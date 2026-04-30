@@ -13,6 +13,9 @@ export default async function DashboardPage() {
       id: 'demo-user-123',
       email: 'demo@swingz.com',
       user_metadata: { full_name: 'Demo User' },
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
     };
 
     const clubs = [
