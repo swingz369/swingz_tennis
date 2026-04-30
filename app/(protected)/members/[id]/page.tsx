@@ -1,4 +1,5 @@
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { cookies } from 'next/headers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,62 +7,104 @@ import { Calendar, Clock, User, Trophy } from 'lucide-react';
 
 export default async function MemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const hasDemoMode = cookieStore.get('demo-mode');
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Bitte einloggen</p>
-      </div>
-    );
-  }
+  let member: any = null;
+  let bookings: any[] = [];
 
-  const { data: member } = await supabase
-    .from('users')
-    .select('*, club_memberships(clubs(name, status))')
-    .eq('id', id)
-    .single();
+  // Demo mode – return mock data
+  if (hasDemoMode) {
+    member = {
+      id: '1',
+      user_id: 'demo-user-123',
+      full_name: 'Max Mustermann',
+      email: 'max@example.com',
+      role: 'member',
+      is_active: true,
+      joined_at: '2025-01-15',
+      club_memberships: [
+        {
+          clubs: { id: 'demo-club', name: 'Demo Tennis Club', status: 'active' },
+          role: 'member',
+        },
+      ],
+    };
 
-  if (!member) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Mitglied nicht gefunden</p>
-      </div>
-    );
-  }
+    bookings = [
+      {
+        id: 'b1',
+        status: 'confirmed',
+        created_at: new Date().toISOString(),
+        sessions: {
+          id: 's1',
+          timeslot_start: new Date().toISOString(),
+          timeslot_end: new Date(Date.now() + 3600000).toISOString(),
+          trainer_id: 'trainer-1',
+          schedules: { name: 'Trainingsgruppe A' },
+        },
+      },
+    ];
+  } else {
+    // Normal Supabase flow
+    const supabase = await createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
 
-  const { data: bookings } = await supabase
-    .from('bookings')
-    .select(
+    if (!authUser) {
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <p>Bitte einloggen</p>
+        </div>
+      );
+    }
+
+    const { data: memberData } = await supabase
+      .from('users')
+      .select('*, club_memberships(clubs(name, status))')
+      .eq('id', id)
+      .single();
+
+    if (!memberData) {
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <p>Mitglied nicht gefunden</p>
+        </div>
+      );
+    }
+
+    member = memberData;
+
+    const { data: bookingsData } = await supabase
+      .from('bookings')
+      .select(
+        `
+        *,
+        sessions (
+          id,
+          timeslot_start,
+          timeslot_end,
+          trainer_id,
+          schedules (name)
+        )
       `
-      *,
-      sessions (
-        id,
-        timeslot_start,
-        timeslot_end,
-        trainer_id,
-        schedules (name)
       )
-    `
-    )
-    .eq('member_id', id)
-    .order('created_at', { ascending: false })
-    .limit(10);
+      .eq('member_id', id)
+      .order('created_at', { ascending: false })
+      .limit(10);
 
-  const { data: attendance } = await supabase.from('bookings').select('status').eq('member_id', id);
+    bookings = bookingsData || [];
+  }
 
-  const totalBookings = attendance?.length || 0;
-  const confirmedBookings =
-    attendance?.filter((b: { status: string }) => b.status === 'confirmed').length || 0;
-  const cancelledBookings =
-    attendance?.filter((b: { status: string }) => b.status === 'cancelled').length || 0;
-  const noShows = attendance?.filter((b: { status: string }) => b.status === 'no_show').length || 0;
+  // Stats (both modes) – only use bookings data we have
+  const totalBookings = bookings.length;
+  const confirmedBookings = bookings.filter((b) => b.status === 'confirmed').length;
+  const cancelledBookings = bookings.filter((b) => b.status === 'cancelled').length;
+  const noShowBookings = bookings.filter((b) => b.status === 'no_show').length;
 
-  const attendanceRate =
-    totalBookings > 0 ? Math.round(((confirmedBookings + noShows) / totalBookings) * 100) : 0;
+  // Simple attendance rate from these bookings (good enough for demo)
+  const attendanceRate = totalBookings > 0 ? Math.round(((confirmedBookings + noShowBookings) / totalBookings) * 100) : 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -70,6 +113,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
         <Button variant="outline">Bearbeiten</Button>
       </div>
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -107,7 +151,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{noShows}</div>
+            <div className="text-2xl font-bold">{noShowBookings}</div>
           </CardContent>
         </Card>
       </div>

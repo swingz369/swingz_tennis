@@ -206,10 +206,6 @@ async function main() {
   const seasonStart = new Date(currentYear, 0, 1); // Jan 1
   const seasonEnd = new Date(currentYear, 11, 31); // Dec 31
 
-  const currentYear = new Date().getFullYear();
-  const seasonStart = new Date(currentYear, 0, 1); // Jan 1
-  const seasonEnd = new Date(currentYear, 11, 31); // Dec 31
-
   const { data: schedule, error: scheduleErr } = await supabase
     .from('schedules')
     .insert({
