@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import { colors, typography, shadows, gradients, radius } from './styles/theme';
+import tailwindAnimate from 'tailwindcss-animate';
 
 const config: Config = {
   darkMode: ['class'],
@@ -40,14 +41,10 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         brand: {
-          primary: colors.primary,
-          secondary: colors.secondary,
-          accent: colors.accent,
+          primary: '#1B4332',
+          secondary: '#1e3a5f',
+          accent: '#FF6B35',
         },
-        brandPrimary: colors.primary[600],
-        brandSecondary: colors.secondary[900],
-        brandAccent: colors.accent[500],
-        brandBackground: '#ffffff',
         gray: colors.gray,
         success: colors.success,
         warning: colors.warning,
@@ -130,6 +127,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [tailwindAnimate],
 };
 export default config;

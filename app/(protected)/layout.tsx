@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -21,7 +22,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
     return (
       <ProtectedRoute>
-        <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
+        <ErrorBoundary>
+          <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
+        </ErrorBoundary>
       </ProtectedRoute>
     );
   }

@@ -6,8 +6,9 @@ import { createClient } from '@/infrastructure/external/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
+import { analytics } from '@/lib/analytics';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,10 +45,12 @@ export default function LoginPage() {
         }
         setError(err.message);
       } else if (data.user) {
+        analytics.login('email', true);
         router.push('/');
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
+      analytics.login('email', false);
       setError(message);
     } finally {
       setLoading(false);
@@ -57,6 +60,7 @@ export default function LoginPage() {
   const handleDemoLogin = () => {
     // Quick demo login - set cookie for server
     document.cookie = 'demo-mode=true; path=/';
+    analytics.login('demo', true);
     router.push('/');
   };
 
@@ -64,7 +68,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-navy-900 via-brand-navy-800 to-brand-primary-900 p-4">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-primary-500/10 blur-3xl" />
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-brand-primary/50/10 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-brand-accent-500/10 blur-3xl" />
       </div>
 
@@ -84,7 +88,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Card */}
-        <ProfessionalCard variant="elevated" className="w-full">
+        <Card variant="elevated" className="w-full">
           <div className="space-y-6 p-6">
             <div className="text-center">
               <h2 className="text-xl font-semibold text-gray-900">Willkommen zurück</h2>
@@ -169,10 +173,10 @@ export default function LoginPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-11 border-2 border-dashed border-gray-300 text-gray-700 hover:border-brand-primary-500 hover:text-brand-primary-600 hover:bg-brand-primary-50 transition-all"
+                className="w-full h-11 border-2 border-dashed border-gray-300 text-gray-700 hover:border-brand-primary hover:text-brand-primary hover:bg-brand-primary/5 transition-all"
                 onClick={handleDemoLogin}
               >
-                <Trophy className="mr-2 h-4 w-4 text-brand-primary-600" />
+                <Trophy className="mr-2 h-4 w-4 text-brand-primary" />
                 Demo-Modus starten
               </Button>
             </form>
@@ -180,13 +184,13 @@ export default function LoginPage() {
             <div className="mt-4 text-center text-xs text-gray-400">
               <p>
                 Noch kein Konto?{' '}
-                <button className="text-brand-primary-600 hover:text-brand-primary-700 font-medium underline underline-offset-2">
+                <button className="text-brand-primary hover:text-brand-primary font-medium underline underline-offset-2">
                   Registrierung anfragen
                 </button>
               </p>
             </div>
           </div>
-        </ProfessionalCard>
+        </Card>
 
         <p className="mt-6 text-center text-xs text-gray-400">
           Mit der Anmeldung stimmst du unseren{' '}

@@ -14,9 +14,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Clock, User, GripVertical, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
-import { ProfessionalButton } from '@/components/ui/professional/professional-button';
-import { ProfessionalBadge } from '@/components/ui/professional/professional-badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { analytics } from '@/lib/analytics';
 
 const TIME_SLOTS = [
   '08:00',
@@ -154,9 +155,11 @@ export default function SchedulerPage() {
       if (!res.ok) throw new Error(data.error || 'Optimization failed');
       setSchedule(data.schedule || schedule); // API may return updated schedule
       toast.success('Stundenplan optimiert');
+      analytics.scheduleOptimized('demo-club');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Optimierung fehlgeschlagen';
       toast.error(message);
+      analytics.trackEvent('schedule_optimize_failed', { error: message, clubId: 'demo-club' });
     } finally {
       setOptimizing(false);
     }
@@ -185,18 +188,18 @@ export default function SchedulerPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B4332]">Stundenplan</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Stundenplan</h1>
           <p className="text-gray-500">Club: Demo Club – Drag & Drop zum Verschieben</p>
         </div>
-        <ProfessionalButton
+        <Button
           onClick={handleOptimize}
           disabled={optimizing}
-          variant="primary"
+          variant="accent"
           className="flex items-center gap-2"
         >
           <Sparkles size={16} />
           {optimizing ? 'Optimiere...' : 'KI-Optimierung'}
-        </ProfessionalButton>
+        </Button>
       </div>
 
       {/* DnD Context wraps both grid and session list so all draggables are inside */}
@@ -207,7 +210,7 @@ export default function SchedulerPage() {
         onDragEnd={handleDragEnd}
       >
         {/* Schedule Grid */}
-        <ProfessionalCard variant="elevated" padding="none" className="overflow-x-auto">
+        <Card variant="elevated" padding="none" className="overflow-x-auto">
           <div className="min-w-[900px]">
             {/* Header row with days */}
             <div className="grid grid-cols-8 border-b border-gray-200 bg-gray-50">
@@ -217,7 +220,7 @@ export default function SchedulerPage() {
               {DAYS.map((day) => (
                 <div
                   key={day}
-                  className="p-3 text-sm font-semibold text-center text-[#1B4332] border-r border-gray-200 last:border-r-0"
+                  className="p-3 text-sm font-semibold text-center text-brand-primary border-r border-gray-200 last:border-r-0"
                 >
                   {day}
                 </div>
@@ -246,7 +249,7 @@ export default function SchedulerPage() {
               </div>
             ))}
           </div>
-        </ProfessionalCard>
+        </Card>
 
         <DragOverlay>
           {activeSession ? <SessionCard session={activeSession} dragging /> : null}
@@ -255,7 +258,7 @@ export default function SchedulerPage() {
 
       {/* Sessions Legend */}
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-[#1B4332]">Alle Sessions</h3>
+        <h3 className="text-lg font-semibold text-brand-primary">Alle Sessions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {schedule.sessions.map((session) => (
             <SessionCard key={session.id} session={session} />
@@ -338,7 +341,7 @@ function SessionCard({
       >
         <div className="flex items-start justify-between gap-1">
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-[#1B4332] truncate">
+            <div className="text-xs font-semibold text-brand-primary truncate">
               {session.groupNames?.[0] || 'Gruppe'}
             </div>
             <div className="text-[10px] text-gray-500 truncate">
@@ -356,13 +359,13 @@ function SessionCard({
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           {dragHandle}
-          <span className="text-sm font-semibold text-[#1B4332]">
+          <span className="text-sm font-semibold text-brand-primary">
             {session.groupNames?.[0] || 'Gruppe'}
           </span>
         </div>
-        <ProfessionalBadge variant="success" size="sm">
+        <Badge variant="success" size="sm">
           {session.maxParticipants} Plätze
-        </ProfessionalBadge>
+        </Badge>
       </div>
       <div className="space-y-2 text-sm">
         <div className="flex items-center gap-2 text-gray-600">
@@ -377,9 +380,9 @@ function SessionCard({
       </div>
       <div className="mt-3 flex flex-wrap gap-1">
         {session.groupNames?.slice(1).map((name) => (
-          <ProfessionalBadge key={name} variant="secondary" size="sm">
+          <Badge key={name} variant="secondary" size="sm">
             {name}
-          </ProfessionalBadge>
+          </Badge>
         ))}
       </div>
     </div>

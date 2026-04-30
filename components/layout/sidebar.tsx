@@ -60,7 +60,7 @@ export function Sidebar({
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 pathname === item.href
-                  ? 'bg-brand-primary-50 text-brand-primary-700'
+                  ? 'bg-brand-primary/5 text-brand-primary'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
             >
@@ -85,7 +85,7 @@ export function Sidebar({
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     pathname?.startsWith(item.href)
-                      ? 'bg-brand-primary-50 text-brand-primary-700'
+                      ? 'bg-brand-primary/5 text-brand-primary'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
                 >

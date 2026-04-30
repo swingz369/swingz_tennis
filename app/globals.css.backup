@@ -1,0 +1,232 @@
+/* Custom Keyframes – must be BEFORE @tailwind */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(27, 67, 50, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(27, 67, 50, 0.6);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes slide-in-right {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables – light & dark mode */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --radius: 0.5rem;
+  /* Brand colors – light mode (HSL) */
+  --brand-primary: 150 48% 18%; /* #1B4332 */
+  --brand-secondary: 217 33% 24%; /* #1e3a5f */
+  --brand-accent: 26 100% 68%; /* #FF6B35 */
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 217.2 32.6% 17.5%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+  /* Brand colors – dark mode (lightened for contrast) */
+  --brand-primary: 150 100% 30%;
+  --brand-secondary: 217 33% 40%;
+  --brand-accent: 26 100% 75%;
+}
+
+/* Base element styles */
+body {
+  @apply bg-background text-foreground;
+}
+
+/* Focus visible outline for accessibility */
+:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+/* Smooth transitions for interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+  @apply transition-colors duration-200;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-muted rounded-full;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-gray-600;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Utility layer for brand color helpers */
+@layer utilities {
+  .text-brand-primary {
+    color: hsl(var(--brand-primary));
+  }
+  .text-brand-secondary {
+    color: hsl(var(--brand-secondary));
+  }
+  .text-brand-accent {
+    color: hsl(var(--brand-accent));
+  }
+  .bg-brand-primary {
+    background-color: hsl(var(--brand-primary));
+  }
+  .bg-brand-secondary {
+    background-color: hsl(var(--brand-secondary));
+  }
+  .bg-brand-accent {
+    background-color: hsl(var(--brand-accent));
+  }
+  .border-brand-primary {
+    border-color: hsl(var(--brand-primary));
+  }
+  .border-brand-secondary {
+    border-color: hsl(var(--brand-secondary));
+  }
+  .border-brand-accent {
+    border-color: hsl(var(--brand-accent));
+  }
+
+  /* Semi-transparent brand backgrounds */
+  .bg-brand-primary\/5 {
+    background-color: hsl(var(--brand-primary) / 0.05);
+  }
+  .bg-brand-primary\/10 {
+    background-color: hsl(var(--brand-primary) / 0.1);
+  }
+  .bg-brand-primary\/20 {
+    background-color: hsl(var(--brand-primary) / 0.2);
+  }
+  .bg-brand-primary\/50 {
+    background-color: hsl(var(--brand-primary) / 0.5);
+  }
+  .bg-brand-secondary\/10 {
+    background-color: hsl(var(--brand-secondary) / 0.1);
+  }
+  .bg-brand-accent\/10 {
+    background-color: hsl(var(--brand-accent) / 0.1);
+  }
+  .border-brand-primary\/20 {
+    border-color: hsl(var(--brand-primary) / 0.2);
+  }
+  .border-brand-primary\/30 {
+    border-color: hsl(var(--brand-primary) / 0.3);
+  }
+  .border-brand-primary\/40 {
+    border-color: hsl(var(--brand-primary) / 0.4);
+  }
+  .border-brand-primary\/60 {
+    border-color: hsl(var(--brand-primary) / 0.6);
+  }
+}

@@ -15,7 +15,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
+import { Card } from '@/components/ui/card';
 import { TrendingUp, Users, DollarSign, Calendar } from 'lucide-react';
 
 export interface AnalyticsData {
@@ -47,7 +47,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
       title: 'Mitglieder',
       value: data.totalMembers.toLocaleString(),
       icon: Users,
-      color: 'text-brand-primary-600',
+      color: 'text-brand-primary',
     },
     {
       title: 'Buchungen',
@@ -75,14 +75,14 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1B4332]">Analytics</h1>
+        <h1 className="text-2xl font-bold text-brand-primary">Analytics</h1>
         <p className="text-gray-500">Vereinsstatistiken und Leistungskennzahlen</p>
       </div>
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi) => (
-          <ProfessionalCard key={kpi.title} variant="elevated" className="p-6">
+          <Card key={kpi.title} variant="elevated" className="p-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
@@ -92,14 +92,14 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
                 <kpi.icon className="h-6 w-6" />
               </div>
             </div>
-          </ProfessionalCard>
+          </Card>
         ))}
       </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bookings Over Time (Line) */}
-        <ProfessionalCard variant="bordered" className="p-6">
+        <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Buchungen im Zeitverlauf</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -123,10 +123,10 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </ProfessionalCard>
+        </Card>
 
         {/* Revenue by Club (Pie) */}
-        <ProfessionalCard variant="bordered" className="p-6">
+        <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Umsatz nach Verein</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -148,10 +148,10 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </ProfessionalCard>
+        </Card>
 
         {/* Sessions per Trainer (Bar) */}
-        <ProfessionalCard variant="bordered" className="p-6">
+        <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Sessions pro Trainer</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -178,10 +178,10 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </ProfessionalCard>
+        </Card>
 
         {/* Court Utilization (Bar) */}
-        <ProfessionalCard variant="bordered" className="p-6">
+        <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Platzauslastung</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -209,7 +209,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </ProfessionalCard>
+        </Card>
       </div>
     </div>
   );

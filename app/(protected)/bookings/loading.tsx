@@ -1,4 +1,4 @@
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
+import { Card } from '@/components/ui/card';
 
 export default function BookingsLoading() {
   return (
@@ -12,7 +12,7 @@ export default function BookingsLoading() {
       </div>
 
       {/* Calendar skeleton */}
-      <ProfessionalCard variant="bordered" className="p-6">
+      <Card variant="bordered" className="p-6">
         <div className="grid grid-cols-7 gap-2 mb-4">
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="h-8 bg-gray-100 rounded animate-pulse" />
@@ -26,7 +26,7 @@ export default function BookingsLoading() {
             />
           ))}
         </div>
-      </ProfessionalCard>
+      </Card>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
+import { Card } from '@/components/ui/card';
 import { Calendar, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 export interface MemberProfileData {
@@ -96,14 +96,14 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1B4332]">Mitgliedsprofil</h1>
+        <h1 className="text-2xl font-bold text-brand-primary">Mitgliedsprofil</h1>
         <p className="text-gray-500">Übersicht für {member.fullName}</p>
       </div>
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
-          <ProfessionalCard key={kpi.title} variant="elevated" className="p-6">
+          <Card key={kpi.title} variant="elevated" className="p-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
@@ -113,13 +113,13 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
                 <kpi.icon className="h-6 w-6" />
               </div>
             </div>
-          </ProfessionalCard>
+          </Card>
         ))}
       </div>
 
       {/* Member Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProfessionalCard variant="bordered" className="p-6">
+        <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Persönliche Daten</h3>
           <div className="space-y-3">
             <div>
@@ -142,7 +142,7 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
                 {member.roles.map((role) => (
                   <span
                     key={role}
-                    className="px-2 py-1 bg-brand-primary-100 text-brand-primary-700 rounded text-xs font-medium"
+                    className="px-2 py-1 bg-brand-primary/10 text-brand-primary rounded text-xs font-medium"
                   >
                     {role}
                   </span>
@@ -150,15 +150,14 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
               </div>
             </div>
           </div>
-        </ProfessionalCard>
-
-        <ProfessionalCard variant="bordered" className="p-6">
+        </Card>
+        <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Vereine</h3>
           {member.clubIds.length > 0 ? (
             <ul className="space-y-2">
               {member.clubIds.map((clubId) => (
                 <li key={clubId} className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-brand-primary-500 rounded-full" />
+                  <div className="w-2 h-2 bg-brand-primary rounded-full" />
                   <span className="text-sm">{clubId}</span>
                   {clubId === member.primaryClubId && (
                     <span className="text-xs text-gray-500">(Primär)</span>
@@ -169,11 +168,10 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
           ) : (
             <p className="text-sm text-gray-500">Keine Vereinszugehörigkeit</p>
           )}
-        </ProfessionalCard>
+        </Card>
       </div>
 
-      {/* Recent Bookings */}
-      <ProfessionalCard variant="bordered" className="p-6">
+      <Card variant="bordered" className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Letzte Buchungen</h3>
         {recentBookings.length > 0 ? (
           <div className="overflow-x-auto">
@@ -215,7 +213,7 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
         ) : (
           <p className="text-sm text-gray-500">Noch keine Buchungen vorhanden</p>
         )}
-      </ProfessionalCard>
+      </Card>
     </div>
   );
 }

@@ -128,7 +128,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-[#1B4332] dark:text-white">
+          <h1 className="text-xl md:text-2xl font-bold text-brand-primary dark:text-white">
             Mitgliederverwaltung
           </h1>
           <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">

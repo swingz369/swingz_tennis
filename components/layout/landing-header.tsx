@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ProfessionalButton } from '@/components/ui/professional';
+import { Button } from '@/components/ui';
 import { Trophy } from 'lucide-react';
 
 export function LandingHeader() {
@@ -28,23 +28,23 @@ export function LandingHeader() {
           {/* CTA */}
           <div className="hidden md:flex md:items-center md:gap-4">
             <Link href="/login">
-              <ProfessionalButton size="md" variant="secondary">
+              <Button size="md" variant="secondary">
                 Anmelden
-              </ProfessionalButton>
+              </Button>
             </Link>
             <Link href="/login">
-              <ProfessionalButton size="md" variant="primary">
+              <Button size="md" variant="primary">
                 Kostenlos starten
-              </ProfessionalButton>
+              </Button>
             </Link>
           </div>
 
           {/* Mobile CTA */}
           <div className="md:hidden">
             <Link href="/login">
-              <ProfessionalButton size="sm" variant="primary">
+              <Button size="sm" variant="primary">
                 Login
-              </ProfessionalButton>
+              </Button>
             </Link>
           </div>
         </div>

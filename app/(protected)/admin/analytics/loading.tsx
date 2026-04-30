@@ -1,4 +1,4 @@
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
+import { Card } from '@/components/ui/card';
 
 export default function AnalyticsLoading() {
   return (
@@ -12,7 +12,7 @@ export default function AnalyticsLoading() {
       {/* KPI Grid Skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <ProfessionalCard key={i} variant="elevated" className="p-6">
+          <Card key={i} variant="elevated" className="p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-3">
                 <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
@@ -20,17 +20,17 @@ export default function AnalyticsLoading() {
               </div>
               <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse" />
             </div>
-          </ProfessionalCard>
+          </Card>
         ))}
       </div>
 
       {/* Charts Grid Skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <ProfessionalCard key={i} variant="bordered" className="p-6">
+          <Card key={i} variant="bordered" className="p-6">
             <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-4" />
             <div className="h-64 bg-gray-50 rounded-lg border border-gray-100" />
-          </ProfessionalCard>
+          </Card>
         ))}
       </div>
     </div>

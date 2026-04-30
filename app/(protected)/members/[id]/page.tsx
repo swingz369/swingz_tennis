@@ -104,7 +104,10 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
   const noShowBookings = bookings.filter((b) => b.status === 'no_show').length;
 
   // Simple attendance rate from these bookings (good enough for demo)
-  const attendanceRate = totalBookings > 0 ? Math.round(((confirmedBookings + noShowBookings) / totalBookings) * 100) : 0;
+  const attendanceRate =
+    totalBookings > 0
+      ? Math.round(((confirmedBookings + noShowBookings) / totalBookings) * 100)
+      : 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -257,10 +260,10 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
                     <Badge
                       variant={
                         booking.status === 'confirmed'
-                          ? 'default'
+                          ? 'success'
                           : booking.status === 'cancelled'
-                            ? 'secondary'
-                            : 'destructive'
+                            ? 'error'
+                            : 'warning'
                       }
                     >
                       {booking.status === 'confirmed'

@@ -3,10 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ProfessionalButton } from '@/components/ui/professional/professional-button';
-import { FeatureCard, StatsCard } from '@/components/ui/professional/professional-card';
+import { Button } from '@/components/ui/button';
+import { FeatureCard, StatsCard } from '@/components/ui';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import type { Session } from '@supabase/supabase-js';
+import { analytics } from '@/lib/analytics';
+import { getVariant } from '@/lib/experiments';
 import {
   Trophy,
   BarChart3,
@@ -20,6 +22,9 @@ import {
 
 export default function LandingPage() {
   const router = useRouter();
+
+  // A/B test: hero CTA text variant
+  const heroCtaVariant = getVariant('landing_hero_cta');
 
   useEffect(() => {
     const cookies = document.cookie.split(';');
@@ -35,7 +40,17 @@ export default function LandingPage() {
         router.replace('/dashboard');
       }
     });
-  }, [router]);
+  }, [router, heroCtaVariant]); // heroCtaVariant added to deps
+
+  // Track experiment exposure on mount
+  useEffect(() => {
+    if (heroCtaVariant) {
+      analytics.trackEvent('experiment_exposure', {
+        experiment_key: 'landing_hero_cta',
+        variant: heroCtaVariant,
+      });
+    }
+  }, [heroCtaVariant]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -54,29 +69,30 @@ export default function LandingPage() {
             </Link>
             <div className="hidden md:flex md:items-center md:gap-4">
               <Link href="/login">
-                <ProfessionalButton
+                <Button
                   size="md"
                   variant="ghost"
                   className="text-white hover:text-white hover:bg-white/10"
+                  onClick={() => analytics.featureUsed('header_login')}
                 >
                   Anmelden
-                </ProfessionalButton>
+                </Button>
               </Link>
               <Link href="/login">
-                <ProfessionalButton
+                <Button
                   size="md"
                   variant="accent"
-                  style={{ boxShadow: '0 12px 40px -8px rgba(255, 107, 53, 0.6)' }}
+                  onClick={() => analytics.signUp('landing_header')}
                 >
                   Kostenlos starten
-                </ProfessionalButton>
+                </Button>
               </Link>
             </div>
             <div className="md:hidden">
               <Link href="/login">
-                <ProfessionalButton size="sm" variant="accent">
+                <Button size="sm" variant="accent">
                   Login
-                </ProfessionalButton>
+                </Button>
               </Link>
             </div>
           </div>
@@ -128,15 +144,17 @@ export default function LandingPage() {
                     boxShadow:
                       '0 12px 40px -8px rgba(27, 67, 50, 0.5), 0 8px 24px -4px rgba(27, 67, 50, 0.35)',
                   }}
+                  onClick={() => analytics.signUp('landing_hero_cta', heroCtaVariant || 'default')}
                 >
                   <Sparkles className="mr-2 h-5 w-5" />
-                  Demo starten
+                  {heroCtaVariant || 'Demo starten'}
                 </button>
               </Link>
               <Link href="/login">
                 <button
                   type="button"
                   className="min-w-[200px] inline-flex items-center justify-center gap-2 rounded-full bg-[#1e3a5f] text-white px-8 py-4 text-lg font-medium transition-all duration-200 hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:ring-offset-2 active:scale-[0.98] shadow-[0_8px_24px_-4px_rgba(30,58,95,0.3)]"
+                  onClick={() => analytics.featureUsed('landing_learn_more')}
                 >
                   <ArrowRight className="mr-2 h-5 w-5" />
                   Mehr erfahren

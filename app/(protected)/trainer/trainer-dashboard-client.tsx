@@ -1,6 +1,6 @@
 'use client';
 
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
+import { Card } from '@/components/ui/card';
 import { Calendar, Users } from 'lucide-react';
 
 export interface TrainerSession {
@@ -43,17 +43,17 @@ export function TrainerDashboardClient({ trainer, sessions }: Props) {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#1B4332]">Trainer Dashboard</h1>
+        <h1 className="text-2xl font-bold text-brand-primary">Trainer Dashboard</h1>
         <p className="text-gray-500">Willkommen, {trainer.name}</p>
       </div>
 
       {/* Sessions by Day */}
       {sortedDays.length === 0 ? (
-        <ProfessionalCard variant="bordered" className="p-6">
+        <Card variant="bordered" className="p-6">
           <div className="text-center py-8 text-gray-500">
             Keine kommenden Sessions in den nächsten 30 Tagen
           </div>
-        </ProfessionalCard>
+        </Card>
       ) : (
         sortedDays.map((day) => {
           const dayName = dayNames[day] ?? '';
@@ -62,7 +62,7 @@ export function TrainerDashboardClient({ trainer, sessions }: Props) {
               <h2 className="text-lg font-semibold text-gray-900">{dayName}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sessionsByDay[day].map((session) => (
-                  <ProfessionalCard key={session.id} variant="bordered" className="p-4">
+                  <Card key={session.id} variant="bordered" className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="font-medium text-gray-900">
@@ -81,13 +81,13 @@ export function TrainerDashboardClient({ trainer, sessions }: Props) {
                         <span>Max. {session.maxParticipants} Teilnehmer</span>
                       </div>
                       <button
-                        className="mt-2 w-full py-1 px-3 bg-brand-primary-50 text-brand-primary-700 rounded text-xs hover:bg-brand-primary-100 transition-colors"
+                        className="mt-2 w-full py-1 px-3 bg-brand-primary/5 text-brand-primary rounded text-xs hover:bg-brand-primary/10 transition-colors"
                         disabled
                       >
                         Teilnehmerliste (bald verfügbar)
                       </button>
                     </div>
-                  </ProfessionalCard>
+                  </Card>
                 ))}
               </div>
             </div>

@@ -200,7 +200,7 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B4332]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
       </div>
     );
   }
@@ -210,7 +210,7 @@ export default function BillingPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B4332]">Abrechnung</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Abrechnung</h1>
           <p className="text-gray-500">Mitgliederabonnements und Rechnungen</p>
         </div>
         <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
@@ -277,7 +277,7 @@ export default function BillingPage() {
           onClick={() => setActiveTab('subscriptions')}
           className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'subscriptions'
-              ? 'border-[#1B4332] text-[#1B4332]'
+              ? 'border-brand-primary text-brand-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -290,7 +290,7 @@ export default function BillingPage() {
           onClick={() => setActiveTab('invoices')}
           className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'invoices'
-              ? 'border-[#1B4332] text-[#1B4332]'
+              ? 'border-brand-primary text-brand-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >

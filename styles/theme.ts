@@ -2,7 +2,7 @@
 // Colors: Tennis Green + Navy + Orange Accent
 
 export const colors = {
-  // Primary – Tennis Green (vibrant, professional)
+  // Primary – Forest Green (SwingZ Brand)
   primary: {
     50: '#f0fdf4',
     100: '#dcfce7',
@@ -14,8 +14,10 @@ export const colors = {
     700: '#15803d',
     800: '#166534',
     900: '#14532d',
+    // Brand exact color
+    brand: '#1B4332', // Deep forest green – primary brand
   },
-  // Secondary – Navy (trustworthy, professional)
+  // Secondary – Navy (SwingZ Brand)
   secondary: {
     50: '#f0f4f8',
     100: '#d9e2ec',
@@ -27,8 +29,9 @@ export const colors = {
     700: '#3e5c76',
     800: '#334e68',
     900: '#1e3a5f',
+    brand: '#1e3a5f', // Deep navy – secondary brand
   },
-  // Accent – Orange (energy, action)
+  // Accent – Orange (SwingZ Brand)
   accent: {
     50: '#fff7ed',
     100: '#ffedd5',
@@ -40,6 +43,7 @@ export const colors = {
     700: '#c2410c',
     800: '#9a3412',
     900: '#7c2d12',
+    brand: '#FF6B35', // Vibrant orange – accent brand
   },
   // Neutrals – Warm Grays
   gray: {

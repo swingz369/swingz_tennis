@@ -70,7 +70,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               className="relative h-9 gap-2 hover:bg-gray-100 dark:hover:bg-brand-navy-800 text-gray-900 dark:text-white"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
             >
-              <Avatar className="h-7 w-7 border border-brand-primary-500">
+              <Avatar className="h-7 w-7 border border-brand-primary">
                 <AvatarFallback className="bg-brand-primary-600 text-white text-xs">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>

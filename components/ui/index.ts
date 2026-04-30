@@ -1,22 +1,29 @@
-// Professional UI Components – SWINGZ Design System
-export { ProfessionalButton, buttonVariants } from '../ui/professional/professional-button';
-export {
-  ProfessionalCard,
-  FeatureCard,
-  StatsCard,
-  cardVariants,
-} from '../ui/professional/professional-card';
-export {
-  ProfessionalInput,
-  ProfessionalTextarea,
-  inputVariants,
-} from '../ui/professional/professional-input';
-export { ProfessionalBadge, badgeVariants } from '../ui/professional/professional-badge';
-export { ProfessionalAvatar } from '../ui/professional/professional-avatar';
+// Unified UI Components – SwingZ Design System
+// All components are enhanced shadcn/ui components with SwingZ brand styling
 
-// Re-export original shadcn components that we still use
-export { Button } from '../ui/button';
-export { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/card';
-export { Input } from '../ui/input';
+export { Button, buttonVariants } from '../ui/button';
+export {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  cardVariants,
+} from '../ui/card';
+export { Input, inputVariants } from '../ui/input';
+export { Textarea, textareaVariants } from '../ui/textarea';
+export { Badge, badgeVariants } from '../ui/badge';
+export { Avatar, AvatarImage, AvatarFallback, AvatarWithStatus } from '../ui/avatar';
+
+// Supporting components
 export { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
-export { Avatar, AvatarFallback } from '../ui/avatar';
+export { Dialog } from '../ui/dialog';
+export { Select } from '../ui/select';
+export { Table } from '../ui/table';
+export { ScrollArea } from '../ui/scroll-area';
+
+// Specialized SwingZ components
+export { FeatureCard } from '../ui/feature-card';
+export { StatsCard } from '../ui/stats-card';
+export { Skeleton } from '../ui/skeleton';

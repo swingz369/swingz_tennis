@@ -187,7 +187,7 @@ export default function SchedulesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B4332]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
       </div>
     );
   }
@@ -197,7 +197,7 @@ export default function SchedulesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B4332]">Sessions verwalten</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Sessions verwalten</h1>
           <p className="text-gray-500">Trainingsplan für deinen Verein</p>
         </div>
         <Button

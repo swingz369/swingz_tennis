@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import type { User, SupabaseClient } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
-import { ProfessionalCard } from '@/components/ui/professional/professional-card';
-import { KPISkeleton } from '@/components/ui/professional/skeleton';
+import { Card } from '@/components/ui/card';
+import { Skeleton as KPISkeleton } from '@/components/ui';
 import { Users, Calendar, ClipboardList, Building2, Trophy, ArrowRight } from 'lucide-react';
 
 interface DashboardClientProps {
@@ -111,7 +111,7 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
       value: kpis.activeMembers,
       description: 'Aktive Vereinsmitglieder',
       icon: Users,
-      color: 'text-brand-primary-600' as const,
+      color: 'text-brand-primary' as const,
     },
     {
       title: 'Sessions heute',
@@ -141,7 +141,7 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1B4332]">SWINGZ Dashboard</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">SWINGZ Dashboard</h1>
           <p className="text-gray-500">
             Willkommen zurück, {user.user_metadata?.full_name || user.email?.split('@')[0]}
           </p>
@@ -177,7 +177,7 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
           </>
         ) : (
           kpiCards.map((kpi) => (
-            <ProfessionalCard key={kpi.title} variant="elevated" className="p-6">
+            <Card key={kpi.title} variant="elevated" className="p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
@@ -188,22 +188,22 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
                   <kpi.icon className="h-6 w-6" />
                 </div>
               </div>
-            </ProfessionalCard>
+            </Card>
           ))
         )}
       </div>
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-[#1B4332] mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-semibold text-brand-primary mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ProfessionalCard
+          <Card
             variant="bordered"
             className="p-4 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => router.push('/scheduler')}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-brand-primary-100 text-brand-primary-700">
+              <div className="p-2 rounded-lg bg-brand-primary/10 text-brand-primary">
                 <Trophy className="h-5 w-5" />
               </div>
               <div className="flex-1">
@@ -212,9 +212,9 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400" />
             </div>
-          </ProfessionalCard>
+          </Card>
 
-          <ProfessionalCard
+          <Card
             variant="bordered"
             className="p-4 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => router.push('/bookings')}
@@ -229,9 +229,9 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400" />
             </div>
-          </ProfessionalCard>
+          </Card>
 
-          <ProfessionalCard
+          <Card
             variant="bordered"
             className="p-4 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => router.push('/admin/analytics')}
@@ -246,17 +246,17 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
               </div>
               <ArrowRight className="h-4 w-4 text-gray-400" />
             </div>
-          </ProfessionalCard>
+          </Card>
         </div>
       </div>
 
       {/* Clubs Section */}
       {clubs.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold text-[#1B4332] mb-4">Deine Vereine</h2>
+          <h2 className="text-lg font-semibold text-brand-primary mb-4">Deine Vereine</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {clubs.map((club) => (
-              <ProfessionalCard
+              <Card
                 key={club.id}
                 variant={club.id === selectedClubId ? 'elevated' : 'bordered'}
                 className="p-4"
@@ -276,7 +276,7 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
                 <p className="text-sm text-gray-600">
                   Max. Mitglieder: {club.max_members || 'N/A'}
                 </p>
-              </ProfessionalCard>
+              </Card>
             ))}
           </div>
         </div>
