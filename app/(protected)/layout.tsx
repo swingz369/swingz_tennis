@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { Header } from '@/components/layout/header';
-import { Sidebar } from '@/components/layout/sidebar';
+import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -22,15 +21,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
     return (
       <ProtectedRoute>
-        <div className="flex min-h-screen flex-col">
-          <Header user={userData} />
-          <div className="flex flex-1">
-            <Sidebar roles={userData.roles} />
-            <main className="flex-1 bg-background p-6 lg:p-8">
-              <div className="mx-auto max-w-7xl">{children}</div>
-            </main>
-          </div>
-        </div>
+        <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
       </ProtectedRoute>
     );
   }
@@ -83,15 +74,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen flex-col">
-        <Header user={userData} />
-        <div className="flex flex-1">
-          <Sidebar />
-          <main className="flex-1 bg-background p-6 lg:p-8">
-            <div className="mx-auto max-w-7xl">{children}</div>
-          </main>
-        </div>
-      </div>
+      <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
     </ProtectedRoute>
   );
 }

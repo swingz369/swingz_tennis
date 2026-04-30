@@ -202,10 +202,22 @@ async function main() {
 
   // 5) Create schedule for demo club
   console.log('   └─ Creating schedule...');
+  const currentYear = new Date().getFullYear();
+  const seasonStart = new Date(currentYear, 0, 1); // Jan 1
+  const seasonEnd = new Date(currentYear, 11, 31); // Dec 31
+
+  const currentYear = new Date().getFullYear();
+  const seasonStart = new Date(currentYear, 0, 1); // Jan 1
+  const seasonEnd = new Date(currentYear, 11, 31); // Dec 31
+
   const { data: schedule, error: scheduleErr } = await supabase
     .from('schedules')
     .insert({
       club_id: clubId,
+      season_type: 'summer',
+      season_year: currentYear,
+      season_start_date: seasonStart.toISOString(),
+      season_end_date: seasonEnd.toISOString(),
       is_active: true,
     })
     .select('id')
@@ -226,39 +238,48 @@ async function main() {
   // 6) Create sessions for the next 2 weeks
   console.log('   └─ Creating sessions...');
   const trainerId = userIds['trainer'] || 'unknown';
-
-  // Helper to create session dates
-  const makeDate = (daysFromNow: number, hours: number, minutes: number) => {
-    const d = new Date();
-    d.setHours(hours, minutes, 0, 0);
-    d.setDate(d.getDate() + daysFromNow);
-    return d.toISOString();
-  };
+  const now = new Date();
 
   const sessionsToInsert = [
-    // Week 1
+    // Week 1: Today at 10:00-11:00
     {
       schedule_id: scheduleId,
-      timeslot_start: makeDate(0, 10, 0),
-      timeslot_end: makeDate(0, 11, 0),
+      timeslot_start: new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        10,
+        0,
+        0
+      ).toISOString(),
+      timeslot_end: new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        11,
+        0,
+        0
+      ).toISOString(),
       trainer_id: trainerId,
       max_participants: 4,
       notes: 'Anfänger',
       is_active: true,
     },
+    // Week 3: +2 days at 14:00-15:30
     {
       schedule_id: scheduleId,
-      timeslot_start: makeDate(2, 14, 0),
-      timeslot_end: makeDate(2, 15, 30),
+      timeslot_start: new Date(now.getTime() + 2 * 86400000, 14, 0, 0).toISOString(),
+      timeslot_end: new Date(now.getTime() + 2 * 86400000, 15, 30, 0).toISOString(),
       trainer_id: trainerId,
       max_participants: 6,
       notes: 'Fortgeschrittene',
       is_active: true,
     },
+    // Week 5: +4 days at 16:00-17:00
     {
       schedule_id: scheduleId,
-      timeslot_start: makeDate(4, 16, 0),
-      timeslot_end: makeDate(4, 17, 0),
+      timeslot_start: new Date(now.getTime() + 4 * 86400000, 16, 0, 0).toISOString(),
+      timeslot_end: new Date(now.getTime() + 4 * 86400000, 17, 0, 0).toISOString(),
       trainer_id: trainerId,
       max_participants: 8,
       notes: 'Mixed',

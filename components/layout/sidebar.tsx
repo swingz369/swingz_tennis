@@ -4,9 +4,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart3, Users, Calendar, Settings, Trophy, Club, CreditCard } from 'lucide-react';
+import { BarChart3, Users, Calendar, Settings, Club, CreditCard, Home } from 'lucide-react';
 
-export function Sidebar({ roles, open }: { roles?: string[]; open?: boolean }) {
+export function Sidebar({
+  roles,
+  open,
+  onClose,
+}: {
+  roles?: string[];
+  open?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
 
   const isAdmin = roles?.some((r) => r === 'admin' || r === 'superadmin');
@@ -14,7 +22,7 @@ export function Sidebar({ roles, open }: { roles?: string[]; open?: boolean }) {
   const isTrainer = roles?.includes('trainer') || isAdmin;
 
   const mainNav = [
-    { name: 'Dashboard', href: '/dashboard', icon: Trophy },
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Bookings', href: '/bookings', icon: Calendar },
     ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),
   ];
@@ -46,6 +54,9 @@ export function Sidebar({ roles, open }: { roles?: string[]; open?: boolean }) {
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => {
+                onClose?.();
+              }}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 pathname === item.href
@@ -68,6 +79,9 @@ export function Sidebar({ roles, open }: { roles?: string[]; open?: boolean }) {
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={() => {
+                    onClose?.();
+                  }}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     pathname?.startsWith(item.href)
