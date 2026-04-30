@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { cookies } from 'next/headers';
 
 export async function GET(req: NextRequest) {
   try {
+    // Demo mode early return
+    const cookieStore = await cookies();
+    const hasDemoMode = cookieStore.get('demo-mode');
+    if (hasDemoMode) {
+      return NextResponse.json({
+        activeMembers: 42,
+        sessionsToday: 5,
+        pendingBookings: 3,
+        totalCourts: 4,
+      });
+    }
+
     const supabase = await createClient();
     const {
       data: { user },

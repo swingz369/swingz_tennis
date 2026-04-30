@@ -1,0 +1,387 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Settings, Building2 } from 'lucide-react';
+
+type OpeningHours = {
+  monday: { open: string; close: string };
+  tuesday: { open: string; close: string };
+  wednesday: { open: string; close: string };
+  thursday: { open: string; close: string };
+  friday: { open: string; close: string };
+  saturday: { open: string; close: string };
+  sunday: { open: string; close: string };
+};
+
+type ClubSettings = {
+  id: string;
+  name: string;
+  maxMembers: number;
+  status: 'active' | 'inactive' | 'suspended';
+  openingHours: OpeningHours;
+};
+
+type SystemSettings = {
+  appName: string;
+  emailNotifications: boolean;
+  reminderDaysBefore: number;
+  stripePublicKey: string;
+};
+
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState<'club' | 'system'>('club');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Club settings state
+  const [clubSettings, setClubSettings] = useState<ClubSettings>({
+    id: '',
+    name: '',
+    maxMembers: 100,
+    status: 'active',
+    openingHours: {
+      monday: { open: '09:00', close: '22:00' },
+      tuesday: { open: '09:00', close: '22:00' },
+      wednesday: { open: '09:00', close: '22:00' },
+      thursday: { open: '09:00', close: '22:00' },
+      friday: { open: '09:00', close: '22:00' },
+      saturday: { open: '09:00', close: '22:00' },
+      sunday: { open: '09:00', close: '22:00' },
+    },
+  });
+
+  // System settings state (superadmin only)
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({
+    appName: 'SWINGZ',
+    emailNotifications: true,
+    reminderDaysBefore: 1,
+    stripePublicKey: '',
+  });
+
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      // Fetch user club
+      const clubRes = await fetch('/api/user/club');
+      if (clubRes.ok) {
+        const clubData = await clubRes.json();
+        setClubSettings((prev) => ({
+          ...prev,
+          id: clubData.clubId,
+          name: clubData.club.name || '',
+          maxMembers: clubData.club.maxMembers || 100,
+          status: clubData.club.status || 'active',
+        }));
+      }
+
+      // Check if user is superadmin (by trying to fetch system settings or checking role)
+      // For now, we'll assume if they can access /admin/billing they are superadmin
+      // We'll determine by role from the user object - we need to fetch it
+      // For demo, we'll just use mock detection
+      const isDemo = document.cookie.includes('demo-mode');
+      if (isDemo) {
+        setIsSuperAdmin(true); // Demo user has all roles
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+      toast.error('Fehler beim Laden der Einstellungen');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveClubSettings = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/clubs/${clubSettings.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: clubSettings.name,
+          maxMembers: clubSettings.maxMembers,
+          openingHours: clubSettings.openingHours,
+          status: clubSettings.status,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success('Vereinseinstellungen gespeichert');
+      } else {
+        const error = await res.json();
+        toast.error(`Fehler: ${error.error || 'Unbekannter Fehler'}`);
+      }
+    } catch (err) {
+      console.error('Failed to save club settings:', err);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveSystemSettings = async () => {
+    setSaving(true);
+    try {
+      // TODO: Create /api/admin/system/settings endpoint
+      toast.success('Systemeinstellungen gespeichert (Demo)');
+    } catch (err) {
+      console.error('Failed to save system settings:', err);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1B4332]"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-[#1B4332]">Einstellungen</h1>
+        <p className="text-gray-500">Vereins- und Systemkonfiguration</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-4 border-b">
+        <button
+          onClick={() => setActiveTab('club')}
+          className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'club'
+              ? 'border-[#1B4332] text-[#1B4332]'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Verein
+          </div>
+        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setActiveTab('system')}
+            className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'system'
+                ? 'border-[#1B4332] text-[#1B4332]'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              System
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Club Settings Tab */}
+      {activeTab === 'club' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Vereinseinstellungen</CardTitle>
+            <CardDescription>Grundlegende Informationen zu deinem Verein</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="clubName">Vereinsname</Label>
+                <Input
+                  id="clubName"
+                  value={clubSettings.name}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    setClubSettings((prev) => ({ ...prev, name: newName }));
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxMembers">Maximale Mitgliederzahl</Label>
+                <Input
+                  id="maxMembers"
+                  type="number"
+                  value={clubSettings.maxMembers}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    setClubSettings((prev) => ({ ...prev, maxMembers: val }));
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Status */}
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={clubSettings.status}
+                onValueChange={(value: 'active' | 'inactive' | 'suspended') =>
+                  setClubSettings({ ...clubSettings, status: value })
+                }
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Status wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Aktiv</SelectItem>
+                  <SelectItem value="inactive">Inaktiv</SelectItem>
+                  <SelectItem value="suspended">Suspendiert</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Opening Hours */}
+            <div>
+              <Label className="text-base font-semibold">Öffnungszeiten</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {(
+                  [
+                    'monday',
+                    'tuesday',
+                    'wednesday',
+                    'thursday',
+                    'friday',
+                    'saturday',
+                    'sunday',
+                  ] as const
+                ).map((day) => (
+                  <div key={day} className="flex items-center gap-2">
+                    <div className="w-28 capitalize">{day}</div>
+                    <Input
+                      type="time"
+                      value={clubSettings.openingHours[day].open}
+                      onChange={(e) =>
+                        setClubSettings({
+                          ...clubSettings,
+                          openingHours: {
+                            ...clubSettings.openingHours,
+                            [day]: { ...clubSettings.openingHours[day], open: e.target.value },
+                          },
+                        })
+                      }
+                      className="w-32"
+                    />
+                    <span>-</span>
+                    <Input
+                      type="time"
+                      value={clubSettings.openingHours[day].close}
+                      onChange={(e) =>
+                        setClubSettings({
+                          ...clubSettings,
+                          openingHours: {
+                            ...clubSettings.openingHours,
+                            [day]: { ...clubSettings.openingHours[day], close: e.target.value },
+                          },
+                        })
+                      }
+                      className="w-32"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+              <Button onClick={handleSaveClubSettings} disabled={saving}>
+                {saving ? 'Wird gespeichert...' : 'Speichern'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* System Settings Tab (Superadmin only) */}
+      {activeTab === 'system' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Systemeinstellungen</CardTitle>
+            <CardDescription>Globale Konfiguration für SWINGZ</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <Label htmlFor="appName">Anwendungsname</Label>
+              <Input
+                id="appName"
+                value={systemSettings.appName}
+                onChange={(e) => setSystemSettings({ ...systemSettings, appName: e.target.value })}
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="emailNotifications"
+                checked={systemSettings.emailNotifications}
+                onChange={(e) =>
+                  setSystemSettings({ ...systemSettings, emailNotifications: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="emailNotifications">E-Mail-Benachrichtigungen aktivieren</Label>
+            </div>
+
+            <div>
+              <Label htmlFor="reminderDays">Erinnerung Tage vorher (Buchungen)</Label>
+              <Input
+                id="reminderDays"
+                type="number"
+                min="1"
+                max="7"
+                value={systemSettings.reminderDaysBefore}
+                onChange={(e) =>
+                  setSystemSettings({
+                    ...systemSettings,
+                    reminderDaysBefore: parseInt(e.target.value) || 1,
+                  })
+                }
+                className="w-48"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="stripeKey">Stripe Public Key</Label>
+              <Input
+                id="stripeKey"
+                type="password"
+                value={systemSettings.stripePublicKey}
+                onChange={(e) =>
+                  setSystemSettings({ ...systemSettings, stripePublicKey: e.target.value })
+                }
+                placeholder="pk_live_..."
+              />
+              <p className="text-sm text-gray-500 mt-1">Wird für die Zahlungsabwicklung benötigt</p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSaveSystemSettings} disabled={saving}>
+                {saving ? 'Wird gespeichert...' : 'Speichern'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

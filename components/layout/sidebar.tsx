@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart3, Users, Calendar, Settings, Trophy, Club } from 'lucide-react';
+import { BarChart3, Users, Calendar, Settings, Trophy, Club, CreditCard } from 'lucide-react';
 
 export function Sidebar({ roles, open }: { roles?: string[]; open?: boolean }) {
   const pathname = usePathname();
 
   const isAdmin = roles?.some((r) => r === 'admin' || r === 'superadmin');
+  const isSuperAdmin = roles?.includes('superadmin');
   const isTrainer = roles?.includes('trainer') || isAdmin;
 
   const mainNav = [
@@ -19,11 +20,13 @@ export function Sidebar({ roles, open }: { roles?: string[]; open?: boolean }) {
   ];
 
   const adminNav = [
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Clubs', href: '/admin/clubs', icon: Club, disabled: !isAdmin || true },
-    { name: 'Members', href: '/admin/members', icon: Users, disabled: !isAdmin || true },
-    { name: 'Settings', href: '/admin/settings', icon: Settings, disabled: !isAdmin || true },
-  ];
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, showIf: isAdmin },
+    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin },
+    { name: 'Members', href: '/admin/members', icon: Users, showIf: isAdmin },
+    { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },
+    { name: 'Settings', href: '/admin/settings', icon: Settings, showIf: isAdmin },
+    { name: 'Billing', href: '/admin/billing', icon: CreditCard, showIf: isSuperAdmin },
+  ].filter((item) => item.showIf);
 
   return (
     <aside
@@ -67,13 +70,10 @@ export function Sidebar({ roles, open }: { roles?: string[]; open?: boolean }) {
                   href={item.href}
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    item.disabled
-                      ? 'cursor-not-allowed opacity-50'
-                      : pathname?.startsWith(item.href)
-                        ? 'bg-brand-primary-50 text-brand-primary-700'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    pathname?.startsWith(item.href)
+                      ? 'bg-brand-primary-50 text-brand-primary-700'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )}
-                  onClick={(e) => item.disabled && e.preventDefault()}
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
                   <span>{item.name}</span>

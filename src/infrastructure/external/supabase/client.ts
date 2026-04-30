@@ -9,10 +9,21 @@ export const createClient = () => {
     console.log('✅ Demo mode active - returning mock Supabase client');
     return {
       auth: {
+        getUser: async () => ({
+          data: {
+            user: {
+              id: 'demo-user-123',
+              email: 'demo@swingz.com',
+              user_metadata: { full_name: 'Demo User' },
+              aud: 'authenticated',
+              role: 'authenticated',
+            },
+          },
+        }),
         signInWithPassword: async () => ({
           data: {
             user: {
-              id: 'demo-user',
+              id: 'demo-user-123',
               email: 'demo@swingz.com',
               user_metadata: { full_name: 'Demo User' },
             },
@@ -23,7 +34,7 @@ export const createClient = () => {
           data: {
             session: {
               user: {
-                id: 'demo-user',
+                id: 'demo-user-123',
                 email: 'demo@swingz.com',
                 user_metadata: { full_name: 'Demo User' },
               },
@@ -51,10 +62,21 @@ export const createClient = () => {
       console.warn('⚠️ Supabase credentials not set. Running in development demo mode.');
       return {
         auth: {
+          getUser: async () => ({
+            data: {
+              user: {
+                id: 'demo-user-123',
+                email: 'demo@swingz.com',
+                user_metadata: { full_name: 'Demo User' },
+                aud: 'authenticated',
+                role: 'authenticated',
+              },
+            },
+          }),
           signInWithPassword: async () => ({
             data: {
               user: {
-                id: 'demo-user',
+                id: 'demo-user-123',
                 email: 'demo@swingz.com',
                 user_metadata: { full_name: 'Demo User' },
               },
@@ -65,7 +87,7 @@ export const createClient = () => {
             data: {
               session: {
                 user: {
-                  id: 'demo-user',
+                  id: 'demo-user-123',
                   email: 'demo@swingz.com',
                   user_metadata: { full_name: 'Demo User' },
                 },

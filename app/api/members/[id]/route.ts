@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { cookies } from 'next/headers';
 import { updateMemberSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { EmailService } from '@/infrastructure/email/email.service';
@@ -8,6 +9,44 @@ import { AuditService } from '@/infrastructure/audit/audit.service';
 // GET /api/members/:id – Member profile
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // Demo mode early return
+  const cookieStore = await cookies();
+  const hasDemoMode = cookieStore.get('demo-mode');
+  if (hasDemoMode) {
+    // Return demo member profile
+    return NextResponse.json({
+      member: {
+        id: id || 'demo-member-1',
+        email: 'member@demo.club',
+        fullName: 'Demo Member',
+        memberSince: new Date().toISOString(),
+        roles: ['member'],
+        clubIds: ['demo-club'],
+        primaryClubId: 'demo-club',
+      },
+      stats: {
+        totalBookings: 5,
+        confirmed: 3,
+        cancelled: 1,
+        noShow: 1,
+      },
+      recentBookings: [
+        {
+          id: 'demo-booking-1',
+          status: 'confirmed',
+          bookedAt: new Date().toISOString(),
+          session: {
+            id: 'demo-session-1',
+            startTime: '10:00',
+            endTime: '11:00',
+            trainerId: 'demo-trainer',
+            court: 'Court 1',
+          },
+        },
+      ],
+    });
+  }
 
   const supabase = await createClient();
   const {

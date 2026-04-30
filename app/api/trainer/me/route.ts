@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { cookies } from 'next/headers';
 
 interface BookingMember {
   full_name: string | null;
@@ -35,6 +36,33 @@ interface TransformedSession {
 }
 
 export async function GET(_req: NextRequest) {
+  // Demo mode early return
+  const cookieStore = await cookies();
+  const hasDemoMode = cookieStore.get('demo-mode');
+  if (hasDemoMode) {
+    return NextResponse.json({
+      stats: {
+        totalSessions: 3,
+        upcomingSessions: 2,
+        sessionsThisWeek: 2,
+        noShows: 1,
+        totalAttendees: 12,
+      },
+      sessions: [
+        {
+          id: 'demo-session-1',
+          startTime: new Date().toISOString(),
+          endTime: new Date(Date.now() + 3600000).toISOString(),
+          maxParticipants: 4,
+          attendees: [
+            { bookingId: 'b1', memberName: 'Demo Member 1', status: 'confirmed' },
+            { bookingId: 'b2', memberName: 'Demo Member 2', status: 'pending' },
+          ],
+        },
+      ],
+    });
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { cookies } from 'next/headers';
 
 export async function GET() {
   try {
+    // Demo mode early return
+    const cookieStore = await cookies();
+    const hasDemoMode = cookieStore.get('demo-mode');
+    if (hasDemoMode) {
+      return NextResponse.json({
+        clubId: 'demo-club',
+        club: { id: 'demo-club', name: 'Demo Tennis Club', maxMembers: 100, status: 'active' },
+      });
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
