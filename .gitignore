@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Local env files
+.env.local
+.env.*.local
+.env
+.env.vercel
+.env.vercel.*
+.env.swingz
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Kilo CLI working directory
+.kilo/
+.kilocode/
+.opencode/
+
+# Vercel build artifacts
+.vercel/
+
+# Temp files
+.tmp/
+.vercel/
+.playwright-mcp/
+
+# Misc
+.cache/
+.temp/

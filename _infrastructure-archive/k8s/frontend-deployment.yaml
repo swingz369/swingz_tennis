@@ -1,0 +1,56 @@
+# k8s/frontend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsow-frontend
+  labels:
+    app: tsow
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tsow
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: tsow
+        tier: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: tsow/frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_SUPABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tsow-config
+                  key: supabase-url
+            - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tsow-secrets
+                  key: supabase-anon-key
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tsow-frontend
+spec:
+  selector:
+    app: tsow
+    tier: frontend
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: LoadBalancer

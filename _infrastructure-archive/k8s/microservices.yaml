@@ -1,0 +1,160 @@
+# k8s/microservices.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsow-auth-service
+  labels:
+    app: tsow
+    tier: auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tsow
+      tier: auth
+  template:
+    metadata:
+      labels:
+        app: tsow
+        tier: auth
+    spec:
+      containers:
+        - name: auth
+          image: tsow/auth-service:latest
+          ports:
+            - containerPort: 3001
+          env:
+            - name: REDIS_URL
+              value: "redis://tsow-redis:6379"
+            - name: SUPABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tsow-config
+                  key: supabase-url
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tsow-secrets
+                  key: supabase-service-key
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: tsow-secrets
+                  key: jwt-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsow-scheduling-service
+  labels:
+    app: tsow
+    tier: scheduling
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tsow
+      tier: scheduling
+  template:
+    metadata:
+      labels:
+        app: tsow
+        tier: scheduling
+    spec:
+      containers:
+        - name: scheduling
+          image: tsow/scheduling-service:latest
+          ports:
+            - containerPort: 3002
+          env:
+            - name: REDIS_URL
+              value: "redis://tsow-redis:6379"
+            - name: SUPABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tsow-config
+                  key: supabase-url
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tsow-secrets
+                  key: openai-api-key
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsow-billing-service
+  labels:
+    app: tsow
+    tier: billing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tsow
+      tier: billing
+  template:
+    metadata:
+      labels:
+        app: tsow
+        tier: billing
+    spec:
+      containers:
+        - name: billing
+          image: tsow/billing-service:latest
+          ports:
+            - containerPort: 3003
+          env:
+            - name: REDIS_URL
+              value: "redis://tsow-redis:6379"
+            - name: SUPABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tsow-config
+                  key: supabase-url
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tsow-secrets
+                  key: stripe-secret-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tsow-redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          command:
+            - redis-server
+            - --appendonly
+            - yes
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          emptyDir: {}

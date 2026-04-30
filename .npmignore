@@ -1,0 +1,76 @@
+# Exclude from npm package and Vercel deployment
+
+# Tests
+**/__tests__/**
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+.test/
+tests/
+coverage/
+
+# Local env
+.env.local
+.env.*.local
+.env
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Misc
+.DS_Store
+*.pem
+.vercel
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+.travis.yml
+
+# Docker
+Dockerfile
+docker-compose*.yml
+
+# Database migrations (already in supabase/)
+# supabase/migrations/ - keep this, needed for DB
+
+# TypeScript cache
+*.tsbuildinfo
+
+# ESLint/Prettier
+.eslintrc.cjs
+.prettierrc
+prettier.config.js
+
+# Husky
+.husky/
+
+# Local scripts backup
+scripts/**/*.js
+scripts/**/*.js.map
+scripts/**/*.d.ts

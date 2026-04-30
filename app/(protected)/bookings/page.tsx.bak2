@@ -1,0 +1,203 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  format,
+  eachDayOfInterval,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  addMonths,
+  subMonths,
+} from 'date-fns';
+import { de } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Clock, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface Session {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  trainerId: string;
+  trainerName?: string;
+  groupIds: string[];
+  groupNames?: string[];
+  maxParticipants: number;
+  notes?: string;
+  bookedByUser?: boolean;
+}
+
+export default function BookingsPage() {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [clubId, setClubId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchClubId = async () => {
+      try {
+        const res = await fetch('/api/user/club');
+        if (res.ok) {
+          const data = await res.json();
+          setClubId(data.clubId);
+        } else {
+          setError('Kein Vereinszugang gefunden');
+        }
+      } catch (err) {
+        console.error('Failed to fetch club:', err);
+        setError('Fehler beim Laden des Vereins');
+      }
+    };
+    fetchClubId();
+  }, []);
+
+  useEffect(() => {
+    if (!clubId) return;
+    fetchSessions();
+  }, [clubId]);
+
+  const fetchSessions = async () => {
+    if (!clubId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/sessions?clubId=${clubId}`);
+      const data: Session[] = await res.json();
+      setSessions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch sessions:', err);
+      setSessions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBooking = async (sessionId: string) => {
+    const demoUserJson = localStorage.getItem('demo-user');
+    const memberId = demoUserJson ? JSON.parse(demoUserJson).id : 'demo-member';
+
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId, sessionId, clubId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Booking failed');
+      }
+
+      toast.success('Buchung erfolgreich');
+      fetchSessions();
+    } catch (err: any) {
+      toast.error(err.message || 'Buchung fehlgeschlagen');
+    }
+  };
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  const getSessionsForDay = (date: Date) => {
+    const jsDay = date.getDay();
+    const apiDay = jsDay === 0 ? 7 : jsDay;
+    return sessions.filter((s) => s.dayOfWeek === apiDay);
+  };
+
+  const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+  const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12 text-red-600">{error}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1B4332]">Buchungen</h1>
+          <p className="text-gray-500">Trainingsbuchungen für deinen Verein</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[120px] text-center font-medium">
+            {format(currentMonth, 'MMMM yyyy', { locale: de })}
+          </span>
+          <Button variant="outline" size="icon" onClick={goToNextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Calendar Grid */}
+      {loading ? (
+        <div className="text-center py-12 text-gray-500">Laden...</div>
+      ) : (
+        <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+          {/* Day headers */}
+          {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
+            <div key={day} className="bg-gray-50 p-3 text-center font-semibold text-gray-700">
+              {day}
+            </div>
+          ))}
+
+          {/* Calendar days */}
+          {calendarDays.map((day, idx) => {
+            const daySessions = getSessionsForDay(day);
+            const isCurrentMonth = isSameMonth(day, currentMonth);
+
+            return (
+              <div
+                key={idx}
+                className={`min-h-[100px] bg-white p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+              >
+                <div className="text-xs font-medium text-gray-500 mb-1">{format(day, 'd')}</div>
+                <div className="space-y-1">
+                  {daySessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className={`p-1 rounded text-xs cursor-pointer transition-colors ${
+                        session.bookedByUser
+                          ? 'bg-green-100 text-green-800 border border-green-300'
+                          : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
+                      }`}
+                      onClick={() => !session.bookedByUser && handleBooking(session.id)}
+                    >
+                      <div className="font-medium">
+                        {session.startTime} - {session.endTime}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{session.trainerName || session.trainerId}</span>
+                      </div>
+                      {session.bookedByUser && (
+                        <div className="flex items-center gap-1 text-green-600">
+                          <CheckCircle className="h-3 w-3" />
+                          <span>Gebucht</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

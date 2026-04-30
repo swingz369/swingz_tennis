@@ -1,0 +1,69 @@
+# docker-compose.dev.yml
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+      target: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../:/app:delegated
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_SUPABASE_URL=http://supabase:8000
+    command: npm run dev
+    depends_on:
+      - supabase
+      - redis
+
+  supabase:
+    image: supabase/supabase:latest
+    environment:
+      - POSTGRES_DB=tsow
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+      - "8000:8000"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  auth-service:
+    build: ../services/auth
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../services/auth:/app:delegated
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - redis
+
+  scheduling-service:
+    build: ../services/scheduling
+    ports:
+      - "3002:3002"
+    volumes:
+      - ../services/scheduling:/app:delegated
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - redis
+
+  billing-service:
+    build: ../services/billing
+    ports:
+      - "3003:3003"
+    volumes:
+      - ../services/billing:/app:delegated
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - redis
