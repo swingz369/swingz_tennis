@@ -35,7 +35,14 @@ export function middleware(request: NextRequest) {
 
   // Custom domain tenant resolution
   const hostname = request.headers.get('host')?.split(':')[0] || '';
-  const customDomains = process.env.CUSTOM_DOMAINS ? JSON.parse(process.env.CUSTOM_DOMAINS) : {};
+  let customDomains: Record<string, string> = {};
+  if (process.env.CUSTOM_DOMAINS && process.env.CUSTOM_DOMAINS.trim()) {
+    try {
+      customDomains = JSON.parse(process.env.CUSTOM_DOMAINS);
+    } catch {
+      console.error('Invalid CUSTOM_DOMAINS JSON format');
+    }
+  }
 
   if (customDomains[hostname]) {
     const clubId = customDomains[hostname];

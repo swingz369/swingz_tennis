@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Type guard: validates URL format and protocol
+function isValidUrl(url: string | undefined): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -35,9 +46,9 @@ export async function POST(request: NextRequest) {
 async function handleBookingCreated(booking: Record<string, unknown>) {
   const { memberId, memberEmail, memberName, courtName, startTime, endTime } = booking;
 
-  // Forward to Zapier webhook URL if configured
+  // Forward to Zapier webhook URL if configured and valid
   const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
-  if (zapierUrl) {
+  if (isValidUrl(zapierUrl)) {
     try {
       await fetch(zapierUrl, {
         method: 'POST',
@@ -57,16 +68,13 @@ async function handleBookingCreated(booking: Record<string, unknown>) {
       console.error('Failed to forward to Zapier:', err);
     }
   }
-
-  // Optional: Send email notifications
-  // await sendEmailNotification(memberEmail, 'booking_created', { ... });
 }
 
 async function handleBookingUpdated(booking: Record<string, unknown>) {
   const { memberId, memberEmail, memberName, courtName, startTime, endTime } = booking;
 
   const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
-  if (zapierUrl) {
+  if (isValidUrl(zapierUrl)) {
     try {
       await fetch(zapierUrl, {
         method: 'POST',
@@ -93,7 +101,7 @@ async function handleBookingCancelled(booking: Record<string, unknown>) {
     booking;
 
   const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
-  if (zapierUrl) {
+  if (isValidUrl(zapierUrl)) {
     try {
       await fetch(zapierUrl, {
         method: 'POST',
