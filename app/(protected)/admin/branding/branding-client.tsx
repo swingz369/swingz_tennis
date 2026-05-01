@@ -51,6 +51,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
 
   useEffect(() => {
     fetchBranding();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId]);
 
   const saveBranding = async () => {

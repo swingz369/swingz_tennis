@@ -61,34 +61,32 @@ export default function SchedulesPage() {
   });
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch trainers (for future use)
+        const trainersRes = await fetch('/api/trainer/me');
+        if (trainersRes.ok) {
+          // trainersData could be used to populate trainer dropdown in session form
+        }
+
+        // Fetch clubs (for superadmin filter)
+        const clubsRes = await fetch('/api/clubs');
+        if (clubsRes.ok) {
+          const clubsData = await clubsRes.json();
+          setClubs(Array.isArray(clubsData) ? clubsData : []);
+        }
+
+        // Fetch sessions
+        await fetchSessions();
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const fetchData = async () => {
-    try {
-      // Fetch trainers (for future use)
-      const trainersRes = await fetch('/api/trainer/me');
-      if (trainersRes.ok) {
-        // trainersData could be used to populate trainer dropdown in session form
-        // const trainersData = await trainersRes.json();
-        // setTrainers(trainersData.trainers || []);
-      }
-
-      // Fetch clubs (for superadmin filter)
-      const clubsRes = await fetch('/api/clubs');
-      if (clubsRes.ok) {
-        const clubsData = await clubsRes.json();
-        setClubs(Array.isArray(clubsData) ? clubsData : []);
-      }
-
-      // Fetch sessions
-      await fetchSessions();
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchSessions = async () => {
     try {

@@ -20,9 +20,9 @@ describe('ValidationService', () => {
     });
 
     it('should throw if name is empty', () => {
-      expect(() =>
-        ValidationService.validateClubCreation('', 500, defaultOpeningHours)
-      ).toThrow('Club name is required');
+      expect(() => ValidationService.validateClubCreation('', 500, defaultOpeningHours)).toThrow(
+        'Club name is required'
+      );
     });
 
     it('should throw if name exceeds 200 characters', () => {
@@ -33,9 +33,9 @@ describe('ValidationService', () => {
     });
 
     it('should throw if maxMembers is not positive', () => {
-      expect(() =>
-        ValidationService.validateClubCreation('Club', 0, defaultOpeningHours)
-      ).toThrow('Max members must be positive');
+      expect(() => ValidationService.validateClubCreation('Club', 0, defaultOpeningHours)).toThrow(
+        'Max members must be positive'
+      );
     });
 
     it('should throw if maxMembers exceeds 10000', () => {
@@ -51,13 +51,19 @@ describe('ValidationService', () => {
     });
 
     it('should throw if monday hours are missing', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { monday, ...rest } = defaultOpeningHours;
-      expect(() => ValidationService.validateOpeningHours(rest as any)).toThrow('Opening hours for monday are required');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => ValidationService.validateOpeningHours(rest as any)).toThrow(
+        'Opening hours for monday are required'
+      );
     });
 
     it('should throw if closing time is before opening', () => {
       const invalidHours = { ...defaultOpeningHours, monday: { open: '10:00', close: '09:00' } };
-      expect(() => ValidationService.validateOpeningHours(invalidHours)).toThrow('Closing time must be after opening time on monday');
+      expect(() => ValidationService.validateOpeningHours(invalidHours)).toThrow(
+        'Closing time must be after opening time on monday'
+      );
     });
   });
 
@@ -81,9 +87,9 @@ describe('ValidationService', () => {
     });
 
     it('should throw if specialties is empty', () => {
-      expect(() =>
-        ValidationService.validateTrainer('John', 'john@example.com', [], 30)
-      ).toThrow('At least one specialty is required');
+      expect(() => ValidationService.validateTrainer('John', 'john@example.com', [], 30)).toThrow(
+        'At least one specialty is required'
+      );
     });
 
     it('should throw if maxHoursPerWeek is out of range', () => {

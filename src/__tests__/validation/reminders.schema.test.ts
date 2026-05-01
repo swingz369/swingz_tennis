@@ -19,7 +19,7 @@ describe('sendRemindersSchema', () => {
 
   it('should reject invalid types', () => {
     // TypeScript correctly infers error for string instead of boolean
-    // @ts-ignore
+    // @ts-expect-error testing invalid type coercion
     expect(() => sendRemindersSchema.parse({ dryRun: 'yes' })).toThrow();
   });
 });

@@ -22,11 +22,17 @@ describe('SchedulingService', () => {
   });
 
   const createScheduleWithSessions = (sessions: Session[]): Schedule => {
-    const schedule = Schedule.create(clubId, 'spring', 2024, new Date(2024, 0, 1), new Date(2024, 11, 31));
+    const schedule = Schedule.create(
+      clubId,
+      'spring',
+      2024,
+      new Date(2024, 0, 1),
+      new Date(2024, 11, 31)
+    );
     for (const session of sessions) {
       try {
         schedule.addSession(session);
-      } catch (e) {
+      } catch {
         // Ignore conflicts during setup
       }
     }
@@ -47,7 +53,13 @@ describe('SchedulingService', () => {
 
   it('should detect trainer double bookings in AI plan', async () => {
     const trainerId = TrainerId.fromString('trainer-1');
-    const schedule = Schedule.create(clubId, 'spring', 2024, new Date(2024, 0, 1), new Date(2024, 11, 31));
+    const schedule = Schedule.create(
+      clubId,
+      'spring',
+      2024,
+      new Date(2024, 0, 1),
+      new Date(2024, 11, 31)
+    );
 
     const service = new SchedulingService(mockTrainerRepo);
 
@@ -76,7 +88,7 @@ describe('SchedulingService', () => {
     const result = await service.optimizeSchedule(schedule, aiPlan);
 
     expect(result.conflicts.length).toBeGreaterThanOrEqual(1);
-    expect(result.conflicts.some(c => c.type === 'trainer_double')).toBe(true);
+    expect(result.conflicts.some((c) => c.type === 'trainer_double')).toBe(true);
   });
 
   it('should accept sessions without conflicts', async () => {
