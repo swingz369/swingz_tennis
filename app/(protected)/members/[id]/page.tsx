@@ -52,6 +52,8 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
       role: 'member',
       is_active: true,
       joined_at: '2025-01-15',
+      created_at: '2025-01-15',
+      phone: null,
       club_memberships: [
         {
           clubs: { id: 'demo-club', name: 'Demo Tennis Club', status: 'active' },
