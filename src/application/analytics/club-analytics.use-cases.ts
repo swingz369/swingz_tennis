@@ -5,7 +5,7 @@ import {
   CourtRepository,
   BookingRepository,
 } from '@/domain/repositories';
-import { ClubId } from '@/domain/value-objects';
+import { ClubId, TrainerId } from '@/domain/value-objects';
 import type { Session, Court } from '@/domain/entities';
 
 export interface ClubKPIs {

@@ -51,7 +51,7 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ error: membersError.message }, { status: 500 });
     }
 
-    const subscriptions = (members || []).map((m) => ({
+    const subscriptions = (members || []).map((m: any) => ({
       id: `sub-${m.id}`,
       memberId: m.id,
       memberName: m.full_name || 'N/A',

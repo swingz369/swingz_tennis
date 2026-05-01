@@ -28,7 +28,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .eq('user_id', user.id)
         .limit(1);
 
-      const isAdmin = actorMemberships?.some((m) => m.role === 'admin' || m.role === 'superadmin');
+      const isAdmin = actorMemberships?.some(
+        (m: { role: string }) => m.role === 'admin' || m.role === 'superadmin'
+      );
       if (!isAdmin) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }

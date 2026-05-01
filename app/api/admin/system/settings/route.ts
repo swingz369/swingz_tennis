@@ -61,17 +61,19 @@ export async function GET(req: NextRequest) {
     }
 
     // Convert array of {key, value} to object
-    const settingsObj = settings.reduce((acc, { key, value }) => {
+    const settingsObj: Partial<SystemSettings> = {};
+    for (const { key, value } of settings) {
       // Parse values based on expected type
       if (key === 'emailNotifications') {
-        acc[key] = value === 'true';
+        settingsObj.emailNotifications = value === 'true';
       } else if (key === 'reminderDaysBefore') {
-        acc[key] = parseInt(value, 10) || 1;
-      } else {
-        acc[key] = value;
+        settingsObj.reminderDaysBefore = parseInt(value, 10) || 1;
+      } else if (key === 'appName') {
+        settingsObj.appName = value;
+      } else if (key === 'stripePublicKey') {
+        settingsObj.stripePublicKey = value;
       }
-      return acc;
-    }, {} as SystemSettings);
+    }
 
     // Ensure all keys are present (fill missing with defaults)
     const finalSettings: SystemSettings = {

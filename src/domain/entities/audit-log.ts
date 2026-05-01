@@ -20,9 +20,17 @@ export type AuditAction =
   | 'session_deleted'
   | 'login_success'
   | 'login_failed'
-  | 'permission_denied';
+  | 'permission_denied'
+  | 'subscription_assigned';
 
-export type AuditResourceType = 'booking' | 'member' | 'club' | 'trainer' | 'session' | 'user';
+export type AuditResourceType =
+  | 'booking'
+  | 'member'
+  | 'club'
+  | 'trainer'
+  | 'session'
+  | 'user'
+  | 'subscription';
 
 export interface AuditDetails {
   [key: string]: unknown;

@@ -6,6 +6,9 @@ import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositor
 import { ClubId } from '@/domain/value-objects';
 import { optimizeScheduleSchema, updateSessionsSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
+import { getDb } from '@/infrastructure/persistence/client';
+import { eq } from 'drizzle-orm';
+import { sessions } from '@/infrastructure/persistence/schema';
 
 const scheduleRepo = new DrizzleScheduleRepository();
 const trainerRepo = new DrizzleTrainerRepository();
@@ -163,8 +166,8 @@ export async function PUT(req: NextRequest) {
               trainer_id: sessionData.trainerId,
               court_id: sessionData.courtId ?? null,
               week_number: sessionData.weekNumber,
-              timeslot_start: sessionData.timeslotStart,
-              timeslot_end: sessionData.timeslotEnd,
+              timeslot_start: new Date(sessionData.timeslotStart),
+              timeslot_end: new Date(sessionData.timeslotEnd),
               max_participants: sessionData.maxParticipants,
               notes: sessionData.notes ?? null,
               group_ids: sessionData.groupIds,

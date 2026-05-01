@@ -274,47 +274,36 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
         <CardContent>
           {bookings!.length > 0 ? (
             <div className="space-y-3">
-              {bookings.map(
-                (booking: {
-                  id: string;
-                  status: string;
-                  sessions?: {
-                    timeslot_start: string;
-                    schedules?: { name: string };
-                  } | null;
-                }) => (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium">
-                        {booking.sessions?.schedules?.name || 'Training'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {booking.sessions?.timeslot_start
-                          ? new Date(booking.sessions.timeslot_start).toLocaleString('de-DE')
-                          : 'N/A'}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={
-                        booking.status === 'confirmed'
-                          ? 'success'
-                          : booking.status === 'cancelled'
-                            ? 'error'
-                            : 'warning'
-                      }
-                    >
-                      {booking.status === 'confirmed'
-                        ? 'Bestätigt'
-                        : booking.status === 'cancelled'
-                          ? 'Abgesagt'
-                          : 'No-Show'}
-                    </Badge>
+              {bookings!.map((booking: Booking) => (
+                <div
+                  key={booking.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium">{booking.sessions?.schedules?.name || 'Training'}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {booking.sessions?.timeslot_start
+                        ? new Date(booking.sessions.timeslot_start).toLocaleString('de-DE')
+                        : 'N/A'}
+                    </p>
                   </div>
-                )
-              )}
+                  <Badge
+                    variant={
+                      booking.status === 'confirmed'
+                        ? 'success'
+                        : booking.status === 'cancelled'
+                          ? 'error'
+                          : 'warning'
+                    }
+                  >
+                    {booking.status === 'confirmed'
+                      ? 'Bestätigt'
+                      : booking.status === 'cancelled'
+                        ? 'Abgesagt'
+                        : 'No-Show'}
+                  </Badge>
+                </div>
+              ))}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Keine Buchungen vorhanden</p>
