@@ -14,7 +14,7 @@ export class DrizzleCourtRepository implements CourtRepository {
 
   async findByClub(clubId: ClubId): Promise<Court[]> {
     const result = await db.select().from(courts).where(eq(courts.club_id, clubId.getValue()));
-    return result.map((row) => this.mapToDomain(row));
+    return result.map((row: typeof courts.$inferSelect) => this.mapToDomain(row));
   }
 
   async save(_court: Court): Promise<void> {

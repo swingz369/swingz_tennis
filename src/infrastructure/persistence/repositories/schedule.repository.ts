@@ -92,7 +92,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
           lte(sessions.timeslot_end, endDate)
         )
       );
-    return result.map((row) => {
+    return result.map((row: any) => {
       const session: Session = {
         id: row.id,
         trainerId: TrainerId.fromString(row.trainer_id),
@@ -143,7 +143,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       .select({ id: schedules.id })
       .from(schedules)
       .where(eq(schedules.club_id, clubId.getValue()));
-    const scheduleIds = scheduleRows.map((row) => row.id);
+    const scheduleIds = scheduleRows.map((row: any) => row.id);
     if (scheduleIds.length === 0) return [];
 
     const result = await db
@@ -151,7 +151,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       .from(sessions)
       .where(inArray(sessions.schedule_id, scheduleIds));
 
-    return result.map((row) => {
+    return result.map((row: any) => {
       const session: Session = {
         id: row.id,
         trainerId: TrainerId.fromString(row.trainer_id),

@@ -18,7 +18,7 @@ export class DrizzleBookingRepository implements BookingRepository {
       .select()
       .from(bookings)
       .where(eq(bookings.member_id, memberId.getValue()));
-    return result.map((row) => this.mapToDomain(row));
+    return result.map((row: typeof bookings.$inferSelect) => this.mapToDomain(row));
   }
 
   async findBySession(sessionId: SessionId): Promise<Booking[]> {
@@ -26,7 +26,7 @@ export class DrizzleBookingRepository implements BookingRepository {
       .select()
       .from(bookings)
       .where(eq(bookings.session_id, sessionId.getValue()));
-    return result.map((row) => this.mapToDomain(row));
+    return result.map((row: any) => this.mapToDomain(row));
   }
 
   async findBySchedule(scheduleId: ScheduleId): Promise<Booking[]> {
@@ -34,12 +34,12 @@ export class DrizzleBookingRepository implements BookingRepository {
       .select()
       .from(bookings)
       .where(eq(bookings.schedule_id, scheduleId.getValue()));
-    return result.map((row) => this.mapToDomain(row));
+    return result.map((row: typeof bookings.$inferSelect) => this.mapToDomain(row));
   }
 
   async findByClub(clubId: ClubId): Promise<Booking[]> {
     const result = await db.select().from(bookings).where(eq(bookings.club_id, clubId.getValue()));
-    return result.map((row) => this.mapToDomain(row));
+    return result.map((row: any) => this.mapToDomain(row));
   }
 
   async save(booking: Booking): Promise<void> {

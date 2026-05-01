@@ -43,7 +43,7 @@ export class DrizzleClubRepository implements ClubRepository {
 
   async findAll(): Promise<Club[]> {
     const result = await db.select().from(clubs).orderBy(clubs.created_at);
-    return result.map((row) => this.mapToDomain(row));
+    return result.map((row: typeof clubs.$inferSelect) => this.mapToDomain(row));
   }
 
   async findByMemberId(memberId: MemberId): Promise<Club[]> {
@@ -51,10 +51,10 @@ export class DrizzleClubRepository implements ClubRepository {
       .select()
       .from(userClubMemberships)
       .where(eq(userClubMemberships.user_id, memberId.getValue()));
-    const clubIds = memberships.map((r) => r.club_id);
+    const clubIds = memberships.map((r: typeof userClubMemberships.$inferSelect) => r.club_id);
     if (clubIds.length === 0) return [];
     const clubsData = await db.select().from(clubs).where(inArray(clubs.id, clubIds));
-    return clubsData.map((row) => this.mapToDomain(row));
+    return clubsData.map((row: typeof clubs.$inferSelect) => this.mapToDomain(row));
   }
 
   async exists(id: ClubId): Promise<boolean> {
@@ -134,7 +134,7 @@ export class DrizzleClubRepository implements ClubRepository {
       .groupBy(sql`date_trunc('month', ${userClubMemberships.joined_at})`)
       .orderBy(sql`date_trunc('month', ${userClubMemberships.joined_at})`);
 
-    return result.map((row) => ({
+    return result.map((row: { month: Date; count: number }) => ({
       month: this.formatMonth(row.month),
       count: Number(row.count) || 0,
     }));

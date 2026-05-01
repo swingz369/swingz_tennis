@@ -46,6 +46,7 @@
     "src/infrastructure/cache",
     "src/domain/aggregates",
     "src/__tests__/domain/aggregates",
-    "src/infrastructure/persistence/repositories/event-sourced-club.repository.ts"
+    "src/infrastructure/persistence/repositories/event-sourced-club.repository.ts",
+    "vitest.config.ts"
   ]
 }

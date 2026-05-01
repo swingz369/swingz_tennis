@@ -23,13 +23,13 @@ export class DrizzleMemberRepository implements MemberRepository {
       .select()
       .from(clubMemberships)
       .where(eq(clubMemberships.club_id, clubId.getValue()));
-    const userIds = memberships.map((m) => m.user_id);
+    const userIds = memberships.map((m: typeof clubMemberships.$inferSelect) => m.user_id);
     if (userIds.length === 0) return [];
     const usersData = await db.select().from(users).where(inArray(users.id, userIds));
-    return usersData.map((user) => {
+    return usersData.map((user: typeof users.$inferSelect) => {
       const clubIds = memberships
-        .filter((m) => m.user_id === user.id)
-        .map((m) => m.club_id)
+        .filter((m: typeof clubMemberships.$inferSelect) => m.user_id === user.id)
+        .map((m: typeof clubMemberships.$inferSelect) => m.club_id)
         .map(ClubId.fromString);
       return {
         id: MemberId.fromString(user.id),
