@@ -40,7 +40,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         if (res.ok) {
           const data = await res.json();
-          setResults(data.results || []);
+          // API returns array directly
+          setResults(Array.isArray(data) ? data : []);
           setOpen(true);
         }
       } catch (e) {

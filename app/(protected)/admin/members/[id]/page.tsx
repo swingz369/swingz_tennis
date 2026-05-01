@@ -1,18 +1,19 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { cookies } from 'next/headers';
-import { MembersClient } from './members-client';
-import type { Member } from './member.types';
+import { MembersDetailClient } from './members-detail-client';
+import type { Member } from '../member.types';
 
-export default async function MembersPage() {
+export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const cookieStore = await cookies();
   const hasDemoMode = cookieStore.get('demo-mode');
 
-  let initialMembers: Member[] = [];
+  let member: Member | null = null;
   let clubId: string | null = null;
 
   if (hasDemoMode) {
-    initialMembers = [
+    const demoMembers: Member[] = [
       {
         id: '1',
         user_id: '1',
@@ -50,6 +51,7 @@ export default async function MembersPage() {
         joined_at: '2025-01-05',
       },
     ];
+    member = demoMembers.find((m) => m.id === id) || null;
     clubId = 'demo-club';
   } else {
     const supabase = await createClient();
@@ -58,7 +60,6 @@ export default async function MembersPage() {
     } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
-    // Get user's first active club
     const { data: memberships } = await supabase
       .from('user_club_memberships')
       .select('club_id')
@@ -72,16 +73,15 @@ export default async function MembersPage() {
 
     clubId = memberships[0].club_id;
 
-    // Fetch members for this club
-    const { data: members } = await supabase
+    const { data: memberData } = await supabase
       .from('user_club_memberships')
       .select(
         `
         id,
         user_id,
         role,
-        is_active,
         joined_at,
+        is_active,
         users (
           id,
           full_name,
@@ -89,28 +89,27 @@ export default async function MembersPage() {
         )
       `
       )
-      .eq('club_id', clubId)
-      .order('joined_at', { ascending: false });
+      .eq('id', id)
+      .single();
 
-    initialMembers = (members || []).map(
-      (m: {
-        id: string;
-        user_id: string;
-        role: string;
-        is_active: boolean;
-        joined_at: string;
-        users: { id: string; full_name: string; email: string } | null;
-      }) => ({
-        id: m.id,
-        user_id: m.user_id,
-        full_name: m.users?.full_name || 'N/A',
-        email: m.users?.email || 'N/A',
-        role: m.role as Member['role'],
-        is_active: m.is_active,
-        joined_at: m.joined_at,
-      })
-    );
+    if (!memberData) {
+      return <div className="p-6 text-gray-500">Mitglied nicht gefunden</div>;
+    }
+
+    member = {
+      id: memberData.id,
+      user_id: memberData.user_id,
+      full_name: memberData.users?.full_name || 'Unbekannt',
+      email: memberData.users?.email || '',
+      role: memberData.role,
+      is_active: memberData.is_active,
+      joined_at: memberData.joined_at,
+    };
   }
 
-  return <MembersClient initialMembers={initialMembers} clubId={clubId!} />;
+  if (!member) {
+    return <div className="p-6 text-gray-500">Mitglied nicht gefunden</div>;
+  }
+
+  return <MembersDetailClient initialMember={member} clubId={clubId!} />;
 }

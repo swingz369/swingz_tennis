@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { AuditService } from '@/infrastructure/audit/audit.service';
+import { assignSubscriptionSchema } from '@/application/validation/schemas';
+import { withValidation } from '@/application/validation/validator';
 
 // const memberRepo = new DrizzleMemberRepository(); // Will be used in future for advanced member queries
 
@@ -34,14 +36,14 @@ export async function GET(_req: NextRequest) {
       .from('users')
       .select(
         `
-        id,
-        email,
-        full_name,
-        subscription_tier,
-        subscription_status,
-        stripe_customer_id,
-        current_period_end
-      `
+         id,
+         email,
+         full_name,
+         subscription_tier,
+         subscription_status,
+         stripe_customer_id,
+         current_period_end
+       `
       )
       .order('created_at', { ascending: false });
 
@@ -49,7 +51,7 @@ export async function GET(_req: NextRequest) {
       return NextResponse.json({ error: membersError.message }, { status: 500 });
     }
 
-    const subscriptions = (members || []).map((m: any) => ({
+    const subscriptions = (members || []).map((m) => ({
       id: `sub-${m.id}`,
       memberId: m.id,
       memberName: m.full_name || 'N/A',
@@ -70,7 +72,7 @@ export async function GET(_req: NextRequest) {
 }
 
 // POST /api/admin/billing/subscriptions – Assign/update subscription
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -91,38 +93,30 @@ export async function POST(_req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const body = await _req.json();
-    const { memberId, plan } = body;
+    return withValidation(assignSubscriptionSchema, async (input) => {
+      const { memberId, plan } = input;
 
-    if (!memberId || !plan) {
-      return NextResponse.json({ error: 'memberId and plan are required' }, { status: 400 });
-    }
+      // Update member's subscription fields
+      const updateData: Record<string, string | boolean> = {
+        subscription_tier: plan,
+        subscription_status: 'active',
+        updated_at: new Date().toISOString(),
+      };
 
-    const validPlans = ['free', 'pro', 'enterprise'];
-    if (!validPlans.includes(plan)) {
-      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
-    }
+      const { error: updateError } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', memberId);
 
-    // Update member's subscription fields
-    const updateData: Record<string, any> = {
-      subscription_tier: plan,
-      subscription_status: 'active',
-      updated_at: new Date().toISOString(),
-    };
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
 
-    const { error: updateError } = await supabase
-      .from('users')
-      .update(updateData)
-      .eq('id', memberId);
+      // Audit log
+      await AuditService.logSubscriptionAssigned(user.id, memberId, plan);
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
-
-    // Audit log
-    await AuditService.logRoleChange(user.id, memberId, 'subscription', plan);
-
-    return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true });
+    })(req);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     console.error('Error assigning subscription:', error);

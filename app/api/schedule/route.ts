@@ -144,19 +144,40 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  return withValidation(updateSessionsSchema, async (_input) => {
-    void _input; // silence unused warning
+  return withValidation(updateSessionsSchema, async (input) => {
     try {
       if (isDemoMode(req)) {
         return NextResponse.json({ success: true, message: 'Updated (demo)' });
       }
 
-      // TODO: Persist changes using repository
-      // For now, just validate and return success
+      // Persist changes using repository
+      const db = getDb();
+
+      // Update each session
+      for (const sessionData of input.sessions) {
+        if (sessionData.id) {
+          // Update existing session
+          await db
+            .update(sessions)
+            .set({
+              trainer_id: sessionData.trainerId,
+              court_id: sessionData.courtId ?? null,
+              week_number: sessionData.weekNumber,
+              timeslot_start: sessionData.timeslotStart,
+              timeslot_end: sessionData.timeslotEnd,
+              max_participants: sessionData.maxParticipants,
+              notes: sessionData.notes ?? null,
+              group_ids: sessionData.groupIds,
+              updated_at: new Date(),
+            })
+            .where(eq(sessions.id, sessionData.id));
+        }
+      }
+
       return NextResponse.json({ success: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return NextResponse.json({ error: message }, { status: 400 });
+      return NextResponse.json({ error: message }, { status: 500 });
     }
   })(req);
 }

@@ -249,7 +249,10 @@ export default function BillingPage() {
               </div>
               <div>
                 <Label htmlFor="plan">Tarif</Label>
-                <Select value={selectedPlan} onValueChange={(v: any) => setSelectedPlan(v)}>
+                <Select
+                  value={selectedPlan}
+                  onValueChange={(v) => setSelectedPlan(v as Subscription['plan'])}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

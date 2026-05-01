@@ -163,6 +163,13 @@ export class AuditService {
   }
 
   /**
+   * Quick helper: log club deletion
+   */
+  static async logClubDeleted(actorId: string, clubId: string, request?: Request): Promise<void> {
+    await this.log(actorId, 'club_deleted', 'club', clubId, {}, request);
+  }
+
+  /**
    * Quick helper: log role change
    */
   static async logRoleChange(
@@ -173,6 +180,18 @@ export class AuditService {
     request?: Request
   ): Promise<void> {
     await this.log(actorId, 'role_changed', 'member', memberId, { oldRole, newRole }, request);
+  }
+
+  /**
+   * Quick helper: log subscription assigned
+   */
+  static async logSubscriptionAssigned(
+    actorId: string,
+    memberId: string,
+    plan: string,
+    request?: Request
+  ): Promise<void> {
+    await this.log(actorId, 'subscription_assigned', 'subscription', memberId, { plan }, request);
   }
 
   /**

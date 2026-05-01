@@ -4,7 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart3, Users, Calendar, Settings, Club, CreditCard, Home } from 'lucide-react';
+import {
+  BarChart3,
+  Users,
+  Calendar,
+  Settings,
+  Club,
+  CreditCard,
+  Home,
+  HelpCircle,
+} from 'lucide-react';
 
 export function Sidebar({
   roles,
@@ -30,6 +39,7 @@ export function Sidebar({
 
   const adminNav = [
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, showIf: isAdmin },
+    { name: 'Onboarding', href: '/admin/onboarding', icon: HelpCircle, showIf: isAdmin },
     { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin },
     { name: 'Members', href: '/admin/members', icon: Users, showIf: isAdmin },
     { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },

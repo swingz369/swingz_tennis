@@ -6,11 +6,14 @@ import {
 } from '@/application/use-cases/booking.use-cases';
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
+import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositories/trainer.repository';
 import { createBookingSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
+import { SessionId, TrainerId } from '@/domain/value-objects';
 
 const bookingRepo = new DrizzleBookingRepository();
 const scheduleRepo = new DrizzleScheduleRepository();
+const trainerRepo = new DrizzleTrainerRepository();
 
 const createBookingUseCase = new CreateBookingUseCase(bookingRepo, scheduleRepo);
 const getMemberBookingsUseCase = new GetMemberBookingsUseCase(bookingRepo);
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
   })(req);
 }
 
-// GET /api/bookings?memberId=xxx – Buchungen eines Members
+// GET /api/bookings?memberId=xxx – Buchungen eines Members (mit Session-Details)
 export async function GET(req: NextRequest) {
   // Demo mode: return mock bookings
   if (isDemoMode(req)) {
@@ -91,8 +94,38 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Member ID too long' }, { status: 400 });
     }
 
+    // Fetch bookings (just booking info)
     const result = await getMemberBookingsUseCase.execute({ memberId });
-    return NextResponse.json(result);
+    const bookings = result.bookings;
+
+    // Enrich with session and trainer details
+    const enriched = await Promise.all(
+      bookings.map(async (b) => {
+        const sessionId = SessionId.fromString(b.sessionId);
+        const sessionDetails = await scheduleRepo.getSessionDetails(sessionId);
+
+        let trainerName: string | undefined;
+        if (sessionDetails?.trainerId) {
+          const trainer = await trainerRepo.findById(
+            TrainerId.fromString(sessionDetails.trainerId.getValue())
+          );
+          trainerName = trainer?.name;
+        }
+
+        return {
+          id: b.id,
+          sessionId: b.sessionId,
+          status: b.status,
+          bookedAt: b.bookedAt,
+          session_start: sessionDetails?.timeslot.getStart(),
+          session_end: sessionDetails?.timeslot.getEnd(),
+          trainer_name: trainerName,
+          clubId: sessionDetails?.clubId.getValue(),
+        };
+      })
+    );
+
+    return NextResponse.json(enriched);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error fetching bookings:', error);

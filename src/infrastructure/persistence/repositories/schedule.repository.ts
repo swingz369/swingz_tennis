@@ -121,6 +121,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
     scheduleId: ScheduleId;
     timeslot: TimeSlot;
     maxParticipants: number;
+    trainerId?: TrainerId;
   } | null> {
     const db = getDb();
     const result = await db
@@ -130,6 +131,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
         timeslotStart: sessions.timeslot_start,
         timeslotEnd: sessions.timeslot_end,
         maxParticipants: sessions.max_participants,
+        trainerId: sessions.trainer_id,
       })
       .from(sessions)
       .innerJoin(schedules, eq(sessions.schedule_id, schedules.id))
@@ -142,6 +144,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       scheduleId: ScheduleId.fromString(row.scheduleId),
       timeslot: new TimeSlot(new Date(row.timeslotStart), new Date(row.timeslotEnd)),
       maxParticipants: row.maxParticipants,
+      ...(row.trainerId && { trainerId: TrainerId.fromString(row.trainerId) }),
     };
   }
 

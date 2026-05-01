@@ -118,8 +118,12 @@ export class Booking {
   }
 
   public isCancellable(): boolean {
-    // TODO: Consider hours until session for cancellation policy
-    return this.status === 'pending' || this.status === 'confirmed';
+    // Can cancel if pending or confirmed, and session hasn't started yet
+    if (this.status !== 'pending' && this.status !== 'confirmed') {
+      return false;
+    }
+    const hoursUntilSession = this.getHoursUntilSession();
+    return hoursUntilSession > 0; // Can cancel if session hasn't started
   }
 
   public getCancellationPolicy(): {

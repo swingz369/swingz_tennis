@@ -138,8 +138,18 @@ export default function SettingsPage() {
   const handleSaveSystemSettings = async () => {
     setSaving(true);
     try {
-      // TODO: Create /api/admin/system/settings endpoint
-      toast.success('Systemeinstellungen gespeichert (Demo)');
+      const res = await fetch(`/api/admin/system/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(systemSettings),
+      });
+
+      if (res.ok) {
+        toast.success('Systemeinstellungen gespeichert');
+      } else {
+        const error = await res.json();
+        toast.error(`Fehler: ${error.error || 'Unbekannter Fehler'}`);
+      }
     } catch (err) {
       console.error('Failed to save system settings:', err);
       toast.error('Fehler beim Speichern');

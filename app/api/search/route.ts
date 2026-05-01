@@ -1,5 +1,7 @@
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { NextResponse } from 'next/server';
+import { searchQuerySchema } from '@/application/validation/schemas';
+import { validateQuery } from '@/application/validation/validator';
 
 export interface SearchResult {
   id: string;
@@ -14,13 +16,12 @@ export interface SearchResult {
  * Search across multiple entity types
  */
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const query = searchParams.get('q') || '';
-  const limit = parseInt(searchParams.get('limit') || '10', 10);
-
-  if (!query || query.length < 2) {
-    return NextResponse.json([]);
+  const url = new URL(req.url);
+  const validation = validateQuery(searchQuerySchema, url.searchParams);
+  if (!validation) {
+    return NextResponse.json({ error: 'Invalid search query' }, { status: 400 });
   }
+  const { q, limit } = validation.data;
 
   const supabase = await createClient();
   const results: SearchResult[] = [];
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     const { data: members } = await supabase
       .from('users')
       .select('id, full_name, email')
-      .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+      .or(`full_name.ilike.%${q}%,email.ilike.%${q}%`)
       .limit(limit);
 
     if (members) {
@@ -54,7 +55,7 @@ export async function GET(req: Request) {
     const { data: bookings } = await supabase
       .from('bookings')
       .select('id, booked_at, status')
-      .ilike('id', `%${query}%`)
+      .ilike('id', `%${q}%`)
       .limit(limit);
 
     if (bookings) {
@@ -79,7 +80,7 @@ export async function GET(req: Request) {
     const { data: trainers } = await supabase
       .from('trainers')
       .select('id, name, email')
-      .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+      .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
       .limit(limit);
 
     if (trainers) {
@@ -103,7 +104,7 @@ export async function GET(req: Request) {
     const { data: clubs } = await supabase
       .from('clubs')
       .select('id, name')
-      .ilike('name', `%${query}%`)
+      .ilike('name', `%${q}%`)
       .limit(limit);
 
     if (clubs) {

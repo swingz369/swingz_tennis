@@ -5,13 +5,42 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, User, Trophy } from 'lucide-react';
 
+type Member = {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  joined_at: string;
+  created_at: string;
+  phone: string | null;
+  club_memberships: Array<{
+    clubs: { id: string; name: string; status: string };
+    role: string;
+  }>;
+};
+
+type Booking = {
+  id: string;
+  status: string;
+  created_at: string;
+  sessions: {
+    id: string;
+    timeslot_start: string;
+    timeslot_end: string;
+    trainer_id: string;
+    schedules: { name: string } | null;
+  } | null;
+};
+
 export default async function MemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const cookieStore = await cookies();
   const hasDemoMode = cookieStore.get('demo-mode');
 
-  let member: any = null;
-  let bookings: any[] = [];
+  let member: Member | null = null;
+  let bookings: Booking[] = [];
 
   // Demo mode – return mock data
   if (hasDemoMode) {

@@ -95,7 +95,22 @@ export const updateTrainerSchema = createTrainerSchema.partial();
 export const updateMemberSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(100).optional(),
   is_active: z.boolean().optional(),
-  role: z.enum(['member', 'trainer', 'admin']).optional(),
+  role: z.enum(['member', 'trainer', 'admin', 'superadmin']).optional(),
+});
+
+export const inviteMemberSchema = z.object({
+  email: z.string().email('Valid email is required'),
+  full_name: z.string().min(1, 'Name is required').max(100),
+  role: z.enum(['member', 'trainer', 'admin']).default('member'),
+});
+
+// ============================================
+// BILLING / SUBSCRIPTION SCHEMAS
+// ============================================
+
+export const assignSubscriptionSchema = z.object({
+  memberId: uuidSchema,
+  plan: z.enum(['free', 'pro', 'enterprise']),
 });
 
 // ============================================
@@ -250,9 +265,8 @@ export type UpdateClubInput = z.infer<typeof updateClubSchema>;
 export type CreateTrainerInput = z.infer<typeof createTrainerSchema>;
 export type UpdateTrainerInput = z.infer<typeof updateTrainerSchema>;
 export type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
-export type CreateSessionInput = z.infer<typeof createSessionSchema>;
-export type UpdateSessionInput = z.infer<typeof updateSessionSchema>;
-export type CreateScheduleInput = z.infer<typeof createScheduleSchema>;
+export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+export type AssignSubscriptionInput = z.infer<typeof assignSubscriptionSchema>;
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type UpdateBookingStatusInput = z.infer<typeof updateBookingStatusSchema>;
 export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;

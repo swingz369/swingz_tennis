@@ -81,3 +81,54 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   })(req);
 }
+
+// DELETE /api/clubs/:id – Verein löschen
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check superadmin role
+    const { data: memberships } = await supabase
+      .from('user_club_memberships')
+      .select('role')
+      .eq('user_id', user.id);
+    const isSuperAdmin = (memberships as Array<{ role: string }> | null)?.some(
+      (m) => m.role === 'superadmin'
+    );
+
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const clubId = ClubId.fromString(id);
+    const existing = await clubRepo.findById(clubId);
+    if (!existing) {
+      return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+    }
+
+    // Delete club (cascades via FK)
+    await clubRepo.delete(clubId);
+
+    // Audit log
+    try {
+      await AuditService.logClubDeleted(user.id, id);
+    } catch (auditError) {
+      console.warn('Audit log failed:', auditError);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error deleting club:', error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

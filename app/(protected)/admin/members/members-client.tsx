@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,16 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, UserCheck, UserX, Search, Download, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
-
-export interface Member {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  role: 'member' | 'trainer' | 'admin' | 'superadmin';
-  is_active: boolean;
-  joined_at: string;
-}
+import type { Member } from './member.types';
 
 interface MembersClientProps {
   initialMembers: Member[];
@@ -258,8 +250,10 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                     </td>
                     <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="Details">
-                          <Eye className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" title="Details" asChild>
+                          <Link href={`/admin/members/${member.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
                         </Button>
                         <Button
                           variant="ghost"

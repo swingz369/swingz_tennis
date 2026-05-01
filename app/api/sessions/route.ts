@@ -4,14 +4,16 @@ import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositor
 import { createClient } from '@/infrastructure/external/supabase/server';
 import type { BookingStatus } from '@/domain/entities/booking';
 import { ClubId, TrainerId } from '@/domain/value-objects';
+import { cookies } from 'next/headers';
 
 const scheduleRepo = new DrizzleScheduleRepository();
 const trainerRepo = new DrizzleTrainerRepository();
 
 // Helper: Check for demo mode cookie
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
+async function isDemoMode(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const hasDemoMode = cookieStore.get('demo-mode');
+  return !!hasDemoMode?.value;
 }
 
 // Mock sessions for demo mode with trainer names
@@ -70,15 +72,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'clubId required' }, { status: 400 });
   }
 
+  // Demo mode: return mock sessions with trainer names (skip validation)
+  if (await isDemoMode()) {
+    return NextResponse.json(DEMO_SESSIONS);
+  }
+
   // Optional: validate clubId format (UUID)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(clubIdParam)) {
     return NextResponse.json({ error: 'Invalid club ID format' }, { status: 400 });
-  }
-
-  // Demo mode: return mock sessions with trainer names
-  if (isDemoMode(req)) {
-    return NextResponse.json(DEMO_SESSIONS);
   }
 
   try {
@@ -108,7 +110,7 @@ export async function GET(req: NextRequest) {
 
     // Fetch current user's bookings for this club (if authenticated)
     const userBookingsMap = new Map<string, { bookingId: string; status: BookingStatus }>();
-    if (!isDemoMode(req)) {
+    if (!(await isDemoMode())) {
       try {
         const supabaseClient = await createClient();
         const {

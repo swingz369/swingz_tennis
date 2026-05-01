@@ -105,7 +105,7 @@ export class GetClubAnalyticsUseCase {
     });
     const trainerIds = Array.from(trainerMap.keys());
     const trainersPromises = trainerIds.map((id) =>
-      this.trainerRepository.findById({ toString: () => id } as any)
+      this.trainerRepository.findById(TrainerId.fromString(id))
     );
     const trainers = await Promise.all(trainersPromises);
     const sessionsPerTrainer = trainerIds
@@ -144,8 +144,13 @@ export class GetClubAnalyticsUseCase {
         activeTrainers,
         totalTrainingHours: totalHours,
         courtUtilization: overallCourtUtil,
-        memberGrowthRate: 12.5, // TODO: calculate from trends
-        aiScheduleAccuracy: 0, // TODO
+        memberGrowthRate:
+          growthHistory.length >= 2
+            ? ((growthHistory[growthHistory.length - 1].count - growthHistory[0].count) /
+                growthHistory[0].count) *
+              100
+            : 0,
+        aiScheduleAccuracy: 0, // Not implemented in MVP - requires predicted vs actual attendance data
         revenue: totalHours * 25,
         bookings: {
           total: bookingStats.total,
