@@ -39,5 +39,13 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "services/*", "src/infrastructure/cqrs", "src/infrastructure/cache", "src/domain/aggregates", "src/__tests__/domain/aggregates", "src/infrastructure/persistence/repositories/event-sourced-club.repository.ts"]
+  "exclude": [
+    "node_modules",
+    "services/*",
+    "src/infrastructure/cqrs",
+    "src/infrastructure/cache",
+    "src/domain/aggregates",
+    "src/__tests__/domain/aggregates",
+    "src/infrastructure/persistence/repositories/event-sourced-club.repository.ts"
+  ]
 }

@@ -28,7 +28,9 @@ describe('TimeSlot', () => {
     it('should throw if duration exceeds 8 hours', () => {
       const start = new Date(2024, 0, 1, 8, 0);
       const end = new Date(2024, 0, 1, 17, 1);
-      expect(() => new TimeSlot(start, end)).toThrow('TimeSlot duration must be between 1 minute and 8 hours');
+      expect(() => new TimeSlot(start, end)).toThrow(
+        'TimeSlot duration must be between 1 minute and 8 hours'
+      );
     });
   });
 

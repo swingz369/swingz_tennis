@@ -32,7 +32,7 @@ describe('Booking', () => {
 
     it('should throw when confirming non-pending booking', () => {
       booking.confirm();
-      expect(() => booking.confirm()).toThrow("Cannot confirm booking in status: confirmed");
+      expect(() => booking.confirm()).toThrow('Cannot confirm booking in status: confirmed');
     });
 
     it('should cancel a booking', () => {
@@ -47,7 +47,9 @@ describe('Booking', () => {
       booking.confirm();
       booking.complete();
 
-      expect(() => booking.cancel('member_request')).toThrow("Cannot cancel booking in status: completed");
+      expect(() => booking.cancel('member_request')).toThrow(
+        'Cannot cancel booking in status: completed'
+      );
     });
 
     it('should complete a confirmed booking', () => {

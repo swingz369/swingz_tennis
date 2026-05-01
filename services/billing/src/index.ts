@@ -35,7 +35,7 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
   switch (event.type) {
     case 'checkout.session.completed':
       const session = event.data.object as Stripe.Checkout.Session;
-      
+
       // Update subscription in Supabase
       await supabase.from('subscriptions').upsert({
         user_id: session.client_reference_id,
@@ -50,10 +50,13 @@ app.post('/webhook/stripe', express.raw({ type: 'application/json' }), async (re
 
     case 'customer.subscription.deleted':
       const subscription = event.data.object as Stripe.Subscription;
-      
-      await supabase.from('subscriptions').update({
-        status: 'cancelled',
-      }).eq('stripe_subscription_id', subscription.id);
+
+      await supabase
+        .from('subscriptions')
+        .update({
+          status: 'cancelled',
+        })
+        .eq('stripe_subscription_id', subscription.id);
       break;
   }
 
@@ -70,7 +73,8 @@ app.post('/api/billing/checkout', async (req, res) => {
       mode: 'subscription',
       line_items: [
         {
-          price: plan === 'premium' ? process.env.STRIPE_PREMIUM_PRICE : process.env.STRIPE_BASIC_PRICE,
+          price:
+            plan === 'premium' ? process.env.STRIPE_PREMIUM_PRICE : process.env.STRIPE_BASIC_PRICE,
           quantity: 1,
         },
       ],

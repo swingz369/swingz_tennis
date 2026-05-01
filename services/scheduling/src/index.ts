@@ -20,7 +20,7 @@ const openai = new OpenAI({
 
 // Optimize Schedule - V4 KI-Prompts
 app.post('/api/schedule/optimize', async (req, res) => {
-  const { clubId, season, year, forceRegenerate } = req.body;
+  const { clubId, season, year } = req.body;
 
   try {
     // Hole Club-Daten
@@ -48,10 +48,12 @@ app.post('/api/schedule/optimize', async (req, res) => {
     // Hole Trainingsgruppen
     const { data: schedule } = await supabase
       .from('schedules')
-      .select(`
+      .select(
+        `
         *,
         training_groups (*)
-      `)
+      `
+      )
       .eq('club_id', clubId)
       .eq('season_year', year)
       .single();
@@ -127,7 +129,7 @@ Antworte AUSSCHLIESSLICH mit valide JSON, keine Erklärungen!
     } catch (parseError) {
       console.error('AI Response Parse Error:', parseError);
       console.error('Raw AI Response:', aiResponse);
-      
+
       // Fallback: Manueller Plan
       scheduleData = {
         schedule: {
@@ -148,11 +150,7 @@ Antworte AUSSCHLIESSLICH mit valide JSON, keine Erklärungen!
     }
 
     // Cache in Redis
-    await redis.setex(
-      `schedule:${clubId}:${year}`,
-      3600,
-      JSON.stringify(scheduleData)
-    );
+    await redis.setex(`schedule:${clubId}:${year}`, 3600, JSON.stringify(scheduleData));
 
     // Event veröffentlichen
     await redis.publish(
@@ -169,7 +167,6 @@ Antworte AUSSCHLIESSLICH mit valide JSON, keine Erklärungen!
       data: scheduleData,
       source: aiResponse ? 'ai' : 'fallback',
     });
-
   } catch (error) {
     console.error('Scheduling error:', error);
     res.status(500).json({ error: 'Scheduling failed' });

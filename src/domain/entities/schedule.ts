@@ -38,11 +38,7 @@ export class Schedule {
   private createdAt: Date;
   private updatedAt: Date;
 
-  private constructor(
-    id: ScheduleId,
-    clubId: ClubId,
-    season: Schedule['season']
-  ) {
+  private constructor(id: ScheduleId, clubId: ClubId, season: Schedule['season']) {
     this.id = id;
     this.clubId = clubId;
     this.season = season;
@@ -65,11 +61,12 @@ export class Schedule {
     if (startDate >= endDate) {
       throw new Error('Season start date must be before end date');
     }
-    return new Schedule(
-      ScheduleId.create(),
-      clubId,
-      { type: seasonType, year, startDate, endDate }
-    );
+    return new Schedule(ScheduleId.create(), clubId, {
+      type: seasonType,
+      year,
+      startDate,
+      endDate,
+    });
   }
 
   public static reconstitute(
@@ -84,8 +81,8 @@ export class Schedule {
     const schedule = new Schedule(id, clubId, season);
     schedule.createdAt = createdAt;
     schedule.updatedAt = updatedAt;
-    schedule.trainingGroups = new Map(trainingGroups.map(g => [g.id, g]));
-    schedule.sessions = new Map(sessions.map(s => [s.id, s]));
+    schedule.trainingGroups = new Map(trainingGroups.map((g) => [g.id, g]));
+    schedule.sessions = new Map(sessions.map((s) => [s.id, s]));
     return schedule;
   }
 
@@ -102,7 +99,7 @@ export class Schedule {
   }
 
   public getTrainingGroups(): TrainingGroup[] {
-    return Array.from(this.trainingGroups.values()).filter(g => g.isActive);
+    return Array.from(this.trainingGroups.values()).filter((g) => g.isActive);
   }
 
   public addTrainingGroup(group: TrainingGroup): void {
@@ -135,7 +132,7 @@ export class Schedule {
   }
 
   public getSessionsForWeek(week: ScheduleWeek): Session[] {
-    return this.getSessions().filter(s => s.week.equals(week));
+    return this.getSessions().filter((s) => s.week.equals(week));
   }
 
   public addSession(session: Session): void {
@@ -157,18 +154,22 @@ export class Schedule {
         existing.timeslot.overlaps(session.timeslot);
 
       if (trainerConflict && existing.id !== session.id) {
-        throw new Error(`Trainer double booking conflict: trainer is already scheduled at ${existing.timeslot}`);
+        throw new Error(
+          `Trainer double booking conflict: trainer is already scheduled at ${existing.timeslot}`
+        );
       }
 
       if (session.courtId && existing.courtId === session.courtId) {
         if (existing.timeslot.overlaps(session.timeslot)) {
-          throw new Error(`Court double booking conflict: court ${session.courtId} is already booked`);
+          throw new Error(
+            `Court double booking conflict: court ${session.courtId} is already booked`
+          );
         }
       }
     }
 
     const trainerTotalHours = currentSessions
-      .filter(s => s.trainerId.equals(session.trainerId))
+      .filter((s) => s.trainerId.equals(session.trainerId))
       .reduce((sum, s) => sum + s.timeslot.getDurationMinutes(), 0);
 
     const newSessionHours = session.timeslot.getDurationMinutes();
@@ -197,7 +198,7 @@ export class Schedule {
   }
 
   public getTrainerSchedule(trainerId: TrainerId, week: ScheduleWeek): Session[] {
-    return this.getSessionsForWeek(week).filter(s => s.trainerId.equals(trainerId));
+    return this.getSessionsForWeek(week).filter((s) => s.trainerId.equals(trainerId));
   }
 
   public isSlotAvailable(timeslot: TimeSlot, courtId?: string, excludeSessionId?: string): boolean {

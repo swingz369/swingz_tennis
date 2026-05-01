@@ -9,18 +9,12 @@ export class MicroserviceEventHandler {
   }
 
   async listenToBillingEvents(): Promise<void> {
-    const stream = this.redis.xread(
-      'BLOCK',
-      0,
-      'STREAMS',
-      'events:billing',
-      '0'
-    );
+    const stream = this.redis.xread('BLOCK', 0, 'STREAMS', 'events:billing', '0');
 
     stream.then((data) => {
       if (data && data[0]) {
-        const [stream, messages] = data[0];
-        messages.forEach(([id, fields]) => {
+        const [, messages] = data[0];
+        messages.forEach(([, fields]) => {
           const event = this.parseMessage(fields);
           this.handleBillingEvent(event);
         });

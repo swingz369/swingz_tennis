@@ -23,13 +23,13 @@ export class DrizzleTrainerRepository implements TrainerRepository {
       .select()
       .from(trainerClubs)
       .where(eq(trainerClubs.club_id, clubId.getValue()));
-    const trainerIds = trainerClubsList.map(tc => tc.trainer_id);
+    const trainerIds = trainerClubsList.map((tc) => tc.trainer_id);
     if (trainerIds.length === 0) return [];
     const trainersData = await db.select().from(trainers).where(inArray(trainers.id, trainerIds));
-    return trainersData.map(trainer => {
+    return trainersData.map((trainer) => {
       const clubIds = trainerClubsList
-        .filter(tc => tc.trainer_id === trainer.id)
-        .map(tc => ClubId.fromString(tc.club_id));
+        .filter((tc) => tc.trainer_id === trainer.id)
+        .map((tc) => ClubId.fromString(tc.club_id));
       return {
         trainerId: TrainerId.fromString(trainer.id),
         email: trainer.email,
@@ -47,7 +47,7 @@ export class DrizzleTrainerRepository implements TrainerRepository {
       .select()
       .from(trainers)
       .where(sql`${trainers.specialties} @> ${[specialty]}`);
-    return result.map(row => this.mapToDomain(row));
+    return result.map((row) => this.mapToDomain(row));
   }
 
   async save(trainer: Trainer): Promise<void> {

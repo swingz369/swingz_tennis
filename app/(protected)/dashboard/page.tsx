@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     };
 
     const clubs = [
-      { id: 'demo-club', name: 'Demo Tennis Club', max_members: 100, status: 'active' }
+      { id: 'demo-club', name: 'Demo Tennis Club', max_members: 100, status: 'active' },
     ];
 
     return <DashboardClient user={user} clubs={clubs} />;

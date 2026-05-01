@@ -19,9 +19,9 @@ describe('Schedule', () => {
     });
 
     it('should throw if start date is after end date', () => {
-      expect(() =>
-        Schedule.create(clubId, 'spring', 2024, endDate, startDate)
-      ).toThrow('Season start date must be before end date');
+      expect(() => Schedule.create(clubId, 'spring', 2024, endDate, startDate)).toThrow(
+        'Season start date must be before end date'
+      );
     });
   });
 

@@ -39,10 +39,7 @@ export class TimeSlot {
   }
 
   public overlaps(other: TimeSlot): boolean {
-    return (
-      this.start < other.end &&
-      this.end > other.start
-    );
+    return this.start < other.end && this.end > other.start;
   }
 
   public contains(date: Date): boolean {

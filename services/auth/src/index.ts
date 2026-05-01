@@ -27,7 +27,10 @@ interface AuthPayload {
 app.post('/auth/login', async (req, res) => {
   const { email, password, tenantId } = req.body;
 
-  const { data: { user }, error } = await supabase.auth.signInWithPassword({
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -71,7 +74,10 @@ app.post('/auth/login', async (req, res) => {
 app.post('/auth/admin/login', async (req, res) => {
   const { email, password } = req.body;
 
-  const { data: { user }, error } = await supabase.auth.signInWithPassword({
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -94,7 +100,7 @@ app.post('/auth/admin/login', async (req, res) => {
     userId: user.id,
     tenantId: '*', // Wildcard für Superadmin
     email: user.email || '',
-    roles: ['superadmin', ...memberships.map(m => m.role)],
+    roles: ['superadmin', ...memberships.map((m) => m.role)],
   };
 
   const token = jwt.sign(payload, JWT_SECRET, {
@@ -106,7 +112,11 @@ app.post('/auth/admin/login', async (req, res) => {
 });
 
 // Token Validierung Middleware
-export const verifyToken = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const verifyToken = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -119,13 +129,17 @@ export const verifyToken = (req: express.Request, res: express.Response, next: e
     const decoded = jwt.verify(token, JWT_SECRET) as AuthPayload;
     (req as any).user = decoded;
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
 
 // Tenant Isolation Middleware
-export const requireTenantAccess = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const requireTenantAccess = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
   const user = (req as any).user;
   const requestedTenantId = req.params.tenantId || req.body.tenantId;
 

@@ -7,7 +7,7 @@ services:
       context: ..
       dockerfile: docker/frontend.Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_SUPABASE_URL=http://supabase:8000
@@ -28,8 +28,8 @@ services:
       - ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy
       - SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy
     ports:
-      - "5432:5432"
-      - "8000:8000"
+      - '5432:5432'
+      - '8000:8000'
     volumes:
       - supabase_data:/var/lib/postgresql/data
 
@@ -37,7 +37,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -52,7 +52,7 @@ services:
       - SUPABASE_URL=http://supabase:8000
       - JWT_SECRET=tsow-jwt-secret-2026
     ports:
-      - "3001:3001"
+      - '3001:3001'
     depends_on:
       - redis
       - supabase
@@ -67,7 +67,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - SUPABASE_URL=http://supabase:8000
     ports:
-      - "3002:3002"
+      - '3002:3002'
     depends_on:
       - redis
       - supabase
@@ -82,7 +82,7 @@ services:
       - SUPABASE_URL=http://supabase:8000
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
     ports:
-      - "3003:3003"
+      - '3003:3003'
     depends_on:
       - redis
       - supabase

@@ -21,12 +21,15 @@ export class ValidationService {
     this.validateOpeningHours(openingHours);
   }
 
-  public static validateOpeningHours(
-    openingHours: Club['openingHours']
-  ): boolean {
+  public static validateOpeningHours(openingHours: Club['openingHours']): boolean {
     const days = [
-      'monday', 'tuesday', 'wednesday',
-      'thursday', 'friday', 'saturday', 'sunday'
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
     ] as const;
 
     for (const day of days) {
@@ -38,10 +41,7 @@ export class ValidationService {
       const [openHour, openMin] = hours.open.split(':').map(Number);
       const [closeHour, closeMin] = hours.close.split(':').map(Number);
 
-      if (
-        isNaN(openHour) || isNaN(openMin) ||
-        isNaN(closeHour) || isNaN(closeMin)
-      ) {
+      if (isNaN(openHour) || isNaN(openMin) || isNaN(closeHour) || isNaN(closeMin)) {
         throw new Error(`Invalid time format for ${day}`);
       }
 
@@ -84,14 +84,11 @@ export class ValidationService {
     }
   }
 
-  public static validateMemberAddition(
-    club: Club,
-    memberId: string
-  ): void {
+  public static validateMemberAddition(club: Club, memberId: string): void {
     if (club.getStatus() !== 'active') {
       throw new Error('Cannot add member to inactive club');
     }
-    if (club.getMembers().some(m => m.getValue() === memberId)) {
+    if (club.getMembers().some((m) => m.getValue() === memberId)) {
       throw new Error('Member already registered in this club');
     }
     if (club.getMemberCount() >= club.getMaxMembers()) {
@@ -118,11 +115,7 @@ export class ValidationService {
     }
   }
 
-  public static validateBooking(
-    memberId: string,
-    sessionId: string,
-    bookingTime: Date
-  ): void {
+  public static validateBooking(memberId: string, sessionId: string, bookingTime: Date): void {
     if (!memberId) {
       throw new Error('Member ID is required');
     }

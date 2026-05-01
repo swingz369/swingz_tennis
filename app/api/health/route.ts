@@ -10,8 +10,8 @@ export async function GET() {
     environment: process.env.NODE_ENV,
     services: {
       database: 'connected', // Check Supabase connection
-      cache: 'connected',    // Check Redis
-      ai: 'configured',      // Check OpenAI
+      cache: 'connected', // Check Redis
+      ai: 'configured', // Check OpenAI
     },
   };
 

@@ -41,7 +41,7 @@ describe('Club', () => {
 
     it('should add members up to capacity', () => {
       const memberIds = Array.from({ length: 50 }, () => ClubId.create());
-      memberIds.forEach(id => club.addMember(id));
+      memberIds.forEach((id) => club.addMember(id));
 
       expect(club.getMemberCount()).toBe(50);
     });
@@ -51,7 +51,9 @@ describe('Club', () => {
         club.addMember(ClubId.create());
       }
 
-      expect(() => club.addMember(ClubId.create())).toThrow('Club has reached maximum member capacity');
+      expect(() => club.addMember(ClubId.create())).toThrow(
+        'Club has reached maximum member capacity'
+      );
     });
 
     it('should remove members', () => {
@@ -67,14 +69,15 @@ describe('Club', () => {
   describe('trainer management', () => {
     let club: Club;
 
-      const mockTrainer = (id: string) => ({
+    const mockTrainer = (id: string) =>
+      ({
         id: ClubId.fromString(id),
         email: `trainer${id}@example.com`,
         name: `Trainer ${id}`,
         specialties: ['beginner', 'advanced'] as string[],
         maxHoursPerWeek: 30,
         isActive: true,
-      } as any);
+      }) as any;
 
     beforeEach(() => {
       club = Club.create('Test Club', 100, openingHours);

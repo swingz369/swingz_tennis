@@ -139,12 +139,8 @@
           "name": "bookings_club_id_clubs_id_fk",
           "tableFrom": "bookings",
           "tableTo": "clubs",
-          "columnsFrom": [
-            "club_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["club_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -152,12 +148,8 @@
           "name": "bookings_schedule_id_schedules_id_fk",
           "tableFrom": "bookings",
           "tableTo": "schedules",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -165,12 +157,8 @@
           "name": "bookings_session_id_sessions_id_fk",
           "tableFrom": "bookings",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -269,12 +257,8 @@
           "name": "club_members_club_id_clubs_id_fk",
           "tableFrom": "club_members",
           "tableTo": "clubs",
-          "columnsFrom": [
-            "club_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["club_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -419,12 +403,8 @@
           "name": "courts_club_id_clubs_id_fk",
           "tableFrom": "courts",
           "tableTo": "clubs",
-          "columnsFrom": [
-            "club_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["club_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -504,12 +484,8 @@
           "name": "schedules_club_id_clubs_id_fk",
           "tableFrom": "schedules",
           "tableTo": "clubs",
-          "columnsFrom": [
-            "club_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["club_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -668,12 +644,8 @@
           "name": "sessions_schedule_id_schedules_id_fk",
           "tableFrom": "sessions",
           "tableTo": "schedules",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -681,12 +653,8 @@
           "name": "sessions_trainer_id_trainers_id_fk",
           "tableFrom": "sessions",
           "tableTo": "trainers",
-          "columnsFrom": [
-            "trainer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trainer_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -694,12 +662,8 @@
           "name": "sessions_court_id_courts_id_fk",
           "tableFrom": "sessions",
           "tableTo": "courts",
-          "columnsFrom": [
-            "court_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["court_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -771,12 +735,8 @@
           "name": "trainer_club_trainer_id_trainers_id_fk",
           "tableFrom": "trainer_club",
           "tableTo": "trainers",
-          "columnsFrom": [
-            "trainer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trainer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -784,12 +744,8 @@
           "name": "trainer_club_club_id_clubs_id_fk",
           "tableFrom": "trainer_club",
           "tableTo": "clubs",
-          "columnsFrom": [
-            "club_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["club_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -866,9 +822,7 @@
         "trainers_email_unique": {
           "name": "trainers_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -926,12 +880,8 @@
           "name": "training_groups_schedule_id_schedules_id_fk",
           "tableFrom": "training_groups",
           "tableTo": "schedules",
-          "columnsFrom": [
-            "schedule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["schedule_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1043,12 +993,8 @@
           "name": "user_club_memberships_user_id_users_id_fk",
           "tableFrom": "user_club_memberships",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1056,12 +1002,8 @@
           "name": "user_club_memberships_club_id_clubs_id_fk",
           "tableFrom": "user_club_memberships",
           "tableTo": "clubs",
-          "columnsFrom": [
-            "club_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["club_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1123,9 +1065,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},

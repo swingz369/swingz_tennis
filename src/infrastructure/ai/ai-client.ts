@@ -65,7 +65,8 @@ export class AIClient {
         messages: [
           {
             role: 'system',
-            content: 'Du bist ein Experte für Tennis-Trainingsplanung. Gib immer valides JSON zurück.',
+            content:
+              'Du bist ein Experte für Tennis-Trainingsplanung. Gib immer valides JSON zurück.',
           },
           {
             role: 'user',
@@ -87,7 +88,9 @@ export class AIClient {
       return parsed;
     } catch (error) {
       console.error('AI generation failed:', error);
-      throw new Error(`AI scheduling failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `AI scheduling failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -97,13 +100,13 @@ export class AIClient {
 Saison: ${request.season.type} ${request.season.year}
 
 Verfügbare Trainer:
-${request.trainers.map(t => `- ${t.name} (ID: ${t.id}, Spezialitäten: ${t.specialties.join(', ')}, Max. ${t.maxHoursPerWeek}h/Woche)`).join('\n')}
+${request.trainers.map((t) => `- ${t.name} (ID: ${t.id}, Spezialitäten: ${t.specialties.join(', ')}, Max. ${t.maxHoursPerWeek}h/Woche)`).join('\n')}
 
 Trainingsgruppen:
-${request.groups.map(g => `- ${g.name} (ID: ${g.id}, Level: ${g.level}, Altersgruppe: ${g.ageGroup}, ${g.memberCount} Mitglieder)`).join('\n')}
+${request.groups.map((g) => `- ${g.name} (ID: ${g.id}, Level: ${g.level}, Altersgruppe: ${g.ageGroup}, ${g.memberCount} Mitglieder)`).join('\n')}
 
 Plätze:
-${request.courts.map(c => `- ${c.name} (${c.surface}, ${c.hasIndoor ? 'Halle' : 'Freiplatz'})`).join('\n')}
+${request.courts.map((c) => `- ${c.name} (${c.surface}, ${c.hasIndoor ? 'Halle' : 'Freiplatz'})`).join('\n')}
 
 Constraints:
 - Maximal ${request.constraints.maxTrainerHours} Stunden pro Trainer/Woche
