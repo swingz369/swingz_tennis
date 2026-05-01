@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
 export async function POST(req: NextRequest) {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!stripeSecret || !webhookSecret) {
+    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+  }
+
+  const stripe = new Stripe(stripeSecret);
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
 

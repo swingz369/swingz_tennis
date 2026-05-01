@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 export async function POST(req: NextRequest) {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 });
+  }
+  const stripe = new Stripe(stripeSecret);
   try {
     const supabase = await createClient();
     const {
