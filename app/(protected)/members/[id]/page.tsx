@@ -111,21 +111,30 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
       .from('bookings')
       .select(
         `
-        *,
-        sessions (
-          id,
-          timeslot_start,
-          timeslot_end,
-          trainer_id,
-          schedules (name)
-        )
-      `
+           *,
+           sessions (
+             id,
+             timeslot_start,
+             timeslot_end,
+             trainer_id,
+             schedules (name)
+           )
+         `
       )
       .eq('member_id', id)
       .order('created_at', { ascending: false })
       .limit(10);
 
     bookings = bookingsData || [];
+  }
+
+  // If member is still null, show an error (should not happen)
+  if (!member) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Fehler beim Laden des Mitgliedsprofils</p>
+      </div>
+    );
   }
 
   // Stats (both modes) – only use bookings data we have
@@ -199,21 +208,21 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Name</p>
-              <p className="font-medium">{member.full_name || 'Nicht angegeben'}</p>
+              <p className="font-medium">{member!.full_name || 'Nicht angegeben'}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">E-Mail</p>
-              <p className="font-medium">{member.email}</p>
+              <p className="font-medium">{member!.email}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Telefon</p>
-              <p className="font-medium">{member.phone || 'Nicht angegeben'}</p>
+              <p className="font-medium">{member!.phone || 'Nicht angegeben'}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Mitglied seit</p>
               <p className="font-medium">
-                {member.created_at
-                  ? new Date(member.created_at).toLocaleDateString('de-DE')
+                {member!.created_at
+                  ? new Date(member!.created_at).toLocaleDateString('de-DE')
                   : 'N/A'}
               </p>
             </div>
@@ -230,7 +239,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
             <CardDescription>Zugeordnete Vereine</CardDescription>
           </CardHeader>
           <CardContent>
-            {member.club_memberships && member.club_memberships.length > 0 ? (
+            {member!.club_memberships && member!.club_memberships.length > 0 ? (
               <div className="space-y-2">
                 {member.club_memberships.map(
                   (membership: { clubs: { id: string; name: string; status: string } }) => (
@@ -263,7 +272,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
           <CardDescription>Letzte 10 Buchungen</CardDescription>
         </CardHeader>
         <CardContent>
-          {bookings && bookings.length > 0 ? (
+          {bookings!.length > 0 ? (
             <div className="space-y-3">
               {bookings.map(
                 (booking: {
