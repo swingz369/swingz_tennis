@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { useState } from 'react';
 import { AnalyticsProvider } from '@/components/analytics-provider';
+import { TenantProvider } from '@/lib/tenant-context';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -21,10 +22,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-      <Suspense fallback={null}>
-        <AnalyticsProvider />
-      </Suspense>
+      <TenantProvider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <Suspense fallback={null}>
+          <AnalyticsProvider />
+        </Suspense>
+      </TenantProvider>
     </ThemeProvider>
   );
 }

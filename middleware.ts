@@ -18,23 +18,37 @@ export function middleware(request: NextRequest) {
   const bypassToken = url.searchParams.get('bypass');
 
   if (bypassToken === BYPASS_TOKEN) {
-    // Set bypass cookie and redirect to clean URL
     const response = NextResponse.redirect(url.origin + url.pathname);
     response.cookies.set('vercel-protection-bypass', bypassToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 30,
     });
     return response;
   }
 
-  // Check if bypass cookie exists – if yes, allow through
   const bypassCookie = request.cookies.get('vercel-protection-bypass');
   if (bypassCookie && bypassCookie.value === BYPASS_TOKEN) {
     return NextResponse.next();
   }
 
-  // Otherwise, continue (Vercel protection will block if active)
+  // Custom domain tenant resolution
+  const hostname = request.headers.get('host')?.split(':')[0] || '';
+  const customDomains = process.env.CUSTOM_DOMAINS ? JSON.parse(process.env.CUSTOM_DOMAINS) : {};
+
+  if (customDomains[hostname]) {
+    const clubId = customDomains[hostname];
+    const response = NextResponse.next();
+    response.headers.set('x-tenant-id', clubId);
+    response.cookies.set('tenant-club', clubId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365, // 1 year
+    });
+    return response;
+  }
+
   return NextResponse.next();
 }
