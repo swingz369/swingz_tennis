@@ -1,8 +1,12 @@
-import { DrizzleAuditLogRepository } from '@/infrastructure/persistence/repositories/audit-log.repository';
 import { AuditLog } from '@/domain/entities/audit-log';
 import { Id } from '@/domain/value-objects/ids';
 
-const getRepo = () => new DrizzleAuditLogRepository();
+// Lazy loader for repository to avoid DB initialization at module load
+async function getRepo() {
+  const { DrizzleAuditLogRepository } =
+    await import('@/infrastructure/persistence/repositories/audit-log.repository');
+  return new DrizzleAuditLogRepository();
+}
 
 /**
  * Audit service for logging important system actions.
@@ -33,7 +37,7 @@ export class AuditService {
       userAgent
     );
 
-    const repo = getRepo();
+    const repo = await getRepo();
     await repo.save(log);
   }
 
@@ -175,7 +179,7 @@ export class AuditService {
    * Find logs by actor (user)
    */
   static async findByActor(actorId: string, limit = 100): Promise<AuditLog[]> {
-    const repo = getRepo();
+    const repo = await getRepo();
     return repo.findByActor(actorId, limit);
   }
 
@@ -187,7 +191,7 @@ export class AuditService {
     resourceId: string,
     limit = 100
   ): Promise<AuditLog[]> {
-    const repo = getRepo();
+    const repo = await getRepo();
     return repo.findByResource(resourceType, resourceId, limit);
   }
 
@@ -195,7 +199,7 @@ export class AuditService {
    * Find logs by action type
    */
   static async findByAction(action: string, limit = 100): Promise<AuditLog[]> {
-    const repo = getRepo();
+    const repo = await getRepo();
     return repo.findByAction(action, limit);
   }
 
@@ -203,7 +207,7 @@ export class AuditService {
    * Find logs within a date range
    */
   static async findByDateRange(startDate: Date, endDate: Date, limit = 100): Promise<AuditLog[]> {
-    const repo = getRepo();
+    const repo = await getRepo();
     return repo.findByDateRange(startDate, endDate, limit);
   }
 
@@ -211,7 +215,7 @@ export class AuditService {
    * Get all logs (for admin dashboard)
    */
   static async getAll(limit = 100, offset = 0): Promise<AuditLog[]> {
-    const repo = getRepo();
+    const repo = await getRepo();
     return repo.findAll(limit, offset);
   }
 
@@ -219,7 +223,7 @@ export class AuditService {
    * Count total logs
    */
   static async count(): Promise<number> {
-    const repo = getRepo();
+    const repo = await getRepo();
     return repo.count();
   }
 

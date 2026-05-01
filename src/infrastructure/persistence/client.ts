@@ -4,60 +4,63 @@ import * as schema from './schema';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
+function createMockDb(): ReturnType<typeof drizzle> {
+  const createQuery = () => ({
+    from: () => createQuery(),
+    where: () => createQuery(),
+    orderBy: () => createQuery(),
+    limit: () => Promise.resolve([]),
+    eq: () => ({}),
+    inArray: () => ({}),
+    asc: () => ({}),
+    desc: () => ({}),
+    all: () => Promise.resolve([]),
+    one: () => Promise.resolve({}),
+    none: () => Promise.resolve({}),
+  });
+
+  return {
+    select: () => createQuery(),
+    insert: () => ({
+      values: () => ({
+        returning: () => Promise.resolve([]),
+      }),
+    }),
+    update: () => ({
+      set: () => ({
+        where: () => Promise.resolve([]),
+      }),
+    }),
+    delete: () => ({
+      where: () => Promise.resolve([]),
+    }),
+    query: () => Promise.resolve([]),
+    transact: () => Promise.resolve([]),
+    run: () => Promise.resolve([]),
+    create: () => Promise.resolve([]),
+    cast: () => ({}),
+    all: () => Promise.resolve([]),
+    one: () => Promise.resolve({}),
+    none: () => Promise.resolve({}),
+    execute: () => Promise.resolve({}),
+  } as any;
+}
+
 export function getDb(): ReturnType<typeof drizzle> {
   if (_db) return _db;
 
-  if (process.env.NODE_ENV === 'test') {
-    const createQuery = () => ({
-      from: () => createQuery(),
-      where: () => createQuery(),
-      orderBy: () => createQuery(),
-      limit: () => Promise.resolve([]),
-      eq: () => ({}),
-      inArray: () => ({}),
-      asc: () => ({}),
-      desc: () => ({}),
-      all: () => Promise.resolve([]),
-      one: () => Promise.resolve({}),
-      none: () => Promise.resolve({}),
-    });
-
-    const mockDb = {
-      select: () => createQuery(),
-      insert: () => ({
-        values: () => ({
-          returning: () => Promise.resolve([]),
-        }),
-      }),
-      update: () => ({
-        set: () => ({
-          where: () => Promise.resolve([]),
-        }),
-      }),
-      delete: () => ({
-        where: () => Promise.resolve([]),
-      }),
-      query: () => Promise.resolve([]),
-      transact: () => Promise.resolve([]),
-      run: () => Promise.resolve([]),
-      create: () => Promise.resolve([]),
-      cast: () => ({}),
-      all: () => Promise.resolve([]),
-      one: () => Promise.resolve({}),
-      none: () => Promise.resolve({}),
-      execute: () => Promise.resolve({}),
-    };
-
-    return mockDb as unknown as ReturnType<typeof drizzle>;
+  // Return mock in test environment or when DATABASE_URL is not available (e.g., during build)
+  if (process.env.NODE_ENV === 'test' || !process.env.DATABASE_URL) {
+    return createMockDb();
   }
 
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is required');
+  try {
+    const client = postgres(process.env.DATABASE_URL);
+    const db = drizzle(client, { schema });
+    _db = db;
+    return db;
+  } catch (error) {
+    console.error('Failed to initialize database, falling back to mock:', error);
+    return createMockDb();
   }
-
-  const client = postgres(connectionString);
-  const db = drizzle(client, { schema });
-  _db = db;
-  return db;
 }

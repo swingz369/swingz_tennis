@@ -1,11 +1,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+
+type CookieHandler = {
+  get(name: string): string | undefined;
+  set(name: string, value: string, options?: any): void;
+  remove(name: string, options?: any): void;
+};
+
+let cookieHandler: CookieHandler | null = null;
+
+function getCookieHandler(): CookieHandler {
+  if (cookieHandler) return cookieHandler;
+
+  // Dynamically import cookies to avoid module-level execution during build
+  const { cookies } = require('next/headers');
+  const cookieStore = cookies();
+
+  cookieHandler = {
+    get(name: string) {
+      return cookieStore.get(name)?.value;
+    },
+    set(name: string, value: string, options: any = {}) {
+      (cookieStore as any).set(name, value, options);
+    },
+    remove(name: string, options: any = {}) {
+      (cookieStore as any).delete(name, options);
+    },
+  };
+
+  return cookieHandler;
+}
 
 export const createClient = async () => {
   // Check for demo mode cookie (set by login page)
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
+  const cookies = getCookieHandler();
+  const hasDemoMode = cookies.get('demo-mode');
 
   if (hasDemoMode) {
     console.log('✅ Demo mode active - returning mock Supabase client');
@@ -80,13 +109,13 @@ export const createClient = async () => {
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       get(name: string) {
-        return cookieStore.get(name)?.value;
+        return cookies.get(name);
       },
       set(name: string, value: string, options: any = {}) {
-        (cookieStore as any).set(name, value, options);
+        cookies.set(name, value, options);
       },
       remove(name: string, options: any = {}) {
-        (cookieStore as any).delete(name, options);
+        cookies.remove(name, options);
       },
     },
   });

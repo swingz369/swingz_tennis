@@ -46,7 +46,7 @@ export default function SchedulesPage() {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingSession, setEditingSession] = useState<Session | null>(null);
-  const [filterClubId, setFilterClubId] = useState('');
+  const [filterClubId, setFilterClubId] = useState('all');
   const [filterDate, setFilterDate] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -221,7 +221,7 @@ export default function SchedulesPage() {
                   <SelectValue placeholder="Alle Vereine" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Alle Vereine</SelectItem>
+                  <SelectItem value="all">Alle Vereine</SelectItem>
                   {clubs.map((club) => (
                     <SelectItem key={club.id} value={club.id}>
                       {club.name}
@@ -243,7 +243,7 @@ export default function SchedulesPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setFilterClubId('');
+                  setFilterClubId('all');
                   setFilterDate('');
                   fetchSessions();
                 }}
