@@ -57,6 +57,7 @@ describe('CancelBookingUseCase', () => {
     mockBooking = {
       cancel: vi.fn(),
       getId: () => ({ getValue: () => 'bk-123' }),
+      getMemberId: () => ({ getValue: () => 'member-123' }),
     };
     mockBookingRepo.findById.mockResolvedValue(mockBooking);
   });
