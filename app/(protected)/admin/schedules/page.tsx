@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -60,35 +60,7 @@ export default function SchedulesPage() {
     notes: '',
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch trainers (for future use)
-        const trainersRes = await fetch('/api/trainer/me');
-        if (trainersRes.ok) {
-          // trainersData could be used to populate trainer dropdown in session form
-        }
-
-        // Fetch clubs (for superadmin filter)
-        const clubsRes = await fetch('/api/clubs');
-        if (clubsRes.ok) {
-          const clubsData = await clubsRes.json();
-          setClubs(Array.isArray(clubsData) ? clubsData : []);
-        }
-
-        // Fetch sessions
-        await fetchSessions();
-      } catch (err) {
-        console.error('Failed to fetch data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (filterClubId) params.set('clubId', filterClubId);
@@ -102,7 +74,35 @@ export default function SchedulesPage() {
     } catch (err) {
       console.error('Failed to fetch sessions:', err);
     }
-  };
+  }, [filterClubId, filterDate]);
+
+  const fetchData = useCallback(async () => {
+    try {
+      // Fetch trainers (for future use)
+      const trainersRes = await fetch('/api/trainer/me');
+      if (trainersRes.ok) {
+        // trainersData could be used to populate trainer dropdown in session form
+      }
+
+      // Fetch clubs (for superadmin filter)
+      const clubsRes = await fetch('/api/clubs');
+      if (clubsRes.ok) {
+        const clubsData = await clubsRes.json();
+        setClubs(Array.isArray(clubsData) ? clubsData : []);
+      }
+
+      // Fetch sessions
+      await fetchSessions();
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchSessions]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
     customDomain: '',
   });
 
-  const fetchBranding = async () => {
+  const fetchBranding = useCallback(async () => {
     try {
       const res = await fetch(`/api/branding?clubId=${clubId}`);
       if (res.ok) {
@@ -47,12 +47,11 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
     } catch {
       console.error('Failed to load branding');
     }
-  };
+  }, [clubId]);
 
   useEffect(() => {
     fetchBranding();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId]);
+  }, [fetchBranding]);
 
   const saveBranding = async () => {
     setSaving(true);
