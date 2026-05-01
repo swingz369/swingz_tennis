@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
-import { db } from '../client';
+import { getDb } from '../client';
 import { courts } from '../schema';
 import type { Court } from '@/domain/entities/club';
 import { ClubId } from '@/domain/value-objects';
@@ -7,12 +7,14 @@ import type { CourtRepository } from '@/domain/repositories/court-repository.int
 
 export class DrizzleCourtRepository implements CourtRepository {
   async findById(id: string): Promise<Court | null> {
+    const db = getDb();
     const result = await db.select().from(courts).where(eq(courts.id, id)).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByClub(clubId: ClubId): Promise<Court[]> {
+    const db = getDb();
     const result = await db.select().from(courts).where(eq(courts.club_id, clubId.getValue()));
     return result.map((row: typeof courts.$inferSelect) => this.mapToDomain(row));
   }
@@ -23,6 +25,7 @@ export class DrizzleCourtRepository implements CourtRepository {
   }
 
   async exists(id: string): Promise<boolean> {
+    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(courts)

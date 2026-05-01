@@ -1,5 +1,5 @@
 import { eq, inArray, sql, and, gte, lt } from 'drizzle-orm';
-import { db } from '../client';
+import { getDb } from '../client';
 import { clubs, userClubMemberships } from '../schema';
 import { Club } from '@/domain/entities/club';
 import { ClubId, MemberId } from '@/domain/value-objects';
@@ -7,18 +7,21 @@ import type { ClubRepository } from '@/domain/repositories/club-repository.inter
 
 export class DrizzleClubRepository implements ClubRepository {
   async findById(id: ClubId): Promise<Club | null> {
+    const db = getDb();
     const result = await db.select().from(clubs).where(eq(clubs.id, id.getValue())).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByName(name: string): Promise<Club | null> {
+    const db = getDb();
     const result = await db.select().from(clubs).where(eq(clubs.name, name)).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async save(club: Club): Promise<void> {
+    const db = getDb();
     const now = new Date();
     const clubData = {
       id: club.getId().getValue(),
@@ -38,15 +41,18 @@ export class DrizzleClubRepository implements ClubRepository {
   }
 
   async delete(id: ClubId): Promise<void> {
+    const db = getDb();
     await db.delete(clubs).where(eq(clubs.id, id.getValue()));
   }
 
   async findAll(): Promise<Club[]> {
+    const db = getDb();
     const result = await db.select().from(clubs).orderBy(clubs.created_at);
     return result.map((row: typeof clubs.$inferSelect) => this.mapToDomain(row));
   }
 
   async findByMemberId(memberId: MemberId): Promise<Club[]> {
+    const db = getDb();
     const memberships = await db
       .select()
       .from(userClubMemberships)
@@ -58,6 +64,7 @@ export class DrizzleClubRepository implements ClubRepository {
   }
 
   async exists(id: ClubId): Promise<boolean> {
+    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(clubs)
@@ -70,12 +77,11 @@ export class DrizzleClubRepository implements ClubRepository {
     startDate: Date,
     endDate: Date
   ): Promise<{ total: number; new: number; active: number }> {
-    // Total count (all time, including inactive)
+    const db = getDb();
     const totalResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(userClubMemberships)
       .where(eq(userClubMemberships.club_id, clubId.getValue()));
-    // New members in date range (joined_at between startDate and endDate)
     const newResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(userClubMemberships)
@@ -86,7 +92,6 @@ export class DrizzleClubRepository implements ClubRepository {
           lt(userClubMemberships.joined_at, endDate)
         )
       );
-    // Active members (is_active = true)
     const activeResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(userClubMemberships)
@@ -109,14 +114,7 @@ export class DrizzleClubRepository implements ClubRepository {
     startDate: Date,
     endDate: Date
   ): Promise<Array<{ month: string; count: number }>> {
-    // Monthly active member counts using date_trunc (PostgreSQL)
-    // Count distinct members who were active (is_active=true) at the end of each month
-    // For each month, we count members whose joined_at <= month_end AND (left_at IS NULL OR left_at > month_end)
-    // Since we only have is_active flag, we approximate: count active members as of last day of month.
-    //
-    // Strategy: Generate months from start to end, then count active members at month end.
-    // Simpler: Count members who joined up to month-end and are still active (is_active=true),
-    // ignoring soft-deletes (no left_at column yet). This gives cumulative growth.
+    const db = getDb();
     const result = await db
       .select({
         month: sql<Date>`date_trunc('month', ${userClubMemberships.joined_at})`,

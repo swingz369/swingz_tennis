@@ -1,5 +1,5 @@
 import { eq, desc, gte, lte, and, sql } from 'drizzle-orm';
-import { db } from '../client';
+import { getDb } from '../client';
 import { auditLogs } from '../schema';
 import { AuditLogRepository } from '@/domain/repositories/audit-log-repository.interface';
 import { AuditLog } from '@/domain/entities/audit-log';
@@ -7,6 +7,7 @@ import { Id } from '@/domain/value-objects/ids';
 
 export class DrizzleAuditLogRepository implements AuditLogRepository {
   async save(log: AuditLog): Promise<void> {
+    const db = getDb();
     const baseValues = {
       id: log.getId().getValue(),
       actor_id: log.getActorId().getValue(),
@@ -42,6 +43,7 @@ export class DrizzleAuditLogRepository implements AuditLogRepository {
   }
 
   async findByActor(actorId: string, limit = 100): Promise<AuditLog[]> {
+    const db = getDb();
     const rows = await db
       .select()
       .from(auditLogs)
@@ -52,6 +54,7 @@ export class DrizzleAuditLogRepository implements AuditLogRepository {
   }
 
   async findByResource(resourceType: string, resourceId: string, limit = 100): Promise<AuditLog[]> {
+    const db = getDb();
     const rows = await db
       .select()
       .from(auditLogs)
@@ -62,6 +65,7 @@ export class DrizzleAuditLogRepository implements AuditLogRepository {
   }
 
   async findByAction(action: string, limit = 100): Promise<AuditLog[]> {
+    const db = getDb();
     const rows = await db
       .select()
       .from(auditLogs)
@@ -72,6 +76,7 @@ export class DrizzleAuditLogRepository implements AuditLogRepository {
   }
 
   async findByDateRange(startDate: Date, endDate: Date, limit = 100): Promise<AuditLog[]> {
+    const db = getDb();
     const rows = await db
       .select()
       .from(auditLogs)
@@ -82,6 +87,7 @@ export class DrizzleAuditLogRepository implements AuditLogRepository {
   }
 
   async findAll(limit = 100, offset = 0): Promise<AuditLog[]> {
+    const db = getDb();
     const rows = await db
       .select()
       .from(auditLogs)
@@ -92,6 +98,7 @@ export class DrizzleAuditLogRepository implements AuditLogRepository {
   }
 
   async count(): Promise<number> {
+    const db = getDb();
     const result = await db.select({ count: sql<number>`count(*)` }).from(auditLogs);
     return Number(result[0]?.count) || 0;
   }

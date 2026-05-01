@@ -1,5 +1,5 @@
 import { eq, and, sql, gte, lt } from 'drizzle-orm';
-import { db } from '../client';
+import { getDb } from '../client';
 import { bookings } from '../schema';
 import { Booking } from '@/domain/entities/booking';
 import type { CancellationReason } from '@/domain/entities/booking';
@@ -8,12 +8,14 @@ import type { BookingRepository } from '@/domain/repositories/booking-repository
 
 export class DrizzleBookingRepository implements BookingRepository {
   async findById(id: BookingId): Promise<Booking | null> {
+    const db = getDb();
     const result = await db.select().from(bookings).where(eq(bookings.id, id.getValue())).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByMember(memberId: MemberId): Promise<Booking[]> {
+    const db = getDb();
     const result = await db
       .select()
       .from(bookings)
@@ -22,14 +24,16 @@ export class DrizzleBookingRepository implements BookingRepository {
   }
 
   async findBySession(sessionId: SessionId): Promise<Booking[]> {
+    const db = getDb();
     const result = await db
       .select()
       .from(bookings)
       .where(eq(bookings.session_id, sessionId.getValue()));
-    return result.map((row: any) => this.mapToDomain(row));
+    return result.map((row: typeof bookings.$inferSelect) => this.mapToDomain(row));
   }
 
   async findBySchedule(scheduleId: ScheduleId): Promise<Booking[]> {
+    const db = getDb();
     const result = await db
       .select()
       .from(bookings)
@@ -38,11 +42,13 @@ export class DrizzleBookingRepository implements BookingRepository {
   }
 
   async findByClub(clubId: ClubId): Promise<Booking[]> {
+    const db = getDb();
     const result = await db.select().from(bookings).where(eq(bookings.club_id, clubId.getValue()));
-    return result.map((row: any) => this.mapToDomain(row));
+    return result.map((row: typeof bookings.$inferSelect) => this.mapToDomain(row));
   }
 
   async save(booking: Booking): Promise<void> {
+    const db = getDb();
     const now = new Date();
     const values = {
       id: booking.getId().getValue(),
@@ -66,10 +72,12 @@ export class DrizzleBookingRepository implements BookingRepository {
   }
 
   async delete(id: BookingId): Promise<void> {
+    const db = getDb();
     await db.delete(bookings).where(eq(bookings.id, id.getValue()));
   }
 
   async countActiveBookingsForMember(memberId: MemberId): Promise<number> {
+    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(bookings)
@@ -82,7 +90,7 @@ export class DrizzleBookingRepository implements BookingRepository {
     startDate: Date,
     endDate: Date
   ): Promise<{ total: number; confirmed: number; cancelled: number; noShow: number }> {
-    // Build count queries with conditional filters
+    const db = getDb();
     const baseWhere = and(
       eq(bookings.club_id, clubId.getValue()),
       gte(bookings.booked_at, startDate),
@@ -115,6 +123,7 @@ export class DrizzleBookingRepository implements BookingRepository {
   }
 
   async exists(id: BookingId): Promise<boolean> {
+    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(bookings)
@@ -123,6 +132,7 @@ export class DrizzleBookingRepository implements BookingRepository {
   }
 
   async existsByMemberAndSession(memberId: MemberId, sessionId: SessionId): Promise<boolean> {
+    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(bookings)
@@ -136,6 +146,7 @@ export class DrizzleBookingRepository implements BookingRepository {
   }
 
   async updateStatus(id: BookingId, status: 'confirmed' | 'cancelled' | 'no_show'): Promise<void> {
+    const db = getDb();
     await db.update(bookings).set({ status }).where(eq(bookings.id, id.getValue()));
   }
 

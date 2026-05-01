@@ -1,5 +1,5 @@
 import { eq, gte, lte, sql, and, inArray } from 'drizzle-orm';
-import { db } from '../client';
+import { getDb } from '../client';
 import { schedules, sessions, trainingGroups } from '../schema';
 import { Schedule } from '@/domain/entities/schedule';
 import { ScheduleId, ClubId, ScheduleWeek, TrainerId, SessionId } from '@/domain/value-objects';
@@ -9,6 +9,7 @@ import { TimeSlot } from '@/domain/value-objects/timeslot';
 
 export class DrizzleScheduleRepository implements ScheduleRepository {
   async findById(id: ScheduleId): Promise<Schedule | null> {
+    const db = getDb();
     const result = await db
       .select()
       .from(schedules)
@@ -19,6 +20,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
   }
 
   async findByClubId(clubId: ClubId): Promise<Schedule | null> {
+    const db = getDb();
     const result = await db
       .select()
       .from(schedules)
@@ -29,6 +31,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
   }
 
   async findByWeek(clubId: ClubId, week: ScheduleWeek): Promise<Schedule | null> {
+    const db = getDb();
     const result = await db
       .select()
       .from(schedules)
@@ -41,6 +44,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
   }
 
   async save(schedule: Schedule): Promise<void> {
+    const db = getDb();
     const now = new Date();
     const scheduleData = {
       id: schedule.getId().getValue(),
@@ -64,12 +68,14 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
   }
 
   async delete(id: ScheduleId): Promise<void> {
+    const db = getDb();
     await db.delete(sessions).where(eq(sessions.schedule_id, id.getValue()));
     await db.delete(trainingGroups).where(eq(trainingGroups.schedule_id, id.getValue()));
     await db.delete(schedules).where(eq(schedules.id, id.getValue()));
   }
 
   async exists(id: ScheduleId): Promise<boolean> {
+    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(schedules)
@@ -82,6 +88,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
     startDate: Date,
     endDate: Date
   ): Promise<Session[]> {
+    const db = getDb();
     const result = await db
       .select()
       .from(sessions)
@@ -92,7 +99,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
           lte(sessions.timeslot_end, endDate)
         )
       );
-    return result.map((row: any) => {
+    return result.map((row: typeof sessions.$inferSelect) => {
       const session: Session = {
         id: row.id,
         trainerId: TrainerId.fromString(row.trainer_id),
@@ -115,6 +122,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
     timeslot: TimeSlot;
     maxParticipants: number;
   } | null> {
+    const db = getDb();
     const result = await db
       .select({
         clubId: schedules.club_id,
@@ -138,12 +146,12 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
   }
 
   async findSessionsByClubId(clubId: ClubId): Promise<Session[]> {
-    // Get all schedule IDs for this club
+    const db = getDb();
     const scheduleRows = await db
       .select({ id: schedules.id })
       .from(schedules)
       .where(eq(schedules.club_id, clubId.getValue()));
-    const scheduleIds = scheduleRows.map((row: any) => row.id);
+    const scheduleIds = scheduleRows.map((row: { id: string }) => row.id);
     if (scheduleIds.length === 0) return [];
 
     const result = await db
@@ -151,7 +159,7 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
       .from(sessions)
       .where(inArray(sessions.schedule_id, scheduleIds));
 
-    return result.map((row: any) => {
+    return result.map((row: typeof sessions.$inferSelect) => {
       const session: Session = {
         id: row.id,
         trainerId: TrainerId.fromString(row.trainer_id),
