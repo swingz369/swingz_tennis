@@ -25,6 +25,7 @@ export function Sidebar({
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Bookings', href: '/bookings', icon: Calendar },
     ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),
+    { name: 'Abo & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin }, // Für Mitglieder
   ];
 
   const adminNav = [
@@ -33,7 +34,7 @@ export function Sidebar({
     { name: 'Members', href: '/admin/members', icon: Users, showIf: isAdmin },
     { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },
     { name: 'Settings', href: '/admin/settings', icon: Settings, showIf: isAdmin },
-    { name: 'Billing', href: '/admin/billing', icon: CreditCard, showIf: isSuperAdmin },
+    { name: 'Billing Admin', href: '/admin/billing', icon: CreditCard, showIf: isSuperAdmin },
   ].filter((item) => item.showIf);
 
   return (
