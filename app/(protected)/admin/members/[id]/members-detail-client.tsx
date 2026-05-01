@@ -64,7 +64,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     fetchBookings();
   }, [fetchBookings]);
 
-  const handleRoleChange = async (newRole: string) => {
+  const handleRoleChange = async (newRole: Member['role']) => {
     try {
       const res = await fetch(`/api/members/${member.id}`, {
         method: 'PATCH',
