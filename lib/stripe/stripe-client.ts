@@ -1,8 +1,19 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2026-04-22.dahlia',
-});
+let stripeInstance: Stripe | null = null;
+
+function getStripeClient(): Stripe {
+  if (!stripeInstance) {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    if (!apiKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    stripeInstance = new Stripe(apiKey, {
+      apiVersion: '2026-04-22.dahlia',
+    });
+  }
+  return stripeInstance;
+}
 
 export interface StripeCheckoutData {
   invoiceId: string;
@@ -15,6 +26,7 @@ export interface StripeCheckoutData {
 }
 
 export async function createStripeCheckoutSession(data: StripeCheckoutData): Promise<string> {
+  const stripe = getStripeClient();
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     payment_method_types: ['card', 'sofort'],
     line_items: [
@@ -48,6 +60,7 @@ export async function createStripeCheckoutSession(data: StripeCheckoutData): Pro
 }
 
 export async function getStripeCheckoutSession(sessionId: string) {
+  const stripe = getStripeClient();
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   return session;
 }
@@ -116,6 +129,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): P
 }
 
 export function constructStripeEvent(payload: string, signature: string): Stripe.Event {
+  const stripe = getStripeClient();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
@@ -125,4 +139,4 @@ export function constructStripeEvent(payload: string, signature: string): Stripe
   return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
 }
 
-export { stripe };
+export { getStripeClient as stripe };
