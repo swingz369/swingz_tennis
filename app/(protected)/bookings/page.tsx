@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   format,
   eachDayOfInterval,
@@ -16,171 +16,57 @@ import { de } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { createClient } from '@/infrastructure/external/supabase/client';
 import { exportBookingsCSV } from '@/lib/csv-export';
-
-interface Session {
-  id: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  trainerId: string;
-  trainerName?: string;
-  groupIds: string[];
-  groupNames?: string[];
-  maxParticipants: number;
-  notes?: string;
-  bookedByUser?: boolean;
-  bookingId?: string; // ID der Buchung für Cancel/Status-Update
-  bookingStatus?: 'pending' | 'confirmed' | 'cancelled' | 'no_show';
-}
+import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
+import {
+  useSessions,
+  useCreateBooking,
+  useCancelBooking,
+  useUpdateBookingStatus,
+} from '@/hooks/use-sessions';
 
 export default function BookingsPage() {
-  const [sessions, setSessions] = useState<Session[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [loading, setLoading] = useState(true);
-  const [clubId, setClubId] = useState<string | null>(null);
-  const [memberId, setMemberId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
 
-  // Fetch user's club ID and member ID on mount
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const [clubRes, memberRes] = await Promise.all([
-          fetch('/api/user/club'),
-          fetch('/api/user/member'),
-        ]);
+  const { data: clubData, error: clubError } = useUserClub();
+  const { data: memberData } = useUserMember();
+  const { data: userRoles = [] } = useUserRoles();
 
-        if (clubRes.ok) {
-          const clubData = await clubRes.json();
-          setClubId(clubData.clubId);
-        } else {
-          setError('Kein Vereinszugang gefunden');
-        }
+  const clubId = clubData?.clubId ?? null;
+  const memberId = memberData?.memberId ?? null;
 
-        if (memberRes.ok) {
-          const memberData = await memberRes.json();
-          setMemberId(memberData.memberId);
-        } else {
-          console.warn('Could not fetch member ID');
-        }
-      } catch (err) {
-        console.error('Failed to fetch user data:', err);
-        setError('Fehler beim Laden der Benutzerdaten');
-      }
-    };
-    fetchUserData();
-  }, []);
+  const { data: sessions = [], isLoading, error: sessionsError } = useSessions(clubId);
 
-  // Load user roles to determine permissions
-  useEffect(() => {
-    const fetchUserRoles = async () => {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: rolesData } = await supabase
-          .from('user_club_memberships')
-          .select('role')
-          .eq('user_id', user.id);
-        if (rolesData) {
-          const roles = (rolesData as Array<{ role: string }>).map((m) => m.role);
-          setUserRoles(roles);
-        }
-      } catch (e) {
-        console.error('Failed to fetch user roles', e);
-      }
-    };
-    fetchUserRoles();
-  }, []);
-
-  const fetchSessions = useCallback(async () => {
-    if (!clubId) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/sessions?clubId=${clubId}`);
-      const data: Session[] = await res.json();
-      setSessions(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Failed to fetch sessions:', err);
-      setSessions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [clubId]);
-
-  // Fetch sessions when clubId is available
-  useEffect(() => {
-    if (!clubId) return;
-    fetchSessions();
-  }, [clubId, fetchSessions]);
+  const createBooking = useCreateBooking();
+  const cancelBooking = useCancelBooking();
+  const updateBookingStatus = useUpdateBookingStatus();
 
   const handleBooking = useCallback(
-    async (sessionId: string) => {
-      if (!memberId) {
-        toast.error('Member-ID nicht verfügbar');
+    (sessionId: string) => {
+      if (!memberId || !clubId) {
+        toast.error('Member-ID oder Club-ID nicht verfügbar');
         return;
       }
-
-      try {
-        const res = await fetch('/api/bookings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ memberId, sessionId, clubId }),
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || 'Booking failed');
-        }
-
-        const result = await res.json();
-
-        // Optimistic update: mark session as booked
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === sessionId ? { ...s, bookedByUser: true, bookingId: result.bookingId } : s
-          )
-        );
-
-        toast.success('Buchung erfolgreich');
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Buchung fehlgeschlagen';
-        toast.error(message);
-      }
+      createBooking.mutate({ memberId, sessionId, clubId });
     },
-    [memberId, clubId]
+    [memberId, clubId, createBooking]
   );
 
-  const handleCancelBooking = useCallback(async (sessionId: string, bookingId: string) => {
-    if (!bookingId) return;
+  const handleCancelBooking = useCallback(
+    (sessionId: string, bookingId: string) => {
+      if (!clubId) return;
+      cancelBooking.mutate({ bookingId, sessionId, clubId });
+    },
+    [clubId, cancelBooking]
+  );
 
-    try {
-      const res = await fetch(`/api/bookings/${bookingId}/cancel`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'member_request' }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Cancellation failed');
-      }
-
-      toast.success('Buchung storniert');
-      // Update session: remove booking
-      setSessions((prev) =>
-        prev.map((s) => (s.id === sessionId ? { ...s, bookedByUser: false } : s))
-      );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Stornierung fehlgeschlagen';
-      toast.error(message);
-    }
-  }, []);
+  const handleStatusChange = useCallback(
+    (bookingId: string, newStatus: 'pending' | 'confirmed' | 'cancelled' | 'no_show') => {
+      if (!clubId) return;
+      updateBookingStatus.mutate({ bookingId, status: newStatus, clubId });
+    },
+    [clubId, updateBookingStatus]
+  );
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -209,39 +95,6 @@ export default function BookingsPage() {
     }
   };
 
-  const handleStatusChange = useCallback(
-    async (bookingId: string, newStatus: 'pending' | 'confirmed' | 'cancelled' | 'no_show') => {
-      if (!memberId) {
-        toast.error('Member-ID nicht verfügbar');
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/bookings/${bookingId}/status`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: newStatus }),
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || 'Status-Update fehlgeschlagen');
-        }
-
-        toast.success(`Status geändert zu ${getBookingStatusLabel(newStatus)}`);
-
-        // Optimistic update
-        setSessions((prev) =>
-          prev.map((s) => (s.bookingId === bookingId ? { ...s, bookingStatus: newStatus } : s))
-        );
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Fehler';
-        toast.error(message);
-      }
-    },
-    [memberId]
-  );
-
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
@@ -264,10 +117,18 @@ export default function BookingsPage() {
     toast.success('Buchungs-Export gestartet');
   };
 
-  if (error) {
+  if (clubError) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-red-600">{error}</div>
+        <div className="text-center py-12 text-red-600">Kein Vereinszugang gefunden</div>
+      </div>
+    );
+  }
+
+  if (sessionsError) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12 text-red-600">Fehler beim Laden der Sessions</div>
       </div>
     );
   }
@@ -298,7 +159,7 @@ export default function BookingsPage() {
       </div>
 
       {/* Calendar Grid */}
-      {loading ? (
+      {isLoading ? (
         <div className="text-center py-12 text-gray-500">Laden...</div>
       ) : (
         <div className="overflow-x-auto -mx-4 px-4">

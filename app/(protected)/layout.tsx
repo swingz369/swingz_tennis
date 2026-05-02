@@ -1,43 +1,11 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createClient } from '@/infrastructure/external/supabase/server';
 import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
-import { ErrorBoundary } from '@/components/error-boundary';
+import { SentryErrorBoundary } from '@/components/sentry-error-boundary';
+import { requireAuth } from '@/lib/auth';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const isDemoMode = cookieStore.get('demo-mode');
-
-  // Demo mode bypass – no Supabase auth required
-  if (isDemoMode) {
-    // Return minimal protected layout with mock user data
-    const userData = {
-      name: 'Demo User',
-      email: 'demo@swingz.com',
-      memberId: null,
-      club: { id: 'demo-club', name: 'Demo Tennis Club' },
-      roles: ['superadmin', 'admin', 'trainer', 'member'],
-    };
-
-    return (
-      <ProtectedRoute>
-        <ErrorBoundary>
-          <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
-        </ErrorBoundary>
-      </ProtectedRoute>
-    );
-  }
-
   // Normal Supabase auth flow
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/login');
-  }
+  const { supabase, user } = await requireAuth();
 
   // Fetch member profile linked to this auth user
   const { data: memberData } = await supabase
@@ -57,7 +25,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     .maybeSingle();
 
   // Extract primary club (first membership)
-  const primaryClub = memberData?.club_memberships?.[0]?.clubs;
+  const primaryClubRaw = memberData?.club_memberships?.[0]?.clubs ?? null;
+  const primaryClub = Array.isArray(primaryClubRaw) ? primaryClubRaw[0] : primaryClubRaw;
 
   // Collect all roles across club memberships
   const roles: string[] = (memberData?.club_memberships ?? []).map((m: { role: string }) => m.role);
@@ -77,7 +46,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   return (
     <ProtectedRoute>
-      <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
+      <SentryErrorBoundary>
+        <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
+      </SentryErrorBoundary>
     </ProtectedRoute>
   );
 }

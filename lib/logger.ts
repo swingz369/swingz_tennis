@@ -1,61 +1,100 @@
-// src/presentation/lib/logger.ts
+import * as Sentry from '@sentry/nextjs';
+
 export enum LogLevel {
-  DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
-  ERROR = 3,
+  DEBUG = 'debug',
+  INFO = 'info',
+  WARN = 'warn',
+  ERROR = 'error',
+  FATAL = 'fatal',
 }
 
-export class Logger {
-  private context: string;
-  private minLevel: LogLevel;
+interface LogContext {
+  [key: string]: any;
+}
 
-  constructor(context: string, minLevel: LogLevel = LogLevel.INFO) {
-    this.context = context;
-    this.minLevel = minLevel;
+class Logger {
+  constructor() {}
+
+  setUserId(userId: string) {
+    Sentry.setUser({ id: userId });
   }
 
-  private log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
-    if (level < this.minLevel) return;
+  clearUserId() {
+    Sentry.setUser(null);
+  }
 
-    const timestamp = new Date().toISOString();
-    const levelStr = LogLevel[level];
+  private log(level: LogLevel, message: string, context?: LogContext) {
+    if (typeof window !== 'undefined') {
+      console.log(`[${level.toUpperCase()}]`, message, context);
+    }
 
-    const logEntry = JSON.stringify({
-      timestamp,
-      level: levelStr,
-      context: this.context,
-      message,
-      ...(meta && { meta }),
-    });
-
-    switch (level) {
-      case LogLevel.ERROR:
-        console.error(logEntry);
-        break;
-      case LogLevel.WARN:
-        console.warn(logEntry);
-        break;
-      default:
-        console.log(logEntry);
+    if (level === LogLevel.ERROR || level === LogLevel.FATAL) {
+      Sentry.captureException(new Error(message));
+    } else if (level === LogLevel.WARN) {
+      Sentry.captureMessage(message, {
+        level: 'warning',
+      });
     }
   }
 
-  debug(message: string, meta?: Record<string, unknown>) {
-    this.log(LogLevel.DEBUG, message, meta);
+  debug(message: string, context?: LogContext) {
+    this.log(LogLevel.DEBUG, message, context);
   }
 
-  info(message: string, meta?: Record<string, unknown>) {
-    this.log(LogLevel.INFO, message, meta);
+  info(message: string, context?: LogContext) {
+    this.log(LogLevel.INFO, message, context);
   }
 
-  warn(message: string, meta?: Record<string, unknown>) {
-    this.log(LogLevel.WARN, message, meta);
+  warn(message: string, context?: LogContext) {
+    this.log(LogLevel.WARN, message, context);
   }
 
-  error(message: string, meta?: Record<string, unknown>) {
-    this.log(LogLevel.ERROR, message, meta);
+  error(message: string, context?: LogContext) {
+    this.log(LogLevel.ERROR, message, context);
+  }
+
+  fatal(message: string, context?: LogContext) {
+    this.log(LogLevel.FATAL, message, context);
+  }
+
+  trackEvent(eventName: string, properties?: Record<string, any>) {
+    Sentry.addBreadcrumb({
+      category: 'user',
+      message: eventName,
+      level: 'info',
+      ...(properties && { data: properties }),
+    });
+  }
+
+  trackApiCall(endpoint: string, method: string, duration: number, status: number) {
+    this.trackEvent('api_call', {
+      endpoint,
+      method,
+      duration,
+      status,
+    });
+  }
+
+  trackUserAction(action: string, properties?: Record<string, any>) {
+    this.trackEvent('user_action', {
+      action,
+      ...properties,
+    });
+  }
+
+  trackError(error: Error) {
+    Sentry.captureException(error);
   }
 }
 
-export const logger = new Logger('tsow-app');
+export const logger = new Logger();
+
+export function createLogger(context: string) {
+  return {
+    debug: (message: string, data?: any) => logger.debug(message, { ...data, context }),
+    info: (message: string, data?: any) => logger.info(message, { ...data, context }),
+    warn: (message: string, data?: any) => logger.warn(message, { ...data, context }),
+    error: (message: string, data?: any) => logger.error(message, { ...data, context }),
+    fatal: (message: string, data?: any) => logger.fatal(message, { ...data, context }),
+  };
+}

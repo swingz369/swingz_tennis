@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/infrastructure/external/supabase/client';
-import type { User, SupabaseClient } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton as KPISkeleton } from '@/components/ui';
 import { Users, Calendar, ClipboardList, Building2, Trophy, ArrowRight } from 'lucide-react';
+import { useDashboardKpis } from '@/hooks/use-dashboard-kpis';
+import { createClient } from '@/infrastructure/external/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface DashboardClientProps {
-  user: User;
+  user: {
+    id: string;
+    email: string;
+    user_metadata: { full_name?: string };
+  };
   clubs: Array<{ id: string; name: string; max_members?: number; status?: string }>;
 }
 
@@ -19,29 +24,20 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
   const searchParams = useSearchParams();
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [selectedClubId, setSelectedClubId] = useState<string>(clubs[0]?.id || '');
-  const [kpis, setKpis] = useState<{
-    activeMembers: number;
-    sessionsToday: number;
-    pendingBookings: number;
-    totalCourts: number;
-  }>({
-    activeMembers: 0,
-    sessionsToday: 0,
-    pendingBookings: 0,
-    totalCourts: 0,
-  });
-  const [loading, setLoading] = useState(true);
+
+  const {
+    data: kpis = { activeMembers: 0, sessionsToday: 0, pendingBookings: 0, totalCourts: 0 },
+    isLoading,
+  } = useDashboardKpis();
 
   console.log('🔍 DashboardClient: Received clubs prop:', clubs);
   console.log('🔍 DashboardClient: Selected clubId:', selectedClubId);
 
-  // Initialize Supabase client
   useEffect(() => {
     const supabaseClient = createClient();
     setSupabase(supabaseClient);
   }, []);
 
-  // Determine initial clubId from URL or first club
   useEffect(() => {
     const clubFromUrl = searchParams.get('clubId');
     if (clubFromUrl && clubs.some((c) => c.id === clubFromUrl)) {
@@ -50,40 +46,6 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
       setSelectedClubId(clubs[0].id);
     }
   }, [searchParams, clubs]);
-
-  // Fetch KPIs when clubId changes
-  useEffect(() => {
-    if (!selectedClubId) {
-      console.log('⚠️ No selectedClubId, skipping KPI fetch');
-      setLoading(false);
-      return;
-    }
-
-    const fetchKPIs = async () => {
-      console.log('🔍 Fetching KPIs for clubId:', selectedClubId);
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/dashboard/kpis?clubId=${selectedClubId}`);
-        console.log('📊 Response status:', res.status);
-        if (res.ok) {
-          const data = await res.json();
-          console.log('✅ KPI data:', data);
-          setKpis(data);
-        } else {
-          const err = await res.json();
-          console.error('❌ KPI fetch error:', err);
-          setKpis({ activeMembers: 0, sessionsToday: 0, pendingBookings: 0, totalCourts: 0 });
-        }
-      } catch (err) {
-        console.error('❌ Failed to fetch KPIs:', err);
-        setKpis({ activeMembers: 0, sessionsToday: 0, pendingBookings: 0, totalCourts: 0 });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchKPIs();
-  }, [selectedClubId]);
 
   const handleSignOut = async () => {
     try {
@@ -168,7 +130,7 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {loading ? (
+        {isLoading ? (
           <>
             <KPISkeleton />
             <KPISkeleton />

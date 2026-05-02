@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -13,11 +13,15 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Clock, User, GripVertical, Sparkles } from 'lucide-react';
-import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { analytics } from '@/lib/analytics';
+import {
+  useSchedule,
+  useUpdateSchedule,
+  useOptimizeSchedule,
+  type Session,
+} from '@/hooks/use-schedule';
 
 const TIME_SLOTS = [
   '08:00',
@@ -36,58 +40,19 @@ const TIME_SLOTS = [
 ];
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-interface Session {
-  id: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-  trainerId: string;
-  trainerName?: string;
-  groupIds: string[];
-  groupNames?: string[];
-  maxParticipants: number;
-  notes?: string;
-}
-
-interface ScheduleData {
-  scheduleId: string;
-  clubId: string;
-  sessions: Session[];
-}
-
 export default function SchedulerPage() {
-  const [schedule, setSchedule] = useState<ScheduleData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [optimizing, setOptimizing] = useState(false);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
 
-  useEffect(() => {
-    loadSchedule();
-  }, []);
-
-  const loadSchedule = async () => {
-    try {
-      const res = await fetch('/api/schedule?clubId=demo-club');
-      const data = await res.json();
-      if (!res.ok) {
-        const err = data as { error?: string };
-        throw new Error(err.error || 'Failed to load schedule');
-      }
-      setSchedule(data as ScheduleData);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Laden';
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: schedule, isLoading, error } = useSchedule('demo-club');
+  const updateSchedule = useUpdateSchedule();
+  const optimizeSchedule = useOptimizeSchedule();
 
   const handleDragStart = (event: DragStartEvent) => {
     const session = schedule?.sessions.find((s) => s.id === event.active.id);
     setActiveSession(session || null);
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveSession(null);
 
@@ -96,73 +61,31 @@ export default function SchedulerPage() {
     const activeSession = schedule.sessions.find((s) => s.id === active.id);
     if (!activeSession) return;
 
-    // Parse drop target id: "slot-{dayIdx}-{time}"
     const parts = over.id.toString().split('-');
     if (parts.length < 3) return;
     const dayIdx = parseInt(parts[1], 10);
-    const time = parts.slice(2).join('-'); // rejoin in case time contains '-'
+    const time = parts.slice(2).join('-');
 
-    // Only update if day or time changed
     if (dayIdx + 1 === activeSession.dayOfWeek && time === activeSession.startTime) {
       return;
     }
 
-    const newDayOfWeek = dayIdx + 1; // API: 1=Mon, 7=Sun
+    const newDayOfWeek = dayIdx + 1;
     const newStartTime = time;
 
-    // Update local state optimistically
     const updatedSessions = schedule.sessions.map((s) =>
       s.id === activeSession.id ? { ...s, dayOfWeek: newDayOfWeek, startTime: newStartTime } : s
     );
-    setSchedule({ ...schedule, sessions: updatedSessions });
 
-    // Persist change
-    try {
-      const res = await fetch('/api/schedule', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scheduleId: schedule.scheduleId,
-          sessions: updatedSessions.map((s) => ({
-            id: s.id,
-            dayOfWeek: s.dayOfWeek,
-            startTime: s.startTime,
-            endTime: s.endTime,
-            trainerId: s.trainerId,
-            groupIds: s.groupIds,
-            maxParticipants: s.maxParticipants,
-            notes: s.notes,
-          })),
-        }),
-      });
-      if (!res.ok) throw new Error('Update failed');
-      toast.success('Termin verschoben');
-    } catch {
-      toast.error('Fehler beim Speichern');
-      loadSchedule(); // revert
-    }
+    updateSchedule.mutate({
+      scheduleId: schedule.scheduleId,
+      sessions: updatedSessions,
+      clubId: schedule.clubId,
+    });
   };
 
-  const handleOptimize = async () => {
-    setOptimizing(true);
-    try {
-      const res = await fetch('/api/schedule/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clubId: 'demo-club' }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Optimization failed');
-      setSchedule(data.schedule || schedule); // API may return updated schedule
-      toast.success('Stundenplan optimiert');
-      analytics.scheduleOptimized('demo-club');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Optimierung fehlgeschlagen';
-      toast.error(message);
-      analytics.trackEvent('schedule_optimize_failed', { error: message, clubId: 'demo-club' });
-    } finally {
-      setOptimizing(false);
-    }
+  const handleOptimize = () => {
+    optimizeSchedule.mutate({ clubId: 'demo-club' });
   };
 
   // Build matrix: days (7) x time slots
@@ -171,7 +94,7 @@ export default function SchedulerPage() {
     return schedule.sessions.filter((s) => s.dayOfWeek === dayIdx + 1 && s.startTime === time);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1B4332]"></div>
@@ -179,7 +102,7 @@ export default function SchedulerPage() {
     );
   }
 
-  if (!schedule) {
+  if (error || !schedule) {
     return <div className="text-red-500">Kein Stundenplan gefunden.</div>;
   }
 
@@ -193,12 +116,12 @@ export default function SchedulerPage() {
         </div>
         <Button
           onClick={handleOptimize}
-          disabled={optimizing}
+          disabled={optimizeSchedule.isPending}
           variant="accent"
           className="flex items-center gap-2"
         >
           <Sparkles size={16} />
-          {optimizing ? 'Optimiere...' : 'KI-Optimierung'}
+          {optimizeSchedule.isPending ? 'Optimiere...' : 'KI-Optimierung'}
         </Button>
       </div>
 

@@ -1,0 +1,52 @@
+{
+  "app": {
+    "name": "SWINGZ"
+  },
+  "layout": {
+    "header": {
+      "dashboard": "Dashboard",
+      "bookings": "Buchungen",
+      "scheduler": "Trainingsplanung",
+      "admin": "Admin",
+      "trainer": "Trainer",
+      "member": "Mitglied",
+      "login": "Anmelden",
+      "logout": "Abmelden"
+    },
+    "sidebar": {
+      "main": "Hauptbereich",
+      "administration": "Administration",
+      "dashboard": "Dashboard",
+      "bookings": "Buchungen",
+      "scheduler": "Scheduler",
+      "analytics": "Analytics",
+      "onboarding": "Onboarding",
+      "clubs": "Clubs",
+      "members": "Mitglieder",
+      "schedules": "Schedules",
+      "settings": "Einstellungen",
+      "billingAdmin": "Billing Admin"
+    }
+  },
+  "common": {
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "view": "Ansehen",
+    "create": "Erstellen",
+    "update": "Aktualisieren",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "reset": "Zurücksetzen",
+    "close": "Schließen",
+    "open": "Öffnen",
+    "yes": "Ja",
+    "no": "Nein",
+    "ok": "OK"
+  }
+}

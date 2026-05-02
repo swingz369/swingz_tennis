@@ -3,6 +3,8 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
+import { cookies } from 'next/headers';
+import { QueryProvider } from './query-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -20,11 +22,14 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.svg',
   },
+  manifest: '/manifest.json',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'de';
   return (
-    <html lang="de" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${playfair.variable}`}>
       <head>
         {/* Resource hints for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,8 +40,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
-        <Toaster position="top-right" richColors />
+        <QueryProvider>
+          <Providers>{children}</Providers>
+          <Toaster position="top-right" richColors />
+        </QueryProvider>
       </body>
     </html>
   );

@@ -48,3 +48,7 @@ Thumbs.db
 # Misc
 .cache/
 .temp/
+
+# PWA generated files
+public/sw.js
+public/workbox-*.js
