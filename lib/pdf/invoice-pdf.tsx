@@ -1,20 +1,21 @@
-import { 
-  Document, 
-  Page, 
-  Text, 
-  View, 
-  StyleSheet, 
-  PDFDownloadLink,
-  Font,
-} from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
 import { InvoiceWithItems } from '../types/billing';
 
 Font.register({
   family: 'Roboto',
   fonts: [
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf', fontWeight: 400 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf', fontWeight: 500 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Bold.ttf', fontWeight: 700 },
+    {
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
+      fontWeight: 400,
+    },
+    {
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
+      fontWeight: 500,
+    },
+    {
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Bold.ttf',
+      fontWeight: 700,
+    },
   ],
 });
 
@@ -171,11 +172,11 @@ interface InvoicePDFProps {
   memberEmail: string;
 }
 
-const InvoicePDF = ({ 
-  invoice, 
-  clubName, 
-  clubAddress, 
-  clubEmail, 
+const InvoicePDF = ({
+  invoice,
+  clubName,
+  clubAddress,
+  clubEmail,
   clubPhone,
   memberName,
   memberAddress,
@@ -183,13 +184,20 @@ const InvoicePDF = ({
 }: InvoicePDFProps) => {
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'draft': return styles.statusDraft;
-      case 'sent': return styles.statusSent;
-      case 'paid': return styles.statusPaid;
-      case 'overdue': return styles.statusOverdue;
-      case 'cancelled': return styles.statusCancelled;
-      case 'dunning': return styles.statusDunning;
-      default: return styles.statusDraft;
+      case 'draft':
+        return styles.statusDraft;
+      case 'sent':
+        return styles.statusSent;
+      case 'paid':
+        return styles.statusPaid;
+      case 'overdue':
+        return styles.statusOverdue;
+      case 'cancelled':
+        return styles.statusCancelled;
+      case 'dunning':
+        return styles.statusDunning;
+      default:
+        return styles.statusDraft;
     }
   };
 
@@ -200,8 +208,9 @@ const InvoicePDF = ({
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE');
+  const formatDate = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    return date.toLocaleDateString('de-DE');
   };
 
   return (
@@ -210,11 +219,9 @@ const InvoicePDF = ({
         <View style={styles.header}>
           <Text style={styles.title}>RECHNUNG</Text>
           <Text style={styles.subtitle}>SWINGZ Tennis Club Management</Text>
-          
+
           <View style={[styles.statusBadge, getStatusStyle(invoice.status)]}>
-            <Text style={styles.statusText}>
-              {invoice.status.toUpperCase()}
-            </Text>
+            <Text style={styles.statusText}>{invoice.status.toUpperCase()}</Text>
           </View>
         </View>
 
@@ -276,14 +283,18 @@ const InvoicePDF = ({
               <Text style={[styles.tableHeaderCell, { textAlign: 'right' }]}>MwSt.</Text>
               <Text style={[styles.tableHeaderCell, { textAlign: 'right' }]}>Gesamt</Text>
             </View>
-            
+
             {invoice.items.map((item) => (
               <View key={item.id} style={styles.tableRow}>
                 <Text style={styles.tableCell}>{item.description}</Text>
                 <Text style={[styles.tableCell, { textAlign: 'right' }]}>{item.quantity}</Text>
-                <Text style={[styles.tableCell, { textAlign: 'right' }]}>{formatCurrency(item.unit_price)}</Text>
+                <Text style={[styles.tableCell, { textAlign: 'right' }]}>
+                  {formatCurrency(item.unit_price)}
+                </Text>
                 <Text style={[styles.tableCell, { textAlign: 'right' }]}>{item.tax_rate}%</Text>
-                <Text style={[styles.tableCell, { textAlign: 'right' }]}>{formatCurrency(item.total_price)}</Text>
+                <Text style={[styles.tableCell, { textAlign: 'right' }]}>
+                  {formatCurrency(item.total_price)}
+                </Text>
               </View>
             ))}
           </View>
@@ -345,11 +356,11 @@ const InvoicePDF = ({
 
 export default InvoicePDF;
 
-export const InvoiceDownloadLink = ({ 
-  invoice, 
-  clubName, 
-  clubAddress, 
-  clubEmail, 
+export const InvoiceDownloadLink = ({
+  invoice,
+  clubName,
+  clubAddress,
+  clubEmail,
   clubPhone,
   memberName,
   memberAddress,

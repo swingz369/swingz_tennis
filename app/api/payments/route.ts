@@ -5,16 +5,13 @@ import { CreatePayment } from '@/lib/types/billing';
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAuth(request);
+    await requireAuth();
     const body = await request.json();
-    
+
     const { clubId, memberId, invoiceId, amount, paymentMethod, notes } = body;
 
     if (!clubId || !memberId || !amount || !paymentMethod) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const createPaymentData: CreatePayment = {
@@ -31,18 +28,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ payment }, { status: 201 });
   } catch (error) {
     console.error('Error creating payment:', error);
-    return NextResponse.json(
-      { error: 'Failed to create payment' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request);
+    await requireAuth();
     const { searchParams } = new URL(request.url);
-    
+
     const invoiceId = searchParams.get('invoiceId');
     const memberId = searchParams.get('memberId');
 
@@ -62,9 +56,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error('Error getting payments:', error);
-    return NextResponse.json(
-      { error: 'Failed to get payments' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to get payments' }, { status: 500 });
   }
 }

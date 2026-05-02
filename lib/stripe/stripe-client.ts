@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
+  apiVersion: '2026-04-22.dahlia',
 });
 
 export interface StripeCheckoutData {
@@ -15,7 +15,7 @@ export interface StripeCheckoutData {
 }
 
 export async function createStripeCheckoutSession(data: StripeCheckoutData): Promise<string> {
-  const session = await stripe.checkout.sessions.create({
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     payment_method_types: ['card', 'sofort'],
     line_items: [
       {
@@ -33,11 +33,16 @@ export async function createStripeCheckoutSession(data: StripeCheckoutData): Pro
     mode: 'payment',
     success_url: data.successUrl,
     cancel_url: data.cancelUrl,
-    customer_email: data.customerEmail,
     metadata: {
       invoiceId: data.invoiceId,
     },
-  });
+  };
+
+  if (data.customerEmail) {
+    sessionParams.customer_email = data.customerEmail;
+  }
+
+  const session = await stripe.checkout.sessions.create(sessionParams);
 
   return session.url || '';
 }
@@ -68,14 +73,14 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
   const invoiceId = session.metadata?.invoiceId;
-  
+
   if (!invoiceId) {
     console.error('No invoice ID in session metadata');
     return;
   }
 
   const { billingEngine } = await import('../billing-engine');
-  
+
   const payment = await billingEngine.createPayment({
     club_id: '', // Will be filled from invoice
     member_id: '', // Will be filled from invoice
@@ -97,11 +102,11 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
   console.log('Payment failed:', paymentIntent.id);
-  
+
   const { billingEngine } = await import('../billing-engine');
-  
+
   const payment = await billingEngine.getPaymentByStripeId(paymentIntent.id);
-  
+
   if (payment) {
     await billingEngine.updatePaymentStatus(payment.id, 'failed', {
       failed_at: new Date().toISOString(),
@@ -112,7 +117,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): P
 
 export function constructStripeEvent(payload: string, signature: string): Stripe.Event {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  
+
   if (!webhookSecret) {
     throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
   }

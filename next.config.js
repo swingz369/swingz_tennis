@@ -29,6 +29,14 @@ const nextConfig = {
   },
   // Code splitting optimizations
   webpack: (config, { dev, isServer }) => {
+    // Exclude Supabase Edge Functions from Next.js build
+    config.externals = config.externals || [];
+    if (Array.isArray(config.externals)) {
+      config.externals.push(function ({ request }) {
+        return request.includes('supabase/functions');
+      });
+    }
+
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',

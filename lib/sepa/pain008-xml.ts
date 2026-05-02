@@ -125,7 +125,10 @@ export function generatePain008Xml(data: SepaDirectDebitData): string {
   return xml;
 }
 
-export function validateSepaDirectDebitData(data: SepaDirectDebitData): { valid: boolean; errors: string[] } {
+export function validateSepaDirectDebitData(data: SepaDirectDebitData): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   if (!data.creditorId || data.creditorId.length !== 18) {
@@ -194,16 +197,19 @@ export function validateSepaDirectDebitData(data: SepaDirectDebitData): { valid:
 
 function isValidIban(iban: string): boolean {
   const cleanedIban = iban.replace(/\s/g, '').toUpperCase();
-  
+
   if (cleanedIban.length < 15 || cleanedIban.length > 34) {
     return false;
   }
 
   const rearranged = cleanedIban.substring(4) + cleanedIban.substring(0, 4);
-  const numeric = rearranged.split('').map(char => {
-    const code = char.charCodeAt(0);
-    return code >= 65 && code <= 90 ? code - 55 : char;
-  }).join('');
+  const numeric = rearranged
+    .split('')
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code >= 65 && code <= 90 ? code - 55 : char;
+    })
+    .join('');
 
   let remainder = 0;
   for (let i = 0; i < numeric.length; i++) {
@@ -226,28 +232,54 @@ export function createSepaDirectDebitData(
   creditorBic: string,
   creditorId: string
 ): SepaDirectDebitData {
-  const mandateMap = new Map(mandates.map(m => [m.id, m]));
+  const mandateMap = new Map(mandates.map((m) => [m.id, m]));
 
   return {
     creditorId,
     creditorName,
     creditorIban,
     creditorBic,
-    payments: payments.map(payment => {
+    payments: payments.map((payment) => {
       const mandate = mandateMap.get(payment.sepa_mandate_id || '');
-      
-      return {
+
+      const mandateDate = mandate?.signature_date;
+      const executionDate = payment.payment_date;
+      const debtorBic = mandate?.bic;
+
+      const paymentData: {
+        paymentId: string;
+        amount: number;
+        currency: string;
+        mandateId: string;
+        mandateDate: string;
+        debtorName: string;
+        debtorIban: string;
+        debtorBic?: string;
+        description: string;
+        executionDate: string;
+      } = {
         paymentId: payment.payment_number,
         amount: payment.amount,
         currency: 'EUR',
         mandateId: mandate?.mandate_reference || '',
-        mandateDate: mandate?.signature_date || '',
+        mandateDate:
+          typeof mandateDate === 'string'
+            ? mandateDate
+            : mandateDate?.toISOString().split('T')[0] || '',
         debtorName: mandate?.account_holder_name || '',
         debtorIban: mandate?.iban || '',
-        debtorBic: mandate?.bic,
         description: `Payment ${payment.payment_number}`,
-        executionDate: payment.payment_date,
+        executionDate:
+          typeof executionDate === 'string'
+            ? executionDate
+            : executionDate?.toISOString().split('T')[0] || '',
       };
+
+      if (debtorBic !== null && debtorBic !== undefined) {
+        paymentData.debtorBic = debtorBic;
+      }
+
+      return paymentData;
     }),
   };
 }

@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mockSupabase, mockQueryBuilder } from './supabase-mock';
 import { BillingEngine } from '@/lib/billing-engine';
-import { 
-  CreateInvoice, 
-  CreateSepaMandate, 
+import {
+  CreateInvoice,
+  CreateSepaMandate,
   CreateDunningRecord,
   InvoiceStatus,
   PaymentStatus,
-  InvoiceItemType
+  InvoiceItemType,
 } from '@/lib/types/billing';
 
 describe('BillingEngine', () => {
@@ -15,16 +15,16 @@ describe('BillingEngine', () => {
 
   beforeEach(() => {
     billingEngine = BillingEngine.getInstance();
-    
+
     mockSupabase.from.mockReturnValue(mockQueryBuilder);
     mockSupabase.rpc.mockResolvedValue({
       data: 'INV-202605-00001',
-      error: null
+      error: null,
     });
-    
+
     mockQueryBuilder.single.mockResolvedValue({
       data: null,
-      error: null
+      error: null,
     });
   });
 
@@ -32,25 +32,26 @@ describe('BillingEngine', () => {
     it('should generate a unique invoice number', async () => {
       mockSupabase.rpc.mockResolvedValue({
         data: 'INV-202605-00001',
-        error: null
+        error: null,
       });
 
       const result = await billingEngine.generateInvoiceNumber('test-club-id');
-      
+
       expect(result).toBe('INV-202605-00001');
       expect(mockSupabase.rpc).toHaveBeenCalledWith('generate_invoice_number', {
-        p_club_id: 'test-club-id'
+        p_club_id: 'test-club-id',
       });
     });
 
     it('should throw error when generation fails', async () => {
       mockSupabase.rpc.mockResolvedValue({
         data: null,
-        error: { message: 'Database error' }
+        error: { message: 'Database error' },
       });
 
-      await expect(billingEngine.generateInvoiceNumber('test-club-id'))
-        .rejects.toThrow('Failed to generate invoice number: Database error');
+      await expect(billingEngine.generateInvoiceNumber('test-club-id')).rejects.toThrow(
+        'Failed to generate invoice number: Database error'
+      );
     });
   });
 
@@ -58,14 +59,14 @@ describe('BillingEngine', () => {
     it('should generate a unique payment number', async () => {
       mockSupabase.rpc.mockResolvedValue({
         data: 'PAY-202605-00001',
-        error: null
+        error: null,
       });
 
       const result = await billingEngine.generatePaymentNumber('test-club-id');
-      
+
       expect(result).toBe('PAY-202605-00001');
       expect(mockSupabase.rpc).toHaveBeenCalledWith('generate_payment_number', {
-        p_club_id: 'test-club-id'
+        p_club_id: 'test-club-id',
       });
     });
   });
@@ -74,34 +75,12 @@ describe('BillingEngine', () => {
     it('should create an invoice with items', async () => {
       mockSupabase.rpc.mockResolvedValue({
         data: 'INV-202605-00001',
-        error: null
+        error: null,
       });
 
       mockSupabase.from.mockReturnValue({
         insert: vi.fn(() => mockQueryBuilder),
       });
-
-      mockSupabase.from.mockReturnValue({
-        insert: vi.fn(() => mockQueryBuilder),
-      });
-
-      const mockInvoice = {
-        id: 'invoice-1',
-        club_id: 'club-1',
-        member_id: 'member-1',
-        invoice_number: 'INV-202605-00001',
-        invoice_date: '2026-05-02',
-        due_date: '2026-05-16',
-        status: 'draft',
-        subtotal: 100,
-        tax_amount: 19,
-        total_amount: 119,
-        paid_amount: 0,
-        currency: 'EUR',
-        notes: null,
-        created_at: '2026-05-02T00:00:00Z',
-        updated_at: '2026-05-02T00:00:00Z',
-      };
 
       mockSupabase.from.mockReturnValue({
         insert: vi.fn(() => mockQueryBuilder),
@@ -118,12 +97,12 @@ describe('BillingEngine', () => {
             unit_price: 100,
             tax_rate: 19,
             item_type: InvoiceItemType.MembershipFee,
-          }
+          },
         ],
       };
 
       const result = await billingEngine.createInvoice(createInvoiceData);
-      
+
       expect(result).toBeDefined();
       expect(result.invoice_number).toBe('INV-202605-00001');
       expect(result.total_amount).toBe(119);
@@ -132,7 +111,7 @@ describe('BillingEngine', () => {
     it('should calculate correct totals for multiple items', async () => {
       mockSupabase.rpc.mockResolvedValue({
         data: 'INV-202605-00001',
-        error: null
+        error: null,
       });
 
       mockSupabase.from.mockReturnValue({
@@ -146,13 +125,6 @@ describe('BillingEngine', () => {
       mockSupabase.from.mockReturnValue({
         insert: vi.fn(() => mockQueryBuilder),
       });
-
-      const mockInvoice = {
-        id: 'invoice-1',
-        subtotal: 200,
-        tax_amount: 38,
-        total_amount: 238,
-      };
 
       mockSupabase.from.mockReturnValue({
         insert: vi.fn(() => mockQueryBuilder),
@@ -176,12 +148,12 @@ describe('BillingEngine', () => {
             unit_price: 50,
             tax_rate: 19,
             item_type: InvoiceItemType.TrainingFee,
-          }
+          },
         ],
       };
 
       const result = await billingEngine.createInvoice(createInvoiceData);
-      
+
       expect(result.subtotal).toBe(200);
       expect(result.tax_amount).toBe(38);
       expect(result.total_amount).toBe(238);
@@ -193,9 +165,7 @@ describe('BillingEngine', () => {
       const mockInvoice = {
         id: 'invoice-1',
         invoice_number: 'INV-202605-00001',
-        items: [
-          { id: 'item-1', description: 'Membership fee', quantity: 1, unit_price: 100 }
-        ],
+        items: [{ id: 'item-1', description: 'Membership fee', quantity: 1, unit_price: 100 }],
         payments: [],
         dunning_records: [],
       };
@@ -203,13 +173,13 @@ describe('BillingEngine', () => {
       mockSupabase.from.mockReturnValue({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null }))
-          }))
-        }))
+            single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null })),
+          })),
+        })),
       });
 
       const result = await billingEngine.getInvoiceById('invoice-1');
-      
+
       expect(result).toBeDefined();
       expect(result?.id).toBe('invoice-1');
       expect(result?.items).toHaveLength(1);
@@ -219,16 +189,18 @@ describe('BillingEngine', () => {
       mockSupabase.from.mockReturnValue({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ 
-              data: null, 
-              error: { code: 'PGRST116' } 
-            }))
-          }))
-        }))
+            single: vi.fn(() =>
+              Promise.resolve({
+                data: null,
+                error: { code: 'PGRST116' },
+              })
+            ),
+          })),
+        })),
       });
 
       const result = await billingEngine.getInvoiceById('non-existent');
-      
+
       expect(result).toBeNull();
     });
   });
@@ -245,14 +217,14 @@ describe('BillingEngine', () => {
         update: vi.fn(() => ({
           eq: vi.fn(() => ({
             select: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null }))
-            }))
-          }))
-        }))
+              single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null })),
+            })),
+          })),
+        })),
       });
 
       const result = await billingEngine.updateInvoiceStatus('invoice-1', InvoiceStatus.Sent);
-      
+
       expect(result.status).toBe('sent');
       expect(result.sent_at).toBeDefined();
     });
@@ -268,14 +240,14 @@ describe('BillingEngine', () => {
         update: vi.fn(() => ({
           eq: vi.fn(() => ({
             select: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null }))
-            }))
-          }))
-        }))
+              single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null })),
+            })),
+          })),
+        })),
       });
 
       const result = await billingEngine.updateInvoiceStatus('invoice-1', InvoiceStatus.Paid);
-      
+
       expect(result.status).toBe('paid');
       expect(result.paid_at).toBeDefined();
     });
@@ -285,7 +257,7 @@ describe('BillingEngine', () => {
     it('should create a payment', async () => {
       mockSupabase.rpc.mockResolvedValue({
         data: 'PAY-202605-00001',
-        error: null
+        error: null,
       });
 
       const mockPayment = {
@@ -299,9 +271,9 @@ describe('BillingEngine', () => {
       mockSupabase.from.mockReturnValue({
         insert: vi.fn(() => ({
           select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: mockPayment, error: null }))
-          }))
-        }))
+            single: vi.fn(() => Promise.resolve({ data: mockPayment, error: null })),
+          })),
+        })),
       });
 
       const createPaymentData: CreatePayment = {
@@ -313,7 +285,7 @@ describe('BillingEngine', () => {
       };
 
       const result = await billingEngine.createPayment(createPaymentData);
-      
+
       expect(result).toBeDefined();
       expect(result.payment_number).toBe('PAY-202605-00001');
       expect(result.amount).toBe(119);
@@ -332,18 +304,16 @@ describe('BillingEngine', () => {
         update: vi.fn(() => ({
           eq: vi.fn(() => ({
             select: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ data: mockPayment, error: null }))
-            }))
-          }))
-        }))
+              single: vi.fn(() => Promise.resolve({ data: mockPayment, error: null })),
+            })),
+          })),
+        })),
       });
 
-      const result = await billingEngine.updatePaymentStatus(
-        'payment-1',
-        PaymentStatus.Completed,
-        { processed_at: '2026-05-02T10:00:00Z' }
-      );
-      
+      const result = await billingEngine.updatePaymentStatus('payment-1', PaymentStatus.Completed, {
+        processed_at: '2026-05-02T10:00:00Z',
+      });
+
       expect(result.status).toBe('completed');
       expect(result.processed_at).toBeDefined();
     });
@@ -362,9 +332,9 @@ describe('BillingEngine', () => {
       mockSupabase.from.mockReturnValue({
         insert: vi.fn(() => ({
           select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: mockMandate, error: null }))
-          }))
-        }))
+            single: vi.fn(() => Promise.resolve({ data: mockMandate, error: null })),
+          })),
+        })),
       });
 
       const createMandateData: CreateSepaMandate = {
@@ -375,7 +345,7 @@ describe('BillingEngine', () => {
       };
 
       const result = await billingEngine.createSepaMandate(createMandateData);
-      
+
       expect(result).toBeDefined();
       expect(result.mandate_reference).toContain('SWINGZ');
       expect(result.iban).toBe('DE89370400440532013000');
@@ -391,9 +361,9 @@ describe('BillingEngine', () => {
       mockSupabase.from.mockReturnValue({
         insert: vi.fn(() => ({
           select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: mockMandate, error: null }))
-          }))
-        }))
+            single: vi.fn(() => Promise.resolve({ data: mockMandate, error: null })),
+          })),
+        })),
       });
 
       const createMandateData: CreateSepaMandate = {
@@ -404,7 +374,7 @@ describe('BillingEngine', () => {
       };
 
       const result = await billingEngine.createSepaMandate(createMandateData);
-      
+
       expect(result.iban).toBe('DE89370400440532013000');
     });
   });
@@ -418,29 +388,31 @@ describe('BillingEngine', () => {
       mockSupabase.from.mockReturnValue({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null }))
-          }))
+            single: vi.fn(() => Promise.resolve({ data: mockInvoice, error: null })),
+          })),
         })),
         insert: vi.fn(() => ({
           select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ 
-              data: { 
-                id: 'dunning-1',
-                dunning_level: 1,
-                dunning_fee: 5,
-                total_amount: 105,
-              },
-              error: null 
-            }))
-          }))
+            single: vi.fn(() =>
+              Promise.resolve({
+                data: {
+                  id: 'dunning-1',
+                  dunning_level: 1,
+                  dunning_fee: 5,
+                  total_amount: 105,
+                },
+                error: null,
+              })
+            ),
+          })),
         })),
         update: vi.fn(() => ({
           eq: vi.fn(() => ({
             select: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ data: {}, error: null }))
-            }))
-          }))
-        }))
+              single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+            })),
+          })),
+        })),
       });
 
       const createDunningData: CreateDunningRecord = {
@@ -452,7 +424,7 @@ describe('BillingEngine', () => {
       };
 
       const result = await billingEngine.createDunningRecord(createDunningData);
-      
+
       expect(result).toBeDefined();
       expect(result.dunning_level).toBe(1);
       expect(result.dunning_fee).toBe(5);
@@ -486,7 +458,7 @@ describe('BillingEngine', () => {
         };
 
         const result = await billingEngine.createDunningRecord(createDunningData);
-        
+
         expect(result.dunning_fee).toBe(expectedFee);
         expect(result.total_amount).toBe(100 + expectedFee);
       }
@@ -501,7 +473,7 @@ describe('BillingEngine', () => {
       mockQueryBuilder.single.mockResolvedValue({ count: 1, error: null });
 
       const result = await billingEngine.getMemberBillingSummary('member-1');
-      
+
       expect(result).toBeDefined();
       expect(result.member_id).toBe('member-1');
       expect(result.total_invoices).toBe(2);
@@ -520,7 +492,7 @@ describe('BillingEngine', () => {
       mockQueryBuilder.single.mockResolvedValue({ data: mockInvoices, error: null });
 
       const result = await billingEngine.getClubBillingStats('club-1');
-      
+
       expect(result).toBeDefined();
       expect(result.club_id).toBe('club-1');
       expect(result.total_invoices).toBe(2);

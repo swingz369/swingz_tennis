@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { 
-  Invoice, 
-  Payment, 
-  SepaMandate, 
+import {
+  Invoice,
+  Payment,
+  SepaMandate,
   DunningRecord,
   CreateInvoice,
   CreatePayment,
@@ -12,8 +12,8 @@ import {
   MemberBillingSummary,
   ClubBillingStats,
   InvoiceStatus,
-  PaymentStatus
-} from '../types/billing';
+  PaymentStatus,
+} from './types/billing';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +34,7 @@ export class BillingEngine {
 
   async generateInvoiceNumber(clubId: string): Promise<string> {
     const { data, error } = await supabase.rpc('generate_invoice_number', {
-      p_club_id: clubId
+      p_club_id: clubId,
     });
 
     if (error) {
@@ -46,7 +46,7 @@ export class BillingEngine {
 
   async generatePaymentNumber(clubId: string): Promise<string> {
     const { data, error } = await supabase.rpc('generate_payment_number', {
-      p_club_id: clubId
+      p_club_id: clubId,
     });
 
     if (error) {
@@ -58,14 +58,14 @@ export class BillingEngine {
 
   async createInvoice(data: CreateInvoice): Promise<Invoice> {
     const invoiceNumber = await this.generateInvoiceNumber(data.club_id);
-    
+
     const subtotal = data.items.reduce((sum, item) => {
-      return sum + (item.quantity * item.unit_price);
+      return sum + item.quantity * item.unit_price;
     }, 0);
 
     const taxAmount = data.items.reduce((sum, item) => {
       const itemTotal = item.quantity * item.unit_price;
-      return sum + (itemTotal * (item.tax_rate / 100));
+      return sum + itemTotal * (item.tax_rate / 100);
     }, 0);
 
     const totalAmount = subtotal + taxAmount;
@@ -126,12 +126,14 @@ export class BillingEngine {
   async getInvoiceById(invoiceId: string): Promise<InvoiceWithItems | null> {
     const { data: invoice, error } = await supabase
       .from('invoices')
-      .select(`
+      .select(
+        `
         *,
         items:invoice_items(*),
         payments:payments(*),
         dunning_records:dunning_records(*)
-      `)
+      `
+      )
       .eq('id', invoiceId)
       .single();
 
@@ -145,15 +147,15 @@ export class BillingEngine {
     return invoice;
   }
 
-  async getInvoicesByMember(memberId: string, filters?: {
-    status?: InvoiceStatus;
-    limit?: number;
-    offset?: number;
-  }): Promise<Invoice[]> {
-    let query = supabase
-      .from('invoices')
-      .select('*')
-      .eq('member_id', memberId);
+  async getInvoicesByMember(
+    memberId: string,
+    filters?: {
+      status?: InvoiceStatus;
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Invoice[]> {
+    let query = supabase.from('invoices').select('*').eq('member_id', memberId);
 
     if (filters?.status) {
       query = query.eq('status', filters.status);
@@ -176,15 +178,15 @@ export class BillingEngine {
     return data || [];
   }
 
-  async getInvoicesByClub(clubId: string, filters?: {
-    status?: InvoiceStatus;
-    limit?: number;
-    offset?: number;
-  }): Promise<Invoice[]> {
-    let query = supabase
-      .from('invoices')
-      .select('*')
-      .eq('club_id', clubId);
+  async getInvoicesByClub(
+    clubId: string,
+    filters?: {
+      status?: InvoiceStatus;
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<Invoice[]> {
+    let query = supabase.from('invoices').select('*').eq('club_id', clubId);
 
     if (filters?.status) {
       query = query.eq('status', filters.status);
@@ -267,7 +269,7 @@ export class BillingEngine {
   }
 
   async updatePaymentStatus(
-    paymentId: string, 
+    paymentId: string,
     status: PaymentStatus,
     metadata?: {
       processed_at?: string;
@@ -493,11 +495,11 @@ export class BillingEngine {
   private calculateDunningFee(level: number): number {
     switch (level) {
       case 1:
-        return 5.00;
+        return 5.0;
       case 2:
-        return 10.00;
+        return 10.0;
       case 3:
-        return 20.00;
+        return 20.0;
       default:
         return 0;
     }
@@ -531,7 +533,8 @@ export class BillingEngine {
     const totalAmount = invoices?.reduce((sum, inv) => sum + inv.total_amount, 0) || 0;
     const paidAmount = invoices?.reduce((sum, inv) => sum + inv.paid_amount, 0) || 0;
     const outstandingAmount = totalAmount - paidAmount;
-    const overdueInvoices = invoices?.filter(inv => inv.status === 'overdue' || inv.status === 'dunning').length || 0;
+    const overdueInvoices =
+      invoices?.filter((inv) => inv.status === 'overdue' || inv.status === 'dunning').length || 0;
 
     const { count: activeMandates } = await supabase
       .from('sepa_mandates')
@@ -564,8 +567,10 @@ export class BillingEngine {
     const totalRevenue = invoices?.reduce((sum, inv) => sum + inv.paid_amount, 0) || 0;
     const totalAmount = invoices?.reduce((sum, inv) => sum + inv.total_amount, 0) || 0;
     const outstandingAmount = totalAmount - totalRevenue;
-    const overdueAmount = invoices?.filter(inv => inv.status === 'overdue' || inv.status === 'dunning')
-      .reduce((sum, inv) => sum + (inv.total_amount - inv.paid_amount), 0) || 0;
+    const overdueAmount =
+      invoices
+        ?.filter((inv) => inv.status === 'overdue' || inv.status === 'dunning')
+        .reduce((sum, inv) => sum + (inv.total_amount - inv.paid_amount), 0) || 0;
 
     const { data: payments } = await supabase
       .from('payments')
@@ -574,7 +579,7 @@ export class BillingEngine {
       .eq('status', 'completed');
 
     const paymentMethods: Record<string, number> = {};
-    payments?.forEach(p => {
+    payments?.forEach((p) => {
       paymentMethods[p.payment_method] = (paymentMethods[p.payment_method] || 0) + 1;
     });
 
@@ -584,9 +589,9 @@ export class BillingEngine {
       .eq('club_id', clubId)
       .eq('status', 'sent');
 
-    const dunningLevel1 = dunningRecords?.filter(d => d.dunning_level === 1).length || 0;
-    const dunningLevel2 = dunningRecords?.filter(d => d.dunning_level === 2).length || 0;
-    const dunningLevel3 = dunningRecords?.filter(d => d.dunning_level === 3).length || 0;
+    const dunningLevel1 = dunningRecords?.filter((d) => d.dunning_level === 1).length || 0;
+    const dunningLevel2 = dunningRecords?.filter((d) => d.dunning_level === 2).length || 0;
+    const dunningLevel3 = dunningRecords?.filter((d) => d.dunning_level === 3).length || 0;
 
     return {
       club_id: clubId,
@@ -632,7 +637,7 @@ export class BillingEngine {
 
       const currentLevel = existingDunning?.[0]?.dunning_level || 0;
       const { data: level } = await supabase.rpc('calculate_dunning_level', {
-        p_invoice_id: invoice.id
+        p_invoice_id: invoice.id,
       });
 
       if (level && level > currentLevel) {

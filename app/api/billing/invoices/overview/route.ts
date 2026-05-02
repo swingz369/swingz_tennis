@@ -4,9 +4,9 @@ import { billingEngine } from '@/lib/billing-engine';
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth(request);
+    await requireAuth();
     const { searchParams } = new URL(request.url);
-    
+
     const clubId = searchParams.get('clubId');
     const memberId = searchParams.get('memberId');
     const status = searchParams.get('status');
@@ -16,14 +16,11 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     if (!clubId && !memberId) {
-      return NextResponse.json(
-        { error: 'Either clubId or memberId is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Either clubId or memberId is required' }, { status: 400 });
     }
 
     let invoices;
-    
+
     if (clubId) {
       invoices = await billingEngine.getInvoicesByClub(clubId, {
         status: status as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'dunning',
@@ -40,18 +37,18 @@ export async function GET(request: NextRequest) {
 
     // Filter by date range if provided
     let filteredInvoices = invoices || [];
-    
+
     if (startDate) {
       const start = new Date(startDate);
-      filteredInvoices = filteredInvoices.filter(invoice => 
-        new Date(invoice.invoice_date) >= start
+      filteredInvoices = filteredInvoices.filter(
+        (invoice) => new Date(invoice.invoice_date) >= start
       );
     }
 
     if (endDate) {
       const end = new Date(endDate);
-      filteredInvoices = filteredInvoices.filter(invoice => 
-        new Date(invoice.invoice_date) <= end
+      filteredInvoices = filteredInvoices.filter(
+        (invoice) => new Date(invoice.invoice_date) <= end
       );
     }
 
@@ -60,17 +57,20 @@ export async function GET(request: NextRequest) {
     const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.total_amount, 0);
     const paidAmount = filteredInvoices.reduce((sum, inv) => sum + inv.paid_amount, 0);
 
-    const statusCounts = filteredInvoices.reduce((counts, invoice) => {
-      counts[invoice.status] = (counts[invoice.status] || 0) + 1;
-      return counts;
-    }, {} as Record<string, number>);
+    const statusCounts = filteredInvoices.reduce(
+      (counts, invoice) => {
+        counts[invoice.status] = (counts[invoice.status] || 0) + 1;
+        return counts;
+      },
+      {} as Record<string, number>
+    );
 
     return NextResponse.json({
       invoices: filteredInvoices,
       summary: {
         total_count: totalInvoices,
-        total_amount,
-        paid_amount,
+        total_amount: totalAmount,
+        paid_amount: paidAmount,
         outstanding_amount: totalAmount - paidAmount,
         status_counts: statusCounts,
       },
@@ -82,9 +82,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error getting invoice overview:', error);
-    return NextResponse.json(
-      { error: 'Failed to get invoice overview' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to get invoice overview' }, { status: 500 });
   }
 }

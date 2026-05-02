@@ -14,7 +14,7 @@ export interface InvoicePDFData {
 
 export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> {
   const { pdf } = await import('@react-pdf/renderer');
-  
+
   const document = (
     <InvoicePDF
       invoice={data.invoice}
@@ -28,8 +28,16 @@ export async function generateInvoicePDF(data: InvoicePDFData): Promise<Buffer> 
     />
   );
 
-  const pdfBuffer = await pdf(document).toBuffer();
-  return pdfBuffer;
+  const pdfStream = await pdf(document).toBuffer();
+
+  // Convert stream to Buffer
+  const chunks: Buffer[] = [];
+
+  return new Promise((resolve, reject) => {
+    pdfStream.on('data', (chunk: Buffer) => chunks.push(chunk));
+    pdfStream.on('end', () => resolve(Buffer.concat(chunks)));
+    pdfStream.on('error', reject);
+  });
 }
 
 export async function generateInvoicePDFBase64(data: InvoicePDFData): Promise<string> {
