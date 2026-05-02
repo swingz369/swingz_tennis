@@ -5,9 +5,7 @@ import {
   CreateInvoice,
   CreateSepaMandate,
   CreateDunningRecord,
-  InvoiceStatus,
-  PaymentStatus,
-  InvoiceItemType,
+  CreatePayment,
 } from '@/lib/types/billing';
 
 describe('BillingEngine', () => {
@@ -96,7 +94,7 @@ describe('BillingEngine', () => {
             quantity: 1,
             unit_price: 100,
             tax_rate: 19,
-            item_type: InvoiceItemType.MembershipFee,
+            item_type: 'membership_fee',
           },
         ],
       };
@@ -140,14 +138,14 @@ describe('BillingEngine', () => {
             quantity: 1,
             unit_price: 100,
             tax_rate: 19,
-            item_type: InvoiceItemType.MembershipFee,
+            item_type: 'membership_fee',
           },
           {
             description: 'Training fee',
             quantity: 2,
             unit_price: 50,
             tax_rate: 19,
-            item_type: InvoiceItemType.TrainingFee,
+            item_type: 'training_fee',
           },
         ],
       };
@@ -223,7 +221,7 @@ describe('BillingEngine', () => {
         })),
       });
 
-      const result = await billingEngine.updateInvoiceStatus('invoice-1', InvoiceStatus.Sent);
+      const result = await billingEngine.updateInvoiceStatus('invoice-1', 'sent');
 
       expect(result.status).toBe('sent');
       expect(result.sent_at).toBeDefined();
@@ -246,7 +244,7 @@ describe('BillingEngine', () => {
         })),
       });
 
-      const result = await billingEngine.updateInvoiceStatus('invoice-1', InvoiceStatus.Paid);
+      const result = await billingEngine.updateInvoiceStatus('invoice-1', 'paid');
 
       expect(result.status).toBe('paid');
       expect(result.paid_at).toBeDefined();
@@ -310,7 +308,7 @@ describe('BillingEngine', () => {
         })),
       });
 
-      const result = await billingEngine.updatePaymentStatus('payment-1', PaymentStatus.Completed, {
+      const result = await billingEngine.updatePaymentStatus('payment-1', 'completed', {
         processed_at: '2026-05-02T10:00:00Z',
       });
 
@@ -486,6 +484,11 @@ describe('BillingEngine', () => {
 
   describe('getClubBillingStats', () => {
     it('should return club billing statistics', async () => {
+      const mockInvoices = [
+        { id: '1', total_amount: 50, status: 'paid' },
+        { id: '2', total_amount: 50, status: 'overdue' },
+      ];
+
       mockSupabase.from.mockReturnValue(mockQueryBuilder);
       mockQueryBuilder.select.mockReturnValue(mockQueryBuilder);
       mockQueryBuilder.eq.mockReturnValue(mockQueryBuilder);
