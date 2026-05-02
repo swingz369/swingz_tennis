@@ -6,9 +6,28 @@ import type { User } from '@supabase/supabase-js';
 /**
  * Gets authenticated user from Supabase using the server client.
  * Returns the full Supabase User object including user_metadata.
+ * Supports demo mode via demo-mode cookie.
  */
 async function getAuthenticatedUser(): Promise<User | null> {
   const cookieStore = await cookies();
+
+  // Check for demo mode
+  const demoMode = cookieStore.get('demo-mode')?.value === 'true';
+
+  if (demoMode) {
+    // Return mock user for demo mode
+    return {
+      id: 'demo-user-id',
+      email: 'demo@swingz.com',
+      user_metadata: {
+        full_name: 'Demo User',
+      },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      app_metadata: {},
+    } as User;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,9 +69,82 @@ export { clearAuthCookiesAndRedirect } from '@/app/actions/auth';
 /**
  * Guard: requires authentication. Redirects to /login if not authenticated.
  * Returns the Supabase client (authenticated with JWT for RLS) and the user object.
+ * Supports demo mode via demo-mode cookie.
  */
 export async function requireAuth() {
   const cookieStore = await cookies();
+
+  // Check for demo mode
+  const demoMode = cookieStore.get('demo-mode')?.value === 'true';
+
+  if (demoMode) {
+    // Return mock user for demo mode
+    const mockUser = {
+      id: 'demo-user-id',
+      email: 'demo@swingz.com',
+      user_metadata: {
+        full_name: 'Demo User',
+      },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      app_metadata: {},
+    } as User;
+
+    // Create a mock supabase client for demo mode
+    const mockSupabase = {
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: mockUser }, error: null }),
+      },
+      from: (_table: string) => {
+        // Mock database queries for demo mode
+        return {
+          select: (_columns?: string) => ({
+            eq: (_column: string, _value: any) => ({
+              single: () =>
+                Promise.resolve({
+                  data: {
+                    id: 'demo-user-id',
+                    email: 'demo@swingz.com',
+                    full_name: 'Demo User',
+                    club_memberships: [
+                      {
+                        role: 'admin',
+                        clubs: {
+                          id: 'demo-club-id',
+                          name: 'Demo Tennis Club',
+                        },
+                      },
+                    ],
+                  },
+                  error: null,
+                }),
+              maybeSingle: () =>
+                Promise.resolve({
+                  data: {
+                    id: 'demo-user-id',
+                    email: 'demo@swingz.com',
+                    full_name: 'Demo User',
+                    club_memberships: [
+                      {
+                        role: 'admin',
+                        clubs: {
+                          id: 'demo-club-id',
+                          name: 'Demo Tennis Club',
+                        },
+                      },
+                    ],
+                  },
+                  error: null,
+                }),
+            }),
+          }),
+        };
+      },
+    } as any;
+
+    return { supabase: mockSupabase, user: mockUser };
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
