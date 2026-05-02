@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 type CookieHandler = {
   get(name: string): string | undefined;
@@ -9,12 +10,11 @@ type CookieHandler = {
 
 let cookieHandler: CookieHandler | null = null;
 
-function getCookieHandler(): CookieHandler {
+async function getCookieHandler(): Promise<CookieHandler> {
   if (cookieHandler) return cookieHandler;
 
   // Dynamically import cookies to avoid module-level execution during build
-  const { cookies } = require('next/headers');
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   cookieHandler = {
     get(name: string) {
@@ -33,7 +33,7 @@ function getCookieHandler(): CookieHandler {
 
 export const createClient = async () => {
   // Check for demo mode cookie (set by login page)
-  const cookies = getCookieHandler();
+  const cookies = await getCookieHandler();
   const hasDemoMode = cookies.get('demo-mode');
 
   if (hasDemoMode) {
