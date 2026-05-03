@@ -11,7 +11,7 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_RECORDS = 1000;
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const { user } = await requireAuth();
 
@@ -115,15 +115,15 @@ export async function POST(___request: NextRequest) {
           continue;
         }
 
-        const payment = await billingEngine.createPayment({
-          club_id: membership.club_id,
-          member_id: memberId,
-          amount: Math.min(Math.max(record.amount, 0), 1000000),
-          payment_method: record.paymentMethod,
-          payment_date: record.paymentDate,
-          transaction_id: record.transactionId,
-          notes: record.notes ? record.notes.substring(0, 1000) : undefined,
-        });
+         await billingEngine.createPayment({
+           club_id: membership.club_id,
+           member_id: memberId,
+           amount: Math.min(Math.max(record.amount, 0), 1000000),
+           payment_method: record.paymentMethod,
+           payment_date: record.paymentDate,
+           transaction_id: record.transactionId,
+           notes: record.notes ? record.notes.substring(0, 1000) : undefined,
+         });
 
         results.imported++;
       } catch (error) {

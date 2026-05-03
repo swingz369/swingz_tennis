@@ -708,8 +708,10 @@ export class BillingEngine {
         bic: mandate.bic || undefined,
         accountHolderName: mandate.account_holder_name,
         amount: payment.amount,
-        currency: payment.currency || 'EUR',
-        paymentDate: payment.payment_date,
+        currency: 'EUR',
+        paymentDate: typeof payment.payment_date === 'string' 
+          ? payment.payment_date 
+          : payment.payment_date.toISOString().split('T')[0],
         endToEndId: `SWINGZ-${payment.payment_number}`,
         remittanceInformation: invoice
           ? `Rechnung ${invoice.invoice_number}`

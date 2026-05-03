@@ -4,7 +4,7 @@ import {
   CreateTrainerAvailabilityInput,
   UpdateTrainerAvailabilityInput,
   AvailabilityQuery,
-} from '../entities/trainer-availability.entity';
+} from '../../domain/entities/trainer-availability.entity';
 
 export class TrainerAvailabilityService {
   private static availabilities: TrainerAvailability[] = [];

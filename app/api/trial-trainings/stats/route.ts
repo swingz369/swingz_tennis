@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TrialTrainingService } from '@/src/application/services/trial-training.service';
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const stats = await TrialTrainingService.getTrialTrainingStats();
     return NextResponse.json({ stats });

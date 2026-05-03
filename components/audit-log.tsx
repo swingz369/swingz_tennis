@@ -16,6 +16,7 @@ import {
   Download,
   Clock,
   User,
+  Users,
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -30,13 +31,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  GitBranch,
-  Zap,
-  Settings,
-  Users,
-  Globe,
-  Lock,
+  Plus,
   Key,
+  Lock,
+  DollarSign,
+  CreditCard,
+  Settings,
+  Globe,
+  GitBranch,
 } from 'lucide-react';
 import { toast } from 'sonner';
 

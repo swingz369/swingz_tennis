@@ -7,6 +7,24 @@ export interface UserClubData {
 
 export interface UserMemberData {
   memberId: string | null;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  bio?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  dateOfBirth?: string;
+  memberType?: 'member' | 'trial' | 'inactive';
+  membershipStatus?: 'active' | 'inactive' | 'suspended' | 'terminated';
+  membershipStart?: string;
+  membershipEnd?: string;
+  trainingGroup?: string;
+  notes?: string;
 }
 
 export function useUserClub() {

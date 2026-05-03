@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TrialTrainingService } from '@/src/application/services/trial-training.service';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       participant,
@@ -43,9 +43,9 @@ export async function POST(___request: NextRequest) {
   }
 }
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(__request.url);
+    const { searchParams } = new URL(_request.url);
     const status = searchParams.get('status');
     const email = searchParams.get('email');
     const search = searchParams.get('search');

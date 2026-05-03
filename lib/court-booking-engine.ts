@@ -157,7 +157,7 @@ export class CourtBookingEngine {
         club_id: clubId,
         court_id: data.court_id,
         user_id: userId,
-        booking_number,
+        booking_number: bookingNumber,
         start_time: data.start_time,
         end_time: data.end_time,
         status: 'confirmed',

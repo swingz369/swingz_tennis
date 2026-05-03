@@ -200,31 +200,35 @@ export default function HourlyRateManagement() {
     }
   };
 
-  const getExperienceLevelColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'bg-blue-100 text-blue-700';
-      case 'intermediate':
-        return 'bg-green-100 text-green-700';
-      case 'advanced':
-        return 'bg-orange-100 text-orange-700';
-      case 'professional':
-        return 'bg-purple-100 text-purple-700';
-    }
-  };
+   const getExperienceLevelColor = (level: string) => {
+     switch (level) {
+       case 'beginner':
+         return 'bg-blue-100 text-blue-700';
+       case 'intermediate':
+         return 'bg-green-100 text-green-700';
+       case 'advanced':
+         return 'bg-orange-100 text-orange-700';
+       case 'professional':
+         return 'bg-purple-100 text-purple-700';
+       default:
+         return 'bg-gray-100 text-gray-700';
+     }
+   };
 
-  const getExperienceLevelLabel = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'Anfänger';
-      case 'intermediate':
-        return 'Fortgeschritten';
-      case 'advanced':
-        return 'Erfahren';
-      case 'professional':
-        return 'Professionell';
-    }
-  };
+   const getExperienceLevelLabel = (level: string) => {
+     switch (level) {
+       case 'beginner':
+         return 'Anfänger';
+       case 'intermediate':
+         return 'Fortgeschritten';
+       case 'advanced':
+         return 'Erfahren';
+       case 'professional':
+         return 'Professionell';
+       default:
+         return level;
+     }
+   };
 
   if (isLoading) {
     return (
@@ -281,47 +285,47 @@ export default function HourlyRateManagement() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Name</Label>
-                    <Input
-                      value={editForm.name || ''}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      placeholder="z.B. Anfänger-Training"
-                    />
-                  </div>
-                  <div>
-                    <Label>Basisrate (€)</Label>
-                    <Input
-                      type="number"
-                      value={editForm.baseRate || ''}
-                      onChange={(e) => setEditForm({ ...editForm, baseRate: parseFloat(e.target.value) })}
-                      placeholder="35"
-                    />
-                  </div>
-                  <div>
-                    <Label>Erfahrungslevel</Label>
-                    <select
-                      value={editForm.experienceLevel || ''}
-                      onChange={(e) => setEditForm({ ...editForm, experienceLevel: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    >
-                      <option value="">Bitte auswählen...</option>
-                      <option value="beginner">Anfänger</option>
-                      <option value="intermediate">Fortgeschritten</option>
-                      <option value="advanced">Erfahren</option>
-                      <option value="professional">Professionell</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label>Beschreibung</Label>
-                    <Input
-                      value={editForm.description || ''}
-                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      placeholder="Beschreibung der Tarifstufe"
-                    />
-                  </div>
-                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   <div>
+                     <Label>Name</Label>
+                     <Input
+                       value={(editForm as any).name || ''}
+                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                       placeholder="z.B. Anfänger-Training"
+                     />
+                   </div>
+                   <div>
+                     <Label>Basisrate (€)</Label>
+                     <Input
+                       type="number"
+                       value={(editForm as any).baseRate || ''}
+                       onChange={(e) => setEditForm({ ...editForm, baseRate: parseFloat(e.target.value) })}
+                       placeholder="35"
+                     />
+                   </div>
+                   <div>
+                     <Label>Erfahrungslevel</Label>
+                     <select
+                       value={(editForm as any).experienceLevel || ''}
+                       onChange={(e) => setEditForm({ ...editForm, experienceLevel: e.target.value as any })}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                     >
+                       <option value="">Bitte auswählen...</option>
+                       <option value="beginner">Anfänger</option>
+                       <option value="intermediate">Fortgeschritten</option>
+                       <option value="advanced">Erfahren</option>
+                       <option value="professional">Professionell</option>
+                     </select>
+                   </div>
+                   <div>
+                     <Label>Beschreibung</Label>
+                     <Input
+                       value={(editForm as any).description || ''}
+                       onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                       placeholder="Beschreibung der Tarifstufe"
+                     />
+                   </div>
+                 </div>
                 <Button onClick={handleCreateTier} className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />
                   Tarifstufe erstellen
@@ -368,17 +372,17 @@ export default function HourlyRateManagement() {
                         ))}
                       </div>
                       <div className="flex gap-2 pt-3 border-t">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditForm(tier);
-                            setIsEditing(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Bearbeiten
-                        </Button>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => {
+                             setEditForm(tier as any);
+                             setIsEditing(true);
+                           }}
+                         >
+                           <Edit className="h-4 w-4 mr-1" />
+                           Bearbeiten
+                         </Button>
                         <Button
                           size="sm"
                           variant="outline"

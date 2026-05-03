@@ -13,21 +13,25 @@ import { useUserMember } from '@/hooks/use-user-data';
 export default function MemberProfile() {
   const { data: memberData, isLoading } = useUserMember();
 
-  const [formData, setFormData] = useState({
-    fullName: memberData?.fullName || '',
-    email: memberData?.email || '',
-    phone: memberData?.phone || '',
-    address: memberData?.address || '',
-    city: memberData?.city || '',
-    postalCode: memberData?.postalCode || '',
-    bio: memberData?.bio || '',
-    emergencyContact: memberData?.emergencyContact || '',
-    emergencyPhone: memberData?.emergencyPhone || '',
-  });
+   const [formData, setFormData] = useState({
+     fullName: memberData?.fullName || '',
+     email: memberData?.email || '',
+     phone: memberData?.phone || '',
+     address: memberData?.address || '',
+     city: memberData?.city || '',
+     postalCode: memberData?.postalCode || '',
+     bio: memberData?.bio || '',
+     emergencyContact: memberData?.emergencyContact || '',
+     emergencyPhone: memberData?.emergencyPhone || '',
+   });
 
-  const [isSaving, setIsSaving] = useState(false);
+   const [isSaving, setIsSaving] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+   // Placeholder for SEPA mandate info - TODO: implement actual data fetching
+   const hasActiveMandate = false;
+   const mandateInfo = null;
+
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -288,85 +292,6 @@ export default function MemberProfile() {
         </CardContent>
       </Card>
 
-      {/* SEPA Mandate */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            SEPA-Lastschriftmandat
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {hasActiveMandate && mandateInfo ? (
-            <div className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <FileText className="h-5 w-5 text-green-600 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-medium text-green-900 mb-2">
-                      Aktives SEPA-Mandat
-                    </div>
-                    <div className="space-y-1 text-sm text-green-800">
-                      <div className="flex justify-between">
-                        <span>Kontoinhaber:</span>
-                        <span className="font-medium">{mandateInfo.accountHolder}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>IBAN:</span>
-                        <span className="font-medium">{mandateInfo.maskedIBAN}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Bank:</span>
-                        <span className="font-medium">{mandateInfo.bankName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Mandatsreferenz:</span>
-                        <span className="font-medium">{mandateInfo.mandateReference}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Unterschriftdatum:</span>
-                        <span className="font-medium">
-                          {new Date(mandateInfo.signatureDate).toLocaleDateString('de-DE')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-2" />
-                  PDF herunterladen
-                </Button>
-                <Button variant="outline" size="sm" className="text-red-600 border-red-200">
-                  Mandat widerrufen
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-medium text-yellow-900 mb-2">
-                      Kein aktives SEPA-Mandat
-                    </div>
-                    <p className="text-sm text-yellow-800">
-                      Du hast noch kein SEPA-Lastschriftmandat hinterlegt. Mit einem Mandat können
-                      Mitgliedsbeiträge und Gebühren automatisch von deinem Konto abgebucht werden.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <Button className="w-full">
-                <CreditCard className="h-4 w-4 mr-2" />
-                SEPA-Mandat unterzeichnen
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Save Button */}
       <div className="flex justify-end">

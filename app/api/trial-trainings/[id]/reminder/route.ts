@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrialTrainingService } from '@/src/application/services/trial-training.service';
 import { EmailService } from '@/src/application/services/email.service';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
     const { trialTrainingId } = body;
 
     if (!trialTrainingId) {
@@ -31,16 +31,17 @@ export async function POST(___request: NextRequest) {
       );
     }
 
-    // Send reminder email
-    const success = await EmailService.sendTrialTrainingEmail({
-      recipientName: `${trialTraining.participant.firstName} ${trialTraining.participant.lastName}`,
-      recipientEmail: trialTraining.participant.email,
-      clubName: 'SwingZ Tennis Club',
-      startDate: new Date(trialTraining.scheduledDate),
-      clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-      clubPhone: '+49 123 456 7890',
-      clubEmail: 'info@swingz.app',
-    });
+     // Send reminder email
+     const success = await EmailService.sendTrialTrainingEmail({
+       recipientName: `${trialTraining.participant.firstName} ${trialTraining.participant.lastName}`,
+       recipientEmail: trialTraining.participant.email,
+       clubName: 'SwingZ Tennis Club',
+       memberType: 'trial',
+       startDate: new Date(trialTraining.scheduledDate),
+       clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
+       clubPhone: '+49 123 456 7890',
+       clubEmail: 'info@swingz.app',
+     });
 
     if (!success) {
       return NextResponse.json(

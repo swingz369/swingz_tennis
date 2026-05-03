@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PaymentSettingsService } from '@/src/application/services/payment-settings.service';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       gateway,
@@ -45,9 +45,9 @@ export async function POST(___request: NextRequest) {
   }
 }
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(__request.url);
+    const { searchParams } = new URL(_request.url);
     const gateway = searchParams.get('gateway');
     const active = searchParams.get('active');
     const isDefault = searchParams.get('default');
@@ -62,7 +62,7 @@ export async function GET(___request: NextRequest) {
       return NextResponse.json({ paymentSettings });
     }
 
-    if (gateway) {
+    if (gateway && (gateway === 'cash' || gateway === 'sepa' || gateway === 'stripe' || gateway === 'paypal' || gateway === 'other')) {
       const paymentSettings = await PaymentSettingsService.getPaymentSettingsByGateway(gateway);
       return NextResponse.json({ paymentSettings });
     }

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SEPAMandateService } from '@/src/application/services/sepa-mandate.service';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       memberId,
@@ -70,9 +70,9 @@ export async function POST(___request: NextRequest) {
   }
 }
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(__request.url);
+    const { searchParams } = new URL(_request.url);
     const memberId = searchParams.get('memberId');
     const mandateId = searchParams.get('mandateId');
 

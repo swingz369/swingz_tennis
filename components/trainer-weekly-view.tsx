@@ -25,6 +25,7 @@ import {
   Users,
   Target,
   BookOpen,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 

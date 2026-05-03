@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HoursLogService } from '@/src/application/services/hours-log.service';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       sessionId,
@@ -49,9 +49,9 @@ export async function POST(___request: NextRequest) {
   }
 }
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(__request.url);
+    const { searchParams } = new URL(_request.url);
     const sessionId = searchParams.get('sessionId');
     const trainerId = searchParams.get('trainerId');
     const participantId = searchParams.get('participantId');

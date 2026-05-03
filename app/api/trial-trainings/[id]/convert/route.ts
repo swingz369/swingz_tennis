@@ -3,12 +3,12 @@ import { TrialTrainingService } from '@/src/application/services/trial-training.
 import { EmailService } from '@/src/application/services/email.service';
 
 export async function POST(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = await __request.json();
+    const body = await _request.json();
     const { memberId, memberType, startDate, assignedGroup } = body;
 
     if (!memberId) {

@@ -42,8 +42,8 @@ const DEMO_ANALYTICS = {
   },
 };
 
-export async function GET(___request: NextRequest) {
-  const { searchParams } = new URL(__request.url);
+export async function GET(_request: NextRequest) {
+  const { searchParams } = new URL(_request.url);
   const clubId = searchParams.get('clubId');
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');

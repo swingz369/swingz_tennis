@@ -486,15 +486,15 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Straße</Label>
                           {isEditing ? (
-                            <Input
-                              value={editForm.address?.street || ''}
-                              onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  address: { ...editForm.address, street: e.target.value },
-                                })
-                              }
-                            />
+                             <Input
+                               value={editForm.address?.street || ''}
+                               onChange={(e) =>
+                                 setEditForm({
+                                   ...editForm,
+                                   address: { ...(editForm as any).address, street: e.target.value },
+                                 })
+                               }
+                             />
                           ) : (
                             <div className="mt-1">{selectedMember.address.street}</div>
                           )}
@@ -502,15 +502,15 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Hausnummer</Label>
                           {isEditing ? (
-                            <Input
-                              value={editForm.address?.houseNumber || ''}
-                              onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  address: { ...editForm.address, houseNumber: e.target.value },
-                                })
-                              }
-                            />
+                             <Input
+                               value={editForm.address?.houseNumber || ''}
+                               onChange={(e) =>
+                                 setEditForm({
+                                   ...editForm,
+                                   address: { ...(editForm as any).address, houseNumber: e.target.value },
+                                 })
+                               }
+                             />
                           ) : (
                             <div className="mt-1">{selectedMember.address.houseNumber}</div>
                           )}
@@ -518,15 +518,15 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Postleitzahl</Label>
                           {isEditing ? (
-                            <Input
-                              value={editForm.address?.postalCode || ''}
-                              onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  address: { ...editForm.address, postalCode: e.target.value },
-                                })
-                              }
-                            />
+                             <Input
+                               value={editForm.address?.postalCode || ''}
+                               onChange={(e) =>
+                                 setEditForm({
+                                   ...editForm,
+                                   address: { ...(editForm as any).address, postalCode: e.target.value },
+                                 })
+                               }
+                             />
                           ) : (
                             <div className="mt-1">{selectedMember.address.postalCode}</div>
                           )}
@@ -534,15 +534,15 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Stadt</Label>
                           {isEditing ? (
-                            <Input
-                              value={editForm.address?.city || ''}
-                              onChange={(e) =>
-                                setEditForm({
-                                  ...editForm,
-                                  address: { ...editForm.address, city: e.target.value },
-                                })
-                              }
-                            />
+                             <Input
+                               value={editForm.address?.city || ''}
+                               onChange={(e) =>
+                                 setEditForm({
+                                   ...editForm,
+                                   address: { ...(editForm as any).address, city: e.target.value },
+                                 })
+                               }
+                             />
                           ) : (
                             <div className="mt-1">{selectedMember.address.city}</div>
                           )}

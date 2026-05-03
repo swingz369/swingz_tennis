@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuditLogService } from '@/src/application/services/audit-log.service';
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const searchParams = _request.nextUrl.searchParams;
     const startDate = searchParams.get('startDate');

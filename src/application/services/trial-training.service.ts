@@ -1,4 +1,4 @@
-import { TrialTraining, CreateTrialTrainingInput, UpdateTrialTrainingInput, TrialTrainingStats } from '../entities/trial-training.entity';
+import { TrialTraining, CreateTrialTrainingInput, UpdateTrialTrainingInput, TrialTrainingStats } from '../../domain/entities/trial-training.entity';
 
 export class TrialTrainingService {
   private static trainings: TrialTraining[] = [];

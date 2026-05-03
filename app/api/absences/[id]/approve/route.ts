@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AbsenceService } from '@/src/application/services/absence.service';
 
 export async function POST(
-  __request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = await __request.json();
+    const body = await _request.json();
     const { approvedBy } = body;
 
     if (!approvedBy) {

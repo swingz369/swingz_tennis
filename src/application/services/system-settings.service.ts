@@ -2,7 +2,7 @@ import {
   SystemSettings,
   CreateSystemSettingsInput,
   UpdateSystemSettingsInput,
-} from '../entities/system-settings.entity';
+} from '../../domain/entities/system-settings.entity';
 
 export class SystemSettingsService {
   private static settings: SystemSettings[] = [];

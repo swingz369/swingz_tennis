@@ -61,8 +61,8 @@ const DEMO_RECOMMENDATIONS = [
   },
 ];
 
-export async function GET(___request: NextRequest) {
-  const { searchParams } = new URL(__request.url);
+export async function GET(_request: NextRequest) {
+    const { searchParams } = new URL(_request.url);
   const clubId = searchParams.get('clubId');
   const insightType = searchParams.get('type') || 'churn'; // 'churn' | 'recommendations' | 'all'
 
@@ -70,7 +70,7 @@ export async function GET(___request: NextRequest) {
     return NextResponse.json({ error: 'clubId required' }, { status: 400 });
   }
 
-  if (isDemoMode(request)) {
+  if (isDemoMode(_request)) {
     const result: Record<string, unknown> = { success: true, clubId };
     if (insightType === 'churn' || insightType === 'all') {
       result.churnPredictions = DEMO_CHURN_PREDICTIONS;

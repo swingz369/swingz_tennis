@@ -9,11 +9,11 @@ import {
 } from '@/lib/sepa/pain008-generator';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const { user } = await requireAuth();
 
-    const body = await __request.json();
+    const body = await _request.json();
     const { paymentIds, executionDate } = body;
 
     if (!Array.isArray(paymentIds) || paymentIds.length === 0) {
@@ -119,38 +119,58 @@ export async function POST(___request: NextRequest) {
         ? await billingEngine.getInvoiceById(payment.invoice_id)
         : null;
 
-      transactions.push({
-        paymentId: payment.id,
-        mandateId: mandate.id,
-        mandateReference: mandate.mandate_reference,
-        creditorId: mandate.creditor_id,
-        iban: mandate.iban,
-        bic: mandate.bic || undefined,
-        accountHolderName: mandate.account_holder_name,
-        amount: payment.amount,
-        currency: payment.currency || 'EUR',
-        paymentDate: payment.payment_date,
-        endToEndId: `SWINGZ-${payment.payment_number}`,
-        remittanceInformation: invoice
-          ? `Rechnung ${invoice.invoice_number}`
-          : `Zahlung ${payment.payment_number}`,
-      });
+       const paymentDate = payment.payment_date instanceof Date
+         ? payment.payment_date.toISOString().split('T')[0]
+         : new Date(payment.payment_date).toISOString().split('T')[0];
+
+       const transaction: SepaDirectDebitTransaction = {
+         paymentId: payment.id,
+         mandateId: mandate.id,
+         mandateReference: mandate.mandate_reference,
+         creditorId: mandate.creditor_id,
+         iban: mandate.iban,
+         accountHolderName: mandate.account_holder_name,
+         amount: payment.amount,
+         currency: 'EUR',
+         paymentDate,
+         endToEndId: `SWINGZ-${payment.payment_number}`,
+         remittanceInformation: invoice
+           ? `Rechnung ${invoice.invoice_number}`
+           : `Zahlung ${payment.payment_number}`,
+       };
+       
+       if (mandate.bic) {
+         transaction.bic = mandate.bic;
+       }
+
+       transactions.push(transaction);
     }
 
-    const config: SepaPain008Config = {
-      creditorName: process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club',
-      creditorAccountIban: process.env.SEPA_CREDITOR_IBAN || '',
-      creditorAccountBic: process.env.SEPA_CREDITOR_BIC || undefined,
-      creditorId: process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999',
-      creditorAddress: {
-        street: process.env.SEPA_CREDITOR_STREET || undefined,
-        city: process.env.SEPA_CREDITOR_CITY || undefined,
-        postalCode: process.env.SEPA_CREDITOR_POSTAL_CODE || undefined,
-        country: process.env.SEPA_CREDITOR_COUNTRY || 'DE',
-      },
-      executionDate: executionDate || undefined,
-      batchBooking: true,
-    };
+     const config: SepaPain008Config = {
+       creditorName: process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club',
+       creditorAccountIban: process.env.SEPA_CREDITOR_IBAN || '',
+       creditorId: process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999',
+       executionDate: executionDate || undefined,
+       batchBooking: true,
+     };
+
+     const bic = process.env.SEPA_CREDITOR_BIC;
+     if (bic) {
+       config.creditorAccountBic = bic;
+     }
+
+     const street = process.env.SEPA_CREDITOR_STREET;
+     const city = process.env.SEPA_CREDITOR_CITY;
+     const postalCode = process.env.SEPA_CREDITOR_POSTAL_CODE;
+     const country = process.env.SEPA_CREDITOR_COUNTRY || 'DE';
+     
+     if (street || city || postalCode || country) {
+       config.creditorAddress = {};
+       if (street) config.creditorAddress.street = street;
+       if (city) config.creditorAddress.city = city;
+       if (postalCode) config.creditorAddress.postalCode = postalCode;
+       if (country) config.creditorAddress.country = country;
+     }
 
     if (!config.creditorAccountIban) {
       return NextResponse.json(

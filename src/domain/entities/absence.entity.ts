@@ -31,6 +31,8 @@ export interface UpdateAbsenceInput {
   status?: 'pending' | 'approved' | 'rejected';
   reason?: string;
   notes?: string;
+  approvedBy?: string;
+  approvedAt?: string;
 }
 
 export interface AbsenceConflict {

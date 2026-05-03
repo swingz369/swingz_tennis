@@ -234,7 +234,7 @@ export default function NewsAnnouncements() {
                           ? 'bg-brand-primary/20'
                           : 'bg-gray-100'
                       }`}>
-                        <NewsIcon />
+                        <Bell className="h-5 w-5" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">

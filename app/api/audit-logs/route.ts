@@ -2,21 +2,56 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuditLogService } from '@/src/application/services/audit-log.service';
 import { AuditLogFilter } from '@/src/domain/entities/audit-log.entity';
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const searchParams = __request.nextUrl.searchParams;
+    const searchParams = _request.nextUrl.searchParams;
     
-    const filter: AuditLogFilter = {
-      startDate: searchParams.get('startDate') ? new Date(searchParams.get('startDate')!) : undefined,
-      endDate: searchParams.get('endDate') ? new Date(searchParams.get('endDate')!) : undefined,
-      action: searchParams.get('action')?.split(',') as any,
-      entityType: searchParams.get('entityType')?.split(',') as any,
-      userId: searchParams.get('userId')?.split(','),
-      userRole: searchParams.get('userRole')?.split(','),
-      status: searchParams.get('status')?.split(',') as any,
-      entityId: searchParams.get('entityId') || undefined,
-      searchTerm: searchParams.get('search') || undefined
-    };
+    const filter: AuditLogFilter = {};
+    
+    const startDateParam = searchParams.get('startDate');
+    if (startDateParam) {
+      filter.startDate = new Date(startDateParam);
+    }
+    
+    const endDateParam = searchParams.get('endDate');
+    if (endDateParam) {
+      filter.endDate = new Date(endDateParam);
+    }
+    
+    const actionParam = searchParams.get('action');
+    if (actionParam) {
+      filter.action = actionParam.split(',') as any;
+    }
+    
+    const entityTypeParam = searchParams.get('entityType');
+    if (entityTypeParam) {
+      filter.entityType = entityTypeParam.split(',') as any;
+    }
+    
+    const userIdParam = searchParams.get('userId');
+    if (userIdParam) {
+      filter.userId = userIdParam.split(',');
+    }
+    
+    const userRoleParam = searchParams.get('userRole');
+    if (userRoleParam) {
+      filter.userRole = userRoleParam.split(',');
+    }
+    
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      filter.status = statusParam.split(',') as any;
+    }
+    
+    const entityIdParam = searchParams.get('entityId');
+    if (entityIdParam) {
+      filter.entityId = entityIdParam;
+    }
+    
+    const searchTermParam = searchParams.get('search');
+    if (searchTermParam) {
+      filter.searchTerm = searchTermParam;
+    }
 
     const auditLogService = new AuditLogService();
     const logs = await auditLogService.getAuditLogs(filter);

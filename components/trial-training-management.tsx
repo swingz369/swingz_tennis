@@ -387,7 +387,7 @@ export default function TrialTrainingManagement() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as typeof selectedTab)}>
         <TabsList>
           <TabsTrigger value="all">
             Alle ({trainings.length})
@@ -421,9 +421,10 @@ export default function TrialTrainingManagement() {
               {filteredTrainings.map((training) => (
                 <Card
                   key={training.id}
-                  className={`transition-all hover:shadow-md ${
-                    training.status === 'scheduled' ? 'border-l-4 border-l-blue-500' : ''
-                  }`}
+                   className={
+                     'transition-all hover:shadow-md ' +
+                     (training.status === 'scheduled' ? 'border-l-4 border-l-blue-500' : '')
+                   }
                 >
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between gap-4">
@@ -769,6 +770,7 @@ export default function TrialTrainingManagement() {
         </div>
       )}
       </>
+      )}
     </div>
   );
 }

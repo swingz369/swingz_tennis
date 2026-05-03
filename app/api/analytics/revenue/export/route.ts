@@ -52,8 +52,8 @@ const DEMO_REVENUE = {
   ],
 };
 
-export async function GET(___request: NextRequest) {
-  const { searchParams } = new URL(__request.url);
+export async function GET(_request: NextRequest) {
+  const { searchParams } = new URL(_request.url);
   const clubId = searchParams.get('clubId');
   const format = searchParams.get('format') || 'csv';
 
@@ -61,7 +61,7 @@ export async function GET(___request: NextRequest) {
     return NextResponse.json({ error: 'clubId required' }, { status: 400 });
   }
 
-  if (isDemoMode(request)) {
+   if (isDemoMode(_request)) {
     if (format === 'pdf') {
       return generatePDFExport(DEMO_REVENUE, clubId);
     }

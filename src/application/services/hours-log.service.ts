@@ -6,7 +6,7 @@ import {
   CreateAttendanceRecordInput,
   UpdateAttendanceRecordInput,
   HoursSummary,
-} from '../entities/hours-log.entity';
+} from '../../domain/entities/hours-log.entity';
 
 export class HoursLogService {
   private static hoursLogs: HoursLog[] = [];

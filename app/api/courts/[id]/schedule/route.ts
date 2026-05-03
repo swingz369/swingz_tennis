@@ -4,7 +4,7 @@ import { courtBookingEngine } from '@/lib/court-booking-engine';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
 export async function GET(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
+import Stripe from 'stripe';
 import {
   constructStripeEvent,
-  handleStripeWebhook,
 } from '@/lib/stripe/stripe-client';
 import { billingEngine } from '@/lib/billing-engine';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const body = await _request.text();
-    const signature = headers().get('stripe-signature');
+    const signature = _request.headers.get('stripe-signature');
 
     if (!signature) {
       return NextResponse.json(

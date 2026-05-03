@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BillingService } from '@/src/application/services/billing.service';
 
 export async function POST(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

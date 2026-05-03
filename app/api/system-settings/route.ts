@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SystemSettingsService } from '@/src/application/services/system-settings.service';
+import { SystemSettings } from '@/src/domain/entities/system-settings.entity';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       category,
@@ -45,9 +46,9 @@ export async function POST(___request: NextRequest) {
   }
 }
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(__request.url);
+    const { searchParams } = new URL(_request.url);
     const category = searchParams.get('category');
     const key = searchParams.get('key');
     const isPublic = searchParams.get('public');
@@ -74,7 +75,7 @@ export async function GET(___request: NextRequest) {
       return NextResponse.json({ systemSettings });
     }
 
-    if (category) {
+    if (category && (category === 'general' || category === 'email' || category === 'security' || category === 'notifications' || category === 'integrations' || category === 'other')) {
       const systemSettings = await SystemSettingsService.getSystemSettingsByCategory(category);
       return NextResponse.json({ systemSettings });
     }

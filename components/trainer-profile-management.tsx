@@ -37,6 +37,7 @@ import {
   Target,
   Heart,
   Briefcase,
+  Euro,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -253,6 +254,8 @@ export default function TrainerProfileManagement() {
         return 'bg-orange-100 text-orange-700';
       case 'professional':
         return 'bg-purple-100 text-purple-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -517,7 +520,11 @@ export default function TrainerProfileManagement() {
                             onChange={(e) =>
                               setEditForm({
                                 ...editForm,
-                                emergencyContact: { ...editForm.emergencyContact, name: e.target.value },
+                                emergencyContact: { 
+                                  name: e.target.value,
+                                  phone: editForm.emergencyContact?.phone || '',
+                                  relationship: editForm.emergencyContact?.relationship || '',
+                                },
                               })
                             }
                           />
@@ -533,7 +540,11 @@ export default function TrainerProfileManagement() {
                             onChange={(e) =>
                               setEditForm({
                                 ...editForm,
-                                emergencyContact: { ...editForm.emergencyContact, phone: e.target.value },
+                                emergencyContact: { 
+                                  name: editForm.emergencyContact?.name || '',
+                                  phone: e.target.value,
+                                  relationship: editForm.emergencyContact?.relationship || '',
+                                },
                               })
                             }
                           />
@@ -549,7 +560,11 @@ export default function TrainerProfileManagement() {
                             onChange={(e) =>
                               setEditForm({
                                 ...editForm,
-                                emergencyContact: { ...editForm.emergencyContact, relationship: e.target.value },
+                                emergencyContact: { 
+                                  name: editForm.emergencyContact?.name || '',
+                                  phone: editForm.emergencyContact?.phone || '',
+                                  relationship: e.target.value,
+                                },
                               })
                             }
                           />

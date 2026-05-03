@@ -8,15 +8,15 @@ function isDemoMode(req: NextRequest): boolean {
   return !!cookies?.value;
 }
 
-export async function GET(___request: NextRequest) {
-  const { searchParams } = new URL(__request.url);
+export async function GET(_request: NextRequest) {
+  const { searchParams } = new URL(_request.url);
   const clubId = searchParams.get('clubId');
 
   if (!clubId) {
     return NextResponse.json({ error: 'clubId required' }, { status: 400 });
   }
 
-  if (isDemoMode(request)) {
+  if (isDemoMode(_request)) {
     const DEMO_MEMBERS = [
       {
         id: '1',

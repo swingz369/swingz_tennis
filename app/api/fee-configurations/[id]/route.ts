@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FeeConfigurationService } from '@/src/application/services/fee-configuration.service';
 
 export async function GET(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -27,12 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       name,
@@ -78,7 +78,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

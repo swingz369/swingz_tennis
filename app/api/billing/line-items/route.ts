@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BillingService } from '@/src/application/services/billing.service';
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(__request.url);
+    const { searchParams } = new URL(_request.url);
     const trainerBillingId = searchParams.get('trainerBillingId');
 
     if (trainerBillingId) {

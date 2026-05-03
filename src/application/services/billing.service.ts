@@ -5,7 +5,7 @@ import {
   CreateTrainerBillingInput,
   UpdateTrainerBillingInput,
   BillingSummary,
-} from '../entities/billing.entity';
+} from '../../domain/entities/billing.entity';
 
 export class BillingService {
   private static billingPeriods: BillingPeriod[] = [];

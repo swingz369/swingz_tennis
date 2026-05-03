@@ -6,7 +6,7 @@ import {
   UpdateHourlyRateTierInput,
   CreateTrainerHourlyRateInput,
   UpdateTrainerHourlyRateInput,
-} from '../entities/hourly-rate.entity';
+} from '../../domain/entities/hourly-rate.entity';
 
 export class HourlyRateService {
   private static rateTiers: HourlyRateTier[] = [];

@@ -2,7 +2,7 @@ import {
   PaymentSettings,
   CreatePaymentSettingsInput,
   UpdatePaymentSettingsInput,
-} from '../entities/payment-settings.entity';
+} from '../../domain/entities/payment-settings.entity';
 
 export class PaymentSettingsService {
   private static paymentSettings: PaymentSettings[] = [];

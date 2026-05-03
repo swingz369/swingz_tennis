@@ -106,18 +106,18 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'success':
-        return <Badge variant="default" className="bg-green-500">Erfolgreich</Badge>;
-      case 'failed':
-        return <Badge variant="destructive">Fehlgeschlagen</Badge>;
-      case 'partial':
-        return <Badge variant="secondary" className="bg-yellow-500">Teilweise</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+   const getStatusBadge = (status: string) => {
+     switch (status) {
+       case 'success':
+         return <Badge variant="default" className="bg-green-500">Erfolgreich</Badge>;
+       case 'failed':
+         return <Badge variant="error">Fehlgeschlagen</Badge>;
+       case 'partial':
+         return <Badge variant="secondary" className="bg-yellow-500">Teilweise</Badge>;
+       default:
+         return <Badge variant="outline">{status}</Badge>;
+     }
+   };
 
   const getActionBadge = (action: string) => {
     const colors: Record<string, string> = {

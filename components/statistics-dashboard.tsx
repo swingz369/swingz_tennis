@@ -212,7 +212,7 @@ function MemberStatisticsCard({ stats }: { stats: any }) {
               {Object.entries(stats.membersByStatus).map(([status, count]) => (
                 <div key={status} className="flex items-center justify-between">
                   <span className="text-sm capitalize">{status}</span>
-                  <Badge variant="outline">{count}</Badge>
+                  <Badge variant="outline">{Number(count)}</Badge>
                 </div>
               ))}
             </div>

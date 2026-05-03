@@ -12,7 +12,7 @@ const inviteSchema = z.object({
 });
 
 // POST /api/members/invite – Invite a new member to a club
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,7 +24,7 @@ export async function POST(___request: NextRequest) {
   }
 
   try {
-    const body = await __request.json();
+    const body = await _request.json();
     const { email, full_name, role, club_id } = inviteSchema.parse(body);
 
     // Only admin/superadmin can invite, and must belong to the target club

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TrainerAvailabilityService } from '@/src/application/services/trainer-availability.service';
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const { searchParams } = new URL(__request.url);
+    const { searchParams } = new URL(_request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 

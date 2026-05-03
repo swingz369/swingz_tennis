@@ -6,6 +6,8 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -23,6 +25,7 @@ import {
   Search,
   Download,
   Eye,
+  MapPin,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -517,7 +520,12 @@ export default function AdminApprovalWorkflow() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+      <Tabs
+        value={selectedTab}
+        onValueChange={(value) =>
+          setSelectedTab(value as 'approved' | 'pending' | 'rejected' | 'all')
+        }
+      >
         <TabsList>
           <TabsTrigger value="all">
             Alle ({registrations.length})

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StatisticsService } from '@/src/application/services/statistics.service';
 
-export async function GET(___request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const statisticsService = new StatisticsService();
     const metrics = await statisticsService.getDashboardMetrics();

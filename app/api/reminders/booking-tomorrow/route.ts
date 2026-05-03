@@ -4,7 +4,7 @@ import { ReminderService } from '@/application/use-cases/send-reminders.use-case
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 
 // POST /api/reminders/booking-tomorrow – Send booking reminders for tomorrow
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -27,7 +27,7 @@ export async function POST(___request: NextRequest) {
   }
 
   try {
-    const body = await __request.json();
+    const body = await _request.json();
     const input = sendRemindersSchema.parse(body);
 
     const results = await ReminderService.sendTomorrowReminders(input);

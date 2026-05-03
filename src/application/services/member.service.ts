@@ -3,7 +3,7 @@ import {
   CreateMemberInput,
   UpdateMemberInput,
   MemberQuery,
-} from '../entities/member.entity';
+} from '../../domain/entities/member.entity';
 
 export class MemberService {
   private static members: Member[] = [];

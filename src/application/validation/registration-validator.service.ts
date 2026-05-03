@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   registrationSchema,
   applicationSchema,
@@ -8,6 +9,11 @@ import {
   groupChangeRequestSchema,
   sepaMandateSchema,
   trialTrainingSchema,
+  personalInfoSchema,
+  addressSchema,
+  tennisInfoSchema,
+  additionalInfoSchema,
+  agreementSchema,
   type PersonalInfoFormData,
   type AddressFormData,
   type TennisInfoFormData,
@@ -22,7 +28,7 @@ import {
   type GroupChangeRequestFormData,
   type SepaMandateFormData,
   type TrialTrainingFormData,
-} from './registration.schema';
+} from './schemas/registration.schema';
 
 export interface ValidationResult<T> {
   success: boolean;

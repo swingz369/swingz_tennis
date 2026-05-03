@@ -11,9 +11,9 @@ function isValidUrl(url: string | undefined): url is string {
   }
 }
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
     const event = body;
 
     // In production, validate webhook signature

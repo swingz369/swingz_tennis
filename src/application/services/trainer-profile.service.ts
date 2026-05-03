@@ -1,4 +1,4 @@
-import { TrainerProfile, CreateTrainerProfileInput, UpdateTrainerProfileInput } from '../entities/trainer.entity';
+import { TrainerProfile, CreateTrainerProfileInput, UpdateTrainerProfileInput } from '../../domain/entities/trainer.entity';
 
 export class TrainerProfileService {
   private static profiles: TrainerProfile[] = [];

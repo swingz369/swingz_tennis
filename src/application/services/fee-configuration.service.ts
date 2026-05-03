@@ -2,7 +2,7 @@ import {
   FeeConfiguration,
   CreateFeeConfigurationInput,
   UpdateFeeConfigurationInput,
-} from '../entities/fee-configuration.entity';
+} from '../../domain/entities/fee-configuration.entity';
 
 export class FeeConfigurationService {
   private static feeConfigurations: FeeConfiguration[] = [];

@@ -16,6 +16,7 @@ import {
   MapPin,
   TrendingUp,
   Bell,
+  CheckCircle,
 } from 'lucide-react';
 
 export function Sidebar({

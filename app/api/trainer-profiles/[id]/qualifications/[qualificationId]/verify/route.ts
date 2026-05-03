@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
 
 export async function POST(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string; qualificationId: string }> }
 ) {
   try {
     const { id, qualificationId } = await params;
-    const body = await __request.json();
+    const body = await _request.json();
     const { verifiedBy } = body;
 
     if (!verifiedBy) {

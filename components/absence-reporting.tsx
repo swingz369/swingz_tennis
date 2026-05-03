@@ -23,7 +23,7 @@ import {
   Filter,
   Search,
   Download,
-  Sick,
+  Thermometer,
   Plane,
   User as UserIcon,
   MoreHorizontal,
@@ -209,14 +209,14 @@ export default function AbsenceReporting() {
     }
   };
 
-  const getTypeIcon = (type: Absence['type']) => {
-    switch (type) {
-      case 'sick':
-        return <Sick className="h-4 w-4" />;
-      case 'vacation':
-        return <Plane className="h-4 w-4" />;
-      case 'personal':
-        return <UserIcon className="h-4 w-4" />;
+   const getTypeIcon = (type: Absence['type']) => {
+     switch (type) {
+       case 'sick':
+         return <Thermometer className="h-4 w-4" />;
+       case 'vacation':
+         return <Plane className="h-4 w-4" />;
+       case 'personal':
+         return <UserIcon className="h-4 w-4" />;
       case 'other':
         return <MoreHorizontal className="h-4 w-4" />;
     }

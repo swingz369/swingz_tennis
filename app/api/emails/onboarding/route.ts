@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EmailService } from '@/src/application/services/email.service';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       type,
@@ -23,73 +23,75 @@ export async function POST(___request: NextRequest) {
 
     let success = false;
 
-    switch (type) {
-      case 'welcome':
-        success = await EmailService.sendWelcomeEmail({
-          recipientName,
-          recipientEmail,
-          clubName,
-          memberType,
-          startDate: startDate ? new Date(startDate) : undefined,
-          assignedGroup,
-          temporaryPassword,
-          welcomeGuideUrl,
-          clubAddress,
-          clubPhone,
-          clubEmail,
-        });
-        break;
+     switch (type) {
+       case 'welcome':
+         success = await EmailService.sendWelcomeEmail({
+           recipientName,
+           recipientEmail,
+           clubName,
+           memberType,
+           startDate: startDate ? new Date(startDate) : undefined,
+           assignedGroup,
+           temporaryPassword,
+           welcomeGuideUrl,
+           clubAddress,
+           clubPhone,
+           clubEmail,
+         });
+         break;
 
-      case 'trial':
-        success = await EmailService.sendTrialTrainingEmail({
-          recipientName,
-          recipientEmail,
-          clubName,
-          startDate: startDate ? new Date(startDate) : undefined,
-          clubAddress,
-          clubPhone,
-          clubEmail,
-        });
-        break;
+       case 'trial':
+         success = await EmailService.sendTrialTrainingEmail({
+           recipientName,
+           recipientEmail,
+           clubName,
+           memberType: 'trial',
+           startDate: startDate ? new Date(startDate) : undefined,
+           clubAddress,
+           clubPhone,
+           clubEmail,
+         });
+         break;
 
-      case 'approval':
-        success = await EmailService.sendMembershipApprovalEmail({
-          recipientName,
-          recipientEmail,
-          clubName,
-          memberType,
-          startDate: startDate ? new Date(startDate) : undefined,
-          assignedGroup,
-          clubAddress,
-          clubPhone,
-          clubEmail,
-        });
-        break;
+       case 'approval':
+         success = await EmailService.sendMembershipApprovalEmail({
+           recipientName,
+           recipientEmail,
+           clubName,
+           memberType: memberType || 'member',
+           startDate: startDate ? new Date(startDate) : undefined,
+           assignedGroup,
+           clubAddress,
+           clubPhone,
+           clubEmail,
+         });
+         break;
 
-      case 'rejection':
-        if (!reason) {
-          return NextResponse.json(
-            { error: 'Reason is required for rejection emails' },
-            { status: 400 }
-          );
-        }
-        success = await EmailService.sendRejectionEmail({
-          recipientName,
-          recipientEmail,
-          clubName,
-          reason,
-          clubAddress,
-          clubPhone,
-          clubEmail,
-        });
-        break;
+       case 'rejection':
+         if (!reason) {
+           return NextResponse.json(
+             { error: 'Reason is required for rejection emails' },
+             { status: 400 }
+           );
+         }
+         success = await EmailService.sendRejectionEmail({
+           recipientName,
+           recipientEmail,
+           clubName,
+           memberType: memberType || 'member',
+           reason,
+           clubAddress,
+           clubPhone,
+           clubEmail,
+         });
+         break;
 
-      default:
-        return NextResponse.json(
-          { error: 'Invalid email type' },
-          { status: 400 }
-        );
-    }
+       default:
+         return NextResponse.json(
+           { error: 'Invalid email type' },
+           { status: 400 }
+         );
+     }
 
     if (success) {
       return NextResponse.json({ success: true, message: 'Email sent successfully' });

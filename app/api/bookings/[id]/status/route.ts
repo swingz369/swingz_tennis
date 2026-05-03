@@ -11,7 +11,7 @@ type Membership = {
   role: 'member' | 'trainer' | 'admin' | 'superadmin';
 };
 
-export async function PATCH(____request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return withValidation(updateBookingStatusSchema, async (input) => {
@@ -55,5 +55,5 @@ export async function PATCH(____request: NextRequest, { params }: { params: Prom
       const statusCode = message.includes('Forbidden') ? 403 : 400;
       return NextResponse.json({ error: message }, { status: statusCode });
     }
-  })(request);
+   })(_request);
 }

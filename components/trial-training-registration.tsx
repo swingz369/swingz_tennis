@@ -53,7 +53,7 @@ export default function TrialTrainingRegistration() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'trial',
-            recipientName: `${formData.firstName} ${formData.lastName}`,
+            recipientName: formData.fullName,
             recipientEmail: formData.email,
             clubName: 'SwingZ Tennis Club',
             startDate: formData.preferredDate ? new Date(formData.preferredDate) : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
@@ -67,7 +67,16 @@ export default function TrialTrainingRegistration() {
       }
 
       toast.success('Probetraining erfolgreich gebucht! Wir haben dir eine Bestätigungs-E-Mail gesendet.');
-      setFormData(INITIAL_FORM_DATA);
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        preferredDate: '',
+        preferredTime: '',
+        experience: '',
+        goals: '',
+        notes: '',
+      });
     } catch (error) {
       toast.error('Fehler bei der Buchung. Bitte versuche es erneut.');
       console.error('Trial training booking error:', error);

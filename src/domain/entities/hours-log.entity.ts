@@ -49,6 +49,8 @@ export interface UpdateHoursLogInput {
   type?: 'training' | 'preparation' | 'meeting' | 'other';
   status?: 'pending' | 'approved' | 'rejected';
   notes?: string;
+  approvedBy?: string;
+  approvedAt?: string;
 }
 
 export interface CreateAttendanceRecordInput {

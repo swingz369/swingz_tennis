@@ -4,11 +4,11 @@ import { billingEngine } from '@/lib/billing-engine';
 import { CreateInvoice } from '@/lib/types/billing';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const { user } = await requireAuth();
 
-    const body = await __request.json();
+    const body = await _request.json();
     const { member_id, due_date, items, notes } = body;
 
     if (!member_id) {

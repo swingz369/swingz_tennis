@@ -3,10 +3,10 @@ import { requireAuth } from '@/lib/auth';
 import { billingEngine } from '@/lib/billing-engine';
 import { createStripeCheckoutSession } from '@/lib/stripe/stripe-client';
 
-export async function POST(___request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const { user } = await requireAuth();
-    const body = await __request.json();
+    const body = await _request.json();
 
     const { invoiceId } = body;
 

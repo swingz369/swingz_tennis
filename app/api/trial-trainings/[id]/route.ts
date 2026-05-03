@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrialTrainingService } from '@/src/application/services/trial-training.service';
 
 export async function GET(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -27,12 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = await __request.json();
+    const body = await _request.json();
 
     const { status, notes, feedback, convertedToMemberId } = body;
 
@@ -61,7 +61,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

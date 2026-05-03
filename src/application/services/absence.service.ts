@@ -1,9 +1,9 @@
 import {
   Absence,
-  AbsenceConflict,
   CreateAbsenceInput,
   UpdateAbsenceInput,
-} from '../entities/absence.entity';
+  AbsenceConflict,
+} from '../../domain/entities/absence.entity';
 
 export class AbsenceService {
   private static absences: Absence[] = [];

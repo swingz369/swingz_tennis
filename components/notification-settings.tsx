@@ -336,7 +336,7 @@ export default function NotificationSettings() {
                         ? 'bg-gray-100'
                         : 'bg-brand-primary/20'
                     }`}>
-                      <NotificationIcon />
+                      <Bell className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
@@ -359,7 +359,9 @@ export default function NotificationSettings() {
                             className="h-auto p-0 text-xs"
                             onClick={() => {
                               // Navigate to action URL
-                              window.location.href = notification.actionUrl;
+                              if (notification.actionUrl) {
+                                window.location.href = notification.actionUrl;
+                              }
                             }}
                           >
                             Anzeigen

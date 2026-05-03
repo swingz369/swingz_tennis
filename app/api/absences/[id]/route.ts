@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AbsenceService } from '@/src/application/services/absence.service';
 
 export async function GET(
-  __request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -27,12 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  __request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const body = await __request.json();
+    const body = await _request.json();
 
     const {
       type,
@@ -70,7 +70,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _____request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

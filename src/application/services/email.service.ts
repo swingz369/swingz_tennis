@@ -733,6 +733,7 @@ Dein ${clubName}-Team
       clubAddress,
       clubPhone,
       clubEmail,
+      reason,
     } = data;
 
     const subject = `Deine Bewerbung bei ${clubName}`;
@@ -957,7 +958,7 @@ Dein ${clubName}-Team
    * Send rejection email
    */
   static async sendRejectionEmail(data: OnboardingEmailData & { reason: string }): Promise<boolean> {
-    const email = this.generateRejectionEmail(data, data.reason);
+    const email = this.generateRejectionEmail(data);
     return this.sendEmail(data.recipientEmail, email);
   }
 }
