@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrainerAvailabilityService } from '@/src/application/services/trainer-availability.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const availability = await TrainerAvailabilityService.getTrainerAvailabilityById(params.id);
+    const { id } = await params;
+    const availability = await TrainerAvailabilityService.getTrainerAvailabilityById(id);
 
     if (!availability) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       date,
@@ -40,7 +42,7 @@ export async function PATCH(
       notes,
     } = body;
 
-    const updated = await TrainerAvailabilityService.updateTrainerAvailability(params.id, {
+    const updated = await TrainerAvailabilityService.updateTrainerAvailability(id, {
       date,
       startTime,
       endTime,
@@ -66,11 +68,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await TrainerAvailabilityService.deleteTrainerAvailability(params.id);
+    const { id } = await params;
+    const success = await TrainerAvailabilityService.deleteTrainerAvailability(id);
 
     if (!success) {
       return NextResponse.json(

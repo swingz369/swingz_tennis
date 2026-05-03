@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MemberService } from '@/src/application/services/member.service';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await __request.json();
 
     const {
       userId,
@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
     const status = searchParams.get('status');
     const type = searchParams.get('type');
     const trainingGroup = searchParams.get('trainingGroup');

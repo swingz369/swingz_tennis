@@ -3,10 +3,10 @@ import { requireAuth } from '@/lib/auth';
 import { billingEngine } from '@/lib/billing-engine';
 import { CreatePayment } from '@/lib/types/billing';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
     await requireAuth();
-    const body = await request.json();
+    const body = await __request.json();
 
     const { clubId, memberId, invoiceId, amount, paymentMethod, notes } = body;
 
@@ -32,10 +32,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
     await requireAuth();
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
 
     const invoiceId = searchParams.get('invoiceId');
     const memberId = searchParams.get('memberId');

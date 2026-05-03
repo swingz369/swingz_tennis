@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuditLogService } from '@/src/application/services/audit-log.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auditLog = await AuditLogService.getAuditLogById(params.id);
+    const { id } = await params;
+    const auditLog = await AuditLogService.getAuditLogById(id);
 
     if (!auditLog) {
       return NextResponse.json(

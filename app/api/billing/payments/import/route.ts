@@ -11,11 +11,11 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_RECORDS = 1000;
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
     const { user } = await requireAuth();
 
-    const formData = await request.formData();
+    const formData = await _request.formData();
     const file = formData.get('file') as File;
 
     if (!file) {

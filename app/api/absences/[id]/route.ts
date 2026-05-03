@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AbsenceService } from '@/src/application/services/absence.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  __request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const absence = await AbsenceService.getAbsenceById(params.id);
+    const { id } = await params;
+    const absence = await AbsenceService.getAbsenceById(id);
 
     if (!absence) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  __request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       type,
@@ -41,7 +43,7 @@ export async function PATCH(
       notes,
     } = body;
 
-    const updated = await AbsenceService.updateAbsence(params.id, {
+    const updated = await AbsenceService.updateAbsence(id, {
       type,
       startDate,
       endDate,
@@ -68,11 +70,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await AbsenceService.deleteAbsence(params.id);
+    const { id } = await params;
+    const success = await AbsenceService.deleteAbsence(id);
 
     if (!success) {
       return NextResponse.json(

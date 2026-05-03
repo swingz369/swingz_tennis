@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BillingService } from '@/src/application/services/billing.service';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const updated = await BillingService.markTrainerBillingAsOverdue(params.id);
+    const { id } = await params;
+    const updated = await BillingService.markTrainerBillingAsOverdue(id);
 
     if (!updated) {
       return NextResponse.json(

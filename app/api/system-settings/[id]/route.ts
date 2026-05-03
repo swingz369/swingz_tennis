@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SystemSettingsService } from '@/src/application/services/system-settings.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const systemSetting = await SystemSettingsService.getSystemSettingById(params.id);
+    const { id } = await params;
+    const systemSetting = await SystemSettingsService.getSystemSettingById(id);
 
     if (!systemSetting) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       value,
@@ -40,7 +42,7 @@ export async function PATCH(
       validation,
     } = body;
 
-    const updated = await SystemSettingsService.updateSystemSetting(params.id, {
+    const updated = await SystemSettingsService.updateSystemSetting(id, {
       value,
       description,
       isPublic,
@@ -66,11 +68,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await SystemSettingsService.deleteSystemSetting(params.id);
+    const { id } = await params;
+    const success = await SystemSettingsService.deleteSystemSetting(id);
 
     if (!success) {
       return NextResponse.json(
@@ -83,7 +86,7 @@ export async function DELETE(
   } catch (error) {
     console.error('System setting delete error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

@@ -26,8 +26,8 @@ const BrandingSchema = z.object({
   customDomain: z.string().url().optional().nullable(),
 });
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+export async function GET(___request: NextRequest) {
+  const { searchParams } = new URL(__request.url);
   const clubId = searchParams.get('clubId');
 
   if (!clubId) {
@@ -47,13 +47,13 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function PUT(request: NextRequest) {
+export async function PUT(___request: NextRequest) {
   try {
-    const clubId = request.headers.get('x-club-id') || request.headers.get('x-tenant-id');
+    const clubId = __request.headers.get('x-club-id') || __request.headers.get('x-tenant-id');
     if (!clubId) {
       return NextResponse.json({ error: 'Club ID header missing' }, { status: 400 });
     }
-    const body = await request.json();
+    const body = await __request.json();
     const validated = BrandingSchema.parse({ clubId, ...body });
 
     // In real implementation: save to database

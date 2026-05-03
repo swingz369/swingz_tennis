@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { constructStripeEvent, handleStripeWebhook } from '@/lib/stripe/stripe-client';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const payload = await request.text();
-    const signature = request.headers.get('stripe-signature');
+    const payload = await _request.text();
+    const signature = _request.headers.get('stripe-signature');
 
     if (!signature) {
       return NextResponse.json(

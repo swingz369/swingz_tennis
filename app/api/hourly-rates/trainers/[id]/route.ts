@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const trainerRate = await HourlyRateService.getTrainerHourlyRateById(params.id);
+    const { id } = await params;
+    const trainerRate = await HourlyRateService.getTrainerHourlyRateById(id);
 
     if (!trainerRate) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       overrideRate,
@@ -38,7 +40,7 @@ export async function PATCH(
       reason,
     } = body;
 
-    const updated = await HourlyRateService.updateTrainerHourlyRate(params.id, {
+    const updated = await HourlyRateService.updateTrainerHourlyRate(id, {
       overrideRate,
       validUntil,
       reason,
@@ -62,11 +64,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await HourlyRateService.deleteTrainerHourlyRate(params.id);
+    const { id } = await params;
+    const success = await HourlyRateService.deleteTrainerHourlyRate(id);
 
     if (!success) {
       return NextResponse.json(

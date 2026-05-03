@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AbsenceService } from '@/src/application/services/absence.service';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  __request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
     const { approvedBy } = body;
 
     if (!approvedBy) {
@@ -16,7 +17,7 @@ export async function POST(
       );
     }
 
-    const updated = await AbsenceService.rejectAbsence(params.id, approvedBy);
+    const updated = await AbsenceService.rejectAbsence(id, approvedBy);
 
     if (!updated) {
       return NextResponse.json(

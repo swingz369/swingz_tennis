@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       name,
@@ -23,7 +24,7 @@ export async function POST(
       );
     }
 
-    const updated = await TrainerProfileService.addQualification(params.id, {
+    const updated = await TrainerProfileService.addQualification(id, {
       name,
       issuer,
       issuedDate,

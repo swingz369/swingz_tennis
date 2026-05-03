@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { StatisticsService } from '@/src/application/services/statistics.service';
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    const searchParams = __request.nextUrl.searchParams;
     const period = (searchParams.get('period') || 'monthly') as 'daily' | 'weekly' | 'monthly' | 'yearly';
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');

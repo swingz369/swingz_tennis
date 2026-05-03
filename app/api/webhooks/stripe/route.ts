@@ -6,9 +6,9 @@ import {
 } from '@/lib/stripe/stripe-client';
 import { billingEngine } from '@/lib/billing-engine';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const body = await request.text();
+    const body = await _request.text();
     const signature = headers().get('stripe-signature');
 
     if (!signature) {

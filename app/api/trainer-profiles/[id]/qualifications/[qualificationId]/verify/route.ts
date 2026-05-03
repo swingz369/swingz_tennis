@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string; qualificationId: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string; qualificationId: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id, qualificationId } = await params;
+    const body = await __request.json();
     const { verifiedBy } = body;
 
     if (!verifiedBy) {
@@ -17,8 +18,8 @@ export async function POST(
     }
 
     const updated = await TrainerProfileService.verifyQualification(
-      params.id,
-      params.qualificationId,
+      id,
+      qualificationId,
       verifiedBy
     );
 

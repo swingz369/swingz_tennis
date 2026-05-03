@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BillingService } from '@/src/application/services/billing.service';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await __request.json();
 
     const {
       billingPeriodId,
@@ -45,9 +45,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
     const billingPeriodId = searchParams.get('billingPeriodId');
     const trainerId = searchParams.get('trainerId');
     const status = searchParams.get('status');

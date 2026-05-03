@@ -179,7 +179,7 @@ export class TrainerAvailabilityService {
     const end = endDate ? new Date(endDate) : new Date();
     end.setFullYear(end.getFullYear() + 1); // Default to 1 year in the future
 
-    let nextDate = new Date(currentDate);
+    const nextDate = new Date(currentDate);
 
     while (nextDate <= end) {
       switch (type) {
@@ -395,12 +395,11 @@ export class TrainerAvailabilityService {
   /**
    * Initialize with mock data (for development)
    */
-  static initializeMockData(): void {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    
-    // Create availabilities for the next 7 days
-    for (let i = 0; i < 7; i++) {
+static initializeMockData(): void {
+  const now = new Date();
+  
+  // Create availabilities for the next 7 days
+  for (let i = 0; i < 7; i++) {
       const date = new Date(now);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];

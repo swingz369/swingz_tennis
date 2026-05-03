@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const rateTier = await HourlyRateService.getHourlyRateTierById(params.id);
+    const { id } = await params;
+    const rateTier = await HourlyRateService.getHourlyRateTierById(id);
 
     if (!rateTier) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       name,
@@ -41,7 +43,7 @@ export async function PATCH(
       isActive,
     } = body;
 
-    const updated = await HourlyRateService.updateHourlyRateTier(params.id, {
+    const updated = await HourlyRateService.updateHourlyRateTier(id, {
       name,
       description,
       baseRate,
@@ -68,11 +70,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await HourlyRateService.deleteHourlyRateTier(params.id);
+    const { id } = await params;
+    const success = await HourlyRateService.deleteHourlyRateTier(id);
 
     if (!success) {
       return NextResponse.json(

@@ -3,11 +3,11 @@ import { requireAuth } from '@/lib/auth';
 import { billingEngine } from '@/lib/billing-engine';
 import { PaymentStatus } from '@/lib/types/billing';
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(____request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAuth();
     const { id } = await params;
-    const body = await request.json();
+    const body = await __request.json();
 
     const { status, processedAt, failedAt, failureReason, refundedAt, refundAmount, refundReason } =
       body;

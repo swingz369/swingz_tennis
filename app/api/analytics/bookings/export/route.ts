@@ -52,15 +52,15 @@ const DEMO_BOOKINGS = [
   },
 ];
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+export async function GET(_request: NextRequest) {
+    const { searchParams } = new URL(_request.url);
   const clubId = searchParams.get('clubId');
 
   if (!clubId) {
     return NextResponse.json({ error: 'clubId required' }, { status: 400 });
   }
 
-  if (isDemoMode(request)) {
+  if (isDemoMode(_request)) {
     const csv = convertToCSV(DEMO_BOOKINGS);
     return new NextResponse(csv, {
       headers: {

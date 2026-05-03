@@ -8,8 +8,8 @@ function isDemoMode(req: NextRequest): boolean {
   return !!cookies?.value;
 }
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+export async function GET(___request: NextRequest) {
+  const { searchParams } = new URL(__request.url);
   const clubId = searchParams.get('clubId');
 
   if (!clubId) {

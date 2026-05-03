@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AbsenceService } from '@/src/application/services/absence.service';
 
-export async function POST(request: NextRequest) {
+export async function POST(__request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await __request.json();
 
     const {
       trainerId,
@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(__request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
     const trainerId = searchParams.get('trainerId');
     const status = searchParams.get('status');
     const type = searchParams.get('type');

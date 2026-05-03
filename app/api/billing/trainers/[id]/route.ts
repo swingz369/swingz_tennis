@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BillingService } from '@/src/application/services/billing.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const trainerBilling = await BillingService.getTrainerBillingById(params.id);
+    const { id } = await params;
+    const trainerBilling = await BillingService.getTrainerBillingById(id);
 
     if (!trainerBilling) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       status,
@@ -41,7 +43,7 @@ export async function PATCH(
       notes,
     } = body;
 
-    const updated = await BillingService.updateTrainerBilling(params.id, {
+    const updated = await BillingService.updateTrainerBilling(id, {
       status,
       invoiceId,
       invoiceNumber,

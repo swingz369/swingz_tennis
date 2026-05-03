@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PaymentSettingsService } from '@/src/application/services/payment-settings.service';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const result = await PaymentSettingsService.testPaymentSettings(params.id);
+    const { id } = await params;
+    const result = await PaymentSettingsService.testPaymentSettings(id);
 
     if (!result.success) {
       return NextResponse.json(

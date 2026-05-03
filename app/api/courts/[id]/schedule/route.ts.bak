@@ -1,0 +1,72 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth';
+import { courtBookingEngine } from '@/lib/court-booking-engine';
+import { createClient } from '@/infrastructure/external/supabase/server';
+
+export async function GET(
+  ____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { user } = await requireAuth();
+    const { id: courtId } = await params;
+
+    const searchParams = request.nextUrl.searchParams;
+    const startDate = searchParams.get('start_date') || '';
+    const endDate = searchParams.get('end_date') || '';
+
+    if (!startDate || !endDate) {
+      return NextResponse.json(
+        { error: 'start_date and end_date are required' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+
+    const { data: membership, error: membershipError } = await supabase
+      .from('user_club_memberships')
+      .select('club_id, role')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership) {
+      return NextResponse.json(
+        { error: 'Kein aktiver Club gefunden' },
+        { status: 403 }
+      );
+    }
+
+    const { data: court } = await supabase
+      .from('courts')
+      .select('*, court_type(*)')
+      .eq('id', courtId)
+      .single();
+
+    if (!court) {
+      return NextResponse.json(
+        { error: 'Platz nicht gefunden' },
+        { status: 404 }
+      );
+    }
+
+    if (court.club_id !== membership.club_id && !['admin', 'superadmin'].includes(membership.role)) {
+      return NextResponse.json(
+        { error: 'Keine Berechtigung für diesen Platz' },
+        { status: 403 }
+      );
+    }
+
+    const schedule = await courtBookingEngine.getCourtSchedule(courtId, startDate, endDate);
+
+    return NextResponse.json(schedule);
+  } catch (error) {
+    console.error('Error fetching court schedule:', error);
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const message = isDevelopment && error instanceof Error
+      ? error.message
+      : 'Ein Fehler ist aufgetreten';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

@@ -11,14 +11,14 @@ function isValidUrl(url: string | undefined): url is string {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await __request.json();
     const event = body;
 
     // In production, validate webhook signature
     // if (process.env.NODE_ENV === 'production') {
-    //   const signature = request.headers.get('zapier-signature');
+    //   const signature = _request.headers.get('zapier-signature');
     //   // Validate signature
     // }
 

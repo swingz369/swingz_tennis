@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { FeeConfigurationService } from '@/src/application/services/fee-configuration.service';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await __request.json();
 
     const {
       name,
@@ -47,9 +47,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
     const type = searchParams.get('type');
     const billingCycle = searchParams.get('billingCycle');
     const active = searchParams.get('active');

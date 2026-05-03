@@ -11,7 +11,7 @@ type Membership = {
   role: 'member' | 'trainer' | 'admin' | 'superadmin';
 };
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(____request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return withValidation(updateBookingStatusSchema, async (input) => {

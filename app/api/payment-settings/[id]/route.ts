@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PaymentSettingsService } from '@/src/application/services/payment-settings.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const paymentSettings = await PaymentSettingsService.getPaymentSettingsById(params.id);
+    const { id } = await params;
+    const paymentSettings = await PaymentSettingsService.getPaymentSettingsById(id);
 
     if (!paymentSettings) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       gatewayName,
@@ -44,7 +46,7 @@ export async function PATCH(
       fees,
     } = body;
 
-    const updated = await PaymentSettingsService.updatePaymentSettings(params.id, {
+    const updated = await PaymentSettingsService.updatePaymentSettings(id, {
       gatewayName,
       isActive,
       isDefault,
@@ -74,11 +76,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await PaymentSettingsService.deletePaymentSettings(params.id);
+    const { id } = await params;
+    const success = await PaymentSettingsService.deletePaymentSettings(id);
 
     if (!success) {
       return NextResponse.json(

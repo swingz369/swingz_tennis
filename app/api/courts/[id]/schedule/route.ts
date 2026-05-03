@@ -4,14 +4,14 @@ import { courtBookingEngine } from '@/lib/court-booking-engine';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
 export async function GET(
-  request: NextRequest,
+  _____request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user } = await requireAuth();
     const { id: courtId } = await params;
 
-    const searchParams = request.nextUrl.searchParams;
+    const searchParams = _request.nextUrl.searchParams;
     const startDate = searchParams.get('start_date') || '';
     const endDate = searchParams.get('end_date') || '';
 

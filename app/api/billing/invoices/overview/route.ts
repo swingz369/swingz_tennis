@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { billingEngine } from '@/lib/billing-engine';
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
     await requireAuth();
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
 
     const clubId = searchParams.get('clubId');
     const memberId = searchParams.get('memberId');

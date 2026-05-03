@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { billingEngine } from '@/lib/billing-engine';
 import { generateInvoicePDF, getInvoiceFileName } from '@/lib/pdf/invoice-pdf-utils';
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_____request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { user } = await requireAuth();
     const { id: invoiceId } = await params;

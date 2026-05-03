@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
     const trainerId = searchParams.get('trainerId');
 
     if (trainerId) {

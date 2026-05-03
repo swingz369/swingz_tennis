@@ -9,11 +9,11 @@ import {
 } from '@/lib/sepa/pain008-generator';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
     const { user } = await requireAuth();
 
-    const body = await request.json();
+    const body = await __request.json();
     const { paymentIds, executionDate } = body;
 
     if (!Array.isArray(paymentIds) || paymentIds.length === 0) {

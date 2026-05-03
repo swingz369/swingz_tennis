@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { EmailService } from '@/src/application/services/email.service';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await __request.json();
 
     const {
       type,

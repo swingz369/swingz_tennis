@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SystemSettingsService } from '@/src/application/services/system-settings.service';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await __request.json();
 
     const {
       category,
@@ -45,18 +45,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(__request.url);
     const category = searchParams.get('category');
     const key = searchParams.get('key');
-    const public = searchParams.get('public');
+    const isPublic = searchParams.get('public');
     const object = searchParams.get('object');
 
     if (object) {
-      const settings = await SystemSettingsService.getSystemSettingsAsObject(
-        category as any
-      );
+      const settings = await SystemSettingsService.getSystemSettingsAsObject(category as SystemSettings['category']);
       return NextResponse.json({ settings });
     }
 
@@ -71,13 +69,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ systemSetting });
     }
 
-    if (public) {
+    if (isPublic) {
       const systemSettings = await SystemSettingsService.getPublicSystemSettings();
       return NextResponse.json({ systemSettings });
     }
 
     if (category) {
-      const systemSettings = await SystemSettingsService.getSystemSettingsByCategory(category as any);
+      const systemSettings = await SystemSettingsService.getSystemSettingsByCategory(category);
       return NextResponse.json({ systemSettings });
     }
 

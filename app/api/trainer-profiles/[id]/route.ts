@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const trainerProfile = await TrainerProfileService.getTrainerProfileById(params.id);
+    const { id } = await params;
+    const trainerProfile = await TrainerProfileService.getTrainerProfileById(id);
 
     if (!trainerProfile) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       firstName,
@@ -51,7 +53,7 @@ export async function PATCH(
       emergencyContact,
     } = body;
 
-    const updated = await TrainerProfileService.updateTrainerProfile(params.id, {
+    const updated = await TrainerProfileService.updateTrainerProfile(id, {
       firstName,
       lastName,
       email,
@@ -88,11 +90,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await TrainerProfileService.deleteTrainerProfile(params.id);
+    const { id } = await params;
+    const success = await TrainerProfileService.deleteTrainerProfile(id);
 
     if (!success) {
       return NextResponse.json(

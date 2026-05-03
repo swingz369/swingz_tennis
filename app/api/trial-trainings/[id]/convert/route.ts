@@ -3,11 +3,12 @@ import { TrialTrainingService } from '@/src/application/services/trial-training.
 import { EmailService } from '@/src/application/services/email.service';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
     const { memberId, memberType, startDate, assignedGroup } = body;
 
     if (!memberId) {
@@ -18,7 +19,7 @@ export async function POST(
     }
 
     // Get trial training
-    const trialTraining = await TrialTrainingService.getTrialTrainingById(params.id);
+    const trialTraining = await TrialTrainingService.getTrialTrainingById(id);
 
     if (!trialTraining) {
       return NextResponse.json(
@@ -35,7 +36,7 @@ export async function POST(
     }
 
     // Convert trial to member
-    const updated = await TrialTrainingService.convertTrialToMember(params.id, memberId);
+    const updated = await TrialTrainingService.convertTrialToMember(id, memberId);
 
     if (!updated) {
       return NextResponse.json(

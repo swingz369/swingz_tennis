@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { MemberService } from '@/src/application/services/member.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const member = await MemberService.getMemberById(params.id);
+    const { id } = await params;
+    const member = await MemberService.getMemberById(id);
 
     if (!member) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       firstName,
@@ -48,7 +50,7 @@ export async function PATCH(
       notes,
     } = body;
 
-    const updated = await MemberService.updateMember(params.id, {
+    const updated = await MemberService.updateMember(id, {
       firstName,
       lastName,
       email,
@@ -82,11 +84,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await MemberService.deleteMember(params.id);
+    const { id } = await params;
+    const success = await MemberService.deleteMember(id);
 
     if (!success) {
       return NextResponse.json(

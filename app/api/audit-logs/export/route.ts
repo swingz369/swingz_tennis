@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AuditLogService } from '@/src/application/services/audit-log.service';
 import { AuditLogFilter } from '@/src/domain/entities/audit-log.entity';
 
-export async function GET(request: NextRequest) {
+export async function GET(___request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    const searchParams = _request.nextUrl.searchParams;
     const format = (searchParams.get('format') || 'json') as 'json' | 'csv';
     
     const filter: AuditLogFilter = {

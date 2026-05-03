@@ -8,10 +8,10 @@ import {
 } from '@/lib/sepa/pain008-xml';
 import type { Payment, SepaMandate } from '@/lib/types/billing';
 
-export async function POST(request: NextRequest) {
+export async function POST(___request: NextRequest) {
   try {
     await requireAuth();
-    const body = await request.json();
+    const body = await __request.json();
 
     const { clubId, paymentIds } = body;
 

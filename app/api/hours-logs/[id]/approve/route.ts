@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HoursLogService } from '@/src/application/services/hours-log.service';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  ___request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
     const { approvedBy } = body;
 
     if (!approvedBy) {
@@ -16,7 +17,7 @@ export async function POST(
       );
     }
 
-    const updated = await HoursLogService.approveHoursLog(params.id, approvedBy);
+    const updated = await HoursLogService.approveHoursLog(id, approvedBy);
 
     if (!updated) {
       return NextResponse.json(

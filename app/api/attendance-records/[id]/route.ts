@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { HoursLogService } from '@/src/application/services/hours-log.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const attendanceRecord = await HoursLogService.getAttendanceRecordById(params.id);
+    const { id } = await params;
+    const attendanceRecord = await HoursLogService.getAttendanceRecordById(id);
 
     if (!attendanceRecord) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       status,
@@ -39,7 +41,7 @@ export async function PATCH(
       notes,
     } = body;
 
-    const updated = await HoursLogService.updateAttendanceRecord(params.id, {
+    const updated = await HoursLogService.updateAttendanceRecord(id, {
       status,
       checkInTime,
       checkOutTime,
@@ -64,11 +66,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await HoursLogService.deleteAttendanceRecord(params.id);
+    const { id } = await params;
+    const success = await HoursLogService.deleteAttendanceRecord(id);
 
     if (!success) {
       return NextResponse.json(

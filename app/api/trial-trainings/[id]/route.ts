@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TrialTrainingService } from '@/src/application/services/trial-training.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const trialTraining = await TrialTrainingService.getTrialTrainingById(params.id);
+    const { id } = await params;
+    const trialTraining = await TrialTrainingService.getTrialTrainingById(id);
 
     if (!trialTraining) {
       return NextResponse.json(
@@ -26,15 +27,16 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const { status, notes, feedback, convertedToMemberId } = body;
 
-    const updated = await TrialTrainingService.updateTrialTraining(params.id, {
+    const updated = await TrialTrainingService.updateTrialTraining(id, {
       status,
       notes,
       feedback,
@@ -59,11 +61,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await TrialTrainingService.deleteTrialTraining(params.id);
+    const { id } = await params;
+    const success = await TrialTrainingService.deleteTrialTraining(id);
 
     if (!success) {
       return NextResponse.json(

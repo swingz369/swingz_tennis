@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { FeeConfigurationService } from '@/src/application/services/fee-configuration.service';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const feeConfiguration = await FeeConfigurationService.getFeeConfigurationById(params.id);
+    const { id } = await params;
+    const feeConfiguration = await FeeConfigurationService.getFeeConfigurationById(id);
 
     if (!feeConfiguration) {
       return NextResponse.json(
@@ -26,11 +27,12 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
+    const { id } = await params;
+    const body = await __request.json();
 
     const {
       name,
@@ -45,7 +47,7 @@ export async function PATCH(
       conditions,
     } = body;
 
-    const updated = await FeeConfigurationService.updateFeeConfiguration(params.id, {
+    const updated = await FeeConfigurationService.updateFeeConfiguration(id, {
       name,
       description,
       type,
@@ -76,11 +78,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _____request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await FeeConfigurationService.deleteFeeConfiguration(params.id);
+    const { id } = await params;
+    const success = await FeeConfigurationService.deleteFeeConfiguration(id);
 
     if (!success) {
       return NextResponse.json(
