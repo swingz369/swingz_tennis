@@ -13,6 +13,9 @@ import {
   CreditCard,
   Home,
   HelpCircle,
+  MapPin,
+  TrendingUp,
+  Bell,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -32,7 +35,11 @@ export function Sidebar({
 
   const mainNav = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Trainingszeiten', href: '/training-schedule', icon: Calendar },
+    { name: 'Anwesenheit', href: '/attendance-history', icon: TrendingUp },
+    { name: 'News', href: '/news', icon: Bell },
     { name: 'Bookings', href: '/bookings', icon: Calendar },
+    { name: 'Plätze', href: '/courts', icon: MapPin },
     ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),
     { name: 'Abo & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin }, // Für Mitglieder
   ];
@@ -43,6 +50,8 @@ export function Sidebar({
     { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin },
     { name: 'Members', href: '/admin/members', icon: Users, showIf: isAdmin },
     { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },
+    { name: 'Plätze Verwaltung', href: '/admin/courts', icon: MapPin, showIf: isAdmin },
+    { name: 'Genehmigungen', href: '/admin/approvals', icon: CheckCircle, showIf: isAdmin },
     { name: 'Settings', href: '/admin/settings', icon: Settings, showIf: isAdmin },
     { name: 'Billing Admin', href: '/admin/billing', icon: CreditCard, showIf: isSuperAdmin },
   ].filter((item) => item.showIf);

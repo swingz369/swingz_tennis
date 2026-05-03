@@ -1,0 +1,112 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const trainerProfile = await TrainerProfileService.getTrainerProfileById(params.id);
+
+    if (!trainerProfile) {
+      return NextResponse.json(
+        { error: 'Trainer profile not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ trainerProfile });
+  } catch (error) {
+    console.error('Trainer profile fetch error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dateOfBirth,
+      bio,
+      profileImageUrl,
+      qualifications,
+      specializations,
+      experience,
+      status,
+      hourlyRate,
+      availability,
+      preferredTimeSlots,
+      languages,
+      emergencyContact,
+    } = body;
+
+    const updated = await TrainerProfileService.updateTrainerProfile(params.id, {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dateOfBirth,
+      bio,
+      profileImageUrl,
+      qualifications,
+      specializations,
+      experience,
+      status,
+      hourlyRate,
+      availability,
+      preferredTimeSlots,
+      languages,
+      emergencyContact,
+    });
+
+    if (!updated) {
+      return NextResponse.json(
+        { error: 'Trainer profile not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, trainerProfile: updated });
+  } catch (error) {
+    console.error('Trainer profile update error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const success = await TrainerProfileService.deleteTrainerProfile(params.id);
+
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Trainer profile not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Trainer profile delete error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

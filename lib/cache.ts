@@ -52,6 +52,10 @@ export const QUERY_KEYS = {
   // Trainers
   trainers: (clubId: string) => ['trainers', clubId] as const,
   trainer: (trainerId: string) => ['trainer', trainerId] as const,
+
+  // Courts
+  courts: (clubId: string) => ['courts', clubId] as const,
+  court: (courtId: string) => ['court', courtId] as const,
 };
 
 export function invalidateQueries(queryClient: QueryClient, key: readonly unknown[]) {

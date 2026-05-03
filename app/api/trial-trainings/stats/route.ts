@@ -1,0 +1,15 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { TrialTrainingService } from '@/src/application/services/trial-training.service';
+
+export async function GET(request: NextRequest) {
+  try {
+    const stats = await TrialTrainingService.getTrialTrainingStats();
+    return NextResponse.json({ stats });
+  } catch (error) {
+    console.error('Trial training stats error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

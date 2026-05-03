@@ -14,6 +14,11 @@ import {
   InvoiceStatus,
   PaymentStatus,
 } from './types/billing';
+import {
+  generatePain008Xml,
+  SepaDirectDebitTransaction,
+  SepaPain008Config,
+} from './sepa/pain008-generator';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -657,6 +662,102 @@ export class BillingEngine {
     }
 
     return newDunningRecords;
+  }
+
+  async generateSepaDirectDebit(
+    paymentIds: string[],
+    config?: Partial<SepaPain008Config>
+  ): Promise<{ xml: string; fileName: string; transactions: SepaDirectDebitTransaction[] }> {
+    const payments = await Promise.all(
+      paymentIds.map((id) => this.getPaymentById(id))
+    );
+
+    const validPayments = payments.filter((p) => p !== null);
+
+    if (validPayments.length === 0) {
+      throw new Error('No valid payments found');
+    }
+
+    const transactions: SepaDirectDebitTransaction[] = [];
+
+    for (const payment of validPayments) {
+      if (!payment.sepa_mandate_id) {
+        throw new Error(`Payment ${payment.id} has no SEPA mandate`);
+      }
+
+      const mandate = await this.getSepaMandateById(payment.sepa_mandate_id);
+
+      if (!mandate) {
+        throw new Error(`SEPA mandate ${payment.sepa_mandate_id} not found`);
+      }
+
+      if (mandate.status !== 'active') {
+        throw new Error(`SEPA mandate ${payment.sepa_mandate_id} is not active`);
+      }
+
+      const invoice = payment.invoice_id
+        ? await this.getInvoiceById(payment.invoice_id)
+        : null;
+
+      transactions.push({
+        paymentId: payment.id,
+        mandateId: mandate.id,
+        mandateReference: mandate.mandate_reference,
+        creditorId: mandate.creditor_id,
+        iban: mandate.iban,
+        bic: mandate.bic || undefined,
+        accountHolderName: mandate.account_holder_name,
+        amount: payment.amount,
+        currency: payment.currency || 'EUR',
+        paymentDate: payment.payment_date,
+        endToEndId: `SWINGZ-${payment.payment_number}`,
+        remittanceInformation: invoice
+          ? `Rechnung ${invoice.invoice_number}`
+          : `Zahlung ${payment.payment_number}`,
+      });
+    }
+
+    const defaultConfig: SepaPain008Config = {
+      creditorName: process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club',
+      creditorAccountIban: process.env.SEPA_CREDITOR_IBAN || '',
+      creditorAccountBic: process.env.SEPA_CREDITOR_BIC || undefined,
+      creditorId: process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999',
+      creditorAddress: {
+        street: process.env.SEPA_CREDITOR_STREET || undefined,
+        city: process.env.SEPA_CREDITOR_CITY || undefined,
+        postalCode: process.env.SEPA_CREDITOR_POSTAL_CODE || undefined,
+        country: process.env.SEPA_CREDITOR_COUNTRY || 'DE',
+      },
+      executionDate: undefined,
+      batchBooking: true,
+    };
+
+    const finalConfig = { ...defaultConfig, ...config };
+
+    if (!finalConfig.creditorAccountIban) {
+      throw new Error('SEPA_CREDITOR_IBAN environment variable is required');
+    }
+
+    const xml = generatePain008Xml(transactions, finalConfig);
+    const fileName = `SEPA-DD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}.xml`;
+
+    return { xml, fileName, transactions };
+  }
+
+  async getPendingSepaPayments(clubId: string): Promise<Payment[]> {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('club_id', clubId)
+      .eq('payment_method', 'sepa')
+      .eq('status', 'pending')
+      .order('payment_date', { ascending: true });
+
+    if (error) {
+      throw new Error(`Failed to get pending SEPA payments: ${error.message}`);
+    }
+
+    return data || [];
   }
 }
 

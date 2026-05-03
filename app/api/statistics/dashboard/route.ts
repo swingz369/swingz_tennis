@@ -1,0 +1,17 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { StatisticsService } from '@/src/application/services/statistics.service';
+
+export async function GET(request: NextRequest) {
+  try {
+    const statisticsService = new StatisticsService();
+    const metrics = await statisticsService.getDashboardMetrics();
+
+    return NextResponse.json(metrics);
+  } catch (error) {
+    console.error('Error fetching dashboard metrics:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch dashboard metrics' },
+      { status: 500 }
+    );
+  }
+}

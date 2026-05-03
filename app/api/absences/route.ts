@@ -1,0 +1,92 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { AbsenceService } from '@/src/application/services/absence.service';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+
+    const {
+      trainerId,
+      trainerName,
+      type,
+      startDate,
+      endDate,
+      reason,
+      notes,
+    } = body;
+
+    if (!trainerId || !trainerName || !type || !startDate || !endDate) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Create absence
+    const absence = await AbsenceService.createAbsence({
+      trainerId,
+      trainerName,
+      type,
+      startDate,
+      endDate,
+      reason,
+      notes,
+    });
+
+    return NextResponse.json({ success: true, absence });
+  } catch (error) {
+    console.error('Absence creation error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const trainerId = searchParams.get('trainerId');
+    const status = searchParams.get('status');
+    const type = searchParams.get('type');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const active = searchParams.get('active');
+
+    if (active) {
+      const today = new Date().toISOString().split('T')[0];
+      const absences = await AbsenceService.getActiveAbsencesForDate(today);
+      return NextResponse.json({ absences });
+    }
+
+    if (trainerId) {
+      const absences = await AbsenceService.getAbsencesByTrainerId(trainerId);
+      return NextResponse.json({ absences });
+    }
+
+    if (status) {
+      const absences = await AbsenceService.getAbsencesByStatus(status as any);
+      return NextResponse.json({ absences });
+    }
+
+    if (type) {
+      const absences = await AbsenceService.getAbsencesByType(type as any);
+      return NextResponse.json({ absences });
+    }
+
+    if (startDate && endDate) {
+      const absences = await AbsenceService.getAbsencesByDateRange(startDate, endDate);
+      return NextResponse.json({ absences });
+    }
+
+    // Get all absences
+    const absences = await AbsenceService.getAllAbsences();
+    return NextResponse.json({ absences });
+  } catch (error) {
+    console.error('Absence fetch error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

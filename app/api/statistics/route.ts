@@ -1,0 +1,26 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { StatisticsService } from '@/src/application/services/statistics.service';
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const period = (searchParams.get('period') || 'monthly') as 'daily' | 'weekly' | 'monthly' | 'yearly';
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    const statisticsService = new StatisticsService();
+    
+    const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const end = endDate ? new Date(endDate) : new Date();
+
+    const statistics = await statisticsService.generateStatistics(period, start, end);
+
+    return NextResponse.json(statistics);
+  } catch (error) {
+    console.error('Error generating statistics:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate statistics' },
+      { status: 500 }
+    );
+  }
+}

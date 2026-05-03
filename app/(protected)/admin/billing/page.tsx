@@ -32,6 +32,8 @@ import {
 import { toast } from 'sonner';
 import { CreditCard, DollarSign, Plus, Eye } from 'lucide-react';
 import { addDays } from 'date-fns';
+import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
+import PaymentImportDialog from '@/components/billing/payment-import-dialog';
 
 type Subscription = {
   id: string;
@@ -213,65 +215,69 @@ export default function BillingPage() {
           <h1 className="text-2xl font-bold text-brand-primary">Abrechnung</h1>
           <p className="text-gray-500">Mitgliederabonnements und Rechnungen</p>
         </div>
-        <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Abonnement zuweisen
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Abonnement zuweisen</DialogTitle>
-              <DialogDescription>Weise einem Mitglied einen Tarif zu</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="member">Mitglied</Label>
-                <Select
-                  value={selectedMember?.id || ''}
-                  onValueChange={(v) => {
-                    const member = demoMembers.find((m) => m.id === v);
-                    setSelectedMember(member || null);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Mitglied wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {demoMembers.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.name} ({member.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="plan">Tarif</Label>
-                <Select
-                  value={selectedPlan}
-                  onValueChange={(v) => setSelectedPlan(v as Subscription['plan'])}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Free (0€)</SelectItem>
-                    <SelectItem value="pro">Pro (29,99€/Monat)</SelectItem>
-                    <SelectItem value="enterprise">Enterprise (99€/Monat)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
-                Abbrechen
+        <div className="flex gap-2">
+          <CreateInvoiceDialog onSuccess={fetchData} />
+          <PaymentImportDialog />
+          <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Abonnement zuweisen
               </Button>
-              <Button onClick={handleAssignPlan}>Zuweisen</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Abonnement zuweisen</DialogTitle>
+                <DialogDescription>Weise einem Mitglied einen Tarif zu</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="member">Mitglied</Label>
+                  <Select
+                    value={selectedMember?.id || ''}
+                    onValueChange={(v) => {
+                      const member = demoMembers.find((m) => m.id === v);
+                      setSelectedMember(member || null);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Mitglied wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {demoMembers.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name} ({member.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="plan">Tarif</Label>
+                  <Select
+                    value={selectedPlan}
+                    onValueChange={(v) => setSelectedPlan(v as Subscription['plan'])}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free (0€)</SelectItem>
+                      <SelectItem value="pro">Pro (29,99€/Monat)</SelectItem>
+                      <SelectItem value="enterprise">Enterprise (99€/Monat)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+                  Abbrechen
+                </Button>
+                <Button onClick={handleAssignPlan}>Zuweisen</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Tabs */}
