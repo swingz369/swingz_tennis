@@ -18,6 +18,7 @@ import {
   Bell,
   CheckCircle,
   Trophy,
+  Building2,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -44,6 +45,10 @@ export function Sidebar({
     { name: 'Plätze', href: '/courts', icon: MapPin },
     ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),
     { name: 'Abo & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin },
+    // Superadmin sees Tenant Management instead of normal admin menu
+    ...(isSuperAdmin
+      ? [{ name: 'Vereinsübersicht', href: '/admin/tenants', icon: Building2 }]
+      : []),
   ];
 
   const adminNav = [

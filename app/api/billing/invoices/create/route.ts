@@ -4,11 +4,10 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { CreateInvoice } from '@/lib/types/billing';
-import { createClient } from '@/infrastructure/external/supabase/server';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    // Permission check
+    // Permission check (trainer or admin)
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {
       return forbiddenResponse('Trainer or admin access required');
@@ -57,31 +56,26 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const supabase = await createClient();
-
-      const { data: membership, error: membershipError } = await supabase
+      // Verify that the target member belongs to the same club as the issuer
+      const supabase = auth.supabase;
+      const { data: memberMembership, error: membershipError } = await supabase
         .from('user_club_memberships')
-        .select('club_id, role')
-        .eq('user_id', auth.user.id)
+        .select('club_id')
+        .eq('user_id', member_id)
+        .eq('club_id', auth.clubId)
         .eq('is_active', true)
         .single();
 
-      if (membershipError || !membership) {
-        return NextResponse.json({ error: 'Kein aktiver Club gefunden' }, { status: 403 });
+      if (membershipError || !memberMembership) {
+        return NextResponse.json(
+          { error: 'Mitglied gehört nicht zum aktuellen Verein oder ist inaktiv' },
+          { status: 403 }
+        );
       }
 
-      const { data: memberExists } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', member_id)
-        .single();
-
-      if (!memberExists) {
-        return NextResponse.json({ error: 'Mitglied nicht gefunden' }, { status: 404 });
-      }
-
+      // Build invoice data
       const createInvoiceData: CreateInvoice = {
-        club_id: membership.club_id,
+        club_id: auth.clubId,
         member_id,
         due_date,
         items: validItems.map((item: any) => ({

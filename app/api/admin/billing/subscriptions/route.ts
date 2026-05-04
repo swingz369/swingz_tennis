@@ -1,11 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { AuditService } from '@/infrastructure/audit/audit.service';
 import { assignSubscriptionSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 // const memberRepo = new DrizzleMemberRepository(); // Will be used in future for advanced member queries
 
@@ -21,40 +20,49 @@ export async function GET(_request: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Admin access required');
 
     try {
-      const supabase = await createClient();
+      const supabase = auth.supabase;
 
-      // Fetch all members with subscription info
-      // Assuming members table has: subscription_tier, subscription_status, stripe_customer_id, stripe_subscription_id, current_period_end
-      const { data: members, error: membersError } = await supabase
-        .from('users')
+      // Fetch members of the current club with subscription info
+      const { data: memberships, error: membersError } = await supabase
+        .from('user_club_memberships')
         .select(
           `
-         id,
-         email,
-         full_name,
-         subscription_tier,
-         subscription_status,
-         stripe_customer_id,
-         current_period_end
-       `
+          users (
+            id,
+            email,
+            full_name,
+            subscription_tier,
+            subscription_status,
+            stripe_customer_id,
+            current_period_end
+          )
+        `
         )
-        .order('created_at', { ascending: false });
+        .eq('club_id', auth.clubId)
+        .eq('is_active', true)
+        .eq('role', 'member'); // only members have subscriptions
 
       if (membersError) {
         return NextResponse.json({ error: membersError.message }, { status: 500 });
       }
 
-      const subscriptions = (members || []).map((m: any) => ({
-        id: `sub-${m.id}`,
-        memberId: m.id,
-        memberName: m.full_name || 'N/A',
-        memberEmail: m.email,
-        plan: m.subscription_tier || 'free',
-        status: m.subscription_status || 'active',
-        currentPeriodEnd: m.current_period_end || new Date().toISOString(),
-        stripeCustomerId: m.stripe_customer_id,
-        stripeSubscriptionId: m.stripe_subscription_id,
-      }));
+      const subscriptions = (memberships || [])
+        .map((m: any) => {
+          const user = m.users;
+          if (!user) return null;
+          return {
+            id: `sub-${user.id}`,
+            memberId: user.id,
+            memberName: user.full_name || 'N/A',
+            memberEmail: user.email,
+            plan: user.subscription_tier || 'free',
+            status: user.subscription_status || 'active',
+            currentPeriodEnd: user.current_period_end || new Date().toISOString(),
+            stripeCustomerId: user.stripe_customer_id,
+            stripeSubscriptionId: user.stripe_subscription_id,
+          };
+        })
+        .filter(Boolean);
 
       return NextResponse.json(subscriptions);
     } catch (error) {
@@ -70,7 +78,9 @@ export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     // Rate limiting (strict for POST)
     const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
-    if (rateLimitError) return rateLimitError;
+    if (rateLimitError) {
+      return rateLimitError;
+    }
 
     // Permission check
     const hasPermission = await verifyRole(auth, 'admin');
@@ -79,7 +89,23 @@ export async function POST(_request: NextRequest) {
     try {
       return withValidation(assignSubscriptionSchema, async (input) => {
         const { memberId, plan } = input;
-        const supabase = await createClient();
+        const supabase = auth.supabase;
+
+        // Verify that the member belongs to the admin's club
+        const { data: membership, error: membershipError } = await supabase
+          .from('user_club_memberships')
+          .select('club_id')
+          .eq('user_id', memberId)
+          .eq('club_id', auth.clubId)
+          .eq('is_active', true)
+          .single();
+
+        if (membershipError || !membership) {
+          return NextResponse.json(
+            { error: 'Mitglied nicht im aktuellen Verein gefunden' },
+            { status: 403 }
+          );
+        }
 
         // Update member's subscription fields
         const updateData: Record<string, string | boolean> = {

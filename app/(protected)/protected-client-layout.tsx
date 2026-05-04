@@ -9,6 +9,8 @@ interface AppUser {
   email?: string;
   memberId?: string | null;
   roles?: string[];
+  club?: { id: string; name: string } | null;
+  selectedClubId?: string | null;
 }
 
 interface ProtectedClientLayoutProps {

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-// GET /api/admin/billing/invoices – Alle Rechnungen (SuperAdmin only)
+// GET /api/admin/billing/invoices – All invoices for the current club (Admin/Superadmin)
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     // Rate limiting
@@ -15,9 +15,44 @@ export async function GET(_request: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Admin access required');
 
     try {
-      // For now, return empty array until Stripe integration
-      // In the future, this would join invoices table with users
-      return NextResponse.json([]);
+      const supabase = auth.supabase;
+
+      // Fetch invoices for the current club, joining with users for member name
+      const { data: invoicesData, error: invoicesError } = await supabase
+        .from('invoices')
+        .select(
+          `
+          id,
+          invoice_number,
+          total_amount,
+          currency,
+          status,
+          due_date,
+          paid_at,
+          member_id,
+          users!inner(full_name, email)
+        `
+        )
+        .eq('club_id', auth.clubId)
+        .order('due_date', { ascending: false });
+
+      if (invoicesError) {
+        return NextResponse.json({ error: invoicesError.message }, { status: 500 });
+      }
+
+      const invoices = (invoicesData || []).map((inv: any) => ({
+        id: inv.id,
+        invoiceNumber: inv.invoice_number,
+        memberId: inv.member_id,
+        memberName: inv.users?.full_name || 'N/A',
+        amount: inv.total_amount,
+        currency: inv.currency,
+        status: inv.status,
+        dueDate: inv.due_date,
+        paidAt: inv.paid_at,
+      }));
+
+      return NextResponse.json(invoices);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
       console.error('Error fetching invoices:', error);

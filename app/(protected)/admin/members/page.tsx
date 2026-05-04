@@ -58,36 +58,52 @@ export default async function MembersPage() {
     } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
-    // Get user's first active club
-    const { data: memberships } = await supabase
+    // Get all active club memberships for user
+    const { data: membershipsData } = await supabase
       .from('user_club_memberships')
-      .select('club_id')
+      .select('club_id, role')
       .eq('user_id', user.id)
-      .eq('is_active', true)
-      .limit(1);
+      .eq('is_active', true);
 
-    if (!memberships || memberships.length === 0) {
+    if (!membershipsData || membershipsData.length === 0) {
       return <div className="p-6 text-red-600">Kein Vereinszugang gefunden</div>;
     }
 
-    clubId = memberships[0].club_id;
+    const memberships = membershipsData as Array<{ club_id: string; role: string }>;
+
+    // Determine effective clubId: if superadmin with selected club, use that; else first membership
+    const isSuperAdmin = memberships.some((m) => m.role === 'superadmin');
+    let effectiveClubId: string;
+    if (isSuperAdmin) {
+      // Use outer cookieStore
+      const selectedClubId = cookieStore.get('selected-club-id')?.value;
+      if (selectedClubId && memberships.some((m) => m.club_id === selectedClubId)) {
+        effectiveClubId = selectedClubId;
+      } else {
+        effectiveClubId = memberships[0].club_id;
+      }
+    } else {
+      effectiveClubId = memberships[0].club_id;
+    }
+
+    clubId = effectiveClubId;
 
     // Fetch members for this club
     const { data: members } = await supabase
       .from('user_club_memberships')
       .select(
         `
-        id,
-        user_id,
-        role,
-        is_active,
-        joined_at,
-        users (
-          id,
-          full_name,
-          email
-        )
-      `
+         id,
+         user_id,
+         role,
+         is_active,
+         joined_at,
+         users (
+           id,
+           full_name,
+           email
+         )
+       `
       )
       .eq('club_id', clubId)
       .order('joined_at', { ascending: false });
