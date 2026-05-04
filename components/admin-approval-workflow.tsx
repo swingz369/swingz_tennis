@@ -6,13 +6,11 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User,
-  Mail,
   Phone,
   Calendar,
   CheckCircle,
@@ -157,9 +155,13 @@ const MOCK_REGISTRATIONS: RegistrationRequest[] = [
 
 export default function AdminApprovalWorkflow() {
   const [registrations, setRegistrations] = useState<RegistrationRequest[]>(MOCK_REGISTRATIONS);
-  const [selectedTab, setSelectedTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [selectedTab, setSelectedTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'all'
+  );
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
-  const [filterType, setFilterType] = useState<'all' | 'registration' | 'application' | 'trial'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'registration' | 'application' | 'trial'>(
+    'all'
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [notes, setNotes] = useState('');
@@ -376,9 +378,7 @@ export default function AdminApprovalWorkflow() {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       setRegistrations((prev) =>
-        prev.map((reg) =>
-          reg.id === requestId ? { ...reg, notes } : reg
-        )
+        prev.map((reg) => (reg.id === requestId ? { ...reg, notes } : reg))
       );
 
       toast.success('Notizen gespeichert');
@@ -432,61 +432,45 @@ export default function AdminApprovalWorkflow() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Ausstehend
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Ausstehend</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingCount}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Warten auf Entscheidung
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Warten auf Entscheidung</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Genehmigt
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Genehmigt</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{approvedCount}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Erfolgreich genehmigt
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Erfolgreich genehmigt</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Abgelehnt
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Abgelehnt</CardTitle>
             <XCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{rejectedCount}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Abgelehnte Anträge
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Abgelehnte Anträge</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Gesamt
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Gesamt</CardTitle>
             <FileText className="h-4 w-4 text-gray-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{registrations.length}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Alle Anträge
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Alle Anträge</p>
           </CardContent>
         </Card>
       </div>
@@ -508,7 +492,7 @@ export default function AdminApprovalWorkflow() {
           <Filter className="h-4 w-4 text-gray-400" />
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value as any)}
+            onChange={(e) => setFilterType(e.target.value as typeof filterType)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Alle Typen</option>
@@ -527,18 +511,10 @@ export default function AdminApprovalWorkflow() {
         }
       >
         <TabsList>
-          <TabsTrigger value="all">
-            Alle ({registrations.length})
-          </TabsTrigger>
-          <TabsTrigger value="pending">
-            Ausstehend ({pendingCount})
-          </TabsTrigger>
-          <TabsTrigger value="approved">
-            Genehmigt ({approvedCount})
-          </TabsTrigger>
-          <TabsTrigger value="rejected">
-            Abgelehnt ({rejectedCount})
-          </TabsTrigger>
+          <TabsTrigger value="all">Alle ({registrations.length})</TabsTrigger>
+          <TabsTrigger value="pending">Ausstehend ({pendingCount})</TabsTrigger>
+          <TabsTrigger value="approved">Genehmigt ({approvedCount})</TabsTrigger>
+          <TabsTrigger value="rejected">Abgelehnt ({rejectedCount})</TabsTrigger>
         </TabsList>
 
         <TabsContent value={selectedTab} className="mt-6">
@@ -564,16 +540,10 @@ export default function AdminApprovalWorkflow() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-3">
-                          <Badge
-                            variant="outline"
-                            className={getTypeColor(request.type)}
-                          >
+                          <Badge variant="outline" className={getTypeColor(request.type)}>
                             {getTypeLabel(request.type)}
                           </Badge>
-                          <Badge
-                            variant="outline"
-                            className={getStatusColor(request.status)}
-                          >
+                          <Badge variant="outline" className={getStatusColor(request.status)}>
                             {getStatusLabel(request.status)}
                           </Badge>
                           {request.status === 'pending' && (
@@ -592,9 +562,7 @@ export default function AdminApprovalWorkflow() {
                             <div className="font-semibold">
                               {request.applicant.firstName} {request.applicant.lastName}
                             </div>
-                            <div className="text-sm text-gray-600">
-                              {request.applicant.email}
-                            </div>
+                            <div className="text-sm text-gray-600">{request.applicant.email}</div>
                           </div>
                         </div>
 
@@ -606,14 +574,14 @@ export default function AdminApprovalWorkflow() {
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-gray-400" />
                             <span>
-                              {format(parseISO(request.applicant.dateOfBirth), 'dd.MM.yyyy', { locale: de })}
+                              {format(parseISO(request.applicant.dateOfBirth), 'dd.MM.yyyy', {
+                                locale: de,
+                              })}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Shield className="h-4 w-4 text-gray-400" />
-                            <span>
-                              {getExperienceLabel(request.tennisInfo.experience)}
-                            </span>
+                            <span>{getExperienceLabel(request.tennisInfo.experience)}</span>
                           </div>
                         </div>
 
@@ -623,16 +591,27 @@ export default function AdminApprovalWorkflow() {
                           </div>
                           {request.additionalInfo?.motivation && (
                             <div className="text-sm text-gray-600 mt-1">
-                              <span className="font-medium">Motivation:</span> {request.additionalInfo.motivation}
+                              <span className="font-medium">Motivation:</span>{' '}
+                              {request.additionalInfo.motivation}
                             </div>
                           )}
                         </div>
 
                         <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-gray-500">
                           <div className="flex items-center gap-4">
-                            <span>Eingereicht: {format(parseISO(request.submittedAt), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
+                            <span>
+                              Eingereicht:{' '}
+                              {format(parseISO(request.submittedAt), 'dd.MM.yyyy HH:mm', {
+                                locale: de,
+                              })}
+                            </span>
                             {request.reviewedAt && (
-                              <span>Bearbeitet: {format(parseISO(request.reviewedAt), 'dd.MM.yyyy HH:mm', { locale: de })}</span>
+                              <span>
+                                Bearbeitet:{' '}
+                                {format(parseISO(request.reviewedAt), 'dd.MM.yyyy HH:mm', {
+                                  locale: de,
+                                })}
+                              </span>
                             )}
                           </div>
                           <Button
@@ -693,11 +672,7 @@ export default function AdminApprovalWorkflow() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Antrag Details</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedRequest(null)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setSelectedRequest(null)}>
                   <XCircle className="h-5 w-5" />
                 </Button>
               </div>
@@ -705,16 +680,10 @@ export default function AdminApprovalWorkflow() {
             <CardContent className="space-y-6">
               {/* Status */}
               <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className={getTypeColor(selectedRequest.type)}
-                >
+                <Badge variant="outline" className={getTypeColor(selectedRequest.type)}>
                   {getTypeLabel(selectedRequest.type)}
                 </Badge>
-                <Badge
-                  variant="outline"
-                  className={getStatusColor(selectedRequest.status)}
-                >
+                <Badge variant="outline" className={getStatusColor(selectedRequest.status)}>
                   {getStatusLabel(selectedRequest.status)}
                 </Badge>
               </div>
@@ -743,7 +712,9 @@ export default function AdminApprovalWorkflow() {
                   <div>
                     <span className="text-gray-600">Geburtsdatum:</span>
                     <div className="font-medium">
-                      {format(parseISO(selectedRequest.applicant.dateOfBirth), 'dd. MMMM yyyy', { locale: de })}
+                      {format(parseISO(selectedRequest.applicant.dateOfBirth), 'dd. MMMM yyyy', {
+                        locale: de,
+                      })}
                     </div>
                   </div>
                 </div>
@@ -811,7 +782,7 @@ export default function AdminApprovalWorkflow() {
                     )}
                     {selectedRequest.additionalInfo.availability && (
                       <div>
-                      <span className="text-gray-600">Verfügbarkeit:</span>
+                        <span className="text-gray-600">Verfügbarkeit:</span>
                         <div className="ml-2">{selectedRequest.additionalInfo.availability}</div>
                       </div>
                     )}
@@ -824,7 +795,9 @@ export default function AdminApprovalWorkflow() {
                     {selectedRequest.additionalInfo.specialRequirements && (
                       <div>
                         <span className="text-gray-600">Besondere Anforderungen:</span>
-                        <div className="ml-2">{selectedRequest.additionalInfo.specialRequirements}</div>
+                        <div className="ml-2">
+                          {selectedRequest.additionalInfo.specialRequirements}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -884,10 +857,7 @@ export default function AdminApprovalWorkflow() {
               {/* Actions */}
               {selectedRequest.status === 'pending' && (
                 <div className="flex gap-2 pt-4 border-t">
-                  <Button
-                    onClick={() => handleApprove(selectedRequest.id)}
-                    className="flex-1"
-                  >
+                  <Button onClick={() => handleApprove(selectedRequest.id)} className="flex-1">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Genehmigen
                   </Button>

@@ -6,25 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   CreditCard,
   Settings,
   Plus,
   Edit,
-  Save,
   XCircle,
-  CheckCircle,
-  AlertCircle,
   Download,
   TestTube,
   Star,
   DollarSign,
-  Shield,
   Globe,
   Lock,
   Zap,
-  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -56,8 +50,6 @@ export interface PaymentSettings {
 
 export default function PaymentSettingsManagement() {
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings[]>([]);
-  const [selectedPayment, setSelectedPayment] = useState<PaymentSettings | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<PaymentSettings>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -100,31 +92,10 @@ export default function PaymentSettingsManagement() {
       setEditForm({});
       toast.success('Zahlungseinstellungen erfolgreich erstellt');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen der Zahlungseinstellungen');
+      toast.error(
+        error instanceof Error ? error.message : 'Fehler beim Erstellen der Zahlungseinstellungen'
+      );
       console.error('Create error:', error);
-    }
-  };
-
-  const handleUpdatePayment = async (id: string) => {
-    try {
-      const response = await fetch(`/api/payment-settings/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update payment settings');
-      }
-
-      const data = await response.json();
-      setPaymentSettings(paymentSettings.map((p) => (p.id === id ? data.paymentSettings : p)));
-      setEditForm({});
-      setIsEditing(false);
-      toast.success('Zahlungseinstellungen erfolgreich aktualisiert');
-    } catch (error) {
-      toast.error('Fehler beim Aktualisieren der Zahlungseinstellungen');
-      console.error('Update error:', error);
     }
   };
 
@@ -245,7 +216,12 @@ export default function PaymentSettingsManagement() {
               <Label>Zahlungsgateway</Label>
               <select
                 value={editForm.gateway || ''}
-                onChange={(e) => setEditForm({ ...editForm, gateway: e.target.value as any })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    gateway: e.target.value as 'stripe' | 'paypal' | 'sepa' | 'cash' | 'other',
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="">Bitte auswählen...</option>
@@ -269,7 +245,12 @@ export default function PaymentSettingsManagement() {
               <Input
                 type="password"
                 value={editForm.config?.apiKey || ''}
-                onChange={(e) => setEditForm({ ...editForm, config: { ...editForm.config, apiKey: e.target.value } })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    config: { ...editForm.config, apiKey: e.target.value },
+                  })
+                }
                 placeholder="sk_test_..."
               />
             </div>
@@ -277,7 +258,12 @@ export default function PaymentSettingsManagement() {
               <Label>Public Key</Label>
               <Input
                 value={editForm.config?.publicKey || ''}
-                onChange={(e) => setEditForm({ ...editForm, config: { ...editForm.config, publicKey: e.target.value } })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    config: { ...editForm.config, publicKey: e.target.value },
+                  })
+                }
                 placeholder="pk_test_..."
               />
             </div>
@@ -285,7 +271,12 @@ export default function PaymentSettingsManagement() {
               <Label>Webhook URL</Label>
               <Input
                 value={editForm.config?.webhookUrl || ''}
-                onChange={(e) => setEditForm({ ...editForm, config: { ...editForm.config, webhookUrl: e.target.value } })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    config: { ...editForm.config, webhookUrl: e.target.value },
+                  })
+                }
                 placeholder="https://swingz.app/api/webhooks/..."
               />
             </div>
@@ -293,7 +284,12 @@ export default function PaymentSettingsManagement() {
               <Label>Unterstützte Währungen</Label>
               <Input
                 value={editForm.supportedCurrencies?.join(', ') || ''}
-                onChange={(e) => setEditForm({ ...editForm, supportedCurrencies: e.target.value.split(',').map(s => s.trim()) })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    supportedCurrencies: e.target.value.split(',').map((s) => s.trim()),
+                  })
+                }
                 placeholder="EUR, USD"
               />
             </div>
@@ -301,7 +297,12 @@ export default function PaymentSettingsManagement() {
               <Label>Unterstützte Methoden</Label>
               <Input
                 value={editForm.supportedMethods?.join(', ') || ''}
-                onChange={(e) => setEditForm({ ...editForm, supportedMethods: e.target.value.split(',').map(s => s.trim()) })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    supportedMethods: e.target.value.split(',').map((s) => s.trim()),
+                  })
+                }
                 placeholder="card, sepa_debit"
               />
             </div>
@@ -310,7 +311,9 @@ export default function PaymentSettingsManagement() {
               <Input
                 type="number"
                 value={editForm.minAmount || ''}
-                onChange={(e) => setEditForm({ ...editForm, minAmount: parseFloat(e.target.value) })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, minAmount: parseFloat(e.target.value) })
+                }
                 placeholder="1.00"
               />
             </div>
@@ -319,7 +322,9 @@ export default function PaymentSettingsManagement() {
               <Input
                 type="number"
                 value={editForm.maxAmount || ''}
-                onChange={(e) => setEditForm({ ...editForm, maxAmount: parseFloat(e.target.value) })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, maxAmount: parseFloat(e.target.value) })
+                }
                 placeholder="10000.00"
               />
             </div>
@@ -328,7 +333,12 @@ export default function PaymentSettingsManagement() {
               <Input
                 type="number"
                 value={editForm.fees?.fixed || ''}
-                onChange={(e) => setEditForm({ ...editForm, fees: { ...editForm.fees, fixed: parseFloat(e.target.value) } })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    fees: { ...editForm.fees, fixed: parseFloat(e.target.value) },
+                  })
+                }
                 placeholder="0.30"
               />
             </div>
@@ -337,7 +347,12 @@ export default function PaymentSettingsManagement() {
               <Input
                 type="number"
                 value={editForm.fees?.percentage || ''}
-                onChange={(e) => setEditForm({ ...editForm, fees: { ...editForm.fees, percentage: parseFloat(e.target.value) } })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    fees: { ...editForm.fees, percentage: parseFloat(e.target.value) },
+                  })
+                }
                 placeholder="2.9"
               />
             </div>
@@ -421,7 +436,6 @@ export default function PaymentSettingsManagement() {
                       variant="outline"
                       onClick={() => {
                         setEditForm(payment);
-                        setIsEditing(true);
                       }}
                     >
                       <Edit className="h-4 w-4 mr-1" />

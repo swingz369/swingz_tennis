@@ -13,11 +13,11 @@ A security audit of the SWINGZ payment and billing system was conducted on 2026-
 
 ### Risk Summary
 
-| Severity | Count | Status |
-|----------|-------|--------|
-| 🔴 Critical | 7 | Requires Immediate Fix |
-| 🟡 Medium | 12 | Should Be Fixed Soon |
-| 🟢 Low | 5 | Nice to Have |
+| Severity    | Count | Status                 |
+| ----------- | ----- | ---------------------- |
+| 🔴 Critical | 7     | Requires Immediate Fix |
+| 🟡 Medium   | 12    | Should Be Fixed Soon   |
+| 🟢 Low      | 5     | Nice to Have           |
 
 ---
 
@@ -37,12 +37,14 @@ Several API routes lack proper authorization checks, allowing authenticated user
 - `/api/billing/sepa/pain008` - No verification that user can export SEPA data for the specified payments
 
 **Impact**:
+
 - Users can create invoices for other members
 - Users can import payments for other clubs
 - Users can export sensitive SEPA data they shouldn't have access to
 - Potential financial fraud and data breach
 
 **Recommendation**:
+
 ```typescript
 // Add authorization check before processing
 const { data: membership } = await supabase
@@ -71,12 +73,14 @@ if (!membership || !['admin', 'superadmin'].includes(membership.role)) {
 Both invoice creation and payment import routes have empty `club_id` fields with comments indicating they should be filled from the user's club, but this logic is not implemented.
 
 **Impact**:
+
 - Invoices and payments are created without proper club association
 - Data integrity issues
 - Potential data leakage between clubs
 - RLS policies may not work correctly
 
 **Recommendation**:
+
 ```typescript
 // Get user's active club
 const { data: membership } = await supabase
@@ -115,20 +119,22 @@ No rate limiting is implemented on billing endpoints, allowing potential abuse:
 - Denial of service attacks
 
 **Impact**:
+
 - System overload
 - Database performance degradation
 - Potential financial loss
 - Service disruption
 
 **Recommendation**:
+
 ```typescript
 // Implement rate limiting using Upstash Redis or similar
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "1 m"),
+  limiter: Ratelimit.slidingWindow(10, '1 m'),
 });
 
 const { success } = await ratelimit.limit(user.id);
@@ -151,20 +157,22 @@ if (!success) {
 The CSV import functionality does not properly sanitize user input, allowing CSV injection attacks. Malicious CSV files could contain formulas or commands that execute when opened in spreadsheet applications.
 
 **Impact**:
+
 - Remote code execution on user's machine
 - Data exfiltration
 - Malware distribution
 
 **Recommendation**:
+
 ```typescript
 // Sanitize all CSV fields before processing
 function sanitizeCsvField(value: string): string {
   // Remove or escape dangerous characters
   return value
-    .replace(/^=/, "'=")  // Escape formulas
-    .replace(/^@/, "'@")  // Escape commands
-    .replace(/^\+/, "'+")  // Escape concatenation
-    .replace(/^-/, "'-");  // Escape negative numbers
+    .replace(/^=/, "'=") // Escape formulas
+    .replace(/^@/, "'@") // Escape commands
+    .replace(/^\+/, "'+") // Escape concatenation
+    .replace(/^-/, "'-"); // Escape negative numbers
 }
 
 // Apply to all fields
@@ -191,25 +199,32 @@ Input validation is insufficient across multiple endpoints:
 - No validation on email formats
 
 **Impact**:
+
 - Database bloat
 - Performance issues
 - Data integrity problems
 - Potential security bypasses
 
 **Recommendation**:
+
 ```typescript
 import { z } from 'zod';
 
 const CreateInvoiceSchema = z.object({
   member_id: z.string().uuid(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  items: z.array(z.object({
-    description: z.string().min(1).max(500),
-    quantity: z.number().int().min(1).max(1000),
-    unit_price: z.number().min(0).max(1000000),
-    tax_rate: z.number().min(0).max(100),
-    item_type: z.enum(['membership_fee', 'training_fee', 'court_fee', 'dunning_fee', 'other']),
-  })).min(1).max(100),
+  items: z
+    .array(
+      z.object({
+        description: z.string().min(1).max(500),
+        quantity: z.number().int().min(1).max(1000),
+        unit_price: z.number().min(0).max(1000000),
+        tax_rate: z.number().min(0).max(100),
+        item_type: z.enum(['membership_fee', 'training_fee', 'court_fee', 'dunning_fee', 'other']),
+      })
+    )
+    .min(1)
+    .max(100),
   notes: z.string().max(1000).optional(),
 });
 
@@ -235,11 +250,13 @@ Error messages may expose sensitive information about the system:
 - User information in error responses
 
 **Impact**:
+
 - Information disclosure
 - Easier attack surface for attackers
 - Privacy violations
 
 **Recommendation**:
+
 ```typescript
 // Use generic error messages for production
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -270,19 +287,18 @@ if (error instanceof Error) {
 The CSV import endpoint does not limit file size, allowing potential DoS attacks through large file uploads.
 
 **Impact**:
+
 - Memory exhaustion
 - Server crash
 - Service disruption
 
 **Recommendation**:
+
 ```typescript
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 if (file.size > MAX_FILE_SIZE) {
-  return NextResponse.json(
-    { error: 'File size exceeds 10MB limit' },
-    { status: 413 }
-  );
+  return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 413 });
 }
 ```
 
@@ -302,6 +318,7 @@ No audit logging is implemented for critical billing operations, making it diffi
 
 **Recommendation**:
 Implement comprehensive audit logging for all billing operations including:
+
 - Invoice creation/modification/deletion
 - Payment creation/modification
 - SEPA exports
@@ -319,6 +336,7 @@ Password requirements may not be strong enough to prevent brute force attacks.
 
 **Recommendation**:
 Implement strong password requirements:
+
 - Minimum 12 characters
 - Mix of uppercase, lowercase, numbers, and special characters
 - Password strength meter
@@ -336,6 +354,7 @@ Two-factor authentication is not available for sensitive operations like billing
 
 **Recommendation**:
 Implement 2FA for:
+
 - Admin access
 - Billing operations
 - SEPA exports
@@ -353,6 +372,7 @@ Sensitive payment data may not be encrypted at rest in the database.
 
 **Recommendation**:
 Implement encryption for:
+
 - IBANs
 - Credit card numbers (if stored)
 - SEPA mandates
@@ -383,6 +403,7 @@ User sessions do not timeout, increasing the risk of session hijacking.
 
 **Recommendation**:
 Implement session timeout:
+
 - 30 minutes for regular users
 - 15 minutes for admin users
 - Re-authentication for sensitive operations
@@ -438,6 +459,7 @@ Cookies may not have secure settings (HttpOnly, Secure, SameSite).
 
 **Recommendation**:
 Ensure all cookies have:
+
 - HttpOnly flag
 - Secure flag
 - SameSite=Strict or SameSite=Lax

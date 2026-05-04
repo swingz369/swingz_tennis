@@ -1,14 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, parseISO, subDays, subMonths } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   FileText,
   Search,
@@ -16,26 +13,17 @@ import {
   Download,
   Clock,
   User,
-  Users,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Shield,
   Activity,
-  Calendar,
   Database,
   Trash2,
   RefreshCw,
-  Eye,
-  EyeOff,
-  ChevronLeft,
-  ChevronRight,
   Info,
   Plus,
   Key,
   Lock,
-  DollarSign,
-  CreditCard,
   Settings,
   Globe,
   GitBranch,
@@ -178,36 +166,15 @@ export default function AuditLogManagement() {
     return <Activity className="h-4 w-4" />;
   };
 
-  const getEntityTypeIcon = (entityType: string) => {
-    const typeLower = entityType.toLowerCase();
-    if (typeLower.includes('member')) {
-      return <Users className="h-4 w-4" />;
-    }
-    if (typeLower.includes('trainer')) {
-      return <User className="h-4 w-4" />;
-    }
-    if (typeLower.includes('trial')) {
-      return <Clock className="h-4 w-4" />;
-    }
-    if (typeLower.includes('billing') || typeLower.includes('abrechnung')) {
-      return <DollarSign className="h-4 w-4" />;
-    }
-    if (typeLower.includes('payment') || typeLower.includes('zahlung')) {
-      return <CreditCard className="h-4 w-4" />;
-    }
-    if (typeLower.includes('setting') || typeLower.includes('einstellung')) {
-      return <Settings className="h-4 w-4" />;
-    }
-    return <Database className="h-4 w-4" />;
-  };
-
   const filteredLogs = auditLogs.filter((log) => {
     const matchesAction = actionFilter === 'all' || log.action === actionFilter;
     const matchesEntityType = entityTypeFilter === 'all' || log.entityType === entityTypeFilter;
     const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
     const matchesSearch =
       searchQuery === '' ||
-      `${log.action} ${log.entityType} ${log.userName}`.toLowerCase().includes(searchQuery.toLowerCase());
+      `${log.action} ${log.entityType} ${log.userName}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
     return matchesAction && matchesEntityType && matchesStatus && matchesSearch;
   });
@@ -236,11 +203,7 @@ export default function AuditLogManagement() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDeleteOldLogs}
-          >
+          <Button variant="outline" size="sm" onClick={handleDeleteOldLogs}>
             <Trash2 className="h-4 w-4 mr-2" />
             Alte löschen
           </Button>
@@ -252,67 +215,49 @@ export default function AuditLogManagement() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Gesamt
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Gesamt</CardTitle>
               <FileText className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{statistics.total}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Audit-Logs
-              </p>
+              <p className="text-xs text-gray-500 mt-1">Audit-Logs</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Erfolgreich
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Erfolgreich</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
                 {statistics.byStatus.success || 0}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Erfolgreiche Aktionen
-              </p>
+              <p className="text-xs text-gray-500 mt-1">Erfolgreiche Aktionen</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Fehlgeschlagen
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Fehlgeschlagen</CardTitle>
               <XCircle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
                 {statistics.byStatus.failed || 0}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Fehlgeschlagene Aktionen
-              </p>
+              <p className="text-xs text-gray-500 mt-1">Fehlgeschlagene Aktionen</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Letzte Stunde
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Letzte Stunde</CardTitle>
               <Clock className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
-                {statistics.recentActivity}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Aktivitäten letzte Stunde
-              </p>
+              <div className="text-2xl font-bold text-purple-600">{statistics.recentActivity}</div>
+              <p className="text-xs text-gray-500 mt-1">Aktivitäten letzte Stunde</p>
             </CardContent>
           </Card>
         </div>
@@ -366,7 +311,7 @@ export default function AuditLogManagement() {
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Alle Status</option>
@@ -379,7 +324,7 @@ export default function AuditLogManagement() {
         <div className="flex items-center gap-2">
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as any)}
+            onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="7d">Letzte 7 Tage</option>
@@ -470,11 +415,7 @@ export default function AuditLogManagement() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Audit-Log Details</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedLog(null)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setSelectedLog(null)}>
                   <XCircle className="h-5 w-5" />
                 </Button>
               </div>
@@ -547,9 +488,9 @@ export default function AuditLogManagement() {
                     )}
                     {selectedLog.changes.after && (
                       <div>
-                      <span className="text-gray-600">Nachher:</span>
-                      <pre className="mt-1 p-3 bg-gray-50 rounded text-xs overflow-x-auto">
-                        {JSON.stringify(selectedLog.changes.after, null, 2)}
+                        <span className="text-gray-600">Nachher:</span>
+                        <pre className="mt-1 p-3 bg-gray-50 rounded text-xs overflow-x-auto">
+                          {JSON.stringify(selectedLog.changes.after, null, 2)}
                         </pre>
                       </div>
                     )}
@@ -567,7 +508,9 @@ export default function AuditLogManagement() {
                   <div>
                     <span className="text-gray-600">Zeitstempel:</span>
                     <span className="ml-2 font-medium">
-                      {format(parseISO(selectedLog.createdAt), 'dd. MMM yyyy HH:mm:ss', { locale: de })}
+                      {format(parseISO(selectedLog.createdAt), 'dd. MMM yyyy HH:mm:ss', {
+                        locale: de,
+                      })}
                     </span>
                   </div>
                   {selectedLog.ipAddress && (

@@ -12,10 +12,13 @@ export interface AuthenticatedRequest extends NextRequest {
   clubId: string;
 }
 
+export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
+
 export interface AuthResult {
   user: User;
   clubId: string;
   supabase: ReturnType<typeof createServerClient>;
+  role?: UserRole;
 }
 
 /**
@@ -135,7 +138,7 @@ export function verifyClubAccess(auth: AuthResult, requestedClubId: string): boo
  */
 export async function verifyRole(
   auth: AuthResult,
-  requiredRole: 'admin' | 'trainer' | 'member'
+  requiredRole: 'superadmin' | 'admin' | 'trainer' | 'member'
 ): Promise<boolean> {
   const { data: membership } = await auth.supabase
     .from('user_club_memberships')
@@ -148,14 +151,23 @@ export async function verifyRole(
     return false;
   }
 
-  // Role hierarchy: admin > trainer > member
-  const roleHierarchy = {
+  const userRole = membership.role as UserRole;
+  auth.role = userRole;
+
+  const roleHierarchy: Record<UserRole, number> = {
+    superadmin: 4,
     admin: 3,
     trainer: 2,
     member: 1,
   };
 
-  return (
-    roleHierarchy[membership.role as keyof typeof roleHierarchy] >= roleHierarchy[requiredRole]
-  );
+  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+}
+
+export function isSuperadmin(auth: AuthResult): boolean {
+  return auth.role === 'superadmin';
+}
+
+export function isAdminOrAbove(auth: AuthResult): boolean {
+  return auth.role === 'superadmin' || auth.role === 'admin';
 }

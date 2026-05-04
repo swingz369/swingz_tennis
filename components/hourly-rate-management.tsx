@@ -8,23 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Clock,
   User,
   Plus,
   Edit,
-  Save,
   XCircle,
-  CheckCircle,
-  AlertCircle,
   History,
-  Filter,
-  Search,
   Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -71,7 +64,6 @@ export default function HourlyRateManagement() {
   const [trainerRates, setTrainerRates] = useState<TrainerHourlyRate[]>([]);
   const [rateHistory, setRateHistory] = useState<RateHistoryEntry[]>([]);
   const [selectedTab, setSelectedTab] = useState<'tiers' | 'trainers' | 'history'>('tiers');
-  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<HourlyRateTier | TrainerHourlyRate>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -132,29 +124,6 @@ export default function HourlyRateManagement() {
     }
   };
 
-  const handleUpdateTier = async (id: string) => {
-    try {
-      const response = await fetch(`/api/hourly-rates/tiers/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update rate tier');
-      }
-
-      const data = await response.json();
-      setRateTiers(rateTiers.map((t) => (t.id === id ? data.rateTier : t)));
-      setEditForm({});
-      setIsEditing(false);
-      toast.success('Stundensatz-Stufe erfolgreich aktualisiert');
-    } catch (error) {
-      toast.error('Fehler beim Aktualisieren der Stundensatz-Stufe');
-      console.error('Update error:', error);
-    }
-  };
-
   const handleDeleteTier = async (id: string) => {
     if (!confirm('Möchten Sie diese Stundensatz-Stufe wirklich löschen?')) {
       return;
@@ -177,58 +146,35 @@ export default function HourlyRateManagement() {
     }
   };
 
-  const handleUpdateTrainerRate = async (id: string) => {
-    try {
-      const response = await fetch(`/api/hourly-rates/trainers/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update trainer rate');
-      }
-
-      const data = await response.json();
-      setTrainerRates(trainerRates.map((r) => (r.id === id ? data.trainerRate : r)));
-      setEditForm({});
-      setIsEditing(false);
-      toast.success('Trainer-Stundensatz erfolgreich aktualisiert');
-    } catch (error) {
-      toast.error('Fehler beim Aktualisieren des Trainer-Stundensatzes');
-      console.error('Update error:', error);
+  const getExperienceLevelColor = (level: string) => {
+    switch (level) {
+      case 'beginner':
+        return 'bg-blue-100 text-blue-700';
+      case 'intermediate':
+        return 'bg-green-100 text-green-700';
+      case 'advanced':
+        return 'bg-orange-100 text-orange-700';
+      case 'professional':
+        return 'bg-purple-100 text-purple-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
-   const getExperienceLevelColor = (level: string) => {
-     switch (level) {
-       case 'beginner':
-         return 'bg-blue-100 text-blue-700';
-       case 'intermediate':
-         return 'bg-green-100 text-green-700';
-       case 'advanced':
-         return 'bg-orange-100 text-orange-700';
-       case 'professional':
-         return 'bg-purple-100 text-purple-700';
-       default:
-         return 'bg-gray-100 text-gray-700';
-     }
-   };
-
-   const getExperienceLevelLabel = (level: string) => {
-     switch (level) {
-       case 'beginner':
-         return 'Anfänger';
-       case 'intermediate':
-         return 'Fortgeschritten';
-       case 'advanced':
-         return 'Erfahren';
-       case 'professional':
-         return 'Professionell';
-       default:
-         return level;
-     }
-   };
+  const getExperienceLevelLabel = (level: string) => {
+    switch (level) {
+      case 'beginner':
+        return 'Anfänger';
+      case 'intermediate':
+        return 'Fortgeschritten';
+      case 'advanced':
+        return 'Erfahren';
+      case 'professional':
+        return 'Professionell';
+      default:
+        return level;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -258,7 +204,7 @@ export default function HourlyRateManagement() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)}>
+      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}>
         <TabsList>
           <TabsTrigger value="tiers">
             <DollarSign className="h-4 w-4 mr-2" />
@@ -285,47 +231,54 @@ export default function HourlyRateManagement() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div>
-                     <Label>Name</Label>
-                     <Input
-                       value={(editForm as any).name || ''}
-                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                       placeholder="z.B. Anfänger-Training"
-                     />
-                   </div>
-                   <div>
-                     <Label>Basisrate (€)</Label>
-                     <Input
-                       type="number"
-                       value={(editForm as any).baseRate || ''}
-                       onChange={(e) => setEditForm({ ...editForm, baseRate: parseFloat(e.target.value) })}
-                       placeholder="35"
-                     />
-                   </div>
-                   <div>
-                     <Label>Erfahrungslevel</Label>
-                     <select
-                       value={(editForm as any).experienceLevel || ''}
-                       onChange={(e) => setEditForm({ ...editForm, experienceLevel: e.target.value as any })}
-                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                     >
-                       <option value="">Bitte auswählen...</option>
-                       <option value="beginner">Anfänger</option>
-                       <option value="intermediate">Fortgeschritten</option>
-                       <option value="advanced">Erfahren</option>
-                       <option value="professional">Professionell</option>
-                     </select>
-                   </div>
-                   <div>
-                     <Label>Beschreibung</Label>
-                     <Input
-                       value={(editForm as any).description || ''}
-                       onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                       placeholder="Beschreibung der Tarifstufe"
-                     />
-                   </div>
-                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Name</Label>
+                    <Input
+                      value={(editForm as Partial<HourlyRateTier>).name || ''}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      placeholder="z.B. Anfänger-Training"
+                    />
+                  </div>
+                  <div>
+                    <Label>Basisrate (€)</Label>
+                    <Input
+                      type="number"
+                      value={(editForm as Partial<HourlyRateTier>).baseRate || ''}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, baseRate: parseFloat(e.target.value) })
+                      }
+                      placeholder="35"
+                    />
+                  </div>
+                  <div>
+                    <Label>Erfahrungslevel</Label>
+                    <select
+                      value={(editForm as Partial<HourlyRateTier>).experienceLevel || ''}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          experienceLevel: e.target.value as HourlyRateTier['experienceLevel'],
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    >
+                      <option value="">Bitte auswählen...</option>
+                      <option value="beginner">Anfänger</option>
+                      <option value="intermediate">Fortgeschritten</option>
+                      <option value="advanced">Erfahren</option>
+                      <option value="professional">Professionell</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label>Beschreibung</Label>
+                    <Input
+                      value={(editForm as Partial<HourlyRateTier>).description || ''}
+                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                      placeholder="Beschreibung der Tarifstufe"
+                    />
+                  </div>
+                </div>
                 <Button onClick={handleCreateTier} className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />
                   Tarifstufe erstellen
@@ -357,7 +310,9 @@ export default function HourlyRateManagement() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600">Basisrate:</span>
-                        <span className="text-2xl font-bold text-brand-primary">€{tier.baseRate}</span>
+                        <span className="text-2xl font-bold text-brand-primary">
+                          €{tier.baseRate}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge className={getExperienceLevelColor(tier.experienceLevel)}>
@@ -372,17 +327,16 @@ export default function HourlyRateManagement() {
                         ))}
                       </div>
                       <div className="flex gap-2 pt-3 border-t">
-                         <Button
-                           size="sm"
-                           variant="outline"
-                           onClick={() => {
-                             setEditForm(tier as any);
-                             setIsEditing(true);
-                           }}
-                         >
-                           <Edit className="h-4 w-4 mr-1" />
-                           Bearbeiten
-                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditForm(tier);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Bearbeiten
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -413,8 +367,7 @@ export default function HourlyRateManagement() {
                         <p className="text-sm text-gray-600 mt-1">ID: {rate.trainerId}</p>
                       </div>
                       <Badge variant="secondary">
-                        <DollarSign className="h-3 w-3 mr-1" />
-                        €{rate.effectiveRate}
+                        <DollarSign className="h-3 w-3 mr-1" />€{rate.effectiveRate}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -457,7 +410,6 @@ export default function HourlyRateManagement() {
                         variant="outline"
                         onClick={() => {
                           setEditForm(rate);
-                          setIsEditing(true);
                         }}
                       >
                         <Edit className="h-4 w-4 mr-1" />
@@ -508,12 +460,12 @@ export default function HourlyRateManagement() {
                           </div>
                         </div>
                         {entry.reason && (
-                          <div className="mt-2 text-sm text-gray-600">
-                            Grund: {entry.reason}
-                          </div>
+                          <div className="mt-2 text-sm text-gray-600">Grund: {entry.reason}</div>
                         )}
                         <div className="mt-2 text-xs text-gray-500">
-                          Geändert am {format(parseISO(entry.changedAt), 'dd. MMM yyyy HH:mm', { locale: de })} von {entry.changedBy}
+                          Geändert am{' '}
+                          {format(parseISO(entry.changedAt), 'dd. MMM yyyy HH:mm', { locale: de })}{' '}
+                          von {entry.changedBy}
                         </div>
                       </div>
                     </div>

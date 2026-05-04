@@ -6,21 +6,14 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock,
   User,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Plus,
   Edit,
-  Save,
-  Filter,
-  Search,
   Download,
   Calendar,
   Users,
@@ -83,8 +76,6 @@ export default function HoursLogManagement() {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [hoursSummaries, setHoursSummaries] = useState<HoursSummary[]>([]);
   const [selectedTab, setSelectedTab] = useState<'hours' | 'attendance' | 'summary'>('hours');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<Partial<HoursLog | AttendanceRecord>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -161,29 +152,6 @@ export default function HoursLogManagement() {
     } catch (error) {
       toast.error('Fehler bei der Ablehnung');
       console.error('Reject error:', error);
-    }
-  };
-
-  const handleUpdateAttendance = async (id: string) => {
-    try {
-      const response = await fetch(`/api/attendance-records/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update attendance');
-      }
-
-      const data = await response.json();
-      setAttendanceRecords(attendanceRecords.map((a) => (a.id === id ? data.attendanceRecord : a)));
-      setEditForm({});
-      setIsEditing(false);
-      toast.success('Anwesenheit erfolgreich aktualisiert');
-    } catch (error) {
-      toast.error('Fehler beim Aktualisieren der Anwesenheit');
-      console.error('Update error:', error);
     }
   };
 
@@ -281,7 +249,7 @@ export default function HoursLogManagement() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)}>
+      <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}>
         <TabsList>
           <TabsTrigger value="hours">
             <Clock className="h-4 w-4 mr-2" />
@@ -405,8 +373,7 @@ export default function HoursLogManagement() {
                       <div className="text-sm text-gray-600 space-y-1">
                         <div>Trainer: {record.trainerName}</div>
                         <div>
-                          Datum:{' '}
-                          {format(parseISO(record.date), 'dd. MMMM yyyy', { locale: de })}
+                          Datum: {format(parseISO(record.date), 'dd. MMMM yyyy', { locale: de })}
                         </div>
                         {record.checkInTime && (
                           <div className="flex items-center gap-1">
@@ -433,7 +400,6 @@ export default function HoursLogManagement() {
                           variant="outline"
                           onClick={() => {
                             setEditForm(record);
-                            setIsEditing(true);
                           }}
                         >
                           <Edit className="h-4 w-4 mr-1" />
@@ -473,7 +439,9 @@ export default function HoursLogManagement() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Vorbereitung:</span>
-                          <span className="font-medium">{summary.preparationHours.toFixed(1)}h</span>
+                          <span className="font-medium">
+                            {summary.preparationHours.toFixed(1)}h
+                          </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Meetings:</span>

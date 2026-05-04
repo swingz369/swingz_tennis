@@ -1,28 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, parseISO, addMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, addMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DollarSign,
-  TrendingUp,
-  TrendingDown,
   Calendar,
   Clock,
   User,
   CheckCircle,
-  XCircle,
-  AlertCircle,
   Download,
   FileText,
   Printer,
   Mail,
   Filter,
-  Search,
   ChevronLeft,
   ChevronRight,
   Receipt,
@@ -64,7 +58,9 @@ export default function MonthlyBillingOverview() {
   const [trainerBillings, setTrainerBillings] = useState<TrainerBilling[]>([]);
   const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState(new Date());
-  const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'processed' | 'paid' | 'overdue'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<
+    'all' | 'pending' | 'processed' | 'paid' | 'overdue'
+  >('all');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -74,8 +70,6 @@ export default function MonthlyBillingOverview() {
   const loadBillingData = async () => {
     try {
       setIsLoading(true);
-      const periodStart = startOfMonth(selectedPeriod).toISOString().split('T')[0];
-      const periodEnd = endOfMonth(selectedPeriod).toISOString().split('T')[0];
 
       // In production, this would fetch from an API
       // For now, we'll use mock data
@@ -127,7 +121,7 @@ export default function MonthlyBillingOverview() {
     }
   };
 
-  const handleMarkAsPaid = async (id: string) => {
+  const handleMarkAsPaid = async (_id: string) => {
     try {
       const response = await fetch(`/api/billing/trainers/${id}/pay`, {
         method: 'POST',
@@ -146,7 +140,7 @@ export default function MonthlyBillingOverview() {
     }
   };
 
-  const handleMarkAsOverdue = async (id: string) => {
+  const handleMarkAsOverdue = async (_id: string) => {
     try {
       const response = await fetch(`/api/billing/trainers/${id}/overdue`, {
         method: 'POST',
@@ -165,7 +159,7 @@ export default function MonthlyBillingOverview() {
     }
   };
 
-  const handleGenerateInvoice = async (id: string) => {
+  const handleGenerateInvoice = async (_id: string) => {
     try {
       // In production, this would generate a PDF invoice
       toast.success('Rechnung wird generiert...');
@@ -177,7 +171,7 @@ export default function MonthlyBillingOverview() {
     }
   };
 
-  const handleSendInvoice = async (id: string) => {
+  const handleSendInvoice = async (_id: string) => {
     try {
       // In production, this would send the invoice via email
       toast.success('Rechnung wird gesendet...');
@@ -215,8 +209,8 @@ export default function MonthlyBillingOverview() {
     }
   };
 
-  const filteredBillings = trainerBillings.filter((b) =>
-    selectedStatus === 'all' || b.status === selectedStatus
+  const filteredBillings = trainerBillings.filter(
+    (b) => selectedStatus === 'all' || b.status === selectedStatus
   );
 
   if (isLoading) {
@@ -269,11 +263,7 @@ export default function MonthlyBillingOverview() {
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSelectedPeriod(new Date())}
-        >
+        <Button variant="outline" size="sm" onClick={() => setSelectedPeriod(new Date())}>
           Heute
         </Button>
       </div>
@@ -283,9 +273,7 @@ export default function MonthlyBillingOverview() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Gesamt
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Gesamt</CardTitle>
               <DollarSign className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
@@ -298,46 +286,40 @@ export default function MonthlyBillingOverview() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Ausstehend
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Ausstehend</CardTitle>
               <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">€{billingSummary.pendingAmount.toFixed(2)}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Noch nicht bezahlt
-              </p>
+              <div className="text-2xl font-bold text-yellow-600">
+                €{billingSummary.pendingAmount.toFixed(2)}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Noch nicht bezahlt</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Bezahlt
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Bezahlt</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">€{billingSummary.paidAmount.toFixed(2)}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Erfolgreich bezahlt
-              </p>
+              <div className="text-2xl font-bold text-green-600">
+                €{billingSummary.paidAmount.toFixed(2)}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Erfolgreich bezahlt</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Überfällig
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Überfällig</CardTitle>
               <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">€{billingSummary.overdueAmount.toFixed(2)}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Zahlung überfällig
-              </p>
+              <div className="text-2xl font-bold text-red-600">
+                €{billingSummary.overdueAmount.toFixed(2)}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Zahlung überfällig</p>
             </CardContent>
           </Card>
         </div>
@@ -349,7 +331,7 @@ export default function MonthlyBillingOverview() {
           <Filter className="h-4 w-4 text-gray-400" />
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as any)}
+            onChange={(e) => setSelectedStatus(e.target.value as typeof selectedStatus)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Alle Status</option>
@@ -414,14 +396,20 @@ export default function MonthlyBillingOverview() {
                   {billing.dueDate && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar className="h-4 w-4" />
-                      <span>Fällig am: {format(parseISO(billing.dueDate), 'dd. MMM yyyy', { locale: de })}</span>
+                      <span>
+                        Fällig am:{' '}
+                        {format(parseISO(billing.dueDate), 'dd. MMM yyyy', { locale: de })}
+                      </span>
                     </div>
                   )}
 
                   {billing.paidAt && (
                     <div className="flex items-center gap-2 text-sm text-green-600">
                       <CheckCircle className="h-4 w-4" />
-                      <span>Bezahlt am: {format(parseISO(billing.paidAt), 'dd. MMM yyyy', { locale: de })}</span>
+                      <span>
+                        Bezahlt am:{' '}
+                        {format(parseISO(billing.paidAt), 'dd. MMM yyyy', { locale: de })}
+                      </span>
                     </div>
                   )}
 

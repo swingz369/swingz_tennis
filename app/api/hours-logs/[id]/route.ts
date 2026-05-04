@@ -50,6 +50,11 @@ export async function PATCH(
       const { id } = await params;
       const body = await _request.json();
 
+      const isAdmin = await verifyRole(auth, 'admin');
+      if (body.status && !isAdmin) {
+        return forbiddenResponse('Nur Admins können den Status ändern');
+      }
+
       const { startTime, endTime, type, status, notes } = body;
 
       const updated = await HoursLogService.updateHoursLog(id, {

@@ -145,7 +145,7 @@ export async function requireAuth() {
           }),
         };
       },
-    } as any;
+    } as ReturnType<typeof createServerClient>;
 
     return { supabase: mockSupabase, user: mockUser };
   }
@@ -185,7 +185,7 @@ export async function requireAuth() {
           }),
         }),
       }),
-    } as any;
+    } as ReturnType<typeof createServerClient>;
 
     return { supabase: fallbackSupabase, user: fallbackUser };
   }

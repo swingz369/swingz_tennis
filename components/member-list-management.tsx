@@ -16,9 +16,7 @@ import {
   Phone,
   MapPin,
   Calendar,
-  CheckCircle,
   XCircle,
-  AlertCircle,
   Plus,
   Edit,
   Save,
@@ -29,9 +27,6 @@ import {
   Shield,
   PhoneCall,
   FileText,
-  MoreHorizontal,
-  Star,
-  Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -70,7 +65,9 @@ export default function MemberListManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Member>>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'suspended' | 'terminated'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'active' | 'inactive' | 'suspended' | 'terminated'
+  >('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'member' | 'trial' | 'inactive'>('all');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -116,10 +113,8 @@ export default function MemberListManagement() {
       }
 
       const data = await response.json();
-      
-      setMembers((prev) =>
-        prev.map((m) => (m.id === selectedMember.id ? data.member : m))
-      );
+
+      setMembers((prev) => prev.map((m) => (m.id === selectedMember.id ? data.member : m)));
 
       setSelectedMember(data.member);
       setIsEditing(false);
@@ -143,10 +138,8 @@ export default function MemberListManagement() {
       }
 
       const data = await response.json();
-      
-      setMembers((prev) =>
-        prev.map((m) => (m.id === memberId ? data.member : m))
-      );
+
+      setMembers((prev) => prev.map((m) => (m.id === memberId ? data.member : m)));
 
       toast.success(`Status aktualisiert`);
     } catch (error) {
@@ -230,7 +223,9 @@ export default function MemberListManagement() {
     const matchesType = typeFilter === 'all' || member.memberType === typeFilter;
     const matchesSearch =
       searchQuery === '' ||
-      `${member.firstName} ${member.lastName} ${member.email}`.toLowerCase().includes(searchQuery.toLowerCase());
+      `${member.firstName} ${member.lastName} ${member.email}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
     return matchesStatus && matchesType && matchesSearch;
   });
@@ -283,7 +278,7 @@ export default function MemberListManagement() {
           <Filter className="h-4 w-4 text-gray-400" />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Alle Status</option>
@@ -297,7 +292,7 @@ export default function MemberListManagement() {
         <div className="flex items-center gap-2">
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as any)}
+            onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Alle Typen</option>
@@ -355,7 +350,8 @@ export default function MemberListManagement() {
                   <div className="flex items-center gap-2 text-gray-600">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      Seit {format(parseISO(member.membershipStart), 'dd. MMM yyyy', { locale: de })}
+                      Seit{' '}
+                      {format(parseISO(member.membershipStart), 'dd. MMM yyyy', { locale: de })}
                     </span>
                   </div>
                 )}
@@ -378,7 +374,10 @@ export default function MemberListManagement() {
                   <p className="text-gray-500">{selectedMember.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={getStatusColor(selectedMember.membershipStatus)}>
+                  <Badge
+                    variant="outline"
+                    className={getStatusColor(selectedMember.membershipStatus)}
+                  >
                     {getStatusLabel(selectedMember.membershipStatus)}
                   </Badge>
                   <Badge className={getTypeColor(selectedMember.memberType)}>
@@ -419,7 +418,9 @@ export default function MemberListManagement() {
                         {isEditing ? (
                           <Input
                             value={editForm.firstName || ''}
-                            onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, firstName: e.target.value })
+                            }
                           />
                         ) : (
                           <div className="mt-1">{selectedMember.firstName}</div>
@@ -464,11 +465,15 @@ export default function MemberListManagement() {
                           <Input
                             type="date"
                             value={editForm.dateOfBirth || ''}
-                            onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, dateOfBirth: e.target.value })
+                            }
                           />
                         ) : (
                           <div className="mt-1">
-                            {format(parseISO(selectedMember.dateOfBirth), 'dd. MMMM yyyy', { locale: de })}
+                            {format(parseISO(selectedMember.dateOfBirth), 'dd. MMMM yyyy', {
+                              locale: de,
+                            })}
                           </div>
                         )}
                       </div>
@@ -486,15 +491,18 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Straße</Label>
                           {isEditing ? (
-                             <Input
-                               value={editForm.address?.street || ''}
-                               onChange={(e) =>
-                                 setEditForm({
-                                   ...editForm,
-                                   address: { ...(editForm as any).address, street: e.target.value },
-                                 })
-                               }
-                             />
+                            <Input
+                              value={editForm.address?.street || ''}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  address: {
+                                    ...editForm.address,
+                                    street: e.target.value,
+                                  } as Member['address'],
+                                })
+                              }
+                            />
                           ) : (
                             <div className="mt-1">{selectedMember.address.street}</div>
                           )}
@@ -502,15 +510,18 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Hausnummer</Label>
                           {isEditing ? (
-                             <Input
-                               value={editForm.address?.houseNumber || ''}
-                               onChange={(e) =>
-                                 setEditForm({
-                                   ...editForm,
-                                   address: { ...(editForm as any).address, houseNumber: e.target.value },
-                                 })
-                               }
-                             />
+                            <Input
+                              value={editForm.address?.houseNumber || ''}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  address: {
+                                    ...editForm.address,
+                                    houseNumber: e.target.value,
+                                  } as Member['address'],
+                                })
+                              }
+                            />
                           ) : (
                             <div className="mt-1">{selectedMember.address.houseNumber}</div>
                           )}
@@ -518,15 +529,18 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Postleitzahl</Label>
                           {isEditing ? (
-                             <Input
-                               value={editForm.address?.postalCode || ''}
-                               onChange={(e) =>
-                                 setEditForm({
-                                   ...editForm,
-                                   address: { ...(editForm as any).address, postalCode: e.target.value },
-                                 })
-                               }
-                             />
+                            <Input
+                              value={editForm.address?.postalCode || ''}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  address: {
+                                    ...editForm.address,
+                                    postalCode: e.target.value,
+                                  } as Member['address'],
+                                })
+                              }
+                            />
                           ) : (
                             <div className="mt-1">{selectedMember.address.postalCode}</div>
                           )}
@@ -534,15 +548,18 @@ export default function MemberListManagement() {
                         <div>
                           <Label>Stadt</Label>
                           {isEditing ? (
-                             <Input
-                               value={editForm.address?.city || ''}
-                               onChange={(e) =>
-                                 setEditForm({
-                                   ...editForm,
-                                   address: { ...(editForm as any).address, city: e.target.value },
-                                 })
-                               }
-                             />
+                            <Input
+                              value={editForm.address?.city || ''}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  address: {
+                                    ...editForm.address,
+                                    city: e.target.value,
+                                  } as Member['address'],
+                                })
+                              }
+                            />
                           ) : (
                             <div className="mt-1">{selectedMember.address.city}</div>
                           )}
@@ -564,7 +581,12 @@ export default function MemberListManagement() {
                         {isEditing ? (
                           <select
                             value={editForm.memberType || ''}
-                            onChange={(e) => setEditForm({ ...editForm, memberType: e.target.value as any })}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                memberType: e.target.value as Member['memberType'],
+                              })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                           >
                             <option value="member">Mitglied</option>
@@ -580,7 +602,12 @@ export default function MemberListManagement() {
                         {isEditing ? (
                           <select
                             value={editForm.membershipStatus || ''}
-                            onChange={(e) => setEditForm({ ...editForm, membershipStatus: e.target.value as any })}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                membershipStatus: e.target.value as Member['membershipStatus'],
+                              })
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                           >
                             <option value="active">Aktiv</option>
@@ -589,7 +616,9 @@ export default function MemberListManagement() {
                             <option value="terminated">Beendet</option>
                           </select>
                         ) : (
-                          <div className="mt-1">{getStatusLabel(selectedMember.membershipStatus)}</div>
+                          <div className="mt-1">
+                            {getStatusLabel(selectedMember.membershipStatus)}
+                          </div>
                         )}
                       </div>
                       <div>
@@ -598,12 +627,16 @@ export default function MemberListManagement() {
                           <Input
                             type="date"
                             value={editForm.membershipStart || ''}
-                            onChange={(e) => setEditForm({ ...editForm, membershipStart: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, membershipStart: e.target.value })
+                            }
                           />
                         ) : (
                           <div className="mt-1">
                             {selectedMember.membershipStart
-                              ? format(parseISO(selectedMember.membershipStart), 'dd. MMM yyyy', { locale: de })
+                              ? format(parseISO(selectedMember.membershipStart), 'dd. MMM yyyy', {
+                                  locale: de,
+                                })
                               : 'Nicht festgelegt'}
                           </div>
                         )}
@@ -614,12 +647,16 @@ export default function MemberListManagement() {
                           <Input
                             type="date"
                             value={editForm.membershipEnd || ''}
-                            onChange={(e) => setEditForm({ ...editForm, membershipEnd: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, membershipEnd: e.target.value })
+                            }
                           />
                         ) : (
                           <div className="mt-1">
                             {selectedMember.membershipEnd
-                              ? format(parseISO(selectedMember.membershipEnd), 'dd. MMM yyyy', { locale: de })
+                              ? format(parseISO(selectedMember.membershipEnd), 'dd. MMM yyyy', {
+                                  locale: de,
+                                })
                               : 'Nicht festgelegt'}
                           </div>
                         )}
@@ -629,10 +666,14 @@ export default function MemberListManagement() {
                         {isEditing ? (
                           <Input
                             value={editForm.trainingGroup || ''}
-                            onChange={(e) => setEditForm({ ...editForm, trainingGroup: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, trainingGroup: e.target.value })
+                            }
                           />
                         ) : (
-                          <div className="mt-1">{selectedMember.trainingGroup || 'Nicht zugewiesen'}</div>
+                          <div className="mt-1">
+                            {selectedMember.trainingGroup || 'Nicht zugewiesen'}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -676,21 +717,27 @@ export default function MemberListManagement() {
                           <User className="h-5 w-5 text-gray-400" />
                           <div>
                             <div className="text-sm text-gray-600">Name</div>
-                            <div className="font-medium">{selectedMember.emergencyContact.name}</div>
+                            <div className="font-medium">
+                              {selectedMember.emergencyContact.name}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <Phone className="h-5 w-5 text-gray-400" />
                           <div>
                             <div className="text-sm text-gray-600">Telefon</div>
-                            <div className="font-medium">{selectedMember.emergencyContact.phone}</div>
+                            <div className="font-medium">
+                              {selectedMember.emergencyContact.phone}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <Users className="h-5 w-5 text-gray-400" />
                           <div>
                             <div className="text-sm text-gray-600">Beziehung</div>
-                            <div className="font-medium">{selectedMember.emergencyContact.relationship}</div>
+                            <div className="font-medium">
+                              {selectedMember.emergencyContact.relationship}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -714,7 +761,9 @@ export default function MemberListManagement() {
                       placeholder="Interne Notizen..."
                     />
                   ) : (
-                    <div className="text-gray-700">{selectedMember.notes || 'Keine Notizen vorhanden'}</div>
+                    <div className="text-gray-700">
+                      {selectedMember.notes || 'Keine Notizen vorhanden'}
+                    </div>
                   )}
                 </div>
 

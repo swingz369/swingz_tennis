@@ -8,28 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  DollarSign,
-  Calendar,
-  Clock,
-  Plus,
-  Edit,
-  Save,
-  XCircle,
-  Filter,
-  Search,
-  Download,
-  Settings,
-  User,
-  Shield,
-  CheckCircle,
-  AlertCircle,
-  CreditCard,
-  Repeat,
-  Info,
-} from 'lucide-react';
+import { Calendar, Clock, Plus, Edit, XCircle, Download, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 
 export interface FeeConfiguration {
@@ -55,8 +34,6 @@ export interface FeeConfiguration {
 
 export default function FeeConfigurationManagement() {
   const [feeConfigurations, setFeeConfigurations] = useState<FeeConfiguration[]>([]);
-  const [selectedFee, setSelectedFee] = useState<FeeConfiguration | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<FeeConfiguration>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -99,31 +76,10 @@ export default function FeeConfigurationManagement() {
       setEditForm({});
       toast.success('Gebührenkonfiguration erfolgreich erstellt');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen der Gebührenkonfiguration');
+      toast.error(
+        error instanceof Error ? error.message : 'Fehler beim Erstellen der Gebührenkonfiguration'
+      );
       console.error('Create error:', error);
-    }
-  };
-
-  const handleUpdateFee = async (id: string) => {
-    try {
-      const response = await fetch(`/api/fee-configurations/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update fee configuration');
-      }
-
-      const data = await response.json();
-      setFeeConfigurations(feeConfigurations.map((f) => (f.id === id ? data.feeConfiguration : f)));
-      setEditForm({});
-      setIsEditing(false);
-      toast.success('Gebührenkonfiguration erfolgreich aktualisiert');
-    } catch (error) {
-      toast.error('Fehler beim Aktualisieren der Gebührenkonfiguration');
-      console.error('Update error:', error);
     }
   };
 
@@ -245,7 +201,12 @@ export default function FeeConfigurationManagement() {
               <Label>Typ</Label>
               <select
                 value={editForm.type || ''}
-                onChange={(e) => setEditForm({ ...editForm, type: e.target.value as any })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    type: e.target.value as 'membership' | 'training' | 'court' | 'other',
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="">Bitte auswählen...</option>
@@ -276,7 +237,12 @@ export default function FeeConfigurationManagement() {
               <Label>Abrechnungszyklus</Label>
               <select
                 value={editForm.billingCycle || ''}
-                onChange={(e) => setEditForm({ ...editForm, billingCycle: e.target.value as any })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    billingCycle: e.target.value as 'monthly' | 'quarterly' | 'yearly' | 'one_time',
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="">Bitte auswählen...</option>
@@ -325,9 +291,7 @@ export default function FeeConfigurationManagement() {
                     )}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <Badge className={getTypeColor(fee.type)}>
-                      {getTypeLabel(fee.type)}
-                    </Badge>
+                    <Badge className={getTypeColor(fee.type)}>{getTypeLabel(fee.type)}</Badge>
                     {!fee.isActive && (
                       <Badge variant="outline" className="bg-gray-100 text-gray-700">
                         Inaktiv
@@ -363,7 +327,8 @@ export default function FeeConfigurationManagement() {
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Clock className="h-4 w-4" />
                       <span>
-                        Gültig bis: {format(parseISO(fee.validUntil), 'dd. MMM yyyy', { locale: de })}
+                        Gültig bis:{' '}
+                        {format(parseISO(fee.validUntil), 'dd. MMM yyyy', { locale: de })}
                       </span>
                     </div>
                   )}
@@ -379,14 +344,10 @@ export default function FeeConfigurationManagement() {
                           <div>Höchstalter: {fee.conditions.maxAge} Jahre</div>
                         )}
                         {fee.conditions.memberType && (
-                          <div>
-                            Mitgliedstyp: {fee.conditions.memberType.join(', ')}
-                          </div>
+                          <div>Mitgliedstyp: {fee.conditions.memberType.join(', ')}</div>
                         )}
                         {fee.conditions.trainingGroup && (
-                          <div>
-                            Trainingsgruppen: {fee.conditions.trainingGroup.join(', ')}
-                          </div>
+                          <div>Trainingsgruppen: {fee.conditions.trainingGroup.join(', ')}</div>
                         )}
                       </div>
                     </div>
@@ -398,17 +359,12 @@ export default function FeeConfigurationManagement() {
                       variant="outline"
                       onClick={() => {
                         setEditForm(fee);
-                        setIsEditing(true);
                       }}
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Bearbeiten
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDeleteFee(fee.id)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => handleDeleteFee(fee.id)}>
                       <XCircle className="h-4 w-4 mr-1" />
                       Löschen
                     </Button>

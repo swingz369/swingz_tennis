@@ -2,21 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  Calendar,
-  Star,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Download,
-} from 'lucide-react';
+import { TrendingUp, Users, Star, Clock, AlertCircle, Download } from 'lucide-react';
 import { format, subDays, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -65,7 +53,7 @@ export default function TrialTrainingAnalytics() {
       // In production, this would fetch from an analytics API
       // For now, we'll use mock data
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       setAnalytics({
         total: 156,
         scheduled: 23,
@@ -120,21 +108,6 @@ export default function TrialTrainingAnalytics() {
     }
   };
 
-  const getTrendIcon = (current: number, previous: number) => {
-    if (current > previous) {
-      return <TrendingUp className="h-4 w-4 text-green-600" />;
-    } else if (current < previous) {
-      return <TrendingDown className="h-4 w-4 text-red-600" />;
-    }
-    return null;
-  };
-
-  const getTrendColor = (current: number, previous: number) => {
-    if (current > previous) return 'text-green-600';
-    if (current < previous) return 'text-red-600';
-    return 'text-gray-600';
-  };
-
   if (isLoading) {
     return (
       <div className="p-4 md:p-6 space-y-6">
@@ -170,7 +143,10 @@ export default function TrialTrainingAnalytics() {
           <p className="text-gray-500">Detaillierte Statistiken und Trends</p>
         </div>
         <div className="flex items-center gap-2">
-          <Tabs value={selectedPeriod} onValueChange={(v) => setSelectedPeriod(v as any)}>
+          <Tabs
+            value={selectedPeriod}
+            onValueChange={(v) => setSelectedPeriod(v as typeof selectedPeriod)}
+          >
             <TabsList>
               <TabsTrigger value="7d">7 Tage</TabsTrigger>
               <TabsTrigger value="30d">30 Tage</TabsTrigger>
@@ -188,31 +164,23 @@ export default function TrialTrainingAnalytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Gesamt
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Gesamt</CardTitle>
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.total}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Probetrainings
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Probetrainings</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Konversionsrate
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Konversionsrate</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.conversionRate}%</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Von Abgeschlossen zu Mitglied
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Von Abgeschlossen zu Mitglied</p>
           </CardContent>
         </Card>
 
@@ -225,24 +193,18 @@ export default function TrialTrainingAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.averageRating.toFixed(1)}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Von 5 Sternen
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Von 5 Sternen</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Durchschnittsdauer
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Durchschnittsdauer</CardTitle>
             <Clock className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.averageDuration} Min</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Pro Training
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Pro Training</p>
           </CardContent>
         </Card>
       </div>
@@ -286,7 +248,10 @@ export default function TrialTrainingAnalytics() {
         <CardContent>
           <div className="space-y-4">
             {analytics.topTrainers.map((trainer, index) => (
-              <div key={trainer.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div
+                key={trainer.id}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-8 h-8 bg-brand-primary text-white rounded-full flex items-center justify-center font-bold">
                     {index + 1}
@@ -316,15 +281,21 @@ export default function TrialTrainingAnalytics() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">{analytics.timeDistribution.morning}</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {analytics.timeDistribution.morning}
+              </div>
               <div className="text-sm text-gray-600 mt-1">Morgens (6-12)</div>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">{analytics.timeDistribution.afternoon}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {analytics.timeDistribution.afternoon}
+              </div>
               <div className="text-sm text-gray-600 mt-1">Nachmittags (12-18)</div>
             </div>
             <div className="text-center p-4 bg-indigo-50 rounded-lg">
-              <div className="text-2xl font-bold text-indigo-600">{analytics.timeDistribution.evening}</div>
+              <div className="text-2xl font-bold text-indigo-600">
+                {analytics.timeDistribution.evening}
+              </div>
               <div className="text-sm text-gray-600 mt-1">Abends (18-22)</div>
             </div>
           </div>
@@ -366,9 +337,7 @@ export default function TrialTrainingAnalytics() {
                       className="w-full bg-brand-primary rounded-t"
                       style={{ height: `${(value / Math.max(...analytics.trends.weekly)) * 100}%` }}
                     />
-                    <div className="text-xs text-gray-600 mt-2">
-                      Woche {index + 1}
-                    </div>
+                    <div className="text-xs text-gray-600 mt-2">Woche {index + 1}</div>
                   </div>
                 ))}
               </div>
@@ -379,7 +348,9 @@ export default function TrialTrainingAnalytics() {
                   <div key={index} className="flex-1 flex flex-col items-center">
                     <div
                       className="w-full bg-brand-primary rounded-t"
-                      style={{ height: `${(value / Math.max(...analytics.trends.monthly)) * 100}%` }}
+                      style={{
+                        height: `${(value / Math.max(...analytics.trends.monthly)) * 100}%`,
+                      }}
                     />
                     <div className="text-xs text-gray-600 mt-2">
                       {format(subMonths(new Date(), 2 - index), 'MMM', { locale: de })}

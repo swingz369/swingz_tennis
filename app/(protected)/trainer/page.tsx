@@ -53,21 +53,6 @@ export default function TrainerDashboard() {
     fetchData();
   }, []);
 
-  const handleNoShow = async (bookingId: string) => {
-    try {
-      const res = await fetch(`/api/bookings/${bookingId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'no_show' }),
-      });
-      if (!res.ok) throw new Error('Failed to update');
-      // Reload to refresh
-      window.location.reload();
-    } catch {
-      setError('Failed to mark no-show');
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -187,13 +172,12 @@ export default function TrainerDashboard() {
                       {session.attendees.map(
                         (a, i) =>
                           a.status === 'confirmed' && (
-                            <button
+                            <span
                               key={i}
-                              onClick={() => handleNoShow(a.bookingId)}
-                              className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-800 hover:bg-gray-200 mr-1 mb-1 rounded"
+                              className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-600 mr-1 mb-1 rounded"
                             >
-                              No-Show
-                            </button>
+                              Kontaktieren Sie den Admin für No-Show
+                            </span>
                           )
                       )}
                     </td>

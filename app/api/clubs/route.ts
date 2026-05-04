@@ -41,9 +41,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
-    const hasRole = await verifyRole(auth, 'admin');
+    const hasRole = await verifyRole(auth, 'superadmin');
     if (!hasRole) {
-      return forbiddenResponse('Admin access required');
+      return forbiddenResponse('Superadmin access required');
     }
 
     const rateLimitError = await checkRateLimitOrFail(req, rateLimit);

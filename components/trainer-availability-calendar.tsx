@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, addDays, startOfWeek, parseISO, isSameDay, isToday } from 'date-fns';
+import { format, addDays, startOfWeek, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,25 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Calendar,
-  Clock,
-  User,
-  Plus,
-  Edit,
-  Save,
-  XCircle,
-  CheckCircle,
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Search,
-  Download,
-  Repeat,
-  MapPin,
-} from 'lucide-react';
+import { Calendar, User, Plus, ChevronLeft, ChevronRight, Download, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 
 export interface TrainerAvailability {
@@ -51,7 +33,6 @@ export default function TrainerAvailabilityCalendar() {
   const [availabilities, setAvailabilities] = useState<TrainerAvailability[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTrainerId, setSelectedTrainerId] = useState<string>('all');
-  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<TrainerAvailability>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
@@ -95,54 +76,10 @@ export default function TrainerAvailabilityCalendar() {
       setEditForm({});
       toast.success('Verfügbarkeit erfolgreich erstellt');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen der Verfügbarkeit');
+      toast.error(
+        error instanceof Error ? error.message : 'Fehler beim Erstellen der Verfügbarkeit'
+      );
       console.error('Create error:', error);
-    }
-  };
-
-  const handleUpdateAvailability = async (id: string) => {
-    try {
-      const response = await fetch(`/api/trainer-availability/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update availability');
-      }
-
-      const data = await response.json();
-      setAvailabilities(availabilities.map((a) => (a.id === id ? data.availability : a)));
-      setEditForm({});
-      setIsEditing(false);
-      toast.success('Verfügbarkeit erfolgreich aktualisiert');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Aktualisieren der Verfügbarkeit');
-      console.error('Update error:', error);
-    }
-  };
-
-  const handleDeleteAvailability = async (id: string) => {
-    if (!confirm('Möchten Sie diese Verfügbarkeit wirklich löschen?')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/trainer-availability/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete availability');
-      }
-
-      setAvailabilities(availabilities.filter((a) => a.id !== id));
-      toast.success('Verfügbarkeit erfolgreich gelöscht');
-    } catch (error) {
-      toast.error('Fehler beim Löschen der Verfügbarkeit');
-      console.error('Delete error:', error);
     }
   };
 
@@ -263,7 +200,7 @@ export default function TrainerAvailabilityCalendar() {
           <Calendar className="h-4 w-4 text-gray-400" />
           <select
             value={viewMode}
-            onChange={(e) => setViewMode(e.target.value as any)}
+            onChange={(e) => setViewMode(e.target.value as typeof viewMode)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="week">Wochenansicht</option>
@@ -281,7 +218,9 @@ export default function TrainerAvailabilityCalendar() {
           </Button>
           <span className="text-sm font-medium">
             {format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'dd. MMM', { locale: de })} -{' '}
-            {format(addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), 6), 'dd. MMM yyyy', { locale: de })}
+            {format(addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), 6), 'dd. MMM yyyy', {
+              locale: de,
+            })}
           </span>
           <Button
             variant="outline"
@@ -292,11 +231,7 @@ export default function TrainerAvailabilityCalendar() {
           </Button>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSelectedDate(new Date())}
-        >
+        <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
           Heute
         </Button>
       </div>
@@ -349,15 +284,11 @@ export default function TrainerAvailabilityCalendar() {
                           {getStatusLabel(availability.status)}
                         </Badge>
                       </div>
-                      <div className="text-gray-600">
-                        Trainer {availability.trainerId}
-                      </div>
+                      <div className="text-gray-600">Trainer {availability.trainerId}</div>
                       {availability.recurringPattern && (
                         <div className="flex items-center gap-1 mt-1 text-gray-500">
                           <Repeat className="h-3 w-3" />
-                          <span className="text-[10px]">
-                            {availability.recurringPattern.type}
-                          </span>
+                          <span className="text-[10px]">{availability.recurringPattern.type}</span>
                         </div>
                       )}
                     </div>
@@ -422,7 +353,12 @@ export default function TrainerAvailabilityCalendar() {
               <Label>Status</Label>
               <select
                 value={editForm.status || 'available'}
-                onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    status: e.target.value as 'available' | 'unavailable' | 'booked' | 'blocked',
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="available">Verfügbar</option>
@@ -436,12 +372,10 @@ export default function TrainerAvailabilityCalendar() {
               <select
                 value={editForm.recurringPattern?.type || ''}
                 onChange={(e) => {
-                  const type = e.target.value as any;
+                  const type = e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly' | '';
                   setEditForm({
                     ...editForm,
-                    recurringPattern: type
-                      ? { type, interval: 1 }
-                      : undefined,
+                    recurringPattern: type ? { type, interval: 1 } : undefined,
                   });
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"

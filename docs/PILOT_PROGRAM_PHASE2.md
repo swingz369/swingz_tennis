@@ -31,6 +31,7 @@ Das SWINGZ Pilot Programm für Phase 2 Finanzmanagement wird mit 3 Tennisclubs d
 **Herausforderungen**: Komplexe Preisstruktur, viele Trainer
 
 **Test-Szenarien**:
+
 - Monatliche Mitgliedsbeiträge
 - Trainingsgebühren für verschiedene Gruppen
 - SEPA-Lastschriften
@@ -44,6 +45,7 @@ Das SWINGZ Pilot Programm für Phase 2 Finanzmanagement wird mit 3 Tennisclubs d
 **Herausforderungen**: Hoher Rechnungsvolumen, viele Einmalzahlungen
 
 **Test-Szenarien**:
+
 - Hohe Rechnungsvolumina
 - CSV-Import von Zahlungen
 - Manuelle Rechnungserstellung
@@ -57,6 +59,7 @@ Das SWINGZ Pilot Programm für Phase 2 Finanzmanagement wird mit 3 Tennisclubs d
 **Herausforderungen**: Gemischte Zahlungsarten, viele Ausnahmen
 
 **Test-Szenarien**:
+
 - Gemischte Zahlungsarten (SEPA, Stripe, Bar)
 - Ausnahmen und Sonderfälle
 - Rechnungskorrekturen
@@ -78,11 +81,11 @@ Das SWINGZ Pilot Programm für Phase 2 Finanzmanagement wird mit 3 Tennisclubs d
 
 #### Onboarding-Sitzungen
 
-| Club | Datum | Zeit | Teilnehmer | Agenda |
-|------|-------|------|------------|--------|
-| TC Grün-Weiß Berlin | 06.05.2026 | 10:00 - 12:00 | Admin, Buchhaltung | Plattform-Übersicht, Rechnungserstellung |
-| Tennisclub Rot-Blau München | 06.05.2026 | 14:00 - 16:00 | Admin, Buchhaltung | CSV-Import, Berichte |
-| SV Tennis Hamburg | 07.05.2026 | 10:00 - 12:00 | Admin, Buchhaltung | SEPA-Lastschriften, Mahnwesen |
+| Club                        | Datum      | Zeit          | Teilnehmer         | Agenda                                   |
+| --------------------------- | ---------- | ------------- | ------------------ | ---------------------------------------- |
+| TC Grün-Weiß Berlin         | 06.05.2026 | 10:00 - 12:00 | Admin, Buchhaltung | Plattform-Übersicht, Rechnungserstellung |
+| Tennisclub Rot-Blau München | 06.05.2026 | 14:00 - 16:00 | Admin, Buchhaltung | CSV-Import, Berichte                     |
+| SV Tennis Hamburg           | 07.05.2026 | 10:00 - 12:00 | Admin, Buchhaltung | SEPA-Lastschriften, Mahnwesen            |
 
 #### Testdaten
 
@@ -165,25 +168,25 @@ Für jeden Club werden folgende Testdaten bereitgestellt:
 
 ### Quantitative Metriken
 
-| Metrik | Ziel | Aktuell | Status |
-|--------|------|---------|--------|
-| Rechnungen erstellt | 150+ | 0 | ⏳ |
-| Zahlungen verarbeitet | 100+ | 0 | ⏳ |
-| SEPA-Exporte | 10+ | 0 | ⏳ |
-| CSV-Importe | 5+ | 0 | ⏳ |
-| Mahnungen erstellt | 20+ | 0 | ⏳ |
-| System-Uptime | >99% | - | ⏳ |
-| Durchschnittliche Ladezeit | <2s | - | ⏳ |
-| Bug-Reports | <10 | 0 | ⏳ |
+| Metrik                     | Ziel | Aktuell | Status |
+| -------------------------- | ---- | ------- | ------ |
+| Rechnungen erstellt        | 150+ | 0       | ⏳     |
+| Zahlungen verarbeitet      | 100+ | 0       | ⏳     |
+| SEPA-Exporte               | 10+  | 0       | ⏳     |
+| CSV-Importe                | 5+   | 0       | ⏳     |
+| Mahnungen erstellt         | 20+  | 0       | ⏳     |
+| System-Uptime              | >99% | -       | ⏳     |
+| Durchschnittliche Ladezeit | <2s  | -       | ⏳     |
+| Bug-Reports                | <10  | 0       | ⏳     |
 
 ### Qualitative Metriken
 
-| Metrik | Ziel | Bewertung |
-|--------|------|-----------|
-| Benutzerfreundlichkeit | >4/5 | ⏳ |
-| Support-Zufriedenheit | >4/5 | ⏳ |
-| Feature-Adoption | >80% | ⏳ |
-| Empfehlungsbereitschaft | >80% | ⏳ |
+| Metrik                  | Ziel | Bewertung |
+| ----------------------- | ---- | --------- |
+| Benutzerfreundlichkeit  | >4/5 | ⏳        |
+| Support-Zufriedenheit   | >4/5 | ⏳        |
+| Feature-Adoption        | >80% | ⏳        |
+| Empfehlungsbereitschaft | >80% | ⏳        |
 
 ---
 
@@ -215,13 +218,13 @@ Für jeden Club werden folgende Testdaten bereitgestellt:
 
 ### Identifizierte Risiken
 
-| Risiko | Wahrscheinlichkeit | Auswirkung | Mitigationsstrategie |
-|--------|-------------------|------------|---------------------|
-| Technische Probleme | Mittel | Hoch | 24/7 Support, Hotfixes |
-| Geringe Akzeptanz | Niedrig | Mittel | Intensives Training, Support |
-| Datenverlust | Niedrig | Kritisch | Regelmäßige Backups |
-| Performance-Probleme | Mittel | Mittel | Monitoring, Optimierung |
-| Sicherheitsprobleme | Niedrig | Kritisch | Security Audit, Penetration Testing |
+| Risiko               | Wahrscheinlichkeit | Auswirkung | Mitigationsstrategie                |
+| -------------------- | ------------------ | ---------- | ----------------------------------- |
+| Technische Probleme  | Mittel             | Hoch       | 24/7 Support, Hotfixes              |
+| Geringe Akzeptanz    | Niedrig            | Mittel     | Intensives Training, Support        |
+| Datenverlust         | Niedrig            | Kritisch   | Regelmäßige Backups                 |
+| Performance-Probleme | Mittel             | Mittel     | Monitoring, Optimierung             |
+| Sicherheitsprobleme  | Niedrig            | Kritisch   | Security Audit, Penetration Testing |
 
 ### Notfall-Pläne
 
@@ -289,51 +292,51 @@ Für jeden Club werden folgende Testdaten bereitgestellt:
 
 ### Woche 1: Setup und Onboarding
 
-| Tag | Aufgabe | Verantwortlich |
-|-----|---------|---------------|
-| Mo | Pilot-Clubs kontaktieren | Product Manager |
-| Di | Zugangsdaten erstellen | Tech Lead |
-| Mi | Onboarding-Sitzung Club 1 | Product Manager |
-| Do | Onboarding-Sitzung Club 2 | Product Manager |
-| Fr | Onboarding-Sitzung Club 3 | Product Manager |
-| Sa | Testdaten vorbereiten | Backend Dev |
-| So | Support-Kanäle einrichten | Support |
+| Tag | Aufgabe                   | Verantwortlich  |
+| --- | ------------------------- | --------------- |
+| Mo  | Pilot-Clubs kontaktieren  | Product Manager |
+| Di  | Zugangsdaten erstellen    | Tech Lead       |
+| Mi  | Onboarding-Sitzung Club 1 | Product Manager |
+| Do  | Onboarding-Sitzung Club 2 | Product Manager |
+| Fr  | Onboarding-Sitzung Club 3 | Product Manager |
+| Sa  | Testdaten vorbereiten     | Backend Dev     |
+| So  | Support-Kanäle einrichten | Support         |
 
 ### Woche 2: Erste Tests
 
-| Tag | Aufgabe | Verantwortlich |
-|-----|---------|---------------|
-| Mo | Clubs bei ersten Rechnungen unterstützen | Support |
-| Di | Feedback zu UI/UX sammeln | Product Manager |
-| Mi | Erste Bugs dokumentieren | QA Engineer |
-| Do | Performance-Messungen durchführen | DevOps Engineer |
-| Fr | Wöchentliches Status-Meeting | Product Manager |
-| Sa | Bugfixes | Backend Dev |
-| So | Bugfixes | Backend Dev |
+| Tag | Aufgabe                                  | Verantwortlich  |
+| --- | ---------------------------------------- | --------------- |
+| Mo  | Clubs bei ersten Rechnungen unterstützen | Support         |
+| Di  | Feedback zu UI/UX sammeln                | Product Manager |
+| Mi  | Erste Bugs dokumentieren                 | QA Engineer     |
+| Do  | Performance-Messungen durchführen        | DevOps Engineer |
+| Fr  | Wöchentliches Status-Meeting             | Product Manager |
+| Sa  | Bugfixes                                 | Backend Dev     |
+| So  | Bugfixes                                 | Backend Dev     |
 
 ### Woche 3: Erweiterte Tests
 
-| Tag | Aufgabe | Verantwortlich |
-|-----|---------|---------------|
-| Mo | Komplexe Szenarien testen | QA Engineer |
-| Di | Berichte und Exporte validieren | QA Engineer |
-| Mi | Performance unter Last testen | DevOps Engineer |
-| Do | Sicherheitsaspekte prüfen | Security Consultant |
-| Fr | Feedback-Sitzungen durchführen | Product Manager |
-| Sa | Optimierungen | Backend Dev |
-| So | Optimierungen | Backend Dev |
+| Tag | Aufgabe                         | Verantwortlich      |
+| --- | ------------------------------- | ------------------- |
+| Mo  | Komplexe Szenarien testen       | QA Engineer         |
+| Di  | Berichte und Exporte validieren | QA Engineer         |
+| Mi  | Performance unter Last testen   | DevOps Engineer     |
+| Do  | Sicherheitsaspekte prüfen       | Security Consultant |
+| Fr  | Feedback-Sitzungen durchführen  | Product Manager     |
+| Sa  | Optimierungen                   | Backend Dev         |
+| So  | Optimierungen                   | Backend Dev         |
 
 ### Woche 4: Abschluss und Evaluation
 
-| Tag | Aufgabe | Verantwortlich |
-|-----|---------|---------------|
-| Mo | Abschluss-Feedback sammeln | Product Manager |
-| Di | Erfolgsmetriken auswerten | Product Manager |
-| Mi | Lessons Learned dokumentieren | Product Manager |
-| Do | Empfehlungen für Rollout | Product Manager |
-| Fr | Abschluss-Präsentation vorbereiten | Product Manager |
-| Sa | Dokumentation finalisieren | Tech Writer |
-| So | Pilot-Abschluss | Product Manager |
+| Tag | Aufgabe                            | Verantwortlich  |
+| --- | ---------------------------------- | --------------- |
+| Mo  | Abschluss-Feedback sammeln         | Product Manager |
+| Di  | Erfolgsmetriken auswerten          | Product Manager |
+| Mi  | Lessons Learned dokumentieren      | Product Manager |
+| Do  | Empfehlungen für Rollout           | Product Manager |
+| Fr  | Abschluss-Präsentation vorbereiten | Product Manager |
+| Sa  | Dokumentation finalisieren         | Tech Writer     |
+| So  | Pilot-Abschluss                    | Product Manager |
 
 ---
 
@@ -341,14 +344,14 @@ Für jeden Club werden folgende Testdaten bereitgestellt:
 
 ### Kosten
 
-| Kategorie | Betrag | Status |
-|-----------|--------|--------|
-| Support-Personal | €5.000 | ✅ Genehmigt |
-| Infrastruktur | €2.000 | ✅ Genehmigt |
-| Training | €1.500 | ✅ Genehmigt |
-| Dokumentation | €1.000 | ✅ Genehmigt |
-| Contingency | €500 | ✅ Genehmigt |
-| **Gesamt** | **€10.000** | ✅ Genehmigt |
+| Kategorie        | Betrag      | Status       |
+| ---------------- | ----------- | ------------ |
+| Support-Personal | €5.000      | ✅ Genehmigt |
+| Infrastruktur    | €2.000      | ✅ Genehmigt |
+| Training         | €1.500      | ✅ Genehmigt |
+| Dokumentation    | €1.000      | ✅ Genehmigt |
+| Contingency      | €500        | ✅ Genehmigt |
+| **Gesamt**       | **€10.000** | ✅ Genehmigt |
 
 ---
 
@@ -425,20 +428,20 @@ Für jeden Club werden folgende Testdaten bereitgestellt:
 
 ### Projekt-Team
 
-| Rolle | Name | Email | Telefon |
-|-------|------|-------|---------|
-| Product Manager | [Name] | pm@swingz.de | +49 123 456789 |
-| Tech Lead | [Name] | tech@swingz.de | +49 123 456790 |
-| Support Lead | [Name] | support@swingz.de | +49 123 456791 |
-| QA Lead | [Name] | qa@swingz.de | +49 123 456792 |
+| Rolle           | Name   | Email             | Telefon        |
+| --------------- | ------ | ----------------- | -------------- |
+| Product Manager | [Name] | pm@swingz.de      | +49 123 456789 |
+| Tech Lead       | [Name] | tech@swingz.de    | +49 123 456790 |
+| Support Lead    | [Name] | support@swingz.de | +49 123 456791 |
+| QA Lead         | [Name] | qa@swingz.de      | +49 123 456792 |
 
 ### Pilot-Clubs
 
-| Club | Kontakt | Email | Telefon |
-|------|---------|-------|---------|
-| TC Grün-Weiß Berlin | Hans Müller | hans.mueller@tc-gruenweiss-berlin.de | +49 30 123456 |
-| Tennisclub Rot-Blau München | Anna Schmidt | anna.schmidt@tc-rotblau-muenchen.de | +49 89 123456 |
-| SV Tennis Hamburg | Thomas Weber | thomas.weber@sv-tennis-hamburg.de | +49 40 123456 |
+| Club                        | Kontakt      | Email                                | Telefon       |
+| --------------------------- | ------------ | ------------------------------------ | ------------- |
+| TC Grün-Weiß Berlin         | Hans Müller  | hans.mueller@tc-gruenweiss-berlin.de | +49 30 123456 |
+| Tennisclub Rot-Blau München | Anna Schmidt | anna.schmidt@tc-rotblau-muenchen.de  | +49 89 123456 |
+| SV Tennis Hamburg           | Thomas Weber | thomas.weber@sv-tennis-hamburg.de    | +49 40 123456 |
 
 ---
 

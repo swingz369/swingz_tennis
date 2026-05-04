@@ -53,6 +53,16 @@ export class HoursLogService {
       errors.push('Typ ist erforderlich');
     }
 
+    const duration = this.calculateDuration(input.startTime, input.endTime);
+    if (duration > 720) {
+      errors.push('Maximal 12 Stunden pro Eintrag erlaubt');
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    if (input.date && input.date > today) {
+      errors.push('Datum darf nicht in der Zukunft liegen');
+    }
+
     return {
       valid: errors.length === 0,
       errors,
@@ -62,7 +72,10 @@ export class HoursLogService {
   /**
    * Validate attendance record input
    */
-  static validateAttendanceRecordInput(input: CreateAttendanceRecordInput): { valid: boolean; errors: string[] } {
+  static validateAttendanceRecordInput(input: CreateAttendanceRecordInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.sessionId || input.sessionId.trim().length === 0) {
@@ -213,9 +226,19 @@ export class HoursLogService {
     }
 
     const existing = this.hoursLogs[index];
-    const duration = input.startTime && input.endTime
-      ? this.calculateDuration(input.startTime, input.endTime)
-      : existing.duration;
+
+    if (existing.status === 'approved') {
+      throw new Error('Genehmigte Einträge können nicht mehr bearbeitet werden');
+    }
+
+    const duration =
+      input.startTime && input.endTime
+        ? this.calculateDuration(input.startTime, input.endTime)
+        : existing.duration;
+
+    if (duration > 720) {
+      throw new Error('Maximal 12 Stunden pro Eintrag erlaubt');
+    }
 
     const updated: HoursLog = {
       ...existing,
@@ -270,7 +293,9 @@ export class HoursLogService {
   /**
    * Create a new attendance record
    */
-  static async createAttendanceRecord(input: CreateAttendanceRecordInput): Promise<AttendanceRecord> {
+  static async createAttendanceRecord(
+    input: CreateAttendanceRecordInput
+  ): Promise<AttendanceRecord> {
     const validation = this.validateAttendanceRecordInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
@@ -321,7 +346,9 @@ export class HoursLogService {
   /**
    * Get attendance records by participant ID
    */
-  static async getAttendanceRecordsByParticipantId(participantId: string): Promise<AttendanceRecord[]> {
+  static async getAttendanceRecordsByParticipantId(
+    participantId: string
+  ): Promise<AttendanceRecord[]> {
     return this.attendanceRecords.filter((a) => a.participantId === participantId);
   }
 
@@ -335,14 +362,20 @@ export class HoursLogService {
   /**
    * Get attendance records by date range
    */
-  static async getAttendanceRecordsByDateRange(startDate: string, endDate: string): Promise<AttendanceRecord[]> {
+  static async getAttendanceRecordsByDateRange(
+    startDate: string,
+    endDate: string
+  ): Promise<AttendanceRecord[]> {
     return this.attendanceRecords.filter((a) => a.date >= startDate && a.date <= endDate);
   }
 
   /**
    * Update attendance record
    */
-  static async updateAttendanceRecord(id: string, input: UpdateAttendanceRecordInput): Promise<AttendanceRecord | null> {
+  static async updateAttendanceRecord(
+    id: string,
+    input: UpdateAttendanceRecordInput
+  ): Promise<AttendanceRecord | null> {
     const index = this.attendanceRecords.findIndex((a) => a.id === id);
     if (index === -1) {
       return null;
@@ -379,14 +412,25 @@ export class HoursLogService {
     const trainerLogs = this.hoursLogs.filter((h) => h.trainerId === trainerId);
 
     const totalHours = trainerLogs.reduce((sum, h) => sum + h.duration, 0) / 60;
-    const trainingHours = trainerLogs.filter((h) => h.type === 'training').reduce((sum, h) => sum + h.duration, 0) / 60;
-    const preparationHours = trainerLogs.filter((h) => h.type === 'preparation').reduce((sum, h) => sum + h.duration, 0) / 60;
-    const meetingHours = trainerLogs.filter((h) => h.type === 'meeting').reduce((sum, h) => sum + h.duration, 0) / 60;
-    const otherHours = trainerLogs.filter((h) => h.type === 'other').reduce((sum, h) => sum + h.duration, 0) / 60;
+    const trainingHours =
+      trainerLogs.filter((h) => h.type === 'training').reduce((sum, h) => sum + h.duration, 0) / 60;
+    const preparationHours =
+      trainerLogs.filter((h) => h.type === 'preparation').reduce((sum, h) => sum + h.duration, 0) /
+      60;
+    const meetingHours =
+      trainerLogs.filter((h) => h.type === 'meeting').reduce((sum, h) => sum + h.duration, 0) / 60;
+    const otherHours =
+      trainerLogs.filter((h) => h.type === 'other').reduce((sum, h) => sum + h.duration, 0) / 60;
 
-    const pendingHours = trainerLogs.filter((h) => h.status === 'pending').reduce((sum, h) => sum + h.duration, 0) / 60;
-    const approvedHours = trainerLogs.filter((h) => h.status === 'approved').reduce((sum, h) => sum + h.duration, 0) / 60;
-    const rejectedHours = trainerLogs.filter((h) => h.status === 'rejected').reduce((sum, h) => sum + h.duration, 0) / 60;
+    const pendingHours =
+      trainerLogs.filter((h) => h.status === 'pending').reduce((sum, h) => sum + h.duration, 0) /
+      60;
+    const approvedHours =
+      trainerLogs.filter((h) => h.status === 'approved').reduce((sum, h) => sum + h.duration, 0) /
+      60;
+    const rejectedHours =
+      trainerLogs.filter((h) => h.status === 'rejected').reduce((sum, h) => sum + h.duration, 0) /
+      60;
 
     const trainer = trainerLogs[0];
 
@@ -425,7 +469,7 @@ export class HoursLogService {
   static initializeMockData(): void {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
-    
+
     this.hoursLogs = [
       {
         id: 'hours-1',

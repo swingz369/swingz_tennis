@@ -20,7 +20,6 @@ export function withCodeSplitting(componentPath: string) {
 }
 
 export const LazyComponents = {
-  Dashboard: withLazyLoading(() => import('@/app/(protected)/dashboard/page')),
   Bookings: withLazyLoading(() => import('@/app/(protected)/bookings/page')),
   Scheduler: withLazyLoading(() => import('@/app/(protected)/scheduler/page')),
 };

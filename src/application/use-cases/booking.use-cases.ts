@@ -1,11 +1,14 @@
+import 'reflect-metadata';
+import { injectable, inject } from 'tsyringe';
 import { Booking } from '@/domain/entities/booking';
 import type { CancellationReason } from '@/domain/entities/booking';
-import { BookingRepository } from '@/domain/repositories/booking-repository.interface';
-import { ScheduleRepository } from '@/domain/repositories/schedule-repository.interface';
+import type { BookingRepository } from '@/domain/repositories/booking-repository.interface';
+import type { ScheduleRepository } from '@/domain/repositories/schedule-repository.interface';
 import { MemberId, SessionId, BookingId, ClubId } from '@/domain/value-objects';
 import { ValidationService } from '@/domain/services/validation.service';
 import { BookingNotFoundError, SessionNotFoundError, DoubleBookingError } from '@/domain/errors';
-import { IEmailService, IAuditService } from '@/domain/services';
+import type { IEmailService, IAuditService } from '@/domain/services';
+import { TOKENS } from '@/application/container';
 
 export interface CreateBookingInput {
   memberId: string;
@@ -18,12 +21,13 @@ export interface CreateBookingOutput {
   status: string;
 }
 
+@injectable()
 export class CreateBookingUseCase {
   constructor(
-    private bookingRepository: BookingRepository,
-    private scheduleRepository: ScheduleRepository,
-    private emailService: IEmailService,
-    private auditService: IAuditService
+    @inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository,
+    @inject(TOKENS.ScheduleRepository) private scheduleRepository: ScheduleRepository,
+    @inject(TOKENS.EmailService) private emailService: IEmailService,
+    @inject(TOKENS.AuditService) private auditService: IAuditService
   ) {}
 
   async execute(input: CreateBookingInput): Promise<CreateBookingOutput> {
@@ -112,10 +116,11 @@ export interface CancelBookingOutput {
   success: boolean;
 }
 
+@injectable()
 export class CancelBookingUseCase {
   constructor(
-    private bookingRepository: BookingRepository,
-    private auditService: IAuditService
+    @inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository,
+    @inject(TOKENS.AuditService) private auditService: IAuditService
   ) {}
 
   async execute(input: CancelBookingInput): Promise<CancelBookingOutput> {
@@ -213,8 +218,9 @@ export interface GetMemberBookingsOutput {
   }>;
 }
 
+@injectable()
 export class GetMemberBookingsUseCase {
-  constructor(private bookingRepository: BookingRepository) {}
+  constructor(@inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository) {}
 
   async execute(input: GetMemberBookingsInput): Promise<GetMemberBookingsOutput> {
     const memberId = MemberId.fromString(input.memberId);

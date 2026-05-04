@@ -8,9 +8,9 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     try {
       await checkRateLimitOrFail(_request, rateLimitStrict);
 
-      const hasPermission = await verifyRole(auth, 'admin');
+      const hasPermission = await verifyRole(auth, 'superadmin');
       if (!hasPermission) {
-        return forbiddenResponse('Admin access required');
+        return forbiddenResponse('Superadmin access required');
       }
 
       const { id } = await params;

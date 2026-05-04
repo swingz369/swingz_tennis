@@ -8,24 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Settings,
   Plus,
   Edit,
-  Save,
   XCircle,
-  CheckCircle,
-  AlertCircle,
   Download,
   Shield,
   Mail,
   Bell,
-  Lock,
   Globe,
-  Clock,
-  Info,
   Eye,
   EyeOff,
   Search,
@@ -56,10 +48,10 @@ export interface SystemSetting {
 
 export default function SystemSettingsManagement() {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
-  const [selectedSetting, setSelectedSetting] = useState<SystemSetting | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<SystemSetting>>({});
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'general' | 'email' | 'notifications' | 'security' | 'integrations' | 'other'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<
+    'all' | 'general' | 'email' | 'notifications' | 'security' | 'integrations' | 'other'
+  >('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -102,31 +94,10 @@ export default function SystemSettingsManagement() {
       setEditForm({});
       toast.success('Systemeinstellung erfolgreich erstellt');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Fehler beim Erstellen der Systemeinstellung');
+      toast.error(
+        error instanceof Error ? error.message : 'Fehler beim Erstellen der Systemeinstellung'
+      );
       console.error('Create error:', error);
-    }
-  };
-
-  const handleUpdateSetting = async (id: string) => {
-    try {
-      const response = await fetch(`/api/system-settings/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update system setting');
-      }
-
-      const data = await response.json();
-      setSettings(settings.map((s) => (s.id === id ? data.systemSetting : s)));
-      setEditForm({});
-      setIsEditing(false);
-      toast.success('Systemeinstellung erfolgreich aktualisiert');
-    } catch (error) {
-      toast.error('Fehler beim Aktualisieren der Systemeinstellung');
-      console.error('Update error:', error);
     }
   };
 
@@ -220,7 +191,9 @@ export default function SystemSettingsManagement() {
     const matchesCategory = selectedCategory === 'all' || setting.category === selectedCategory;
     const matchesSearch =
       searchQuery === '' ||
-      `${setting.key} ${setting.description || ''}`.toLowerCase().includes(searchQuery.toLowerCase());
+      `${setting.key} ${setting.description || ''}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
     return matchesCategory && matchesSearch;
   });
@@ -269,7 +242,7 @@ export default function SystemSettingsManagement() {
           <Filter className="h-4 w-4 text-gray-400" />
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value as any)}
+            onChange={(e) => setSelectedCategory(e.target.value as typeof selectedCategory)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Alle Kategorien</option>
@@ -297,7 +270,18 @@ export default function SystemSettingsManagement() {
               <Label>Kategorie</Label>
               <select
                 value={editForm.category || ''}
-                onChange={(e) => setEditForm({ ...editForm, category: e.target.value as any })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    category: e.target.value as
+                      | 'general'
+                      | 'email'
+                      | 'notifications'
+                      | 'security'
+                      | 'integrations'
+                      | 'other',
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="">Bitte auswählen...</option>
@@ -321,7 +305,12 @@ export default function SystemSettingsManagement() {
               <Label>Typ</Label>
               <select
                 value={editForm.type || ''}
-                onChange={(e) => setEditForm({ ...editForm, type: e.target.value as any })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    type: e.target.value as 'string' | 'number' | 'boolean' | 'json' | 'array',
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="">Bitte auswählen...</option>
@@ -397,7 +386,9 @@ export default function SystemSettingsManagement() {
                       </div>
                       <div>
                         <div className="font-semibold">{setting.key}</div>
-                        <div className="text-sm text-gray-600">{getCategoryLabel(setting.category)}</div>
+                        <div className="text-sm text-gray-600">
+                          {getCategoryLabel(setting.category)}
+                        </div>
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
@@ -414,9 +405,7 @@ export default function SystemSettingsManagement() {
                   </div>
 
                   {setting.description && (
-                    <div className="text-sm text-gray-600">
-                      {setting.description}
-                    </div>
+                    <div className="text-sm text-gray-600">{setting.description}</div>
                   )}
 
                   <div className="flex items-center justify-between pt-2 border-t">
@@ -456,7 +445,8 @@ export default function SystemSettingsManagement() {
                   </div>
 
                   <div className="text-xs text-gray-500 pt-2 border-t">
-                    Zuletzt aktualisiert: {format(parseISO(setting.updatedAt), 'dd. MMM yyyy HH:mm', { locale: de })}
+                    Zuletzt aktualisiert:{' '}
+                    {format(parseISO(setting.updatedAt), 'dd. MMM yyyy HH:mm', { locale: de })}
                     {setting.updatedBy && ` von ${setting.updatedBy}`}
                   </div>
                 </div>

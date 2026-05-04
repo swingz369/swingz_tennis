@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, parseISO, addDays, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import {
-  Calendar,
   Clock,
   User,
   Plus,
-  Edit,
-  Save,
   XCircle,
   CheckCircle,
-  AlertCircle,
-  Filter,
-  Search,
   Download,
   Thermometer,
   Plane,
@@ -49,7 +43,6 @@ export interface Absence {
 
 export default function AbsenceReporting() {
   const [absences, setAbsences] = useState<Absence[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Absence>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -209,14 +202,14 @@ export default function AbsenceReporting() {
     }
   };
 
-   const getTypeIcon = (type: Absence['type']) => {
-     switch (type) {
-       case 'sick':
-         return <Thermometer className="h-4 w-4" />;
-       case 'vacation':
-         return <Plane className="h-4 w-4" />;
-       case 'personal':
-         return <UserIcon className="h-4 w-4" />;
+  const getTypeIcon = (type: Absence['type']) => {
+    switch (type) {
+      case 'sick':
+        return <Thermometer className="h-4 w-4" />;
+      case 'vacation':
+        return <Plane className="h-4 w-4" />;
+      case 'personal':
+        return <UserIcon className="h-4 w-4" />;
       case 'other':
         return <MoreHorizontal className="h-4 w-4" />;
     }
@@ -281,7 +274,12 @@ export default function AbsenceReporting() {
               <Label>Typ</Label>
               <select
                 value={editForm.type || ''}
-                onChange={(e) => setEditForm({ ...editForm, type: e.target.value as any })}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    type: e.target.value as 'sick' | 'vacation' | 'personal' | 'other',
+                  })
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="">Typ auswählen...</option>
@@ -389,9 +387,7 @@ export default function AbsenceReporting() {
                   )}
 
                   {absence.approvedBy && (
-                    <div className="text-xs text-gray-500">
-                      Genehmigt von {absence.approvedBy}
-                    </div>
+                    <div className="text-xs text-gray-500">Genehmigt von {absence.approvedBy}</div>
                   )}
 
                   <div className="flex gap-2 pt-2 border-t">

@@ -49,7 +49,7 @@ export function Sidebar({
   const adminNav = [
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, showIf: isAdmin },
     { name: 'Onboarding', href: '/admin/onboarding', icon: HelpCircle, showIf: isAdmin },
-    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin },
+    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isSuperAdmin },
     { name: 'Mitglieder', href: '/admin/members', icon: Users, showIf: isAdmin },
     { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },
     { name: 'Plätze', href: '/admin/courts', icon: MapPin, showIf: isAdmin },

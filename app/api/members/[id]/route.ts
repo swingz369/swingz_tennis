@@ -17,6 +17,18 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
+
+      const isTrainer = await verifyRole(auth, 'trainer');
+      const { data: membership } = await auth.supabase
+        .from('user_club_memberships')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+
+      if (!isTrainer && membership?.user_id !== auth.user.id) {
+        return forbiddenResponse('Access denied');
+      }
+
       const member = await MemberService.getMemberById(id);
 
       if (!member) {

@@ -12,11 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User,
-  Mail,
   Phone,
   Calendar,
   MapPin,
-  Star,
   Award,
   CheckCircle,
   XCircle,
@@ -24,7 +22,6 @@ import {
   Edit,
   Save,
   Plus,
-  Upload,
   Download,
   Search,
   Filter,
@@ -35,7 +32,6 @@ import {
   GraduationCap,
   Trophy,
   Target,
-  Heart,
   Briefcase,
   Euro,
 } from 'lucide-react';
@@ -102,7 +98,9 @@ export default function TrainerProfileManagement() {
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'on_leave' | 'terminated'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'active' | 'inactive' | 'on_leave' | 'terminated'
+  >('all');
   const [isLoading, setIsLoading] = useState(true);
   const [editForm, setEditForm] = useState<Partial<TrainerProfile>>({});
 
@@ -148,7 +146,7 @@ export default function TrainerProfileManagement() {
       }
 
       const data = await response.json();
-      
+
       setTrainers((prev) =>
         prev.map((t) => (t.id === selectedTrainer.id ? data.trainerProfile : t))
       );
@@ -175,10 +173,8 @@ export default function TrainerProfileManagement() {
       }
 
       const data = await response.json();
-      
-      setTrainers((prev) =>
-        prev.map((t) => (t.id === trainerId ? data.trainerProfile : t))
-      );
+
+      setTrainers((prev) => prev.map((t) => (t.id === trainerId ? data.trainerProfile : t)));
 
       toast.success(`Status aktualisiert`);
     } catch (error) {
@@ -205,7 +201,7 @@ export default function TrainerProfileManagement() {
       }
 
       const data = await response.json();
-      
+
       setSelectedTrainer(data.trainerProfile);
       setTrainers((prev) =>
         prev.map((t) => (t.id === selectedTrainer.id ? data.trainerProfile : t))
@@ -318,7 +314,7 @@ export default function TrainerProfileManagement() {
           <Filter className="h-4 w-4 text-gray-400" />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
           >
             <option value="all">Alle Status</option>
@@ -434,7 +430,9 @@ export default function TrainerProfileManagement() {
                         {isEditing ? (
                           <Input
                             value={editForm.firstName || ''}
-                            onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, firstName: e.target.value })
+                            }
                           />
                         ) : (
                           <div className="mt-1">{selectedTrainer.firstName}</div>
@@ -479,11 +477,15 @@ export default function TrainerProfileManagement() {
                           <Input
                             type="date"
                             value={editForm.dateOfBirth || ''}
-                            onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, dateOfBirth: e.target.value })
+                            }
                           />
                         ) : (
                           <div className="mt-1">
-                            {format(parseISO(selectedTrainer.dateOfBirth), 'dd. MMMM yyyy', { locale: de })}
+                            {format(parseISO(selectedTrainer.dateOfBirth), 'dd. MMMM yyyy', {
+                              locale: de,
+                            })}
                           </div>
                         )}
                       </div>
@@ -501,7 +503,9 @@ export default function TrainerProfileManagement() {
                         className="mt-1"
                       />
                     ) : (
-                      <div className="mt-1 text-gray-700">{selectedTrainer.bio || 'Keine Bio vorhanden'}</div>
+                      <div className="mt-1 text-gray-700">
+                        {selectedTrainer.bio || 'Keine Bio vorhanden'}
+                      </div>
                     )}
                   </div>
 
@@ -520,7 +524,7 @@ export default function TrainerProfileManagement() {
                             onChange={(e) =>
                               setEditForm({
                                 ...editForm,
-                                emergencyContact: { 
+                                emergencyContact: {
                                   name: e.target.value,
                                   phone: editForm.emergencyContact?.phone || '',
                                   relationship: editForm.emergencyContact?.relationship || '',
@@ -540,7 +544,7 @@ export default function TrainerProfileManagement() {
                             onChange={(e) =>
                               setEditForm({
                                 ...editForm,
-                                emergencyContact: { 
+                                emergencyContact: {
                                   name: editForm.emergencyContact?.name || '',
                                   phone: e.target.value,
                                   relationship: editForm.emergencyContact?.relationship || '',
@@ -560,7 +564,7 @@ export default function TrainerProfileManagement() {
                             onChange={(e) =>
                               setEditForm({
                                 ...editForm,
-                                emergencyContact: { 
+                                emergencyContact: {
                                   name: editForm.emergencyContact?.name || '',
                                   phone: editForm.emergencyContact?.phone || '',
                                   relationship: e.target.value,
@@ -569,7 +573,9 @@ export default function TrainerProfileManagement() {
                             }
                           />
                         ) : (
-                          <div className="mt-1">{selectedTrainer.emergencyContact.relationship}</div>
+                          <div className="mt-1">
+                            {selectedTrainer.emergencyContact.relationship}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -631,13 +637,17 @@ export default function TrainerProfileManagement() {
                               {qual.expiryDate && (
                                 <div>
                                   Läuft ab:{' '}
-                                  {format(parseISO(qual.expiryDate), 'dd. MMMM yyyy', { locale: de })}
+                                  {format(parseISO(qual.expiryDate), 'dd. MMMM yyyy', {
+                                    locale: de,
+                                  })}
                                 </div>
                               )}
                               {qual.verifiedAt && (
                                 <div>
                                   Verifiziert am:{' '}
-                                  {format(parseISO(qual.verifiedAt), 'dd. MMMM yyyy', { locale: de })}
+                                  {format(parseISO(qual.verifiedAt), 'dd. MMMM yyyy', {
+                                    locale: de,
+                                  })}
                                 </div>
                               )}
                             </div>
@@ -692,13 +702,17 @@ export default function TrainerProfileManagement() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Card>
                         <CardHeader>
-                          <CardTitle className="text-lg">{selectedTrainer.experience.years} Jahre</CardTitle>
+                          <CardTitle className="text-lg">
+                            {selectedTrainer.experience.years} Jahre
+                          </CardTitle>
                           <p className="text-gray-500">Erfahrung</p>
                         </CardHeader>
                       </Card>
                       <Card>
                         <CardHeader>
-                          <CardTitle className="text-lg">{selectedTrainer.experience.previousClubs.length}</CardTitle>
+                          <CardTitle className="text-lg">
+                            {selectedTrainer.experience.previousClubs.length}
+                          </CardTitle>
                           <p className="text-gray-500">Vereine</p>
                         </CardHeader>
                       </Card>
@@ -737,25 +751,33 @@ export default function TrainerProfileManagement() {
                       Wöchentliche Verfügbarkeit
                     </h3>
                     <div className="grid grid-cols-7 gap-2">
-                      {(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map(
-                        (day) => (
-                          <div
-                            key={day}
-                            className={`p-3 rounded-lg text-center ${
-                              selectedTrainer.availability[day]
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-500'
-                            }`}
-                          >
-                            <div className="text-xs font-medium mb-1">
-                              {day.charAt(0).toUpperCase() + day.slice(1, 3)}
-                            </div>
-                            <div className="text-lg">
-                              {selectedTrainer.availability[day] ? '✓' : '✗'}
-                            </div>
+                      {(
+                        [
+                          'monday',
+                          'tuesday',
+                          'wednesday',
+                          'thursday',
+                          'friday',
+                          'saturday',
+                          'sunday',
+                        ] as const
+                      ).map((day) => (
+                        <div
+                          key={day}
+                          className={`p-3 rounded-lg text-center ${
+                            selectedTrainer.availability[day]
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          <div className="text-xs font-medium mb-1">
+                            {day.charAt(0).toUpperCase() + day.slice(1, 3)}
                           </div>
-                        )
-                      )}
+                          <div className="text-lg">
+                            {selectedTrainer.availability[day] ? '✓' : '✗'}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
