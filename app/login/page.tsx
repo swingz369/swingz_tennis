@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Trophy, Sparkles, ArrowRight } from 'lucide-react';
+import { Trophy, Sparkles, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 
 export default function LoginPage() {
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -173,15 +174,25 @@ export default function LoginPage() {
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                   Passwort
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="h-12 rounded-xl border-gray-200 focus:border-[#40916C] focus:ring-[#40916C]/20"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="h-12 rounded-xl border-gray-200 focus:border-[#40916C] focus:ring-[#40916C]/20 pr-12"
+                  />
+                  <Button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Passwort anzeigen/verstecken"
+                  >
+                    {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                  </Button>
+                </div>
               </div>
 
               {error && (
