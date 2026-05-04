@@ -3,6 +3,8 @@ import { getClubBookingsUseCase } from '@/application/bookings/get-club-bookings
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 function isDemoMode(req: NextRequest): boolean {
   const cookies = req.cookies.get('demo-mode');
@@ -53,41 +55,53 @@ const DEMO_BOOKINGS = [
 ];
 
 export async function GET(_request: NextRequest) {
+  return withApiAuth(_request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
+      return forbiddenResponse('Admin access required');
+    }
+
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
     const { searchParams } = new URL(_request.url);
-  const clubId = searchParams.get('clubId');
+    const clubId = searchParams.get('clubId');
 
-  if (!clubId) {
-    return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-  }
+    if (!clubId) {
+      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    }
 
-  if (isDemoMode(_request)) {
-    const csv = convertToCSV(DEMO_BOOKINGS);
-    return new NextResponse(csv, {
-      headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': 'attachment; filename="bookings-export.csv"',
-      },
-    });
-  }
+    if (isDemoMode(_request)) {
+      const csv = convertToCSV(DEMO_BOOKINGS);
+      return new NextResponse(csv, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': 'attachment; filename="bookings-export.csv"',
+        },
+      });
+    }
 
-  try {
-    const bookingRepository = new DrizzleBookingRepository();
-    const clubRepository = new DrizzleClubRepository();
-    const scheduleRepository = new DrizzleScheduleRepository();
-    const useCase = getClubBookingsUseCase(bookingRepository, clubRepository, scheduleRepository);
-    const bookings = await useCase.execute(clubId);
+    try {
+      const bookingRepository = new DrizzleBookingRepository();
+      const clubRepository = new DrizzleClubRepository();
+      const scheduleRepository = new DrizzleScheduleRepository();
+      const useCase = getClubBookingsUseCase(bookingRepository, clubRepository, scheduleRepository);
+      const bookings = await useCase.execute(clubId);
 
-    const csv = convertToCSV(bookings);
-    return new NextResponse(csv, {
-      headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="bookings-${clubId}.csv"`,
-      },
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+      const csv = convertToCSV(bookings);
+      return new NextResponse(csv, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="bookings-${clubId}.csv"`,
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
 }
 
 function convertToCSV(data: object[]): string {

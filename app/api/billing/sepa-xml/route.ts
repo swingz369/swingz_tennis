@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import {
   generatePain008Xml,
@@ -9,79 +10,92 @@ import {
 import type { Payment, SepaMandate } from '@/lib/types/billing';
 
 export async function POST(_request: NextRequest) {
-  try {
-    await requireAuth();
-    const body = await _request.json();
-
-    const { clubId, paymentIds } = body;
-
-    if (!clubId || !paymentIds || !Array.isArray(paymentIds)) {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  return withApiAuth(_request, async (auth) => {
+    // Permission check - only admins can generate SEPA XML
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
+      return forbiddenResponse('Admin access required');
     }
 
-    const payments = (await Promise.all(
-      paymentIds.map(async (paymentId: string) => {
-        const payment = await billingEngine.getPaymentById(paymentId);
-        return payment;
-      })
-    )) as (Payment | null | undefined)[];
-
-    const validPayments = payments.filter(
-      (p): p is Payment =>
-        p !== null && p !== undefined && p.payment_method === 'sepa' && p.status === 'pending'
-    );
-
-    if (validPayments.length === 0) {
-      return NextResponse.json({ error: 'No valid SEPA payments found' }, { status: 400 });
+    // Rate limit
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
-    const mandateIds = validPayments
-      .map((p) => p.sepa_mandate_id)
-      .filter((id): id is string => id !== undefined);
+    try {
+      const body = await _request.json();
 
-    const mandates = await Promise.all(
-      mandateIds.map(async (mandateId) => {
-        const mandate = await billingEngine.getSepaMandateById(mandateId);
-        return mandate;
-      })
-    );
+      const { clubId, paymentIds } = body;
 
-    const validMandates = mandates.filter((m): m is SepaMandate => m !== null && m !== undefined);
+      if (!clubId || !paymentIds || !Array.isArray(paymentIds)) {
+        return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+      }
 
-    const creditorName = process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club';
-    const creditorIban = process.env.SEPA_CREDITOR_IBAN || '';
-    const creditorBic = process.env.SEPA_CREDITOR_BIC || '';
-    const creditorId = process.env.SEPA_CREDITOR_ID || '';
+      const payments = (await Promise.all(
+        paymentIds.map(async (paymentId: string) => {
+          const payment = await billingEngine.getPaymentById(paymentId);
+          return payment;
+        })
+      )) as (Payment | null | undefined)[];
 
-    const sepaData = createSepaDirectDebitData(
-      validPayments,
-      validMandates,
-      creditorName,
-      creditorIban,
-      creditorBic,
-      creditorId
-    );
-
-    const validation = validateSepaDirectDebitData(sepaData);
-
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: 'Invalid SEPA data', details: validation.errors },
-        { status: 400 }
+      const validPayments = payments.filter(
+        (p): p is Payment =>
+          p !== null && p !== undefined && p.payment_method === 'sepa' && p.status === 'pending'
       );
+
+      if (validPayments.length === 0) {
+        return NextResponse.json({ error: 'No valid SEPA payments found' }, { status: 400 });
+      }
+
+      const mandateIds = validPayments
+        .map((p) => p.sepa_mandate_id)
+        .filter((id): id is string => id !== undefined);
+
+      const mandates = await Promise.all(
+        mandateIds.map(async (mandateId) => {
+          const mandate = await billingEngine.getSepaMandateById(mandateId);
+          return mandate;
+        })
+      );
+
+      const validMandates = mandates.filter((m): m is SepaMandate => m !== null && m !== undefined);
+
+      const creditorName = process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club';
+      const creditorIban = process.env.SEPA_CREDITOR_IBAN || '';
+      const creditorBic = process.env.SEPA_CREDITOR_BIC || '';
+      const creditorId = process.env.SEPA_CREDITOR_ID || '';
+
+      const sepaData = createSepaDirectDebitData(
+        validPayments,
+        validMandates,
+        creditorName,
+        creditorIban,
+        creditorBic,
+        creditorId
+      );
+
+      const validation = validateSepaDirectDebitData(sepaData);
+
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: 'Invalid SEPA data', details: validation.errors },
+          { status: 400 }
+        );
+      }
+
+      const xml = generatePain008Xml(sepaData);
+
+      return new NextResponse(xml, {
+        headers: {
+          'Content-Type': 'application/xml',
+          'Content-Disposition': `attachment; filename="sepa-direct-debit-${Date.now()}.xml"`,
+          'Content-Length': xml.length.toString(),
+        },
+      });
+    } catch (error) {
+      console.error('Error generating SEPA XML:', error);
+      return NextResponse.json({ error: 'Failed to generate SEPA XML' }, { status: 500 });
     }
-
-    const xml = generatePain008Xml(sepaData);
-
-    return new NextResponse(xml, {
-      headers: {
-        'Content-Type': 'application/xml',
-        'Content-Disposition': `attachment; filename="sepa-direct-debit-${Date.now()}.xml"`,
-        'Content-Length': xml.length.toString(),
-      },
-    });
-  } catch (error) {
-    console.error('Error generating SEPA XML:', error);
-    return NextResponse.json({ error: 'Failed to generate SEPA XML' }, { status: 500 });
-  }
+  });
 }

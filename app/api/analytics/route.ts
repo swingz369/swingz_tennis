@@ -5,6 +5,8 @@ import { DrizzleScheduleRepository } from '@/infrastructure/persistence/reposito
 import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositories/trainer.repository';
 import { DrizzleCourtRepository } from '@/infrastructure/persistence/repositories/court.repository';
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 // Helper: Check for demo mode cookie
 function isDemoMode(req: NextRequest): boolean {
@@ -43,42 +45,55 @@ const DEMO_ANALYTICS = {
 };
 
 export async function GET(_request: NextRequest) {
-  const { searchParams } = new URL(_request.url);
-  const clubId = searchParams.get('clubId');
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
+  return withApiAuth(_request, async (auth) => {
+    // Only trainers and admins can view analytics
+    const hasPermission = await verifyRole(auth, 'trainer');
+    if (!hasPermission) {
+      return forbiddenResponse('Trainer or admin access required');
+    }
 
-  if (!clubId || !startDate || !endDate) {
-    return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
-  }
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
 
-  // Demo mode: return mock analytics
-  if (isDemoMode(_request)) {
-    return NextResponse.json(DEMO_ANALYTICS);
-  }
+    const { searchParams } = new URL(_request.url);
+    const clubId = searchParams.get('clubId');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
-  try {
-    const clubRepository = new DrizzleClubRepository();
-    const scheduleRepository = new DrizzleScheduleRepository();
-    const trainerRepository = new DrizzleTrainerRepository();
-    const courtRepository = new DrizzleCourtRepository();
-    const bookingRepository = new DrizzleBookingRepository();
+    if (!clubId || !startDate || !endDate) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
 
-    const useCase = new GetClubAnalyticsUseCase(
-      clubRepository,
-      scheduleRepository,
-      trainerRepository,
-      courtRepository,
-      bookingRepository
-    );
-    const analytics = await useCase.execute(clubId, new Date(startDate), new Date(endDate));
+    // Demo mode: return mock analytics
+    if (isDemoMode(_request)) {
+      return NextResponse.json(DEMO_ANALYTICS);
+    }
 
-    return NextResponse.json({
-      success: true,
-      data: analytics,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    try {
+      const clubRepository = new DrizzleClubRepository();
+      const scheduleRepository = new DrizzleScheduleRepository();
+      const trainerRepository = new DrizzleTrainerRepository();
+      const courtRepository = new DrizzleCourtRepository();
+      const bookingRepository = new DrizzleBookingRepository();
+
+      const useCase = new GetClubAnalyticsUseCase(
+        clubRepository,
+        scheduleRepository,
+        trainerRepository,
+        courtRepository,
+        bookingRepository
+      );
+      const analytics = await useCase.execute(clubId, new Date(startDate), new Date(endDate));
+
+      return NextResponse.json({
+        success: true,
+        data: analytics,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
 }

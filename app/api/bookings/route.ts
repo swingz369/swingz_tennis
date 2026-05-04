@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
 import {
   CreateBookingUseCase,
   GetMemberBookingsUseCase,
@@ -7,15 +6,26 @@ import {
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
 import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositories/trainer.repository';
+import { EmailService } from '@/infrastructure/email/email.service';
+import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { createBookingSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { SessionId, TrainerId } from '@/domain/value-objects';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 const bookingRepo = new DrizzleBookingRepository();
 const scheduleRepo = new DrizzleScheduleRepository();
 const trainerRepo = new DrizzleTrainerRepository();
+const emailService = new EmailService();
+const auditService = new AuditServiceImpl();
 
-const createBookingUseCase = new CreateBookingUseCase(bookingRepo, scheduleRepo);
+const createBookingUseCase = new CreateBookingUseCase(
+  bookingRepo,
+  scheduleRepo,
+  emailService,
+  auditService
+);
 const getMemberBookingsUseCase = new GetMemberBookingsUseCase(bookingRepo);
 
 // Helper: Check for demo mode cookie
@@ -49,30 +59,33 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return withValidation(createBookingSchema, async (input) => {
-    // Auth check
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (!user || authError) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(req, async (auth) => {
+    // Members can create bookings
+    const hasPermission = await verifyRole(auth, 'member');
+    if (!hasPermission) {
+      return forbiddenResponse('Authentication required');
     }
 
-    try {
-      const result = await createBookingUseCase.execute({
-        memberId: input.memberId,
-        sessionId: input.sessionId,
-        actorId: user.id,
-      });
-      return NextResponse.json(result, { status: 201 });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error creating booking:', error);
-      return NextResponse.json({ error: message }, { status: 400 });
+    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
     }
-  })(req);
+
+    return withValidation(createBookingSchema, async (input) => {
+      try {
+        const result = await createBookingUseCase.execute({
+          memberId: input.memberId,
+          sessionId: input.sessionId,
+          actorId: auth.user.id,
+        });
+        return NextResponse.json(result, { status: 201 });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error creating booking:', error);
+        return NextResponse.json({ error: message }, { status: 400 });
+      }
+    })(req);
+  });
 }
 
 // GET /api/bookings?memberId=xxx – Buchungen eines Members (mit Session-Details)
@@ -82,35 +95,76 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(DEMO_BOOKINGS);
   }
 
-  try {
-    const url = new URL(req.url);
-    const memberId = url.searchParams.get('memberId');
-    if (!memberId) {
-      return NextResponse.json({ error: 'memberId query parameter required' }, { status: 400 });
+  return withApiAuth(req, async (auth) => {
+    // Members can view bookings
+    const hasPermission = await verifyRole(auth, 'member');
+    if (!hasPermission) {
+      return forbiddenResponse('Authentication required');
     }
 
-    // Basic validation
-    if (memberId.length > 100) {
-      return NextResponse.json({ error: 'Member ID too long' }, { status: 400 });
+    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
-    // Fetch bookings (just booking info)
-    const result = await getMemberBookingsUseCase.execute({ memberId });
-    const bookings = result.bookings;
+    try {
+      const url = new URL(req.url);
+      const memberId = url.searchParams.get('memberId');
+      if (!memberId) {
+        return NextResponse.json({ error: 'memberId query parameter required' }, { status: 400 });
+      }
 
-    // Enrich with session and trainer details
-    const enriched = await Promise.all(
-      bookings.map(async (b) => {
-        const sessionId = SessionId.fromString(b.sessionId);
-        const sessionDetails = await scheduleRepo.getSessionDetails(sessionId);
+      // Basic validation
+      if (memberId.length > 100) {
+        return NextResponse.json({ error: 'Member ID too long' }, { status: 400 });
+      }
 
-        let trainerName: string | undefined;
-        if (sessionDetails?.trainerId) {
-          const trainer = await trainerRepo.findById(
-            TrainerId.fromString(sessionDetails.trainerId.getValue())
-          );
-          trainerName = trainer?.name;
+      // Fetch bookings (just booking info)
+      const result = await getMemberBookingsUseCase.execute({ memberId });
+      const bookings = result.bookings;
+
+      // ✅ Batch-Loading: Collect all session IDs
+      const sessionIds = bookings.map((b) => SessionId.fromString(b.sessionId));
+
+      // ✅ Fetch all session details in one batch
+      const sessionDetailsMap = new Map<
+        string,
+        Awaited<ReturnType<typeof scheduleRepo.getSessionDetails>>
+      >();
+      await Promise.all(
+        sessionIds.map(async (sessionId) => {
+          const details = await scheduleRepo.getSessionDetails(sessionId);
+          if (details) {
+            sessionDetailsMap.set(sessionId.toString(), details);
+          }
+        })
+      );
+
+      // ✅ Collect unique trainer IDs
+      const trainerIds = new Set<string>();
+      for (const [, details] of sessionDetailsMap) {
+        if (details?.trainerId) {
+          trainerIds.add(details.trainerId.getValue());
         }
+      }
+
+      // ✅ Fetch all trainers in one batch
+      const trainersMap = new Map<string, string>();
+      await Promise.all(
+        Array.from(trainerIds).map(async (trainerId) => {
+          const trainer = await trainerRepo.findById(TrainerId.fromString(trainerId));
+          if (trainer) {
+            trainersMap.set(trainerId, trainer.name);
+          }
+        })
+      );
+
+      // ✅ In-memory join (no additional queries)
+      const enriched = bookings.map((b) => {
+        const sessionDetails = sessionDetailsMap.get(b.sessionId);
+        const trainerName = sessionDetails?.trainerId
+          ? trainersMap.get(sessionDetails.trainerId.getValue())
+          : undefined;
 
         return {
           id: b.id,
@@ -122,13 +176,13 @@ export async function GET(req: NextRequest) {
           trainer_name: trainerName,
           clubId: sessionDetails?.clubId.getValue(),
         };
-      })
-    );
+      });
 
-    return NextResponse.json(enriched);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error fetching bookings:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+      return NextResponse.json(enriched);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error fetching bookings:', error);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
 }

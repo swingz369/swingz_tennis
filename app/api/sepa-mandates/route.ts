@@ -1,106 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SEPAMandateService } from '@/src/application/services/sepa-mandate.service';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withRateLimit, rateLimitStrict } from '@/lib/rate-limit';
+import { withCSRFProtection } from '@/lib/csrf';
+import {
+  CreateSEPAMandateSchema,
+  validateRequestBody,
+  formatValidationErrors,
+} from '@/lib/validation-schemas';
 
-export async function POST(_request: NextRequest) {
-  try {
-    const body = await _request.json();
+export async function POST(request: NextRequest) {
+  return withCSRFProtection(request, async () => {
+    return withRateLimit(
+      request,
+      async () => {
+        return withApiAuth(request, async (auth) => {
+          try {
+            // Only admin can create SEPA mandates
+            const hasPermission = await verifyRole(auth, 'admin');
+            if (!hasPermission) {
+              return forbiddenResponse('Insufficient permissions to create SEPA mandates');
+            }
 
-    const {
-      memberId,
-      accountHolder,
-      iban,
-      bic,
-      bankName,
-      street,
-      houseNumber,
-      postalCode,
-      city,
-      mandateReference,
-      signatureDate,
-    } = body;
+            const body = await request.json();
 
-    if (!memberId) {
-      return NextResponse.json(
-        { error: 'Member ID is required' },
-        { status: 400 }
-      );
-    }
+            // Validate request body with Zod
+            const validation = validateRequestBody(CreateSEPAMandateSchema, body);
+            if (!validation.success) {
+              return NextResponse.json(
+                {
+                  error: 'Validation failed',
+                  details: formatValidationErrors(validation.errors),
+                },
+                { status: 400 }
+              );
+            }
 
-    // Validate mandate data
-    const validation = SEPAMandateService.validateMandateData({
-      accountHolder,
-      iban,
-      bic,
-      bankName,
-      street,
-      houseNumber,
-      postalCode,
-      city,
-      signatureDate,
-    });
+            const validatedData = validation.data;
 
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: validation.errors },
-        { status: 400 }
-      );
-    }
+            // Create mandate
+            const mandate = await SEPAMandateService.createMandate(
+              validatedData.memberId,
+              validatedData
+            );
 
-    // Create mandate
-    const mandate = await SEPAMandateService.createMandate(memberId, {
-      accountHolder,
-      iban,
-      bic,
-      bankName,
-      street,
-      houseNumber,
-      postalCode,
-      city,
-      mandateReference,
-      signatureDate,
-    });
-
-    return NextResponse.json({ success: true, mandate });
-  } catch (error) {
-    console.error('SEPA mandate creation error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
+            return NextResponse.json({ success: true, mandate });
+          } catch (error) {
+            console.error('SEPA mandate creation error:', error);
+            return NextResponse.json(
+              { error: error instanceof Error ? error.message : 'Internal server error' },
+              { status: 500 }
+            );
+          }
+        });
+      },
+      rateLimitStrict
     );
-  }
+  });
 }
 
-export async function GET(_request: NextRequest) {
-  try {
-    const { searchParams } = new URL(_request.url);
-    const memberId = searchParams.get('memberId');
-    const mandateId = searchParams.get('mandateId');
-
-    if (mandateId) {
-      const mandate = await SEPAMandateService.getMandateById(mandateId);
-      if (!mandate) {
-        return NextResponse.json(
-          { error: 'Mandate not found' },
-          { status: 404 }
-        );
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    try {
+      // Only admin and trainers can view SEPA mandates
+      const hasPermission = await verifyRole(auth, 'trainer');
+      if (!hasPermission) {
+        return forbiddenResponse('Insufficient permissions to view SEPA mandates');
       }
-      return NextResponse.json({ mandate });
-    }
 
-    if (memberId) {
-      const mandates = await SEPAMandateService.getAllMandatesForMember(memberId);
-      return NextResponse.json({ mandates });
-    }
+      const { searchParams } = new URL(request.url);
+      const memberId = searchParams.get('memberId');
+      const mandateId = searchParams.get('mandateId');
 
-    return NextResponse.json(
-      { error: 'Member ID or Mandate ID is required' },
-      { status: 400 }
-    );
-  } catch (error) {
-    console.error('SEPA mandate fetch error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+      if (mandateId) {
+        const mandate = await SEPAMandateService.getMandateById(mandateId);
+        if (!mandate) {
+          return NextResponse.json({ error: 'Mandate not found' }, { status: 404 });
+        }
+        return NextResponse.json({ mandate });
+      }
+
+      if (memberId) {
+        const mandates = await SEPAMandateService.getAllMandatesForMember(memberId);
+        return NextResponse.json({ mandates });
+      }
+
+      return NextResponse.json({ error: 'Member ID or Mandate ID is required' }, { status: 400 });
+    } catch (error) {
+      console.error('SEPA mandate fetch error:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+  });
 }

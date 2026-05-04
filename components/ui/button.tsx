@@ -4,32 +4,33 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-full font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-xl font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
   {
     variants: {
       variant: {
         default:
-          'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-sm hover:shadow-md focus-visible:ring-[#1B4332]/20',
+          'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#40916C]/50',
         primary:
-          'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-sm hover:shadow-md focus-visible:ring-[#1B4332]/20',
+          'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#40916C]/50',
         secondary:
-          'bg-[#1e3a5f] text-white shadow-sm hover:bg-[#1e3a5f]/90 focus-visible:ring-[#1e3a5f]/20',
+          'bg-[#1e3a5f] text-white shadow-md hover:bg-[#1e3a5f]/90 hover:shadow-lg focus-visible:ring-[#1e3a5f]/50',
         outline:
-          'border-2 border-[#1B4332]/30 bg-transparent text-[#1B4332] hover:border-[#1B4332]/60 hover:bg-[#1B4332]/5 focus-visible:ring-[#1B4332]/20',
+          'border-2 border-gray-200 dark:border-white/20 bg-transparent text-gray-700 dark:text-white hover:border-[#40916C] hover:text-[#40916C] hover:bg-[#40916C]/5 focus-visible:ring-[#40916C]/50',
         ghost:
-          'text-gray-600 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm focus-visible:ring-gray-200',
-        destructive: 'bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-red-500',
+          'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white focus-visible:ring-gray-300',
+        destructive:
+          'bg-red-600 text-white shadow-md hover:bg-red-700 hover:shadow-lg focus-visible:ring-red-500',
         accent:
-          'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-sm hover:shadow-md focus-visible:ring-[#FF6B35]/20',
+          'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#FF6B35]/50',
         gradient:
-          'bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#FF6B35] text-white shadow-sm hover:shadow-md focus-visible:ring-[#1B4332]/20',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#40916C] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#40916C]/50',
+        link: 'text-[#40916C] underline-offset-4 hover:underline',
       },
       size: {
-        sm: 'h-9 px-3 text-sm gap-1.5',
+        sm: 'h-9 px-4 text-sm gap-1.5',
         md: 'h-11 px-5 text-base gap-2',
-        lg: 'h-14 px-7 text-lg gap-2.5',
-        xl: 'h-16 px-8 text-xl gap-3',
+        lg: 'h-12 px-6 text-lg gap-2.5',
+        xl: 'h-14 px-8 text-xl gap-3',
         default: 'h-10 px-4 py-2',
         icon: 'h-10 w-10 p-0',
       },
@@ -73,7 +74,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button';
 
-    // Generate accessible label if only icon is provided
     const hasTextContent = React.Children.toArray(children).some(
       (child) => typeof child === 'string' || typeof child === 'number'
     );

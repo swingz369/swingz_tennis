@@ -7,14 +7,20 @@ import Redis from 'ioredis';
 const app = express();
 app.use(express.json());
 
-const supabase = createClient(
-  process.env.SUPABASE_URL || 'http://localhost:8000',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 'service-key'
-);
+// Validate required environment variables
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set');
+}
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY must be set');
+}
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2023-10-16',
 });
 

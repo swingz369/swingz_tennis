@@ -1,32 +1,33 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-export async function GET() {
-  try {
-    // Demo mode early return
-    const cookieStore = await cookies();
-    const hasDemoMode = cookieStore.get('demo-mode');
-    if (hasDemoMode) {
-      return NextResponse.json({
-        clubId: 'demo-club',
-        club: { id: 'demo-club', name: 'Demo Tennis Club', maxMembers: 100, status: 'active' },
-      });
+export async function GET(_req: NextRequest) {
+  const cookieStore = await cookies();
+  const hasDemoMode = cookieStore.get('demo-mode');
+  if (hasDemoMode) {
+    return NextResponse.json({
+      clubId: 'demo-club',
+      club: { id: 'demo-club', name: 'Demo Tennis Club', maxMembers: 100, status: 'active' },
+    });
+  }
+
+  return withApiAuth(_req, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'member');
+    if (!hasPermission) {
+      return forbiddenResponse('Member access required');
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (!user || authError) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const rateLimitError = await checkRateLimitOrFail(_req, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
-    const { data: memberships, error: membershipError } = await supabase
+    const { data: memberships, error: membershipError } = await auth.supabase
       .from('user_club_memberships')
       .select('club_id, clubs (id, name, max_members, status)')
-      .eq('user_id', user.id)
+      .eq('user_id', auth.user.id)
       .eq('is_active', true)
       .limit(1);
 
@@ -45,9 +46,5 @@ export async function GET() {
       clubId: membership.club_id,
       club: { id: club.id, name: club.name, maxMembers: club.max_members, status: club.status },
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Error fetching user club:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  });
 }

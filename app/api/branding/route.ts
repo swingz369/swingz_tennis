@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 const BrandingSchema = z.object({
   clubId: z.string().uuid(),
@@ -34,7 +35,6 @@ export async function GET(_request: NextRequest) {
     return NextResponse.json({ error: 'clubId required' }, { status: 400 });
   }
 
-  // Mock response - in real app fetch from database
   return NextResponse.json({
     clubId,
     brand: {
@@ -48,26 +48,35 @@ export async function GET(_request: NextRequest) {
 }
 
 export async function PUT(_request: NextRequest) {
-  try {
-    const clubId = _request.headers.get('x-club-id') || _request.headers.get('x-tenant-id');
-    if (!clubId) {
-      return NextResponse.json({ error: 'Club ID header missing' }, { status: 400 });
+  return withApiAuth(_request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
+      return forbiddenResponse('Admin access required');
     }
-    const body = await _request.json();
-    const validated = BrandingSchema.parse({ clubId, ...body });
 
-    // In real implementation: save to database
-    // await db.insert(brandingTable).values(validated);
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Branding updated',
-      data: validated,
-    });
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Validation failed' },
-      { status: 400 }
-    );
-  }
+    try {
+      const clubId = _request.headers.get('x-club-id') || _request.headers.get('x-tenant-id');
+      if (!clubId) {
+        return NextResponse.json({ error: 'Club ID header missing' }, { status: 400 });
+      }
+      const body = await _request.json();
+      const validated = BrandingSchema.parse({ clubId, ...body });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Branding updated',
+        data: validated,
+      });
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : 'Validation failed' },
+        { status: 400 }
+      );
+    }
+  });
 }

@@ -1,24 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AuditLogService } from '@/src/application/services/audit-log.service';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_request: NextRequest) {
-  try {
-    const searchParams = _request.nextUrl.searchParams;
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+  return withApiAuth(_request, async (auth) => {
+    // Verify admin role
+    const hasRole = await verifyRole(auth, 'admin');
+    if (!hasRole) {
+      return forbiddenResponse('Admin access required');
+    }
 
-    const auditLogService = new AuditLogService();
-    const summary = await auditLogService.getAuditLogSummary(
-      startDate ? new Date(startDate) : undefined,
-      endDate ? new Date(endDate) : undefined
-    );
+    // Apply strict rate limiting
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
 
-    return NextResponse.json(summary);
-  } catch (error) {
-    console.error('Error fetching audit log summary:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch audit log summary' },
-      { status: 500 }
-    );
-  }
+    try {
+      const searchParams = _request.nextUrl.searchParams;
+      const startDate = searchParams.get('startDate');
+      const endDate = searchParams.get('endDate');
+
+      const auditLogService = new AuditLogService();
+      const summary = await auditLogService.getAuditLogSummary(
+        startDate ? new Date(startDate) : undefined,
+        endDate ? new Date(endDate) : undefined
+      );
+
+      return NextResponse.json(summary);
+    } catch (error) {
+      console.error('Error fetching audit log summary:', error);
+      return NextResponse.json({ error: 'Failed to fetch audit log summary' }, { status: 500 });
+    }
+  });
 }

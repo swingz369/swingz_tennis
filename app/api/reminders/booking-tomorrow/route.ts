@@ -1,51 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { ReminderService } from '@/application/use-cases/send-reminders.use-case';
+import { EmailService } from '@/infrastructure/email/email.service';
+import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 
-// POST /api/reminders/booking-tomorrow – Send booking reminders for tomorrow
+class TempSessionRepository {
+  async findSessionsForDateRange(startDate: Date, endDate: Date) {
+    const { createClient } = await import('@/infrastructure/external/supabase/server');
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('sessions')
+      .select('*, trainers(*), courts(*), clubs(*)')
+      .gte('timeslot_start', startDate.toISOString())
+      .lte('timeslot_end', endDate.toISOString());
+    return data || [];
+  }
+}
+
+class TempBookingRepository {
+  async findConfirmedBookingsForSessions(sessionIds: string[]) {
+    const { createClient } = await import('@/infrastructure/external/supabase/server');
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('bookings')
+      .select('*')
+      .in('session_id', sessionIds)
+      .eq('status', 'confirmed');
+    return data || [];
+  }
+}
+
+class TempMemberRepository {
+  async findMemberById(memberId: string) {
+    const { createClient } = await import('@/infrastructure/external/supabase/server');
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('users')
+      .select('email, full_name')
+      .eq('id', memberId)
+      .single();
+    return data;
+  }
+}
+
 export async function POST(_request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  return withApiAuth(_request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
+      return forbiddenResponse('Admin access required');
+    }
 
-  if (!user || authError) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
 
-  // Only admin/superadmin can trigger reminders
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id);
-  const roles = (memberships as Array<{ role: string }> | null)?.map((m) => m.role) || [];
-  const isAuthorized = roles.some((r) => r === 'admin' || r === 'superadmin');
-  if (!isAuthorized) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+    try {
+      const body = await _request.json();
+      const input = sendRemindersSchema.parse(body);
 
-  try {
-    const body = await _request.json();
-    const input = sendRemindersSchema.parse(body);
+      const reminderService = new ReminderService(
+        new EmailService(),
+        new AuditServiceImpl(),
+        new TempSessionRepository(),
+        new TempBookingRepository(),
+        new TempMemberRepository()
+      );
 
-    const results = await ReminderService.sendTomorrowReminders(input);
+      const results = await reminderService.sendTomorrowReminders(input);
 
-    const sentCount = results.filter((r) => r.status === 'sent').length;
-    const failedCount = results.filter((r) => r.status === 'failed').length;
+      const sentCount = results.filter((r) => r.status === 'sent').length;
+      const failedCount = results.filter((r) => r.status === 'failed').length;
 
-    return NextResponse.json({
-      success: true,
-      dryRun: input.dryRun,
-      total: results.length,
-      sent: sentCount,
-      failed: failedCount,
-      results: results.slice(0, 50), // Limit response size
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error sending reminders:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+      return NextResponse.json({
+        success: true,
+        dryRun: input.dryRun,
+        total: results.length,
+        sent: sentCount,
+        failed: failedCount,
+        results: results.slice(0, 50),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error sending reminders:', error);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
 }

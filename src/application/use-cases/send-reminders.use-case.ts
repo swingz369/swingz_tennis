@@ -1,6 +1,4 @@
-import { createClient } from '@/infrastructure/external/supabase/server';
-import { EmailService } from '@/infrastructure/email/email.service';
-import { AuditService } from '@/infrastructure/audit/audit.service';
+import { IEmailService, IAuditService } from '@/domain/services';
 import {
   SendRemindersInput,
   ReminderResult,
@@ -25,12 +23,32 @@ interface Booking {
   status: string;
 }
 
+// Repository interfaces for data access
+interface ISessionRepository {
+  findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]>;
+}
+
+interface IBookingRepository {
+  findConfirmedBookingsForSessions(sessionIds: string[]): Promise<Booking[]>;
+}
+
+interface IMemberRepository {
+  findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null>;
+}
+
 export class ReminderService {
+  constructor(
+    private emailService: IEmailService,
+    private auditService: IAuditService,
+    private sessionRepository: ISessionRepository,
+    private bookingRepository: IBookingRepository,
+    private memberRepository: IMemberRepository
+  ) {}
+
   /**
    * Send booking reminders for tomorrow's sessions
    */
-  static async sendTomorrowReminders(input: SendRemindersInput): Promise<ReminderResult[]> {
-    const supabase = await createClient();
+  async sendTomorrowReminders(input: SendRemindersInput): Promise<ReminderResult[]> {
     const results: ReminderResult[] = [];
 
     // Get tomorrow's date range
@@ -40,30 +58,8 @@ export class ReminderService {
     const tomorrowEnd = new Date(tomorrow);
     tomorrowEnd.setHours(23, 59, 59, 999);
 
-    // Find all sessions for tomorrow
-    const { data: sessions, error: sessionsError } = await supabase
-      .from('sessions')
-      .select(
-        `
-        id,
-        timeslot_start,
-        timeslot_end,
-        trainer_id,
-        court_id,
-        club_id,
-        trainers (name, email),
-        courts (name),
-        clubs (name)
-      `
-      )
-      .gte('timeslot_start', tomorrow.toISOString())
-      .lte('timeslot_start', tomorrowEnd.toISOString())
-      .eq('is_active', true);
-
-    if (sessionsError) {
-      console.error('Error fetching sessions:', sessionsError);
-      return results;
-    }
+    // Find all sessions for tomorrow using repository
+    const sessions = await this.sessionRepository.findSessionsForDateRange(tomorrow, tomorrowEnd);
 
     if (!sessions || sessions.length === 0) {
       console.log('No sessions found for tomorrow');
@@ -72,17 +68,8 @@ export class ReminderService {
 
     const sessionIds = sessions.map((s: Session) => s.id);
 
-    // Get all bookings for these sessions
-    const { data: bookings, error: bookingsError } = await supabase
-      .from('bookings')
-      .select('id, member_id, session_id, status')
-      .in('session_id', sessionIds)
-      .eq('status', 'confirmed');
-
-    if (bookingsError) {
-      console.error('Error fetching bookings:', bookingsError);
-      return results;
-    }
+    // Get all bookings for these sessions using repository
+    const bookings = await this.bookingRepository.findConfirmedBookingsForSessions(sessionIds);
 
     if (!bookings || bookings.length === 0) {
       console.log('No confirmed bookings for tomorrow');
@@ -91,24 +78,20 @@ export class ReminderService {
 
     // Group bookings by session
     const bookingsBySession = new Map<string | number, Booking[]>();
-    (bookings as Booking[]).forEach((booking: Booking) => {
+    bookings.forEach((booking: Booking) => {
       const existing = bookingsBySession.get(booking.session_id) || [];
       existing.push(booking);
       bookingsBySession.set(booking.session_id, existing);
     });
 
     // Send reminder for each booking
-    for (const session of sessions as Session[]) {
+    for (const session of sessions) {
       const sessionBookings = bookingsBySession.get(session.id) || [];
 
       for (const booking of sessionBookings) {
         try {
-          // Get member details
-          const { data: member } = await supabase
-            .from('users')
-            .select('email, full_name')
-            .eq('id', booking.member_id)
-            .single();
+          // Get member details using repository
+          const member = await this.memberRepository.findMemberById(booking.member_id);
 
           if (!member) {
             results.push({
@@ -184,14 +167,33 @@ export class ReminderService {
           if (session.trainers?.name) emailData.trainerName = session.trainers.name;
           if (session.courts?.name) emailData.courtName = session.courts.name;
 
-          await EmailService.sendBookingReminder(member.email, emailData);
+          // Send reminder email via interface
+          const sessionDate = new Date(session.timeslot_start).toLocaleDateString('de-DE');
+          const sessionTime = new Date(session.timeslot_start).toLocaleTimeString('de-DE', {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
 
-          // Audit log
-          await AuditService.log('system', 'reminder_sent', 'booking', booking.id, {
-            type: 'booking_reminder',
-            sessionId: session.id,
-            memberId: booking.member_id,
-            method: 'email',
+          await this.emailService.sendBookingReminder(member.email, {
+            memberName: member.full_name || 'Member',
+            sessionDate,
+            sessionTime,
+            courtName: session.courts?.name || 'TBD',
+            clubName: session.clubs?.name || 'TBD',
+          });
+
+          // Audit log via interface
+          await this.auditService.log({
+            userId: 'system',
+            action: 'create', // Using generic action
+            entityType: 'booking',
+            entityId: booking.id,
+            details: {
+              type: 'booking_reminder',
+              sessionId: session.id,
+              memberId: booking.member_id,
+              method: 'email',
+            },
           });
 
           results.push({

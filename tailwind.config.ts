@@ -56,7 +56,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: typography.fontFamily.sans,
-        serif: typography.fontFamily.serif,
+        display: typography.fontFamily.display,
+        mono: typography.fontFamily.mono,
       },
       fontSize: {
         'display-1': ['3.75rem', { lineHeight: '1.1', fontWeight: '800' }],
@@ -80,10 +81,10 @@ const config: Config = {
         soft: shadows.md,
         medium: shadows.lg,
         strong: shadows.xl,
-        'glow-green-sm': shadows.primaryGlow,
-        'glow-green': shadows.primaryGlowStrong,
-        'glow-orange-sm': shadows.accentGlow,
-        'glow-orange': shadows.accentGlowStrong,
+        'glow-green-sm': shadows.glow.primary,
+        'glow-green': shadows.glow.primaryStrong,
+        'glow-orange-sm': shadows.glow.accent,
+        'glow-orange': shadows.glow.accentStrong,
         glass: '0 0 0 1px rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.1)',
       },
       backgroundImage: {

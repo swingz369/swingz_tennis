@@ -1,4 +1,11 @@
 import { Resend } from 'resend';
+import type {
+  IEmailService,
+  EmailTemplate,
+  BookingConfirmationData,
+  BookingCancellationData,
+  ReminderData,
+} from '@/domain/services';
 
 export interface EmailConfig {
   from: string;
@@ -359,7 +366,104 @@ const templates = {
   }),
 };
 
-export class EmailService {
+/**
+ * EmailService Implementation
+ * Implements IEmailService interface using Resend API
+ */
+export class EmailService implements IEmailService {
+  /**
+   * Send booking confirmation email
+   */
+  async sendBookingConfirmation(email: string, data: BookingConfirmationData): Promise<void> {
+    const template = templates.bookingConfirmation({
+      memberName: data.memberName,
+      sessionStartFormatted: `${data.sessionDate} ${data.sessionTime}`,
+      sessionEndFormatted: '', // Not provided in interface
+      courtName: data.courtName,
+      clubName: data.clubName,
+    });
+    await this.sendEmailInternal(email, template);
+  }
+
+  /**
+   * Send booking cancellation email
+   */
+  async sendBookingCancellation(email: string, data: BookingCancellationData): Promise<void> {
+    const template = templates.bookingCancellation({
+      memberName: data.memberName,
+      reason: data.reason || 'Keine Angabe',
+      sessionStartFormatted: `${data.sessionDate} ${data.sessionTime}`,
+    });
+    await this.sendEmailInternal(email, template);
+  }
+
+  /**
+   * Send booking reminder email
+   */
+  async sendBookingReminder(email: string, data: ReminderData): Promise<void> {
+    const template = templates.bookingReminder({
+      memberName: data.memberName,
+      sessionStartFormatted: `${data.sessionDate} ${data.sessionTime}`,
+      sessionEndFormatted: '', // Not in template
+      courtName: data.courtName,
+    });
+    await this.sendEmailInternal(email, template);
+  }
+
+  /**
+   * Send generic email using template
+   */
+  async sendEmail(template: EmailTemplate): Promise<void> {
+    await this.sendEmailInternal(template.to, {
+      subject: template.subject,
+      html: template.html,
+      text: template.text || '',
+    });
+  }
+
+  /**
+   * Send batch emails
+   */
+  async sendBatchEmails(templates: EmailTemplate[]): Promise<void> {
+    await Promise.all(templates.map((t) => this.sendEmail(t)));
+  }
+
+  /**
+   * Internal helper to send email via Resend
+   */
+  private async sendEmailInternal(
+    to: string,
+    template: { subject: string; html: string; text: string }
+  ): Promise<void> {
+    const resend = getResend();
+    if (!resend) {
+      console.log('Email skipped: RESEND_API_KEY not configured', {
+        to,
+        subject: template.subject,
+      });
+      return;
+    }
+
+    try {
+      await resend.emails.send({
+        from: config.from,
+        to,
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+        ...(config.replyTo ? { replyTo: config.replyTo } : {}),
+      });
+      console.log('Email sent:', { to, subject: template.subject });
+    } catch (error) {
+      console.error('Failed to send email:', error);
+    }
+  }
+
+  // ============================================
+  // Legacy static methods for backward compatibility
+  // TODO: Remove after all callers are migrated to use IEmailService
+  // ============================================
+
   static async sendBookingConfirmation(
     to: string,
     data: {
@@ -379,7 +483,7 @@ export class EmailService {
       sessionStartFormatted: formattedStart,
       sessionEndFormatted: formattedEnd,
     });
-    await this.sendEmail(to, template);
+    await EmailService.sendEmailStatic(to, template);
   }
 
   static async sendBookingCancellation(
@@ -392,7 +496,7 @@ export class EmailService {
       notes: data.notes,
       sessionStartFormatted: data.sessionStartFormatted,
     });
-    await this.sendEmail(to, template);
+    await EmailService.sendEmailStatic(to, template);
   }
 
   static async sendBookingStatusChanged(
@@ -412,7 +516,7 @@ export class EmailService {
       sessionEnd: data.sessionEnd,
       clubName: data.clubName,
     });
-    await this.sendEmail(to, template);
+    await EmailService.sendEmailStatic(to, template);
   }
 
   static async sendBookingReminder(
@@ -426,7 +530,7 @@ export class EmailService {
     }
   ): Promise<void> {
     const template = templates.bookingReminder(data);
-    await this.sendEmail(to, template);
+    await EmailService.sendEmailStatic(to, template);
   }
 
   static async sendMemberStatusUpdate(
@@ -434,7 +538,7 @@ export class EmailService {
     data: { memberName: string; clubName: string; isActive: boolean }
   ): Promise<void> {
     const template = templates.memberStatus(data);
-    await this.sendEmail(to, template);
+    await EmailService.sendEmailStatic(to, template);
   }
 
   static async sendRoleChangeNotification(
@@ -442,7 +546,7 @@ export class EmailService {
     data: { memberName: string; clubName: string; oldRole: string; newRole: string }
   ): Promise<void> {
     const template = templates.roleChange(data);
-    await this.sendEmail(to, template);
+    await EmailService.sendEmailStatic(to, template);
   }
 
   static async sendInvitation(
@@ -450,10 +554,10 @@ export class EmailService {
     data: { memberName: string; clubName: string; loginUrl: string; resetPasswordUrl: string }
   ): Promise<void> {
     const template = templates.invitation(data);
-    await this.sendEmail(to, template);
+    await EmailService.sendEmailStatic(to, template);
   }
 
-  private static async sendEmail(
+  private static async sendEmailStatic(
     to: string,
     template: { subject: string; html: string; text: string }
   ): Promise<void> {

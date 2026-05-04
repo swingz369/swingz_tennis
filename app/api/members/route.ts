@@ -1,105 +1,131 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MemberService } from '@/src/application/services/member.service';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withRateLimit, rateLimit } from '@/lib/rate-limit';
+import { withCSRFProtection } from '@/lib/csrf';
+import {
+  CreateMemberSchema,
+  MemberQuerySchema,
+  validateRequestBody,
+  validateQueryParams,
+  formatValidationErrors,
+} from '@/lib/validation-schemas';
 
-export async function POST(_request: NextRequest) {
-  try {
-    const body = await _request.json();
+export async function POST(request: NextRequest) {
+  return withCSRFProtection(request, async () => {
+    return withRateLimit(
+      request,
+      async () => {
+        return withApiAuth(request, async (auth) => {
+          try {
+            // Only admin and trainers can create members
+            const hasPermission = await verifyRole(auth, 'trainer');
+            if (!hasPermission) {
+              return forbiddenResponse('Insufficient permissions to create members');
+            }
 
-    const {
-      userId,
-      firstName,
-      lastName,
-      email,
-      phone,
-      dateOfBirth,
-      address,
-      memberType,
-      membershipStatus,
-      membershipStart,
-      membershipEnd,
-      trainingGroup,
-      emergencyContact,
-      notes,
-    } = body;
+            const body = await request.json();
 
-    if (!userId || !firstName || !lastName || !email || !phone || !dateOfBirth) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
+            // Validate request body with Zod
+            const validation = validateRequestBody(CreateMemberSchema, body);
+            if (!validation.success) {
+              return NextResponse.json(
+                {
+                  error: 'Validation failed',
+                  details: formatValidationErrors(validation.errors),
+                },
+                { status: 400 }
+              );
+            }
 
-    // Create member
-    const member = await MemberService.createMember({
-      userId,
-      firstName,
-      lastName,
-      email,
-      phone,
-      dateOfBirth,
-      address,
-      memberType,
-      membershipStatus,
-      membershipStart,
-      membershipEnd,
-      trainingGroup,
-      emergencyContact,
-      notes,
-    });
+            const validatedData = validation.data;
 
-    return NextResponse.json({ success: true, member });
-  } catch (error) {
-    console.error('Member creation error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
+            // Create member (associated with the authenticated user's club)
+            const member = await MemberService.createMember(validatedData);
+
+            return NextResponse.json({ success: true, member });
+          } catch (error) {
+            console.error('Member creation error:', error);
+            return NextResponse.json(
+              { error: error instanceof Error ? error.message : 'Internal server error' },
+              { status: 500 }
+            );
+          }
+        });
+      },
+      rateLimit
     );
-  }
+  });
 }
 
-export async function GET(_request: NextRequest) {
-  try {
-    const { searchParams } = new URL(_request.url);
-    const status = searchParams.get('status');
-    const type = searchParams.get('type');
-    const trainingGroup = searchParams.get('trainingGroup');
-    const search = searchParams.get('search');
-    const active = searchParams.get('active');
-    const statistics = searchParams.get('statistics');
+export async function GET(request: NextRequest) {
+  return withRateLimit(
+    request,
+    async () => {
+      return withApiAuth(request, async (_auth) => {
+        try {
+          const { searchParams } = new URL(request.url);
 
-    if (statistics) {
-      const statistics = await MemberService.getMemberStatistics();
-      return NextResponse.json({ statistics });
-    }
+          // Validate query parameters with Zod
+          const validation = validateQueryParams(MemberQuerySchema, searchParams);
+          if (!validation.success) {
+            return NextResponse.json(
+              {
+                error: 'Invalid query parameters',
+                details: formatValidationErrors(validation.errors),
+              },
+              { status: 400 }
+            );
+          }
 
-    if (active) {
-      const members = await MemberService.getActiveMembers();
-      return NextResponse.json({ members });
-    }
+          const { status, type, trainingGroup, search, active, statistics, limit, offset } =
+            validation.data;
 
-    if (search) {
-      const members = await MemberService.searchMembers(search);
-      return NextResponse.json({ members });
-    }
+          if (statistics) {
+            const statistics = await MemberService.getMemberStatistics();
+            return NextResponse.json({ statistics });
+          }
 
-    if (trainingGroup) {
-      const members = await MemberService.getMembersByTrainingGroup(trainingGroup);
-      return NextResponse.json({ members });
-    }
+          if (active) {
+            const members = await MemberService.getActiveMembers();
+            return NextResponse.json({ members });
+          }
 
-    // Query with filters
-    const query: any = {};
-    if (status) query.status = status;
-    if (type) query.type = type;
-    if (search) query.search = search;
+          if (search) {
+            const members = await MemberService.searchMembers(search);
+            return NextResponse.json({ members });
+          }
 
-    const members = await MemberService.queryMembers(query);
-    return NextResponse.json({ members });
-  } catch (error) {
-    console.error('Member fetch error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+          if (trainingGroup) {
+            const members = await MemberService.getMembersByTrainingGroup(trainingGroup);
+            return NextResponse.json({ members });
+          }
+
+          // Query with filters (filtered by club in future iterations)
+          const query: any = {};
+          if (status) query.status = status;
+          if (type) query.type = type;
+
+          const members = await MemberService.queryMembers(query);
+
+          // Apply pagination
+          const paginatedMembers = members.slice(offset, offset + limit);
+
+          return NextResponse.json({
+            members: paginatedMembers,
+            pagination: {
+              total: members.length,
+              limit,
+              offset,
+              hasMore: offset + limit < members.length,
+            },
+          });
+        } catch (error) {
+          console.error('Member fetch error:', error);
+          return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        }
+      });
+    },
+    rateLimit
+  );
 }

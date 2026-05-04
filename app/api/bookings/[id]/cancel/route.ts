@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CancelBookingUseCase } from '@/application/use-cases/booking.use-cases';
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
+import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { cancelBookingSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 const bookingRepo = new DrizzleBookingRepository();
-const cancelBookingUseCase = new CancelBookingUseCase(bookingRepo);
+const auditService = new AuditServiceImpl();
+const cancelBookingUseCase = new CancelBookingUseCase(bookingRepo, auditService);
 
 // Helper: Check for demo mode cookie
 function isDemoMode(req: NextRequest): boolean {
@@ -27,28 +30,32 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
   }
 
-  return withValidation(cancelBookingSchema, async (input) => {
-    try {
-      const supabase = await createClient();
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (!user || authError) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      const result = await cancelBookingUseCase.execute({
-        bookingId: id,
-        reason: input.reason,
-        notes: input.notes,
-        actorId: user.id,
-      });
-      return NextResponse.json(result);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error cancelling booking:', error);
-      return NextResponse.json({ error: message }, { status: 400 });
+  return withApiAuth(req, async (auth) => {
+    // Members can cancel bookings
+    const hasPermission = await verifyRole(auth, 'member');
+    if (!hasPermission) {
+      return forbiddenResponse('Authentication required');
     }
-  })(req);
+
+    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
+    return withValidation(cancelBookingSchema, async (input) => {
+      try {
+        const result = await cancelBookingUseCase.execute({
+          bookingId: id,
+          reason: input.reason,
+          notes: input.notes,
+          actorId: auth.user.id,
+        });
+        return NextResponse.json(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error cancelling booking:', error);
+        return NextResponse.json({ error: message }, { status: 400 });
+      }
+    })(req);
+  });
 }

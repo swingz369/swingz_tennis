@@ -3,6 +3,8 @@ import { getClubRevenueUseCase } from '@/application/analytics/get-club-revenue.
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 function isDemoMode(req: NextRequest): boolean {
   const cookies = req.cookies.get('demo-mode');
@@ -53,49 +55,61 @@ const DEMO_REVENUE = {
 };
 
 export async function GET(_request: NextRequest) {
-  const { searchParams } = new URL(_request.url);
-  const clubId = searchParams.get('clubId');
-  const format = searchParams.get('format') || 'csv';
-
-  if (!clubId) {
-    return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-  }
-
-   if (isDemoMode(_request)) {
-    if (format === 'pdf') {
-      return generatePDFExport(DEMO_REVENUE, clubId);
-    }
-    const csv = convertRevenueToCSV(DEMO_REVENUE);
-    return new NextResponse(csv, {
-      headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': 'attachment; filename="revenue-export.csv"',
-      },
-    });
-  }
-
-  try {
-    const bookingRepository = new DrizzleBookingRepository();
-    const clubRepository = new DrizzleClubRepository();
-    const scheduleRepository = new DrizzleScheduleRepository();
-    const useCase = getClubRevenueUseCase(bookingRepository, clubRepository, scheduleRepository);
-    const revenue = await useCase.execute(clubId);
-
-    if (format === 'pdf') {
-      return generatePDFExport(revenue, clubId);
+  return withApiAuth(_request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
+      return forbiddenResponse('Admin access required');
     }
 
-    const csv = convertRevenueToCSV(revenue);
-    return new NextResponse(csv, {
-      headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="revenue-${clubId}.csv"`,
-      },
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
+    const { searchParams } = new URL(_request.url);
+    const clubId = searchParams.get('clubId');
+    const format = searchParams.get('format') || 'csv';
+
+    if (!clubId) {
+      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+    }
+
+    if (isDemoMode(_request)) {
+      if (format === 'pdf') {
+        return generatePDFExport(DEMO_REVENUE, clubId);
+      }
+      const csv = convertRevenueToCSV(DEMO_REVENUE);
+      return new NextResponse(csv, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': 'attachment; filename="revenue-export.csv"',
+        },
+      });
+    }
+
+    try {
+      const bookingRepository = new DrizzleBookingRepository();
+      const clubRepository = new DrizzleClubRepository();
+      const scheduleRepository = new DrizzleScheduleRepository();
+      const useCase = getClubRevenueUseCase(bookingRepository, clubRepository, scheduleRepository);
+      const revenue = await useCase.execute(clubId);
+
+      if (format === 'pdf') {
+        return generatePDFExport(revenue, clubId);
+      }
+
+      const csv = convertRevenueToCSV(revenue);
+      return new NextResponse(csv, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="revenue-${clubId}.csv"`,
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
 }
 
 function convertRevenueToCSV(data: {

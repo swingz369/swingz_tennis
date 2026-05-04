@@ -1,88 +1,120 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
 
 export async function POST(_request: NextRequest) {
-  try {
-    const body = await _request.json();
-
-    const {
-      billingPeriodId,
-      trainerId,
-      trainerName,
-      totalHours,
-      hourlyRate,
-      totalAmount,
-      dueDate,
-      notes,
-    } = body;
-
-    if (!billingPeriodId || !trainerId || !trainerName || !totalHours || !hourlyRate || !totalAmount) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+  return withApiAuth(_request, async (auth) => {
+    // Permission check
+    const hasPermission = await verifyRole(auth, 'trainer');
+    if (!hasPermission) {
+      return forbiddenResponse('Trainer or admin access required');
     }
 
-    // Create trainer billing
-    const trainerBilling = await BillingService.createTrainerBilling({
-      billingPeriodId,
-      trainerId,
-      trainerName,
-      totalHours,
-      hourlyRate,
-      totalAmount,
-      dueDate,
-      notes,
-    });
+    // Rate limit
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
 
-    return NextResponse.json({ success: true, trainerBilling });
-  } catch (error) {
-    console.error('Trainer billing creation error:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 }
-    );
-  }
+    try {
+      const body = await _request.json();
+
+      const {
+        billingPeriodId,
+        trainerId,
+        trainerName,
+        totalHours,
+        hourlyRate,
+        totalAmount,
+        dueDate,
+        notes,
+      } = body;
+
+      if (
+        !billingPeriodId ||
+        !trainerId ||
+        !trainerName ||
+        !totalHours ||
+        !hourlyRate ||
+        !totalAmount
+      ) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      }
+
+      // Create trainer billing
+      const trainerBilling = await BillingService.createTrainerBilling({
+        billingPeriodId,
+        trainerId,
+        trainerName,
+        totalHours,
+        hourlyRate,
+        totalAmount,
+        dueDate,
+        notes,
+      });
+
+      return NextResponse.json({ success: true, trainerBilling });
+    } catch (error) {
+      console.error('Trainer billing creation error:', error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Internal server error' },
+        { status: 500 }
+      );
+    }
+  });
 }
 
 export async function GET(_request: NextRequest) {
-  try {
-    const { searchParams } = new URL(_request.url);
-    const billingPeriodId = searchParams.get('billingPeriodId');
-    const trainerId = searchParams.get('trainerId');
-    const status = searchParams.get('status');
-    const summary = searchParams.get('summary');
-
-    if (summary && billingPeriodId) {
-      const summary = await BillingService.calculateBillingSummary(billingPeriodId);
-      return NextResponse.json({ summary });
+  return withApiAuth(_request, async (auth) => {
+    // Permission check
+    const hasPermission = await verifyRole(auth, 'trainer');
+    if (!hasPermission) {
+      return forbiddenResponse('Trainer or admin access required');
     }
 
-    if (billingPeriodId) {
-      const trainerBillings = await BillingService.getTrainerBillingsByBillingPeriod(billingPeriodId);
+    // Rate limit
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
+    try {
+      const { searchParams } = new URL(_request.url);
+      const billingPeriodId = searchParams.get('billingPeriodId');
+      const trainerId = searchParams.get('trainerId');
+      const status = searchParams.get('status');
+      const summary = searchParams.get('summary');
+
+      if (summary && billingPeriodId) {
+        const summary = await BillingService.calculateBillingSummary(billingPeriodId);
+        return NextResponse.json({ summary });
+      }
+
+      if (billingPeriodId) {
+        const trainerBillings =
+          await BillingService.getTrainerBillingsByBillingPeriod(billingPeriodId);
+        return NextResponse.json({ trainerBillings });
+      }
+
+      if (trainerId) {
+        const trainerBillings = await BillingService.getTrainerBillingsByTrainerId(trainerId);
+        return NextResponse.json({ trainerBillings });
+      }
+
+      if (status) {
+        const trainerBillings = (await BillingService.getAllTrainerBillings()).filter(
+          (b) => b.status === status
+        );
+        return NextResponse.json({ trainerBillings });
+      }
+
+      // Get all trainer billings
+      const trainerBillings = await BillingService.getAllTrainerBillings();
       return NextResponse.json({ trainerBillings });
+    } catch (error) {
+      console.error('Trainer billing fetch error:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
-
-    if (trainerId) {
-      const trainerBillings = await BillingService.getTrainerBillingsByTrainerId(trainerId);
-      return NextResponse.json({ trainerBillings });
-    }
-
-    if (status) {
-      const trainerBillings = (await BillingService.getAllTrainerBillings()).filter(
-        (b) => b.status === status
-      );
-      return NextResponse.json({ trainerBillings });
-    }
-
-    // Get all trainer billings
-    const trainerBillings = await BillingService.getAllTrainerBillings();
-    return NextResponse.json({ trainerBillings });
-  } catch (error) {
-    console.error('Trainer billing fetch error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+  });
 }

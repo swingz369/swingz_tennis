@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getClubMembersUseCase } from '@/application/members/get-club-members.use-case';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
 import { DrizzleMemberRepository } from '@/infrastructure/persistence/repositories/member.repository';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 function isDemoMode(req: NextRequest): boolean {
   const cookies = req.cookies.get('demo-mode');
@@ -62,52 +64,65 @@ const DEMO_RECOMMENDATIONS = [
 ];
 
 export async function GET(_request: NextRequest) {
+  return withApiAuth(_request, async (auth) => {
+    // Only admins can view insights
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
+      return forbiddenResponse('Admin access required');
+    }
+
+    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
     const { searchParams } = new URL(_request.url);
-  const clubId = searchParams.get('clubId');
-  const insightType = searchParams.get('type') || 'churn'; // 'churn' | 'recommendations' | 'all'
+    const clubId = searchParams.get('clubId');
+    const insightType = searchParams.get('type') || 'churn'; // 'churn' | 'recommendations' | 'all'
 
-  if (!clubId) {
-    return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-  }
-
-  if (isDemoMode(_request)) {
-    const result: Record<string, unknown> = { success: true, clubId };
-    if (insightType === 'churn' || insightType === 'all') {
-      result.churnPredictions = DEMO_CHURN_PREDICTIONS;
-    }
-    if (insightType === 'recommendations' || insightType === 'all') {
-      result.recommendations = DEMO_RECOMMENDATIONS;
-    }
-    return NextResponse.json(result);
-  }
-
-  try {
-    const memberRepository = new DrizzleMemberRepository();
-    const clubRepository = new DrizzleClubRepository();
-    const useCase = getClubMembersUseCase(memberRepository, clubRepository);
-    const members = await useCase.execute(clubId);
-
-    // AI insights generation (simplified mock implementation)
-    // In production, integrate with OpenAI/ML model for predictions
-    const insights = generateInsights(members);
-
-    const result: Record<string, unknown> = {
-      success: true,
-      clubId,
-      generatedAt: new Date().toISOString(),
-    };
-    if (insightType === 'churn' || insightType === 'all') {
-      result.churnPredictions = insights.churnPredictions;
-    }
-    if (insightType === 'recommendations' || insightType === 'all') {
-      result.recommendations = insights.recommendations;
+    if (!clubId) {
+      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
-    return NextResponse.json(result);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    if (isDemoMode(_request)) {
+      const result: Record<string, unknown> = { success: true, clubId };
+      if (insightType === 'churn' || insightType === 'all') {
+        result.churnPredictions = DEMO_CHURN_PREDICTIONS;
+      }
+      if (insightType === 'recommendations' || insightType === 'all') {
+        result.recommendations = DEMO_RECOMMENDATIONS;
+      }
+      return NextResponse.json(result);
+    }
+
+    try {
+      const memberRepository = new DrizzleMemberRepository();
+      const clubRepository = new DrizzleClubRepository();
+      const useCase = getClubMembersUseCase(memberRepository, clubRepository);
+      const members = await useCase.execute(clubId);
+
+      // AI insights generation (simplified mock implementation)
+      // In production, integrate with OpenAI/ML model for predictions
+      const insights = generateInsights(members);
+
+      const result: Record<string, unknown> = {
+        success: true,
+        clubId,
+        generatedAt: new Date().toISOString(),
+      };
+      if (insightType === 'churn' || insightType === 'all') {
+        result.churnPredictions = insights.churnPredictions;
+      }
+      if (insightType === 'recommendations' || insightType === 'all') {
+        result.recommendations = insights.recommendations;
+      }
+
+      return NextResponse.json(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
 }
 
 function generateInsights(

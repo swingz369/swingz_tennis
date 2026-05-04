@@ -1,8 +1,9 @@
-// SWINGZ Design Tokens – Professional Tennis Club Management
-// Colors: Tennis Green + Navy + Orange Accent
+// SWINGZ Design Tokens – Premium Tennis Club Management
+// Philosophy: Refined Elegance meets Athletic Performance
+// Colors: Deep Forest + Midnight Navy + Sunrise Orange
 
 export const colors = {
-  // Primary – Forest Green (SwingZ Brand)
+  // Primary – Forest Green (SwingZ Brand Core)
   primary: {
     50: '#f0fdf4',
     100: '#dcfce7',
@@ -14,10 +15,11 @@ export const colors = {
     700: '#15803d',
     800: '#166534',
     900: '#14532d',
-    // Brand exact color
-    brand: '#1B4332', // Deep forest green – primary brand
+    950: '#0a3d2e',
+    brand: '#1B4332',
+    velvet: '#0f2d22',
   },
-  // Secondary – Navy (SwingZ Brand)
+  // Secondary – Midnight Navy (Depth & Trust)
   secondary: {
     50: '#f0f4f8',
     100: '#d9e2ec',
@@ -29,9 +31,11 @@ export const colors = {
     700: '#3e5c76',
     800: '#334e68',
     900: '#1e3a5f',
-    brand: '#1e3a5f', // Deep navy – secondary brand
+    950: '#0f1f33',
+    brand: '#1e3a5f',
+    obsidian: '#0a1420',
   },
-  // Accent – Orange (SwingZ Brand)
+  // Accent – Sunrise Orange (Energy & Action)
   accent: {
     50: '#fff7ed',
     100: '#ffedd5',
@@ -43,34 +47,45 @@ export const colors = {
     700: '#c2410c',
     800: '#9a3412',
     900: '#7c2d12',
-    brand: '#FF6B35', // Vibrant orange – accent brand
+    950: '#4a1a0b',
+    brand: '#FF6B35',
+    ember: '#e85a2a',
   },
-  // Neutrals – Warm Grays
+  // Neutrals – Refined Warm Grays with Depth
   gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
-    400: '#9ca3af',
-    500: '#6b7280',
-    600: '#4b5563',
-    700: '#374151',
-    800: '#1f2937',
-    900: '#111827',
+    25: '#fefefe',
+    50: '#fafafa',
+    100: '#f5f5f6',
+    150: '#ebebec',
+    200: '#e0e1e3',
+    300: '#c7c9cc',
+    400: '#a0a3a8',
+    500: '#75787f',
+    600: '#54585f',
+    700: '#3a3f47',
+    800: '#252a33',
+    900: '#151921',
+    950: '#0c0f14',
   },
   // Semantic
   success: '#22c55e',
+  successLight: '#dcfce7',
   warning: '#f59e0b',
+  warningLight: '#fef3c7',
   error: '#ef4444',
+  errorLight: '#fee2e2',
   info: '#3b82f6',
+  infoLight: '#dbeafe',
 };
 
 export const typography = {
   fontFamily: {
-    sans: ['Inter', 'system-ui', 'sans-serif'],
-    serif: ['"Playfair Display"', 'Georgia', 'serif'],
+    sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+    display: ['"Clash Display"', '"DM Sans"', 'system-ui', 'sans-serif'],
+    mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
   },
   fontSize: {
+    '2xs': '0.625rem',
     xs: '0.75rem',
     sm: '0.875rem',
     base: '1rem',
@@ -82,24 +97,33 @@ export const typography = {
     '5xl': '3rem',
     '6xl': '3.75rem',
     '7xl': '4.5rem',
+    '8xl': '6rem',
+    '9xl': '8rem',
   },
   fontWeight: {
+    light: 300,
     normal: 400,
     medium: 500,
     semibold: 600,
     bold: 700,
     extrabold: 800,
+    black: 900,
   },
   lineHeight: {
-    tight: 1.25,
+    none: 1,
+    tight: 1.15,
+    snug: 1.25,
     normal: 1.5,
-    relaxed: 1.75,
+    relaxed: 1.625,
+    loose: 1.75,
   },
   letterSpacing: {
+    tighter: '-0.05em',
     tight: '-0.025em',
     normal: '0',
     wide: '0.025em',
     wider: '0.05em',
+    widest: '0.1em',
   },
 };
 
@@ -129,32 +153,68 @@ export const radius = {
 
 export const shadows = {
   none: 'none',
-  xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-  sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-  md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-  '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-  '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.3)',
-  // Colored Glow Shadows für CTAs und Fokus
-  primaryGlow: '0 8px 24px -4px rgba(27, 67, 50, 0.5)',
-  primaryGlowStrong: '0 12px 40px -8px rgba(27, 67, 50, 0.6)',
-  accentGlow: '0 8px 24px -4px rgba(255, 107, 53, 0.5)',
-  accentGlowStrong: '0 12px 40px -8px rgba(255, 107, 53, 0.6)',
-  card: '0 2px 8px -2px rgb(0 0 0 / 0.08), 0 4px 12px -3px rgb(0 0 0 / 0.06)',
-  cardHover: '0 12px 24px -4px rgb(0 0 0 / 0.12), 0 6px 12px -3px rgb(0 0 0 / 0.08)',
+  xs: '0 1px 2px 0 rgb(0 0 0 / 0.04)',
+  sm: '0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08)',
+  md: '0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06)',
+  lg: '0 12px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -2px rgb(0 0 0 / 0.06)',
+  xl: '0 24px 48px -8px rgb(0 0 0 / 0.12), 0 8px 16px -4px rgb(0 0 0 / 0.08)',
+  '2xl': '0 32px 64px -12px rgb(0 0 0 / 0.2)',
+  '3xl': '0 48px 80px -16px rgb(0 0 0 / 0.25)',
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+  glow: {
+    primary: '0 0 60px -12px rgba(27, 67, 50, 0.4), 0 0 24px -8px rgba(27, 67, 50, 0.3)',
+    primaryStrong: '0 0 80px -16px rgba(27, 67, 50, 0.5), 0 0 40px -12px rgba(27, 67, 50, 0.4)',
+    accent: '0 0 60px -12px rgba(255, 107, 53, 0.4), 0 0 24px -8px rgba(255, 107, 53, 0.3)',
+    accentStrong: '0 0 80px -16px rgba(255, 107, 53, 0.5), 0 0 40px -12px rgba(255, 107, 53, 0.4)',
+    premium:
+      '0 24px 64px -16px rgba(0, 0, 0, 0.15), 0 8px 32px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+  },
+  card: {
+    default: '0 2px 8px -2px rgb(0 0 0 / 0.06), 0 4px 16px -4px rgb(0 0 0 / 0.04)',
+    hover: '0 12px 32px -8px rgb(0 0 0 / 0.1), 0 4px 12px -4px rgb(0 0 0 / 0.06)',
+    elevated:
+      '0 24px 48px -12px rgb(0 0 0 / 0.12), 0 8px 24px -8px rgb(0 0 0 / 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+  },
+  button: {
+    default: '0 2px 8px -2px rgba(27, 67, 50, 0.3), 0 1px 2px rgba(0, 0, 0, 0.05)',
+    hover: '0 8px 24px -4px rgba(27, 67, 50, 0.4), 0 2px 8px -2px rgba(27, 67, 50, 0.2)',
+    active: '0 1px 4px rgba(27, 67, 50, 0.3) inset',
+  },
 };
 
 export const gradients = {
   primary: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #40916C 100%)',
-  primaryRadial: 'radial-gradient(circle at 30% 20%, #40916C 0%, #1B4332 100%)',
-  accent: 'linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FF9E5C 100%)',
-  accentWarm: 'linear-gradient(135deg, #FFB88C 0%, #FF9E5C 100%)',
-  hero: 'linear-gradient(135deg, #0A3D2E 0%, #1B4332 50%, #2D6A4F 100%)',
-  dark: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)',
-  glass: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+  primaryRadial: 'radial-gradient(ellipse 80% 50% at 50% 0%, #40916C 0%, #1B4332 100%)',
+  primaryMesh: `
+    radial-gradient(at 40% 20%, hsla(150, 48%, 25%, 0.8) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(150, 45%, 35%, 0.6) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(217, 33%, 20%, 0.5) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(150, 48%, 30%, 0.4) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(217, 33%, 25%, 0.6) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsla(150, 45%, 35%, 0.5) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, hsla(150, 50%, 20%, 0.7) 0px, transparent 50%)
+  `,
+  accent: 'linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FFAB76 100%)',
+  accentRadial: 'radial-gradient(circle at 70% 30%, #FFAB76 0%, #FF6B35 100%)',
+  hero: 'linear-gradient(160deg, #0A3D2E 0%, #1B4332 40%, #2D6A4F 100%)',
+  heroMesh: `
+    radial-gradient(ellipse 100% 100% at 20% 0%, rgba(64, 145, 108, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 80% at 80% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse 60% 60% at 40% 80%, rgba(30, 58, 95, 0.2) 0%, transparent 50%),
+    linear-gradient(160deg, #0A3D2E 0%, #1B4332 40%, #2D6A4F 100%)
+  `,
+  glass: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
+  glassDark: 'linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 100%)',
   mesh: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 25%, #40916C 50%, #52B788 75%, #74C69D 100%)',
+  aurora: `
+    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(64, 145, 108, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 30% at 50% 90%, rgba(30, 58, 95, 0.2) 0%, transparent 40%)
+  `,
+  text: {
+    primary: 'linear-gradient(135deg, #1B4332 0%, #40916C 100%)',
+    accent: 'linear-gradient(135deg, #FF6B35 0%, #FFAB76 100%)',
+  },
 };
 
 export const transitions = {

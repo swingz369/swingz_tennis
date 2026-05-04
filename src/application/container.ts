@@ -1,18 +1,42 @@
 import { container } from 'tsyringe';
+import type { IEmailService, IAuditService } from '@/domain/services';
 
 /**
  * Dependency Injection Container
  *
- * NOTE: Full DI implementation requires decorating all Use Cases with @injectable()
- * and using @inject() on constructor parameters for repository interfaces.
- *
- * Current state: Container exists as placeholder. API routes manually instantiate
- * repositories until Use Cases are properly decorated.
- *
- * When ready to enable DI:
- * 1. Add @injectable() to all Use Case classes
- * 2. Add @inject(REPOSITORY_TOKENS.Booking) to constructor parameters
- * 3. Register all repository implementations below
- * 4. Change API routes to: container.resolve(CreateBookingUseCase)
+ * Registers all service implementations for the application.
+ * Use Cases and API routes can resolve dependencies from this container.
  */
+
+// Service tokens for DI
+export const TOKENS = {
+  EmailService: Symbol.for('IEmailService'),
+  AuditService: Symbol.for('IAuditService'),
+} as const;
+
+/**
+ * Register service implementations
+ * These are registered lazily to avoid circular dependencies
+ */
+export function registerServices(): void {
+  // Register EmailService
+  container.register<IEmailService>(TOKENS.EmailService, {
+    useFactory: () => {
+      const { EmailService } = require('@/infrastructure/email/email.service');
+      return new EmailService();
+    },
+  });
+
+  // Register AuditService
+  container.register<IAuditService>(TOKENS.AuditService, {
+    useFactory: () => {
+      const { AuditServiceImpl } = require('@/infrastructure/audit/audit.service');
+      return new AuditServiceImpl();
+    },
+  });
+}
+
+// Auto-register services on import
+registerServices();
+
 export { container };

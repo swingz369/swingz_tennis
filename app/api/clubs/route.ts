@@ -5,94 +5,71 @@ import { ValidationService } from '@/domain/services/validation.service';
 import { createClubSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { AuditService } from '@/infrastructure/audit/audit.service';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 const clubRepo = new DrizzleClubRepository();
 
-// Helper: Check for demo mode cookie
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
-// GET /api/clubs – Liste aller Vereine
 export async function GET(req: NextRequest) {
-  // Demo mode: return mock club
-  if (isDemoMode(req)) {
-    return NextResponse.json([
-      {
-        id: 'demo-club',
-        name: 'Demo Tennis Club',
-        status: 'active',
-        memberCount: 0,
-        maxMembers: 100,
-      },
-    ]);
-  }
+  return withApiAuth(req, async (auth) => {
+    const hasRole = await verifyRole(auth, 'member');
+    if (!hasRole) {
+      return forbiddenResponse('Member access required');
+    }
 
-  try {
-    const clubs = await clubRepo.findAll();
-    return NextResponse.json(
-      clubs.map((c) => ({
-        id: c.getId().getValue(),
-        name: c.getName(),
-        status: c.getStatus(),
-        memberCount: c.getMemberCount(),
-        maxMembers: c.getMaxMembers(),
-      }))
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error listing clubs:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    if (rateLimitError) return rateLimitError;
 
-// POST /api/clubs – Verein erstellen
-export async function POST(req: NextRequest) {
-  // Demo mode: return created mock club
-  if (isDemoMode(req)) {
-    const body = await req.json();
-    return NextResponse.json(
-      {
-        clubId: 'demo-club-' + Date.now(),
-        name: body.name || 'Demo Club',
-      },
-      { status: 201 }
-    );
-  }
-
-  return withValidation(createClubSchema, async (input) => {
     try {
-      // Additional validation using domain service (provides detailed error messages)
-      ValidationService.validateClubCreation(input.name, input.maxMembers, input.openingHours);
-
-      const supabase = await createClient();
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (!user || authError) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      const club = ClubEntity.create(input.name, input.maxMembers, input.openingHours);
-      await clubRepo.save(club);
-
-      // Audit log
-      await AuditService.logClubCreated(user.id, club.getId().getValue(), input.name);
-
+      const clubs = await clubRepo.findAll();
       return NextResponse.json(
-        {
-          clubId: club.getId().getValue(),
-          name: club.getName(),
-        },
-        { status: 201 }
+        clubs.map((c) => ({
+          id: c.getId().getValue(),
+          name: c.getName(),
+          status: c.getStatus(),
+          memberCount: c.getMemberCount(),
+          maxMembers: c.getMaxMembers(),
+        }))
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error creating club:', error);
-      return NextResponse.json({ error: message }, { status: 400 });
+      console.error('Error listing clubs:', error);
+      return NextResponse.json({ error: message }, { status: 500 });
     }
-  })(req);
+  });
+}
+
+export async function POST(req: NextRequest) {
+  return withApiAuth(req, async (auth) => {
+    const hasRole = await verifyRole(auth, 'admin');
+    if (!hasRole) {
+      return forbiddenResponse('Admin access required');
+    }
+
+    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    if (rateLimitError) return rateLimitError;
+
+    return withValidation(createClubSchema, async (input) => {
+      try {
+        ValidationService.validateClubCreation(input.name, input.maxMembers, input.openingHours);
+
+        const club = ClubEntity.create(input.name, input.maxMembers, input.openingHours);
+        await clubRepo.save(club);
+
+        await AuditService.logClubCreated(auth.user.id, club.getId().getValue(), input.name);
+
+        return NextResponse.json(
+          {
+            clubId: club.getId().getValue(),
+            name: club.getName(),
+          },
+          { status: 201 }
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error creating club:', error);
+        return NextResponse.json({ error: message }, { status: 400 });
+      }
+    })(req);
+  });
 }

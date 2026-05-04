@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { format, startOfMonth, endOfMonth, isSameDay, isWithinInterval } from 'date-fns';
+import { useState } from 'react';
+import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,9 @@ import {
   BookOpen,
   Target,
   ArrowRight,
+  ChevronRight,
 } from 'lucide-react';
-import { useUserClub, useUserMember } from '@/hooks/use-user-data';
+import { useUserClub } from '@/hooks/use-user-data';
 import { useSessions } from '@/hooks/use-sessions';
 import { useRouter } from 'next/navigation';
 
@@ -30,13 +31,11 @@ interface DashboardStats {
 
 export default function MemberDashboard() {
   const router = useRouter();
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth] = useState(new Date());
 
   const { data: clubData } = useUserClub();
-  const { data: memberData } = useUserMember();
 
   const clubId = clubData?.clubId ?? null;
-  const memberId = memberData?.memberId ?? null;
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
@@ -63,9 +62,8 @@ export default function MemberDashboard() {
     }).length;
 
     const totalBookings = monthSessions.length;
-    const attendanceRate = totalBookings > 0
-      ? Math.round((completedSessions / totalBookings) * 100)
-      : 0;
+    const attendanceRate =
+      totalBookings > 0 ? Math.round((completedSessions / totalBookings) * 100) : 0;
 
     return {
       totalBookings,
@@ -121,107 +119,100 @@ export default function MemberDashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-brand-primary mb-2">
-          Willkommen zurück!
-        </h1>
-        <p className="text-gray-600">
-          Hier ist dein Überblick für {format(currentMonth, 'MMMM yyyy', { locale: de })}
-        </p>
+    <div className="p-4 md:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            Willkommen zurück!
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Dein Überblick für {format(currentMonth, 'MMMM yyyy', { locale: de })}
+          </p>
+        </div>
+        <Button variant="accent" onClick={() => router.push('/bookings')}>
+          Neue Buchung
+          <ChevronRight className="ml-1 h-4 w-4" />
+        </Button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Gesamt Buchungen
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-brand-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBookings}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              diesen Monat
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Kommende Sessions
-            </CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.upcomingSessions}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              geplant
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Abgeschlossen
-            </CardTitle>
-            <Trophy className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completedSessions}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Trainings
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Anwesenheitsrate
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
-            <p className="text-xs text-gray-500 mt-1">
-              dieses Monat
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Next Session Card */}
-      {nextSession && (
-        <Card className="bg-gradient-to-r from-brand-primary/10 to-blue-50 border-brand-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-brand-primary" />
-              Nächste Session
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-semibold text-lg">
-                  {format(new Date(nextSession.week), 'EEEE, dd. MMMM', { locale: de })}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          {
+            label: 'Gesamt Buchungen',
+            value: stats.totalBookings,
+            icon: Calendar,
+            color: 'from-[#40916C] to-[#1B4332]',
+            sublabel: 'diesen Monat',
+          },
+          {
+            label: 'Kommende Sessions',
+            value: stats.upcomingSessions,
+            icon: Clock,
+            color: 'from-[#3b82f6] to-[#1e3a5f]',
+            sublabel: 'geplant',
+          },
+          {
+            label: 'Abgeschlossen',
+            value: stats.completedSessions,
+            icon: Trophy,
+            color: 'from-[#22c55e] to-[#15803d]',
+            sublabel: 'Trainings',
+          },
+          {
+            label: 'Anwesenheitsrate',
+            value: `${stats.attendanceRate}%`,
+            icon: TrendingUp,
+            color: 'from-[#FF6B35] to-[#ea580c]',
+            sublabel: 'dieses Monat',
+          },
+        ].map((stat, idx) => (
+          <Card key={idx} variant="default" className="group overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {stat.label}
+                  </p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                    {stat.value}
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{stat.sublabel}</p>
                 </div>
-                <div className="text-gray-600">
-                  {nextSession.startTime} - {nextSession.endTime} Uhr
-                </div>
-                <div className="text-sm text-gray-500 mt-1">
-                  mit {nextSession.trainerName || 'Trainer'}
+                <div
+                  className={`h-12 w-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                >
+                  <stat.icon className="h-6 w-6" />
                 </div>
               </div>
-              <Button
-                onClick={() => router.push('/bookings')}
-                className="gap-2"
-              >
-                Details anzeigen
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {nextSession && (
+        <Card variant="gradient" className="overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#40916C]/10 via-transparent to-[#FF6B35]/5" />
+          <CardContent className="relative p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#40916C] to-[#1B4332] flex items-center justify-center text-white shadow-lg">
+                  <Calendar className="h-7 w-7" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Nächste Session
+                  </p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                    {format(new Date(nextSession.week), 'EEEE, dd. MMMM', { locale: de })}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {nextSession.startTime} - {nextSession.endTime} Uhr mit{' '}
+                    {nextSession.trainerName || 'Trainer'}
+                  </p>
+                </div>
+              </div>
+              <Button onClick={() => router.push('/bookings')} className="gap-2">
+                Details
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
@@ -229,99 +220,67 @@ export default function MemberDashboard() {
         </Card>
       )}
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Schnellaktionen</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => router.push('/bookings')}
-            >
-              <Calendar className="h-6 w-6" />
-              <span className="font-medium">Buchungen verwalten</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => router.push('/courts')}
-            >
-              <BookOpen className="h-6 w-6" />
-              <span className="font-medium">Platzkalender</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => router.push('/billing')}
-            >
-              <CreditCard className="h-6 w-6" />
-              <span className="font-medium">Rechnungen</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => router.push('/profile')}
-            >
-              <User className="h-6 w-6" />
-              <span className="font-medium">Profil bearbeiten</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => router.push('/notifications')}
-            >
-              <Bell className="h-6 w-6" />
-              <span className="font-medium">Benachrichtigungen</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              onClick={() => router.push('/progress')}
-            >
-              <Target className="h-6 w-6" />
-              <span className="font-medium">Fortschritt</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      {recentActivity.length > 0 && (
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card variant="default" className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Kürzliche Aktivität</CardTitle>
+            <CardTitle>Schnellaktionen</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {recentActivity.map((session) => (
-                <div
-                  key={session.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[
+                { icon: Calendar, label: 'Buchungen', href: '/bookings' },
+                { icon: BookOpen, label: 'Platzkalender', href: '/courts' },
+                { icon: CreditCard, label: 'Rechnungen', href: '/billing' },
+                { icon: User, label: 'Profil', href: '/profile' },
+                { icon: Bell, label: 'Benachrichtigungen', href: '/notifications' },
+                { icon: Target, label: 'Fortschritt', href: '/progress' },
+              ].map((action, idx) => (
+                <Button
+                  key={idx}
+                  variant="outline"
+                  className="h-auto py-6 flex flex-col items-center gap-3 rounded-xl hover:border-[#40916C] hover:text-[#40916C]"
+                  onClick={() => router.push(action.href)}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-brand-primary/10 rounded-lg">
-                      <Calendar className="h-4 w-4 text-brand-primary" />
-                    </div>
-                    <div>
-                      <div className="font-medium">
-                        {format(new Date(session.week), 'dd. MMMM', { locale: de })}
+                  <action.icon className="h-6 w-6" />
+                  <span className="font-medium">{action.label}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {recentActivity.length > 0 && (
+          <Card variant="default">
+            <CardHeader>
+              <CardTitle>Kürzliche Aktivität</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentActivity.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-[#40916C]/20 to-[#1B4332]/20 rounded-lg">
+                        <Calendar className="h-4 w-4 text-[#40916C]" />
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {session.startTime} - {session.endTime} mit {session.trainerName || 'Trainer'}
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {format(new Date(session.week), 'dd. MMMM', { locale: de })}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {session.startTime} - {session.endTime}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="text-right">
                     <div
-                      className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
                         session.bookingStatus === 'completed'
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-[#dcfce7] text-[#15803d] dark:bg-[#15803d]/20 dark:text-[#4ade80]'
                           : session.bookingStatus === 'cancelled'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-700'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
                       }`}
                     >
                       {session.bookingStatus === 'completed'
@@ -331,12 +290,12 @@ export default function MemberDashboard() {
                           : 'Ausstehend'}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

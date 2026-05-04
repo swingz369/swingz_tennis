@@ -1,39 +1,34 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-export async function GET() {
-  try {
-    // Demo mode early return
-    const cookieStore = await cookies();
-    const hasDemoMode = cookieStore.get('demo-mode');
-    if (hasDemoMode) {
-      return NextResponse.json({
-        memberId: 'demo-member',
-        email: 'demo@swingz.com',
-        name: 'Demo User',
-      });
-    }
-
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (!user || authError) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Return member details (Supabase user ID is the member ID)
+export async function GET(_req: NextRequest) {
+  const cookieStore = await cookies();
+  const hasDemoMode = cookieStore.get('demo-mode');
+  if (hasDemoMode) {
     return NextResponse.json({
-      memberId: user.id,
-      email: user.email,
-      name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Member',
+      memberId: 'demo-member',
+      email: 'demo@swingz.com',
+      name: 'Demo User',
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    console.error('Error fetching member:', error);
-    return NextResponse.json({ error: message || 'Internal server error' }, { status: 500 });
   }
+
+  return withApiAuth(_req, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'member');
+    if (!hasPermission) {
+      return forbiddenResponse('Member access required');
+    }
+
+    const rateLimitError = await checkRateLimitOrFail(_req, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
+    return NextResponse.json({
+      memberId: auth.user.id,
+      email: auth.user.email,
+      name: auth.user.user_metadata?.full_name || auth.user.email?.split('@')[0] || 'Member',
+    });
+  });
 }
