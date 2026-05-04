@@ -13,7 +13,6 @@ import {
   CheckCircle,
   XCircle,
   Plus,
-  Edit,
   Download,
   Calendar,
   Users,
@@ -395,16 +394,16 @@ export default function HoursLogManagement() {
                       </div>
 
                       <div className="flex gap-2 pt-2 border-t">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditForm(record);
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Bearbeiten
-                        </Button>
+                        <span className="text-xs text-gray-500">
+                          Status:{' '}
+                          {record.status === 'present'
+                            ? 'Anwesend'
+                            : record.status === 'absent'
+                              ? 'Abwesend'
+                              : record.status === 'late'
+                                ? 'Verspätet'
+                                : 'Entschuldigt'}
+                        </span>
                       </div>
                     </div>
                   </CardContent>

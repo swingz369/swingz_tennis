@@ -123,7 +123,7 @@ export default function MonthlyBillingOverview() {
 
   const handleMarkAsPaid = async (_id: string) => {
     try {
-      const response = await fetch(`/api/billing/trainers/${id}/pay`, {
+      const response = await fetch(`/api/billing/trainers/${_id}/pay`, {
         method: 'POST',
       });
 
@@ -132,7 +132,7 @@ export default function MonthlyBillingOverview() {
       }
 
       const data = await response.json();
-      setTrainerBillings(trainerBillings.map((b) => (b.id === id ? data.trainerBilling : b)));
+      setTrainerBillings(trainerBillings.map((b) => (b.id === _id ? data.trainerBilling : b)));
       toast.success('Abrechnung als bezahlt markiert');
     } catch (error) {
       toast.error('Fehler beim Markieren als bezahlt');
@@ -142,7 +142,7 @@ export default function MonthlyBillingOverview() {
 
   const handleMarkAsOverdue = async (_id: string) => {
     try {
-      const response = await fetch(`/api/billing/trainers/${id}/overdue`, {
+      const response = await fetch(`/api/billing/trainers/${_id}/overdue`, {
         method: 'POST',
       });
 
@@ -151,7 +151,7 @@ export default function MonthlyBillingOverview() {
       }
 
       const data = await response.json();
-      setTrainerBillings(trainerBillings.map((b) => (b.id === id ? data.trainerBilling : b)));
+      setTrainerBillings(trainerBillings.map((b) => (b.id === _id ? data.trainerBilling : b)));
       toast.success('Abrechnung als überfällig markiert');
     } catch (error) {
       toast.error('Fehler beim Markieren als überfällig');

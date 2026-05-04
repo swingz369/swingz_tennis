@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import {
   Settings,
   Plus,
-  Edit,
   XCircle,
   Download,
   Shield,
@@ -423,17 +422,6 @@ export default function SystemSettingsManagement() {
                   </div>
 
                   <div className="flex gap-2 pt-2 border-t">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditForm(setting);
-                        setIsEditing(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Bearbeiten
-                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
