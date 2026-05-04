@@ -10,13 +10,15 @@ const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-sans',
   weight: ['400', '500', '600', '700'],
-  display: 'swap', // Avoid FOIT/FOUT
+  display: 'swap',
+  preload: false, // Avoid preload warnings for fonts not used immediately
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   display: 'swap',
+  preload: false,
 });
 
 export const metadata: Metadata = {
