@@ -1,77 +1,114 @@
 /**
- * API Authentication Middleware
- * Provides authentication and authorization for API routes
+ * API Authentication Middleware for Supabase SSR
+ * Uses Supabase's built-in session handling via cookies
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
-export interface AuthenticatedRequest extends NextRequest {
+export interface AuthContext {
   user: User;
-  clubId: string;
-}
-
-export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
-
-export interface AuthResult {
-  user: User;
-  clubId: string;
+  session: Session;
   supabase: ReturnType<typeof createServerClient>;
-  role?: UserRole;
-  memberships?: Array<{ club_id: string; role: string }>;
+  clubId: string;
+  role: 'superadmin' | 'admin' | 'trainer' | 'member';
+  memberships: Array<{ club_id: string; role: string }>;
 }
 
 /**
- * Validates the authentication token and returns the authenticated user
- * This is specifically designed for API routes and does NOT support demo mode
- *
- * @throws {Error} Returns 401 response if authentication fails
+ * Get authenticated user from Supabase session
+ * Supports both Cookie-based (SSR) and Bearer Token (API clients)
+ * Throws error if authentication fails
  */
-export async function requireApiAuth(request: NextRequest): Promise<AuthResult> {
+export async function requireAuth(request: NextRequest): Promise<AuthContext> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase credentials not configured');
   }
 
-  // Extract auth token from Authorization header
-  const authHeader = request.headers.get('authorization');
-  const token = authHeader?.replace('Bearer ', '');
-
-  if (!token) {
-    throw new Error('No authorization token provided');
-  }
-
-  // Create supabase client with request cookies
+  // Strategy 1: Try cookie-based session (SSR, same-site)
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
-      getAll() {
-        const cookies: Array<{ name: string; value: string }> = [];
-        request.cookies.getAll().forEach((cookie) => {
-          cookies.push({ name: cookie.name, value: cookie.value });
-        });
-        return cookies;
+      get(name: string) {
+        return request.cookies.get(name)?.value;
       },
-      setAll() {
-        // No-op for API routes - we don't set cookies in API responses
-      },
+      set() {},
+      remove() {},
     },
   });
 
-  // Verify the token and get user
   const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(token);
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-  if (error || !user) {
-    throw new Error('Invalid or expired authentication token');
+  if (session && session.user) {
+    // Cookie-based session found
+    return await buildAuthContext(supabase, session.user);
   }
 
-  // Get the user's club memberships (all active memberships)
+  // Strategy 2: Try Bearer token from Authorization header (API clients, dev tools)
+  const authHeader = request.headers.get('authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+  if (bearerToken && supabaseServiceKey) {
+    // Validate token using admin API (service role)
+    const adminSupabase = createServerClient(supabaseUrl, supabaseServiceKey, {
+      cookies: { get: () => null, set: () => {}, remove: () => {} },
+    });
+
+    try {
+      const {
+        data: { user },
+        error: tokenError,
+      } = await adminSupabase.auth.getUser(bearerToken);
+      if (!tokenError && user) {
+        // Create a new client for this user (anon key) for subsequent DB calls
+        const userSupabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+          cookies: { get: () => null, set: () => {}, remove: () => {} },
+        });
+        // Set the session manually
+        await userSupabase.auth.setSession({ access_token: bearerToken, refresh_token: '' });
+        return await buildAuthContext(userSupabase, user);
+      }
+    } catch (e) {
+      console.log('Bearer token validation failed:', e);
+    }
+  }
+
+  // Strategy 3: Check for demo mode cookie
+  const hasDemoMode = request.cookies.get('demo-mode');
+  if (hasDemoMode) {
+    // Return mock auth for development
+    return {
+      user: {
+        id: 'demo-user',
+        email: 'demo@swingz.com',
+        user_metadata: { full_name: 'Demo User' },
+      } as any,
+      session: { access_token: 'demo', refresh_token: '' } as any,
+      supabase: {} as any,
+      clubId: 'demo-club',
+      role: 'member' as const,
+      memberships: [{ club_id: 'demo-club', role: 'member' }],
+    };
+  }
+
+  throw new Error('No valid session found. Please log in.');
+}
+
+/**
+ * Helper: Build AuthContext from user
+ */
+async function buildAuthContext(
+  supabase: ReturnType<typeof createServerClient>,
+  user: any
+): Promise<AuthContext> {
   const { data: memberships, error: membershipsError } = await supabase
     .from('user_club_memberships')
     .select('club_id, role')
@@ -79,15 +116,14 @@ export async function requireApiAuth(request: NextRequest): Promise<AuthResult> 
     .eq('is_active', true);
 
   if (membershipsError) {
-    throw new Error('Failed to fetch user memberships');
+    console.error('Failed to fetch memberships:', membershipsError);
+    throw new Error('Failed to fetch user permissions');
   }
 
-  // If no memberships found, user has no access
   if (!memberships || memberships.length === 0) {
-    throw new Error('User does not have an active club membership');
+    throw new Error('User has no active club membership');
   }
 
-  // Determine highest role across all memberships
   const roleHierarchy: Record<string, number> = {
     superadmin: 4,
     admin: 3,
@@ -95,117 +131,118 @@ export async function requireApiAuth(request: NextRequest): Promise<AuthResult> 
     member: 1,
   };
 
-  let highestRole = memberships[0].role;
+  let highestRole = memberships[0].role as 'superadmin' | 'admin' | 'trainer' | 'member';
   for (const m of memberships) {
     if (roleHierarchy[m.role] > roleHierarchy[highestRole]) {
-      highestRole = m.role;
+      highestRole = m.role as 'superadmin' | 'admin' | 'trainer' | 'member';
     }
   }
 
-  // Use the first club's context; superadmin will have full access via RLS
   const clubId = memberships[0].club_id;
 
   return {
     user,
-    clubId,
+    session: { access_token: '', refresh_token: '' } as any, // Not needed for auth context
     supabase,
-    role: highestRole as UserRole,
+    clubId,
+    role: highestRole,
     memberships,
   };
 }
 
+// Alias for backward compatibility
+export const getAuthContext = requireAuth;
+
 /**
- * Helper function to create an unauthorized response
+ * Authorization check: verify user has required role
+ */
+export async function verifyRole(
+  auth: AuthContext,
+  requiredRole: 'superadmin' | 'admin' | 'trainer' | 'member'
+): Promise<boolean> {
+  const roleHierarchy: Record<string, number> = {
+    superadmin: 4,
+    admin: 3,
+    trainer: 2,
+    member: 1,
+  };
+  return roleHierarchy[auth.role] >= roleHierarchy[requiredRole];
+}
+
+/**
+ * Verify user has access to specific club
+ * Superadmin has access to all clubs automatically
+ */
+export function verifyClubAccess(auth: AuthContext, requestedClubId: string): boolean {
+  if (auth.role === 'superadmin') return true;
+  return auth.clubId === requestedClubId;
+}
+
+/**
+ * Check if user is superadmin
+ */
+export function isSuperadmin(auth: AuthContext): boolean {
+  return auth.role === 'superadmin';
+}
+
+/**
+ * Check if user is admin or superadmin
+ */
+export function isAdminOrAbove(auth: AuthContext): boolean {
+  return auth.role === 'superadmin' || auth.role === 'admin';
+}
+
+/**
+ * Helper to create 401 response
  */
 export function unauthorizedResponse(message: string = 'Unauthorized'): NextResponse {
   return NextResponse.json({ error: message }, { status: 401 });
 }
 
 /**
- * Helper function to create a forbidden response
+ * Helper to create 403 response
  */
 export function forbiddenResponse(message: string = 'Forbidden'): NextResponse {
   return NextResponse.json({ error: message }, { status: 403 });
 }
 
 /**
- * Middleware wrapper that handles authentication errors
- * Usage:
- *
- * export async function GET(request: NextRequest) {
- *   return withApiAuth(request, async ({ user, clubId, supabase }) => {
- *     // Your authenticated logic here
- *     return NextResponse.json({ data: 'success' });
- *   });
- * }
+ * Wrapper for API routes with auth
  */
-export async function withApiAuth(
+export async function withAuth(
   request: NextRequest,
-  handler: (auth: AuthResult) => Promise<NextResponse>
+  handler: (auth: AuthContext) => Promise<NextResponse>
 ): Promise<NextResponse> {
   try {
-    const auth = await requireApiAuth(request);
+    const auth = await requireAuth(request);
     return await handler(auth);
   } catch (error) {
+    if (error instanceof NextResponse) {
+      return error;
+    }
     const message = error instanceof Error ? error.message : 'Authentication failed';
     return unauthorizedResponse(message);
   }
 }
 
-/**
- * Authorization check: Verify user has access to a specific club
- */
-export function verifyClubAccess(auth: AuthResult, requestedClubId: string): boolean {
-  return auth.clubId === requestedClubId;
-}
+// ==========================================
+// BACKWARD COMPATIBILITY (deprecated)
+// Use `withAuth` or `requireAuth` in new code
+// ==========================================
 
 /**
- * Authorization check: Verify user has a specific role (uses cached role from requireApiAuth)
+ * @deprecated Use `withAuth` instead
  */
-export async function verifyRole(
-  auth: AuthResult,
-  requiredRole: 'superadmin' | 'admin' | 'trainer' | 'member'
-): Promise<boolean> {
-  // If auth.role is already set from requireApiAuth, use hierarchy check directly (no DB query)
-  if (auth.role) {
-    const roleHierarchy: Record<UserRole, number> = {
-      superadmin: 4,
-      admin: 3,
-      trainer: 2,
-      member: 1,
-    };
-    return roleHierarchy[auth.role] >= roleHierarchy[requiredRole];
-  }
-
-  // Fallback: query DB if role not set (should not happen with standard requireApiAuth)
-  const { data: membership } = await auth.supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', auth.user.id)
-    .eq('club_id', auth.clubId)
-    .single();
-
-  if (!membership) {
-    return false;
-  }
-
-  const userRole = membership.role as UserRole;
-  auth.role = userRole;
-
-  const roleHierarchy: Record<UserRole, number> = {
-    superadmin: 4,
-    admin: 3,
-    trainer: 2,
-    member: 1,
-  };
-
-  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+export async function withApiAuth(
+  request: NextRequest,
+  handler: (auth: AuthContext) => Promise<NextResponse>
+): Promise<NextResponse> {
+  return withAuth(request, handler);
 }
 
-export function isSuperadmin(auth: AuthResult): boolean {
-  return auth.role === 'superadmin';
-}
-
-export function isAdminOrAbove(auth: AuthResult): boolean {
-  return auth.role === 'superadmin' || auth.role === 'admin';
+/**
+ * @deprecated Use `requireAuth` instead
+ */
+export async function requireApiAuth(request: NextRequest): Promise<AuthContext> {
+  return requireAuth(request);
 }
