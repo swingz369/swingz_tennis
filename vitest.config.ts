@@ -3,7 +3,24 @@ import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // Apply to all TS/TSX files (not just those with JSX)
+      include: /\.(ts|tsx|js|jsx)$/,
+      swcOptions: {
+        jsc: {
+          transform: {
+            decoratorMetadata: true,
+          },
+          parser: {
+            decorators: true,
+            syntax: 'typescript',
+            tsx: true,
+          },
+        },
+      },
+    }),
+  ],
   test: {
     environment: 'jsdom',
     globals: true,

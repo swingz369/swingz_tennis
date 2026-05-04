@@ -19,6 +19,7 @@ export default function ClubsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [newClub, setNewClub] = useState({ name: '', maxMembers: 500, openingHours: {} });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClubs();
@@ -27,6 +28,9 @@ export default function ClubsAdminPage() {
   const fetchClubs = async () => {
     try {
       const res = await fetch('/api/clubs');
+      if (!res.ok) {
+        throw new Error(`Failed to fetch clubs: ${res.status}`);
+      }
       const data = await res.json();
       setClubs(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -48,6 +52,7 @@ export default function ClubsAdminPage() {
 
   const handleCreateClub = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     try {
       const res = await fetch('/api/clubs', {
         method: 'POST',
@@ -69,9 +74,14 @@ export default function ClubsAdminPage() {
         setShowDialog(false);
         setNewClub({ name: '', maxMembers: 500, openingHours: {} });
         fetchClubs();
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Fehler ${res.status}: ${res.statusText}`;
+        setError(errorMessage);
       }
     } catch (err) {
       console.error('Failed to create club:', err);
+      setError('Netzwerkfehler. Bitte versuchen Sie es erneut.');
     }
   };
 
@@ -91,6 +101,11 @@ export default function ClubsAdminPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateClub} className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
               <div>
                 <Label htmlFor="name">Name</Label>
                 <Input

@@ -45,9 +45,9 @@ export class BillingEngine {
     return this.paymentService.generatePaymentNumber(clubId);
   }
 
-  async createInvoice(data: CreateInvoice): Promise<Invoice> {
-    return this.invoiceService.createInvoice(data);
-  }
+   async createInvoice(data: CreateInvoice): Promise<InvoiceWithItems> {
+     return this.invoiceService.createInvoice(data);
+   }
 
   async getInvoiceById(invoiceId: string): Promise<InvoiceWithItems | null> {
     return this.invoiceService.getInvoiceById(invoiceId);

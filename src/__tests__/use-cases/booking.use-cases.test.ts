@@ -8,6 +8,8 @@ import {
 describe('CreateBookingUseCase', () => {
   let mockBookingRepo: any;
   let mockScheduleRepo: any;
+  let mockEmailService: any;
+  let mockAuditService: any;
 
   beforeEach(() => {
     mockBookingRepo = {
@@ -15,6 +17,8 @@ describe('CreateBookingUseCase', () => {
       existsByMemberAndSession: vi.fn().mockResolvedValue(false),
     };
     mockScheduleRepo = { getSessionDetails: vi.fn() };
+    mockEmailService = { sendBookingConfirmation: vi.fn() };
+    mockAuditService = { log: vi.fn() };
   });
 
   it('should create booking successfully', async () => {
@@ -25,7 +29,12 @@ describe('CreateBookingUseCase', () => {
       maxParticipants: 10,
     });
 
-    const useCase = new CreateBookingUseCase(mockBookingRepo, mockScheduleRepo);
+    const useCase = new CreateBookingUseCase(
+      mockBookingRepo,
+      mockScheduleRepo,
+      mockEmailService,
+      mockAuditService
+    );
     const result = await useCase.execute({
       memberId: 'member-123',
       sessionId: 'session-456',
@@ -38,7 +47,12 @@ describe('CreateBookingUseCase', () => {
 
   it('should fail if session not found', async () => {
     mockScheduleRepo.getSessionDetails.mockResolvedValue(null);
-    const useCase = new CreateBookingUseCase(mockBookingRepo, mockScheduleRepo);
+    const useCase = new CreateBookingUseCase(
+      mockBookingRepo,
+      mockScheduleRepo,
+      mockEmailService,
+      mockAuditService
+    );
     await expect(
       useCase.execute({
         memberId: 'member-123',
@@ -51,6 +65,7 @@ describe('CreateBookingUseCase', () => {
 describe('CancelBookingUseCase', () => {
   let mockBookingRepo: any;
   let mockBooking: any;
+  let mockAuditService: any;
 
   beforeEach(() => {
     mockBookingRepo = { findById: vi.fn(), save: vi.fn() };
@@ -60,21 +75,23 @@ describe('CancelBookingUseCase', () => {
       getMemberId: () => ({ getValue: () => 'member-123' }),
     };
     mockBookingRepo.findById.mockResolvedValue(mockBooking);
+    mockAuditService = { log: vi.fn() };
   });
 
   it('should cancel booking', async () => {
-    const useCase = new CancelBookingUseCase(mockBookingRepo);
+    const useCase = new CancelBookingUseCase(mockBookingRepo, mockAuditService);
     const result = await useCase.execute({
       bookingId: 'bk-123',
       reason: 'member_request',
     });
     expect(result.success).toBe(true);
     expect(mockBooking.cancel).toHaveBeenCalledWith('member_request', undefined);
+    expect(mockAuditService.log).toHaveBeenCalled();
   });
 
   it('should fail if booking not found', async () => {
     mockBookingRepo.findById.mockResolvedValue(null);
-    const useCase = new CancelBookingUseCase(mockBookingRepo);
+    const useCase = new CancelBookingUseCase(mockBookingRepo, mockAuditService);
     await expect(
       useCase.execute({
         bookingId: 'bk-999',
