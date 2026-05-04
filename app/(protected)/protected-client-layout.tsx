@@ -27,6 +27,7 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
       <div className="flex flex-1 relative">
         <Sidebar
           roles={user.roles ?? []}
+          selectedClubId={user.selectedClubId ?? null}
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />

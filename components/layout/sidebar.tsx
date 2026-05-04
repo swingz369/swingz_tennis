@@ -25,16 +25,21 @@ export function Sidebar({
   roles,
   open,
   onClose,
+  selectedClubId,
 }: {
   roles?: string[];
   open?: boolean;
   onClose?: () => void;
+  selectedClubId?: string | null;
 }) {
   const pathname = usePathname();
 
   const isAdmin = roles?.some((r) => r === 'admin' || r === 'superadmin');
   const isSuperAdmin = roles?.includes('superadmin');
   const isTrainer = roles?.includes('trainer') || isAdmin;
+
+  // Superadmin sees "Vereinsübersicht" only when no club is selected
+  const showTenantLink = isSuperAdmin && !selectedClubId;
 
   const mainNav = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -45,8 +50,7 @@ export function Sidebar({
     { name: 'Plätze', href: '/courts', icon: MapPin },
     ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),
     { name: 'Abo & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin },
-    // Superadmin sees Tenant Management instead of normal admin menu
-    ...(isSuperAdmin
+    ...(showTenantLink
       ? [{ name: 'Vereinsübersicht', href: '/admin/tenants', icon: Building2 }]
       : []),
   ];

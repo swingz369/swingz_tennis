@@ -99,7 +99,7 @@ export default function SuperadminTenantsPage() {
     document.cookie = `selected-club-id=${clubId}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
 
     toast.success(`Gewechselt zu: ${clubName}`);
-    router.push('/admin/dashboard');
+    router.push('/admin/members');
   };
 
   if (loading) {
