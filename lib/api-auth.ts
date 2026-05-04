@@ -99,11 +99,13 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
   });
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (session?.user) {
-    return await buildAuthContext(supabase, session.user, request);
+  if (error || !user) {
+    console.error('Auth error in requireAuth:', error);
+    throw new Error('No valid session found. Please log in.');
   }
 
   // Bearer token fallback

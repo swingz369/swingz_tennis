@@ -21,10 +21,20 @@ async function getCookieHandler(): Promise<CookieHandler> {
       return cookieStore.get(name)?.value;
     },
     set(name: string, value: string, options: any = {}) {
-      (cookieStore as any).set(name, value, options);
+      try {
+        cookieStore.set(name, value, options);
+      } catch {
+        // Silently ignore errors when trying to set cookies in a read-only context
+        // This can happen in Server Components where cookies are read-only.
+        // In Route Handlers/Server Actions, this will succeed.
+      }
     },
     remove(name: string, options: any = {}) {
-      (cookieStore as any).delete(name, options);
+      try {
+        cookieStore.delete(name, options);
+      } catch {
+        // Silently ignore errors when trying to delete cookies in a read-only context
+      }
     },
   };
 
