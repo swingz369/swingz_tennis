@@ -19,9 +19,10 @@ export async function POST(request: NextRequest) {
       async () => {
         return withApiAuth(request, async (auth) => {
           try {
-            // Only admin and trainers can create members
-            const hasPermission = await verifyRole(auth, 'trainer');
-            if (!hasPermission) {
+            // Admin and trainers can create members
+            const isAdmin = await verifyRole(auth, 'admin');
+            const isTrainer = await verifyRole(auth, 'trainer');
+            if (!isAdmin && !isTrainer) {
               return forbiddenResponse('Insufficient permissions to create members');
             }
 

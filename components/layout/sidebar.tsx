@@ -49,13 +49,13 @@ export function Sidebar({
   const adminNav = [
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, showIf: isAdmin },
     { name: 'Onboarding', href: '/admin/onboarding', icon: HelpCircle, showIf: isAdmin },
-    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isSuperAdmin },
+    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin }, // Changed: isAdmin instead of isSuperAdmin
     { name: 'Mitglieder', href: '/admin/members', icon: Users, showIf: isAdmin },
     { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },
     { name: 'Plätze', href: '/admin/courts', icon: MapPin, showIf: isAdmin },
     { name: 'Genehmigungen', href: '/admin/approvals', icon: CheckCircle, showIf: isAdmin },
     { name: 'Einstellungen', href: '/admin/settings', icon: Settings, showIf: isAdmin },
-    { name: 'Billing Admin', href: '/admin/billing', icon: CreditCard, showIf: isSuperAdmin },
+    { name: 'Billing Admin', href: '/admin/billing', icon: CreditCard, showIf: isAdmin }, // Changed: isAdmin instead of isSuperAdmin
   ].filter((item) => item.showIf);
 
   return (
