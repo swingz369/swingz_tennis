@@ -106,9 +106,27 @@ export default async function AnalyticsPage() {
         } satisfies AnalyticsData;
       } catch (err) {
         console.error('Analytics fetch error:', err);
-        analyticsData = null;
+        return (
+          <div className="p-6">
+            <div className="text-center py-12 text-gray-500">
+              Fehler beim Laden der Vereinsstatistiken. Bitte versuchen Sie es später erneut oder
+              kontaktieren Sie den Support.
+            </div>
+          </div>
+        );
       }
     }
+  }
+
+  if (!analyticsData) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12 text-gray-500">
+          Sie sind keiner Vereins zugeordnet. Bitte wenden Sie sich an den Superadmin, um einem
+          Verein zugewiesen zu werden.
+        </div>
+      </div>
+    );
   }
 
   return <AnalyticsClient data={analyticsData} />;

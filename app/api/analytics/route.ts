@@ -47,7 +47,9 @@ const DEMO_ANALYTICS = {
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     // Only trainers and admins can view analytics
-    const hasPermission = await verifyRole(auth, 'trainer');
+    const isTrainer = await verifyRole(auth, 'trainer');
+    const isAdmin = await verifyRole(auth, 'admin');
+    const hasPermission = isTrainer || isAdmin;
     if (!hasPermission) {
       return forbiddenResponse('Trainer or admin access required');
     }
