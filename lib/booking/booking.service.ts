@@ -1,5 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import { Booking, CreateBooking, BookingStatus, BookingConflict } from '../types/court-booking';
+import type {
+  Booking,
+  CreateBooking,
+  BookingStatus,
+  BookingConflict,
+} from '../types/court-booking';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { OptimizeScheduleUseCase } from '@/application/use-cases/schedule.use-cases';
 import { SchedulingService } from '@/domain/services/scheduling.service';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';

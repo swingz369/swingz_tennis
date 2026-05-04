@@ -1,4 +1,4 @@
-import {
+import type {
   SystemSettings,
   CreateSystemSettingsInput,
   UpdateSystemSettingsInput,
@@ -17,7 +17,10 @@ export class SystemSettingsService {
   /**
    * Validate system settings input
    */
-  static validateSystemSettingsInput(input: CreateSystemSettingsInput): { valid: boolean; errors: string[] } {
+  static validateSystemSettingsInput(input: CreateSystemSettingsInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.category) {
@@ -141,7 +144,9 @@ export class SystemSettingsService {
   /**
    * Get system settings by category
    */
-  static async getSystemSettingsByCategory(category: SystemSettings['category']): Promise<SystemSettings[]> {
+  static async getSystemSettingsByCategory(
+    category: SystemSettings['category']
+  ): Promise<SystemSettings[]> {
     return this.settings.filter((s) => s.category === category);
   }
 
@@ -155,7 +160,10 @@ export class SystemSettingsService {
   /**
    * Update system setting
    */
-  static async updateSystemSetting(id: string, input: UpdateSystemSettingsInput): Promise<SystemSettings | null> {
+  static async updateSystemSetting(
+    id: string,
+    input: UpdateSystemSettingsInput
+  ): Promise<SystemSettings | null> {
     const index = this.settings.findIndex((s) => s.id === id);
     if (index === -1) {
       return null;
@@ -212,7 +220,9 @@ export class SystemSettingsService {
   /**
    * Get system settings as a key-value object
    */
-  static async getSystemSettingsAsObject(category?: SystemSettings['category']): Promise<Record<string, any>> {
+  static async getSystemSettingsAsObject(
+    category?: SystemSettings['category']
+  ): Promise<Record<string, any>> {
     let settings = this.settings;
 
     if (category) {
@@ -249,7 +259,7 @@ export class SystemSettingsService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    
+
     this.settings = [
       // General Settings
       {

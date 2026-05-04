@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { SystemSettingsService } from '@/src/application/services/system-settings.service';
-import { SystemSettings } from '@/src/domain/entities/system-settings.entity';
+import type { SystemSettings } from '@/src/domain/entities/system-settings.entity';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {

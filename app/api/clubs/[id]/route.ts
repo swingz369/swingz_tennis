@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
 import { ClubId } from '@/domain/value-objects';
 import { updateClubSchema } from '@/application/validation/schemas';

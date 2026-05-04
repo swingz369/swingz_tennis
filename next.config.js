@@ -10,7 +10,7 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 31536000, // 1 year for static images
     dangerouslyAllowSVG: true,
   },
   compress: true,
@@ -103,10 +103,18 @@ const nextConfig = {
             minChunks: 1,
           },
           analytics: {
-            test: /[\\/]node_modules[\\/](recharts|dnd-kit)[\\/]/,
+            test: /[\\/]node_modules[\\/](recharts|dnd-kit|@tanstack)[\\/]/,
             name: 'analytics',
             chunks: 'all',
             maxSize: 200 * 1024,
+            minChunks: 1,
+          },
+          // Large libraries that benefit from separate chunking
+          large: {
+            test: /[\\/]node_modules[\\/](@supabase|openai|ai|zod|date-fns|uuid)[\\/]/,
+            name: 'large-libs',
+            chunks: 'all',
+            maxSize: 300 * 1024,
             minChunks: 1,
           },
         },

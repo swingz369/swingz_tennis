@@ -2,7 +2,7 @@ import type { Schedule } from '../entities/schedule';
 import type { ScheduleId, ClubId, SessionId } from '../value-objects';
 import type { ScheduleWeek } from '../value-objects';
 import type { Session } from '../entities/schedule';
-import { TimeSlot } from '../value-objects/timeslot';
+import type { TimeSlot } from '../value-objects/timeslot';
 
 export interface ScheduleRepository {
   findById(id: ScheduleId): Promise<Schedule | null>;

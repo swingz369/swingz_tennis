@@ -1,10 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { SepaMandate, Payment, CreateSepaMandate } from '../types/billing';
-import {
-  generatePain008Xml,
-  SepaDirectDebitTransaction,
-  SepaPain008Config,
-} from '../sepa/pain008-generator';
+import type { SepaMandate, Payment, CreateSepaMandate } from '../types/billing';
+import type { SepaDirectDebitTransaction, SepaPain008Config } from '../sepa/pain008-generator';
+import { generatePain008Xml } from '../sepa/pain008-generator';
 import { InvoiceService } from './invoice.service';
 import { PaymentService } from './payment.service';
 

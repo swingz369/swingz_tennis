@@ -14,7 +14,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -38,7 +38,13 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "services/*",
@@ -48,6 +54,7 @@
     "src/__tests__/domain/aggregates",
     "src/infrastructure/persistence/repositories/event-sourced-club.repository.ts",
     "vitest.config.ts",
-    "supabase/functions/**"
+    "supabase/functions/**",
+    "scripts/*" // Exclude seed scripts from typecheck (dev only)
   ]
 }

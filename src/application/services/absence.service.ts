@@ -1,4 +1,4 @@
-import {
+import type {
   Absence,
   CreateAbsenceInput,
   UpdateAbsenceInput,
@@ -72,10 +72,7 @@ export class AbsenceService {
 
     // Get all absences for this trainer
     const existingAbsences = this.absences.filter(
-      (a) =>
-        a.trainerId === trainerId &&
-        a.id !== excludeId &&
-        a.status === 'approved'
+      (a) => a.trainerId === trainerId && a.id !== excludeId && a.status === 'approved'
     );
 
     // Check for date overlaps
@@ -110,11 +107,7 @@ export class AbsenceService {
     const s2 = new Date(start2);
     const e2 = new Date(end2);
 
-    return (
-      (s2 >= s1 && s2 <= e1) ||
-      (e2 >= s1 && e2 <= e1) ||
-      (s2 <= s1 && e2 >= e1)
-    );
+    return (s2 >= s1 && s2 <= e1) || (e2 >= s1 && e2 <= e1) || (s2 <= s1 && e2 >= e1);
   }
 
   /**
@@ -127,11 +120,7 @@ export class AbsenceService {
     }
 
     // Check for conflicts
-    const conflicts = await this.checkForConflicts(
-      input.trainerId,
-      input.startDate,
-      input.endDate
-    );
+    const conflicts = await this.checkForConflicts(input.trainerId, input.startDate, input.endDate);
 
     if (conflicts.length > 0) {
       throw new Error(`Conflicts detected: ${conflicts.map((c) => c.conflictType).join(', ')}`);
@@ -225,12 +214,7 @@ export class AbsenceService {
       const newStart = input.startDate || existing.startDate;
       const newEnd = input.endDate || existing.endDate;
 
-      const conflicts = await this.checkForConflicts(
-        existing.trainerId,
-        newStart,
-        newEnd,
-        id
-      );
+      const conflicts = await this.checkForConflicts(existing.trainerId, newStart, newEnd, id);
 
       if (conflicts.length > 0) {
         throw new Error(`Conflicts detected: ${conflicts.map((c) => c.conflictType).join(', ')}`);
@@ -309,7 +293,7 @@ export class AbsenceService {
   static initializeMockData(): void {
     const now = new Date();
     const today = now.toISOString().split('T')[0];
-    
+
     this.absences = [
       {
         id: 'absence-1',

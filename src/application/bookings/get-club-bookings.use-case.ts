@@ -1,6 +1,6 @@
-import { BookingRepository } from '@/domain/repositories/booking-repository.interface';
-import { ClubRepository } from '@/domain/repositories/club-repository.interface';
-import { ScheduleRepository } from '@/domain/repositories/schedule-repository.interface';
+import type { BookingRepository } from '@/domain/repositories/booking-repository.interface';
+import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
+import type { ScheduleRepository } from '@/domain/repositories/schedule-repository.interface';
 import { ClubId } from '@/domain/value-objects';
 import type { BookingStatus } from '@/domain/entities/booking';
 

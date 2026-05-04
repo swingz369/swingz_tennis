@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { DunningRecord, CreateDunningRecord } from '../types/billing';
+import type { DunningRecord, CreateDunningRecord } from '../types/billing';
 import { InvoiceService } from './invoice.service';
 
 const supabase = createClient(

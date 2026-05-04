@@ -1,5 +1,5 @@
 import { AuditLogService } from '@/src/application/services/audit-log.service';
-import { AuditAction, EntityType } from '@/src/domain/entities/audit-log.entity';
+import type { AuditAction, EntityType } from '@/src/domain/entities/audit-log.entity';
 
 export class AuditLogger {
   private static auditLogService: AuditLogService = new AuditLogService();
@@ -47,7 +47,7 @@ export class AuditLogger {
       userRole,
       metadata: data,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -72,7 +72,7 @@ export class AuditLogger {
       userRole,
       changes,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -97,7 +97,7 @@ export class AuditLogger {
       userRole,
       metadata: data,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -122,7 +122,7 @@ export class AuditLogger {
       userRole,
       metadata,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -147,7 +147,7 @@ export class AuditLogger {
       userRole,
       metadata: { reason },
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -168,7 +168,7 @@ export class AuditLogger {
       userEmail,
       userRole,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -189,7 +189,7 @@ export class AuditLogger {
       userEmail,
       userRole,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -215,7 +215,7 @@ export class AuditLogger {
       userRole,
       metadata: { format, ...metadata },
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 
@@ -244,7 +244,7 @@ export class AuditLogger {
       errorMessage,
       metadata,
       ipAddress,
-      userAgent
+      userAgent,
     });
   }
 }

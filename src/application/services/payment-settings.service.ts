@@ -1,4 +1,4 @@
-import {
+import type {
   PaymentSettings,
   CreatePaymentSettingsInput,
   UpdatePaymentSettingsInput,
@@ -17,7 +17,10 @@ export class PaymentSettingsService {
   /**
    * Validate payment settings input
    */
-  static validatePaymentSettingsInput(input: CreatePaymentSettingsInput): { valid: boolean; errors: string[] } {
+  static validatePaymentSettingsInput(input: CreatePaymentSettingsInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.gateway) {
@@ -44,7 +47,11 @@ export class PaymentSettingsService {
       errors.push('Höchstbetrag darf nicht negativ sein');
     }
 
-    if (input.minAmount !== undefined && input.maxAmount !== undefined && input.minAmount > input.maxAmount) {
+    if (
+      input.minAmount !== undefined &&
+      input.maxAmount !== undefined &&
+      input.minAmount > input.maxAmount
+    ) {
       errors.push('Mindestbetrag darf nicht größer als Höchstbetrag sein');
     }
 
@@ -52,7 +59,10 @@ export class PaymentSettingsService {
       errors.push('Feste Gebühr darf nicht negativ sein');
     }
 
-    if (input.fees?.percentage !== undefined && (input.fees.percentage < 0 || input.fees.percentage > 100)) {
+    if (
+      input.fees?.percentage !== undefined &&
+      (input.fees.percentage < 0 || input.fees.percentage > 100)
+    ) {
       errors.push('Prozentuale Gebühr muss zwischen 0 und 100 liegen');
     }
 
@@ -123,14 +133,19 @@ export class PaymentSettingsService {
   /**
    * Get payment settings by gateway
    */
-  static async getPaymentSettingsByGateway(gateway: PaymentSettings['gateway']): Promise<PaymentSettings[]> {
+  static async getPaymentSettingsByGateway(
+    gateway: PaymentSettings['gateway']
+  ): Promise<PaymentSettings[]> {
     return this.paymentSettings.filter((p) => p.gateway === gateway);
   }
 
   /**
    * Update payment settings
    */
-  static async updatePaymentSettings(id: string, input: UpdatePaymentSettingsInput): Promise<PaymentSettings | null> {
+  static async updatePaymentSettings(
+    id: string,
+    input: UpdatePaymentSettingsInput
+  ): Promise<PaymentSettings | null> {
     const index = this.paymentSettings.findIndex((p) => p.id === id);
     if (index === -1) {
       return null;
@@ -208,7 +223,7 @@ export class PaymentSettingsService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    
+
     this.paymentSettings = [
       {
         id: 'payment-1',
@@ -226,7 +241,7 @@ export class PaymentSettingsService {
         minAmount: 1,
         maxAmount: 10000,
         fees: {
-          fixed: 0.30,
+          fixed: 0.3,
           percentage: 2.9,
         },
         createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
@@ -269,7 +284,7 @@ export class PaymentSettingsService {
         minAmount: 10,
         maxAmount: 50000,
         fees: {
-          fixed: 0.10,
+          fixed: 0.1,
           percentage: 0.0,
         },
         createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),

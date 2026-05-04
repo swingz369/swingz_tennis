@@ -5,8 +5,6 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     react({
-      // Apply to all TS/TSX files (not just those with JSX)
-      include: /\.(ts|tsx|js|jsx)$/,
       swcOptions: {
         jsc: {
           transform: {

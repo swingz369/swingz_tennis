@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
-import { CreateInvoice } from '@/lib/types/billing';
+import type { CreateInvoice } from '@/lib/types/billing';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
 export async function POST(_request: NextRequest) {

@@ -3,8 +3,8 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
-  tracesSampleRate: 1.0,
-  profilesSampleRate: 1.0,
+  tracesSampleRate: 0.1, // Reduced from 1.0 - 10% of transactions
+  profilesSampleRate: 0.2, // Reduced from 1.0 - 20% of profiles
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
   integrations: [
@@ -32,7 +32,8 @@ export function registerSentry() {
     Sentry.init({
       dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
-      tracesSampleRate: 1.0,
+      tracesSampleRate: 0.1, // Reduced from 1.0
+      profilesSampleRate: 0.2, // Reduced from 1.0
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
       integrations: [

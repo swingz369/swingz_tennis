@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { WaitlistEntry, CreateWaitlistEntry, WaitlistStatus } from '../types/court-booking';
+import type { WaitlistEntry, CreateWaitlistEntry, WaitlistStatus } from '../types/court-booking';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

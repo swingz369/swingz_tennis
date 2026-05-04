@@ -1,4 +1,4 @@
-import {
+import type {
   Member,
   CreateMemberInput,
   UpdateMemberInput,
@@ -68,7 +68,11 @@ export class MemberService {
       errors.push('Ungültiges Mitgliedschaftsenddatum');
     }
 
-    if (input.membershipStart && input.membershipEnd && new Date(input.membershipStart) > new Date(input.membershipEnd)) {
+    if (
+      input.membershipStart &&
+      input.membershipEnd &&
+      new Date(input.membershipStart) > new Date(input.membershipEnd)
+    ) {
       errors.push('Mitgliedschaftsstart muss vor Mitgliedschaftsend liegen');
     }
 
@@ -231,7 +235,10 @@ export class MemberService {
   /**
    * Update member status
    */
-  static async updateMemberStatus(id: string, status: Member['membershipStatus']): Promise<Member | null> {
+  static async updateMemberStatus(
+    id: string,
+    status: Member['membershipStatus']
+  ): Promise<Member | null> {
     return this.updateMember(id, { membershipStatus: status });
   }
 
@@ -311,7 +318,7 @@ export class MemberService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    
+
     this.members = [
       {
         id: 'member-1',
@@ -329,7 +336,9 @@ export class MemberService {
         },
         memberType: 'member',
         membershipStatus: 'active',
-        membershipStart: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        membershipStart: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split('T')[0],
         trainingGroup: 'Anfänger A',
         emergencyContact: {
           name: 'Erika Mustermann',
@@ -355,7 +364,9 @@ export class MemberService {
         },
         memberType: 'member',
         membershipStatus: 'active',
-        membershipStart: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        membershipStart: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split('T')[0],
         trainingGroup: 'Fortgeschritten B',
         emergencyContact: {
           name: 'Hans Schmidt',
@@ -388,7 +399,9 @@ export class MemberService {
         dateOfBirth: '1988-03-17',
         memberType: 'member',
         membershipStatus: 'suspended',
-        membershipStart: new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        membershipStart: new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split('T')[0],
         trainingGroup: 'Erfahren C',
         notes: 'Zahlungsrückstand',
         createdAt: new Date(now.getTime() - 730 * 24 * 60 * 60 * 1000).toISOString(),

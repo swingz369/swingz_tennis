@@ -1,4 +1,4 @@
-import {
+import type {
   Invoice,
   Payment,
   SepaMandate,
@@ -13,7 +13,7 @@ import {
   InvoiceStatus,
   PaymentStatus,
 } from './types/billing';
-import { SepaDirectDebitTransaction, SepaPain008Config } from './sepa/pain008-generator';
+import type { SepaDirectDebitTransaction, SepaPain008Config } from './sepa/pain008-generator';
 import { InvoiceService } from './billing/invoice.service';
 import { PaymentService } from './billing/payment.service';
 import { SepaService } from './billing/sepa.service';
@@ -45,9 +45,9 @@ export class BillingEngine {
     return this.paymentService.generatePaymentNumber(clubId);
   }
 
-   async createInvoice(data: CreateInvoice): Promise<InvoiceWithItems> {
-     return this.invoiceService.createInvoice(data);
-   }
+  async createInvoice(data: CreateInvoice): Promise<InvoiceWithItems> {
+    return this.invoiceService.createInvoice(data);
+  }
 
   async getInvoiceById(invoiceId: string): Promise<InvoiceWithItems | null> {
     return this.invoiceService.getInvoiceById(invoiceId);

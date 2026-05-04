@@ -1,7 +1,9 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { ClubBranding, DEFAULT_BRANDING, mergeBranding, brandingToCSSVars } from '@/lib/branding';
+import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { ClubBranding } from '@/lib/branding';
+import { DEFAULT_BRANDING, mergeBranding, brandingToCSSVars } from '@/lib/branding';
 
 interface TenantContextType {
   clubId: string | null;

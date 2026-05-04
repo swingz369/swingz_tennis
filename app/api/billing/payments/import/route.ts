@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
-import {
-  parsePaymentCsv,
-  validatePaymentRecords,
-  CsvPaymentRecord,
-} from '@/lib/csv/payment-import';
+import type { CsvPaymentRecord } from '@/lib/csv/payment-import';
+import { parsePaymentCsv, validatePaymentRecords } from '@/lib/csv/payment-import';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB

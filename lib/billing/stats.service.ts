@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { MemberBillingSummary, ClubBillingStats } from '../types/billing';
+import type { MemberBillingSummary, ClubBillingStats } from '../types/billing';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

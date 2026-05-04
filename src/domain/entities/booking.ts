@@ -1,4 +1,5 @@
-import { BookingId, ClubId, MemberId, ScheduleId, SessionId } from '../value-objects';
+import type { ClubId, MemberId, ScheduleId, SessionId } from '../value-objects';
+import { BookingId } from '../value-objects';
 
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
 export type CancellationReason = 'trainer_unavailable' | 'member_request' | 'weather' | 'other';

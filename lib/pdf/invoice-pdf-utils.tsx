@@ -1,4 +1,4 @@
-import { InvoiceWithItems } from '../types/billing';
+import type { InvoiceWithItems } from '../types/billing';
 import InvoicePDF from './invoice-pdf';
 
 export interface InvoicePDFData {

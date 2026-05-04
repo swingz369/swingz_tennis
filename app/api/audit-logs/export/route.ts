@@ -1,6 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { AuditLogService } from '@/src/application/services/audit-log.service';
-import { AuditLogFilter, AuditAction, EntityType } from '@/src/domain/entities/audit-log.entity';
+import type {
+  AuditLogFilter,
+  AuditAction,
+  EntityType,
+} from '@/src/domain/entities/audit-log.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 

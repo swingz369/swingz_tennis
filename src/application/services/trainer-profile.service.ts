@@ -1,4 +1,8 @@
-import { TrainerProfile, CreateTrainerProfileInput, UpdateTrainerProfileInput } from '../../domain/entities/trainer.entity';
+import type {
+  TrainerProfile,
+  CreateTrainerProfileInput,
+  UpdateTrainerProfileInput,
+} from '../../domain/entities/trainer.entity';
 
 export class TrainerProfileService {
   private static profiles: TrainerProfile[] = [];
@@ -13,7 +17,10 @@ export class TrainerProfileService {
   /**
    * Validate trainer profile input
    */
-  static validateTrainerProfileInput(input: CreateTrainerProfileInput): { valid: boolean; errors: string[] } {
+  static validateTrainerProfileInput(input: CreateTrainerProfileInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.firstName || input.firstName.trim().length < 2) {
@@ -148,7 +155,9 @@ export class TrainerProfileService {
   /**
    * Get trainer profiles by status
    */
-  static async getTrainerProfilesByStatus(status: TrainerProfile['status']): Promise<TrainerProfile[]> {
+  static async getTrainerProfilesByStatus(
+    status: TrainerProfile['status']
+  ): Promise<TrainerProfile[]> {
     return this.profiles.filter((p) => p.status === status);
   }
 
@@ -162,7 +171,10 @@ export class TrainerProfileService {
   /**
    * Update trainer profile
    */
-  static async updateTrainerProfile(id: string, input: UpdateTrainerProfileInput): Promise<TrainerProfile | null> {
+  static async updateTrainerProfile(
+    id: string,
+    input: UpdateTrainerProfileInput
+  ): Promise<TrainerProfile | null> {
     const index = this.profiles.findIndex((p) => p.id === id);
     if (index === -1) {
       return null;
@@ -194,7 +206,10 @@ export class TrainerProfileService {
    */
   static async addQualification(
     id: string,
-    qualification: Omit<TrainerProfile['qualifications'][0], 'id' | 'verified' | 'verifiedAt' | 'verifiedBy'>
+    qualification: Omit<
+      TrainerProfile['qualifications'][0],
+      'id' | 'verified' | 'verifiedAt' | 'verifiedBy'
+    >
   ): Promise<TrainerProfile | null> {
     const profile = await this.getTrainerProfileById(id);
     if (!profile) {
@@ -271,7 +286,7 @@ export class TrainerProfileService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    
+
     this.profiles = [
       {
         id: 'trainer-1',
@@ -318,10 +333,7 @@ export class TrainerProfileService {
         experience: {
           years: 15,
           previousClubs: ['TC Grün-Weiß', 'Tennisclub Berlin'],
-          achievements: [
-            'Landesmeister 2015',
-            'Trainer des Jahres 2020',
-          ],
+          achievements: ['Landesmeister 2015', 'Trainer des Jahres 2020'],
         },
         status: 'active',
         hourlyRate: 45,
@@ -382,10 +394,7 @@ export class TrainerProfileService {
         experience: {
           years: 8,
           previousClubs: ['TC Rot-Weiß'],
-          achievements: [
-            'Bundesliga-Spielerin',
-            'Jugend-Europameisterin',
-          ],
+          achievements: ['Bundesliga-Spielerin', 'Jugend-Europameisterin'],
         },
         status: 'active',
         hourlyRate: 55,

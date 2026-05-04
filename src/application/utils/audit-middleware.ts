@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export interface AuditContext {
   userId: string;
@@ -14,11 +14,10 @@ export function getAuditContext(request: NextRequest): AuditContext {
   const userName = request.headers.get('x-user-name') || 'System';
   const userEmail = request.headers.get('x-user-email') || 'system@swingz.de';
   const userRole = request.headers.get('x-user-role') || 'system';
-  
-  const ipAddress = request.headers.get('x-forwarded-for') || 
-                    request.headers.get('x-real-ip') || 
-                    'unknown';
-  
+
+  const ipAddress =
+    request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
   return {
@@ -27,7 +26,7 @@ export function getAuditContext(request: NextRequest): AuditContext {
     userEmail,
     userRole,
     ipAddress,
-    userAgent
+    userAgent,
   };
 }
 

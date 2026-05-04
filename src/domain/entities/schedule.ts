@@ -1,6 +1,7 @@
-import { ScheduleId, ClubId, TrainerId } from '../value-objects';
-import { TimeSlot, ScheduleWeek } from '../value-objects';
-import { MemberId } from '../value-objects';
+import type { ClubId, TrainerId } from '../value-objects';
+import { ScheduleId } from '../value-objects';
+import type { TimeSlot, ScheduleWeek } from '../value-objects';
+import type { MemberId } from '../value-objects';
 
 export interface Session {
   id: string;

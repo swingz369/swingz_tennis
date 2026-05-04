@@ -1,5 +1,6 @@
-import { BookingId, ClubId } from '@/domain/value-objects';
-import { Booking } from '@/domain/entities/booking';
+import type { ClubId } from '@/domain/value-objects';
+import { BookingId } from '@/domain/value-objects';
+import type { Booking } from '@/domain/entities/booking';
 import type { BookingRepository } from '@/domain/repositories';
 import type { ScheduleRepository } from '@/domain/repositories';
 import { AuditService } from '@/infrastructure/audit/audit.service';

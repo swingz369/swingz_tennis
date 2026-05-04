@@ -1,4 +1,9 @@
-import { TrialTraining, CreateTrialTrainingInput, UpdateTrialTrainingInput, TrialTrainingStats } from '../../domain/entities/trial-training.entity';
+import type {
+  TrialTraining,
+  CreateTrialTrainingInput,
+  UpdateTrialTrainingInput,
+  TrialTrainingStats,
+} from '../../domain/entities/trial-training.entity';
 
 export class TrialTrainingService {
   private static trainings: TrialTraining[] = [];
@@ -13,7 +18,10 @@ export class TrialTrainingService {
   /**
    * Validate trial training input
    */
-  static validateTrialTrainingInput(input: CreateTrialTrainingInput): { valid: boolean; errors: string[] } {
+  static validateTrialTrainingInput(input: CreateTrialTrainingInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.participant.firstName || input.participant.firstName.trim().length < 2) {
@@ -140,7 +148,9 @@ export class TrialTrainingService {
   /**
    * Get trial trainings by status
    */
-  static async getTrialTrainingsByStatus(status: TrialTraining['status']): Promise<TrialTraining[]> {
+  static async getTrialTrainingsByStatus(
+    status: TrialTraining['status']
+  ): Promise<TrialTraining[]> {
     return this.trainings.filter((t) => t.status === status);
   }
 
@@ -154,7 +164,10 @@ export class TrialTrainingService {
   /**
    * Update trial training
    */
-  static async updateTrialTraining(id: string, input: UpdateTrialTrainingInput): Promise<TrialTraining | null> {
+  static async updateTrialTraining(
+    id: string,
+    input: UpdateTrialTrainingInput
+  ): Promise<TrialTraining | null> {
     const index = this.trainings.findIndex((t) => t.id === id);
     if (index === -1) {
       return null;
@@ -194,10 +207,7 @@ export class TrialTrainingService {
   /**
    * Convert trial training to member
    */
-  static async convertTrialToMember(
-    id: string,
-    memberId: string
-  ): Promise<TrialTraining | null> {
+  static async convertTrialToMember(id: string, memberId: string): Promise<TrialTraining | null> {
     return this.updateTrialTraining(id, {
       status: 'converted',
       convertedToMemberId: memberId,
@@ -251,11 +261,7 @@ export class TrialTrainingService {
 
     return this.trainings.filter((t) => {
       const scheduledDate = new Date(t.scheduledDate);
-      return (
-        t.status === 'scheduled' &&
-        scheduledDate >= now &&
-        scheduledDate <= futureDate
-      );
+      return t.status === 'scheduled' && scheduledDate >= now && scheduledDate <= futureDate;
     });
   }
 
@@ -269,11 +275,7 @@ export class TrialTrainingService {
 
     return this.trainings.filter((t) => {
       const scheduledDate = new Date(t.scheduledDate);
-      return (
-        t.status === 'scheduled' &&
-        scheduledDate >= now &&
-        scheduledDate <= tomorrow
-      );
+      return t.status === 'scheduled' && scheduledDate >= now && scheduledDate <= tomorrow;
     });
   }
 
@@ -294,7 +296,7 @@ export class TrialTrainingService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    
+
     this.trainings = [
       {
         id: '1',

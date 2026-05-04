@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Court, CourtType, CreateCourt, CourtStatus } from '../types/court-booking';
+import type { Court, CourtType, CreateCourt, CourtStatus } from '../types/court-booking';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

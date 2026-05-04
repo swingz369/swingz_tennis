@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // Type guard: validates URL format and protocol
 function isValidUrl(url: string | undefined): url is string {

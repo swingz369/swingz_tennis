@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { SystemSettingsService } from '@/src/application/services/system-settings.service';

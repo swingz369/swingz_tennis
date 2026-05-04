@@ -1,5 +1,5 @@
 import { ClubId } from '../value-objects';
-import { TrainerId, MemberId } from '../value-objects';
+import type { TrainerId, MemberId } from '../value-objects';
 
 export interface ClubMember {
   memberId: MemberId;

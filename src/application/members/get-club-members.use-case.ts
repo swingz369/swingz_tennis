@@ -1,5 +1,5 @@
-import { MemberRepository } from '@/domain/repositories/member-repository.interface';
-import { ClubRepository } from '@/domain/repositories/club-repository.interface';
+import type { MemberRepository } from '@/domain/repositories/member-repository.interface';
+import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
 import { ClubId } from '@/domain/value-objects';
 
 export interface ClubMember {

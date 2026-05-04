@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
-import {
-  constructStripeEvent,
-} from '@/lib/stripe/stripe-client';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import type Stripe from 'stripe';
+import { constructStripeEvent } from '@/lib/stripe/stripe-client';
 import { billingEngine } from '@/lib/billing-engine';
 
 export async function POST(_request: NextRequest) {
@@ -11,10 +10,7 @@ export async function POST(_request: NextRequest) {
     const signature = _request.headers.get('stripe-signature');
 
     if (!signature) {
-      return NextResponse.json(
-        { error: 'Missing stripe-signature header' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
     }
 
     const event = constructStripeEvent(body, signature);

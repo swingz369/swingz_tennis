@@ -91,34 +91,29 @@ export class DrizzleBookingRepository implements BookingRepository {
     endDate: Date
   ): Promise<{ total: number; confirmed: number; cancelled: number; noShow: number }> {
     const db = getDb();
-    const baseWhere = and(
-      eq(bookings.club_id, clubId.getValue()),
-      gte(bookings.booked_at, startDate),
-      lt(bookings.booked_at, endDate)
-    );
+    // Optimized: Single query with conditional aggregation (PostgreSQL FILTER)
+    const result = await db
+      .select({
+        total: sql<number>`count(*)`,
+        confirmed: sql<number>`count(*) filter (where ${bookings.status} = 'confirmed')`,
+        cancelled: sql<number>`count(*) filter (where ${bookings.status} = 'cancelled')`,
+        noShow: sql<number>`count(*) filter (where ${bookings.status} = 'no_show')`,
+      })
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.club_id, clubId.getValue()),
+          gte(bookings.booked_at, startDate),
+          lt(bookings.booked_at, endDate)
+        )
+      );
 
-    const totalResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bookings)
-      .where(baseWhere);
-    const confirmedResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bookings)
-      .where(and(baseWhere, eq(bookings.status, 'confirmed')));
-    const cancelledResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bookings)
-      .where(and(baseWhere, eq(bookings.status, 'cancelled')));
-    const noShowResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bookings)
-      .where(and(baseWhere, eq(bookings.status, 'no_show')));
-
+    const row = result[0];
     return {
-      total: Number(totalResult[0]?.count) || 0,
-      confirmed: Number(confirmedResult[0]?.count) || 0,
-      cancelled: Number(cancelledResult[0]?.count) || 0,
-      noShow: Number(noShowResult[0]?.count) || 0,
+      total: Number(row?.total) || 0,
+      confirmed: Number(row?.confirmed) || 0,
+      cancelled: Number(row?.cancelled) || 0,
+      noShow: Number(row?.noShow) || 0,
     };
   }
 

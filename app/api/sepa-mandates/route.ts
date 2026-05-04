@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { SEPAMandateService } from '@/src/application/services/sepa-mandate.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { withRateLimit, rateLimitStrict } from '@/lib/rate-limit';

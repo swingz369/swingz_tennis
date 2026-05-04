@@ -1,5 +1,5 @@
-import { IEmailService, IAuditService } from '@/domain/services';
-import {
+import type { IEmailService, IAuditService } from '@/domain/services';
+import type {
   SendRemindersInput,
   ReminderResult,
 } from '@/application/validation/schemas/reminders.schema';

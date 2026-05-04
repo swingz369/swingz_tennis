@@ -1,4 +1,4 @@
-import {
+import type {
   HourlyRateTier,
   TrainerHourlyRate,
   RateHistoryEntry,
@@ -23,7 +23,10 @@ export class HourlyRateService {
   /**
    * Validate hourly rate tier input
    */
-  static validateHourlyRateTierInput(input: CreateHourlyRateTierInput): { valid: boolean; errors: string[] } {
+  static validateHourlyRateTierInput(input: CreateHourlyRateTierInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.name || input.name.trim().length < 2) {
@@ -51,7 +54,10 @@ export class HourlyRateService {
   /**
    * Validate trainer hourly rate input
    */
-  static validateTrainerHourlyRateInput(input: CreateTrainerHourlyRateInput): { valid: boolean; errors: string[] } {
+  static validateTrainerHourlyRateInput(input: CreateTrainerHourlyRateInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.trainerId || input.trainerId.trim().length === 0) {
@@ -142,7 +148,10 @@ export class HourlyRateService {
   /**
    * Update hourly rate tier
    */
-  static async updateHourlyRateTier(id: string, input: UpdateHourlyRateTierInput): Promise<HourlyRateTier | null> {
+  static async updateHourlyRateTier(
+    id: string,
+    input: UpdateHourlyRateTierInput
+  ): Promise<HourlyRateTier | null> {
     const index = this.rateTiers.findIndex((t) => t.id === id);
     if (index === -1) {
       return null;
@@ -175,7 +184,9 @@ export class HourlyRateService {
   /**
    * Create a new trainer hourly rate
    */
-  static async createTrainerHourlyRate(input: CreateTrainerHourlyRateInput): Promise<TrainerHourlyRate> {
+  static async createTrainerHourlyRate(
+    input: CreateTrainerHourlyRateInput
+  ): Promise<TrainerHourlyRate> {
     const validation = this.validateTrainerHourlyRateInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
@@ -212,7 +223,9 @@ export class HourlyRateService {
   /**
    * Get trainer hourly rate by trainer ID
    */
-  static async getTrainerHourlyRateByTrainerId(trainerId: string): Promise<TrainerHourlyRate | null> {
+  static async getTrainerHourlyRateByTrainerId(
+    trainerId: string
+  ): Promise<TrainerHourlyRate | null> {
     const now = new Date();
     return (
       this.trainerRates.find(
@@ -234,7 +247,10 @@ export class HourlyRateService {
   /**
    * Update trainer hourly rate
    */
-  static async updateTrainerHourlyRate(id: string, input: UpdateTrainerHourlyRateInput): Promise<TrainerHourlyRate | null> {
+  static async updateTrainerHourlyRate(
+    id: string,
+    input: UpdateTrainerHourlyRateInput
+  ): Promise<TrainerHourlyRate | null> {
     const index = this.trainerRates.findIndex((r) => r.id === id);
     if (index === -1) {
       return null;
@@ -309,7 +325,7 @@ export class HourlyRateService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    
+
     this.rateTiers = [
       {
         id: 'tier-1',

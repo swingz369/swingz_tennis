@@ -4,14 +4,44 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Filter, Download, Clock, User, Activity, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
-import { AuditLog, AuditLogSummary } from '@/src/domain/entities/audit-log.entity';
+import {
+  Search,
+  Filter,
+  Download,
+  Clock,
+  User,
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+import type { AuditLog, AuditLogSummary } from '@/src/domain/entities/audit-log.entity';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -106,18 +136,26 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
     }
   };
 
-   const getStatusBadge = (status: string) => {
-     switch (status) {
-       case 'success':
-         return <Badge variant="default" className="bg-green-500">Erfolgreich</Badge>;
-       case 'failed':
-         return <Badge variant="error">Fehlgeschlagen</Badge>;
-       case 'partial':
-         return <Badge variant="secondary" className="bg-yellow-500">Teilweise</Badge>;
-       default:
-         return <Badge variant="outline">{status}</Badge>;
-     }
-   };
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'success':
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Erfolgreich
+          </Badge>
+        );
+      case 'failed':
+        return <Badge variant="error">Fehlgeschlagen</Badge>;
+      case 'partial':
+        return (
+          <Badge variant="secondary" className="bg-yellow-500">
+            Teilweise
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
   const getActionBadge = (action: string) => {
     const colors: Record<string, string> = {
@@ -143,7 +181,7 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
       upload: 'bg-blue-500',
       download: 'bg-blue-500',
       configure: 'bg-purple-500',
-      reset: 'bg-red-500'
+      reset: 'bg-red-500',
     };
     return <Badge className={colors[action] || 'bg-gray-500'}>{action}</Badge>;
   };
@@ -260,7 +298,9 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {format(new Date(log.timestamp), 'dd.MM.yyyy HH:mm:ss', { locale: de })}
+                              {format(new Date(log.timestamp), 'dd.MM.yyyy HH:mm:ss', {
+                                locale: de,
+                              })}
                             </span>
                           </div>
                         </TableCell>
@@ -302,29 +342,45 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                                   <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground">ID</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                          ID
+                                        </p>
                                         <p className="font-mono text-sm">{selectedLog.id}</p>
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Zeitstempel</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                          Zeitstempel
+                                        </p>
                                         <p className="text-sm">
-                                          {format(new Date(selectedLog.timestamp), 'dd.MM.yyyy HH:mm:ss', { locale: de })}
+                                          {format(
+                                            new Date(selectedLog.timestamp),
+                                            'dd.MM.yyyy HH:mm:ss',
+                                            { locale: de }
+                                          )}
                                         </p>
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Aktion</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                          Aktion
+                                        </p>
                                         <p className="text-sm">{selectedLog.action}</p>
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Entitätstyp</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                          Entitätstyp
+                                        </p>
                                         <p className="text-sm">{selectedLog.entityType}</p>
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Entitäts-ID</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                          Entitäts-ID
+                                        </p>
                                         <p className="font-mono text-sm">{selectedLog.entityId}</p>
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                          Status
+                                        </p>
                                         <div className="flex items-center gap-2">
                                           {getStatusIcon(selectedLog.status)}
                                           <span className="text-sm">{selectedLog.status}</span>
@@ -333,29 +389,48 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                                     </div>
 
                                     <div>
-                                      <p className="text-sm font-medium text-muted-foreground mb-2">Benutzer</p>
+                                      <p className="text-sm font-medium text-muted-foreground mb-2">
+                                        Benutzer
+                                      </p>
                                       <div className="bg-secondary p-3 rounded-lg">
                                         <p className="font-medium">{selectedLog.userName}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedLog.userEmail}</p>
-                                        <Badge variant="outline" className="mt-2">{selectedLog.userRole}</Badge>
+                                        <p className="text-sm text-muted-foreground">
+                                          {selectedLog.userEmail}
+                                        </p>
+                                        <Badge variant="outline" className="mt-2">
+                                          {selectedLog.userRole}
+                                        </Badge>
                                       </div>
                                     </div>
 
                                     {selectedLog.changes && selectedLog.changes.length > 0 && (
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground mb-2">Änderungen</p>
+                                        <p className="text-sm font-medium text-muted-foreground mb-2">
+                                          Änderungen
+                                        </p>
                                         <div className="space-y-2">
                                           {selectedLog.changes.map((change, index) => (
-                                            <div key={index} className="bg-secondary p-3 rounded-lg">
+                                            <div
+                                              key={index}
+                                              className="bg-secondary p-3 rounded-lg"
+                                            >
                                               <p className="font-medium">{change.field}</p>
                                               <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                                                 <div>
-                                                  <span className="text-muted-foreground">Alt:</span>{' '}
-                                                  <span className="line-through text-red-500">{String(change.oldValue)}</span>
+                                                  <span className="text-muted-foreground">
+                                                    Alt:
+                                                  </span>{' '}
+                                                  <span className="line-through text-red-500">
+                                                    {String(change.oldValue)}
+                                                  </span>
                                                 </div>
                                                 <div>
-                                                  <span className="text-muted-foreground">Neu:</span>{' '}
-                                                  <span className="text-green-500">{String(change.newValue)}</span>
+                                                  <span className="text-muted-foreground">
+                                                    Neu:
+                                                  </span>{' '}
+                                                  <span className="text-green-500">
+                                                    {String(change.newValue)}
+                                                  </span>
                                                 </div>
                                               </div>
                                             </div>
@@ -364,20 +439,25 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                                       </div>
                                     )}
 
-                                    {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
-                                      <div>
-                                        <p className="text-sm font-medium text-muted-foreground mb-2">Metadaten</p>
-                                        <div className="bg-secondary p-3 rounded-lg">
-                                          <pre className="text-xs overflow-auto">
-                                            {JSON.stringify(selectedLog.metadata, null, 2)}
-                                          </pre>
+                                    {selectedLog.metadata &&
+                                      Object.keys(selectedLog.metadata).length > 0 && (
+                                        <div>
+                                          <p className="text-sm font-medium text-muted-foreground mb-2">
+                                            Metadaten
+                                          </p>
+                                          <div className="bg-secondary p-3 rounded-lg">
+                                            <pre className="text-xs overflow-auto">
+                                              {JSON.stringify(selectedLog.metadata, null, 2)}
+                                            </pre>
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
 
                                     {selectedLog.errorMessage && (
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground mb-2">Fehlermeldung</p>
+                                        <p className="text-sm font-medium text-muted-foreground mb-2">
+                                          Fehlermeldung
+                                        </p>
                                         <div className="bg-destructive/10 p-3 rounded-lg text-destructive">
                                           {selectedLog.errorMessage}
                                         </div>
@@ -386,11 +466,15 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
 
                                     {selectedLog.ipAddress && (
                                       <div>
-                                        <p className="text-sm font-medium text-muted-foreground mb-2">Netzwerk-Informationen</p>
+                                        <p className="text-sm font-medium text-muted-foreground mb-2">
+                                          Netzwerk-Informationen
+                                        </p>
                                         <div className="bg-secondary p-3 rounded-lg text-sm">
                                           <p>IP: {selectedLog.ipAddress}</p>
                                           {selectedLog.userAgent && (
-                                            <p className="text-muted-foreground mt-1">{selectedLog.userAgent}</p>
+                                            <p className="text-muted-foreground mt-1">
+                                              {selectedLog.userAgent}
+                                            </p>
                                           )}
                                         </div>
                                       </div>
@@ -429,7 +513,9 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                   <CheckCircle className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{summary.logsByStatus.success || 0}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {summary.logsByStatus.success || 0}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -439,7 +525,9 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                   <XCircle className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{summary.logsByStatus.failed || 0}</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {summary.logsByStatus.failed || 0}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -492,7 +580,10 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                 <CardContent>
                   <div className="space-y-2">
                     {summary.topUsers.map((user, index) => (
-                      <div key={user.userId} className="flex items-center justify-between p-2 bg-secondary rounded">
+                      <div
+                        key={user.userId}
+                        className="flex items-center justify-between p-2 bg-secondary rounded"
+                      >
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">{index + 1}</Badge>
                           <span className="text-sm font-medium">{user.userName}</span>
@@ -511,7 +602,10 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                 <CardContent>
                   <div className="space-y-2">
                     {summary.recentActivity.map((log) => (
-                      <div key={log.id} className="flex items-center justify-between p-2 bg-secondary rounded">
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between p-2 bg-secondary rounded"
+                      >
                         <div className="flex items-center gap-2">
                           {getStatusIcon(log.status)}
                           <span className="text-sm">{log.userName}</span>

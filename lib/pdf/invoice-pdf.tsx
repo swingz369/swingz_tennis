@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
-import { InvoiceWithItems } from '../types/billing';
+import type { InvoiceWithItems } from '../types/billing';
 
 Font.register({
   family: 'Roboto',

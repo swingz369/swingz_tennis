@@ -1,7 +1,7 @@
 import { eq, desc, gte, lte, and, sql } from 'drizzle-orm';
 import { getDb } from '../client';
 import { auditLogs } from '../schema';
-import { AuditLogRepository } from '@/domain/repositories/audit-log-repository.interface';
+import type { AuditLogRepository } from '@/domain/repositories/audit-log-repository.interface';
 import { AuditLog } from '@/domain/entities/audit-log';
 import { Id } from '@/domain/value-objects/ids';
 

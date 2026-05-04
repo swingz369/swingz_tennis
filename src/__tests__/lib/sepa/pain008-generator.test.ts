@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import type { SepaDirectDebitTransaction, SepaPain008Config } from '@/lib/sepa/pain008-generator';
 import {
   generatePain008Xml,
   validatePain008Xml,
   getPain008FileName,
   getPain008EmailSubject,
   getPain008EmailBody,
-  SepaDirectDebitTransaction,
-  SepaPain008Config,
 } from '@/lib/sepa/pain008-generator';
 
 describe('Pain.008 XML Generator', () => {

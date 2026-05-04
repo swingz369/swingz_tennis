@@ -1,4 +1,10 @@
-import { AuditLog, AuditLogFilter, AuditLogSummary, AuditAction, EntityType } from '../../domain/entities/audit-log.entity';
+import type {
+  AuditLog,
+  AuditLogFilter,
+  AuditLogSummary,
+  AuditAction,
+  EntityType,
+} from '../../domain/entities/audit-log.entity';
 
 export class AuditLogService {
   private auditLogs: Map<string, AuditLog> = new Map();
@@ -37,7 +43,7 @@ export class AuditLogService {
       status: params.status || 'success',
       errorMessage: params.errorMessage,
       ipAddress: params.ipAddress,
-      userAgent: params.userAgent
+      userAgent: params.userAgent,
     };
 
     this.auditLogs.set(auditLog.id, auditLog);
@@ -49,36 +55,37 @@ export class AuditLogService {
 
     if (filter) {
       if (filter.startDate) {
-        logs = logs.filter(log => log.timestamp >= filter.startDate!);
+        logs = logs.filter((log) => log.timestamp >= filter.startDate!);
       }
       if (filter.endDate) {
-        logs = logs.filter(log => log.timestamp <= filter.endDate!);
+        logs = logs.filter((log) => log.timestamp <= filter.endDate!);
       }
       if (filter.action && filter.action.length > 0) {
-        logs = logs.filter(log => filter.action!.includes(log.action));
+        logs = logs.filter((log) => filter.action!.includes(log.action));
       }
       if (filter.entityType && filter.entityType.length > 0) {
-        logs = logs.filter(log => filter.entityType!.includes(log.entityType));
+        logs = logs.filter((log) => filter.entityType!.includes(log.entityType));
       }
       if (filter.userId && filter.userId.length > 0) {
-        logs = logs.filter(log => filter.userId!.includes(log.userId));
+        logs = logs.filter((log) => filter.userId!.includes(log.userId));
       }
       if (filter.userRole && filter.userRole.length > 0) {
-        logs = logs.filter(log => filter.userRole!.includes(log.userRole));
+        logs = logs.filter((log) => filter.userRole!.includes(log.userRole));
       }
       if (filter.status && filter.status.length > 0) {
-        logs = logs.filter(log => filter.status!.includes(log.status));
+        logs = logs.filter((log) => filter.status!.includes(log.status));
       }
       if (filter.entityId) {
-        logs = logs.filter(log => log.entityId === filter.entityId);
+        logs = logs.filter((log) => log.entityId === filter.entityId);
       }
       if (filter.searchTerm) {
         const term = filter.searchTerm.toLowerCase();
-        logs = logs.filter(log =>
-          log.userName.toLowerCase().includes(term) ||
-          log.userEmail.toLowerCase().includes(term) ||
-          log.entityId.toLowerCase().includes(term) ||
-          (log.errorMessage && log.errorMessage.toLowerCase().includes(term))
+        logs = logs.filter(
+          (log) =>
+            log.userName.toLowerCase().includes(term) ||
+            log.userEmail.toLowerCase().includes(term) ||
+            log.entityId.toLowerCase().includes(term) ||
+            (log.errorMessage && log.errorMessage.toLowerCase().includes(term))
         );
       }
     }
@@ -92,13 +99,13 @@ export class AuditLogService {
 
   async getAuditLogsByEntity(entityType: EntityType, entityId: string): Promise<AuditLog[]> {
     return Array.from(this.auditLogs.values())
-      .filter(log => log.entityType === entityType && log.entityId === entityId)
+      .filter((log) => log.entityType === entityType && log.entityId === entityId)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }
 
   async getAuditLogsByUser(userId: string, limit: number = 50): Promise<AuditLog[]> {
     return Array.from(this.auditLogs.values())
-      .filter(log => log.userId === userId)
+      .filter((log) => log.userId === userId)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, limit);
   }
@@ -107,31 +114,43 @@ export class AuditLogService {
     let logs = Array.from(this.auditLogs.values());
 
     if (startDate) {
-      logs = logs.filter(log => log.timestamp >= startDate);
+      logs = logs.filter((log) => log.timestamp >= startDate);
     }
     if (endDate) {
-      logs = logs.filter(log => log.timestamp <= endDate);
+      logs = logs.filter((log) => log.timestamp <= endDate);
     }
 
-    const logsByAction = logs.reduce((acc, log) => {
-      acc[log.action] = (acc[log.action] || 0) + 1;
-      return acc;
-    }, {} as Record<AuditAction, number>);
+    const logsByAction = logs.reduce(
+      (acc, log) => {
+        acc[log.action] = (acc[log.action] || 0) + 1;
+        return acc;
+      },
+      {} as Record<AuditAction, number>
+    );
 
-    const logsByEntityType = logs.reduce((acc, log) => {
-      acc[log.entityType] = (acc[log.entityType] || 0) + 1;
-      return acc;
-    }, {} as Record<EntityType, number>);
+    const logsByEntityType = logs.reduce(
+      (acc, log) => {
+        acc[log.entityType] = (acc[log.entityType] || 0) + 1;
+        return acc;
+      },
+      {} as Record<EntityType, number>
+    );
 
-    const logsByUser = logs.reduce((acc, log) => {
-      acc[log.userId] = (acc[log.userId] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const logsByUser = logs.reduce(
+      (acc, log) => {
+        acc[log.userId] = (acc[log.userId] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
-    const logsByStatus = logs.reduce((acc, log) => {
-      acc[log.status] = (acc[log.status] || 0) + 1;
-      return acc;
-    }, {} as Record<'success' | 'failed' | 'partial', number>);
+    const logsByStatus = logs.reduce(
+      (acc, log) => {
+        acc[log.status] = (acc[log.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<'success' | 'failed' | 'partial', number>
+    );
 
     const recentActivity = logs
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
@@ -140,8 +159,8 @@ export class AuditLogService {
     const topUsers = Object.entries(logsByUser)
       .map(([userId, actionCount]) => ({
         userId,
-        userName: logs.find(l => l.userId === userId)?.userName || userId,
-        actionCount
+        userName: logs.find((l) => l.userId === userId)?.userName || userId,
+        actionCount,
       }))
       .sort((a, b) => b.actionCount - a.actionCount)
       .slice(0, 5);
@@ -153,7 +172,7 @@ export class AuditLogService {
       logsByUser,
       logsByStatus,
       recentActivity,
-      topUsers
+      topUsers,
     };
   }
 
@@ -176,8 +195,20 @@ export class AuditLogService {
     const logs = await this.getAuditLogs(filter);
 
     if (format === 'csv') {
-      const headers = ['ID', 'Action', 'Entity Type', 'Entity ID', 'User', 'User Email', 'User Role', 'Timestamp', 'Status', 'IP Address', 'Error Message'];
-      const rows = logs.map(log => [
+      const headers = [
+        'ID',
+        'Action',
+        'Entity Type',
+        'Entity ID',
+        'User',
+        'User Email',
+        'User Role',
+        'Timestamp',
+        'Status',
+        'IP Address',
+        'Error Message',
+      ];
+      const rows = logs.map((log) => [
         log.id,
         log.action,
         log.entityType,
@@ -188,9 +219,9 @@ export class AuditLogService {
         log.timestamp.toISOString(),
         log.status,
         log.ipAddress || '',
-        log.errorMessage || ''
+        log.errorMessage || '',
       ]);
-      return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+      return [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
     }
 
     return JSON.stringify(logs, null, 2);
@@ -210,9 +241,9 @@ export class AuditLogService {
         timestamp: new Date(Date.now() - 1000 * 60 * 30),
         changes: [
           { field: 'name', oldValue: null, newValue: 'Max Mustermann', changeType: 'added' },
-          { field: 'email', oldValue: null, newValue: 'max@example.com', changeType: 'added' }
+          { field: 'email', oldValue: null, newValue: 'max@example.com', changeType: 'added' },
         ],
-        status: 'success'
+        status: 'success',
       },
       {
         id: 'audit-2',
@@ -225,9 +256,9 @@ export class AuditLogService {
         userRole: 'admin',
         timestamp: new Date(Date.now() - 1000 * 60 * 25),
         changes: [
-          { field: 'status', oldValue: 'trial', newValue: 'active', changeType: 'modified' }
+          { field: 'status', oldValue: 'trial', newValue: 'active', changeType: 'modified' },
         ],
-        status: 'success'
+        status: 'success',
       },
       {
         id: 'audit-3',
@@ -239,7 +270,7 @@ export class AuditLogService {
         userEmail: 'max@example.com',
         userRole: 'member',
         timestamp: new Date(Date.now() - 1000 * 60 * 20),
-        status: 'success'
+        status: 'success',
       },
       {
         id: 'audit-4',
@@ -251,7 +282,7 @@ export class AuditLogService {
         userEmail: 'admin@swingz.de',
         userRole: 'admin',
         timestamp: new Date(Date.now() - 1000 * 60 * 15),
-        status: 'success'
+        status: 'success',
       },
       {
         id: 'audit-5',
@@ -265,7 +296,7 @@ export class AuditLogService {
         timestamp: new Date(Date.now() - 1000 * 60 * 10),
         ipAddress: '192.168.1.100',
         userAgent: 'Mozilla/5.0',
-        status: 'success'
+        status: 'success',
       },
       {
         id: 'audit-6',
@@ -278,7 +309,7 @@ export class AuditLogService {
         userRole: 'admin',
         timestamp: new Date(Date.now() - 1000 * 60 * 5),
         metadata: { format: 'pdf', period: 'monthly' },
-        status: 'success'
+        status: 'success',
       },
       {
         id: 'audit-7',
@@ -290,7 +321,7 @@ export class AuditLogService {
         userEmail: 'max@example.com',
         userRole: 'member',
         timestamp: new Date(Date.now() - 1000 * 60 * 2),
-        status: 'success'
+        status: 'success',
       },
       {
         id: 'audit-8',
@@ -302,10 +333,10 @@ export class AuditLogService {
         userEmail: 'max@example.com',
         userRole: 'member',
         timestamp: new Date(Date.now() - 1000 * 60),
-        status: 'success'
-      }
+        status: 'success',
+      },
     ];
 
-    mockLogs.forEach(log => this.auditLogs.set(log.id, log));
+    mockLogs.forEach((log) => this.auditLogs.set(log.id, log));
   }
 }

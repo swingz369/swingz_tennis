@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getClubRevenueUseCase } from '@/application/analytics/get-club-revenue.use-case';
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';

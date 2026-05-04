@@ -1,4 +1,4 @@
-import { Payment, SepaMandate } from '../types/billing';
+import type { Payment, SepaMandate } from '../types/billing';
 
 export interface SepaDirectDebitData {
   creditorId: string;

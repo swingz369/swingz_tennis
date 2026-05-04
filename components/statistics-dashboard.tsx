@@ -3,11 +3,27 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUp, ArrowDown, TrendingUp, Users, Euro, Calendar, Clock, Target, Download } from 'lucide-react';
-import { DashboardMetric, Statistics } from '@/src/domain/entities/statistics.entity';
+import {
+  ArrowUp,
+  ArrowDown,
+  TrendingUp,
+  Users,
+  Euro,
+  Calendar,
+  Clock,
+  Target,
+  Download,
+} from 'lucide-react';
+import type { DashboardMetric, Statistics } from '@/src/domain/entities/statistics.entity';
 
 interface StatisticsDashboardProps {
   className?: string;
@@ -28,7 +44,7 @@ export function StatisticsDashboard({ className }: StatisticsDashboardProps) {
     try {
       const [metricsRes, statsRes] = await Promise.all([
         fetch('/api/statistics/dashboard'),
-        fetch(`/api/statistics?period=${period}`)
+        fetch(`/api/statistics?period=${period}`),
       ]);
 
       if (metricsRes.ok && statsRes.ok) {
@@ -199,7 +215,7 @@ function MemberStatisticsCard({ stats }: { stats: any }) {
               <Badge variant="secondary">{stats.conversionRate.toFixed(1)}%</Badge>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-primary transition-all"
                 style={{ width: `${stats.conversionRate}%` }}
               />
@@ -242,11 +258,15 @@ function RevenueStatisticsCard({ stats }: { stats: any }) {
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Ausstehend</p>
-            <p className="text-2xl font-bold text-yellow-600">{stats.pendingPayments.toLocaleString('de-DE')} €</p>
+            <p className="text-2xl font-bold text-yellow-600">
+              {stats.pendingPayments.toLocaleString('de-DE')} €
+            </p>
           </div>
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Überfällig</p>
-            <p className="text-2xl font-bold text-red-600">{stats.overduePayments.toLocaleString('de-DE')} €</p>
+            <p className="text-2xl font-bold text-red-600">
+              {stats.overduePayments.toLocaleString('de-DE')} €
+            </p>
           </div>
         </div>
 
@@ -340,7 +360,10 @@ function TrainerStatisticsCard({ stats }: { stats: any }) {
           <p className="text-sm font-medium mb-4">Top-Performer</p>
           <div className="space-y-2">
             {stats.topPerformers.map((performer: any, index: number) => (
-              <div key={performer.trainerId} className="flex items-center justify-between p-2 bg-secondary rounded">
+              <div
+                key={performer.trainerId}
+                className="flex items-center justify-between p-2 bg-secondary rounded"
+              >
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{index + 1}</Badge>
                   <span className="text-sm font-medium">Trainer {performer.trainerId}</span>
@@ -348,7 +371,9 @@ function TrainerStatisticsCard({ stats }: { stats: any }) {
                 <div className="flex items-center gap-4 text-sm">
                   <span>{performer.hours}h</span>
                   <span>{performer.sessions} Sitzungen</span>
-                  <span className="font-semibold">{performer.earnings.toLocaleString('de-DE')} €</span>
+                  <span className="font-semibold">
+                    {performer.earnings.toLocaleString('de-DE')} €
+                  </span>
                 </div>
               </div>
             ))}

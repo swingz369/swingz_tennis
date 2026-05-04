@@ -3,7 +3,8 @@
  * Provides authentication and authorization for API routes
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 
@@ -70,55 +71,47 @@ export async function requireApiAuth(request: NextRequest): Promise<AuthResult> 
     throw new Error('Invalid or expired authentication token');
   }
 
-   // Get the user's club memberships (all active memberships)
-   const { data: memberships, error: membershipsError } = await supabase
-     .from('user_club_memberships')
-     .select('club_id, role')
-     .eq('user_id', user.id)
-     .eq('is_active', true);
+  // Get the user's club memberships (all active memberships)
+  const { data: memberships, error: membershipsError } = await supabase
+    .from('user_club_memberships')
+    .select('club_id, role')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
 
-   if (membershipsError) {
-     throw new Error('Failed to fetch user memberships');
-   }
+  if (membershipsError) {
+    throw new Error('Failed to fetch user memberships');
+  }
 
-    // If no memberships found, check if user is superadmin via a separate query
-    // (Superadmin may not have club-specific memberships in some setups)
-    let isSuperadmin = false;
-    if (!memberships || memberships.length === 0) {
-      // Try to detect superadmin from a dedicated admin table or JWT claims
-      // For now, we'll assume no membership = no access
-      // This can be extended later with proper superadmin detection
-      throw new Error('User does not have an active club membership');
+  // If no memberships found, user has no access
+  if (!memberships || memberships.length === 0) {
+    throw new Error('User does not have an active club membership');
+  }
+
+  // Determine highest role across all memberships
+  const roleHierarchy: Record<string, number> = {
+    superadmin: 4,
+    admin: 3,
+    trainer: 2,
+    member: 1,
+  };
+
+  let highestRole = memberships[0].role;
+  for (const m of memberships) {
+    if (roleHierarchy[m.role] > roleHierarchy[highestRole]) {
+      highestRole = m.role;
     }
+  }
 
-    // Determine highest role across all memberships
-    const roleHierarchy: Record<string, number> = {
-      superadmin: 4,
-      admin: 3,
-      trainer: 2,
-      member: 1,
-    };
+  // Use the first club's context; superadmin will have full access via RLS
+  const clubId = memberships[0].club_id;
 
-    let highestRole = memberships[0].role;
-    for (const m of memberships) {
-      if (roleHierarchy[m.role] > roleHierarchy[highestRole]) {
-        highestRole = m.role;
-      }
-    }
-
-    isSuperadmin = highestRole === 'superadmin';
-
-    // For superadmin, use the first club's context (they'll have full access via RLS)
-    // For others, require at least one membership and use that club context
-    const clubId = memberships[0].club_id;
-
-    return {
-      user,
-      clubId,
-      supabase,
-      role: highestRole as UserRole,
-      memberships,
-    };
+  return {
+    user,
+    clubId,
+    supabase,
+    role: highestRole as UserRole,
+    memberships,
+  };
 }
 
 /**

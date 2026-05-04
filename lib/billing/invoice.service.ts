@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Invoice, CreateInvoice, InvoiceWithItems, InvoiceStatus } from '../types/billing';
+import type { Invoice, CreateInvoice, InvoiceWithItems, InvoiceStatus } from '../types/billing';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,72 +30,72 @@ export class InvoiceService {
     return data;
   }
 
-   async createInvoice(data: CreateInvoice): Promise<InvoiceWithItems> {
-     const invoiceNumber = await this.generateInvoiceNumber(data.club_id);
+  async createInvoice(data: CreateInvoice): Promise<InvoiceWithItems> {
+    const invoiceNumber = await this.generateInvoiceNumber(data.club_id);
 
-     const subtotal = data.items.reduce((sum, item) => {
-       return sum + item.quantity * item.unit_price;
-     }, 0);
+    const subtotal = data.items.reduce((sum, item) => {
+      return sum + item.quantity * item.unit_price;
+    }, 0);
 
-     const taxAmount = data.items.reduce((sum, item) => {
-       const itemTotal = item.quantity * item.unit_price;
-       return sum + itemTotal * (item.tax_rate / 100);
-     }, 0);
+    const taxAmount = data.items.reduce((sum, item) => {
+      const itemTotal = item.quantity * item.unit_price;
+      return sum + itemTotal * (item.tax_rate / 100);
+    }, 0);
 
-     const totalAmount = subtotal + taxAmount;
+    const totalAmount = subtotal + taxAmount;
 
-     const { data: invoice, error } = await supabase
-       .from('invoices')
-       .insert({
-         club_id: data.club_id,
-         member_id: data.member_id,
-         invoice_number: invoiceNumber,
-         invoice_date: data.invoice_date || new Date().toISOString().split('T')[0],
-         due_date: data.due_date,
-         status: 'draft',
-         subtotal,
-         tax_amount: taxAmount,
-         total_amount: totalAmount,
-         paid_amount: 0,
-         currency: 'EUR',
-         notes: data.notes,
-       })
-       .select()
-       .single();
+    const { data: invoice, error } = await supabase
+      .from('invoices')
+      .insert({
+        club_id: data.club_id,
+        member_id: data.member_id,
+        invoice_number: invoiceNumber,
+        invoice_date: data.invoice_date || new Date().toISOString().split('T')[0],
+        due_date: data.due_date,
+        status: 'draft',
+        subtotal,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
+        paid_amount: 0,
+        currency: 'EUR',
+        notes: data.notes,
+      })
+      .select()
+      .single();
 
-     if (error) {
-       throw new Error(`Failed to create invoice: ${error.message}`);
-     }
+    if (error) {
+      throw new Error(`Failed to create invoice: ${error.message}`);
+    }
 
-     const items = await Promise.all(
-       data.items.map(async (item) => {
-         const total_price = item.quantity * item.unit_price;
-         const { data: invoiceItem, error } = await supabase
-           .from('invoice_items')
-           .insert({
-             invoice_id: invoice.id,
-             description: item.description,
-             quantity: item.quantity,
-             unit_price: item.unit_price,
-             tax_rate: item.tax_rate,
-             total_price,
-             item_type: item.item_type,
-             reference_id: item.reference_id,
-             reference_type: item.reference_type,
-           })
-           .select()
-           .single();
+    const items = await Promise.all(
+      data.items.map(async (item) => {
+        const total_price = item.quantity * item.unit_price;
+        const { data: invoiceItem, error } = await supabase
+          .from('invoice_items')
+          .insert({
+            invoice_id: invoice.id,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            tax_rate: item.tax_rate,
+            total_price,
+            item_type: item.item_type,
+            reference_id: item.reference_id,
+            reference_type: item.reference_type,
+          })
+          .select()
+          .single();
 
-         if (error) {
-           throw new Error(`Failed to create invoice item: ${error.message}`);
-         }
+        if (error) {
+          throw new Error(`Failed to create invoice item: ${error.message}`);
+        }
 
-         return invoiceItem;
-       })
-     );
+        return invoiceItem;
+      })
+    );
 
-     return { ...invoice, items };
-   }
+    return { ...invoice, items };
+  }
 
   async getInvoiceById(invoiceId: string): Promise<InvoiceWithItems | null> {
     const { data: invoice, error } = await supabase

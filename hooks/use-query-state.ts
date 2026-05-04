@@ -1,5 +1,5 @@
 import React from 'react';
-import { UseQueryResult } from '@tanstack/react-query';
+import type { UseQueryResult } from '@tanstack/react-query';
 import { QueryError, EmptyState, NotFound } from '@/components/ui/error-states';
 import { FullPageLoading } from '@/components/ui/loading-skeletons';
 

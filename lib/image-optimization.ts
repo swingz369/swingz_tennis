@@ -1,4 +1,4 @@
-import { ImageProps } from 'next/image';
+import type { ImageProps } from 'next/image';
 
 export interface OptimizedImageProps extends Omit<ImageProps, 'src'> {
   src: string;

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
-import { CreatePayment } from '@/lib/types/billing';
+import type { CreatePayment } from '@/lib/types/billing';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {

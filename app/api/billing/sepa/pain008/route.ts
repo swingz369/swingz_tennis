@@ -1,13 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
-import {
-  generatePain008Xml,
-  getPain008FileName,
-  SepaDirectDebitTransaction,
-  SepaPain008Config,
-} from '@/lib/sepa/pain008-generator';
+import type { SepaDirectDebitTransaction, SepaPain008Config } from '@/lib/sepa/pain008-generator';
+import { generatePain008Xml, getPain008FileName } from '@/lib/sepa/pain008-generator';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {

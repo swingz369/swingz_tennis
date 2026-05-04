@@ -1,4 +1,4 @@
-import {
+import type {
   BillingPeriod,
   TrainerBilling,
   BillingLineItem,
@@ -58,10 +58,7 @@ export class BillingService {
     const now = new Date();
     return (
       this.billingPeriods.find(
-        (p) =>
-          p.status === 'open' &&
-          new Date(p.startDate) <= now &&
-          new Date(p.endDate) >= now
+        (p) => p.status === 'open' && new Date(p.startDate) <= now && new Date(p.endDate) >= now
       ) || null
     );
   }
@@ -115,7 +112,9 @@ export class BillingService {
   /**
    * Get trainer billings by billing period
    */
-  static async getTrainerBillingsByBillingPeriod(billingPeriodId: string): Promise<TrainerBilling[]> {
+  static async getTrainerBillingsByBillingPeriod(
+    billingPeriodId: string
+  ): Promise<TrainerBilling[]> {
     return this.trainerBillings.filter((b) => b.billingPeriodId === billingPeriodId);
   }
 
@@ -136,7 +135,10 @@ export class BillingService {
   /**
    * Update trainer billing
    */
-  static async updateTrainerBilling(id: string, input: UpdateTrainerBillingInput): Promise<TrainerBilling | null> {
+  static async updateTrainerBilling(
+    id: string,
+    input: UpdateTrainerBillingInput
+  ): Promise<TrainerBilling | null> {
     const index = this.trainerBillings.findIndex((b) => b.id === id);
     if (index === -1) {
       return null;
@@ -204,7 +206,9 @@ export class BillingService {
   /**
    * Get billing line items by trainer billing ID
    */
-  static async getBillingLineItemsByTrainerBilling(trainerBillingId: string): Promise<BillingLineItem[]> {
+  static async getBillingLineItemsByTrainerBilling(
+    trainerBillingId: string
+  ): Promise<BillingLineItem[]> {
     return this.billingLineItems.filter((i) => i.trainerBillingId === trainerBillingId);
   }
 
@@ -219,15 +223,25 @@ export class BillingService {
    * Calculate billing summary for a billing period
    */
   static async calculateBillingSummary(billingPeriodId: string): Promise<BillingSummary> {
-    const periodBillings = this.trainerBillings.filter((b) => b.billingPeriodId === billingPeriodId);
+    const periodBillings = this.trainerBillings.filter(
+      (b) => b.billingPeriodId === billingPeriodId
+    );
 
     const totalTrainers = periodBillings.length;
     const totalHours = periodBillings.reduce((sum, b) => sum + b.totalHours, 0);
     const totalAmount = periodBillings.reduce((sum, b) => sum + b.totalAmount, 0);
-    const pendingAmount = periodBillings.filter((b) => b.status === 'pending').reduce((sum, b) => sum + b.totalAmount, 0);
-    const processedAmount = periodBillings.filter((b) => b.status === 'processed').reduce((sum, b) => sum + b.totalAmount, 0);
-    const paidAmount = periodBillings.filter((b) => b.status === 'paid').reduce((sum, b) => sum + b.totalAmount, 0);
-    const overdueAmount = periodBillings.filter((b) => b.status === 'overdue').reduce((sum, b) => sum + b.totalAmount, 0);
+    const pendingAmount = periodBillings
+      .filter((b) => b.status === 'pending')
+      .reduce((sum, b) => sum + b.totalAmount, 0);
+    const processedAmount = periodBillings
+      .filter((b) => b.status === 'processed')
+      .reduce((sum, b) => sum + b.totalAmount, 0);
+    const paidAmount = periodBillings
+      .filter((b) => b.status === 'paid')
+      .reduce((sum, b) => sum + b.totalAmount, 0);
+    const overdueAmount = periodBillings
+      .filter((b) => b.status === 'overdue')
+      .reduce((sum, b) => sum + b.totalAmount, 0);
 
     return {
       billingPeriodId,
@@ -247,7 +261,9 @@ export class BillingService {
   static generateInvoiceNumber(): string {
     const year = new Date().getFullYear();
     const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const count = this.trainerBillings.filter((b) => b.invoiceNumber?.startsWith(`INV-${year}${month}`)).length + 1;
+    const count =
+      this.trainerBillings.filter((b) => b.invoiceNumber?.startsWith(`INV-${year}${month}`))
+        .length + 1;
     return `INV-${year}${month}-${String(count).padStart(4, '0')}`;
   }
 
@@ -256,9 +272,15 @@ export class BillingService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      .toISOString()
+      .split('T')[0];
+    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      .toISOString()
+      .split('T')[0];
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      .toISOString()
+      .split('T')[0];
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
 
     this.billingPeriods = [

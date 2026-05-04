@@ -1,4 +1,4 @@
-import {
+import type {
   TrainerAvailability,
   AvailabilityConflict,
   CreateTrainerAvailabilityInput,
@@ -19,7 +19,10 @@ export class TrainerAvailabilityService {
   /**
    * Validate availability input
    */
-  static validateAvailabilityInput(input: CreateTrainerAvailabilityInput): { valid: boolean; errors: string[] } {
+  static validateAvailabilityInput(input: CreateTrainerAvailabilityInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.trainerId || input.trainerId.trim().length === 0) {
@@ -124,7 +127,9 @@ export class TrainerAvailabilityService {
   /**
    * Create a new trainer availability
    */
-  static async createTrainerAvailability(input: CreateTrainerAvailabilityInput): Promise<TrainerAvailability> {
+  static async createTrainerAvailability(
+    input: CreateTrainerAvailabilityInput
+  ): Promise<TrainerAvailability> {
     const validation = this.validateAvailabilityInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
@@ -169,7 +174,9 @@ export class TrainerAvailabilityService {
   /**
    * Create recurring availabilities
    */
-  private static async createRecurringAvailabilities(baseAvailability: TrainerAvailability): Promise<void> {
+  private static async createRecurringAvailabilities(
+    baseAvailability: TrainerAvailability
+  ): Promise<void> {
     if (!baseAvailability.recurringPattern) {
       return;
     }
@@ -187,7 +194,7 @@ export class TrainerAvailabilityService {
           nextDate.setDate(nextDate.getDate() + interval);
           break;
         case 'weekly':
-          nextDate.setDate(nextDate.getDate() + (7 * interval));
+          nextDate.setDate(nextDate.getDate() + 7 * interval);
           break;
         case 'monthly':
           nextDate.setMonth(nextDate.getMonth() + interval);
@@ -223,7 +230,9 @@ export class TrainerAvailabilityService {
   /**
    * Get trainer availabilities by trainer ID
    */
-  static async getTrainerAvailabilitiesByTrainerId(trainerId: string): Promise<TrainerAvailability[]> {
+  static async getTrainerAvailabilitiesByTrainerId(
+    trainerId: string
+  ): Promise<TrainerAvailability[]> {
     return this.availabilities.filter((a) => a.trainerId === trainerId);
   }
 
@@ -237,7 +246,9 @@ export class TrainerAvailabilityService {
   /**
    * Query trainer availabilities
    */
-  static async queryTrainerAvailabilities(query: AvailabilityQuery): Promise<TrainerAvailability[]> {
+  static async queryTrainerAvailabilities(
+    query: AvailabilityQuery
+  ): Promise<TrainerAvailability[]> {
     let results = this.availabilities;
 
     if (query.trainerId) {
@@ -262,7 +273,11 @@ export class TrainerAvailabilityService {
   /**
    * Get available trainers for a specific date and time
    */
-  static async getAvailableTrainers(date: string, startTime: string, endTime: string): Promise<string[]> {
+  static async getAvailableTrainers(
+    date: string,
+    startTime: string,
+    endTime: string
+  ): Promise<string[]> {
     const availableTrainerIds = new Set<string>();
 
     const relevantAvailabilities = this.availabilities.filter(
@@ -294,7 +309,10 @@ export class TrainerAvailabilityService {
   /**
    * Update trainer availability
    */
-  static async updateTrainerAvailability(id: string, input: UpdateTrainerAvailabilityInput): Promise<TrainerAvailability | null> {
+  static async updateTrainerAvailability(
+    id: string,
+    input: UpdateTrainerAvailabilityInput
+  ): Promise<TrainerAvailability | null> {
     const index = this.availabilities.findIndex((a) => a.id === id);
     if (index === -1) {
       return null;
@@ -347,7 +365,10 @@ export class TrainerAvailabilityService {
   /**
    * Get availability conflicts for a date range
    */
-  static async getAvailabilityConflicts(startDate: string, endDate: string): Promise<AvailabilityConflict[]> {
+  static async getAvailabilityConflicts(
+    startDate: string,
+    endDate: string
+  ): Promise<AvailabilityConflict[]> {
     const conflicts: AvailabilityConflict[] = [];
 
     const dateAvailabilities = this.availabilities.filter(
@@ -367,7 +388,7 @@ export class TrainerAvailabilityService {
     // Check for overlaps within each group
     for (const [key, group] of grouped) {
       const [trainerId, date] = key.split('-');
-      
+
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
           const a1 = group[i];
@@ -395,11 +416,11 @@ export class TrainerAvailabilityService {
   /**
    * Initialize with mock data (for development)
    */
-static initializeMockData(): void {
-  const now = new Date();
-  
-  // Create availabilities for the next 7 days
-  for (let i = 0; i < 7; i++) {
+  static initializeMockData(): void {
+    const now = new Date();
+
+    // Create availabilities for the next 7 days
+    for (let i = 0; i < 7; i++) {
       const date = new Date(now);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];

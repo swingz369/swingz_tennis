@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { AuditService } from '@/infrastructure/audit/audit.service';
 import { assignSubscriptionSchema } from '@/application/validation/schemas';

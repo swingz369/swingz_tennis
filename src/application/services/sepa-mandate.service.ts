@@ -1,4 +1,9 @@
-import { SEPAMandateFormData, validateIBAN, formatIBAN, generateMandateReference } from '../validation/schemas/sepa-mandate.schema';
+import type { SEPAMandateFormData } from '../validation/schemas/sepa-mandate.schema';
+import {
+  validateIBAN,
+  formatIBAN,
+  generateMandateReference,
+} from '../validation/schemas/sepa-mandate.schema';
 
 export interface SEPAMandate {
   id: string;
@@ -86,9 +91,7 @@ export class SEPAMandateService {
    */
   static async getActiveMandateForMember(memberId: string): Promise<SEPAMandate | null> {
     return (
-      Array.from(this.mandates.values()).find(
-        (m) => m.memberId === memberId && m.isActive
-      ) || null
+      Array.from(this.mandates.values()).find((m) => m.memberId === memberId && m.isActive) || null
     );
   }
 
@@ -102,10 +105,7 @@ export class SEPAMandateService {
   /**
    * Revoke mandate
    */
-  static async revokeMandate(
-    mandateId: string,
-    reason: string
-  ): Promise<SEPAMandate> {
+  static async revokeMandate(mandateId: string, reason: string): Promise<SEPAMandate> {
     const mandate = this.mandates.get(mandateId);
 
     if (!mandate) {

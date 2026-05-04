@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z, ZodError } from 'zod';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { z } from 'zod';
+import { ZodError } from 'zod';
 
 /**
  * Validate request body against a Zod schema.

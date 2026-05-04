@@ -5,11 +5,24 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, isWithinInterva
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Download, FileText, Calendar, CreditCard, AlertCircle } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  FileText,
+  Calendar,
+  CreditCard,
+  AlertCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useSessions } from '@/hooks/use-sessions';
-import { downloadInvoicePDF, generateSampleInvoice, generateInvoiceFromBookings, Invoice } from '@/lib/invoice-pdf';
+import type { Invoice } from '@/lib/invoice-pdf';
+import {
+  downloadInvoicePDF,
+  generateSampleInvoice,
+  generateInvoiceFromBookings,
+} from '@/lib/invoice-pdf';
 
 export default function MemberBilling() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -73,7 +86,7 @@ export default function MemberBilling() {
   };
 
   const calculateMonthlyTotal = () => {
-    return monthSessions.length * 15.00; // Assuming €15 per session
+    return monthSessions.length * 15.0; // Assuming €15 per session
   };
 
   const monthlyTotal = calculateMonthlyTotal();
@@ -114,29 +127,24 @@ export default function MemberBilling() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Diesen Monat
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Diesen Monat</CardTitle>
             <Calendar className="h-4 w-4 text-brand-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              {monthSessions.length} Sessions gebucht
-            </p>
+            <p className="text-xs text-gray-500 mt-1">{monthSessions.length} Sessions gebucht</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Ausstehend
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Ausstehend</CardTitle>
             <CreditCard className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              €{invoices
+              €
+              {invoices
                 .filter((inv) => inv.status === 'pending')
                 .reduce((sum, inv) => sum + inv.total, 0)
                 .toFixed(2)}
@@ -149,14 +157,13 @@ export default function MemberBilling() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Bezahlt
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Bezahlt</CardTitle>
             <FileText className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              €{invoices
+              €
+              {invoices
                 .filter((inv) => inv.status === 'paid')
                 .reduce((sum, inv) => sum + inv.total, 0)
                 .toFixed(2)}
@@ -216,9 +223,7 @@ export default function MemberBilling() {
             <div className="text-center py-8 text-gray-500">
               <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>Noch keine Rechnungen vorhanden</p>
-              <p className="text-sm mt-2">
-                Buche Trainingssessions, um Rechnungen zu generieren
-              </p>
+              <p className="text-sm mt-2">Buche Trainingssessions, um Rechnungen zu generieren</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -246,9 +251,7 @@ export default function MemberBilling() {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <div className="font-semibold">€{invoice.total.toFixed(2)}</div>
-                        <div
-                          className={`text-xs px-2 py-1 rounded-full ${status.color}`}
-                        >
+                        <div className={`text-xs px-2 py-1 rounded-full ${status.color}`}>
                           {status.label}
                         </div>
                       </div>

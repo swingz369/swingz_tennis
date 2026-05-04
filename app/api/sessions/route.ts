@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
 import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositories/trainer.repository';
 import { createClient } from '@/infrastructure/external/supabase/server';

@@ -1,4 +1,4 @@
-import {
+import type {
   FeeConfiguration,
   CreateFeeConfigurationInput,
   UpdateFeeConfigurationInput,
@@ -17,7 +17,10 @@ export class FeeConfigurationService {
   /**
    * Validate fee configuration input
    */
-  static validateFeeConfigurationInput(input: CreateFeeConfigurationInput): { valid: boolean; errors: string[] } {
+  static validateFeeConfigurationInput(input: CreateFeeConfigurationInput): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!input.name || input.name.trim().length < 2) {
@@ -44,7 +47,11 @@ export class FeeConfigurationService {
       errors.push('Ungültiges Gültig-bis-Datum');
     }
 
-    if (input.validFrom && input.validUntil && new Date(input.validFrom) > new Date(input.validUntil)) {
+    if (
+      input.validFrom &&
+      input.validUntil &&
+      new Date(input.validFrom) > new Date(input.validUntil)
+    ) {
       errors.push('Gültig-ab muss vor Gültig-bis liegen');
     }
 
@@ -56,7 +63,11 @@ export class FeeConfigurationService {
       errors.push('Höchstalter darf nicht negativ sein');
     }
 
-    if (input.conditions?.minAge && input.conditions?.maxAge && input.conditions.minAge > input.conditions.maxAge) {
+    if (
+      input.conditions?.minAge &&
+      input.conditions?.maxAge &&
+      input.conditions.minAge > input.conditions.maxAge
+    ) {
       errors.push('Mindestalter darf nicht größer als Höchstalter sein');
     }
 
@@ -77,7 +88,9 @@ export class FeeConfigurationService {
   /**
    * Create a new fee configuration
    */
-  static async createFeeConfiguration(input: CreateFeeConfigurationInput): Promise<FeeConfiguration> {
+  static async createFeeConfiguration(
+    input: CreateFeeConfigurationInput
+  ): Promise<FeeConfiguration> {
     const validation = this.validateFeeConfigurationInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
@@ -143,21 +156,28 @@ export class FeeConfigurationService {
   /**
    * Get fee configurations by type
    */
-  static async getFeeConfigurationsByType(type: FeeConfiguration['type']): Promise<FeeConfiguration[]> {
+  static async getFeeConfigurationsByType(
+    type: FeeConfiguration['type']
+  ): Promise<FeeConfiguration[]> {
     return this.feeConfigurations.filter((f) => f.type === type);
   }
 
   /**
    * Get fee configurations by billing cycle
    */
-  static async getFeeConfigurationsByBillingCycle(billingCycle: FeeConfiguration['billingCycle']): Promise<FeeConfiguration[]> {
+  static async getFeeConfigurationsByBillingCycle(
+    billingCycle: FeeConfiguration['billingCycle']
+  ): Promise<FeeConfiguration[]> {
     return this.feeConfigurations.filter((f) => f.billingCycle === billingCycle);
   }
 
   /**
    * Update fee configuration
    */
-  static async updateFeeConfiguration(id: string, input: UpdateFeeConfigurationInput): Promise<FeeConfiguration | null> {
+  static async updateFeeConfiguration(
+    id: string,
+    input: UpdateFeeConfigurationInput
+  ): Promise<FeeConfiguration | null> {
     const index = this.feeConfigurations.findIndex((f) => f.id === id);
     if (index === -1) {
       return null;
@@ -214,7 +234,11 @@ export class FeeConfigurationService {
         return false;
       }
 
-      if (config.conditions.trainingGroup && trainingGroup && !config.conditions.trainingGroup.includes(trainingGroup)) {
+      if (
+        config.conditions.trainingGroup &&
+        trainingGroup &&
+        !config.conditions.trainingGroup.includes(trainingGroup)
+      ) {
         return false;
       }
 
@@ -227,7 +251,7 @@ export class FeeConfigurationService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    
+
     this.feeConfigurations = [
       {
         id: 'fee-1',

@@ -2,7 +2,8 @@ import { eq, inArray, sql, and, gte, lt } from 'drizzle-orm';
 import { getDb } from '../client';
 import { clubs, userClubMemberships } from '../schema';
 import { Club } from '@/domain/entities/club';
-import { ClubId, MemberId } from '@/domain/value-objects';
+import type { MemberId } from '@/domain/value-objects';
+import { ClubId } from '@/domain/value-objects';
 import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
 
 export class DrizzleClubRepository implements ClubRepository {

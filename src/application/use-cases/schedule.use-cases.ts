@@ -1,13 +1,13 @@
+import type { SchedulingService } from '@/domain/services/scheduling.service';
 import {
-  SchedulingService,
   type AIGeneratedPlan,
   type ScheduleOptimizationResult,
 } from '@/domain/services/scheduling.service';
-import { ScheduleRepository } from '@/domain/repositories';
+import type { ScheduleRepository } from '@/domain/repositories';
 import { Schedule as ScheduleEntity } from '@/domain/entities/schedule';
 import { ClubId } from '@/domain/value-objects';
 import type { Court } from '@/domain/entities/club';
-import { DrizzleCourtRepository } from '@/infrastructure/persistence/repositories/court.repository';
+import type { DrizzleCourtRepository } from '@/infrastructure/persistence/repositories/court.repository';
 
 export interface OptimizeScheduleInput {
   clubId: string;

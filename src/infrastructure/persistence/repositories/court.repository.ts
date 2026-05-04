@@ -2,7 +2,7 @@ import { eq, sql } from 'drizzle-orm';
 import { getDb } from '../client';
 import { courts } from '../schema';
 import type { Court } from '@/domain/entities/club';
-import { ClubId } from '@/domain/value-objects';
+import type { ClubId } from '@/domain/value-objects';
 import type { CourtRepository } from '@/domain/repositories/court-repository.interface';
 
 export class DrizzleCourtRepository implements CourtRepository {
