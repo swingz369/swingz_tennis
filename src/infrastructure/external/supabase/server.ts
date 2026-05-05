@@ -20,7 +20,11 @@ export const createClient = async () => {
         return cookieStore.get(name)?.value;
       },
       set(name: string, value: string, options: any = {}) {
-        cookieStore.set(name, value, options);
+        cookieStore.set(name, value, {
+          ...options,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        });
       },
       remove(name: string) {
         cookieStore.delete(name);

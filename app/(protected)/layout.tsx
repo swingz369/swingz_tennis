@@ -54,10 +54,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   };
 
   return (
-    <ProtectedRoute>
-      <SentryErrorBoundary>
+    <SentryErrorBoundary>
+      <ProtectedRoute>
         <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
-      </SentryErrorBoundary>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </SentryErrorBoundary>
   );
 }
