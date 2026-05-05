@@ -19,6 +19,7 @@ import {
   CheckCircle,
   Trophy,
   Building2,
+  User,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -46,10 +47,12 @@ export function Sidebar({
     { name: 'Trainingszeiten', href: '/training-schedule', icon: Calendar },
     { name: 'Anwesenheit', href: '/attendance-history', icon: TrendingUp },
     { name: 'News', href: '/news', icon: Bell },
+    { name: 'Benachrichtigungen', href: '/notifications', icon: Bell }, // duplicate icon ok or use different?
     { name: 'Buchungen', href: '/bookings', icon: Calendar },
-    { name: 'Plätze', href: '/courts', icon: MapPin },
+    { name: 'Platz-Kalender', href: '/courts', icon: MapPin },
     ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),
     { name: 'Abo & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin },
+    { name: 'Mein Profil', href: '/profile', icon: User },
     ...(showTenantLink
       ? [{ name: 'Vereinsübersicht', href: '/admin/tenants', icon: Building2 }]
       : []),
@@ -58,13 +61,14 @@ export function Sidebar({
   const adminNav = [
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, showIf: isAdmin },
     { name: 'Onboarding', href: '/admin/onboarding', icon: HelpCircle, showIf: isAdmin },
-    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin }, // Changed: isAdmin instead of isSuperAdmin
+    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin },
     { name: 'Mitglieder', href: '/admin/members', icon: Users, showIf: isAdmin },
+    { name: 'Trainer', href: '/admin/trainers', icon: Users, showIf: isAdmin },
     { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },
-    { name: 'Plätze', href: '/admin/courts', icon: MapPin, showIf: isAdmin },
+    { name: 'Platzverwaltung', href: '/admin/courts/manage', icon: MapPin, showIf: isAdmin },
     { name: 'Genehmigungen', href: '/admin/approvals', icon: CheckCircle, showIf: isAdmin },
     { name: 'Einstellungen', href: '/admin/settings', icon: Settings, showIf: isAdmin },
-    { name: 'Billing Admin', href: '/admin/billing', icon: CreditCard, showIf: isAdmin }, // Changed: isAdmin instead of isSuperAdmin
+    { name: 'Billing Admin', href: '/admin/billing', icon: CreditCard, showIf: isAdmin },
   ].filter((item) => item.showIf);
 
   return (

@@ -29,6 +29,7 @@ type ClubSettings = {
   id: string;
   name: string;
   maxMembers: number;
+  defaultHourlyRate?: number;
   status: 'active' | 'inactive' | 'suspended';
   openingHours: OpeningHours;
 };
@@ -87,17 +88,15 @@ export default function SettingsPage() {
           id: clubData.clubId,
           name: clubData.club.name || '',
           maxMembers: clubData.club.maxMembers || 100,
+          defaultHourlyRate: clubData.club.defaultHourlyRate || 15.0,
           status: clubData.club.status || 'active',
         }));
       }
 
-      // Check if user is superadmin (by trying to fetch system settings or checking role)
-      // For now, we'll assume if they can access /admin/billing they are superadmin
-      // We'll determine by role from the user object - we need to fetch it
-      // For demo, we'll just use mock detection
+      // Check if user is superadmin
       const isDemo = document.cookie.includes('demo-mode');
       if (isDemo) {
-        setIsSuperAdmin(true); // Demo user has all roles
+        setIsSuperAdmin(true);
       }
     } catch (err) {
       console.error('Failed to fetch settings:', err);
@@ -116,6 +115,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           name: clubSettings.name,
           maxMembers: clubSettings.maxMembers,
+          defaultHourlyRate: clubSettings.defaultHourlyRate,
           openingHours: clubSettings.openingHours,
           status: clubSettings.status,
         }),
@@ -259,6 +259,26 @@ export default function SettingsPage() {
                   <SelectItem value="suspended">Suspendiert</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Pricing */}
+            <div>
+              <Label htmlFor="defaultHourlyRate">Stundenpreis (€)</Label>
+              <Input
+                id="defaultHourlyRate"
+                type="number"
+                step="0.5"
+                min="0"
+                value={clubSettings.defaultHourlyRate || 15}
+                onChange={(e) =>
+                  setClubSettings({
+                    ...clubSettings,
+                    defaultHourlyRate: parseFloat(e.target.value) || 15.0,
+                  })
+                }
+                className="w-48"
+              />
+              <p className="text-sm text-gray-500 mt-1">Standard-Stundenpreis für Platzbuchungen</p>
             </div>
 
             {/* Opening Hours */}

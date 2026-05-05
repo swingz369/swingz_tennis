@@ -26,6 +26,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       if (!club) {
         return NextResponse.json({ error: 'Club not found' }, { status: 404 });
       }
+      // Query default_hourly_rate from DB
+      const { getDb } = await import('@/infrastructure/persistence/client');
+      const db2 = getDb();
+      const result = await db2
+        .select({ default_hourly_rate: clubs.default_hourly_rate })
+        .from(clubs)
+        .where(eq(clubs.id, id))
+        .limit(1);
+      const defaultHourlyRate = result[0]?.default_hourly_rate || 15.0;
+
       return NextResponse.json({
         id: club.getId().getValue(),
         name: club.getName(),
@@ -33,6 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         openingHours: club.getOpeningHours(),
         status: club.getStatus(),
         memberCount: club.getMemberCount(),
+        defaultHourlyRate,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -62,6 +73,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           return NextResponse.json({ error: 'Club not found' }, { status: 404 });
         }
 
+        // Update domain fields
         if (input.name !== undefined) {
           existing.setName(input.name);
         }
@@ -75,7 +87,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           existing.setStatus(input.status);
         }
 
+        // Save domain changes
         await clubRepo.save(existing);
+
+        // Handle defaultHourlyRate separately (not in domain entity yet)
+        if (input.defaultHourlyRate !== undefined) {
+          const { getDb } = await import('@/infrastructure/persistence/client');
+          const db = getDb();
+          await db
+            .update(clubs)
+            .set({ default_hourly_rate: input.defaultHourlyRate })
+            .where(eq(clubs.id, clubId.getValue()));
+        }
 
         try {
           await AuditService.logClubUpdated(auth.user.id, id, input);

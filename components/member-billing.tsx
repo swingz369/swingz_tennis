@@ -18,11 +18,7 @@ import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice } from '@/lib/invoice-pdf';
-import {
-  downloadInvoicePDF,
-  generateSampleInvoice,
-  generateInvoiceFromBookings,
-} from '@/lib/invoice-pdf';
+import { downloadInvoicePDF, generateInvoiceFromBookings } from '@/lib/invoice-pdf';
 
 export default function MemberBilling() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -86,7 +82,8 @@ export default function MemberBilling() {
   };
 
   const calculateMonthlyTotal = () => {
-    return monthSessions.length * 15.0; // Assuming €15 per session
+    const rate = clubData?.club?.defaultHourlyRate || 15.0;
+    return monthSessions.length * rate;
   };
 
   const monthlyTotal = calculateMonthlyTotal();

@@ -2,13 +2,19 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { cookies } from 'next/headers';
 import { AnalyticsClient } from './analytics-client';
+import { ClubSelector } from './club-selector';
 import type { AnalyticsData } from './analytics-client';
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clubId?: string }>;
+}) {
   const cookieStore = await cookies();
   const hasDemoMode = cookieStore.get('demo-mode');
 
   let analyticsData: AnalyticsData | null = null;
+  let clubs: Array<{ id: string; name: string }> = [];
 
   if (hasDemoMode) {
     analyticsData = {
@@ -36,6 +42,7 @@ export default async function AnalyticsPage() {
         { court: 'Platz 5', util: 55 },
       ],
     };
+    clubs = [{ id: 'demo-club', name: 'Demo Tennis Club' }];
   } else {
     const supabase = await createClient();
     const {
@@ -43,16 +50,30 @@ export default async function AnalyticsPage() {
     } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
+    // Get all active club memberships with club details
     const { data: memberships } = await supabase
       .from('user_club_memberships')
-      .select('club_id')
+      .select('club_id, clubs (id, name)')
       .eq('user_id', user.id)
-      .limit(1);
+      .eq('is_active', true);
 
     if (!memberships || memberships.length === 0) {
       analyticsData = null;
     } else {
-      const clubId = memberships[0].club_id;
+      // Build clubs list
+      clubs = memberships.map((m) => ({
+        id: m.club_id,
+        name: (m.clubs as any)?.name || 'Unnamed Club',
+      }));
+
+      // Determine which club to show
+      const params = await searchParams;
+      const requestedClubId = params.clubId;
+      let effectiveClubId = clubs[0].id;
+      if (requestedClubId && clubs.some((c) => c.id === requestedClubId)) {
+        effectiveClubId = requestedClubId;
+      }
+
       const endDate = new Date();
       const startDate = new Date();
       startDate.setMonth(startDate.getMonth() - 6);
@@ -83,7 +104,7 @@ export default async function AnalyticsPage() {
           courtRepo,
           bookingRepo
         );
-        const result = await useCase.execute(clubId, startDate, endDate);
+        const result = await useCase.execute(effectiveClubId, startDate, endDate);
 
         analyticsData = {
           totalMembers: result.metrics.totalMembers,
@@ -129,5 +150,22 @@ export default async function AnalyticsPage() {
     );
   }
 
-  return <AnalyticsClient data={analyticsData} />;
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header with Club Selector for superadmin/multi-club */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-primary">Analytics</h1>
+          <p className="text-gray-500">Vereinsstatistiken und Leistungskennzahlen</p>
+        </div>
+        <ClubSelector
+          clubs={clubs}
+          selectedClubId={
+            clubs.find((c) => c.id === (await searchParams).clubId)?.id || clubs[0].id
+          }
+        />
+      </div>
+      <AnalyticsClient data={analyticsData} />
+    </div>
+  );
 }

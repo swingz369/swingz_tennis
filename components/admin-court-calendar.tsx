@@ -37,14 +37,9 @@ import {
   GripVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
+import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
-import {
-  useSessions,
-  useCreateBooking,
-  useCancelBooking,
-  useUpdateBookingStatus,
-} from '@/hooks/use-sessions';
+import { useSessions } from '@/hooks/use-sessions';
 
 interface AdminCourtCalendarProps {
   onBookCourt?: (courtId: string, date: Date, startTime: string, endTime: string) => void;
@@ -103,27 +98,21 @@ function DraggableSession({ session, isDragging }: DraggableSessionProps) {
   );
 }
 
-export default function AdminCourtCalendar({ onBookCourt }: AdminCourtCalendarProps) {
+export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminCourtCalendarProps) {
   const router = useRouter();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggedSession, setDraggedSession] = useState<any>(null);
 
   const { data: clubData } = useUserClub();
-  const { data: memberData } = useUserMember();
   const { data: userRoles = [] } = useUserRoles();
 
   const clubId = clubData?.clubId ?? null;
-  const memberId = memberData?.memberId ?? null;
 
   const isAdmin = userRoles.some((r) => r === 'admin' || r === 'superadmin');
 
   const { data: courts = [], isLoading: courtsLoading } = useCourts(clubId);
   const { data: sessions = [], isLoading: sessionsLoading } = useSessions(clubId);
-
-  const createBooking = useCreateBooking();
-  const cancelBooking = useCancelBooking();
-  const updateBookingStatus = useUpdateBookingStatus();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -180,13 +169,13 @@ export default function AdminCourtCalendar({ onBookCourt }: AdminCourtCalendarPr
     [sessions]
   );
 
-  const handleDragOver = useCallback((event: DragOverEvent) => {
+  const handleDragOver = useCallback((_event: DragOverEvent) => {
     // Handle drag over visual feedback if needed
   }, []);
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
-      const { active, over } = event;
+      const { over } = event;
       setActiveId(null);
       setDraggedSession(null);
 
@@ -209,58 +198,61 @@ export default function AdminCourtCalendar({ onBookCourt }: AdminCourtCalendarPr
         return;
       }
 
-      // Check if the target slot is available
+      // Check if the target slot is available (no conflicting session)
       const existingSession = getSessionForCourtAndTime(targetCourtId, targetDate, targetTimeSlot);
       if (existingSession && existingSession.id !== activeId) {
         toast.error('Dieser Platz ist bereits belegt');
         return;
       }
 
-      // Here you would typically call an API to update the session
-      // For now, we'll just show a success message
-      toast.success(
-        `Session verschoben nach ${targetCourtId} am ${format(targetDate, 'dd.MM', { locale: de })} um ${targetTimeSlot}`
-      );
+      // Calculate new end time based on session duration
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = session.endTime.split(':').map(Number);
+      const oldStart = new Date(session.week);
+      oldStart.setHours(startHour, startMin, 0, 0);
+      const oldEnd = new Date(oldStart);
+      oldEnd.setHours(endHour, endMin, 0, 0);
+      const durationMs = oldEnd.getTime() - oldStart.getTime();
 
-      // TODO: Implement actual session update API call
-      // await updateSession({
-      //   sessionId: activeId,
-      //   courtId: targetCourtId,
-      //   date: targetDate,
-      //   startTime: targetTimeSlot,
-      //   endTime: calculateEndTime(targetTimeSlot, session.duration)
-      // });
+      const newStartDate = new Date(targetDate);
+      const [newHour, newMin] = targetTimeSlot.split(':').map(Number);
+      newStartDate.setHours(newHour, newMin, 0, 0);
+      const newEndDate = new Date(newStartDate.getTime() + durationMs);
+      const endTimeStr = `${String(newEndDate.getHours()).padStart(2, '0')}:${String(newEndDate.getMinutes()).padStart(2, '0')}`;
+
+      // Call API to update session
+      try {
+        const response = await fetch(`/api/sessions/${activeId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courtId: targetCourtId,
+            dayOfWeek: targetDate.getDay(),
+            startTime: targetTimeSlot,
+            endTime: endTimeStr,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update session');
+        }
+
+        await response.json();
+        toast.success(
+          `Session verschoben nach ${targetCourtId} am ${format(targetDate, 'dd.MM', { locale: de })} um ${targetTimeSlot}`
+        );
+
+        // Refetch sessions to reflect change
+        // The useSessions hook should handle this via mutation or query invalidation
+        // For now, we can window.location.reload() or trigger a refetch if available
+        // window.location.reload(); // Simple but effective
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Fehler beim Verschieben';
+        toast.error(message);
+      }
     },
     [activeId, sessions, getSessionForCourtAndTime]
-  );
-
-  const handleBookSlot = useCallback(
-    (courtId: string, date: Date, timeSlot: string) => {
-      if (!memberId || !clubId) {
-        toast.error('Member-ID oder Club-ID nicht verfügbar');
-        return;
-      }
-
-      const session = getSessionForCourtAndTime(courtId, date, timeSlot);
-      if (session) {
-        if (onBookCourt) {
-          onBookCourt(courtId, date, timeSlot, session.endTime);
-        } else {
-          createBooking.mutate({ memberId, sessionId: session.id, clubId });
-        }
-      } else {
-        toast.error('Keine Session für diesen Zeitplatz gefunden');
-      }
-    },
-    [memberId, clubId, createBooking, getSessionForCourtAndTime, onBookCourt]
-  );
-
-  const handleCancelBooking = useCallback(
-    (sessionId: string, bookingId: string) => {
-      if (!clubId) return;
-      cancelBooking.mutate({ bookingId, sessionId, clubId });
-    },
-    [clubId, cancelBooking]
   );
 
   const getSurfaceLabel = (surface: string) => {

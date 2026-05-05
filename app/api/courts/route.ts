@@ -1,11 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { DrizzleCourtRepository } from '@/infrastructure/persistence/repositories/court.repository';
 import { ClubId } from '@/domain/value-objects';
+import { courtService } from '@/lib/booking/court.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
-
-const courtRepo = new DrizzleCourtRepository();
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -31,15 +29,27 @@ export async function GET(req: NextRequest) {
 
     try {
       const clubId = ClubId.fromString(clubIdParam);
-      const courts = await courtRepo.findByClub(clubId);
 
+      // Use CourtService to get all courts with full details
+      const courts = await courtService.getCourtsByClub(clubId.getValue());
+
+      // Map to consistent camelCase response
       const courtsList = courts.map((c) => ({
         id: c.id,
+        clubId: c.club_id,
+        courtTypeId: c.court_type_id,
         name: c.name,
+        number: c.number,
         surface: c.surface,
-        hasIndoor: c.hasIndoor,
-        isActive: c.isActive,
-        clubId: clubId.getValue(),
+        location: c.location,
+        description: c.description,
+        status: c.status,
+        hasLighting: c.has_lighting,
+        lightingHoursStart: c.lighting_hours_start,
+        lightingHoursEnd: c.lighting_hours_end,
+        isActive: c.is_active,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
       }));
 
       return NextResponse.json(courtsList);
@@ -63,24 +73,72 @@ export async function POST(req: NextRequest) {
 
     try {
       const body = await req.json();
-      const { name, surface, hasIndoor, isActive, clubId } = body;
+      const {
+        name,
+        courtTypeId,
+        number,
+        hasLighting,
+        lightingHoursStart,
+        lightingHoursEnd,
+        location,
+        description,
+        clubId: bodyClubId,
+      } = body;
 
-      if (!name || !clubId) {
-        return NextResponse.json({ error: 'name and clubId are required' }, { status: 400 });
+      if (!name || !courtTypeId || number === undefined) {
+        return NextResponse.json(
+          { error: 'name, courtTypeId, and number are required' },
+          { status: 400 }
+        );
       }
 
-      const court = {
-        id: crypto.randomUUID(),
+      // SECURITY FIX: Validate clubId belongs to admin for non-superadmin
+      let effectiveClubId: string;
+      if (auth.role !== 'superadmin') {
+        effectiveClubId = auth.clubId; // Force admin to use their own club
+      } else {
+        // Superadmin must provide clubId or default to first membership?
+        if (!bodyClubId) {
+          return NextResponse.json({ error: 'clubId required for superadmin' }, { status: 400 });
+        }
+        effectiveClubId = bodyClubId;
+      }
+
+      // Create court via service
+      const court = await courtService.createCourt({
+        club_id: effectiveClubId,
+        court_type_id: courtTypeId,
         name,
-        surface: surface || 'clay',
-        hasIndoor: hasIndoor || false,
-        isActive: isActive !== undefined ? isActive : true,
-        clubId,
-      };
+        number,
+        location,
+        description,
+        has_lighting: hasLighting || false,
+        lighting_hours_start: lightingHoursStart || null,
+        lighting_hours_end: lightingHoursEnd || null,
+      });
 
-      await courtRepo.save(court);
-
-      return NextResponse.json({ success: true, court }, { status: 201 });
+      return NextResponse.json(
+        {
+          success: true,
+          court: {
+            id: court.id,
+            clubId: court.club_id,
+            courtTypeId: court.court_type_id,
+            name: court.name,
+            number: court.number,
+            surface: court.surface,
+            location: court.location,
+            description: court.description,
+            status: court.status,
+            hasLighting: court.has_lighting,
+            lightingHoursStart: court.lighting_hours_start,
+            lightingHoursEnd: court.lighting_hours_end,
+            isActive: court.is_active,
+            createdAt: court.created_at,
+          },
+        },
+        { status: 201 }
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error creating court:', error);

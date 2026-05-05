@@ -10,7 +10,13 @@ export async function GET(_req: NextRequest) {
   if (hasDemoMode) {
     return NextResponse.json({
       clubId: 'demo-club',
-      club: { id: 'demo-club', name: 'Demo Tennis Club', maxMembers: 100, status: 'active' },
+      club: {
+        id: 'demo-club',
+        name: 'Demo Tennis Club',
+        maxMembers: 100,
+        defaultHourlyRate: 15.0,
+        status: 'active',
+      },
     });
   }
 
@@ -27,7 +33,7 @@ export async function GET(_req: NextRequest) {
 
     const { data: memberships, error: membershipError } = await auth.supabase
       .from('user_club_memberships')
-      .select('club_id, clubs (id, name, max_members, status)')
+      .select('club_id, clubs (id, name, max_members, default_hourly_rate, status)')
       .eq('user_id', auth.user.id)
       .eq('is_active', true)
       .limit(1);
@@ -41,11 +47,18 @@ export async function GET(_req: NextRequest) {
       id: string;
       name: string;
       max_members: number;
+      default_hourly_rate: number;
       status: string;
     };
     return NextResponse.json({
       clubId: membership.club_id,
-      club: { id: club.id, name: club.name, maxMembers: club.max_members, status: club.status },
+      club: {
+        id: club.id,
+        name: club.name,
+        maxMembers: club.max_members,
+        defaultHourlyRate: club.default_hourly_rate || 15.0,
+        status: club.status,
+      },
     });
   });
 }

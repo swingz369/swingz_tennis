@@ -21,6 +21,8 @@ import {
   useOptimizeSchedule,
   type Session,
 } from '@/hooks/use-schedule';
+import { useUserRoles } from '@/hooks/use-user-data';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 const TIME_SLOTS = [
   '08:00',
@@ -45,6 +47,89 @@ export default function SchedulerPage() {
   const { data: schedule, isLoading, error } = useSchedule('demo-club');
   const updateSchedule = useUpdateSchedule();
   const optimizeSchedule = useOptimizeSchedule();
+
+  const { data: user } = useCurrentUser();
+  const { data: roles = [] } = useUserRoles();
+  const isAdmin = roles.includes('admin') || roles.includes('superadmin');
+  const isTrainer = roles.includes('trainer');
+
+  const canDragSession = (session: Session) => {
+    if (isAdmin) return true;
+    if (isTrainer && user?.userId === session.trainerId) return true;
+    return false;
+  };
+
+  // Draggable Session Card component (inner to access canDragSession)
+  function DraggableSessionCard({ session }: { session: Session }) {
+    const canDrag = canDragSession(session);
+    const draggable = useDraggable({
+      id: session.id,
+      disabled: !canDrag,
+    });
+
+    const style = draggable.transform
+      ? { transform: CSS.Transform.toString(draggable.transform) }
+      : undefined;
+
+    const { attributes, listeners, setNodeRef, isDragging } = draggable;
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className={`p-2 rounded text-xs transition-colors ${canDrag ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-50 rotate-2 scale-105 shadow-lg' : 'bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200'}`}
+      >
+        <div className="flex items-start justify-between gap-1">
+          <div className="flex items-center gap-1">
+            {canDrag && <GripVertical className="h-3 w-3 text-gray-400" />}
+            <div className="font-medium truncate">
+              {session.trainerName?.substring(0, 8) || 'Trainer'}
+            </div>
+          </div>
+          {session.bookedByUser && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-gray-600">
+          <Clock className="h-3 w-3" />
+          <span>
+            {session.startTime} - {session.endTime}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Drop Zone Component
+  function DropZone({
+    id,
+    dayIdx,
+    time,
+    sessions,
+  }: {
+    id: string;
+    dayIdx: number;
+    time: string;
+    sessions: Session[];
+  }) {
+    const { setNodeRef, isOver } = useDroppable({
+      id,
+      data: { dayIdx, time },
+    });
+
+    return (
+      <div
+        ref={setNodeRef}
+        className={`min-h-[60px] border-r border-gray-200 last:border-r-0 p-2 transition-colors ${
+          isOver ? 'bg-[#2D6A4F]/10' : 'hover:bg-gray-50'
+        }`}
+      >
+        {sessions.map((session) => (
+          <DraggableSessionCard key={session.id} session={session} />
+        ))}
+      </div>
+    );
+  }
 
   const handleDragStart = (event: DragStartEvent) => {
     const session = schedule?.sessions.find((s) => s.id === event.active.id);
@@ -72,10 +157,12 @@ export default function SchedulerPage() {
     const newDayOfWeek = dayIdx + 1;
     const newStartTime = time;
 
+    // Create updated sessions array with the moved session
     const updatedSessions = schedule.sessions.map((s) =>
       s.id === activeSession.id ? { ...s, dayOfWeek: newDayOfWeek, startTime: newStartTime } : s
     );
 
+    // Call update mutation – this updates the entire schedule via PUT /api/schedule
     updateSchedule.mutate({
       scheduleId: schedule.scheduleId,
       sessions: updatedSessions,
@@ -187,55 +274,6 @@ export default function SchedulerPage() {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-// Drop Zone Component
-function DropZone({
-  id,
-  dayIdx,
-  time,
-  sessions,
-}: {
-  id: string;
-  dayIdx: number;
-  time: string;
-  sessions: Session[];
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id,
-    data: { dayIdx, time },
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`min-h-[60px] border-r border-gray-200 last:border-r-0 p-2 transition-colors ${
-        isOver ? 'bg-[#2D6A4F]/10' : 'hover:bg-gray-50'
-      }`}
-    >
-      {sessions.map((session) => (
-        <DraggableSessionCard key={session.id} session={session} />
-      ))}
-    </div>
-  );
-}
-
-// Draggable Session Card
-function DraggableSessionCard({ session }: { session: Session }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: session.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <SessionCard session={session} compact />
     </div>
   );
 }
