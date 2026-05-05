@@ -8,29 +8,27 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const auth = await requireAuth();
   const { supabase, user } = auth;
 
+  // Fetch user basic data
   const { data: memberData } = await supabase
     .from('users')
-    .select(
-      `
-      id,
-      email,
-      full_name,
-      user_club_memberships (
-        role,
-        clubs (id, name)
-      )
-    `
-    )
+    .select('id, email, full_name')
     .eq('id', user.id)
     .maybeSingle();
 
-  const primaryClubRaw = memberData?.user_club_memberships?.[0]?.clubs ?? null;
-  const primaryClub = Array.isArray(primaryClubRaw) ? primaryClubRaw[0] : primaryClubRaw;
+  // Fetch memberships separately to avoid foreign key issues
+  const { data: memberships } = await supabase
+    .from('user_club_memberships')
+    .select('role, club_id, is_active, clubs(id, name)')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
 
-  const roles: string[] = (memberData?.user_club_memberships ?? []).map(
-    (m: { role: string }) => m.role
-  );
+  const roles: string[] = (memberships ?? []).map((m: { role: string }) => m.role);
   const isSuperAdmin = roles.includes('superadmin');
+
+  // Get primary club from first active membership
+  const primaryMembership = memberships?.[0];
+  const primaryClubRaw = primaryMembership?.clubs ?? null;
+  const primaryClub = Array.isArray(primaryClubRaw) ? primaryClubRaw[0] : primaryClubRaw;
 
   // Read selected-club-id cookie for superadmin context
   const cookieStore = await cookies();
