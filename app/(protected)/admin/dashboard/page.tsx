@@ -22,7 +22,13 @@ export default async function SuperadminDashboardPage() {
   console.log('Is superadmin:', isSuperadmin);
 
   if (!isSuperadmin) {
-    redirect('/admin/analytics');
+    // Vereins-Admin: Zum Admin-Dashboard seines Vereins weiterleiten
+    const adminMembership = memberships?.find((m) => m.role === 'admin') || memberships?.[0];
+    if (adminMembership) {
+      redirect(`/admin/clubs/${adminMembership.club_id}/dashboard`);
+    } else {
+      redirect('/admin/members');
+    }
   }
 
   const { data: clubs, error: clubsError } = await supabase.from('clubs').select('id, name');
