@@ -69,11 +69,11 @@ export default async function AnalyticsPage({
       await import('@/infrastructure/persistence/repositories/booking.repository');
 
     const getClubAnalyticsUseCase = new GetClubAnalyticsUseCase(
-      DrizzleClubRepository,
-      DrizzleScheduleRepository,
-      DrizzleTrainerRepository,
-      DrizzleCourtRepository,
-      DrizzleBookingRepository
+      new DrizzleClubRepository(),
+      new DrizzleScheduleRepository(),
+      new DrizzleTrainerRepository(),
+      new DrizzleCourtRepository(),
+      new DrizzleBookingRepository()
     );
 
     const analyticsData = await getClubAnalyticsUseCase.execute(
