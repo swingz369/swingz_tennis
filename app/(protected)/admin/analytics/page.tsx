@@ -47,22 +47,8 @@ export default async function AnalyticsPage({
 
   const { data: membershipsWithClubs } = await clubQuery;
 
-  type Membership = {
-    club_id: string;
-    clubs: { id: string; name: string }[];
-  };
-
-  if (!membershipsWithClubs || membershipsWithClubs.length === 0) {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-        <p className="text-gray-500">Sie sind keinem Verein zugeordnet.</p>
-      </div>
-    );
-  }
-
   // Build clubs list (clubs is an array from the join)
-  const clubs = (membershipsWithClubs as Membership[]).map((m) => ({
+  const clubs = (membershipsWithClubs as any[]).map((m) => ({
     id: m.club_id,
     name: m.clubs[0]?.name || 'Unnamed Club',
   }));
