@@ -35,16 +35,8 @@ export default function ClubsAdminPage() {
       setClubs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch clubs:', err);
-      // Demo fallback
-      setClubs([
-        {
-          id: 'demo-club',
-          name: 'Demo Tennis Club',
-          maxMembers: 100,
-          status: 'active',
-          memberCount: 0,
-        },
-      ]);
+      setClubs([]);
+      setError('Fehler beim Laden der Vereine');
     } finally {
       setLoading(false);
     }

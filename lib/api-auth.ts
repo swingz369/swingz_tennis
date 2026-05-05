@@ -94,7 +94,7 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(_cookiesToSet) {
         // No-op in request context (read-only)
       },
     },
@@ -135,26 +135,8 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
     }
   }
 
-  // Demo mode
-  const hasDemoMode = request.cookies.get('demo-mode');
-  if (hasDemoMode) {
-    return {
-      user: {
-        id: 'demo-user',
-        email: 'demo@swingz.com',
-        user_metadata: { full_name: 'Demo User' },
-      } as any,
-      session: { access_token: 'demo', refresh_token: '' } as any,
-      supabase: {} as any,
-      clubId: 'demo-club',
-      selectedClubId: undefined,
-      role: 'member',
-      roles: ['member'],
-      memberships: [{ club_id: 'demo-club', role: 'member' }],
-    };
-  }
-
-  throw new Error('No valid session found. Please log in.');
+  // Build auth context from user session
+  return await buildAuthContext(supabase, user, request);
 }
 
 /**

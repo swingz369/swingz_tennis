@@ -1,5 +1,4 @@
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { cookies } from 'next/headers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,97 +35,59 @@ type Booking = {
 
 export default async function MemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
 
   let member: Member | null = null;
   let bookings: Booking[] = [];
 
-  // Demo mode – return mock data
-  if (hasDemoMode) {
-    member = {
-      id: '1',
-      user_id: 'demo-user-123',
-      full_name: 'Max Mustermann',
-      email: 'max@example.com',
-      role: 'member',
-      is_active: true,
-      joined_at: '2025-01-15',
-      created_at: '2025-01-15',
-      phone: null,
-      club_memberships: [
-        {
-          clubs: { id: 'demo-club', name: 'Demo Tennis Club', status: 'active' },
-          role: 'member',
-        },
-      ],
-    };
+  // Normal Supabase flow
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
 
-    bookings = [
-      {
-        id: 'b1',
-        status: 'confirmed',
-        created_at: new Date().toISOString(),
-        sessions: {
-          id: 's1',
-          timeslot_start: new Date().toISOString(),
-          timeslot_end: new Date(Date.now() + 3600000).toISOString(),
-          trainer_id: 'trainer-1',
-          schedules: { name: 'Trainingsgruppe A' },
-        },
-      },
-    ];
-  } else {
-    // Normal Supabase flow
-    const supabase = await createClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
-    if (!authUser) {
-      return (
-        <div className="flex min-h-screen items-center justify-center">
-          <p>Bitte einloggen</p>
-        </div>
-      );
-    }
-
-    const { data: memberData } = await supabase
-      .from('users')
-      .select('*, club_memberships(clubs(name, status))')
-      .eq('id', id)
-      .single();
-
-    if (!memberData) {
-      return (
-        <div className="flex min-h-screen items-center justify-center">
-          <p>Mitglied nicht gefunden</p>
-        </div>
-      );
-    }
-
-    member = memberData;
-
-    const { data: bookingsData } = await supabase
-      .from('bookings')
-      .select(
-        `
-           *,
-           sessions (
-             id,
-             timeslot_start,
-             timeslot_end,
-             trainer_id,
-             schedules (name)
-           )
-         `
-      )
-      .eq('member_id', id)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    bookings = bookingsData || [];
+  if (!authUser) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Bitte einloggen</p>
+      </div>
+    );
   }
+
+  const { data: memberData } = await supabase
+    .from('users')
+    .select('*, club_memberships(clubs(name, status))')
+    .eq('id', id)
+    .single();
+
+  if (!memberData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Mitglied nicht gefunden</p>
+      </div>
+    );
+  }
+
+  member = memberData;
+
+  const { data: bookingsData } = await supabase
+    .from('bookings')
+    .select(
+      `
+         *,
+         sessions (
+           id,
+           timeslot_start,
+           timeslot_end,
+           trainer_id,
+           schedules (name)
+         )
+       `
+    )
+    .eq('member_id', id)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  bookings = bookingsData || [];
 
   // If member is still null, show an error (should not happen)
   if (!member) {

@@ -1,25 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_req: NextRequest) {
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
-  if (hasDemoMode) {
-    return NextResponse.json({
-      clubId: 'demo-club',
-      club: {
-        id: 'demo-club',
-        name: 'Demo Tennis Club',
-        maxMembers: 100,
-        defaultHourlyRate: 15.0,
-        status: 'active',
-      },
-    });
-  }
-
   return withApiAuth(_req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
