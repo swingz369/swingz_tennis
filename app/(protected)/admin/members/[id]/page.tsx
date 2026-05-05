@@ -99,8 +99,8 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     member = {
       id: memberData.id,
       user_id: memberData.user_id,
-      full_name: memberData.users?.full_name || 'Unbekannt',
-      email: memberData.users?.email || '',
+      full_name: memberData.users?.[0]?.full_name || 'Unbekannt',
+      email: memberData.users?.[0]?.email || '',
       role: memberData.role,
       is_active: memberData.is_active,
       joined_at: memberData.joined_at,
