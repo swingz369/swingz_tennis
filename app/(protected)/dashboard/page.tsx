@@ -46,9 +46,9 @@ export default async function DashboardPage() {
   // Redirect based on highest role
   switch (highestRole) {
     case 'superadmin':
-      redirect('/admin/dashboard');
+      redirect('/admin/dashboard'); // Globales Superadmin-Dashboard
     case 'admin':
-      redirect('/admin/analytics');
+      redirect('/admin/dashboard'); // Vereinsspezifisches Dashboard (wird in /admin/dashboard/page.tsx weitergeleitet)
     case 'trainer':
       redirect('/trainer');
     case 'member':
