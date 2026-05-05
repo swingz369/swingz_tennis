@@ -45,7 +45,7 @@ export default function SchedulerPage() {
   const [activeSession, setActiveSession] = useState<Session | null>(null);
 
   const { data: clubData } = useUserClub();
-  const clubId = clubData?.clubId || null;
+  const clubId = clubData?.clubId || '';
 
   const { data: schedule, isLoading, error } = useSchedule(clubId);
   const updateSchedule = useUpdateSchedule();
