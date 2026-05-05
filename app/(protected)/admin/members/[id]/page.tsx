@@ -28,22 +28,10 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
   clubId = memberships[0].club_id;
 
+  // Fetch membership data
   const { data: memberData } = await supabase
     .from('user_club_memberships')
-    .select(
-      `
-        id,
-        user_id,
-        role,
-        joined_at,
-        is_active,
-        users (
-          id,
-          full_name,
-          email
-        )
-      `
-    )
+    .select('id, user_id, role, joined_at, is_active')
     .eq('id', id)
     .single();
 
@@ -51,11 +39,18 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     return <div className="p-6 text-gray-500">Mitglied nicht gefunden</div>;
   }
 
+  // Fetch user details separately
+  const { data: userData } = await supabase
+    .from('users')
+    .select('id, full_name, email')
+    .eq('id', memberData.user_id)
+    .single();
+
   member = {
     id: memberData.id,
     user_id: memberData.user_id,
-    full_name: memberData.users?.[0]?.full_name || 'Unbekannt',
-    email: memberData.users?.[0]?.email || '',
+    full_name: userData?.full_name || 'Unbekannt',
+    email: userData?.email || '',
     role: memberData.role,
     is_active: memberData.is_active,
     joined_at: memberData.joined_at,

@@ -41,41 +41,37 @@ export default async function MembersPage() {
 
   const clubId = effectiveClubId;
 
-  // Fetch members for this club with user details from public.users table
-  const { data: members, error: membersError } = await supabase
+  // Fetch members for this club
+  const { data: memberships, error: membershipsError } = await supabase
     .from('user_club_memberships')
-    .select(
-      `
-      id,
-      user_id,
-      role,
-      is_active,
-      joined_at,
-      users!user_id (
-        id,
-        full_name,
-        email
-      )
-    `
-    )
+    .select('id, user_id, role, is_active, joined_at')
     .eq('club_id', clubId)
     .order('joined_at', { ascending: false });
 
-  if (membersError) {
-    console.error('Error fetching members:', membersError);
+  if (membershipsError) {
+    console.error('Error fetching members:', membershipsError);
     return (
       <div className="p-6 text-red-600">
-        Fehler beim Laden der Mitglieder: {membersError.message}
+        Fehler beim Laden der Mitglieder: {membershipsError.message}
       </div>
     );
   }
 
-  const initialMembers: Member[] = (members || []).map((m: any) => ({
+  // Fetch user details separately
+  const userIds = (memberships || []).map((m) => m.user_id);
+  const { data: usersData } = await supabase
+    .from('users')
+    .select('id, full_name, email')
+    .in('id', userIds);
+
+  // Create a map for quick lookup
+  const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
+
+  const initialMembers: Member[] = (memberships || []).map((m: any) => ({
     id: m.id,
     user_id: m.user_id,
-    // The foreign key join returns an object, not an array
-    full_name: m.users?.full_name || 'N/A',
-    email: m.users?.email || 'N/A',
+    full_name: usersMap.get(m.user_id)?.full_name || 'N/A',
+    email: usersMap.get(m.user_id)?.email || 'N/A',
     role: m.role as Member['role'],
     is_active: m.is_active,
     joined_at: m.joined_at,
