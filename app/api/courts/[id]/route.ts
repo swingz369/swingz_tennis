@@ -5,7 +5,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 // GET /api/courts/[id] – Einzelnen Court abrufen
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
     if (!hasRole) {
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
     if (rateLimitError) return rateLimitError;
 
-    const courtId = params.id;
+    const { id: courtId } = await params;
 
     // Validate UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
