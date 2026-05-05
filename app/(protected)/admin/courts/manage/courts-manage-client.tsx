@@ -212,6 +212,11 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
     return ct ? ct.name : 'Unbekannt';
   };
 
+  const getCourtSurface = (court: Court) => {
+    const ct = courtTypes.find((t) => t.id === court.court_type_id);
+    return ct?.surface || '';
+  };
+
   const getSurfaceLabel = (surface: string) => {
     const labels: Record<string, string> = {
       clay: 'Sand',
@@ -424,7 +429,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                     <TableCell>{court.number}</TableCell>
                     <TableCell>{getCourtTypeName(court.court_type_id)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{getSurfaceLabel(court.surface)}</Badge>
+                      <Badge variant="outline">{getSurfaceLabel(getCourtSurface(court))}</Badge>
                     </TableCell>
                     <TableCell>
                       {court.has_lighting ? (

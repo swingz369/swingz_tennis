@@ -41,6 +41,7 @@ export const CourtSchema = z.object({
   court_type_id: z.string().uuid(),
   name: z.string().min(1).max(100),
   number: z.number().int().positive(),
+  surface: CourtSurfaceType, // e.g., clay, hard, etc.
   location: z.string().max(100).nullable().optional(),
   description: z.string().nullable().optional(),
   status: CourtStatus,

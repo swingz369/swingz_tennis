@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { cookies } from 'next/headers';
 import { CourtsManageClient } from './courts-manage-client';
-import type { Court } from '@/lib/booking/court.service';
+import type { Court } from '@/lib/types/court-booking';
 
 export default async function AdminCourtsManagePage() {
   const cookieStore = await cookies();
@@ -21,7 +21,6 @@ export default async function AdminCourtsManagePage() {
         court_type_id: 'demo-type-1',
         name: 'Platz 1',
         number: 1,
-        surface: 'clay',
         location: 'Hauptgebäude',
         description: 'Sandplatz',
         status: 'available',
@@ -38,7 +37,6 @@ export default async function AdminCourtsManagePage() {
         court_type_id: 'demo-type-2',
         name: 'Platz 2',
         number: 2,
-        surface: 'hard',
         location: 'Hauptgebäude',
         description: 'Hartplatz',
         status: 'available',
