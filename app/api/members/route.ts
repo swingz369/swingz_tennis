@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   return withRateLimit(
     request,
     async () => {
-      return withApiAuth(request, async (_auth) => {
+      return withApiAuth(request, async (auth) => {
         try {
           const { searchParams } = new URL(request.url);
 
@@ -84,29 +84,48 @@ export async function GET(request: NextRequest) {
             validation.data;
 
           if (statistics) {
-            const statistics = await MemberService.getMemberStatistics();
-            return NextResponse.json({ statistics });
+            // SECURITY FIX: Filter statistics by club (unless superadmin)
+            const stats = await MemberService.getMemberStatistics(
+              auth.role === 'superadmin' ? undefined : auth.clubId
+            );
+            return NextResponse.json({ statistics: stats });
           }
 
           if (active) {
-            const members = await MemberService.getActiveMembers();
+            // SECURITY FIX: Filter active members by club
+            const members = await MemberService.getActiveMembers(
+              auth.role === 'superadmin' ? undefined : auth.clubId
+            );
             return NextResponse.json({ members });
           }
 
           if (search) {
-            const members = await MemberService.searchMembers(search);
+            // SECURITY FIX: Filter search results by club
+            const members = await MemberService.searchMembers(
+              search,
+              auth.role === 'superadmin' ? undefined : auth.clubId
+            );
             return NextResponse.json({ members });
           }
 
           if (trainingGroup) {
-            const members = await MemberService.getMembersByTrainingGroup(trainingGroup);
+            // SECURITY FIX: Filter by training group AND club
+            const members = await MemberService.getMembersByTrainingGroup(
+              trainingGroup,
+              auth.role === 'superadmin' ? undefined : auth.clubId
+            );
             return NextResponse.json({ members });
           }
 
-          // Query with filters (filtered by club in future iterations)
+          // Query with filters - SECURITY FIX: Always filter by club unless superadmin
           const query: any = {};
           if (status) query.status = status;
           if (type) query.type = type;
+
+          // Add club filter for non-superadmin users
+          if (auth.role !== 'superadmin') {
+            query.clubId = auth.clubId;
+          }
 
           const members = await MemberService.queryMembers(query);
 

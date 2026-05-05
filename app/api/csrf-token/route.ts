@@ -1,14 +1,12 @@
-import { getCSRFTokenHandler } from '@/lib/csrf';
-
 /**
+ * CSRF Token Generation Endpoint
  * GET /api/csrf-token
  *
- * Returns a new CSRF token for the client
- * The token is also set as an httpOnly cookie
- *
- * Client should include the token in X-CSRF-Token header for all
- * POST, PUT, PATCH, DELETE requests
+ * Returns a CSRF token that must be included in all mutation requests
  */
+
+import { getCSRFTokenHandler } from '@/lib/csrf';
+
 export async function GET() {
   return getCSRFTokenHandler();
 }

@@ -18,6 +18,7 @@ export class Booking {
   private sessionId: SessionId;
   private status: BookingStatus;
   private bookedAt: Date;
+  private sessionStartTime: Date; // SECURITY FIX: Store actual session start time for cancellation policy
   private cancelledAt?: Date;
   private cancellationReason?: CancellationReason;
   private cancellationNotes?: string;
@@ -27,7 +28,8 @@ export class Booking {
     clubId: ClubId,
     memberId: MemberId,
     scheduleId: ScheduleId,
-    sessionId: SessionId
+    sessionId: SessionId,
+    sessionStartTime: Date
   ) {
     this.id = id;
     this.clubId = clubId;
@@ -36,15 +38,24 @@ export class Booking {
     this.sessionId = sessionId;
     this.status = 'pending';
     this.bookedAt = new Date();
+    this.sessionStartTime = sessionStartTime;
   }
 
   public static create(
     clubId: ClubId,
     memberId: MemberId,
     scheduleId: ScheduleId,
-    sessionId: SessionId
+    sessionId: SessionId,
+    sessionStartTime: Date
   ): Booking {
-    return new Booking(BookingId.create(), clubId, memberId, scheduleId, sessionId);
+    return new Booking(
+      BookingId.create(),
+      clubId,
+      memberId,
+      scheduleId,
+      sessionId,
+      sessionStartTime
+    );
   }
 
   public static reconstitute(
@@ -53,13 +64,14 @@ export class Booking {
     memberId: MemberId,
     scheduleId: ScheduleId,
     sessionId: SessionId,
+    sessionStartTime: Date,
     status: BookingStatus,
     bookedAt: Date,
     cancelledAt?: Date,
     cancellationReason?: CancellationReason,
     cancellationNotes?: string
   ): Booking {
-    const booking = new Booking(id, clubId, memberId, scheduleId, sessionId);
+    const booking = new Booking(id, clubId, memberId, scheduleId, sessionId, sessionStartTime);
     booking.status = status;
     booking.bookedAt = bookedAt;
     if (cancelledAt) booking.cancelledAt = cancelledAt;
@@ -173,6 +185,11 @@ export class Booking {
 
   private getHoursUntilSession(): number {
     const now = new Date();
-    return (this.bookedAt.getTime() - now.getTime()) / (1000 * 60 * 60);
+    // SECURITY FIX: Use session start time, not booking time
+    return (this.sessionStartTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+  }
+
+  public getSessionStartTime(): Date {
+    return new Date(this.sessionStartTime);
   }
 }

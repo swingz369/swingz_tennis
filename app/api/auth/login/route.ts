@@ -1,9 +1,30 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { rateLimitAuth } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY FIX: Add strict rate limiting to prevent brute force attacks
+    // Limit: 5 login attempts per 15 minutes per IP
+    const rateLimitResult = await rateLimitAuth(request);
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        {
+          error: 'Too many login attempts. Please try again later.',
+          retryAfter,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfter.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          },
+        }
+      );
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {

@@ -129,13 +129,67 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await MemberService.deleteMember(id);
 
-      if (!success) {
+      // SECURITY FIX: Implement soft delete instead of hard delete
+      // Get membership details first
+      const { data: membership, error: fetchError } = await auth.supabase
+        .from('user_club_memberships')
+        .select('user_id, club_id, role')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !membership) {
         return NextResponse.json({ error: 'Member not found' }, { status: 404 });
       }
 
-      return NextResponse.json({ success: true });
+      // Verify club access for non-superadmin
+      if (auth.role !== 'superadmin' && membership.club_id !== auth.clubId) {
+        return forbiddenResponse('Cannot delete members from other clubs');
+      }
+
+      // Soft delete: Deactivate membership instead of deleting
+      const { error: updateError } = await auth.supabase
+        .from('user_club_memberships')
+        .update({
+          is_active: false,
+          deactivated_at: new Date().toISOString(),
+          deactivated_by: auth.user.id,
+        })
+        .eq('id', id);
+
+      if (updateError) {
+        console.error('Error deactivating member:', updateError);
+        return NextResponse.json(
+          { error: 'Failed to deactivate member', details: updateError.message },
+          { status: 500 }
+        );
+      }
+
+      // Audit log
+      try {
+        await auth.supabase.from('audit_logs').insert({
+          user_id: auth.user.id,
+          action: 'member_deactivated',
+          resource_type: 'membership',
+          resource_id: id,
+          details: {
+            membership_id: id,
+            user_id: membership.user_id,
+            club_id: membership.club_id,
+            role: membership.role,
+            method: 'soft_delete',
+          },
+          ip_address: _request.headers.get('x-forwarded-for') || _request.headers.get('x-real-ip'),
+          user_agent: _request.headers.get('user-agent'),
+        });
+      } catch (auditError) {
+        console.error('Audit logging failed:', auditError);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Member deactivated successfully (soft delete)',
+      });
     } catch (error) {
       console.error('Member delete error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

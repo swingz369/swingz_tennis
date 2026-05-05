@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 // Type guard: validates URL format and protocol
 function isValidUrl(url: string | undefined): url is string {
@@ -12,16 +13,50 @@ function isValidUrl(url: string | undefined): url is string {
   }
 }
 
+/**
+ * Verify Zapier webhook signature
+ * SECURITY FIX: Prevents unauthorized webhook calls
+ */
+function verifyZapierSignature(request: NextRequest, body: string): boolean {
+  // Skip verification in development for easier testing
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[DEV] Skipping Zapier signature verification');
+    return true;
+  }
+
+  const signature = request.headers.get('x-zapier-signature');
+  const secret = process.env.ZAPIER_WEBHOOK_SECRET;
+
+  if (!signature || !secret) {
+    console.error('Missing signature or secret for Zapier webhook');
+    return false;
+  }
+
+  try {
+    // Zapier uses HMAC-SHA256 for webhook signatures
+    const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex');
+
+    // Use timing-safe comparison to prevent timing attacks
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+  } catch (error) {
+    console.error('Error verifying Zapier signature:', error);
+    return false;
+  }
+}
+
 export async function POST(_request: NextRequest) {
   try {
-    const body = await _request.json();
-    const event = body;
+    // SECURITY FIX: Read body as text first for signature verification
+    const body = await _request.text();
 
-    // In production, validate webhook signature
-    // if (process.env.NODE_ENV === 'production') {
-    //   const signature = _request.headers.get('zapier-signature');
-    //   // Validate signature
-    // }
+    // Verify signature before processing
+    if (!verifyZapierSignature(_request, body)) {
+      console.error('Invalid Zapier webhook signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    // Parse JSON after signature verification
+    const event = JSON.parse(body);
 
     switch (event.type) {
       case 'booking.created':

@@ -7,9 +7,14 @@ import { createServerClient } from '@supabase/ssr';
  * DEBUG ENDPOINT - Shows auth state and cookies
  * Access: https://swingz.vercel.app/api/debug/auth
  *
- * IMPORTANT: REMOVE OR PROTECT THIS ENDPOINT IN PRODUCTION!
+ * SECURITY FIX: Only available in development environment
  */
 export async function GET(_request: NextRequest) {
+  // SECURITY FIX: Disable in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const cookieStore = await cookies();
   const allCookies = cookieStore.getAll();
 

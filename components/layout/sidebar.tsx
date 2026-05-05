@@ -20,6 +20,7 @@ import {
   Trophy,
   Building2,
   User,
+  Newspaper, // ADDED: For News icon
 } from 'lucide-react';
 
 export function Sidebar({
@@ -46,8 +47,8 @@ export function Sidebar({
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Trainingszeiten', href: '/training-schedule', icon: Calendar },
     { name: 'Anwesenheit', href: '/attendance-history', icon: TrendingUp },
-    { name: 'News', href: '/news', icon: Bell },
-    { name: 'Benachrichtigungen', href: '/notifications', icon: Bell }, // duplicate icon ok or use different?
+    { name: 'News', href: '/news', icon: Newspaper }, // SECURITY FIX: Changed from Bell to Newspaper
+    { name: 'Benachrichtigungen', href: '/notifications', icon: Bell },
     { name: 'Buchungen', href: '/bookings', icon: Calendar },
     { name: 'Platz-Kalender', href: '/courts', icon: MapPin },
     ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),

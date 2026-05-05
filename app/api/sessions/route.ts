@@ -7,6 +7,7 @@ import type { BookingStatus } from '@/domain/entities/booking';
 import { ClubId, TrainerId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { withCSRFProtection } from '@/lib/csrf';
 
 const scheduleRepo = new DrizzleScheduleRepository();
 const trainerRepo = new DrizzleTrainerRepository();
@@ -122,114 +123,117 @@ export async function GET(req: NextRequest) {
 
 // POST /api/sessions – Create a new session
 export async function POST(req: NextRequest) {
-  return withApiAuth(req, async (auth) => {
-    // Only admins and trainers can create sessions
-    const hasPermission = await verifyRole(auth, 'trainer');
-    if (!hasPermission) {
-      return forbiddenResponse('Trainer access required');
-    }
-
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
-
-    try {
-      const body = await req.json();
-      const { dayOfWeek, startTime, endTime, trainerId, maxParticipants, notes, clubId } = body;
-
-      // Validate required fields
-      if (!dayOfWeek || !startTime || !endTime || !trainerId) {
-        return NextResponse.json(
-          { error: 'dayOfWeek, startTime, endTime, and trainerId are required' },
-          { status: 400 }
-        );
+  // SECURITY FIX: Add CSRF protection
+  return withCSRFProtection(req, async () => {
+    return withApiAuth(req, async (auth) => {
+      // Only admins and trainers can create sessions
+      const hasPermission = await verifyRole(auth, 'trainer');
+      if (!hasPermission) {
+        return forbiddenResponse('Trainer access required');
       }
 
-      // Use auth.clubId if clubId not provided
-      const effectiveClubId = clubId || auth.clubId;
-      if (!effectiveClubId) {
-        return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+      const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+      if (rateLimitError) {
+        return rateLimitError;
       }
 
-      const supabase = await createClient();
+      try {
+        const body = await req.json();
+        const { dayOfWeek, startTime, endTime, trainerId, maxParticipants, notes, clubId } = body;
 
-      // Find or create a schedule for this club
-      const { data: schedules } = await supabase
-        .from('schedules')
-        .select('id')
-        .eq('club_id', effectiveClubId)
-        .eq('is_active', true)
-        .limit(1);
+        // Validate required fields
+        if (!dayOfWeek || !startTime || !endTime || !trainerId) {
+          return NextResponse.json(
+            { error: 'dayOfWeek, startTime, endTime, and trainerId are required' },
+            { status: 400 }
+          );
+        }
 
-      let scheduleId: string;
-      if (!schedules || schedules.length === 0) {
-        // Create a default schedule
-        const { data: newSchedule, error: scheduleError } = await supabase
+        // Use auth.clubId if clubId not provided
+        const effectiveClubId = clubId || auth.clubId;
+        if (!effectiveClubId) {
+          return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+        }
+
+        const supabase = await createClient();
+
+        // Find or create a schedule for this club
+        const { data: schedules } = await supabase
           .from('schedules')
-          .insert({
-            club_id: effectiveClubId,
-            season_type: 'summer',
-            season_year: new Date().getFullYear(),
-            season_start_date: new Date().toISOString(),
-            season_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            is_active: true,
-          })
           .select('id')
+          .eq('club_id', effectiveClubId)
+          .eq('is_active', true)
+          .limit(1);
+
+        let scheduleId: string;
+        if (!schedules || schedules.length === 0) {
+          // Create a default schedule
+          const { data: newSchedule, error: scheduleError } = await supabase
+            .from('schedules')
+            .insert({
+              club_id: effectiveClubId,
+              season_type: 'summer',
+              season_year: new Date().getFullYear(),
+              season_start_date: new Date().toISOString(),
+              season_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+              is_active: true,
+            })
+            .select('id')
+            .single();
+
+          if (scheduleError || !newSchedule) {
+            console.error('Failed to create schedule:', scheduleError);
+            return NextResponse.json({ error: 'Failed to create schedule' }, { status: 500 });
+          }
+          scheduleId = newSchedule.id;
+        } else {
+          scheduleId = schedules[0].id;
+        }
+
+        // Create timeslot_start and timeslot_end timestamps
+        // Use next occurrence of dayOfWeek from today
+        const now = new Date();
+        const currentDay = now.getDay();
+        const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;
+        const targetDate = new Date(now);
+        targetDate.setDate(now.getDate() + daysUntilTarget);
+
+        const [startHour, startMin] = startTime.split(':').map(Number);
+        const [endHour, endMin] = endTime.split(':').map(Number);
+
+        const timeslotStart = new Date(targetDate);
+        timeslotStart.setHours(startHour, startMin, 0, 0);
+
+        const timeslotEnd = new Date(targetDate);
+        timeslotEnd.setHours(endHour, endMin, 0, 0);
+
+        // Insert session
+        const { data: session, error: insertError } = await supabase
+          .from('sessions')
+          .insert({
+            schedule_id: scheduleId,
+            club_id: effectiveClubId,
+            trainer_id: trainerId,
+            timeslot_start: timeslotStart.toISOString(),
+            timeslot_end: timeslotEnd.toISOString(),
+            max_participants: maxParticipants || 10,
+            notes: notes || '',
+          })
+          .select()
           .single();
 
-        if (scheduleError || !newSchedule) {
-          console.error('Failed to create schedule:', scheduleError);
-          return NextResponse.json({ error: 'Failed to create schedule' }, { status: 500 });
+        if (insertError) {
+          console.error('Failed to create session:', insertError);
+          return NextResponse.json({ error: insertError.message }, { status: 500 });
         }
-        scheduleId = newSchedule.id;
-      } else {
-        scheduleId = schedules[0].id;
+
+        return NextResponse.json(session, { status: 201 });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Error creating session:', error);
+        return NextResponse.json({ error: message }, { status: 500 });
       }
-
-      // Create timeslot_start and timeslot_end timestamps
-      // Use next occurrence of dayOfWeek from today
-      const now = new Date();
-      const currentDay = now.getDay();
-      const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;
-      const targetDate = new Date(now);
-      targetDate.setDate(now.getDate() + daysUntilTarget);
-
-      const [startHour, startMin] = startTime.split(':').map(Number);
-      const [endHour, endMin] = endTime.split(':').map(Number);
-
-      const timeslotStart = new Date(targetDate);
-      timeslotStart.setHours(startHour, startMin, 0, 0);
-
-      const timeslotEnd = new Date(targetDate);
-      timeslotEnd.setHours(endHour, endMin, 0, 0);
-
-      // Insert session
-      const { data: session, error: insertError } = await supabase
-        .from('sessions')
-        .insert({
-          schedule_id: scheduleId,
-          club_id: effectiveClubId,
-          trainer_id: trainerId,
-          timeslot_start: timeslotStart.toISOString(),
-          timeslot_end: timeslotEnd.toISOString(),
-          max_participants: maxParticipants || 10,
-          notes: notes || '',
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Failed to create session:', insertError);
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
-      }
-
-      return NextResponse.json(session, { status: 201 });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error creating session:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
+    });
   });
 }
 

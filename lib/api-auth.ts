@@ -34,25 +34,9 @@ async function buildAuthContext(
 
   const memberships: Array<{ club_id: string; role: string }> = membershipsData ?? [];
 
-  // If no memberships found, check if user email suggests they're a superadmin/admin
-  // This allows initial setup where admin users exist but haven't been assigned clubs yet
+  // SECURITY FIX: Removed email-based superadmin detection vulnerability
+  // All users must have explicit club memberships in database
   if (memberships.length === 0) {
-    const isSuperAdmin = user.email?.includes('superadmin');
-    const isAdmin = user.email?.includes('admin');
-
-    if (isSuperAdmin || isAdmin) {
-      // Allow superadmin/admin to access without club membership
-      return {
-        user,
-        session: { access_token: '', refresh_token: '' } as any,
-        supabase,
-        clubId: '', // No club selected yet
-        selectedClubId: undefined,
-        role: isSuperAdmin ? 'superadmin' : 'admin',
-        roles: [isSuperAdmin ? 'superadmin' : 'admin'],
-        memberships: [],
-      };
-    }
     throw new Error('User has no active club membership');
   }
 
