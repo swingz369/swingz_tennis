@@ -1,26 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { cookies } from 'next/headers';
 import { SuperadminDashboardClient } from './dashboard-client';
 
 export default async function SuperadminDashboardPage() {
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
-
-  if (hasDemoMode) {
-    const demoData = {
-      clubs: [
-        { id: '1', name: 'Demo Tennis Club', members: 120, trainers: 5, revenue: 12500 },
-        { id: '2', name: 'Demo Squash Club', members: 80, trainers: 3, revenue: 8500 },
-      ],
-      totalClubs: 2,
-      totalMembers: 200,
-      totalTrainers: 8,
-      totalRevenue: 21000,
-    };
-    return <SuperadminDashboardClient data={demoData} />;
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -47,18 +29,12 @@ export default async function SuperadminDashboardPage() {
 
   if (clubsError) {
     console.error('Error fetching clubs:', clubsError);
-    const demoClubs = [
-      { id: '1', name: 'Demo Tennis Club', members: 120, trainers: 5, revenue: 12500 },
-      { id: '2', name: 'Demo Squash Club', members: 80, trainers: 3, revenue: 8500 },
-    ];
-    const data = {
-      clubs: demoClubs,
-      totalClubs: demoClubs.length,
-      totalMembers: demoClubs.reduce((sum, c) => sum + c.members, 0),
-      totalTrainers: demoClubs.reduce((sum, c) => sum + c.trainers, 0),
-      totalRevenue: demoClubs.reduce((sum, c) => sum + c.revenue, 0),
-    };
-    return <SuperadminDashboardClient data={data} />;
+    // Return empty data on error
+    return (
+      <SuperadminDashboardClient
+        data={{ clubs: [], totalClubs: 0, totalMembers: 0, totalTrainers: 0, totalRevenue: 0 }}
+      />
+    );
   }
 
   const clubsData = await Promise.all(
