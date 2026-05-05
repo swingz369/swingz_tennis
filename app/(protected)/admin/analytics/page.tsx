@@ -76,11 +76,28 @@ export default async function AnalyticsPage({
       new DrizzleBookingRepository()
     );
 
-    const analyticsData = await getClubAnalyticsUseCase.execute(
-      effectiveClubId,
-      startDate,
-      endDate
-    );
+    const kpis = await getClubAnalyticsUseCase.execute(effectiveClubId, startDate, endDate);
+
+    // Map ClubKPIs to AnalyticsData expected by AnalyticsClient
+    const analyticsData = {
+      totalMembers: kpis.metrics.totalMembers,
+      totalBookings: kpis.metrics.bookings.total,
+      totalRevenue: kpis.metrics.revenue,
+      totalSessions: kpis.metrics.totalSessions,
+      revenueByClub: [{ club: kpis.name, revenue: kpis.metrics.revenue }],
+      bookingsOverTime: kpis.trends.bookingVolumeByWeek.map((w) => ({
+        date: w.week,
+        bookings: w.bookings,
+      })),
+      sessionsPerTrainer: kpis.sessionsPerTrainer.map((t) => ({
+        trainer: t.trainerName,
+        sessions: t.sessions,
+      })),
+      capacityUtilization: kpis.capacityUtilization.map((c) => ({
+        court: c.courtName,
+        util: c.util,
+      })),
+    };
 
     return (
       <div className="p-6 space-y-6">
