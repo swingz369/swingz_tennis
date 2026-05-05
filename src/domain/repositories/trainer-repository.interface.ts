@@ -3,6 +3,7 @@ import type { Trainer } from '../entities/club';
 
 export interface TrainerRepository {
   findById(id: TrainerId): Promise<Trainer | null>;
+  findByIds(ids: TrainerId[]): Promise<Trainer[]>;
   findByEmail(email: string): Promise<Trainer | null>;
   findByClub(clubId: ClubId): Promise<Trainer[]>;
   findBySpecialty(specialty: string): Promise<Trainer[]>;

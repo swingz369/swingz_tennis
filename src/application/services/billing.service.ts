@@ -128,7 +128,10 @@ export class BillingService {
   /**
    * Get all trainer billings
    */
-  static async getAllTrainerBillings(): Promise<TrainerBilling[]> {
+  static async getAllTrainerBillings(status?: string): Promise<TrainerBilling[]> {
+    if (status) {
+      return this.trainerBillings.filter((b) => b.status === status);
+    }
     return [...this.trainerBillings];
   }
 

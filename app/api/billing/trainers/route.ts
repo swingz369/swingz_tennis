@@ -104,9 +104,7 @@ export async function GET(_request: NextRequest) {
       }
 
       if (status) {
-        const trainerBillings = (await BillingService.getAllTrainerBillings()).filter(
-          (b) => b.status === status
-        );
+        const trainerBillings = await BillingService.getAllTrainerBillings(status);
         return NextResponse.json({ trainerBillings });
       }
 

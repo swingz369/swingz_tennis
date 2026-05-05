@@ -8,6 +8,7 @@ import { ClubId, TrainerId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
+import { cache, CacheKeys, CacheTTL } from '@/lib/utils/cache';
 
 const scheduleRepo = new DrizzleScheduleRepository();
 const trainerRepo = new DrizzleTrainerRepository();
@@ -42,26 +43,33 @@ export async function GET(req: NextRequest) {
 
     try {
       const clubId = ClubId.fromString(clubIdParam);
-      const schedule = await scheduleRepo.findByClubId(clubId);
+
+      // Use cache for schedule data (5 minute TTL)
+      const schedule = await cache.getOrSet(
+        CacheKeys.schedule(clubIdParam),
+        () => scheduleRepo.findByClubId(clubId),
+        CacheTTL.MEDIUM
+      );
+
       if (!schedule) {
         return NextResponse.json([]);
       }
 
       const sessions = schedule.getSessions();
 
-      // Collect all unique trainer IDs
-      const trainerIds = Array.from(new Set(sessions.map((s) => s.trainerId.toString())));
+      // Collect all unique trainer IDs and fetch trainers in batch using findByIds
+      const uniqueTrainerIds = Array.from(new Set(sessions.map((s) => s.trainerId)));
 
-      // Fetch trainers in batch
+      // Fetch trainers in batch with caching (15 minute TTL for trainer data)
       const trainersMap = new Map<string, string>();
-      if (trainerIds.length > 0) {
-        const trainers = await Promise.all(
-          trainerIds.map((id) => trainerRepo.findById(TrainerId.fromString(id)))
+      if (uniqueTrainerIds.length > 0) {
+        const trainers = await cache.getOrSet(
+          CacheKeys.trainers(clubIdParam),
+          () => trainerRepo.findByIds(uniqueTrainerIds),
+          CacheTTL.LONG
         );
-        trainers.forEach((trainer, idx) => {
-          if (trainer) {
-            trainersMap.set(trainerIds[idx], trainer.name);
-          }
+        trainers.forEach((trainer) => {
+          trainersMap.set(trainer.trainerId.toString(), trainer.name);
         });
       }
 
@@ -226,6 +234,10 @@ export async function POST(req: NextRequest) {
           console.error('Failed to create session:', insertError);
           return NextResponse.json({ error: insertError.message }, { status: 500 });
         }
+
+        // Invalidate schedule cache for this club
+        cache.invalidatePattern(CacheKeys.schedule(effectiveClubId));
+        cache.invalidatePattern(`session:`);
 
         return NextResponse.json(session, { status: 201 });
       } catch (error) {

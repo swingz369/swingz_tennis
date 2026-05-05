@@ -13,6 +13,14 @@ export class DrizzleTrainerRepository implements TrainerRepository {
     return this.mapToDomain(result[0]);
   }
 
+  async findByIds(ids: TrainerId[]): Promise<Trainer[]> {
+    if (ids.length === 0) return [];
+    const db = getDb();
+    const trainerIds = ids.map((id) => id.getValue());
+    const result = await db.select().from(trainers).where(inArray(trainers.id, trainerIds));
+    return result.map((row) => this.mapToDomain(row));
+  }
+
   async findByEmail(email: string): Promise<Trainer | null> {
     const db = getDb();
     const result = await db.select().from(trainers).where(eq(trainers.email, email)).limit(1);

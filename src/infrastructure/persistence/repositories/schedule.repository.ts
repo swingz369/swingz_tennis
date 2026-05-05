@@ -149,6 +149,50 @@ export class DrizzleScheduleRepository implements ScheduleRepository {
     };
   }
 
+  async getSessionDetailsByIds(sessionIds: SessionId[]): Promise<
+    Map<
+      string,
+      {
+        clubId: ClubId;
+        scheduleId: ScheduleId;
+        timeslot: TimeSlot;
+        maxParticipants: number;
+        trainerId?: string;
+      }
+    >
+  > {
+    const resultMap = new Map();
+    if (sessionIds.length === 0) return resultMap;
+
+    const db = getDb();
+    const ids = sessionIds.map((id) => id.getValue());
+    const result = await db
+      .select({
+        sessionId: sessions.id,
+        clubId: schedules.club_id,
+        scheduleId: sessions.schedule_id,
+        timeslotStart: sessions.timeslot_start,
+        timeslotEnd: sessions.timeslot_end,
+        maxParticipants: sessions.max_participants,
+        trainerId: sessions.trainer_id,
+      })
+      .from(sessions)
+      .innerJoin(schedules, eq(sessions.schedule_id, schedules.id))
+      .where(inArray(sessions.id, ids));
+
+    for (const row of result) {
+      resultMap.set(row.sessionId, {
+        clubId: ClubId.fromString(row.clubId),
+        scheduleId: ScheduleId.fromString(row.scheduleId),
+        timeslot: new TimeSlot(new Date(row.timeslotStart), new Date(row.timeslotEnd)),
+        maxParticipants: row.maxParticipants,
+        ...(row.trainerId && { trainerId: row.trainerId }),
+      });
+    }
+
+    return resultMap;
+  }
+
   async findSessionsByClubId(clubId: ClubId): Promise<Session[]> {
     const db = getDb();
     const scheduleRows = await db

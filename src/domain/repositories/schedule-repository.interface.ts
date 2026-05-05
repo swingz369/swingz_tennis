@@ -19,4 +19,16 @@ export interface ScheduleRepository {
     timeslot: TimeSlot;
     maxParticipants: number;
   } | null>;
+  getSessionDetailsByIds(sessionIds: SessionId[]): Promise<
+    Map<
+      string,
+      {
+        clubId: ClubId;
+        scheduleId: ScheduleId;
+        timeslot: TimeSlot;
+        maxParticipants: number;
+        trainerId?: string;
+      }
+    >
+  >;
 }

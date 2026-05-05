@@ -12,6 +12,7 @@ import { eq } from 'drizzle-orm';
 import { sessions } from '@/infrastructure/persistence/schema';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { cache } from '@/lib/utils/cache';
 
 const scheduleRepo = new DrizzleScheduleRepository();
 const trainerRepo = new DrizzleTrainerRepository();
@@ -124,24 +125,41 @@ export async function PUT(req: NextRequest) {
       try {
         const db = getDb();
 
-        for (const sessionData of input.sessions) {
-          if (sessionData.id) {
-            await db
-              .update(sessions)
-              .set({
-                trainer_id: sessionData.trainerId,
-                court_id: sessionData.courtId ?? null,
-                week_number: sessionData.weekNumber,
-                timeslot_start: new Date(sessionData.timeslotStart),
-                timeslot_end: new Date(sessionData.timeslotEnd),
-                max_participants: sessionData.maxParticipants,
-                notes: sessionData.notes ?? null,
-                group_ids: sessionData.groupIds,
-                updated_at: new Date(),
+        // Use a transaction to batch all updates together for better performance
+        await db.transaction(async (tx) => {
+          // Process updates in batches of 50 to avoid too many queries
+          const BATCH_SIZE = 50;
+          for (let i = 0; i < input.sessions.length; i += BATCH_SIZE) {
+            const batch = input.sessions.slice(i, i + BATCH_SIZE);
+
+            // Execute all updates in this batch in parallel within the transaction
+            await Promise.all(
+              batch.map((sessionData) => {
+                if (sessionData.id) {
+                  return tx
+                    .update(sessions)
+                    .set({
+                      trainer_id: sessionData.trainerId,
+                      court_id: sessionData.courtId ?? null,
+                      week_number: sessionData.weekNumber,
+                      timeslot_start: new Date(sessionData.timeslotStart),
+                      timeslot_end: new Date(sessionData.timeslotEnd),
+                      max_participants: sessionData.maxParticipants,
+                      notes: sessionData.notes ?? null,
+                      group_ids: sessionData.groupIds,
+                      updated_at: new Date(),
+                    })
+                    .where(eq(sessions.id, sessionData.id));
+                }
+                return Promise.resolve();
               })
-              .where(eq(sessions.id, sessionData.id));
+            );
           }
-        }
+        });
+
+        // Invalidate all schedule and session caches after bulk update
+        cache.invalidatePattern('schedule:');
+        cache.invalidatePattern('session:');
 
         return NextResponse.json({ success: true });
       } catch (error) {

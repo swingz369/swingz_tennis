@@ -124,47 +124,35 @@ export async function GET(req: NextRequest) {
       const result = await getMemberBookingsUseCase.execute({ memberId });
       const bookings = result.bookings;
 
-      // ✅ Batch-Loading: Collect all session IDs
+      // ✅ Batch-Loading: Collect all session IDs and fetch in one query
       const sessionIds = bookings.map((b) => SessionId.fromString(b.sessionId));
 
-      // ✅ Fetch all session details in one batch
-      const sessionDetailsMap = new Map<
-        string,
-        Awaited<ReturnType<typeof scheduleRepo.getSessionDetails>>
-      >();
-      await Promise.all(
-        sessionIds.map(async (sessionId) => {
-          const details = await scheduleRepo.getSessionDetails(sessionId);
-          if (details) {
-            sessionDetailsMap.set(sessionId.toString(), details);
-          }
-        })
-      );
+      // ✅ Fetch all session details in ONE batch query using the new method
+      const sessionDetailsMap = await scheduleRepo.getSessionDetailsByIds(sessionIds);
 
-      // ✅ Collect unique trainer IDs
+      // ✅ Collect unique trainer IDs from session details
       const trainerIds = new Set<string>();
       for (const [, details] of sessionDetailsMap) {
         if (details?.trainerId) {
-          trainerIds.add(details.trainerId.getValue());
+          trainerIds.add(details.trainerId);
         }
       }
 
-      // ✅ Fetch all trainers in one batch
+      // ✅ Fetch all trainers in ONE batch query using findByIds
       const trainersMap = new Map<string, string>();
-      await Promise.all(
-        Array.from(trainerIds).map(async (trainerId) => {
-          const trainer = await trainerRepo.findById(TrainerId.fromString(trainerId));
-          if (trainer) {
-            trainersMap.set(trainerId, trainer.name);
-          }
-        })
-      );
+      if (trainerIds.size > 0) {
+        const trainerIdObjects = Array.from(trainerIds).map((id) => TrainerId.fromString(id));
+        const trainers = await trainerRepo.findByIds(trainerIdObjects);
+        trainers.forEach((trainer) => {
+          trainersMap.set(trainer.trainerId.getValue(), trainer.name);
+        });
+      }
 
       // ✅ In-memory join (no additional queries)
       const enriched = bookings.map((b) => {
         const sessionDetails = sessionDetailsMap.get(b.sessionId);
         const trainerName = sessionDetails?.trainerId
-          ? trainersMap.get(sessionDetails.trainerId.getValue())
+          ? trainersMap.get(sessionDetails.trainerId)
           : undefined;
 
         return {
