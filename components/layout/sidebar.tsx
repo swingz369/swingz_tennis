@@ -123,15 +123,19 @@ export function Sidebar({
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0'
           : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:relative md:translate-x-0'
       )}
+      role="navigation"
+      aria-label="Main navigation"
+      aria-hidden={!open && 'true'}
     >
       {/* Mobile close button */}
       {open && (
         <button
           onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400"
-          aria-label="Close menu"
+          className="md:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#40916C]"
+          aria-label="Menü schließen"
         >
           <X className="h-5 w-5" />
+          <span className="sr-only">Menü schließen</span>
         </button>
       )}
       <ScrollArea className="h-full py-6">
@@ -145,8 +149,12 @@ export function Sidebar({
           </Link>
         </div>
 
-        <nav className="flex flex-col gap-1 px-3">
-          <div className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        <nav className="flex flex-col gap-1 px-3" role="navigation" aria-label="Hauptnavigation">
+          <div
+            className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+            role="heading"
+            aria-level={2}
+          >
             Hauptmenü
           </div>
           {mainNav.map((item) => {
@@ -162,8 +170,10 @@ export function Sidebar({
                     ? 'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                 )}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={`${item.name} Seite${isActive ? ' (aktuell)' : ''}`}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
+                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                 <span>{item.name}</span>
               </Link>
             );
@@ -171,7 +181,11 @@ export function Sidebar({
 
           {isAdmin && (
             <>
-              <div className="mt-8 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              <div
+                className="mt-8 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                role="heading"
+                aria-level={2}
+              >
                 Administration
               </div>
               {adminNav.map((item) => {
@@ -187,8 +201,10 @@ export function Sidebar({
                         ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-lg'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                     )}
+                    aria-current={isActive ? 'page' : undefined}
+                    aria-label={`${item.name} Seite${isActive ? ' (aktuell)' : ''}`}
                   >
-                    <item.icon className="h-5 w-5 shrink-0" />
+                    <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                     <span>{item.name}</span>
                   </Link>
                 );

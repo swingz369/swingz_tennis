@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
+import { SkipToContent } from '@/lib/accessibility';
 
 interface AppUser {
   name?: string;
@@ -24,6 +25,7 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
 
   return (
     <div className="flex min-h-screen flex-col pb-16 md:pb-0">
+      <SkipToContent />
       <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
       <div className="flex flex-1 relative">
         <Sidebar
@@ -36,10 +38,17 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
           <div
             className="fixed inset-0 z-40 bg-black/50 md:hidden"
             onClick={() => setSidebarOpen(false)}
-            aria-label="Close menu"
+            aria-label="Menü schließen"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setSidebarOpen(false);
+              }
+            }}
           />
         )}
-        <main className="flex-1 bg-background p-4 md:p-6 lg:p-8">
+        <main id="main-content" className="flex-1 bg-background p-4 md:p-6 lg:p-8" role="main">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>

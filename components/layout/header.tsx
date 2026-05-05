@@ -44,13 +44,19 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0A3D2E]/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/10">
+    <header
+      className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0A3D2E]/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/10"
+      role="banner"
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
+        <Link href="/dashboard" className="flex items-center gap-3 group" aria-label="SwingZ Home">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#40916C] to-[#1B4332] rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300" />
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-[#40916C] to-[#1B4332] rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300"
+              aria-hidden="true"
+            />
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#1B4332] to-[#40916C] shadow-lg">
-              <Trophy className="h-5 w-5 text-white" />
+              <Trophy className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
           </div>
           <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -58,7 +64,11 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           </span>
         </Link>
 
-        <div className="hidden md:block flex-1 max-w-md mx-8">
+        <div
+          className="hidden md:block flex-1 max-w-md mx-8"
+          role="search"
+          aria-label="Suchfunktion"
+        >
           <GlobalSearch />
         </div>
 
@@ -68,10 +78,17 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             size="icon"
             className="h-9 w-9 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label={`Wechsle zu ${theme === 'dark' ? 'hellem' : 'dunklem'} Modus`}
           >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Theme toggle</span>
+            <Sun
+              className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+              aria-hidden="true"
+            />
+            <Moon
+              className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+              aria-hidden="true"
+            />
+            <span className="sr-only">Theme wechseln</span>
           </Button>
 
           <div className="hidden md:block relative">
@@ -79,6 +96,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               variant="ghost"
               className="relative h-9 gap-2 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 rounded-xl"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
+              aria-expanded={userMenuOpen}
+              aria-haspopup="menu"
+              aria-label="Benutzermenü öffnen"
             >
               <Avatar className="h-7 w-7 border-2 border-[#40916C]/30">
                 <AvatarFallback className="bg-gradient-to-br from-[#40916C] to-[#1B4332] text-white text-xs font-semibold">
@@ -86,14 +106,25 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium">{user?.name?.split(' ')[0] || 'User'}</span>
-              <ChevronDown className="h-3 w-3 text-gray-400" />
+              <ChevronDown className="h-3 w-3 text-gray-400" aria-hidden="true" />
             </Button>
 
             {userMenuOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-[#0f2d22] py-2 shadow-xl ring-1 ring-gray-100 dark:ring-white/10 z-50">
-                  <div className="px-4 py-3 border-b border-gray-100 dark:border-white/10">
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setUserMenuOpen(false)}
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-[#0f2d22] py-2 shadow-xl ring-1 ring-gray-100 dark:ring-white/10 z-50"
+                  role="menu"
+                  aria-label="Benutzermenü"
+                >
+                  <div
+                    className="px-4 py-3 border-b border-gray-100 dark:border-white/10"
+                    role="none"
+                  >
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {user?.name || 'User'}
                     </p>
@@ -101,7 +132,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                       {user?.email || 'user@example.com'}
                     </p>
                   </div>
-                  <div className="py-1">
+                  <div className="py-1" role="none">
                     <Link
                       href={user?.memberId ? `/members/${user.memberId}` : '#'}
                       onClick={(e) => {
@@ -112,8 +143,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                         setUserMenuOpen(false);
                       }}
                       className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+                      role="menuitem"
                     >
-                      <User className="h-4 w-4 text-gray-400" />
+                      <User className="h-4 w-4 text-gray-400" aria-hidden="true" />
                       Profil
                     </Link>
                     {isAdmin && (
@@ -121,19 +153,21 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                         href="/admin/settings"
                         onClick={() => setUserMenuOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+                        role="menuitem"
                       >
-                        <Settings className="h-4 w-4 text-gray-400" />
+                        <Settings className="h-4 w-4 text-gray-400" aria-hidden="true" />
                         Einstellungen
                       </Link>
                     )}
                   </div>
-                  <div className="border-t border-gray-100 dark:border-white/10 pt-1">
+                  <div className="border-t border-gray-100 dark:border-white/10 pt-1" role="none">
                     <button
                       onClick={handleSignOut}
                       disabled={isLoggingOut}
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50"
+                      role="menuitem"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-4 w-4" aria-hidden="true" />
                       {isLoggingOut ? 'Abmelden...' : 'Abmelden'}
                     </button>
                   </div>
@@ -147,8 +181,11 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             size="icon"
             className="md:hidden h-9 w-9 text-gray-700 dark:text-white rounded-xl"
             onClick={onMenuClick}
+            aria-label="Menü öffnen"
+            aria-expanded={false}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Menü öffnen</span>
           </Button>
         </div>
       </div>
