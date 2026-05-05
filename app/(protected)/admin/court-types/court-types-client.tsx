@@ -34,10 +34,10 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Surface,
   Users,
   Lightbulb,
   DollarSign,
+  Sun,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -411,7 +411,7 @@ export function CourtTypesClient() {
                         )}
                         {type.is_outdoor && (
                           <span className="flex items-center gap-1">
-                            <Surface className="h-3 w-3" /> Freiluft
+                            <Sun className="h-3 w-3" /> Freiluft
                           </span>
                         )}
                         {type.requires_lighting && (

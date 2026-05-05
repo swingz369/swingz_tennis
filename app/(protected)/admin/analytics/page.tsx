@@ -13,6 +13,10 @@ export default async function AnalyticsPage({
   const cookieStore = await cookies();
   const hasDemoMode = cookieStore.get('demo-mode');
 
+  // Resolve searchParams early
+  const params = await searchParams;
+  const clubIdFromParams = params.clubId;
+
   let analyticsData: AnalyticsData | null = null;
   let clubs: Array<{ id: string; name: string }> = [];
 
@@ -67,11 +71,9 @@ export default async function AnalyticsPage({
       }));
 
       // Determine which club to show
-      const params = await searchParams;
-      const requestedClubId = params.clubId;
       let effectiveClubId = clubs[0].id;
-      if (requestedClubId && clubs.some((c) => c.id === requestedClubId)) {
-        effectiveClubId = requestedClubId;
+      if (clubIdFromParams && clubs.some((c) => c.id === clubIdFromParams)) {
+        effectiveClubId = clubIdFromParams;
       }
 
       const endDate = new Date();
@@ -150,6 +152,12 @@ export default async function AnalyticsPage({
     );
   }
 
+  // Determine selected club ID for ClubSelector
+  const selectedClubId =
+    clubIdFromParams && clubs.some((c) => c.id === clubIdFromParams)
+      ? clubIdFromParams
+      : clubs[0].id;
+
   return (
     <div className="p-6 space-y-6">
       {/* Header with Club Selector for superadmin/multi-club */}
@@ -158,12 +166,7 @@ export default async function AnalyticsPage({
           <h1 className="text-2xl font-bold text-brand-primary">Analytics</h1>
           <p className="text-gray-500">Vereinsstatistiken und Leistungskennzahlen</p>
         </div>
-        <ClubSelector
-          clubs={clubs}
-          selectedClubId={
-            clubs.find((c) => c.id === (await searchParams).clubId)?.id || clubs[0].id
-          }
-        />
+        <ClubSelector clubs={clubs} selectedClubId={selectedClubId} />
       </div>
       <AnalyticsClient data={analyticsData} />
     </div>
