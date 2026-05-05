@@ -1,32 +1,37 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { cookies } from 'next/headers';
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
-
-  if (hasDemoMode) {
-    redirect('/admin/analytics');
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect('/login');
-
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
-
-  if (!memberships || memberships.length === 0) {
+  if (!user) {
+    console.error('No user found in dashboard page');
     redirect('/login');
   }
 
+  // Fetch user's club memberships to determine role
+  const { data: memberships, error } = await supabase
+    .from('user_club_memberships')
+    .select('role, club_id')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
+
+  if (error) {
+    console.error('Error fetching memberships:', error);
+    redirect('/login');
+  }
+
+  if (!memberships || memberships.length === 0) {
+    console.error('No active memberships found for user:', user.id);
+    redirect('/login');
+  }
+
+  console.log('User memberships:', memberships);
+
+  // Determine highest role
   const roles = memberships.map((m: { role: string }) => m.role);
   const highestRole = roles.includes('superadmin')
     ? 'superadmin'
@@ -36,6 +41,9 @@ export default async function DashboardPage() {
         ? 'trainer'
         : 'member';
 
+  console.log('Redirecting user with role:', highestRole);
+
+  // Redirect based on highest role
   switch (highestRole) {
     case 'superadmin':
       redirect('/admin/dashboard');
@@ -43,7 +51,9 @@ export default async function DashboardPage() {
       redirect('/admin/analytics');
     case 'trainer':
       redirect('/trainer');
-    default:
+    case 'member':
       redirect('/bookings');
+    default:
+      redirect('/login');
   }
 }

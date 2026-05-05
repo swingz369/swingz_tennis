@@ -18,22 +18,34 @@ export default async function AnalyticsPage({
   // Get all active club memberships with club details
   const { data: memberships } = await supabase
     .from('user_club_memberships')
-    .select('role')
+    .select('role, club_id')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  // Only superadmin can access global analytics
+  // Check if user has admin or superadmin role
   const isSuperadmin = memberships?.some((m: any) => m.role === 'superadmin');
-  if (!isSuperadmin) {
-    redirect('/admin/members');
+  const isAdmin = memberships?.some((m: any) => m.role === 'admin');
+
+  if (!isSuperadmin && !isAdmin) {
+    // User has neither admin nor superadmin role
+    redirect('/bookings');
   }
 
   // Now fetch full membership data with club details for the selected club
-  const { data: membershipsWithClubs } = await supabase
+  // For regular admins, only show clubs they're admin of
+  // For superadmins, show all clubs they have access to
+  let clubQuery = supabase
     .from('user_club_memberships')
-    .select('club_id, clubs!inner(name)')
+    .select('club_id, role, clubs!inner(name)')
     .eq('user_id', user.id)
     .eq('is_active', true);
+
+  // If not superadmin, filter to only show clubs where user is admin
+  if (!isSuperadmin) {
+    clubQuery = clubQuery.eq('role', 'admin');
+  }
+
+  const { data: membershipsWithClubs } = await clubQuery;
 
   type Membership = {
     club_id: string;
