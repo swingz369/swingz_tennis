@@ -18,13 +18,13 @@ export default async function AnalyticsPage({
   // Get all active club memberships with club details
   const { data: memberships } = await supabase
     .from('user_club_memberships')
-    .select('club_id, clubs (id, name)')
+    .select('club_id, clubs!inner(name)')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
   type Membership = {
     club_id: string;
-    clubs: { id: string; name: string } | null;
+    clubs: { id: string; name: string }[];
   };
 
   if (!memberships || memberships.length === 0) {
@@ -36,10 +36,10 @@ export default async function AnalyticsPage({
     );
   }
 
-  // Build clubs list
+  // Build clubs list (clubs is an array from the join)
   const clubs = (memberships as Membership[]).map((m) => ({
     id: m.club_id,
-    name: m.clubs?.name || 'Unnamed Club',
+    name: m.clubs[0]?.name || 'Unnamed Club',
   }));
 
   // Determine which club to show
