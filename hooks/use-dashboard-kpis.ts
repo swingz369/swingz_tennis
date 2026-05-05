@@ -12,7 +12,7 @@ export function useDashboardKpis() {
       if (!clubId) {
         return { activeMembers: 0, sessionsToday: 0, pendingBookings: 0, totalCourts: 0 };
       }
-      const res = await fetch(`/api/dashboard/kpis?clubId=${clubId}`);
+      const res = await fetch(`/api/dashboard/kpis?clubId=${clubId}`, { credentials: 'include' });
       if (!res.ok) {
         throw new Error('Failed to fetch dashboard KPIs');
       }

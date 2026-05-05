@@ -14,7 +14,7 @@ export function useCourts(clubId: string | null) {
     queryKey: QUERY_KEYS.courts(clubId || ''),
     queryFn: async () => {
       if (!clubId) return [];
-      const res = await fetch(`/api/courts?clubId=${clubId}`);
+      const res = await fetch(`/api/courts?clubId=${clubId}`, { credentials: 'include' });
       if (!res.ok) {
         throw new Error('Failed to fetch courts');
       }

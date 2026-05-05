@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
+import { fetchJSON } from '@/lib/fetch';
 
 export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
 
@@ -46,13 +47,7 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 export function useUserClub() {
   return useQuery({
     queryKey: QUERY_KEYS.userClub('current'),
-    queryFn: async () => {
-      const res = await fetch('/api/user/club');
-      if (!res.ok) {
-        throw new Error('Failed to fetch club data');
-      }
-      return res.json() as Promise<UserClubData>;
-    },
+    queryFn: () => fetchJSON<UserClubData>('/api/user/club'),
     retry: 1,
     staleTime: STALE_TIMES.LONG,
   });
@@ -61,13 +56,7 @@ export function useUserClub() {
 export function useUserMember() {
   return useQuery({
     queryKey: QUERY_KEYS.userMember('current'),
-    queryFn: async () => {
-      const res = await fetch('/api/user/member');
-      if (!res.ok) {
-        throw new Error('Failed to fetch member data');
-      }
-      return res.json() as Promise<UserMemberData>;
-    },
+    queryFn: () => fetchJSON<UserMemberData>('/api/user/member'),
     retry: 1,
     staleTime: STALE_TIMES.LONG,
   });
@@ -77,12 +66,8 @@ export function useUserRoles() {
   return useQuery({
     queryKey: QUERY_KEYS.userRoles('current'),
     queryFn: async () => {
-      const res = await fetch('/api/user/roles');
-      if (!res.ok) {
-        throw new Error('Failed to fetch user roles');
-      }
-      const data = await res.json();
-      return data.roles as UserRole[];
+      const data = await fetchJSON<{ roles: UserRole[] }>('/api/user/roles');
+      return data.roles;
     },
     retry: 1,
     staleTime: STALE_TIMES.LONG,

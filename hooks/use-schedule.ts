@@ -27,7 +27,7 @@ export function useSchedule(clubId: string) {
   return useQuery({
     queryKey: QUERY_KEYS.schedule(clubId),
     queryFn: async () => {
-      const res = await fetch(`/api/schedule?clubId=${clubId}`);
+      const res = await fetch(`/api/schedule?clubId=${clubId}`, { credentials: 'include' });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || 'Failed to load schedule');

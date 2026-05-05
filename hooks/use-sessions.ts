@@ -23,7 +23,7 @@ export function useSessions(clubId: string | null) {
     queryKey: QUERY_KEYS.sessions(clubId || ''),
     queryFn: async () => {
       if (!clubId) return [];
-      const res = await fetch(`/api/sessions?clubId=${clubId}`);
+      const res = await fetch(`/api/sessions?clubId=${clubId}`, { credentials: 'include' });
       if (!res.ok) {
         throw new Error('Failed to fetch sessions');
       }

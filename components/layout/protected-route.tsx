@@ -34,7 +34,30 @@ export function useAuth() {
     // Normal Supabase auth flow
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) {
+              return parts.pop()?.split(';').shift();
+            }
+            return undefined;
+          },
+          set(name: string, value: string, options: any) {
+            let cookie = `${name}=${value}`;
+            if (options?.maxAge) cookie += `; max-age=${options.maxAge}`;
+            cookie += `; path=${options?.path || '/'}`;
+            cookie += `; SameSite=${options?.sameSite || 'Lax'}`;
+            if (window.location.protocol === 'https:') cookie += '; Secure';
+            document.cookie = cookie;
+          },
+          remove(name: string, options: any) {
+            document.cookie = `${name}=; path=${options?.path || '/'}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+          },
+        },
+      }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {

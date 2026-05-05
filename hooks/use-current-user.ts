@@ -4,7 +4,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
-      const res = await fetch('/api/user/me');
+      const res = await fetch('/api/user/me', { credentials: 'include' });
       if (!res.ok) {
         if (res.status === 401) return null;
         throw new Error('Failed to fetch current user');
