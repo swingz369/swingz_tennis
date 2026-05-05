@@ -134,7 +134,9 @@ export async function PUT(_request: NextRequest) {
       for (const { key, value } of updates) {
         const { error } = await supabase
           .from('system_settings')
-          .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: ['key'] });
+          .upsert({ key, value, updated_at: new Date().toISOString() } as any, {
+            onConflict: 'key',
+          });
 
         if (error) {
           throw error;
