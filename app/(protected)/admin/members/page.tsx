@@ -115,12 +115,12 @@ export default async function MembersPage() {
         role: string;
         is_active: boolean;
         joined_at: string;
-        users: { id: string; full_name: string; email: string } | null;
+        users: { id: string; full_name: string; email: string }[] | null | undefined;
       }) => ({
         id: m.id,
         user_id: m.user_id,
-        full_name: m.users?.full_name || 'N/A',
-        email: m.users?.email || 'N/A',
+        full_name: m.users?.[0]?.full_name || 'N/A',
+        email: m.users?.[0]?.email || 'N/A',
         role: m.role as Member['role'],
         is_active: m.is_active,
         joined_at: m.joined_at,
