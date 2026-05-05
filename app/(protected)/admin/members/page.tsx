@@ -42,7 +42,7 @@ export default async function MembersPage() {
   const clubId = effectiveClubId;
 
   // Fetch members for this club
-  const { data: memberships, error: membershipsError } = await supabase
+  const { data: clubMemberships, error: membershipsError } = await supabase
     .from('user_club_memberships')
     .select('id, user_id, role, is_active, joined_at')
     .eq('club_id', clubId)
@@ -58,7 +58,7 @@ export default async function MembersPage() {
   }
 
   // Fetch user details separately
-  const userIds = (memberships || []).map((m) => m.user_id);
+  const userIds = (clubMemberships || []).map((m) => m.user_id);
   const { data: usersData } = await supabase
     .from('users')
     .select('id, full_name, email')
@@ -67,7 +67,7 @@ export default async function MembersPage() {
   // Create a map for quick lookup
   const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
 
-  const initialMembers: Member[] = (memberships || []).map((m: any) => ({
+  const initialMembers: Member[] = (clubMemberships || []).map((m: any) => ({
     id: m.id,
     user_id: m.user_id,
     full_name: usersMap.get(m.user_id)?.full_name || 'N/A',
