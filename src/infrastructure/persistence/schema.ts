@@ -49,6 +49,7 @@ export const clubMemberships = pgTable(
       .notNull()
       .references(() => clubs.id, { onDelete: 'cascade' }),
     user_id: uuid('user_id').notNull(),
+    role: varchar('role', { length: 50 }).notNull().default('member'),
     join_date: timestamp('join_date').notNull().defaultNow(),
     is_active: boolean('is_active').notNull().default(true),
     created_at: timestamp('created_at').notNull().defaultNow(),
@@ -56,6 +57,7 @@ export const clubMemberships = pgTable(
   (table) => ({
     club_user_idx: index('club_members_club_user_idx').on(table.club_id, table.user_id),
     user_idx: index('club_members_user_idx').on(table.user_id),
+    role_idx: index('club_members_role_idx').on(table.role),
   })
 );
 

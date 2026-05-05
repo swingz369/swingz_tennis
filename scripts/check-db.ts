@@ -1,46 +1,43 @@
-import { createClient } from '@supabase/supabase-js';
-import * as dotenv from 'dotenv';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as schema from '@/infrastructure/persistence/schema';
 
-dotenv.config({ path: '.env.local' });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const db = drizzle(pool);
 
-async function check() {
-  const [
-    { count: clubCount },
-    { count: userCount },
-    { count: trainerCount },
-    { count: membershipCount },
-  ] = await Promise.all([
-    supabase.from('clubs').select('*', { count: 'exact', head: true }),
-    supabase.from('users').select('*', { count: 'exact', head: true }),
-    supabase.from('trainers').select('*', { count: 'exact', head: true }),
-    supabase.from('user_club_memberships').select('*', { count: 'exact', head: true }),
-  ]);
+async function checkTables() {
+  try {
+    const tables = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      ORDER BY table_name
+    `);
 
-  console.log('📊 Database Summary:');
-  console.log(`   Clubs: ${clubCount}`);
-  console.log(`   Users: ${userCount}`);
-  console.log(`   Trainers: ${trainerCount}`);
-  console.log(`   Memberships: ${membershipCount}`);
+    console.log('Tables in database:');
+    tables.rows.forEach((row: { table_name: string }) => {
+      console.log(' -', row.table_name);
+    });
 
-  // Check role distribution
-  const { data: roles } = await supabase.from('user_club_memberships').select('role').limit(1000);
+    // Check for clubs data
+    const clubs = await db.select().from(schema.clubs).limit(5);
+    console.log('\nClubs:', clubs);
 
-  const roleCounts = roles?.reduce(
-    (acc, r) => {
-      acc[r.role] = (acc[r.role] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+    // Check for club_members data
+    const members = await db.select().from(schema.clubMemberships).limit(5);
+    console.log('\nClub members:', members);
 
-  console.log('   Roles:', roleCounts);
-
-  process.exit(0);
+    // Check for courts data
+    const courts = await db.select().from(schema.courts).limit(5);
+    console.log('\nCourts:', courts);
+  } catch (error) {
+    console.error('Error:', error);
+  } finally {
+    await pool.end();
+  }
 }
 
-check().catch(console.error);
+checkTables();
