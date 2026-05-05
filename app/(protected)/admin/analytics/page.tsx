@@ -56,7 +56,7 @@ export default async function AnalyticsPage({
 
     // Get all active club memberships with club details
     const { data: memberships } = await supabase
-      .from('club_members')
+      .from('user_club_memberships')
       .select('club_id, clubs (id, name)')
       .eq('user_id', user.id)
       .eq('is_active', true);

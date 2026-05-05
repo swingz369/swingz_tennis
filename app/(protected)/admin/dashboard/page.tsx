@@ -29,7 +29,7 @@ export default async function SuperadminDashboardPage() {
   if (!user) redirect('/login');
 
   const { data: memberships } = await supabase
-    .from('club_members')
+    .from('user_club_memberships')
     .select('role, club_id, clubs!inner(name)')
     .eq('user_id', user.id)
     .eq('is_active', true);
@@ -64,7 +64,7 @@ export default async function SuperadminDashboardPage() {
   const clubsData = await Promise.all(
     (clubs || []).map(async (club: { id: string; name: string }) => {
       const { count: members, error: membersError } = await supabase
-        .from('club_members')
+        .from('user_club_memberships')
         .select('*', { count: 'exact', head: true })
         .eq('club_id', club.id)
         .eq('role', 'member')
@@ -82,7 +82,7 @@ export default async function SuperadminDashboardPage() {
       }
 
       const { count: trainers, error: trainersError } = await supabase
-        .from('club_members')
+        .from('user_club_memberships')
         .select('*', { count: 'exact', head: true })
         .eq('club_id', club.id)
         .eq('role', 'trainer')
