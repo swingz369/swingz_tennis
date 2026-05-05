@@ -153,3 +153,66 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   });
 }
+
+// DELETE /api/sessions/[id] – Delete a session
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  return withApiAuth(req, async (auth) => {
+    const isAdmin = await verifyRole(auth, 'admin');
+    const isTrainer = await verifyRole(auth, 'trainer');
+    if (!isAdmin && !isTrainer) {
+      return forbiddenResponse('Admin or trainer access required');
+    }
+
+    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    if (rateLimitError) return rateLimitError;
+
+    const { id } = await params;
+
+    // Validate UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 });
+    }
+
+    try {
+      const supabase = await createClient();
+
+      // Fetch the session to check permissions
+      const { data: session, error: fetchErr } = await supabase
+        .from('sessions')
+        .select('id, trainer_id, club_id')
+        .eq('id', id)
+        .single();
+
+      if (fetchErr || !session) {
+        return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+      }
+
+      // Authorization: trainer can only delete own sessions; admin can delete any in their club
+      if (isTrainer && session.trainer_id !== auth.user.id) {
+        return forbiddenResponse('Trainers can only delete their own sessions');
+      }
+
+      // For admin, ensure session belongs to admin's club (unless superadmin)
+      if (isAdmin && auth.role !== 'superadmin') {
+        if (session.club_id !== auth.clubId) {
+          return forbiddenResponse('Cannot delete session from different club');
+        }
+      }
+
+      // Delete the session
+      const { error: deleteErr } = await supabase.from('sessions').delete().eq('id', id);
+
+      if (deleteErr) {
+        console.error('Session delete error:', deleteErr);
+        return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error deleting session:', error);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
+}
