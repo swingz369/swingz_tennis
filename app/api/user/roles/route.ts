@@ -27,7 +27,8 @@ export async function GET(_req: NextRequest) {
     const { data: rolesData, error: rolesError } = await auth.supabase
       .from('user_club_memberships')
       .select('role')
-      .eq('user_id', auth.user.id);
+      .eq('user_id', auth.user.id)
+      .eq('is_active', true);
 
     if (rolesError) {
       return NextResponse.json({ error: 'Failed to fetch roles' }, { status: 500 });
