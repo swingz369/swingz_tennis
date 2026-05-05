@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { cookies } from 'next/headers';
-import { TrainerProfileManagement } from '@/components/trainer-profile-management';
+import TrainerProfileManagement from '@/components/trainer-profile-management';
 
 export default async function AdminTrainersPage() {
   const cookieStore = await cookies();
