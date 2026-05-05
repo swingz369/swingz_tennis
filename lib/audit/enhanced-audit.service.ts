@@ -246,6 +246,154 @@ export class EnhancedAuditService {
   }
 
   /**
+   * Log member deletion/deactivation
+   */
+  static async logMemberDeactivated(
+    actorId: string,
+    memberId: string,
+    reason?: string,
+    request?: Request
+  ): Promise<void> {
+    await this.log({
+      user_id: actorId,
+      action: 'member_deactivated',
+      resource_type: 'member',
+      resource_id: memberId,
+      details: { reason },
+      ip_address: request?.headers.get('x-forwarded-for') || request?.headers.get('x-real-ip'),
+      user_agent: request?.headers.get('user-agent'),
+    });
+  }
+
+  /**
+   * Log role change
+   */
+  static async logRoleChange(
+    actorId: string,
+    membershipId: string,
+    oldRole: string,
+    newRole: string,
+    request?: Request
+  ): Promise<void> {
+    await this.log({
+      user_id: actorId,
+      action: 'role_changed',
+      resource_type: 'membership',
+      resource_id: membershipId,
+      details: {
+        old_role: oldRole,
+        new_role: newRole,
+      },
+      ip_address: request?.headers.get('x-forwarded-for') || request?.headers.get('x-real-ip'),
+      user_agent: request?.headers.get('user-agent'),
+    });
+  }
+
+  /**
+   * Log member invitation
+   */
+  static async logMemberInvited(
+    actorId: string,
+    email: string,
+    role: string,
+    request?: Request
+  ): Promise<void> {
+    await this.log({
+      user_id: actorId,
+      action: 'member_invited',
+      resource_type: 'member',
+      resource_id: email,
+      details: { role },
+      ip_address: request?.headers.get('x-forwarded-for') || request?.headers.get('x-real-ip'),
+      user_agent: request?.headers.get('user-agent'),
+    });
+  }
+
+  /**
+   * Log club creation
+   */
+  static async logClubCreated(
+    actorId: string,
+    clubId: string,
+    clubName: string,
+    request?: Request
+  ): Promise<void> {
+    await this.log({
+      user_id: actorId,
+      action: 'club_created',
+      resource_type: 'club',
+      resource_id: clubId,
+      details: { name: clubName },
+      ip_address: request?.headers.get('x-forwarded-for') || request?.headers.get('x-real-ip'),
+      user_agent: request?.headers.get('user-agent'),
+    });
+  }
+
+  /**
+   * Log club update
+   */
+  static async logClubUpdated(
+    actorId: string,
+    clubId: string,
+    changes: Record<string, { from: any; to: any }>,
+    request?: Request
+  ): Promise<void> {
+    await this.log({
+      user_id: actorId,
+      action: 'club_updated',
+      resource_type: 'club',
+      resource_id: clubId,
+      details: { changes },
+      ip_address: request?.headers.get('x-forwarded-for') || request?.headers.get('x-real-ip'),
+      user_agent: request?.headers.get('user-agent'),
+    });
+  }
+
+  /**
+   * Log booking created
+   */
+  static async logBookingCreated(
+    actorId: string,
+    bookingId: string,
+    sessionId: string,
+    request?: Request
+  ): Promise<void> {
+    await this.log({
+      user_id: actorId,
+      action: 'booking_created',
+      resource_type: 'booking',
+      resource_id: bookingId,
+      details: { session_id: sessionId },
+      ip_address: request?.headers.get('x-forwarded-for') || request?.headers.get('x-real-ip'),
+      user_agent: request?.headers.get('user-agent'),
+    });
+  }
+
+  /**
+   * Log booking status change
+   */
+  static async logBookingStatusChanged(
+    actorId: string,
+    bookingId: string,
+    oldStatus: string,
+    newStatus: string,
+    request?: Request
+  ): Promise<void> {
+    await this.log({
+      user_id: actorId,
+      action: 'booking_status_changed',
+      resource_type: 'booking',
+      resource_id: bookingId,
+      details: {
+        old_status: oldStatus,
+        new_status: newStatus,
+      },
+      ip_address: request?.headers.get('x-forwarded-for') || request?.headers.get('x-real-ip'),
+      user_agent: request?.headers.get('user-agent'),
+    });
+  }
+
+  /**
    * Core logging function
    */
   private static async log(entry: AuditLogEntry): Promise<void> {

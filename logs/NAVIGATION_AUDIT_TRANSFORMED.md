@@ -1261,5 +1261,5 @@ This transformation plan converts the original audit's scattered observations in
 **Document Control:**
 
 - Version: 2.0
-- Approved by: ******\_\_\_\_******
+- Approved by: **\*\***\_\_\_\_**\*\***
 - Next Review: After Sprint 1 completion
