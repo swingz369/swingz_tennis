@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { courtService } from '@/lib/booking/court.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createClient } from '@/infrastructure/external/supabase/server';
 
 // PATCH /api/court-types/[id] – Platz-Typ aktualisieren
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -84,7 +85,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     try {
       // Check if any courts reference this type
-      const { data: refCount, error: refError } = await courtService.supabase
+      const supabase = await createClient();
+      const { data: refCount, error: refError } = await supabase
         .from('courts')
         .select('id', { count: 'exact', head: true })
         .eq('court_type_id', id);

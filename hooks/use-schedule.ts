@@ -14,6 +14,7 @@ export interface Session {
   groupNames?: string[];
   maxParticipants: number;
   notes?: string;
+  bookedByUser?: boolean;
 }
 
 export interface ScheduleData {

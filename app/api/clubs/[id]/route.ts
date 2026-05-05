@@ -7,6 +7,8 @@ import { withValidation } from '@/application/validation/validator';
 import { AuditService } from '@/infrastructure/audit/audit.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { clubs } from '@/infrastructure/persistence/schema';
+import { eq } from 'drizzle-orm';
 
 const clubRepo = new DrizzleClubRepository();
 
