@@ -22,8 +22,8 @@ export const createClient = async () => {
       set(name: string, value: string, options: any = {}) {
         cookieStore.set(name, value, options);
       },
-      remove(name: string, options: any = {}) {
-        cookieStore.delete(name, options);
+      remove(name: string) {
+        cookieStore.delete(name);
       },
     },
   });
