@@ -41,8 +41,8 @@ export default async function MembersPage() {
 
   const clubId = effectiveClubId;
 
-  // Fetch members for this club with user details
-  const { data: members } = await supabase
+  // Fetch members for this club with user details from public.users table
+  const { data: members, error: membersError } = await supabase
     .from('user_club_memberships')
     .select(
       `
@@ -51,7 +51,7 @@ export default async function MembersPage() {
       role,
       is_active,
       joined_at,
-      users (
+      users!user_id (
         id,
         full_name,
         email
@@ -61,11 +61,21 @@ export default async function MembersPage() {
     .eq('club_id', clubId)
     .order('joined_at', { ascending: false });
 
+  if (membersError) {
+    console.error('Error fetching members:', membersError);
+    return (
+      <div className="p-6 text-red-600">
+        Fehler beim Laden der Mitglieder: {membersError.message}
+      </div>
+    );
+  }
+
   const initialMembers: Member[] = (members || []).map((m: any) => ({
     id: m.id,
     user_id: m.user_id,
-    full_name: m.users?.[0]?.full_name || 'N/A',
-    email: m.users?.[0]?.email || 'N/A',
+    // The foreign key join returns an object, not an array
+    full_name: m.users?.full_name || 'N/A',
+    email: m.users?.email || 'N/A',
     role: m.role as Member['role'],
     is_active: m.is_active,
     joined_at: m.joined_at,
