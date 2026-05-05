@@ -88,13 +88,15 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
     throw new Error('Supabase credentials not configured');
   }
 
+  // Use tsowapp-style cookie handler with getAll/setAll
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
-      get(name: string) {
-        return request.cookies.get(name)?.value;
+      getAll() {
+        return request.cookies.getAll();
       },
-      set() {},
-      remove() {},
+      setAll(cookiesToSet) {
+        // No-op in request context (read-only)
+      },
     },
   });
 

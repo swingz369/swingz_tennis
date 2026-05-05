@@ -24,35 +24,31 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const supabase = createClient();
-
-      const { data, error: err } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Use server-side login API with proper cookie handling
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include', // Important for cookies
       });
 
-      if (err) {
-        if (
-          err.message.includes('fetch failed') ||
-          err.message.includes('Connection') ||
-          err.message.includes('Invalid')
-        ) {
-          console.warn('Supabase not available or invalid credentials - using demo mode');
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error?.includes('fetch failed') || data.error?.includes('Connection')) {
+          console.warn('Supabase not available - using demo mode');
           document.cookie = 'demo-mode=true; path=/';
-          router.push('/');
+          window.location.href = '/';
           return;
         }
-        setError(err.message);
-      } else if (data.user) {
-        analytics.login('email', true);
-
-        // Wait for session to be properly set before redirecting
-        // This ensures cookies are written to the browser
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Force reload to ensure cookies are picked up by middleware
-        window.location.href = '/';
+        setError(data.error || 'Login failed');
+        return;
       }
+
+      analytics.login('email', true);
+
+      // Force full page reload to ensure cookies are picked up
+      window.location.href = '/';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       analytics.login('email', false);
