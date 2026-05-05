@@ -5,6 +5,8 @@ import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { SkipToContent } from '@/lib/accessibility';
+import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
+import { useGlobalKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 
 interface AppUser {
   name?: string;
@@ -22,6 +24,9 @@ interface ProtectedClientLayoutProps {
 
 export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Initialize global keyboard shortcuts
+  useGlobalKeyboardShortcuts();
 
   return (
     <div className="flex min-h-screen flex-col pb-16 md:pb-0">
@@ -56,6 +61,7 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
         roles={user.roles ?? []}
         onMenuClick={() => setSidebarOpen((prev) => !prev)}
       />
+      <KeyboardShortcutsDialog />
     </div>
   );
 }
