@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
-import { SentryErrorBoundary } from '@/components/sentry-error-boundary';
 import { requireAuth } from '@/lib/auth';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -54,10 +53,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   };
 
   return (
-    <SentryErrorBoundary>
-      <ProtectedRoute>
-        <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
-      </ProtectedRoute>
-    </SentryErrorBoundary>
+    <ProtectedRoute>
+      <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
+    </ProtectedRoute>
   );
 }
