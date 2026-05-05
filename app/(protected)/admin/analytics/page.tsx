@@ -65,7 +65,7 @@ export default async function AnalyticsPage({
       analyticsData = null;
     } else {
       // Build clubs list
-      clubs = memberships.map((m) => ({
+      clubs = memberships.map((m: any) => ({
         id: m.club_id,
         name: (m.clubs as any)?.name || 'Unnamed Club',
       }));
