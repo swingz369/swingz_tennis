@@ -61,13 +61,18 @@ export default async function AnalyticsPage({
       .eq('user_id', user.id)
       .eq('is_active', true);
 
+    type Membership = {
+      club_id: string;
+      clubs: { id: string; name: string } | null;
+    };
+
     if (!memberships || memberships.length === 0) {
       analyticsData = null;
     } else {
       // Build clubs list
-      clubs = memberships.map((m: any) => ({
+      clubs = (memberships as Membership[]).map((m) => ({
         id: m.club_id,
-        name: (m.clubs as any)?.name || 'Unnamed Club',
+        name: m.clubs?.name || 'Unnamed Club',
       }));
 
       // Determine which club to show

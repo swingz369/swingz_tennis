@@ -31,7 +31,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, MoreHorizontal, Edit, Trash2, Lightbulb, Power, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Court } from '@/lib/booking/court.service';
+import type { Court } from '@/lib/types/court-booking';
 
 interface CourtsManageClientProps {
   initialCourts: Court[];
@@ -125,11 +125,12 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
   const handleEdit = (court: Court) => {
     setSelectedCourt(court);
+    const courtType = courtTypes.find((ct) => ct.id === court.court_type_id);
     setFormData({
       name: court.name,
       number: court.number.toString(),
       courtTypeId: court.court_type_id,
-      surface: court.surface,
+      surface: courtType?.surface || '',
       hasLighting: court.has_lighting,
       lightingHoursStart: court.lighting_hours_start || '',
       lightingHoursEnd: court.lighting_hours_end || '',
