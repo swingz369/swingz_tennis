@@ -46,7 +46,12 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'No outstanding amount' }, { status: 400 });
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      // Get base URL from environment or use Vercel URL
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : 'https://swingz.vercel.app');
       const successUrl = `${baseUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${baseUrl}/billing/cancel?invoice_id=${invoiceId}`;
 

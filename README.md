@@ -103,6 +103,11 @@ NEXT_PUBLIC_SENTRY_DSN=dein_sentry_dsn
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NODE_ENV=development
+
+# Production (Vercel)
+# For production on Vercel, set:
+# NEXT_PUBLIC_APP_URL=https://swingz.vercel.app
+# VERCEL_URL is automatically set by Vercel
 ```
 
 ### 4. Datenbank initialisieren

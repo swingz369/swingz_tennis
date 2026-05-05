@@ -100,12 +100,19 @@ export async function POST(_request: NextRequest) {
         .single();
       const clubName = clubData?.name || 'dein Verein';
 
+      // Get base URL from environment or use Vercel URL
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : 'https://swingz.vercel.app');
+
       // Send invite email
       EmailService.sendInvitation(email, {
         memberName: full_name,
         clubName,
-        loginUrl: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
-        resetPasswordUrl: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?email=${encodeURIComponent(email)}`,
+        loginUrl: `${baseUrl}/login`,
+        resetPasswordUrl: `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`,
       }).catch(console.error);
 
       // Audit log
