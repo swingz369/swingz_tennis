@@ -26,9 +26,15 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
   const [selectedClubId, setSelectedClubId] = useState<string>(clubs[0]?.id || '');
 
   const {
-    data: kpis = { activeMembers: 0, sessionsToday: 0, pendingBookings: 0, totalCourts: 0 },
+    data: kpis = {
+      activeMembers: 0,
+      activeTrainers: 0,
+      sessionsToday: 0,
+      pendingBookings: 0,
+      totalCourts: 0,
+    },
     isLoading,
-  } = useDashboardKpis();
+  } = useDashboardKpis(selectedClubId);
 
   console.log('🔍 DashboardClient: Received clubs prop:', clubs);
   console.log('🔍 DashboardClient: Selected clubId:', selectedClubId);
@@ -74,6 +80,13 @@ export function DashboardClient({ user, clubs }: DashboardClientProps) {
       description: 'Aktive Vereinsmitglieder',
       icon: Users,
       color: 'text-brand-primary' as const,
+    },
+    {
+      title: 'Aktive Trainer',
+      value: kpis.activeTrainers,
+      description: 'Aktive Trainer',
+      icon: Trophy,
+      color: 'text-purple-600' as const,
     },
     {
       title: 'Sessions heute',

@@ -21,10 +21,19 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'clubId required' }, { status: 400 });
       }
 
+      // Get separate counts for trainers and members
+      const { count: trainersCount } = await auth.supabase
+        .from('user_club_memberships')
+        .select('*', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('role', 'trainer')
+        .eq('is_active', true);
+
       const { count: membersCount } = await auth.supabase
         .from('user_club_memberships')
         .select('*', { count: 'exact', head: true })
         .eq('club_id', clubId)
+        .eq('role', 'member')
         .eq('is_active', true);
 
       const { count: courtsCount } = await auth.supabase
@@ -63,6 +72,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         activeMembers: membersCount || 0,
+        activeTrainers: trainersCount || 0,
         sessionsToday,
         pendingBookings: pendingCount || 0,
         totalCourts: courtsCount || 0,

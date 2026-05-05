@@ -45,7 +45,13 @@ export default function LoginPage() {
         setError(err.message);
       } else if (data.user) {
         analytics.login('email', true);
-        router.push('/');
+
+        // Wait for session to be properly set before redirecting
+        // This ensures cookies are written to the browser
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Force reload to ensure cookies are picked up by middleware
+        window.location.href = '/';
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';

@@ -21,7 +21,7 @@ import {
   useOptimizeSchedule,
   type Session,
 } from '@/hooks/use-schedule';
-import { useUserRoles } from '@/hooks/use-user-data';
+import { useUserRoles, useUserClub } from '@/hooks/use-user-data';
 import { useCurrentUser } from '@/hooks/use-current-user';
 
 const TIME_SLOTS = [
@@ -44,7 +44,10 @@ const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 export default function SchedulerPage() {
   const [activeSession, setActiveSession] = useState<Session | null>(null);
 
-  const { data: schedule, isLoading, error } = useSchedule('demo-club');
+  const { data: clubData } = useUserClub();
+  const clubId = clubData?.clubId || null;
+
+  const { data: schedule, isLoading, error } = useSchedule(clubId);
   const updateSchedule = useUpdateSchedule();
   const optimizeSchedule = useOptimizeSchedule();
 
@@ -171,7 +174,9 @@ export default function SchedulerPage() {
   };
 
   const handleOptimize = () => {
-    optimizeSchedule.mutate({ clubId: 'demo-club' });
+    if (clubId) {
+      optimizeSchedule.mutate({ clubId });
+    }
   };
 
   // Build matrix: days (7) x time slots
