@@ -15,7 +15,7 @@ import {
 import { createServerClient } from '@supabase/ssr';
 
 type RouteContext = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 const ROLE_HIERARCHY = {
@@ -29,6 +29,7 @@ const ROLE_HIERARCHY = {
  * GET /api/admin/memberships/[id] - Get membership details
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
   return withAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const { data: membership, error } = await auth.supabase
       .from('user_club_memberships')
       .select('*, users:user_id(id, email, full_name)')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error || !membership) {
@@ -59,6 +60,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * SECURITY: Prevents privilege escalation, enforces club boundaries
  */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
+
   return withAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
@@ -82,7 +85,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       const { data: currentMembership, error: fetchError } = await auth.supabase
         .from('user_club_memberships')
         .select('*, users:user_id(email, full_name)')
-        .eq('id', params.id)
+        .eq('id', id)
         .single();
 
       if (fetchError || !currentMembership) {
@@ -138,7 +141,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       const { data: updatedMembership, error: updateError } = await auth.supabase
         .from('user_club_memberships')
         .update(updates)
-        .eq('id', params.id)
+        .eq('id', id)
         .select('*, users:user_id(email, full_name)')
         .single();
 
@@ -153,7 +156,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       // Audit log the change
       try {
         const auditDetails: any = {
-          membership_id: params.id,
+          membership_id: id,
           user_email: currentMembership.users?.email,
           club_id: currentMembership.club_id,
           changes: {},
@@ -178,7 +181,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           user_id: auth.user.id,
           action: role ? 'role_changed' : 'member_status_changed',
           resource_type: 'membership',
-          resource_id: params.id,
+          resource_id: id,
           details: auditDetails,
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
           user_agent: request.headers.get('user-agent'),
@@ -213,6 +216,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
  * Uses is_active flag instead of hard delete to preserve audit trail
  */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const { id } = await params;
+
   return withAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
@@ -224,7 +229,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       const { data: currentMembership, error: fetchError } = await auth.supabase
         .from('user_club_memberships')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single();
 
       if (fetchError || !currentMembership) {
@@ -252,7 +257,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
           deactivated_at: new Date().toISOString(),
           deactivated_by: auth.user.id,
         })
-        .eq('id', params.id);
+        .eq('id', id);
 
       if (updateError) {
         console.error('Error deactivating membership:', updateError);
@@ -268,9 +273,9 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
           user_id: auth.user.id,
           action: 'member_deactivated',
           resource_type: 'membership',
-          resource_id: params.id,
+          resource_id: id,
           details: {
-            membership_id: params.id,
+            membership_id: id,
             user_id: currentMembership.user_id,
             club_id: currentMembership.club_id,
             role: currentMembership.role,
