@@ -6,6 +6,7 @@ import {
   uuid,
   varchar,
   integer,
+  numeric,
   index,
   text,
 } from 'drizzle-orm/pg-core';
@@ -28,6 +29,9 @@ export const clubs = pgTable(
         sunday: { open: string; close: string };
       }>()
       .notNull(),
+    default_hourly_rate: numeric('default_hourly_rate', { precision: 10, scale: 2 })
+      .notNull()
+      .default('15.00'),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),

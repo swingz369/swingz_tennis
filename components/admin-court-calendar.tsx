@@ -206,7 +206,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
       }
 
       // Calculate new end time based on session duration
-      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [startHour, startMin] = session.startTime.split(':').map(Number);
       const [endHour, endMin] = session.endTime.split(':').map(Number);
       const oldStart = new Date(session.week);
       oldStart.setHours(startHour, startMin, 0, 0);

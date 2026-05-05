@@ -5,6 +5,13 @@ export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
 
 export interface UserClubData {
   clubId: string | null;
+  club?: {
+    id: string;
+    name: string;
+    maxMembers: number;
+    defaultHourlyRate: number;
+    status: string;
+  } | null;
 }
 
 export interface UserMemberData {

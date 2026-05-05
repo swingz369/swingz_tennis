@@ -36,7 +36,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         .from(clubs)
         .where(eq(clubs.id, id))
         .limit(1);
-      const defaultHourlyRate = result[0]?.default_hourly_rate || 15.0;
+      const rawRate = result[0]?.default_hourly_rate;
+      const defaultHourlyRate = rawRate ? Number(rawRate) : 15.0;
 
       return NextResponse.json({
         id: club.getId().getValue(),
@@ -92,13 +93,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         // Save domain changes
         await clubRepo.save(existing);
 
-        // Handle defaultHourlyRate separately (not in domain entity yet)
         if (input.defaultHourlyRate !== undefined) {
           const { getDb } = await import('@/infrastructure/persistence/client');
           const db = getDb();
           await db
             .update(clubs)
-            .set({ default_hourly_rate: input.defaultHourlyRate })
+            .set({ default_hourly_rate: input.defaultHourlyRate.toFixed(2) })
             .where(eq(clubs.id, clubId.getValue()));
         }
 
