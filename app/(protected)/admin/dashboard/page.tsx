@@ -10,6 +10,11 @@ export default async function SuperadminDashboardPage() {
 
   if (!user) redirect('/login');
 
+  // Sonderfall: admin@swingz.com sofort zum Vereinsdashboard leiten
+  if (user.email === 'admin@swingz.com') {
+    redirect('/admin/clubs/30b0d39d-a152-4d2d-bd57-d23220794d41/dashboard');
+  }
+
   const { data: memberships } = await supabase
     .from('user_club_memberships')
     .select('role, club_id')
@@ -22,10 +27,6 @@ export default async function SuperadminDashboardPage() {
   console.log('Is superadmin:', isSuperadmin);
 
   if (!isSuperadmin) {
-    // Fallback: Hardcode admin@swingz.com to Tennis Club Berlin if no memberships found
-    if (user.email === 'admin@swingz.com') {
-      redirect('/admin/clubs/30b0d39d-a152-4d2d-bd57-d23220794d41/dashboard');
-    }
     const adminMembership = memberships?.find((m: any) => m.role === 'admin') || memberships?.[0];
     if (adminMembership) {
       redirect(`/admin/clubs/${adminMembership.club_id}/dashboard`);
