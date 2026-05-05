@@ -56,7 +56,8 @@ export class CreateBookingUseCase {
       sessionDetails.clubId,
       memberId,
       sessionDetails.scheduleId,
-      sessionId
+      sessionId,
+      sessionDetails.timeslot.getStart() // Session start time for cancellation policy
     );
 
     await this.bookingRepository.save(booking);

@@ -7,10 +7,11 @@ describe('Booking', () => {
   const memberId = MemberId.create();
   const scheduleId = ScheduleId.create();
   const sessionId = SessionId.create();
+  const sessionStartTime = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours from now
 
   describe('create', () => {
     it('should create a pending booking', () => {
-      const booking = Booking.create(clubId, memberId, scheduleId, sessionId);
+      const booking = Booking.create(clubId, memberId, scheduleId, sessionId, sessionStartTime);
 
       expect(booking.getStatus()).toBe('pending');
       expect(booking.getMemberId().equals(memberId)).toBe(true);
@@ -22,7 +23,7 @@ describe('Booking', () => {
     let booking: Booking;
 
     beforeEach(() => {
-      booking = Booking.create(clubId, memberId, scheduleId, sessionId);
+      booking = Booking.create(clubId, memberId, scheduleId, sessionId, sessionStartTime);
     });
 
     it('should confirm a pending booking', () => {
@@ -63,7 +64,7 @@ describe('Booking', () => {
     let booking: Booking;
 
     beforeEach(() => {
-      booking = Booking.create(clubId, memberId, scheduleId, sessionId);
+      booking = Booking.create(clubId, memberId, scheduleId, sessionId, sessionStartTime);
       // Mock die Zeit bis zur Session - schwierig ohne Zeit-Mocking
     });
 

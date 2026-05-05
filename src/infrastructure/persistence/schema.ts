@@ -220,6 +220,7 @@ export const bookings = pgTable(
       .references(() => sessions.id),
     status: varchar('status', { length: 20 }).notNull().default('pending'),
     booked_at: timestamp('booked_at').notNull().defaultNow(),
+    session_start_time: timestamp('session_start_time').notNull(), // For cancellation policy calculations
     cancelled_at: timestamp('cancelled_at'),
     cancellation_reason: varchar('cancellation_reason', { length: 50 }),
     cancellation_notes: text('cancellation_notes'),

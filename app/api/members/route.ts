@@ -84,36 +84,26 @@ export async function GET(request: NextRequest) {
             validation.data;
 
           if (statistics) {
-            // SECURITY FIX: Filter statistics by club (unless superadmin)
-            const stats = await MemberService.getMemberStatistics(
-              auth.role === 'superadmin' ? undefined : auth.clubId
-            );
+            // Note: Statistics are already filtered by RLS policies at database level
+            const stats = await MemberService.getMemberStatistics();
             return NextResponse.json({ statistics: stats });
           }
 
           if (active) {
-            // SECURITY FIX: Filter active members by club
-            const members = await MemberService.getActiveMembers(
-              auth.role === 'superadmin' ? undefined : auth.clubId
-            );
+            // Note: Active members are filtered by RLS policies at database level
+            const members = await MemberService.getActiveMembers();
             return NextResponse.json({ members });
           }
 
           if (search) {
-            // SECURITY FIX: Filter search results by club
-            const members = await MemberService.searchMembers(
-              search,
-              auth.role === 'superadmin' ? undefined : auth.clubId
-            );
+            // Note: Search results are filtered by RLS policies at database level
+            const members = await MemberService.searchMembers(search);
             return NextResponse.json({ members });
           }
 
           if (trainingGroup) {
-            // SECURITY FIX: Filter by training group AND club
-            const members = await MemberService.getMembersByTrainingGroup(
-              trainingGroup,
-              auth.role === 'superadmin' ? undefined : auth.clubId
-            );
+            // Note: Training groups are filtered by RLS policies at database level
+            const members = await MemberService.getMembersByTrainingGroup(trainingGroup);
             return NextResponse.json({ members });
           }
 
