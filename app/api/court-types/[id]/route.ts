@@ -86,16 +86,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     try {
       // Check if any courts reference this type
       const supabase = await createClient();
-      const { data: refCount, error: refError } = await supabase
+      const { count, error: refError } = await supabase
         .from('courts')
         .select('id', { count: 'exact', head: true })
         .eq('court_type_id', id);
 
       if (refError) {
         console.error('Error checking court type references:', refError);
-      } else if (refCount && refCount > 0) {
+      } else if (count && count > 0) {
         return NextResponse.json(
-          { error: `Cannot delete court type: ${refCount} court(s) are using this type` },
+          { error: `Cannot delete court type: ${count} court(s) are using this type` },
           { status: 409 }
         );
       }
