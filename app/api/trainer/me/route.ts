@@ -5,15 +5,10 @@ import { cookies } from 'next/headers';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-interface BookingMember {
-  full_name: string | null;
-  email: string | null;
-}
-
 interface Booking {
   id: string;
   status: string;
-  member: BookingMember[];
+  member_id: string;
 }
 
 interface Session {
@@ -78,6 +73,21 @@ export async function GET(_req: NextRequest) {
 
     const supabase = await createClient();
 
+    // First, get trainer record from trainers table
+    const { data: trainerRecord, error: trainerError } = await supabase
+      .from('trainers')
+      .select('id, email, name')
+      .eq('email', auth.user.email!)
+      .eq('is_active', true)
+      .single();
+
+    if (trainerError || !trainerRecord) {
+      return NextResponse.json(
+        { error: 'Trainer record not found. Please contact administrator.' },
+        { status: 404 }
+      );
+    }
+
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
       .select(
@@ -91,11 +101,11 @@ export async function GET(_req: NextRequest) {
         bookings (
           id,
           status,
-          member:users!inner(full_name, email)
+          member_id
         )
       `
       )
-      .eq('trainer_id', auth.user.id)
+      .eq('trainer_id', trainerRecord.id)
       .order('timeslot_start', { ascending: true });
 
     if (sessionsError) {
@@ -105,17 +115,31 @@ export async function GET(_req: NextRequest) {
     const today = new Date();
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const transformedSessions: TransformedSession[] = (sessions || []).map((s: Session) => ({
-      id: s.id,
-      startTime: s.timeslot_start,
-      endTime: s.timeslot_end,
-      maxParticipants: s.max_participants,
-      attendees: (s.bookings || []).map((b: Booking) => ({
-        bookingId: b.id,
-        memberName: b.member?.[0]?.full_name || b.member?.[0]?.email || 'Unbekannt',
-        status: b.status,
-      })),
-    }));
+    // For each session, fetch member details for bookings
+    const transformedSessions: TransformedSession[] = [];
+    for (const s of sessions || []) {
+      const attendees = [];
+      for (const b of s.bookings || []) {
+        // Fetch user details for this booking's member_id
+        const { data: userData } = await supabase.auth.admin.getUserById(b.member_id);
+        const memberName =
+          userData?.user?.user_metadata?.full_name || userData?.user?.email || 'Unbekannt';
+
+        attendees.push({
+          bookingId: b.id,
+          memberName,
+          status: b.status,
+        });
+      }
+
+      transformedSessions.push({
+        id: s.id,
+        startTime: s.timeslot_start,
+        endTime: s.timeslot_end,
+        maxParticipants: s.max_participants,
+        attendees,
+      });
+    }
 
     const upcomingSessions = transformedSessions.filter(
       (s) => new Date(s.startTime) >= today

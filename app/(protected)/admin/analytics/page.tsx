@@ -36,7 +36,7 @@ export default async function AnalyticsPage({
   // For superadmins, show all clubs they have access to
   let clubQuery = supabase
     .from('user_club_memberships')
-    .select('club_id, role, clubs!inner(name)')
+    .select('club_id, role, clubs!inner(id, name)')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
@@ -45,12 +45,24 @@ export default async function AnalyticsPage({
     clubQuery = clubQuery.eq('role', 'admin');
   }
 
-  const { data: membershipsWithClubs } = await clubQuery;
+  const { data: membershipsWithClubs, error: clubsError } = await clubQuery;
 
-  // Build clubs list (clubs is an array from the join)
+  if (clubsError || !membershipsWithClubs || membershipsWithClubs.length === 0) {
+    console.error('Error fetching clubs:', clubsError);
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">Analytics</h1>
+        <p className="text-red-500">
+          Keine Club-Daten gefunden. Bitte kontaktieren Sie den Support.
+        </p>
+      </div>
+    );
+  }
+
+  // Build clubs list (clubs is an object from the join, not an array)
   const clubs = (membershipsWithClubs as any[]).map((m) => ({
     id: m.club_id,
-    name: m.clubs[0]?.name || 'Unnamed Club',
+    name: m.clubs?.name || 'Unnamed Club',
   }));
 
   // Determine which club to show
