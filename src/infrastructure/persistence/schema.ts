@@ -245,9 +245,7 @@ export const userClubMemberships = pgTable(
   'user_club_memberships',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    user_id: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+    user_id: uuid('user_id').notNull(),
     club_id: uuid('club_id')
       .notNull()
       .references(() => clubs.id, { onDelete: 'cascade' }),

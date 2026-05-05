@@ -12,7 +12,7 @@ export default async function SuperadminDashboardPage() {
 
   const { data: memberships } = await supabase
     .from('user_club_memberships')
-    .select('role, club_id, clubs!inner(name)')
+    .select('role, club_id')
     .eq('user_id', user.id)
     .eq('is_active', true);
 

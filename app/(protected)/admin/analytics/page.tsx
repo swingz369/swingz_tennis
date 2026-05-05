@@ -18,6 +18,19 @@ export default async function AnalyticsPage({
   // Get all active club memberships with club details
   const { data: memberships } = await supabase
     .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
+
+  // Only superadmin can access global analytics
+  const isSuperadmin = memberships?.some((m: any) => m.role === 'superadmin');
+  if (!isSuperadmin) {
+    redirect('/admin/members');
+  }
+
+  // Now fetch full membership data with club details for the selected club
+  const { data: membershipsWithClubs } = await supabase
+    .from('user_club_memberships')
     .select('club_id, clubs!inner(name)')
     .eq('user_id', user.id)
     .eq('is_active', true);
@@ -27,7 +40,7 @@ export default async function AnalyticsPage({
     clubs: { id: string; name: string }[];
   };
 
-  if (!memberships || memberships.length === 0) {
+  if (!membershipsWithClubs || membershipsWithClubs.length === 0) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Analytics</h1>
@@ -37,7 +50,7 @@ export default async function AnalyticsPage({
   }
 
   // Build clubs list (clubs is an array from the join)
-  const clubs = (memberships as Membership[]).map((m) => ({
+  const clubs = (membershipsWithClubs as Membership[]).map((m) => ({
     id: m.club_id,
     name: m.clubs[0]?.name || 'Unnamed Club',
   }));
