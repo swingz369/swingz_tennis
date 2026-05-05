@@ -13,7 +13,7 @@ interface BookingMember {
 interface Booking {
   id: string;
   status: string;
-  member: BookingMember;
+  member: BookingMember[];
 }
 
 interface Session {
@@ -112,7 +112,7 @@ export async function GET(_req: NextRequest) {
       maxParticipants: s.max_participants,
       attendees: (s.bookings || []).map((b: Booking) => ({
         bookingId: b.id,
-        memberName: b.member?.full_name || b.member?.email || 'Unbekannt',
+        memberName: b.member?.[0]?.full_name || b.member?.[0]?.email || 'Unbekannt',
         status: b.status,
       })),
     }));
