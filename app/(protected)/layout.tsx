@@ -15,7 +15,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       id,
       email,
       full_name,
-      club_memberships (
+      user_club_memberships (
         role,
         clubs (id, name)
       )
@@ -24,10 +24,12 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .maybeSingle();
 
-  const primaryClubRaw = memberData?.club_memberships?.[0]?.clubs ?? null;
+  const primaryClubRaw = memberData?.user_club_memberships?.[0]?.clubs ?? null;
   const primaryClub = Array.isArray(primaryClubRaw) ? primaryClubRaw[0] : primaryClubRaw;
 
-  const roles: string[] = (memberData?.club_memberships ?? []).map((m: { role: string }) => m.role);
+  const roles: string[] = (memberData?.user_club_memberships ?? []).map(
+    (m: { role: string }) => m.role
+  );
   const isSuperAdmin = roles.includes('superadmin');
 
   // Read selected-club-id cookie for superadmin context
