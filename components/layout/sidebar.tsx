@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -20,7 +21,8 @@ import {
   Trophy,
   Building2,
   User,
-  Newspaper, // ADDED: For News icon
+  Newspaper,
+  X,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -35,6 +37,45 @@ export function Sidebar({
   selectedClubId?: string | null;
 }) {
   const pathname = usePathname();
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  // Handle swipe gestures on mobile
+  useEffect(() => {
+    if (!open) return undefined;
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      touchEndX = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+      if (touchStartX - touchEndX > 50) {
+        // Swipe left - close sidebar
+        onClose?.();
+      }
+    };
+
+    const sidebar = sidebarRef.current;
+    if (sidebar) {
+      sidebar.addEventListener('touchstart', handleTouchStart);
+      sidebar.addEventListener('touchmove', handleTouchMove);
+      sidebar.addEventListener('touchend', handleTouchEnd);
+
+      return () => {
+        sidebar.removeEventListener('touchstart', handleTouchStart);
+        sidebar.removeEventListener('touchmove', handleTouchMove);
+        sidebar.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+
+    return undefined;
+  }, [open, onClose]);
 
   const isAdmin = roles?.some((r) => r === 'admin' || r === 'superadmin');
   const isSuperAdmin = roles?.includes('superadmin');
@@ -74,11 +115,25 @@ export function Sidebar({
 
   return (
     <aside
+      ref={sidebarRef}
       className={cn(
-        'h-[calc(100vh-4rem)] w-64 border-r border-gray-100 dark:border-white/10 bg-white dark:bg-[#0f2d22]',
-        open ? 'fixed inset-y-0 left-0 z-50 block' : 'hidden md:block'
+        'h-[calc(100vh-4rem)] w-64 border-r border-gray-100 dark:border-white/10 bg-white dark:bg-[#0f2d22] transition-transform duration-300',
+        'md:translate-x-0',
+        open
+          ? 'fixed inset-y-0 left-0 z-50 translate-x-0'
+          : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:relative md:translate-x-0'
       )}
     >
+      {/* Mobile close button */}
+      {open && (
+        <button
+          onClick={onClose}
+          className="md:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400"
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      )}
       <ScrollArea className="h-full py-6">
         <div className="px-4 mb-6">
           <Link

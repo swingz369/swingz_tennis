@@ -1,5 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { MemberDashboard } from '@/components/dashboard/member-dashboard';
+import { TrainerDashboard } from '@/components/dashboard/trainer-dashboard';
+import { AdminDashboard } from '@/components/dashboard/admin-dashboard';
+import { SuperadminDashboard } from '@/components/dashboard/superadmin-dashboard';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -29,7 +33,17 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  console.log('User memberships:', memberships);
+  // Fetch user profile for display
+  const { data: profile } = await supabase
+    .from('users')
+    .select('full_name, email')
+    .eq('id', user.id)
+    .single();
+
+  const userDisplay = {
+    name: profile?.full_name || user.email?.split('@')[0] || 'User',
+    email: profile?.email || user.email || '',
+  };
 
   // Determine highest role
   const roles = memberships.map((m: { role: string }) => m.role);
@@ -41,18 +55,16 @@ export default async function DashboardPage() {
         ? 'trainer'
         : 'member';
 
-  console.log('Redirecting user with role:', highestRole);
-
-  // Redirect based on highest role
+  // Render dynamic dashboard based on role
   switch (highestRole) {
     case 'superadmin':
-      redirect('/admin/dashboard'); // Globales Superadmin-Dashboard
+      return <SuperadminDashboard user={userDisplay} />;
     case 'admin':
-      redirect('/admin/dashboard'); // Vereinsspezifisches Dashboard (wird in /admin/dashboard/page.tsx weitergeleitet)
+      return <AdminDashboard user={userDisplay} />;
     case 'trainer':
-      redirect('/trainer');
+      return <TrainerDashboard user={userDisplay} />;
     case 'member':
-      redirect('/bookings');
+      return <MemberDashboard user={userDisplay} />;
     default:
       redirect('/login');
   }
