@@ -20,7 +20,10 @@ export default async function AdminCourtTypesPage() {
       .eq('user_id', user.id)
       .eq('is_active', true);
 
-    const isAdmin = memberships?.some((m) => m.role === 'admin' || m.role === 'superadmin');
+    type Membership = { role: string };
+    const isAdmin = memberships?.some(
+      (m: Membership) => m.role === 'admin' || m.role === 'superadmin'
+    );
     if (!isAdmin) {
       redirect('/dashboard');
     }
