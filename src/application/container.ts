@@ -7,6 +7,8 @@ import type { ClubRepository } from '@/domain/repositories/club-repository.inter
 import type { ScheduleRepository } from '@/domain/repositories/schedule-repository.interface';
 import type { TrainerRepository } from '@/domain/repositories/trainer-repository.interface';
 import type { CourtRepository } from '@/domain/repositories/court-repository.interface';
+import type { GroupRepository } from '@/domain/repositories/group-repository.interface';
+import type { PricingRuleRepository } from '@/domain/repositories/pricing-rule-repository.interface';
 
 /**
  * Dependency Injection Container
@@ -27,6 +29,8 @@ export const TOKENS = {
   ScheduleRepository: Symbol.for('ScheduleRepository'),
   TrainerRepository: Symbol.for('TrainerRepository'),
   CourtRepository: Symbol.for('CourtRepository'),
+  GroupRepository: Symbol.for('GroupRepository'),
+  PricingRuleRepository: Symbol.for('PricingRuleRepository'),
 } as const;
 
 let isRegistered = false;
@@ -107,6 +111,24 @@ export function registerServices(): void {
         DrizzleCourtRepository,
       } = require('@/infrastructure/persistence/repositories/court.repository');
       return new DrizzleCourtRepository();
+    },
+  });
+
+  container.register<GroupRepository>(TOKENS.GroupRepository, {
+    useFactory: () => {
+      const {
+        DrizzleGroupRepository,
+      } = require('@/infrastructure/persistence/repositories/group.repository');
+      return new DrizzleGroupRepository();
+    },
+  });
+
+  container.register<PricingRuleRepository>(TOKENS.PricingRuleRepository, {
+    useFactory: () => {
+      const {
+        DrizzlePricingRuleRepository,
+      } = require('@/infrastructure/persistence/repositories/pricing-rule.repository');
+      return new DrizzlePricingRuleRepository();
     },
   });
 }

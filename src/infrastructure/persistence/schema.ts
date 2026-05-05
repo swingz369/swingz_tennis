@@ -125,6 +125,55 @@ export const trainingGroups = pgTable('training_groups', {
   is_active: boolean('is_active').notNull().default(true),
 });
 
+export const groups = pgTable(
+  'groups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    level: varchar('level', { length: 20 }).notNull().default('intermediate'),
+    age_group: varchar('age_group', { length: 20 }).notNull().default('senior'),
+    is_active: boolean('is_active').notNull().default(true),
+    member_ids: jsonb('member_ids').$type<string[]>().notNull().default([]),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('groups_club_idx').on(table.club_id),
+    club_name_idx: index('groups_club_name_idx').on(table.club_id, table.name),
+  })
+);
+
+export const pricing_rules = pgTable(
+  'pricing_rules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    court_id: uuid('court_id').references(() => courts.id, { onDelete: 'cascade' }),
+    rule_type: varchar('rule_type', { length: 50 }).notNull().default('hourly'), // 'hourly', 'member', 'trial', 'group'
+    min_booking_hours: numeric('min_booking_hours', { precision: 5, scale: 2 }).default('1'),
+    max_booking_hours: numeric('max_booking_hours', { precision: 5, scale: 2 }).default('4'),
+    price_per_hour: numeric('price_per_hour', { precision: 10, scale: 2 }).notNull(),
+    advance_booking_days: integer('advance_booking_days').default(7),
+    applies_to_member_types: jsonb('applies_to_member_types').$type<string[]>().default([]), // [] = all
+    applies_to_groups: jsonb('applies_to_groups').$type<string[]>().default([]), // [] = all
+    priority: integer('priority').notNull().default(0), // higher = more specific, wins over lower
+    is_active: boolean('is_active').notNull().default(true),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('pricing_rules_club_idx').on(table.club_id),
+    court_idx: index('pricing_rules_court_idx').on(table.court_id),
+    club_priority_idx: index('pricing_rules_club_priority_idx').on(table.club_id, table.priority),
+  })
+);
+
 export const sessions = pgTable(
   'sessions',
   {

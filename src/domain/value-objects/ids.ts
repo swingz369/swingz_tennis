@@ -138,3 +138,37 @@ export class SessionId extends ValueObject<string> {
     return new SessionId(id);
   }
 }
+
+export class GroupId extends ValueObject<string> {
+  private constructor(value: string) {
+    super(value);
+  }
+
+  public static create(): GroupId {
+    return new GroupId(uuidv4());
+  }
+
+  public static fromString(id: string): GroupId {
+    if (!id) {
+      throw new Error('GroupId cannot be empty');
+    }
+    return new GroupId(id);
+  }
+}
+
+export class CourtId extends ValueObject<string> {
+  private constructor(value: string) {
+    super(value);
+  }
+
+  public static create(): CourtId {
+    return new CourtId(uuidv4());
+  }
+
+  public static fromString(id: string): CourtId {
+    if (!id) {
+      throw new Error('CourtId cannot be empty');
+    }
+    return new CourtId(id);
+  }
+}
