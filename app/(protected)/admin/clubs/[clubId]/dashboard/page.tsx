@@ -67,7 +67,7 @@ export default async function ClubDashboardPage({
     },
     {
       label: 'Trainer',
-      href: `/admin/trainer?clubId=${clubId}`,
+      href: `/admin/trainers?clubId=${clubId}`,
       icon: UserCheck,
       desc: 'Trainer verwalten',
     },
