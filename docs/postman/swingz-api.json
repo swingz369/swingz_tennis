@@ -1,0 +1,536 @@
+{
+  "info": {
+    "name": "SwingZ API",
+    "description": "Complete API collection for SwingZ Tennis Club Management System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://swingz.vercel.app",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "csrf_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "club_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.environment.set('access_token', response.session.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@swingz.com\",\n  \"password\": \"your-password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get CSRF Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "pm.environment.set('csrf_token', response.csrfToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/csrf-token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "csrf-token"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "item": [
+        {
+          "name": "List Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/members?clubId={{club_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "members"],
+              "query": [
+                {
+                  "key": "clubId",
+                  "value": "{{club_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Member",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('base_url') + '/api/csrf-token',",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    pm.environment.set('csrf_token', res.json().csrfToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newmember@example.com\",\n  \"name\": \"New Member\",\n  \"clubId\": \"{{club_id}}\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/members",
+              "host": ["{{base_url}}"],
+              "path": ["api", "members"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Deactivate Members",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('base_url') + '/api/csrf-token',",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    pm.environment.set('csrf_token', res.json().csrfToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberIds\": [\n    \"uuid1\",\n    \"uuid2\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/members/bulk-deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "members", "bulk-deactivate"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "List Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions?clubId={{club_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions"],
+              "query": [
+                {
+                  "key": "clubId",
+                  "value": "{{club_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Session",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('base_url') + '/api/csrf-token',",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    pm.environment.set('csrf_token', res.json().csrfToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dayOfWeek\": 1,\n  \"startTime\": \"09:00\",\n  \"endTime\": \"10:00\",\n  \"trainerId\": \"trainer-uuid\",\n  \"maxParticipants\": 8,\n  \"notes\": \"Beginner group\",\n  \"clubId\": \"{{club_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete Sessions",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('base_url') + '/api/csrf-token',",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    pm.environment.set('csrf_token', res.json().csrfToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionIds\": [\n    \"uuid1\",\n    \"uuid2\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/bulk-delete",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "bulk-delete"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "List Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/bookings?memberId=member-uuid",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings"],
+              "query": [
+                {
+                  "key": "memberId",
+                  "value": "member-uuid"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Booking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('base_url') + '/api/csrf-token',",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    pm.environment.set('csrf_token', res.json().csrfToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"session-uuid\",\n  \"memberId\": \"member-uuid\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bookings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('base_url') + '/api/csrf-token',",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    pm.environment.set('csrf_token', res.json().csrfToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/bookings/booking-uuid/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bookings", "booking-uuid", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clubs",
+      "item": [
+        {
+          "name": "List Clubs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/clubs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clubs"]
+            }
+          }
+        },
+        {
+          "name": "Create Club",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.environment.get('base_url') + '/api/csrf-token',",
+                  "    method: 'GET'",
+                  "}, (err, res) => {",
+                  "    pm.environment.set('csrf_token', res.json().csrfToken);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tennis Club Berlin\",\n  \"address\": \"Hauptstraße 1, 10115 Berlin\",\n  \"contact_email\": \"info@club.de\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/clubs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "clubs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/analytics?clubId={{club_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics"],
+              "query": [
+                {
+                  "key": "clubId",
+                  "value": "{{club_id}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Dashboard KPIs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/kpis?clubId={{club_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "kpis"],
+              "query": [
+                {
+                  "key": "clubId",
+                  "value": "{{club_id}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
