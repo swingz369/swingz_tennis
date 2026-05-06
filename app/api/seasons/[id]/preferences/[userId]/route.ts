@@ -23,10 +23,12 @@ interface RouteContext {
  * Admins can view any preference
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
+    const db = getDb();
     try {
       const { id: seasonId, userId } = params;
 
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       // Check permissions
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
-      const isOwnPreference = userId === auth.userId;
+      const isOwnPreference = userId === auth.user?.id;
 
       if (!isOwnPreference && !isAdmin && !isSuperadmin) {
         return forbiddenResponse('You can only view your own preferences');
@@ -92,18 +94,21 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * Admins can update any preference
  */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id: seasonId, userId } = params;
 
         // Check permissions
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
-        const isOwnPreference = userId === auth.userId;
+        const isOwnPreference = userId === auth.user?.id;
 
         if (!isOwnPreference && !isAdmin && !isSuperadmin) {
           return forbiddenResponse('You can only update your own preferences');
@@ -204,18 +209,21 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
  * Admins can delete any preference
  */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id: seasonId, userId } = params;
 
         // Check permissions
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
-        const isOwnPreference = userId === auth.userId;
+        const isOwnPreference = userId === auth.user?.id;
 
         if (!isOwnPreference && !isAdmin && !isSuperadmin) {
           return forbiddenResponse('You can only delete your own preferences');

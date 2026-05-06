@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Fetch seasons with stats using subqueries
+      const db = getDb();
       const results = await db
         .select({
           season: seasons,
@@ -180,6 +181,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'start_date must be before end_date' }, { status: 400 });
       }
 
+      const db = getDb();
+
       // Check for overlapping seasons of same type
       const overlappingSeasons = await db
         .select()
@@ -214,7 +217,7 @@ export async function POST(request: NextRequest) {
             : null,
           description: body.description || null,
           notes: body.notes || null,
-          created_by: auth.userId,
+          created_by: auth.user?.id,
           planning_status: 'draft',
           preferences_open: false,
           is_active: false,

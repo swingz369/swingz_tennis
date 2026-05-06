@@ -25,10 +25,12 @@ interface RouteContext {
  * Get a single season by ID with full statistics
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
+    const db = getDb();
     try {
       const { id } = params;
 
@@ -92,11 +94,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * Update a season
  */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id } = params;
 
@@ -202,7 +207,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
                     : body.planning_status === 'collecting_preferences'
                       ? 'preferences_opened'
                       : 'manual_edit',
-              actor_id: auth.userId,
+              actor_id: auth.user?.id,
               actor_role: auth.role,
               details: {
                 old_status: existingSeason.planning_status,

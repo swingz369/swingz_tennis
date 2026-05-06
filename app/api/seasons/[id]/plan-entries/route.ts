@@ -33,10 +33,12 @@ interface RouteContext {
  * - entry_type: Filter by type
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
+    const db = getDb();
     try {
       const { id: seasonId } = params;
       const { searchParams } = new URL(request.url);
@@ -128,11 +130,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * Body: CreatePlanEntryRequest
  */
 export async function POST(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id: seasonId } = params;
 

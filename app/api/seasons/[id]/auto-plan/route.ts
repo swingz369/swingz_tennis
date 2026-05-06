@@ -26,7 +26,9 @@ interface RouteContext {
  * Returns: AutoPlanResponse with generated entries and metrics
  */
 export async function POST(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     // Higher rate limit for expensive operation
     const rateLimitError = await checkRateLimitOrFail(request, {
       maxRequests: 5,
@@ -35,6 +37,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id: seasonId } = params;
 

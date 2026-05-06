@@ -27,10 +27,12 @@ interface RouteContext {
  * - user_role: Filter by role (admin only)
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
+    const db = getDb();
     try {
       const { id: seasonId } = params;
       const { searchParams } = new URL(request.url);
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
       // Non-admins can only see their own preferences
       if (!isAdmin && !isSuperadmin) {
-        conditions.push(eq(userTrainingPreferences.user_id, auth.userId));
+        conditions.push(eq(userTrainingPreferences.user_id, auth.user?.id));
       } else {
         // Admin filters
         const userIdFilter = searchParams.get('user_id');
@@ -113,11 +115,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * Body: SubmitPreferencesRequest
  */
 export async function POST(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id: seasonId } = params;
 
@@ -163,7 +168,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           .where(
             and(
               eq(userTrainingPreferences.season_id, seasonId),
-              eq(userTrainingPreferences.user_id, auth.userId)
+              eq(userTrainingPreferences.user_id, auth.user?.id)
             )
           );
 
@@ -201,7 +206,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
             .insert(userTrainingPreferences)
             .values({
               season_id: seasonId,
-              user_id: auth.userId,
+              user_id: auth.user?.id,
               club_id: season.club_id,
               user_role: body.user_role,
               preferred_level: body.preferred_level || null,

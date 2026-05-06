@@ -26,10 +26,12 @@ interface RouteContext {
  * Get a single plan entry with full details
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
+    const db = getDb();
     try {
       const { id: seasonId, entryId } = params;
 
@@ -88,11 +90,14 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * Update a plan entry
  */
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id: seasonId, entryId } = params;
 
@@ -242,11 +247,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
  * Delete a plan entry
  */
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const db = getDb();
   return withCSRFProtection(request, async () => {
+    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
+      const db = getDb();
       try {
         const { id: seasonId, entryId } = params;
 
