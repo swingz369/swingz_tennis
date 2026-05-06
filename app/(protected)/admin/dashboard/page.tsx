@@ -2,6 +2,9 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { SuperadminDashboardClient } from './dashboard-client';
 
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic';
+
 export default async function SuperadminDashboardPage() {
   try {
     const supabase = await createClient();
