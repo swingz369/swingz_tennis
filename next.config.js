@@ -2,16 +2,33 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@supabase/ssr'],
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  turbopack: {}, // Empty turbopack config to silence Next.js 16 warning
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co', // Supabase Storage
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com', // If using Unsplash
+      },
+    ],
     minimumCacheTTL: 31536000, // 1 year for static images
     dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   compress: true,
   poweredByHeader: false,

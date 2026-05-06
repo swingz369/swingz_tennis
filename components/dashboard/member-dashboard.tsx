@@ -1,5 +1,3 @@
-'use client';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Trophy, Clock, CreditCard } from 'lucide-react';
 import Link from 'next/link';
@@ -12,6 +10,11 @@ interface MemberDashboardProps {
   };
 }
 
+/**
+ * Member Dashboard - Server Component
+ * Optimized: Removed 'use client' as no interactivity needed
+ * All navigation uses Next.js Link (works in Server Components)
+ */
 export function MemberDashboard({ user }: MemberDashboardProps) {
   return (
     <div className="space-y-6">

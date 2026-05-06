@@ -3,22 +3,40 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Calendar, MapPin, User, Menu } from 'lucide-react';
+import { Home, Calendar, MapPin, User, Menu, GraduationCap, ClipboardCheck } from 'lucide-react';
 
 interface MobileBottomNavProps {
   roles?: string[];
   onMenuClick?: () => void;
 }
 
-export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
+export function MobileBottomNav({ roles, onMenuClick }: MobileBottomNavProps) {
   const pathname = usePathname();
 
-  const navItems = [
-    { name: 'Home', href: '/dashboard', icon: Home },
-    { name: 'Training', href: '/training-schedule', icon: Calendar },
-    { name: 'Courts', href: '/courts', icon: MapPin },
-    { name: 'Profil', href: '/profile', icon: User },
-  ];
+  // Check user roles
+  const isAdmin = roles?.some((r) => r === 'admin' || r === 'superadmin');
+  const isTrainer = roles?.includes('trainer') || isAdmin;
+
+  // Navigation items based on role
+  let navItems = [];
+
+  if (isTrainer) {
+    // Trainer bottom navigation
+    navItems = [
+      { name: 'Dashboard', href: '/dashboard', icon: Home },
+      { name: 'Trainer', href: '/trainer', icon: GraduationCap },
+      { name: 'Termine', href: '/scheduler', icon: Calendar },
+      { name: 'Anwesenheit', href: '/attendance-history', icon: ClipboardCheck },
+    ];
+  } else {
+    // Member bottom navigation (default)
+    navItems = [
+      { name: 'Home', href: '/dashboard', icon: Home },
+      { name: 'Training', href: '/training-schedule', icon: Calendar },
+      { name: 'Courts', href: '/courts', icon: MapPin },
+      { name: 'Profil', href: '/profile', icon: User },
+    ];
+  }
 
   return (
     <nav

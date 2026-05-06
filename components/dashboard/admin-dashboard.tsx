@@ -1,5 +1,3 @@
-'use client';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, DollarSign, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -12,6 +10,10 @@ interface AdminDashboardProps {
   };
 }
 
+/**
+ * Admin Dashboard - Server Component
+ * Optimized: Removed 'use client' as no interactivity needed
+ */
 export function AdminDashboard({ user }: AdminDashboardProps) {
   return (
     <div className="space-y-6">

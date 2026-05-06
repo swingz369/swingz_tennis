@@ -1,5 +1,3 @@
-'use client';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Users, DollarSign, Activity } from 'lucide-react';
 import Link from 'next/link';
@@ -12,6 +10,10 @@ interface SuperadminDashboardProps {
   };
 }
 
+/**
+ * Superadmin Dashboard - Server Component
+ * Optimized: Removed 'use client' as no interactivity needed
+ */
 export function SuperadminDashboard({ user }: SuperadminDashboardProps) {
   return (
     <div className="space-y-6">

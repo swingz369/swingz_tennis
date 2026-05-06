@@ -1,182 +1,217 @@
+/**
+ * Rate Limiting Utility
+ * Protects API routes from abuse
+ * Based on IP address and user ID
+ */
+
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 
 interface RateLimitConfig {
-  interval: number;
-  maxRequests: number;
+  /**
+   * Maximum number of requests allowed
+   */
+  max: number;
+
+  /**
+   * Time window in milliseconds
+   */
+  windowMs: number;
+
+  /**
+   * Custom message when rate limit is exceeded
+   */
+  message?: string;
 }
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
+interface RateLimitStore {
+  [key: string]: {
+    count: number;
+    resetTime: number;
+  };
 }
 
-// Global in-memory store (development/fallback)
-// For production, replace with Redis (Upstash) via environment variable
-const rateLimitStore = new Map<string, RateLimitEntry>();
+// In-memory store (in production, use Redis or similar)
+const rateLimitStore: RateLimitStore = {};
 
-// Periodic cleanup of expired entries (every 5 min)
-if (typeof window === 'undefined') {
-  setInterval(
-    () => {
-      const now = Date.now();
-      for (const [key, entry] of rateLimitStore.entries()) {
-        if (entry.resetAt < now) {
-          rateLimitStore.delete(key);
-        }
-      }
-    },
-    5 * 60 * 1000
-  );
+/**
+ * Clean up expired entries periodically
+ */
+setInterval(() => {
+  const now = Date.now();
+  Object.keys(rateLimitStore).forEach((key) => {
+    if (rateLimitStore[key].resetTime < now) {
+      delete rateLimitStore[key];
+    }
+  });
+}, 60000); // Clean every minute
+
+/**
+ * Get client identifier (IP + User ID if available)
+ */
+async function getClientIdentifier(request: NextRequest): Promise<string> {
+  const headersList = await headers();
+
+  // Try to get IP from various headers
+  const forwarded = headersList.get('x-forwarded-for');
+  const realIp = headersList.get('x-real-ip');
+  const ip = forwarded?.split(',')[0] || realIp || 'unknown';
+
+  // Add user ID if authenticated (from cookies or headers)
+  const userId = request.cookies.get('sb-user-id')?.value;
+
+  return userId ? `${ip}:${userId}` : ip;
 }
 
 /**
- * Get client identifier from request
+ * Rate limit middleware
  */
-function getClientIdentifier(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  const cfConnectingIp = request.headers.get('cf-connecting-ip');
-
-  const ip = forwarded?.split(',')[0] || realIp || cfConnectingIp || 'unknown';
-
-  const path = new URL(request.url).pathname;
-  return `${ip}:${path}`;
-}
-
-/**
- * Check rate limit (in-memory)
- */
-async function checkRateLimit(
+export async function rateLimit(
   request: NextRequest,
   config: RateLimitConfig
-): Promise<{ success: boolean; remaining: number; resetAt: number }> {
-  const identifier = getClientIdentifier(request);
+): Promise<{ limited: boolean; response?: NextResponse }> {
+  const identifier = await getClientIdentifier(request);
+  const key = `${request.nextUrl.pathname}:${identifier}`;
   const now = Date.now();
 
-  let entry = rateLimitStore.get(identifier);
+  // Initialize or get existing entry
+  let entry = rateLimitStore[key];
 
-  if (!entry || entry.resetAt < now) {
-    entry = { count: 0, resetAt: now + config.interval };
-    rateLimitStore.set(identifier, entry);
+  if (!entry || entry.resetTime < now) {
+    // Create new entry or reset expired one
+    entry = {
+      count: 1,
+      resetTime: now + config.windowMs,
+    };
+    rateLimitStore[key] = entry;
+    return { limited: false };
   }
 
+  // Increment count
   entry.count++;
 
-  const success = entry.count <= config.maxRequests;
-  const remaining = Math.max(0, config.maxRequests - entry.count);
+  // Check if limit exceeded
+  if (entry.count > config.max) {
+    const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
 
-  return { success, remaining, resetAt: entry.resetAt };
-}
-
-/**
- * Standard rate limit: 100 requests per minute
- */
-export async function rateLimit(request: NextRequest) {
-  return checkRateLimit(request, {
-    interval: 60 * 1000,
-    maxRequests: 100,
-  });
-}
-
-/**
- * Strict rate limit: 10 requests per minute
- */
-export async function rateLimitStrict(request: NextRequest) {
-  return checkRateLimit(request, {
-    interval: 60 * 1000,
-    maxRequests: 10,
-  });
-}
-
-/**
- * Generous rate limit: 1000 requests per minute
- */
-export async function rateLimitGenerous(request: NextRequest) {
-  return checkRateLimit(request, {
-    interval: 60 * 1000,
-    maxRequests: 1000,
-  });
-}
-
-/**
- * Auth rate limit: 5 attempts per 15 minutes
- */
-export async function rateLimitAuth(request: NextRequest) {
-  return checkRateLimit(request, {
-    interval: 15 * 60 * 1000,
-    maxRequests: 5,
-  });
-}
-
-/**
- * Middleware wrapper
- */
-export async function withRateLimit(
-  request: NextRequest,
-  handler: () => Promise<Response>,
-  limiter: (
-    req: NextRequest
-  ) => Promise<{ success: boolean; remaining: number; resetAt: number }> = rateLimit
-): Promise<Response> {
-  const { success, remaining, resetAt } = await limiter(request);
-
-  if (!success) {
-    return new Response(
-      JSON.stringify({
-        error: 'Too many requests',
-        retryAfter: Math.ceil((resetAt - Date.now()) / 1000),
-      }),
-      {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-RateLimit-Limit': String(
-            limiter === rateLimitStrict ? 10 : limiter === rateLimitGenerous ? 1000 : 100
-          ),
-          'X-RateLimit-Remaining': String(remaining),
-          'X-RateLimit-Reset': String(Math.floor(resetAt / 1000)),
-          'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)),
+    return {
+      limited: true,
+      response: NextResponse.json(
+        {
+          error: config.message || 'Rate limit exceeded',
+          retryAfter,
         },
-      }
-    );
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfter.toString(),
+            'X-RateLimit-Limit': config.max.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': entry.resetTime.toString(),
+          },
+        }
+      ),
+    };
   }
 
-  const response = await handler();
-
-  response.headers.set(
-    'X-RateLimit-Limit',
-    String(limiter === rateLimitStrict ? 10 : limiter === rateLimitGenerous ? 1000 : 100)
-  );
-  response.headers.set('X-RateLimit-Remaining', String(remaining));
-  response.headers.set('X-RateLimit-Reset', String(Math.floor(resetAt / 1000)));
-
-  return response;
+  // Not limited
+  return { limited: false };
 }
 
 /**
- * Helper to check rate limit and return error if exceeded
+ * Rate limit decorator for API routes
  */
-export async function checkRateLimitOrFail(
-  request: NextRequest,
-  limiter: (
-    req: NextRequest
-  ) => Promise<{ success: boolean; remaining: number; resetAt: number }> = rateLimit
-): Promise<NextResponse | null> {
-  const { success, remaining, resetAt } = await limiter(request);
+export function withRateLimit(config: RateLimitConfig) {
+  return function (handler: (request: NextRequest) => Promise<NextResponse>) {
+    return async function (request: NextRequest): Promise<NextResponse> {
+      const { limited, response } = await rateLimit(request, config);
 
-  if (!success) {
-    return NextResponse.json(
-      { error: 'Too many requests', retryAfter: Math.ceil((resetAt - Date.now()) / 1000) },
-      {
-        status: 429,
-        headers: {
-          'X-RateLimit-Remaining': String(remaining),
-          'Retry-After': String(Math.ceil((resetAt - Date.now()) / 1000)),
-        },
+      if (limited && response) {
+        return response;
       }
-    );
-  }
 
-  return null;
+      return handler(request);
+    };
+  };
 }
+
+/**
+ * Predefined rate limit configurations
+ */
+export const RATE_LIMITS = {
+  /**
+   * Strict: For sensitive operations (login, password reset)
+   * 5 requests per 15 minutes
+   */
+  STRICT: {
+    max: 5,
+    windowMs: 15 * 60 * 1000,
+    message: 'Zu viele Versuche. Bitte warten Sie 15 Minuten.',
+  },
+
+  /**
+   * Auth: For authentication endpoints
+   * 10 requests per 5 minutes
+   */
+  AUTH: {
+    max: 10,
+    windowMs: 5 * 60 * 1000,
+    message: 'Zu viele Login-Versuche. Bitte warten Sie 5 Minuten.',
+  },
+
+  /**
+   * Standard: For regular API endpoints
+   * 100 requests per minute
+   */
+  STANDARD: {
+    max: 100,
+    windowMs: 60 * 1000,
+    message: 'Zu viele Anfragen. Bitte warten Sie eine Minute.',
+  },
+
+  /**
+   * Booking: For booking creation
+   * 20 requests per 5 minutes
+   */
+  BOOKING: {
+    max: 20,
+    windowMs: 5 * 60 * 1000,
+    message: 'Zu viele Buchungsanfragen. Bitte warten Sie.',
+  },
+
+  /**
+   * Search: For search queries
+   * 50 requests per minute
+   */
+  SEARCH: {
+    max: 50,
+    windowMs: 60 * 1000,
+    message: 'Zu viele Suchanfragen. Bitte warten Sie.',
+  },
+
+  /**
+   * File Upload: For file uploads
+   * 10 uploads per hour
+   */
+  UPLOAD: {
+    max: 10,
+    windowMs: 60 * 60 * 1000,
+    message: 'Zu viele Uploads. Bitte warten Sie eine Stunde.',
+  },
+} as const;
+
+/**
+ * Example usage in API route:
+ *
+ * ```ts
+ * import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+ *
+ * export const POST = withRateLimit(RATE_LIMITS.AUTH)(
+ *   async function handler(request: NextRequest) {
+ *     // Your API logic here
+ *     return NextResponse.json({ success: true });
+ *   }
+ * );
+ * ```
+ */
