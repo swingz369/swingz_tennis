@@ -66,50 +66,43 @@ export default async function SuperadminDashboardPage() {
       return <SuperadminDashboardClient data={emptyData} />;
     }
 
-    const clubsData = await Promise.all(
-      clubs.map(async (club: { id: string; name: string }) => {
-        try {
-          const { count: members, error: membersError } = await supabase
-            .from('user_club_memberships')
-            .select('*', { count: 'exact', head: true })
-            .eq('club_id', club.id)
-            .eq('role', 'member')
-            .eq('is_active', true);
+    // Optimize: Fetch all memberships in ONE query instead of N queries (prevents timeout)
+    const clubIds = clubs.map((c) => c.id);
+    const { data: allMemberships, error: membershipsError } = await supabase
+      .from('user_club_memberships')
+      .select('club_id, role')
+      .in('club_id', clubIds)
+      .eq('is_active', true);
 
-          if (membersError) {
-            console.error('Error counting members for club', club.id, membersError);
-          }
+    if (membershipsError) {
+      console.error('Error fetching all memberships:', membershipsError);
+    }
 
-          const { count: trainers, error: trainersError } = await supabase
-            .from('user_club_memberships')
-            .select('*', { count: 'exact', head: true })
-            .eq('club_id', club.id)
-            .eq('role', 'trainer')
-            .eq('is_active', true);
+    // Build lookup map for fast access
+    const clubStats: Record<string, { members: number; trainers: number }> = {};
+    clubIds.forEach((id) => {
+      clubStats[id] = { members: 0, trainers: 0 };
+    });
 
-          if (trainersError) {
-            console.error('Error counting trainers for club', club.id, trainersError);
-          }
-
-          return {
-            id: club.id,
-            name: club.name,
-            members: members ?? 0,
-            trainers: trainers ?? 0,
-            revenue: 0,
-          };
-        } catch (error) {
-          console.error('Error processing club', club.id, error);
-          return {
-            id: club.id,
-            name: club.name,
-            members: 0,
-            trainers: 0,
-            revenue: 0,
-          };
+    // Count members and trainers per club
+    allMemberships?.forEach((membership: { club_id: string; role: string }) => {
+      if (clubStats[membership.club_id]) {
+        if (membership.role === 'member') {
+          clubStats[membership.club_id].members++;
+        } else if (membership.role === 'trainer') {
+          clubStats[membership.club_id].trainers++;
         }
-      })
-    );
+      }
+    });
+
+    // Build clubs data with stats
+    const clubsData = clubs.map((club: { id: string; name: string }) => ({
+      id: club.id,
+      name: club.name,
+      members: clubStats[club.id]?.members ?? 0,
+      trainers: clubStats[club.id]?.trainers ?? 0,
+      revenue: 0,
+    }));
 
     const data = {
       clubs: clubsData,
