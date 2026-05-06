@@ -93,9 +93,12 @@ export function Sidebar({
   // Primary navigation - role-based and prioritized
   const primaryNav = (() => {
     if (isAdmin) {
-      return [
+      const adminNav = [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'Admin Dashboard', href: '/admin/panel-v2', icon: Layout },
+        // Admin Dashboard (panel-v2) is SUPERADMIN-ONLY
+        ...(isSuperAdmin
+          ? [{ name: 'Admin Dashboard', href: '/admin/panel-v2', icon: Layout }]
+          : []),
         { name: 'Saisonplanung', href: '/admin/seasons', icon: CalendarRange },
         { name: 'Benutzerverwaltung', href: '/admin/members', icon: Users },
         {
@@ -107,6 +110,7 @@ export function Sidebar({
         { name: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock },
         { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
       ];
+      return adminNav;
     }
 
     if (isTrainer) {
