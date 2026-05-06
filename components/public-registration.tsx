@@ -8,7 +8,18 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { User, Mail, Phone, MapPin, Calendar, CheckCircle, ArrowRight, ArrowLeft, Info, Shield } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  CheckCircle,
+  ArrowRight,
+  ArrowLeft,
+  Info,
+  Shield,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface RegistrationFormData {
@@ -70,7 +81,9 @@ export default function PublicRegistration() {
 
   const progress = (currentStep / STEPS.length) * 100;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -107,16 +120,10 @@ export default function PublicRegistration() {
         );
       case 3:
         return (
-          formData.experience !== '' &&
-          formData.playingLevel !== '' &&
-          formData.goals.trim() !== ''
+          formData.experience !== '' && formData.playingLevel !== '' && formData.goals.trim() !== ''
         );
       case 4:
-        return (
-          formData.acceptTerms &&
-          formData.acceptPrivacy &&
-          formData.acceptDataProcessing
-        );
+        return formData.acceptTerms && formData.acceptPrivacy && formData.acceptDataProcessing;
       default:
         return false;
     }
@@ -345,7 +352,15 @@ export default function PublicRegistration() {
             <div className="space-y-2">
               <Label>Bevorzugte Trainingstage</Label>
               <div className="flex flex-wrap gap-2">
-                {['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'].map((day) => (
+                {[
+                  'Montag',
+                  'Dienstag',
+                  'Mittwoch',
+                  'Donnerstag',
+                  'Freitag',
+                  'Samstag',
+                  'Sonntag',
+                ].map((day) => (
                   <Button
                     key={day}
                     type="button"
@@ -382,15 +397,15 @@ export default function PublicRegistration() {
                 <Checkbox
                   id="acceptTerms"
                   checked={formData.acceptTerms}
-                  onCheckedChange={(checked) => handleCheckboxChange('acceptTerms', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleCheckboxChange('acceptTerms', checked as boolean)
+                  }
                 />
                 <div className="space-y-1">
                   <Label htmlFor="acceptTerms" className="cursor-pointer">
                     Ich akzeptiere die Allgemeinen Geschäftsbedingungen *
                   </Label>
-                  <p className="text-xs text-gray-600">
-                    Bitte lies unsere AGB sorgfältig durch
-                  </p>
+                  <p className="text-xs text-gray-600">Bitte lies unsere AGB sorgfältig durch</p>
                 </div>
               </div>
 
@@ -398,7 +413,9 @@ export default function PublicRegistration() {
                 <Checkbox
                   id="acceptPrivacy"
                   checked={formData.acceptPrivacy}
-                  onCheckedChange={(checked) => handleCheckboxChange('acceptPrivacy', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleCheckboxChange('acceptPrivacy', checked as boolean)
+                  }
                 />
                 <div className="space-y-1">
                   <Label htmlFor="acceptPrivacy" className="cursor-pointer">
@@ -414,15 +431,16 @@ export default function PublicRegistration() {
                 <Checkbox
                   id="acceptDataProcessing"
                   checked={formData.acceptDataProcessing}
-                  onCheckedChange={(checked) => handleCheckboxChange('acceptDataProcessing', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleCheckboxChange('acceptDataProcessing', checked as boolean)
+                  }
                 />
                 <div className="space-y-1">
                   <Label htmlFor="acceptDataProcessing" className="cursor-pointer">
-                    Ich willige ein, dass meine Daten für die Mitgliedschaftsverarbeitung verwendet werden *
+                    Ich willige ein, dass meine Daten für die Mitgliedschaftsverarbeitung verwendet
+                    werden *
                   </Label>
-                  <p className="text-xs text-gray-600">
-                    Erforderlich für die Mitgliedsverwaltung
-                  </p>
+                  <p className="text-xs text-gray-600">Erforderlich für die Mitgliedsverwaltung</p>
                 </div>
               </div>
             </div>
@@ -456,12 +474,8 @@ export default function PublicRegistration() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand-primary mb-2">
-            Mitglied werden
-          </h1>
-          <p className="text-gray-600">
-            Melde dich an und werde Teil unserer Tennis-Community
-          </p>
+          <h1 className="text-3xl font-bold text-brand-primary mb-2">Mitglied werden</h1>
+          <p className="text-gray-600">Melde dich an und werde Teil unserer Tennis-Community</p>
         </div>
 
         {/* Progress */}
@@ -470,9 +484,7 @@ export default function PublicRegistration() {
             <span className="text-sm font-medium text-gray-700">
               Schritt {currentStep} von {STEPS.length}
             </span>
-            <span className="text-sm text-gray-500">
-              {Math.round(progress)}% abgeschlossen
-            </span>
+            <span className="text-sm text-gray-500">{Math.round(progress)}% abgeschlossen</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -537,18 +549,12 @@ export default function PublicRegistration() {
                 </Button>
 
                 {currentStep < STEPS.length ? (
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                  >
+                  <Button type="button" onClick={handleNext}>
                     Weiter
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Wird gesendet...' : 'Anmeldung absenden'}
                     <CheckCircle className="h-4 w-4 ml-2" />
                   </Button>
@@ -566,8 +572,8 @@ export default function PublicRegistration() {
               <div className="space-y-1 text-sm text-gray-700">
                 <p className="font-medium">Datenschutz & Sicherheit</p>
                 <p>
-                  Deine Daten werden sicher gespeichert und gemäß den geltenden Datenschutzgesetzen behandelt.
-                  Du kannst deine Einwilligung jederzeit widerrufen.
+                  Deine Daten werden sicher gespeichert und gemäß den geltenden Datenschutzgesetzen
+                  behandelt. Du kannst deine Einwilligung jederzeit widerrufen.
                 </p>
               </div>
             </div>

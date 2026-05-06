@@ -69,9 +69,7 @@ export const sepaMandateSchema = z.object({
     }, 'Unterschriftdatum darf nicht in der Zukunft liegen'),
 
   // Terms acceptance
-  acceptTerms: z
-    .boolean()
-    .refine((val) => val === true, 'Du musst die Bedingungen akzeptieren'),
+  acceptTerms: z.boolean().refine((val) => val === true, 'Du musst die Bedingungen akzeptieren'),
 
   acceptDirectDebit: z
     .boolean()
@@ -93,10 +91,13 @@ export function validateIBAN(iban: string): boolean {
   const rearranged = cleaned.substring(4) + cleaned.substring(0, 4);
 
   // Replace letters with numbers
-  const numeric = rearranged.split('').map((char) => {
-    const code = char.charCodeAt(0);
-    return code >= 65 && code <= 90 ? (code - 55).toString() : char;
-  }).join('');
+  const numeric = rearranged
+    .split('')
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code >= 65 && code <= 90 ? (code - 55).toString() : char;
+    })
+    .join('');
 
   // Calculate mod 97
   let remainder = 0;
@@ -125,14 +126,14 @@ export function generateMandateReference(memberId: string): string {
 export function getBankNameFromBIC(bic: string): string | null {
   // This is a simplified version - in production, you'd use a BIC database
   const bankCodes: Record<string, string> = {
-    'COBADEFF': 'Commerzbank',
-    'DEUTDEFF': 'Deutsche Bank',
-    'PBNKDEFF': 'Postbank',
-    'DRESDEFF': 'Dresdner Bank',
-    'GENODEF1': 'Volksbanken Raiffeisenbanken',
-    'BYLADEM1': 'Bayerische Landesbank',
-    'WELADEDD': 'WestLB',
-    'LANDDEFF': 'Landesbank Berlin',
+    COBADEFF: 'Commerzbank',
+    DEUTDEFF: 'Deutsche Bank',
+    PBNKDEFF: 'Postbank',
+    DRESDEFF: 'Dresdner Bank',
+    GENODEF1: 'Volksbanken Raiffeisenbanken',
+    BYLADEM1: 'Bayerische Landesbank',
+    WELADEDD: 'WestLB',
+    LANDDEFF: 'Landesbank Berlin',
   };
 
   const prefix = bic.substring(0, 8);

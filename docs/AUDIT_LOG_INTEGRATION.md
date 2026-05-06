@@ -5,6 +5,7 @@ This guide shows how to integrate audit logging with all existing features in th
 ## Overview
 
 The audit logging system provides comprehensive tracking of all system actions, including:
+
 - User actions (create, update, delete)
 - Authentication events (login, logout)
 - Approval workflows
@@ -62,9 +63,7 @@ await AuditLogger.logUpdate(
   currentUser.name,
   currentUser.email,
   currentUser.role,
-  [
-    { field: 'status', oldValue: 'trial', newValue: 'active', changeType: 'modified' }
-  ],
+  [{ field: 'status', oldValue: 'trial', newValue: 'active', changeType: 'modified' }],
   request.ip,
   request.headers.get('user-agent')
 );
@@ -110,7 +109,7 @@ await AuditLogger.log({
   userRole: currentUser.role,
   metadata: { convertedToMemberId: memberId },
   ipAddress: request.ip,
-  userAgent: request.headers.get('user-agent')
+  userAgent: request.headers.get('user-agent'),
 });
 ```
 
@@ -138,9 +137,7 @@ await AuditLogger.logUpdate(
   currentUser.name,
   currentUser.email,
   currentUser.role,
-  [
-    { field: 'qualifications', oldValue: oldQuals, newValue: newQuals, changeType: 'modified' }
-  ],
+  [{ field: 'qualifications', oldValue: oldQuals, newValue: newQuals, changeType: 'modified' }],
   request.ip,
   request.headers.get('user-agent')
 );
@@ -203,7 +200,7 @@ await AuditLogger.log({
   userRole: currentUser.role,
   metadata: { amount: billing.totalAmount, paymentMethod: 'bank_transfer' },
   ipAddress: request.ip,
-  userAgent: request.headers.get('user-agent')
+  userAgent: request.headers.get('user-agent'),
 });
 ```
 
@@ -252,7 +249,7 @@ await AuditLogger.log({
   userRole: currentUser.role,
   metadata: { ibanLast4: mandate.iban.slice(-4) },
   ipAddress: request.ip,
-  userAgent: request.headers.get('user-agent')
+  userAgent: request.headers.get('user-agent'),
 });
 ```
 
@@ -268,13 +265,13 @@ await AuditLogger.log({
   userName: currentUser.name,
   userEmail: currentUser.email,
   userRole: currentUser.role,
-  metadata: { 
+  metadata: {
     template: templateId,
     recipient: recipientEmail,
-    subject: emailSubject 
+    subject: emailSubject,
   },
   ipAddress: request.ip,
-  userAgent: request.headers.get('user-agent')
+  userAgent: request.headers.get('user-agent'),
 });
 ```
 
@@ -326,7 +323,7 @@ await AuditLogger.logLogout(
 try {
   // Perform operation
   await createMember(data);
-  
+
   // Log success
   await AuditLogger.logCreate(
     'member',
@@ -354,7 +351,7 @@ try {
     request.ip,
     request.headers.get('user-agent')
   );
-  
+
   throw error;
 }
 ```
@@ -370,10 +367,10 @@ import { AuditLogger } from '@/src/application/utils/audit-logger';
 export async function POST(request: NextRequest) {
   try {
     const context = getAuditContext(request);
-    
+
     // Perform operation
     const member = await createMember(data);
-    
+
     // Log action
     await AuditLogger.logCreate(
       'member',
@@ -386,11 +383,11 @@ export async function POST(request: NextRequest) {
       context.ipAddress,
       context.userAgent
     );
-    
+
     return NextResponse.json(member);
   } catch (error) {
     const context = getAuditContext(request);
-    
+
     await AuditLogger.logError(
       'create',
       'member',
@@ -404,7 +401,7 @@ export async function POST(request: NextRequest) {
       context.ipAddress,
       context.userAgent
     );
-    
+
     throw error;
   }
 }
@@ -495,7 +492,7 @@ describe('Audit Logging', () => {
       'admin',
       { name: 'Test User', email: 'test@example.com' }
     );
-    
+
     // Verify log was created
     const logs = await auditLogService.getAuditLogs();
     expect(logs).toHaveLength(1);
@@ -508,16 +505,19 @@ describe('Audit Logging', () => {
 ## Troubleshooting
 
 ### Audit logs not appearing
+
 - Check that AuditLogger is being called correctly
 - Verify audit log service is initialized
 - Check for errors in console
 
 ### Missing user information
+
 - Ensure user context is properly passed
 - Check that headers are being set correctly
 - Verify getAuditContext is being used
 
 ### Performance issues
+
 - Audit logging is asynchronous and should not block
 - Consider batching logs for high-volume operations
 - Implement log cleanup for old entries

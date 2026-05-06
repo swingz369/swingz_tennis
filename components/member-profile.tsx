@@ -6,32 +6,44 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Mail, Phone, MapPin, Save, Camera, Shield, Bell, CreditCard, FileText, AlertCircle } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Save,
+  Camera,
+  Shield,
+  Bell,
+  CreditCard,
+  FileText,
+  AlertCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserMember } from '@/hooks/use-user-data';
 
 export default function MemberProfile() {
   const { data: memberData, isLoading } = useUserMember();
 
-   const [formData, setFormData] = useState({
-     fullName: memberData?.fullName || '',
-     email: memberData?.email || '',
-     phone: memberData?.phone || '',
-     address: memberData?.address || '',
-     city: memberData?.city || '',
-     postalCode: memberData?.postalCode || '',
-     bio: memberData?.bio || '',
-     emergencyContact: memberData?.emergencyContact || '',
-     emergencyPhone: memberData?.emergencyPhone || '',
-   });
+  const [formData, setFormData] = useState({
+    fullName: memberData?.fullName || '',
+    email: memberData?.email || '',
+    phone: memberData?.phone || '',
+    address: memberData?.address || '',
+    city: memberData?.city || '',
+    postalCode: memberData?.postalCode || '',
+    bio: memberData?.bio || '',
+    emergencyContact: memberData?.emergencyContact || '',
+    emergencyPhone: memberData?.emergencyPhone || '',
+  });
 
-   const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-   // Placeholder for SEPA mandate info - TODO: implement actual data fetching
-   const hasActiveMandate = false;
-   const mandateInfo = null;
+  // Placeholder for SEPA mandate info - TODO: implement actual data fetching
+  const hasActiveMandate = false;
+  const mandateInfo = null;
 
-   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -292,14 +304,9 @@ export default function MemberProfile() {
         </CardContent>
       </Card>
 
-
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="gap-2"
-        >
+        <Button onClick={handleSave} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {isSaving ? 'Speichern...' : 'Änderungen speichern'}
         </Button>

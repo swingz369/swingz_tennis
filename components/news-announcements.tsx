@@ -6,7 +6,16 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Calendar, Clock, Tag, TrendingUp, Info, AlertTriangle, CheckCircle } from 'lucide-react';
+import {
+  Bell,
+  Calendar,
+  Clock,
+  Tag,
+  TrendingUp,
+  Info,
+  AlertTriangle,
+  CheckCircle,
+} from 'lucide-react';
 
 export interface NewsItem {
   id: string;
@@ -25,7 +34,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     id: '1',
     title: 'Neue Trainingsgruppen ab nächster Woche',
-    content: 'Ab kommender Woche starten wir neue Trainingsgruppen für Anfänger und Fortgeschrittene. Die Anmeldung ist jetzt möglich. Plätze sind begrenzt, also sichere dir deinen Platz frühzeitig!',
+    content:
+      'Ab kommender Woche starten wir neue Trainingsgruppen für Anfänger und Fortgeschrittene. Die Anmeldung ist jetzt möglich. Plätze sind begrenzt, also sichere dir deinen Platz frühzeitig!',
     type: 'announcement',
     priority: 'high',
     publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
@@ -36,7 +46,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     id: '2',
     title: 'Wartungsarbeiten am Platz 3',
-    content: 'Am kommenden Wochenende führen wir Wartungsarbeiten an Platz 3 durch. Der Platz wird von Samstag bis Montag nicht verfügbar sein. Bitte buche deine Sessions entsprechend um.',
+    content:
+      'Am kommenden Wochenende führen wir Wartungsarbeiten an Platz 3 durch. Der Platz wird von Samstag bis Montag nicht verfügbar sein. Bitte buche deine Sessions entsprechend um.',
     type: 'maintenance',
     priority: 'urgent',
     publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -47,7 +58,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     id: '3',
     title: 'Sommerturnier Anmeldung',
-    content: 'Die Anmeldung für unser jährliches Sommerturnier ist jetzt offen! Melde dich und dein Team an bis zum 15. Juni. Preise und Turnierdetails findest du auf unserer Webseite.',
+    content:
+      'Die Anmeldung für unser jährliches Sommerturnier ist jetzt offen! Melde dich und dein Team an bis zum 15. Juni. Preise und Turnierdetails findest du auf unserer Webseite.',
     type: 'event',
     priority: 'medium',
     publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -57,7 +69,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     id: '4',
     title: 'Neue Trainer im Team',
-    content: 'Wir freuen uns, zwei neue Trainer in unserem Team begrüßen zu dürfen! Anna Schmidt und Thomas Müller bringen jahrelange Erfahrung mit und werden unsere Trainingsangebote erweitern.',
+    content:
+      'Wir freuen uns, zwei neue Trainer in unserem Team begrüßen zu dürfen! Anna Schmidt und Thomas Müller bringen jahrelange Erfahrung mit und werden unsere Trainingsangebote erweitern.',
     type: 'update',
     priority: 'low',
     publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -229,11 +242,11 @@ export default function NewsAnnouncements() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className={`p-2 rounded-lg ${
-                        item.isPinned
-                          ? 'bg-brand-primary/20'
-                          : 'bg-gray-100'
-                      }`}>
+                      <div
+                        className={`p-2 rounded-lg ${
+                          item.isPinned ? 'bg-brand-primary/20' : 'bg-gray-100'
+                        }`}
+                      >
                         <Bell className="h-5 w-5" />
                       </div>
                       <div className="flex-1">
@@ -275,9 +288,7 @@ export default function NewsAnnouncements() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      <span>
-                        {format(parseISO(item.publishedAt), 'HH:mm', { locale: de })}
-                      </span>
+                      <span>{format(parseISO(item.publishedAt), 'HH:mm', { locale: de })}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="font-medium">{item.author}</span>
@@ -295,11 +306,7 @@ export default function NewsAnnouncements() {
                   {item.tags && item.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4">
                       {item.tags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className="text-xs"
-                        >
+                        <Badge key={tag} variant="outline" className="text-xs">
                           <Tag className="h-3 w-3 mr-1" />
                           {tag}
                         </Badge>
@@ -332,9 +339,7 @@ export default function NewsAnnouncements() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm text-gray-600">Angepinnt</div>
-                <div className="text-2xl font-bold">
-                  {news.filter((n) => n.isPinned).length}
-                </div>
+                <div className="text-2xl font-bold">{news.filter((n) => n.isPinned).length}</div>
               </div>
               <CheckCircle className="h-8 w-8 text-brand-primary" />
             </div>
@@ -361,10 +366,12 @@ export default function NewsAnnouncements() {
               <div>
                 <div className="text-sm text-gray-600">Diese Woche</div>
                 <div className="text-2xl font-bold">
-                  {news.filter((n) => {
-                    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                    return new Date(n.publishedAt) >= weekAgo;
-                  }).length}
+                  {
+                    news.filter((n) => {
+                      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                      return new Date(n.publishedAt) >= weekAgo;
+                    }).length
+                  }
                 </div>
               </div>
               <TrendingUp className="h-8 w-8 text-green-600" />

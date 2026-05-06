@@ -5,7 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Bell, BellOff, Clock, Calendar, User, CheckCircle, XCircle, Settings, Trash2 } from 'lucide-react';
+import {
+  Bell,
+  BellOff,
+  Clock,
+  Calendar,
+  User,
+  CheckCircle,
+  XCircle,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 export interface Notification {
@@ -96,9 +106,7 @@ export default function NotificationSettings() {
   };
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     toast.success('Benachrichtigung als gelesen markiert');
   };
 
@@ -199,11 +207,7 @@ export default function NotificationSettings() {
             </div>
             <div className="flex items-center gap-2">
               {!settings.pushNotifications && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={requestNotificationPermission}
-                >
+                <Button variant="outline" size="sm" onClick={requestNotificationPermission}>
                   Aktivieren
                 </Button>
               )}
@@ -222,9 +226,7 @@ export default function NotificationSettings() {
               </div>
               <div>
                 <div className="font-medium">E-Mail-Benachrichtigungen</div>
-                <div className="text-sm text-gray-600">
-                  Erhalte wichtige Updates per E-Mail
-                </div>
+                <div className="text-sm text-gray-600">Erhalte wichtige Updates per E-Mail</div>
               </div>
             </div>
             <Switch
@@ -298,9 +300,7 @@ export default function NotificationSettings() {
                 <option value="24">24 Stunden vorher</option>
                 <option value="48">48 Stunden vorher</option>
               </select>
-              <span className="text-sm text-gray-600">
-                vor Trainingssessions
-              </span>
+              <span className="text-sm text-gray-600">vor Trainingssessions</span>
             </div>
           </div>
         </CardContent>
@@ -331,11 +331,11 @@ export default function NotificationSettings() {
                         : 'bg-brand-primary/5 border-brand-primary/30'
                     }`}
                   >
-                    <div className={`p-2 rounded-lg ${
-                      notification.read
-                        ? 'bg-gray-100'
-                        : 'bg-brand-primary/20'
-                    }`}>
+                    <div
+                      className={`p-2 rounded-lg ${
+                        notification.read ? 'bg-gray-100' : 'bg-brand-primary/20'
+                      }`}
+                    >
                       <Bell className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -345,9 +345,7 @@ export default function NotificationSettings() {
                           <div className="w-2 h-2 rounded-full bg-brand-primary flex-shrink-0 mt-2" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {notification.message}
-                      </p>
+                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-gray-500">
                           {new Date(notification.timestamp).toLocaleString('de-DE')}
@@ -407,7 +405,9 @@ export default function NotificationSettings() {
             <div className="space-y-1 text-sm text-blue-900">
               <p className="font-medium">Wichtige Informationen</p>
               <ul className="list-disc list-inside space-y-1 text-blue-800">
-                <li>Push-Benachrichtigungen funktionieren nur, wenn du diese im Browser erlaubst</li>
+                <li>
+                  Push-Benachrichtigungen funktionieren nur, wenn du diese im Browser erlaubst
+                </li>
                 <li>Einige Benachrichtigungen sind wichtig für deine Buchungen und Trainings</li>
                 <li>Du kannst jederzeit deine Einstellungen anpassen</li>
                 <li>Alte Benachrichtigungen werden automatisch nach 30 Tagen gelöscht</li>

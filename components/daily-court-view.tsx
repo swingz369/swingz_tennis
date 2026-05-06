@@ -5,15 +5,20 @@ import { useRouter } from 'next/navigation';
 import { format, addDays, subDays, isSameDay, setHours, setMinutes } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Clock, User, MapPin, Calendar as CalendarIcon, Download, ExternalLink } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  User,
+  MapPin,
+  Calendar as CalendarIcon,
+  Download,
+  ExternalLink,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
-import {
-  useSessions,
-  useCreateBooking,
-  useCancelBooking,
-} from '@/hooks/use-sessions';
+import { useSessions, useCreateBooking, useCancelBooking } from '@/hooks/use-sessions';
 import { exportSessionsToICS, exportSessionToGoogleCalendar } from '@/lib/calendar-export';
 
 interface DailyCourtViewProps {
@@ -22,12 +27,29 @@ interface DailyCourtViewProps {
 }
 
 const TIME_SLOTS = [
-  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-  '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-  '18:00', '19:00', '20:00', '21:00', '22:00'
+  '06:00',
+  '07:00',
+  '08:00',
+  '09:00',
+  '10:00',
+  '11:00',
+  '12:00',
+  '13:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
+  '19:00',
+  '20:00',
+  '21:00',
+  '22:00',
 ];
 
-export default function DailyCourtView({ selectedDate: initialDate, onDateChange }: DailyCourtViewProps) {
+export default function DailyCourtView({
+  selectedDate: initialDate,
+  onDateChange,
+}: DailyCourtViewProps) {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState(initialDate || new Date());
 
@@ -89,59 +111,60 @@ export default function DailyCourtView({ selectedDate: initialDate, onDateChange
     }
   }, [sessions, courts]);
 
-  const getSessionForCourtAndTime = useCallback((
-    courtId: string,
-    date: Date,
-    timeSlot: string
-  ) => {
-    const [hour, minute] = timeSlot.split(':').map(Number);
-    const slotStart = setMinutes(setHours(date, hour), minute);
-    const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+  const getSessionForCourtAndTime = useCallback(
+    (courtId: string, date: Date, timeSlot: string) => {
+      const [hour, minute] = timeSlot.split(':').map(Number);
+      const slotStart = setMinutes(setHours(date, hour), minute);
+      const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
 
-    return sessions.find((session) => {
-      if (!session.courtId || session.courtId !== courtId) return false;
+      return sessions.find((session) => {
+        if (!session.courtId || session.courtId !== courtId) return false;
 
-      const sessionDate = new Date(session.week);
-      const [startHour, startMinute] = session.startTime.split(':').map(Number);
-      const [endHour, endMinute] = session.endTime.split(':').map(Number);
+        const sessionDate = new Date(session.week);
+        const [startHour, startMinute] = session.startTime.split(':').map(Number);
+        const [endHour, endMinute] = session.endTime.split(':').map(Number);
 
-      const sessionStart = setMinutes(setHours(sessionDate, startHour), startMinute);
-      const sessionEnd = setMinutes(setHours(sessionDate, endHour), endMinute);
+        const sessionStart = setMinutes(setHours(sessionDate, startHour), startMinute);
+        const sessionEnd = setMinutes(setHours(sessionDate, endHour), endMinute);
 
-      return (
-        isSameDay(sessionDate, date) &&
-        ((slotStart.getTime() >= sessionStart.getTime() && slotStart.getTime() < sessionEnd.getTime()) ||
-         (slotEnd.getTime() > sessionStart.getTime() && slotEnd.getTime() <= sessionEnd.getTime()) ||
-         (slotStart.getTime() <= sessionStart.getTime() && slotEnd.getTime() >= sessionEnd.getTime()))
-      );
-    });
-  }, [sessions]);
+        return (
+          isSameDay(sessionDate, date) &&
+          ((slotStart.getTime() >= sessionStart.getTime() &&
+            slotStart.getTime() < sessionEnd.getTime()) ||
+            (slotEnd.getTime() > sessionStart.getTime() &&
+              slotEnd.getTime() <= sessionEnd.getTime()) ||
+            (slotStart.getTime() <= sessionStart.getTime() &&
+              slotEnd.getTime() >= sessionEnd.getTime()))
+        );
+      });
+    },
+    [sessions]
+  );
 
-  const handleBookSlot = useCallback((
-    courtId: string,
-    date: Date,
-    timeSlot: string
-  ) => {
-    if (!memberId || !clubId) {
-      toast.error('Member-ID oder Club-ID nicht verfügbar');
-      return;
-    }
+  const handleBookSlot = useCallback(
+    (courtId: string, date: Date, timeSlot: string) => {
+      if (!memberId || !clubId) {
+        toast.error('Member-ID oder Club-ID nicht verfügbar');
+        return;
+      }
 
-    const session = getSessionForCourtAndTime(courtId, date, timeSlot);
-    if (session) {
-      createBooking.mutate({ memberId, sessionId: session.id, clubId });
-    } else {
-      toast.error('Keine Session für diesen Zeitplatz gefunden');
-    }
-  }, [memberId, clubId, createBooking, getSessionForCourtAndTime]);
+      const session = getSessionForCourtAndTime(courtId, date, timeSlot);
+      if (session) {
+        createBooking.mutate({ memberId, sessionId: session.id, clubId });
+      } else {
+        toast.error('Keine Session für diesen Zeitplatz gefunden');
+      }
+    },
+    [memberId, clubId, createBooking, getSessionForCourtAndTime]
+  );
 
-  const handleCancelBooking = useCallback((
-    sessionId: string,
-    bookingId: string
-  ) => {
-    if (!clubId) return;
-    cancelBooking.mutate({ bookingId, sessionId, clubId });
-  }, [clubId, cancelBooking]);
+  const handleCancelBooking = useCallback(
+    (sessionId: string, bookingId: string) => {
+      if (!clubId) return;
+      cancelBooking.mutate({ bookingId, sessionId, clubId });
+    },
+    [clubId, cancelBooking]
+  );
 
   const getSurfaceLabel = (surface: string) => {
     const labels: Record<string, string> = {
@@ -246,7 +269,7 @@ export default function DailyCourtView({ selectedDate: initialDate, onDateChange
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-gray-600">
-                    {sessions.filter(s => s.courtId === court.id).length} Buchungen
+                    {sessions.filter((s) => s.courtId === court.id).length} Buchungen
                   </div>
                 </div>
               </div>
@@ -271,10 +294,12 @@ export default function DailyCourtView({ selectedDate: initialDate, onDateChange
                         <div className="font-medium text-sm">{timeSlot}</div>
                         <div className="text-xs text-gray-500">
                           {format(
-                            new Date(selectedDate.setHours(
-                              parseInt(timeSlot.split(':')[0]),
-                              parseInt(timeSlot.split(':')[1])
-                            )),
+                            new Date(
+                              selectedDate.setHours(
+                                parseInt(timeSlot.split(':')[0]),
+                                parseInt(timeSlot.split(':')[1])
+                              )
+                            ),
                             'HH:mm'
                           )}
                         </div>
@@ -282,11 +307,13 @@ export default function DailyCourtView({ selectedDate: initialDate, onDateChange
 
                       {session ? (
                         <div className="flex-1">
-                          <div className={`p-3 rounded-lg border ${
-                            session.bookedByUser
-                              ? 'bg-red-50 border-red-200'
-                              : 'bg-blue-50 border-blue-200'
-                          }`}>
+                          <div
+                            className={`p-3 rounded-lg border ${
+                              session.bookedByUser
+                                ? 'bg-red-50 border-red-200'
+                                : 'bg-blue-50 border-blue-200'
+                            }`}
+                          >
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
@@ -298,7 +325,9 @@ export default function DailyCourtView({ selectedDate: initialDate, onDateChange
                                 <div className="flex items-center gap-4 text-sm text-gray-600">
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    <span>{session.startTime} - {session.endTime}</span>
+                                    <span>
+                                      {session.startTime} - {session.endTime}
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <CalendarIcon className="h-3 w-3" />

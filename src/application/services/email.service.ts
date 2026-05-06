@@ -156,7 +156,9 @@ export class EmailService {
         ${memberType === 'member' ? 'Als neues Mitglied wirst du Teil unserer Tennis-Community.' : ''}
       </p>
 
-      ${startDate ? `
+      ${
+        startDate
+          ? `
       <div class="info-box">
         <h3>📅 Dein Starttermin</h3>
         <p>
@@ -164,9 +166,13 @@ export class EmailService {
           Wir freuen uns darauf, dich beim ersten Training begrüßen zu dürfen!
         </p>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
-      ${assignedGroup ? `
+      ${
+        assignedGroup
+          ? `
       <div class="info-box">
         <h3>👥 Deine Trainingsgruppe</h3>
         <p>
@@ -174,9 +180,13 @@ export class EmailService {
           Unser Trainer wird dich bei deinem ersten Training begrüßen und dich in die Gruppe integrieren.
         </p>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
-      ${temporaryPassword ? `
+      ${
+        temporaryPassword
+          ? `
       <div class="info-box">
         <h3>🔐 Dein temporäres Passwort</h3>
         <p>
@@ -189,7 +199,9 @@ export class EmailService {
           Bitte ändere dein Passwort nach dem ersten Login.
         </p>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div class="info-box">
         <h3>📋 Nächste Schritte</h3>
@@ -201,13 +213,17 @@ export class EmailService {
         </ul>
       </div>
 
-      ${welcomeGuideUrl ? `
+      ${
+        welcomeGuideUrl
+          ? `
       <div style="text-align: center; margin: 30px 0;">
         <a href="${welcomeGuideUrl}" class="cta-button">
           📖 Willkommensguide ansehen
         </a>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div class="divider"></div>
 
@@ -275,14 +291,7 @@ Dein ${clubName}-Team
    * Generate trial training confirmation email
    */
   static generateTrialTrainingEmail(data: OnboardingEmailData): EmailTemplate {
-    const {
-      recipientName,
-      clubName,
-      startDate,
-      clubAddress,
-      clubPhone,
-      clubEmail,
-    } = data;
+    const { recipientName, clubName, startDate, clubAddress, clubPhone, clubEmail } = data;
 
     const subject = `Dein Probetraining bei ${clubName}`;
 
@@ -390,7 +399,9 @@ Dein ${clubName}-Team
         vielen Dank für dein Interesse an ${clubName}! Wir freuen uns sehr, dass du unser Probetraining buchen möchtest.
       </p>
 
-      ${startDate ? `
+      ${
+        startDate
+          ? `
       <div class="info-box">
         <h3>📅 Dein Probetraining</h3>
         <p>
@@ -398,7 +409,9 @@ Dein ${clubName}-Team
           Bitte komme 10 Minuten vor Beginn an, damit wir pünktlich starten können.
         </p>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div class="info-box">
         <h3>📋 Was erwartet dich beim Probetraining?</h3>
@@ -630,7 +643,9 @@ Dein ${clubName}-Team
         </p>
       </div>
 
-      ${startDate ? `
+      ${
+        startDate
+          ? `
       <div class="info-box">
         <h3>📅 Dein Starttermin</h3>
         <p>
@@ -638,9 +653,13 @@ Dein ${clubName}-Team
           Wir empfehlen dir, dich vorab mit unserem Trainer abzustimmen.
         </p>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
-      ${assignedGroup ? `
+      ${
+        assignedGroup
+          ? `
       <div class="info-box">
         <h3>👥 Deine Trainingsgruppe</h3>
         <p>
@@ -648,7 +667,9 @@ Dein ${clubName}-Team
           Unser Trainer wird dich bei deinem ersten Training begrüßen und dich in die Gruppe integrieren.
         </p>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       <div class="info-box">
         <h3>📋 Nächste Schritte</h3>
@@ -727,14 +748,7 @@ Dein ${clubName}-Team
    * Generate rejection email
    */
   static generateRejectionEmail(data: OnboardingEmailData & { reason: string }): EmailTemplate {
-    const {
-      recipientName,
-      clubName,
-      clubAddress,
-      clubPhone,
-      clubEmail,
-      reason,
-    } = data;
+    const { recipientName, clubName, clubAddress, clubPhone, clubEmail, reason } = data;
 
     const subject = `Deine Bewerbung bei ${clubName}`;
 
@@ -957,7 +971,9 @@ Dein ${clubName}-Team
   /**
    * Send rejection email
    */
-  static async sendRejectionEmail(data: OnboardingEmailData & { reason: string }): Promise<boolean> {
+  static async sendRejectionEmail(
+    data: OnboardingEmailData & { reason: string }
+  ): Promise<boolean> {
     const email = this.generateRejectionEmail(data);
     return this.sendEmail(data.recipientEmail, email);
   }

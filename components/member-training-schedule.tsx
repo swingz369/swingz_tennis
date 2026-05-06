@@ -1,7 +1,15 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, isSameDay, isWithinInterval, addMonths, subMonths } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  isSameDay,
+  isWithinInterval,
+  addMonths,
+  subMonths,
+} from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,14 +36,16 @@ export default function MemberTrainingSchedule() {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
 
-    return memberSessions.filter((session) => {
-      const sessionDate = new Date(session.week);
-      return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
-    }).sort((a, b) => {
-      const dateA = new Date(a.week);
-      const dateB = new Date(b.week);
-      return dateA.getTime() - dateB.getTime();
-    });
+    return memberSessions
+      .filter((session) => {
+        const sessionDate = new Date(session.week);
+        return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.week);
+        const dateB = new Date(b.week);
+        return dateA.getTime() - dateB.getTime();
+      });
   };
 
   const monthSessions = getMonthSessions();
@@ -122,56 +132,48 @@ export default function MemberTrainingSchedule() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Diesen Monat
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Diesen Monat</CardTitle>
             <Calendar className="h-4 w-4 text-brand-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{monthSessions.length}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Sessions gebucht
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Sessions gebucht</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Kommende
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Kommende</CardTitle>
             <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {monthSessions.filter((s) => {
-                const sessionDate = new Date(s.week);
-                return sessionDate >= new Date();
-              }).length}
+              {
+                monthSessions.filter((s) => {
+                  const sessionDate = new Date(s.week);
+                  return sessionDate >= new Date();
+                }).length
+              }
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              noch bevorstehend
-            </p>
+            <p className="text-xs text-gray-500 mt-1">noch bevorstehend</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Abgeschlossen
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Abgeschlossen</CardTitle>
             <User className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {monthSessions.filter((s) => {
-                const sessionDate = new Date(s.week);
-                return sessionDate < new Date() && s.bookingStatus === 'completed';
-              }).length}
+              {
+                monthSessions.filter((s) => {
+                  const sessionDate = new Date(s.week);
+                  return sessionDate < new Date() && s.bookingStatus === 'completed';
+                }).length
+              }
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              erfolgreich absolviert
-            </p>
+            <p className="text-xs text-gray-500 mt-1">erfolgreich absolviert</p>
           </CardContent>
         </Card>
       </div>
@@ -202,7 +204,9 @@ export default function MemberTrainingSchedule() {
                         <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            <span>{session.startTime} - {session.endTime}</span>
+                            <span>
+                              {session.startTime} - {session.endTime}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <User className="h-4 w-4" />
@@ -211,9 +215,7 @@ export default function MemberTrainingSchedule() {
                         </div>
                       </div>
                     </div>
-                    <div
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}
-                    >
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
                       {status.label}
                     </div>
                   </div>
@@ -227,9 +229,7 @@ export default function MemberTrainingSchedule() {
       {/* Monthly Schedule */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Trainingsplan {format(currentMonth, 'MMMM yyyy', { locale: de })}
-          </CardTitle>
+          <CardTitle>Trainingsplan {format(currentMonth, 'MMMM yyyy', { locale: de })}</CardTitle>
         </CardHeader>
         <CardContent>
           {monthSessions.length === 0 ? (
@@ -252,23 +252,21 @@ export default function MemberTrainingSchedule() {
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${
-                        isToday
-                          ? 'bg-brand-primary/20'
-                          : 'bg-gray-100'
-                      }`}>
-                        <Calendar className={`h-5 w-5 ${
-                          isToday
-                            ? 'text-brand-primary'
-                            : 'text-gray-600'
-                        }`} />
+                      <div
+                        className={`p-3 rounded-lg ${
+                          isToday ? 'bg-brand-primary/20' : 'bg-gray-100'
+                        }`}
+                      >
+                        <Calendar
+                          className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-gray-600'}`}
+                        />
                       </div>
                       <div>
-                        <div className={`font-semibold ${
-                          isToday
-                            ? 'text-brand-primary'
-                            : 'text-gray-900'
-                        }`}>
+                        <div
+                          className={`font-semibold ${
+                            isToday ? 'text-brand-primary' : 'text-gray-900'
+                          }`}
+                        >
                           {format(new Date(session.week), 'EEEE, dd. MMMM', { locale: de })}
                           {isToday && (
                             <span className="ml-2 text-xs bg-brand-primary text-white px-2 py-0.5 rounded-full">
@@ -279,7 +277,9 @@ export default function MemberTrainingSchedule() {
                         <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            <span>{session.startTime} - {session.endTime}</span>
+                            <span>
+                              {session.startTime} - {session.endTime}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <User className="h-4 w-4" />
@@ -294,9 +294,7 @@ export default function MemberTrainingSchedule() {
                         </div>
                       </div>
                     </div>
-                    <div
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}
-                    >
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
                       {status.label}
                     </div>
                   </div>

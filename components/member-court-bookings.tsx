@@ -1,11 +1,28 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, isSameDay, isWithinInterval, addMonths, subMonths } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  isSameDay,
+  isWithinInterval,
+  addMonths,
+  subMonths,
+} from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, User, XCircle, CheckCircle } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  MapPin,
+  Clock,
+  User,
+  XCircle,
+  CheckCircle,
+} from 'lucide-react';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useSessions } from '@/hooks/use-sessions';
 import { useCourts } from '@/hooks/use-courts';
@@ -138,53 +155,43 @@ export default function MemberCourtBookings() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Diesen Monat
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Diesen Monat</CardTitle>
             <Calendar className="h-4 w-4 text-brand-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{monthBookings.length}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Platzbuchungen
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Platzbuchungen</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Kommende
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Kommende</CardTitle>
             <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {monthBookings.filter((b) => {
-                const bookingDate = new Date(b.week);
-                return bookingDate >= new Date();
-              }).length}
+              {
+                monthBookings.filter((b) => {
+                  const bookingDate = new Date(b.week);
+                  return bookingDate >= new Date();
+                }).length
+              }
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              noch bevorstehend
-            </p>
+            <p className="text-xs text-gray-500 mt-1">noch bevorstehend</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Verschiedene Plätze
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Verschiedene Plätze</CardTitle>
             <MapPin className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {new Set(monthBookings.map((b) => b.courtId)).size}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              unterschiedliche Plätze
-            </p>
+            <p className="text-xs text-gray-500 mt-1">unterschiedliche Plätze</p>
           </CardContent>
         </Card>
       </div>
@@ -217,7 +224,9 @@ export default function MemberCourtBookings() {
                         <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            <span>{booking.startTime} - {booking.endTime}</span>
+                            <span>
+                              {booking.startTime} - {booking.endTime}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MapPin className="h-4 w-4" />
@@ -249,9 +258,7 @@ export default function MemberCourtBookings() {
       {/* Monthly Bookings */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Buchungen {format(currentMonth, 'MMMM yyyy', { locale: de })}
-          </CardTitle>
+          <CardTitle>Buchungen {format(currentMonth, 'MMMM yyyy', { locale: de })}</CardTitle>
         </CardHeader>
         <CardContent>
           {monthBookings.length === 0 ? (
@@ -275,23 +282,21 @@ export default function MemberCourtBookings() {
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${
-                        isToday
-                          ? 'bg-brand-primary/20'
-                          : 'bg-gray-100'
-                      }`}>
-                        <Calendar className={`h-5 w-5 ${
-                          isToday
-                            ? 'text-brand-primary'
-                            : 'text-gray-600'
-                        }`} />
+                      <div
+                        className={`p-3 rounded-lg ${
+                          isToday ? 'bg-brand-primary/20' : 'bg-gray-100'
+                        }`}
+                      >
+                        <Calendar
+                          className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-gray-600'}`}
+                        />
                       </div>
                       <div className="flex-1">
-                        <div className={`font-semibold ${
-                          isToday
-                            ? 'text-brand-primary'
-                            : 'text-gray-900'
-                        }`}>
+                        <div
+                          className={`font-semibold ${
+                            isToday ? 'text-brand-primary' : 'text-gray-900'
+                          }`}
+                        >
                           {format(new Date(booking.week), 'EEEE, dd. MMMM', { locale: de })}
                           {isToday && (
                             <span className="ml-2 text-xs bg-brand-primary text-white px-2 py-0.5 rounded-full">
@@ -302,7 +307,9 @@ export default function MemberCourtBookings() {
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-1">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
-                            <span>{booking.startTime} - {booking.endTime}</span>
+                            <span>
+                              {booking.startTime} - {booking.endTime}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MapPin className="h-4 w-4" />
@@ -316,9 +323,7 @@ export default function MemberCourtBookings() {
                             <span>{booking.trainerName || 'Trainer'}</span>
                           </div>
                           {booking.notes && (
-                            <div className="text-xs italic text-gray-500">
-                              {booking.notes}
-                            </div>
+                            <div className="text-xs italic text-gray-500">{booking.notes}</div>
                           )}
                         </div>
                       </div>
@@ -369,9 +374,7 @@ export default function MemberCourtBookings() {
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{courtBookings.length}x</div>
-                      <div className="text-xs text-gray-600">
-                        gebucht
-                      </div>
+                      <div className="text-xs text-gray-600">gebucht</div>
                     </div>
                   </div>
                 );

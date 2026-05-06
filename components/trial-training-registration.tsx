@@ -33,7 +33,9 @@ export default function TrialTrainingRegistration() {
 
   const availableSessions = sessions.filter((s) => !s.bookedByUser);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -56,7 +58,9 @@ export default function TrialTrainingRegistration() {
             recipientName: formData.fullName,
             recipientEmail: formData.email,
             clubName: 'SwingZ Tennis Club',
-            startDate: formData.preferredDate ? new Date(formData.preferredDate) : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+            startDate: formData.preferredDate
+              ? new Date(formData.preferredDate)
+              : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
             clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
             clubPhone: '+49 123 456 7890',
             clubEmail: 'info@swingz.app',
@@ -66,7 +70,9 @@ export default function TrialTrainingRegistration() {
         console.error('Failed to send trial training email:', emailError);
       }
 
-      toast.success('Probetraining erfolgreich gebucht! Wir haben dir eine Bestätigungs-E-Mail gesendet.');
+      toast.success(
+        'Probetraining erfolgreich gebucht! Wir haben dir eine Bestätigungs-E-Mail gesendet.'
+      );
       setFormData({
         fullName: '',
         email: '',
@@ -177,7 +183,9 @@ export default function TrialTrainingRegistration() {
                           <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
-                              <span>{session.startTime} - {session.endTime}</span>
+                              <span>
+                                {session.startTime} - {session.endTime}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1">
                               <User className="h-4 w-4" />
@@ -185,9 +193,7 @@ export default function TrialTrainingRegistration() {
                             </div>
                           </div>
                         </div>
-                        {isSelected && (
-                          <CheckCircle className="h-5 w-5 text-brand-primary" />
-                        )}
+                        {isSelected && <CheckCircle className="h-5 w-5 text-brand-primary" />}
                       </div>
                     </div>
                   );
@@ -310,11 +316,7 @@ export default function TrialTrainingRegistration() {
                 />
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
                 <Send className="h-4 w-4 mr-2" />
                 {isSubmitting ? 'Wird gesendet...' : 'Anmeldung absenden'}
               </Button>

@@ -20,21 +20,18 @@ serve(async (req) => {
 
     const billingEngine = new BillingEngine(supabase);
 
-    const { data: clubs } = await supabase
-      .from('clubs')
-      .select('id')
-      .eq('status', 'active');
+    const { data: clubs } = await supabase.from('clubs').select('id').eq('status', 'active');
 
     if (!clubs || clubs.length === 0) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: true,
           message: 'No active clubs found',
           processed: 0,
         }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
@@ -60,25 +57,22 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         message: `Processed dunning for ${clubs.length} clubs`,
         total_processed: totalProcessed,
         results,
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
     console.error('Error in scheduled dunning run:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

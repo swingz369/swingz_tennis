@@ -78,7 +78,7 @@ describe('Payment Flow Integration Tests', () => {
             {
               description: 'Test item',
               quantity: 1,
-              unitPrice: 100.00,
+              unitPrice: 100.0,
               taxRate: 19,
               itemType: 'other',
             },
@@ -94,7 +94,9 @@ describe('Payment Flow Integration Tests', () => {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.signInWithPassword({
+      const {
+        data: { session },
+      } = await supabase.auth.signInWithPassword({
         email: 'test@example.com',
         password: 'test123456',
       });
@@ -103,7 +105,7 @@ describe('Payment Flow Integration Tests', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           member_id: testMemberId,
@@ -112,7 +114,7 @@ describe('Payment Flow Integration Tests', () => {
             {
               description: 'Test item',
               quantity: 1,
-              unitPrice: 100.00,
+              unitPrice: 100.0,
               taxRate: 19,
               itemType: 'other',
             },
@@ -125,7 +127,7 @@ describe('Payment Flow Integration Tests', () => {
         testInvoiceId = invoice.id;
         expect(invoice).toBeDefined();
         expect(invoice.status).toBe('draft');
-        expect(invoice.total_amount).toBeCloseTo(119.00, 2);
+        expect(invoice.total_amount).toBeCloseTo(119.0, 2);
       }
     });
   });
@@ -136,7 +138,9 @@ describe('Payment Flow Integration Tests', () => {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.signInWithPassword({
+      const {
+        data: { session },
+      } = await supabase.auth.signInWithPassword({
         email: 'test@example.com',
         password: 'test123456',
       });
@@ -145,13 +149,13 @@ describe('Payment Flow Integration Tests', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           club_id: testClubId,
           member_id: testMemberId,
           invoice_id: testInvoiceId,
-          amount: 50.00,
+          amount: 50.0,
           payment_method: 'stripe',
         }),
       });
@@ -161,7 +165,7 @@ describe('Payment Flow Integration Tests', () => {
         testPaymentId = payment.id;
         expect(payment).toBeDefined();
         expect(payment.status).toBe('pending');
-        expect(payment.amount).toBe(50.00);
+        expect(payment.amount).toBe(50.0);
       }
     });
   });
@@ -206,7 +210,7 @@ describe('Payment Flow Integration Tests', () => {
           invoice_id: testInvoiceId,
           payment_number: `PAY-TEST-${Date.now()}`,
           payment_date: new Date().toISOString().split('T')[0],
-          amount: 100.00,
+          amount: 100.0,
           payment_method: 'sepa',
           status: 'pending',
           sepa_mandate_id: testMandateId,
@@ -273,8 +277,8 @@ describe('Payment Flow Integration Tests', () => {
           dunning_date: new Date().toISOString().split('T')[0],
           due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           dunning_fee: 5.0,
-          original_amount: 119.00,
-          total_amount: 124.00,
+          original_amount: 119.0,
+          total_amount: 124.0,
           status: 'sent',
           sent_at: new Date().toISOString(),
         })
@@ -311,7 +315,9 @@ describe('Payment Flow Integration Tests', () => {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.signInWithPassword({
+      const {
+        data: { session },
+      } = await supabase.auth.signInWithPassword({
         email: 'test@example.com',
         password: 'test123456',
       });
@@ -329,7 +335,7 @@ describe('Payment Flow Integration Tests', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             paymentIds: [payments[0].id],
@@ -355,7 +361,9 @@ describe('Payment Flow Integration Tests', () => {
       const csvContent = `Zahlungsnummer,Zahlungsdatum,Betrag,Zahlungsmethode,Mitglied-ID,Mitglied-Email,Rechnungsnummer,Transaktions-ID,Notizen
 PAY-CSV-001,2026-05-15,50.00,stripe,${testMemberId},test@example.com,INV-001,txn-001,Test payment`;
 
-      const { data: { session } } = await supabase.auth.signInWithPassword({
+      const {
+        data: { session },
+      } = await supabase.auth.signInWithPassword({
         email: 'test@example.com',
         password: 'test123456',
       });
@@ -366,7 +374,7 @@ PAY-CSV-001,2026-05-15,50.00,stripe,${testMemberId},test@example.com,INV-001,txn
       const response = await fetch('http://localhost:3000/api/billing/payments/import', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: formData,
       });
@@ -386,17 +394,22 @@ PAY-CSV-001,2026-05-15,50.00,stripe,${testMemberId},test@example.com,INV-001,txn
         return;
       }
 
-      const { data: { session } } = await supabase.auth.signInWithPassword({
+      const {
+        data: { session },
+      } = await supabase.auth.signInWithPassword({
         email: 'test@example.com',
         password: 'test123456',
       });
 
-      const response = await fetch(`http://localhost:3000/api/billing/invoices/${testInvoiceId}/checkout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
+      const response = await fetch(
+        `http://localhost:3000/api/billing/invoices/${testInvoiceId}/checkout`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

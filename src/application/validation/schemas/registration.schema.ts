@@ -41,9 +41,7 @@ export const addressSchema = z.object({
     .string()
     .min(1, 'Hausnummer ist erforderlich')
     .max(10, 'Hausnummer darf maximal 10 Zeichen lang sein'),
-  postalCode: z
-    .string()
-    .regex(/^\d{5}$/, 'Ungültige Postleitzahl (5 Ziffern)'),
+  postalCode: z.string().regex(/^\d{5}$/, 'Ungültige Postleitzahl (5 Ziffern)'),
   city: z
     .string()
     .min(2, 'Stadt muss mindestens 2 Zeichen lang sein')
@@ -59,7 +57,9 @@ export const tennisInfoSchema = z.object({
     errorMap: () => ({ message: 'Bitte wähle eine gültige Spielstärke' }),
   }),
   preferredDays: z
-    .array(z.enum(['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']))
+    .array(
+      z.enum(['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'])
+    )
     .min(1, 'Wähle mindestens einen bevorzugten Tag')
     .max(7, 'Wähle maximal 7 Tage'),
   goals: z
@@ -152,10 +152,7 @@ export const cancellationSchema = z.object({
   reason: z.enum(['trainer_unavailable', 'member_request', 'weather', 'other'], {
     errorMap: () => ({ message: 'Bitte wähle einen gültigen Grund' }),
   }),
-  notes: z
-    .string()
-    .max(500, 'Bemerkungen dürfen maximal 500 Zeichen lang sein')
-    .optional(),
+  notes: z.string().max(500, 'Bemerkungen dürfen maximal 500 Zeichen lang sein').optional(),
 });
 
 // Status Update Validation
@@ -179,22 +176,13 @@ export const profileUpdateSchema = z.object({
     .max(20, 'Telefonnummer darf maximal 20 Zeichen lang sein')
     .regex(/^\+?[\d\s-()]+$/, 'Ungültiges Telefonformat')
     .optional(),
-  address: z
-    .string()
-    .max(200, 'Adresse darf maximal 200 Zeichen lang sein')
-    .optional(),
-  city: z
-    .string()
-    .max(50, 'Stadt darf maximal 50 Zeichen lang sein')
-    .optional(),
+  address: z.string().max(200, 'Adresse darf maximal 200 Zeichen lang sein').optional(),
+  city: z.string().max(50, 'Stadt darf maximal 50 Zeichen lang sein').optional(),
   postalCode: z
     .string()
     .regex(/^\d{5}$/, 'Ungültige Postleitzahl (5 Ziffern)')
     .optional(),
-  bio: z
-    .string()
-    .max(500, 'Bio darf maximal 500 Zeichen lang sein')
-    .optional(),
+  bio: z.string().max(500, 'Bio darf maximal 500 Zeichen lang sein').optional(),
   emergencyContact: z
     .string()
     .max(100, 'Notfallkontakt darf maximal 100 Zeichen lang sein')
@@ -237,9 +225,7 @@ export const sepaMandateSchema = z.object({
     .string()
     .min(1, 'Mandatsreferenz ist erforderlich')
     .max(35, 'Mandatsreferenz darf maximal 35 Zeichen lang sein'),
-  signatureDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datumsformat (YYYY-MM-DD)'),
+  signatureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datumsformat (YYYY-MM-DD)'),
 });
 
 // Trial Training Registration Validation
@@ -272,10 +258,7 @@ export const trialTrainingSchema = z.object({
     .string()
     .min(10, 'Trainingsziele müssen mindestens 10 Zeichen lang sein')
     .max(500, 'Trainingsziele dürfen maximal 500 Zeichen lang sein'),
-  notes: z
-    .string()
-    .max(500, 'Bemerkungen dürfen maximal 500 Zeichen lang sein')
-    .optional(),
+  notes: z.string().max(500, 'Bemerkungen dürfen maximal 500 Zeichen lang sein').optional(),
 });
 
 // Export types

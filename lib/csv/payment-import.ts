@@ -35,9 +35,13 @@ export function parsePaymentCsv(csvContent: string): CsvPaymentRecord[] {
 
     return records.map((record: any) => ({
       paymentNumber: sanitizeCsvField(record['Zahlungsnummer'] || record['payment_number'] || ''),
-      paymentDate: sanitizeCsvField(record['Zahlungsdatum'] || record['payment_date'] || new Date().toISOString().split('T')[0]),
+      paymentDate: sanitizeCsvField(
+        record['Zahlungsdatum'] || record['payment_date'] || new Date().toISOString().split('T')[0]
+      ),
       amount: parseFloat(record['Betrag'] || record['amount'] || '0'),
-      paymentMethod: normalizePaymentMethod(record['Zahlungsmethode'] || record['payment_method'] || 'other'),
+      paymentMethod: normalizePaymentMethod(
+        record['Zahlungsmethode'] || record['payment_method'] || 'other'
+      ),
       memberId: sanitizeCsvField(record['Mitglied-ID'] || record['member_id'] || ''),
       memberEmail: sanitizeCsvField(record['Mitglied-Email'] || record['member_email'] || ''),
       invoiceNumber: sanitizeCsvField(record['Rechnungsnummer'] || record['invoice_number'] || ''),
@@ -50,7 +54,9 @@ export function parsePaymentCsv(csvContent: string): CsvPaymentRecord[] {
   }
 }
 
-function normalizePaymentMethod(method: string): 'sepa' | 'stripe' | 'cash' | 'bank_transfer' | 'other' {
+function normalizePaymentMethod(
+  method: string
+): 'sepa' | 'stripe' | 'cash' | 'bank_transfer' | 'other' {
   const normalized = method.toLowerCase().trim();
 
   if (['sepa', 'lastschrift', 'direct debit'].includes(normalized)) {

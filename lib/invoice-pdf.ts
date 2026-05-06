@@ -249,12 +249,16 @@ export function generateInvoiceHTML(invoice: Invoice): string {
           <span class="info-label">E-Mail:</span>
           <span class="info-value">${invoice.customerEmail}</span>
         </div>
-        ${invoice.customerAddress ? `
+        ${
+          invoice.customerAddress
+            ? `
         <div class="info-row">
           <span class="info-label">Adresse:</span>
           <span class="info-value">${invoice.customerAddress}</span>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     </div>
 
@@ -270,14 +274,18 @@ export function generateInvoiceHTML(invoice: Invoice): string {
           </tr>
         </thead>
         <tbody>
-          ${invoice.items.map(item => `
+          ${invoice.items
+            .map(
+              (item) => `
             <tr>
               <td>${item.description}</td>
               <td class="text-right">${item.quantity}</td>
               <td class="text-right">€${item.unitPrice.toFixed(2)}</td>
               <td class="text-right">€${item.total.toFixed(2)}</td>
             </tr>
-          `).join('')}
+          `
+            )
+            .join('')}
         </tbody>
       </table>
 
@@ -297,14 +305,18 @@ export function generateInvoiceHTML(invoice: Invoice): string {
       </div>
     </div>
 
-    ${invoice.notes ? `
+    ${
+      invoice.notes
+        ? `
     <div class="section">
       <div class="section-title">Bemerkungen</div>
       <div class="notes">
         ${invoice.notes}
       </div>
     </div>
-    ` : ''}
+    `
+        : ''
+    }
 
     <div class="footer">
       <p>SwingZ Tennis Club Management System</p>
@@ -347,14 +359,14 @@ export function generateSampleInvoice(memberData: any): Invoice {
     {
       description: 'Monatliches Mitgliedschaft',
       quantity: 1,
-      unitPrice: 49.90,
-      total: 49.90,
+      unitPrice: 49.9,
+      total: 49.9,
     },
     {
       description: 'Trainingsgebühr (4 Sessions)',
       quantity: 4,
-      unitPrice: 15.00,
-      total: 60.00,
+      unitPrice: 15.0,
+      total: 60.0,
     },
   ];
 
@@ -365,7 +377,9 @@ export function generateSampleInvoice(memberData: any): Invoice {
 
   return {
     id: `inv-${Date.now()}`,
-    invoiceNumber: `INV-${format(now, 'yyyyMM')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+    invoiceNumber: `INV-${format(now, 'yyyyMM')}-${Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, '0')}`,
     issueDate: now,
     dueDate,
     customerName: memberData?.fullName || 'Mitglied',
@@ -391,8 +405,8 @@ export function generateInvoiceFromBookings(bookings: any[], memberData: any): I
   const items: InvoiceItem[] = bookings.map((booking) => ({
     description: `Training am ${format(new Date(booking.week), 'dd. MMMM yyyy', { locale: de })}`,
     quantity: 1,
-    unitPrice: 15.00,
-    total: 15.00,
+    unitPrice: 15.0,
+    total: 15.0,
   }));
 
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
@@ -402,7 +416,9 @@ export function generateInvoiceFromBookings(bookings: any[], memberData: any): I
 
   return {
     id: `inv-${Date.now()}`,
-    invoiceNumber: `INV-${format(now, 'yyyyMM')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+    invoiceNumber: `INV-${format(now, 'yyyyMM')}-${Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, '0')}`,
     issueDate: now,
     dueDate,
     customerName: memberData?.fullName || 'Mitglied',

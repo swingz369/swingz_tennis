@@ -301,7 +301,9 @@ export class ValidationService {
   /**
    * Check if validation was successful
    */
-  static isValid(result: ValidationResult<unknown>): result is ValidationResult<any> & { success: true } {
+  static isValid(
+    result: ValidationResult<unknown>
+  ): result is ValidationResult<any> & { success: true } {
     return result.success === true;
   }
 }

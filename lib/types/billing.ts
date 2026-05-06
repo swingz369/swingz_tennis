@@ -6,7 +6,14 @@ export type InvoiceStatus = z.infer<typeof InvoiceStatus>;
 export const PaymentMethod = z.enum(['sepa', 'stripe', 'cash', 'bank_transfer', 'other']);
 export type PaymentMethod = z.infer<typeof PaymentMethod>;
 
-export const PaymentStatus = z.enum(['pending', 'processing', 'completed', 'failed', 'cancelled', 'refunded']);
+export const PaymentStatus = z.enum([
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+  'cancelled',
+  'refunded',
+]);
 export type PaymentStatus = z.infer<typeof PaymentStatus>;
 
 export const SepaMandateStatus = z.enum(['active', 'revoked', 'expired', 'failed']);
@@ -15,7 +22,13 @@ export type SepaMandateStatus = z.infer<typeof SepaMandateStatus>;
 export const DunningStatus = z.enum(['sent', 'paid', 'escalated', 'cancelled']);
 export type DunningStatus = z.infer<typeof DunningStatus>;
 
-export const InvoiceItemType = z.enum(['membership_fee', 'training_fee', 'court_fee', 'dunning_fee', 'other']);
+export const InvoiceItemType = z.enum([
+  'membership_fee',
+  'training_fee',
+  'court_fee',
+  'dunning_fee',
+  'other',
+]);
 export type InvoiceItemType = z.infer<typeof InvoiceItemType>;
 
 export const InvoiceSchema = z.object({
@@ -133,15 +146,17 @@ export const CreateInvoiceSchema = z.object({
   member_id: z.string().uuid(),
   invoice_date: z.string().or(z.date()).optional(),
   due_date: z.string().or(z.date()),
-  items: z.array(z.object({
-    description: z.string().min(1),
-    quantity: z.number().int().positive(),
-    unit_price: z.number().nonnegative(),
-    tax_rate: z.number().nonnegative().default(19.00),
-    item_type: InvoiceItemType,
-    reference_id: z.string().uuid().nullable().optional(),
-    reference_type: z.string().nullable().optional(),
-  })),
+  items: z.array(
+    z.object({
+      description: z.string().min(1),
+      quantity: z.number().int().positive(),
+      unit_price: z.number().nonnegative(),
+      tax_rate: z.number().nonnegative().default(19.0),
+      item_type: InvoiceItemType,
+      reference_id: z.string().uuid().nullable().optional(),
+      reference_type: z.string().nullable().optional(),
+    })
+  ),
   notes: z.string().nullable().optional(),
 });
 

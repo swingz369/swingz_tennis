@@ -7,7 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { User, Mail, Phone, MapPin, Calendar, Send, Info, FileText, CheckCircle } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Send,
+  Info,
+  FileText,
+  CheckCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ApplicationFormData {
@@ -67,7 +77,9 @@ export default function OnlineApplicationForm() {
   const [formData, setFormData] = useState<ApplicationFormData>(INITIAL_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -146,12 +158,8 @@ export default function OnlineApplicationForm() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-primary/10 rounded-full mb-4">
             <FileText className="h-8 w-8 text-brand-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-brand-primary mb-2">
-            Online-Bewerbung
-          </h1>
-          <p className="text-gray-600">
-            Bewirb dich für eine Mitgliedschaft im SwingZ Tennis Club
-          </p>
+          <h1 className="text-3xl font-bold text-brand-primary mb-2">Online-Bewerbung</h1>
+          <p className="text-gray-600">Bewirb dich für eine Mitgliedschaft im SwingZ Tennis Club</p>
         </div>
 
         {/* Info Card */}
@@ -356,7 +364,15 @@ export default function OnlineApplicationForm() {
                   <div className="space-y-2 md:col-span-2">
                     <Label>Bevorzugte Trainingstage</Label>
                     <div className="flex flex-wrap gap-2">
-                      {['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'].map((day) => (
+                      {[
+                        'Montag',
+                        'Dienstag',
+                        'Mittwoch',
+                        'Donnerstag',
+                        'Freitag',
+                        'Samstag',
+                        'Sonntag',
+                      ].map((day) => (
                         <Button
                           key={day}
                           type="button"
@@ -428,7 +444,9 @@ export default function OnlineApplicationForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="specialRequirements">Besondere Anforderungen oder Wünsche</Label>
+                    <Label htmlFor="specialRequirements">
+                      Besondere Anforderungen oder Wünsche
+                    </Label>
                     <Textarea
                       id="specialRequirements"
                       name="specialRequirements"
@@ -448,7 +466,9 @@ export default function OnlineApplicationForm() {
                     <Checkbox
                       id="acceptTerms"
                       checked={formData.acceptTerms}
-                      onCheckedChange={(checked) => handleCheckboxChange('acceptTerms', checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange('acceptTerms', checked as boolean)
+                      }
                     />
                     <div className="space-y-1">
                       <Label htmlFor="acceptTerms" className="cursor-pointer">
@@ -464,7 +484,9 @@ export default function OnlineApplicationForm() {
                     <Checkbox
                       id="acceptPrivacy"
                       checked={formData.acceptPrivacy}
-                      onCheckedChange={(checked) => handleCheckboxChange('acceptPrivacy', checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange('acceptPrivacy', checked as boolean)
+                      }
                     />
                     <div className="space-y-1">
                       <Label htmlFor="acceptPrivacy" className="cursor-pointer">
@@ -480,12 +502,7 @@ export default function OnlineApplicationForm() {
 
               {/* Submit Button */}
               <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="gap-2"
-                >
+                <Button type="submit" size="lg" disabled={isSubmitting} className="gap-2">
                   <Send className="h-4 w-4" />
                   {isSubmitting ? 'Wird gesendet...' : 'Bewerbung absenden'}
                 </Button>

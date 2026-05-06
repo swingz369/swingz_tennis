@@ -62,19 +62,48 @@ interface CourtSchedule {
 }
 
 const TIME_SLOTS = [
-  '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-  '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
-  '20:00', '20:30', '21:00', '21:30', '22:00'
+  '08:00',
+  '08:30',
+  '09:00',
+  '09:30',
+  '10:00',
+  '10:30',
+  '11:00',
+  '11:30',
+  '12:00',
+  '12:30',
+  '13:00',
+  '13:30',
+  '14:00',
+  '14:30',
+  '15:00',
+  '15:30',
+  '16:00',
+  '16:30',
+  '17:00',
+  '17:30',
+  '18:00',
+  '18:30',
+  '19:00',
+  '19:30',
+  '20:00',
+  '20:30',
+  '21:00',
+  '21:30',
+  '22:00',
 ];
 
 export default function CourtCalendar() {
-  const [currentWeek, setCurrentWeek] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [currentWeek, setCurrentWeek] = useState(() =>
+    startOfWeek(new Date(), { weekStartsOn: 1 })
+  );
   const [courts, setCourts] = useState<Court[]>([]);
   const [schedules, setSchedules] = useState<Record<string, CourtSchedule>>({});
   const [loading, setLoading] = useState(true);
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: string; time: string } | null>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: string; time: string } | null>(
+    null
+  );
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeek, i));
 
@@ -113,7 +142,9 @@ export default function CourtCalendar() {
 
     for (const court of courts) {
       try {
-        const response = await fetch(`/api/courts/${court.id}/schedule?start_date=${startDate}&end_date=${endDate}`);
+        const response = await fetch(
+          `/api/courts/${court.id}/schedule?start_date=${startDate}&end_date=${endDate}`
+        );
         if (response.ok) {
           const data = await response.json();
           newSchedules[court.id] = data;
@@ -190,7 +221,9 @@ export default function CourtCalendar() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-2xl font-bold text-brand-primary">Platz-Kalender</CardTitle>
+              <CardTitle className="text-2xl font-bold text-brand-primary">
+                Platz-Kalender
+              </CardTitle>
               <p className="text-gray-500">Wochenansicht der Tennisplatz-Buchungen</p>
             </div>
             <div className="flex gap-2">
@@ -227,9 +260,7 @@ export default function CourtCalendar() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="border border-gray-200 p-2 text-left bg-gray-50">
-                        Zeit
-                      </th>
+                      <th className="border border-gray-200 p-2 text-left bg-gray-50">Zeit</th>
                       {weekDays.map((day) => (
                         <th
                           key={day.toISOString()}
@@ -237,12 +268,8 @@ export default function CourtCalendar() {
                             isToday(day) ? 'bg-brand-primary text-white' : ''
                           }`}
                         >
-                          <div className="font-medium">
-                            {format(day, 'EEE', { locale: de })}
-                          </div>
-                          <div className="text-sm opacity-75">
-                            {format(day, 'dd.MM.')}
-                          </div>
+                          <div className="font-medium">{format(day, 'EEE', { locale: de })}</div>
+                          <div className="text-sm opacity-75">{format(day, 'dd.MM.')}</div>
                         </th>
                       ))}
                     </tr>
@@ -280,9 +307,7 @@ export default function CourtCalendar() {
                             <td
                               key={day.toISOString()}
                               className={`border border-gray-200 p-1 cursor-pointer transition-colors ${
-                                isAvailable
-                                  ? 'hover:bg-green-50'
-                                  : 'bg-gray-50'
+                                isAvailable ? 'hover:bg-green-50' : 'bg-gray-50'
                               }`}
                               onClick={() => handleTimeSlotClick(dateStr, time, isAvailable)}
                             >
@@ -330,28 +355,23 @@ export default function CourtCalendar() {
                   <div>
                     <span className="text-gray-600">Typ:</span>{' '}
                     {getSurfaceTypeLabel(
-                      courts.find((c) => c.id === selectedCourt)?.court_type
-                        ?.surface_type || ''
+                      courts.find((c) => c.id === selectedCourt)?.court_type?.surface_type || ''
                     )}
                   </div>
                   <div>
                     <span className="text-gray-600">Stundensatz:</span>{' '}
-                    {courts.find((c) => c.id === selectedCourt)?.court_type
-                      ?.hourly_rate || 0}{' '}
-                    €/h
+                    {courts.find((c) => c.id === selectedCourt)?.court_type?.hourly_rate || 0} €/h
                   </div>
                   <div>
                     <span className="text-gray-600">Status:</span>{' '}
                     <Badge
                       variant={
-                        courts.find((c) => c.id === selectedCourt)?.status ===
-                          'available'
+                        courts.find((c) => c.id === selectedCourt)?.status === 'available'
                           ? 'default'
                           : 'secondary'
                       }
                     >
-                      {courts.find((c) => c.id === selectedCourt)?.status ===
-                      'available'
+                      {courts.find((c) => c.id === selectedCourt)?.status === 'available'
                         ? 'Verfügbar'
                         : 'Nicht verfügbar'}
                     </Badge>
@@ -372,7 +392,8 @@ export default function CourtCalendar() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-gray-600">
-                  <strong>Datum:</strong> {format(new Date(selectedTimeSlot.date), 'EEEE, dd.MM.yyyy', { locale: de })}
+                  <strong>Datum:</strong>{' '}
+                  {format(new Date(selectedTimeSlot.date), 'EEEE, dd.MM.yyyy', { locale: de })}
                 </p>
                 <p className="text-sm text-gray-600">
                   <strong>Zeit:</strong> {selectedTimeSlot.time} - {selectedTimeSlot.time}

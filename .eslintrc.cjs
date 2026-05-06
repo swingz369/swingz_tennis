@@ -3,7 +3,10 @@ module.exports = {
   extends: ['next/core-web-vitals', 'next/typescript'],
   rules: {
     '@typescript-eslint/no-explicit-any': 'off', // Too strict, causes noise
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', ignoreRestSiblings: true }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { argsIgnorePattern: '^_', ignoreRestSiblings: true },
+    ],
     'no-html-link-for-pages': 'off',
     '@typescript-eslint/no-require-imports': 'off',
     '@typescript-eslint/consistent-type-imports': 'warn',

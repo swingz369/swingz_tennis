@@ -96,9 +96,7 @@ export default function PaymentImportDialog() {
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Zahlungen aus CSV importieren</DialogTitle>
-          <DialogDescription>
-            Importieren Sie Zahlungen aus einer CSV-Datei
-          </DialogDescription>
+          <DialogDescription>Importieren Sie Zahlungen aus einer CSV-Datei</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -164,7 +162,9 @@ export default function PaymentImportDialog() {
                       <div className="text-sm text-gray-600">Fehlgeschlagen</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">{result.invalid.length}</div>
+                      <div className="text-2xl font-bold text-yellow-600">
+                        {result.invalid.length}
+                      </div>
                       <div className="text-sm text-gray-600">Ungültig</div>
                     </div>
                   </div>
@@ -182,9 +182,7 @@ export default function PaymentImportDialog() {
                             <div className="font-medium">
                               {item.record.memberEmail || item.record.memberId || 'Unbekannt'}
                             </div>
-                            <div className="text-gray-600">
-                              {item.errors.join(', ')}
-                            </div>
+                            <div className="text-gray-600">{item.errors.join(', ')}</div>
                           </div>
                         ))}
                       </div>

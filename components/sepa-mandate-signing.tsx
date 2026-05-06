@@ -215,9 +215,7 @@ export default function SEPAMandateSigning() {
                   <Download className="h-4 w-4 mr-2" />
                   PDF herunterladen
                 </Button>
-                <Button onClick={() => setIsSigned(false)}>
-                  Neues Mandat erstellen
-                </Button>
+                <Button onClick={() => setIsSigned(false)}>Neues Mandat erstellen</Button>
               </div>
             </div>
           </CardContent>
@@ -230,20 +228,16 @@ export default function SEPAMandateSigning() {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary mb-2">
-          SEPA-Lastschriftmandat
-        </h1>
-        <p className="text-gray-600">
-          Unterschreibe dein SEPA-Mandat für automatische Zahlungen
-        </p>
+        <h1 className="text-2xl font-bold text-brand-primary mb-2">SEPA-Lastschriftmandat</h1>
+        <p className="text-gray-600">Unterschreibe dein SEPA-Mandat für automatische Zahlungen</p>
       </div>
 
       {/* Info Alert */}
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Mit diesem Mandat autorisierst du SwingZ Tennis Club, Zahlungen von deinem Konto
-          mittels SEPA-Lastschrift einzuziehen. Du kannst dieses Mandat jederzeit widerrufen.
+          Mit diesem Mandat autorisierst du SwingZ Tennis Club, Zahlungen von deinem Konto mittels
+          SEPA-Lastschrift einzuziehen. Du kannst dieses Mandat jederzeit widerrufen.
         </AlertDescription>
       </Alert>
 
@@ -286,9 +280,7 @@ export default function SEPAMandateSigning() {
                     placeholder="DE89 3704 0044 0532 0130 00"
                     className={errors.iban ? 'border-red-500' : ''}
                   />
-                  {errors.iban && (
-                    <p className="text-sm text-red-600">{errors.iban}</p>
-                  )}
+                  {errors.iban && <p className="text-sm text-red-600">{errors.iban}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -301,9 +293,7 @@ export default function SEPAMandateSigning() {
                     placeholder="COBADEFFXXX"
                     className={errors.bic ? 'border-red-500' : ''}
                   />
-                  {errors.bic && (
-                    <p className="text-sm text-red-600">{errors.bic}</p>
-                  )}
+                  {errors.bic && <p className="text-sm text-red-600">{errors.bic}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -316,9 +306,7 @@ export default function SEPAMandateSigning() {
                     placeholder="Commerzbank"
                     className={errors.bankName ? 'border-red-500' : ''}
                   />
-                  {errors.bankName && (
-                    <p className="text-sm text-red-600">{errors.bankName}</p>
-                  )}
+                  {errors.bankName && <p className="text-sm text-red-600">{errors.bankName}</p>}
                 </div>
               </div>
             </div>
@@ -337,9 +325,7 @@ export default function SEPAMandateSigning() {
                     placeholder="Musterstraße"
                     className={errors.street ? 'border-red-500' : ''}
                   />
-                  {errors.street && (
-                    <p className="text-sm text-red-600">{errors.street}</p>
-                  )}
+                  {errors.street && <p className="text-sm text-red-600">{errors.street}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -367,9 +353,7 @@ export default function SEPAMandateSigning() {
                     placeholder="12345"
                     className={errors.postalCode ? 'border-red-500' : ''}
                   />
-                  {errors.postalCode && (
-                    <p className="text-sm text-red-600">{errors.postalCode}</p>
-                  )}
+                  {errors.postalCode && <p className="text-sm text-red-600">{errors.postalCode}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -382,9 +366,7 @@ export default function SEPAMandateSigning() {
                     placeholder="Musterstadt"
                     className={errors.city ? 'border-red-500' : ''}
                   />
-                  {errors.city && (
-                    <p className="text-sm text-red-600">{errors.city}</p>
-                  )}
+                  {errors.city && <p className="text-sm text-red-600">{errors.city}</p>}
                 </div>
               </div>
             </div>
@@ -431,7 +413,9 @@ export default function SEPAMandateSigning() {
                 <Checkbox
                   id="acceptTerms"
                   checked={formData.acceptTerms}
-                  onCheckedChange={(checked) => handleCheckboxChange('acceptTerms', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleCheckboxChange('acceptTerms', checked as boolean)
+                  }
                 />
                 <div className="space-y-1">
                   <Label htmlFor="acceptTerms" className="cursor-pointer">
@@ -439,20 +423,20 @@ export default function SEPAMandateSigning() {
                   </Label>
                   <p className="text-xs text-gray-600">
                     Ich ermächtige SwingZ Tennis Club, Zahlungen von meinem Konto mittels
-                    SEPA-Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an,
-                    die von SwingZ Tennis Club auf mein Konto gezogenen Lastschriften einzulösen.
+                    SEPA-Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von
+                    SwingZ Tennis Club auf mein Konto gezogenen Lastschriften einzulösen.
                   </p>
                 </div>
               </div>
-              {errors.acceptTerms && (
-                <p className="text-sm text-red-600">{errors.acceptTerms}</p>
-              )}
+              {errors.acceptTerms && <p className="text-sm text-red-600">{errors.acceptTerms}</p>}
 
               <div className="flex items-start gap-3">
                 <Checkbox
                   id="acceptDirectDebit"
                   checked={formData.acceptDirectDebit}
-                  onCheckedChange={(checked) => handleCheckboxChange('acceptDirectDebit', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    handleCheckboxChange('acceptDirectDebit', checked as boolean)
+                  }
                 />
                 <div className="space-y-1">
                   <Label htmlFor="acceptDirectDebit" className="cursor-pointer">
@@ -472,11 +456,7 @@ export default function SEPAMandateSigning() {
 
             {/* Submit Button */}
             <div className="flex gap-2 pt-4 border-t">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1"
-              >
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting ? 'Wird gespeichert...' : 'Mandat unterzeichnen'}
                 <CheckCircle className="h-4 w-4 ml-2" />
               </Button>

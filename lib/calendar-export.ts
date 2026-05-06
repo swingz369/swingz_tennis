@@ -83,7 +83,10 @@ function escapeICS(text: string): string {
 /**
  * Download ICS file
  */
-export function downloadICS(events: CalendarEvent[], filename: string = 'swingz-calendar.ics'): void {
+export function downloadICS(
+  events: CalendarEvent[],
+  filename: string = 'swingz-calendar.ics'
+): void {
   const icsContent = generateICS(events);
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -156,10 +159,12 @@ export function sessionToCalendarEvent(session: any, courtName?: string): Calend
     location: courtName || 'Tennis Court',
     start: startDate,
     end: endDate,
-    organizer: session.trainerName ? {
-      name: session.trainerName,
-      email: `${session.trainerName.toLowerCase().replace(/\s+/g, '.')}@swingz.app`,
-    } : undefined,
+    organizer: session.trainerName
+      ? {
+          name: session.trainerName,
+          email: `${session.trainerName.toLowerCase().replace(/\s+/g, '.')}@swingz.app`,
+        }
+      : undefined,
   };
 }
 

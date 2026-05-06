@@ -68,10 +68,10 @@ export default function TrainerWeeklyView() {
       // In production, this would fetch from an API
       // For now, we'll use mock data
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       const now = new Date();
       const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-      
+
       const mockSessions: TrainingSession[] = [
         {
           id: 'session-1',
@@ -183,9 +183,9 @@ export default function TrainerWeeklyView() {
 
     try {
       // In production, this would call an API
-      setSessions(sessions.map((s) => 
-        s.id === sessionId ? { ...s, status: 'cancelled' as const } : s
-      ));
+      setSessions(
+        sessions.map((s) => (s.id === sessionId ? { ...s, status: 'cancelled' as const } : s))
+      );
       toast.success('Trainingssession erfolgreich abgesagt');
     } catch (error) {
       toast.error('Fehler beim Absagen der Trainingssession');
@@ -196,9 +196,9 @@ export default function TrainerWeeklyView() {
   const handleCompleteSession = async (sessionId: string) => {
     try {
       // In production, this would call an API
-      setSessions(sessions.map((s) => 
-        s.id === sessionId ? { ...s, status: 'completed' as const } : s
-      ));
+      setSessions(
+        sessions.map((s) => (s.id === sessionId ? { ...s, status: 'completed' as const } : s))
+      );
       toast.success('Trainingssession als abgeschlossen markiert');
     } catch (error) {
       toast.error('Fehler beim Abschließen der Trainingssession');
@@ -358,7 +358,9 @@ export default function TrainerWeeklyView() {
           </Button>
           <span className="text-sm font-medium">
             {format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'dd. MMM', { locale: de })} -{' '}
-            {format(addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), 6), 'dd. MMM yyyy', { locale: de })}
+            {format(addDays(startOfWeek(selectedDate, { weekStartsOn: 1 }), 6), 'dd. MMM yyyy', {
+              locale: de,
+            })}
           </span>
           <Button
             variant="outline"
@@ -369,11 +371,7 @@ export default function TrainerWeeklyView() {
           </Button>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSelectedDate(new Date())}
-        >
+        <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
           Heute
         </Button>
       </div>
@@ -382,67 +380,51 @@ export default function TrainerWeeklyView() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Gesamt
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Gesamt</CardTitle>
             <Calendar className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{getFilteredSessions().length}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              Trainingssessions
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Trainingssessions</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Geplant
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Geplant</CardTitle>
             <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {getFilteredSessions().filter((s) => s.status === 'scheduled').length}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Ausstehend
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Ausstehend</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Abgeschlossen
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Abgeschlossen</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {getFilteredSessions().filter((s) => s.status === 'completed').length}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Erfolgreich
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Erfolgreich</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Teilnehmer
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Teilnehmer</CardTitle>
             <Users className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {getFilteredSessions().reduce((sum, s) => sum + s.participants.length, 0)}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Gesamt
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Gesamt</p>
           </CardContent>
         </Card>
       </div>
@@ -478,9 +460,7 @@ export default function TrainerWeeklyView() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {daySessions.length === 0 ? (
-                  <div className="text-center text-xs text-gray-400 py-4">
-                    Keine Sessions
-                  </div>
+                  <div className="text-center text-xs text-gray-400 py-4">Keine Sessions</div>
                 ) : (
                   daySessions.map((session) => (
                     <div
@@ -492,13 +472,14 @@ export default function TrainerWeeklyView() {
                         <span className="font-medium text-xs">
                           {session.startTime} - {session.endTime}
                         </span>
-                        <Badge variant="outline" className={`text-[10px] ${getStatusColor(session.status)}`}>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${getStatusColor(session.status)}`}
+                        >
                           {getStatusLabel(session.status)}
                         </Badge>
                       </div>
-                      <div className="text-xs text-gray-600 mb-1">
-                        {session.trainerName}
-                      </div>
+                      <div className="text-xs text-gray-600 mb-1">{session.trainerName}</div>
                       <div className="flex items-center gap-1 mb-1">
                         <MapPin className="h-3 w-3 text-gray-400" />
                         <span className="text-xs text-gray-600">{session.courtName}</span>
@@ -510,7 +491,9 @@ export default function TrainerWeeklyView() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-600">{session.participants.length} Teilnehmer</span>
+                        <span className="text-xs text-gray-600">
+                          {session.participants.length} Teilnehmer
+                        </span>
                       </div>
                     </div>
                   ))
@@ -528,11 +511,7 @@ export default function TrainerWeeklyView() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Trainingssession Details</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedSession(null)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setSelectedSession(null)}>
                   <XCircle className="h-5 w-5" />
                 </Button>
               </div>
@@ -570,7 +549,9 @@ export default function TrainerWeeklyView() {
                   <div>
                     <span className="text-gray-600">Datum:</span>
                     <span className="ml-2 font-medium">
-                      {format(parseISO(selectedSession.date), 'EEEE, dd. MMMM yyyy', { locale: de })}
+                      {format(parseISO(selectedSession.date), 'EEEE, dd. MMMM yyyy', {
+                        locale: de,
+                      })}
                     </span>
                   </div>
                   <div>

@@ -17,15 +17,19 @@ import {
 } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Clock, MapPin, Calendar as CalendarIcon, Download, ExternalLink } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  MapPin,
+  Calendar as CalendarIcon,
+  Download,
+  ExternalLink,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
-import {
-  useSessions,
-  useCreateBooking,
-  useCancelBooking,
-} from '@/hooks/use-sessions';
+import { useSessions, useCreateBooking, useCancelBooking } from '@/hooks/use-sessions';
 import { exportSessionsToICS, exportSessionToGoogleCalendar } from '@/lib/calendar-export';
 
 interface CourtCalendarProps {
@@ -33,9 +37,23 @@ interface CourtCalendarProps {
 }
 
 const TIME_SLOTS = [
-  '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-  '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-  '18:00', '19:00', '20:00', '21:00', '22:00'
+  '06:00',
+  '07:00',
+  '08:00',
+  '09:00',
+  '10:00',
+  '11:00',
+  '12:00',
+  '13:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
+  '19:00',
+  '20:00',
+  '21:00',
+  '22:00',
 ];
 
 export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
@@ -91,71 +109,68 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
     }
   }, [sessions, courts]);
 
-  const getSessionForCourtAndTime = useCallback((
-    courtId: string,
-    date: Date,
-    timeSlot: string
-  ) => {
-    const [hour, minute] = timeSlot.split(':').map(Number);
-    const slotStart = setMinutes(setHours(date, hour), minute);
-    const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1 hour slots
+  const getSessionForCourtAndTime = useCallback(
+    (courtId: string, date: Date, timeSlot: string) => {
+      const [hour, minute] = timeSlot.split(':').map(Number);
+      const slotStart = setMinutes(setHours(date, hour), minute);
+      const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1 hour slots
 
-    return sessions.find((session) => {
-      if (!session.courtId || session.courtId !== courtId) return false;
+      return sessions.find((session) => {
+        if (!session.courtId || session.courtId !== courtId) return false;
 
-      const sessionDate = new Date(session.week);
-      const [startHour, startMinute] = session.startTime.split(':').map(Number);
-      const [endHour, endMinute] = session.endTime.split(':').map(Number);
+        const sessionDate = new Date(session.week);
+        const [startHour, startMinute] = session.startTime.split(':').map(Number);
+        const [endHour, endMinute] = session.endTime.split(':').map(Number);
 
-      const sessionStart = setMinutes(setHours(sessionDate, startHour), startMinute);
-      const sessionEnd = setMinutes(setHours(sessionDate, endHour), endMinute);
+        const sessionStart = setMinutes(setHours(sessionDate, startHour), startMinute);
+        const sessionEnd = setMinutes(setHours(sessionDate, endHour), endMinute);
 
-      return (
-        isSameDay(sessionDate, date) &&
-        ((isBefore(slotStart, sessionEnd) || slotStart.getTime() === sessionStart.getTime()) &&
-         (isAfter(slotEnd, sessionStart) || slotEnd.getTime() === sessionEnd.getTime()))
-      );
-    });
-  }, [sessions]);
+        return (
+          isSameDay(sessionDate, date) &&
+          (isBefore(slotStart, sessionEnd) || slotStart.getTime() === sessionStart.getTime()) &&
+          (isAfter(slotEnd, sessionStart) || slotEnd.getTime() === sessionEnd.getTime())
+        );
+      });
+    },
+    [sessions]
+  );
 
-  const isSlotAvailable = useCallback((
-    courtId: string,
-    date: Date,
-    timeSlot: string
-  ) => {
-    const session = getSessionForCourtAndTime(courtId, date, timeSlot);
-    return !session;
-  }, [getSessionForCourtAndTime]);
+  const isSlotAvailable = useCallback(
+    (courtId: string, date: Date, timeSlot: string) => {
+      const session = getSessionForCourtAndTime(courtId, date, timeSlot);
+      return !session;
+    },
+    [getSessionForCourtAndTime]
+  );
 
-  const handleBookSlot = useCallback((
-    courtId: string,
-    date: Date,
-    timeSlot: string
-  ) => {
-    if (!memberId || !clubId) {
-      toast.error('Member-ID oder Club-ID nicht verfügbar');
-      return;
-    }
-
-    const session = getSessionForCourtAndTime(courtId, date, timeSlot);
-    if (session) {
-      if (onBookCourt) {
-        onBookCourt(courtId, date, timeSlot, session.endTime);
-      } else {
-        createBooking.mutate({ memberId, sessionId: session.id, clubId });
+  const handleBookSlot = useCallback(
+    (courtId: string, date: Date, timeSlot: string) => {
+      if (!memberId || !clubId) {
+        toast.error('Member-ID oder Club-ID nicht verfügbar');
+        return;
       }
-    } else {
-      toast.error('Keine Session für diesen Zeitplatz gefunden');
-    }
-  }, [memberId, clubId, createBooking, getSessionForCourtAndTime, onBookCourt]);
 
-  const handleCancelBooking = useCallback((
-    sessionId: string,
-    bookingId: string
-  ) => {
-    if (!clubId) return;
-    cancelBooking.mutate({ bookingId, sessionId, clubId });
-  }, [clubId, cancelBooking]);
+      const session = getSessionForCourtAndTime(courtId, date, timeSlot);
+      if (session) {
+        if (onBookCourt) {
+          onBookCourt(courtId, date, timeSlot, session.endTime);
+        } else {
+          createBooking.mutate({ memberId, sessionId: session.id, clubId });
+        }
+      } else {
+        toast.error('Keine Session für diesen Zeitplatz gefunden');
+      }
+    },
+    [memberId, clubId, createBooking, getSessionForCourtAndTime, onBookCourt]
+  );
+
+  const handleCancelBooking = useCallback(
+    (sessionId: string, bookingId: string) => {
+      if (!clubId) return;
+      cancelBooking.mutate({ bookingId, sessionId, clubId });
+    },
+    [clubId, cancelBooking]
+  );
 
   const getSurfaceLabel = (surface: string) => {
     const labels: Record<string, string> = {
@@ -211,7 +226,8 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="min-w-[150px] text-center font-medium text-sm md:text-base">
-            {format(weekStart, 'dd.MM', { locale: de })} - {format(weekEnd, 'dd.MM.yyyy', { locale: de })}
+            {format(weekStart, 'dd.MM', { locale: de })} -{' '}
+            {format(weekEnd, 'dd.MM.yyyy', { locale: de })}
           </span>
           <Button variant="outline" size="icon" onClick={goToNextWeek}>
             <ChevronRight className="h-4 w-4" />
@@ -280,7 +296,9 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
                           >
                             {session ? (
                               <div className="flex items-center gap-1 w-full justify-between px-1">
-                                <span className="truncate">{session.trainerName?.substring(0, 8) || 'Trainer'}</span>
+                                <span className="truncate">
+                                  {session.trainerName?.substring(0, 8) || 'Trainer'}
+                                </span>
                                 {session.bookedByUser && (
                                   <button
                                     onClick={(e) => {

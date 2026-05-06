@@ -23,36 +23,30 @@ serve(async (req) => {
     const { clubId } = await req.json();
 
     if (!clubId) {
-      return new Response(
-        JSON.stringify({ error: 'Club ID is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Club ID is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const newDunningRecords = await billingEngine.processAutomaticDunning(clubId);
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         processed: newDunningRecords.length,
         dunning_records: newDunningRecords,
       }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   } catch (error) {
     console.error('Error processing automatic dunning:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

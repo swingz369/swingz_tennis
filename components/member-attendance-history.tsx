@@ -1,11 +1,31 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, isSameDay, isWithinInterval, addMonths, subMonths, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  isSameDay,
+  isWithinInterval,
+  addMonths,
+  subMonths,
+  eachDayOfInterval,
+  startOfWeek,
+  endOfWeek,
+} from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle, XCircle, Clock, TrendingUp, Award } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Clock,
+  TrendingUp,
+  Award,
+} from 'lucide-react';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useSessions } from '@/hooks/use-sessions';
 
@@ -105,7 +125,9 @@ export default function MemberAttendanceHistory() {
       const recordDate = new Date(record.date);
       recordDate.setHours(0, 0, 0, 0);
 
-      const diffDays = Math.floor((currentDate.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.floor(
+        (currentDate.getTime() - recordDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
       if (diffDays <= 7) {
         streak++;
@@ -228,9 +250,7 @@ export default function MemberAttendanceHistory() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Anwesenheitsrate
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Anwesenheitsrate</CardTitle>
             <TrendingUp className="h-4 w-4 text-brand-primary" />
           </CardHeader>
           <CardContent>
@@ -243,46 +263,34 @@ export default function MemberAttendanceHistory() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Aktuelle Serie
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Aktuelle Serie</CardTitle>
             <Award className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{currentStreak}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              aufeinanderfolgende Trainings
-            </p>
+            <p className="text-xs text-gray-500 mt-1">aufeinanderfolgende Trainings</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Teilgenommen
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Teilgenommen</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.attended}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              erfolgreiche Trainings
-            </p>
+            <p className="text-xs text-gray-500 mt-1">erfolgreiche Trainings</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Verpasst
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Verpasst</CardTitle>
             <XCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.missed}</div>
-            <p className="text-xs text-gray-500 mt-1">
-              nicht erschienen
-            </p>
+            <p className="text-xs text-gray-500 mt-1">nicht erschienen</p>
           </CardContent>
         </Card>
       </div>
@@ -297,10 +305,7 @@ export default function MemberAttendanceHistory() {
             <div className="grid grid-cols-7 gap-1">
               {/* Day headers */}
               {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
-                <div
-                  key={day}
-                  className="text-center font-semibold text-gray-700 text-xs py-2"
-                >
+                <div key={day} className="text-center font-semibold text-gray-700 text-xs py-2">
                   {day}
                 </div>
               ))}
@@ -321,9 +326,7 @@ export default function MemberAttendanceHistory() {
                       ${attendance ? 'cursor-pointer hover:bg-gray-50' : ''}
                     `}
                   >
-                    <div className="text-xs font-medium text-gray-700 mb-1">
-                      {format(day, 'd')}
-                    </div>
+                    <div className="text-xs font-medium text-gray-700 mb-1">{format(day, 'd')}</div>
                     {attendance && (
                       <div
                         className={`p-1 rounded text-[10px] flex items-center justify-center gap-1 ${getStatusColor(attendance.status)}`}
@@ -386,7 +389,8 @@ export default function MemberAttendanceHistory() {
                           {format(record.date, 'EEEE, dd. MMMM yyyy', { locale: de })}
                         </div>
                         <div className="text-sm opacity-80">
-                          {record.session.startTime} - {record.session.endTime} mit {record.session.trainerName || 'Trainer'}
+                          {record.session.startTime} - {record.session.endTime} mit{' '}
+                          {record.session.trainerName || 'Trainer'}
                         </div>
                       </div>
                     </div>

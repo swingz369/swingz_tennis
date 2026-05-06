@@ -78,6 +78,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 ### 2.1 Anforderungen
 
 **Funktionale Anforderungen:**
+
 1. Multi-Club-Support mit Multi-Tenancy ✅
 2. Rollen-basierte Zugriffssteuerung (4 Rollen) ✅
 3. Booking-Management mit Status-Maschine ✅
@@ -88,6 +89,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 8. Audit Logging für kritische Aktionen ✅
 
 **Nicht-funktionale Anforderungen:**
+
 1. Sicherheit: Authentifizierung, Autorisierung, RLS ✅
 2. Performance: <2s Ladezeit, <100ms API-Response ⚠️
 3. Verfügbarkeit: 99.9% Uptime ✅
@@ -102,29 +104,32 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 
 ### 3.1 Systematischer Vergleich
 
-| Bereich | Ist-Zustand | Soll-Zustand | Abweichung | Schweregrad |
-|---------|-------------|--------------|------------|-------------|
-| **Sicherheit** | 94.6% geschützt | Alle geschützt | 5.4% (legitim) | 🟢 Niedrig |
-| **Code-Qualität** | 26 as any (meist Tests) | Keine any | 26 as any | 🟢 Niedrig |
-| **Test-Coverage** | ~20% | >80% | -60% | 🔴 Kritisch |
-| **Rollen-System** | 233 Prüfungen, 10 RLS | Vollständig | Frontend unvollständig | 🟡 Mittel |
-| **RLS-Policies** | 10 Tabellen | Alle Tabellen | Fehlende Tabellen | 🟡 Mittel |
-| **Architektur** | Clean + DDD | + CQRS + Event Sourcing | CQRS + ES fehlen | 🟢 Niedrig |
-| **Dependencies** | 2 moderate CVEs | Keine CVEs | 2 CVEs | 🟡 Mittel |
-| **Performance** | N/A getestet | <2s Ladezeit | Nicht getestet | 🟡 Mittel |
+| Bereich           | Ist-Zustand             | Soll-Zustand            | Abweichung             | Schweregrad |
+| ----------------- | ----------------------- | ----------------------- | ---------------------- | ----------- |
+| **Sicherheit**    | 94.6% geschützt         | Alle geschützt          | 5.4% (legitim)         | 🟢 Niedrig  |
+| **Code-Qualität** | 26 as any (meist Tests) | Keine any               | 26 as any              | 🟢 Niedrig  |
+| **Test-Coverage** | ~20%                    | >80%                    | -60%                   | 🔴 Kritisch |
+| **Rollen-System** | 233 Prüfungen, 10 RLS   | Vollständig             | Frontend unvollständig | 🟡 Mittel   |
+| **RLS-Policies**  | 10 Tabellen             | Alle Tabellen           | Fehlende Tabellen      | 🟡 Mittel   |
+| **Architektur**   | Clean + DDD             | + CQRS + Event Sourcing | CQRS + ES fehlen       | 🟢 Niedrig  |
+| **Dependencies**  | 2 moderate CVEs         | Keine CVEs              | 2 CVEs                 | 🟡 Mittel   |
+| **Performance**   | N/A getestet            | <2s Ladezeit            | Nicht getestet         | 🟡 Mittel   |
 
 ### 3.2 Identifizierte Lücken
 
 **Kritische Lücken:**
+
 1. 🔴 **Test-Coverage:** Nur ~20% statt >80%
 2. 🔴 **Test-Dateien:** 2 von 20 haben Syntax-Fehler
 
 **Mittlere Lücken:**
+
 1. 🟡 **Frontend-Rollen-Prüfung:** Unvollständig
 2. 🟡 **Dependencies:** 2 moderate CVEs
 3. 🟡 **Performance:** Nicht getestet
 
 **Niedrige Lücken:**
+
 1. 🟢 **CQRS:** Nicht implementiert (nice-to-have)
 2. 🟢 **Event Sourcing:** Nicht implementiert (nice-to-have)
 
@@ -135,21 +140,25 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 ### 4.1 Ursachen der identifizierten Probleme
 
 **Test-Coverage-Probleme:**
+
 - **Ursache:** Fokus auf Feature-Implementierung statt Testing
 - **Grund:** Zeitdruck, unklare Test-Strategie
 - **Auswirkung:** Hohe Fehleranfälligkeit, schwierige Wartung
 
 **Test-Dateien Syntax-Fehler:**
+
 - **Ursache:** Änderungen an Use-Case-Signaturen nicht in Tests angepasst
 - **Grund:** Fehlendes Test-Refactoring
 - **Auswirkung:** 2 Test-Dateien können nicht ausgeführt werden
 
 **Frontend-Rollen-Prüfung:**
+
 - **Ursache:** Backend-Rollen-Prüfung priorisiert
 - **Grund:** Zeitdruck
 - **Auswirkung:** Unvollständige Zugriffssteuerung im Frontend
 
 **Dependency-CVEs:**
+
 - **Ursache:** Veraltete Dependencies
 - **Grund:** Fehlendes Dependency Management
 - **Auswirkung:** Moderate Sicherheitslücken
@@ -157,14 +166,17 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 ### 4.2 Auswirkungen auf das Gesamtvorhaben
 
 **Kritische Auswirkungen:**
+
 1. 🔴 **Test-Coverage:** Hohe Fehleranfälligkeit, schwierige Wartung
 
 **Mittlere Auswirkungen:**
+
 1. 🟡 **Frontend-Rollen-Prüfung:** Unvollständige Zugriffssteuerung
 2. 🟡 **Dependencies:** Moderate Sicherheitslücken
 3. 🟡 **Performance:** Nicht getestet
 
 **Niedrige Auswirkungen:**
+
 1. 🟢 **CQRS/Event Sourcing:** Skalierbarkeit könnte verbessert werden
 
 ---
@@ -175,44 +187,45 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 
 **Phase 0: Kritische Test-Probleme beheben (3-5 Tage)**
 
-| ID | Maßnahme | Priorität | Aufwand | Verantwortlich | Deadline | Status |
-|----|----------|-----------|---------|----------------|----------|--------|
-| #1 | 2 Test-Dateien mit Syntax-Fehlern reparieren | 🔴 Kritisch | 1-2 Tage | Backend Team | Tag 2 | ⏳ Pending |
-| #2 | Test-Coverage auf >80% erhöhen | 🔴 Kritisch | 2-3 Tage | Backend Team | Tag 5 | ⏳ Pending |
+| ID  | Maßnahme                                     | Priorität   | Aufwand  | Verantwortlich | Deadline | Status     |
+| --- | -------------------------------------------- | ----------- | -------- | -------------- | -------- | ---------- |
+| #1  | 2 Test-Dateien mit Syntax-Fehlern reparieren | 🔴 Kritisch | 1-2 Tage | Backend Team   | Tag 2    | ⏳ Pending |
+| #2  | Test-Coverage auf >80% erhöhen               | 🔴 Kritisch | 2-3 Tage | Backend Team   | Tag 5    | ⏳ Pending |
 
 **Phase 1: Frontend-Rollen-Prüfung vervollständigen (3-4 Tage)**
 
-| ID | Maßnahme | Priorität | Aufwand | Verantwortlich | Deadline | Status |
-|----|----------|-----------|---------|----------------|----------|--------|
-| #3 | Frontend-Rollen-Prüfung implementieren | 🟡 Mittel | 3-4 Tage | Frontend Team | Tag 9 | ⏳ Pending |
+| ID  | Maßnahme                               | Priorität | Aufwand  | Verantwortlich | Deadline | Status     |
+| --- | -------------------------------------- | --------- | -------- | -------------- | -------- | ---------- |
+| #3  | Frontend-Rollen-Prüfung implementieren | 🟡 Mittel | 3-4 Tage | Frontend Team  | Tag 9    | ⏳ Pending |
 
 **Phase 2: Dependencies aktualisieren (1-2 Tage)**
 
-| ID | Maßnahme | Priorität | Aufwand | Verantwortlich | Deadline | Status |
-|----|----------|-----------|---------|----------------|----------|--------|
-| #4 | Dependencies aktualisieren (CVEs beheben) | 🟡 Mittel | 1-2 Tage | DevOps Team | Tag 11 | ⏳ Pending |
+| ID  | Maßnahme                                  | Priorität | Aufwand  | Verantwortlich | Deadline | Status     |
+| --- | ----------------------------------------- | --------- | -------- | -------------- | -------- | ---------- |
+| #4  | Dependencies aktualisieren (CVEs beheben) | 🟡 Mittel | 1-2 Tage | DevOps Team    | Tag 11   | ⏳ Pending |
 
 **Phase 3: Performance testen (2-3 Tage)**
 
-| ID | Maßnahme | Priorität | Aufwand | Verantwortlich | Deadline | Status |
-|----|----------|-----------|---------|----------------|----------|--------|
-| #5 | Performance Tests implementieren | 🟡 Mittel | 2-3 Tage | QA Team | Tag 14 | ⏳ Pending |
+| ID  | Maßnahme                         | Priorität | Aufwand  | Verantwortlich | Deadline | Status     |
+| --- | -------------------------------- | --------- | -------- | -------------- | -------- | ---------- |
+| #5  | Performance Tests implementieren | 🟡 Mittel | 2-3 Tage | QA Team        | Tag 14   | ⏳ Pending |
 
 **Phase 4: CQRS implementieren (optional, 7-10 Tage)**
 
-| ID | Maßnahme | Priorität | Aufwand | Verantwortlich | Deadline | Status |
-|----|----------|-----------|---------|----------------|----------|--------|
-| #6 | CQRS implementieren | 🟢 Niedrig | 7-10 Tage | Backend Team | Tag 24 | ⏳ Pending |
+| ID  | Maßnahme            | Priorität  | Aufwand   | Verantwortlich | Deadline | Status     |
+| --- | ------------------- | ---------- | --------- | -------------- | -------- | ---------- |
+| #6  | CQRS implementieren | 🟢 Niedrig | 7-10 Tage | Backend Team   | Tag 24   | ⏳ Pending |
 
 **Phase 5: Event Sourcing implementieren (optional, 7-11 Tage)**
 
-| ID | Maßnahme | Priorität | Aufwand | Verantwortlich | Deadline | Status |
-|----|----------|-----------|---------|----------------|----------|--------|
-| #7 | Event Sourcing implementieren | 🟢 Niedrig | 7-11 Tage | Backend Team | Tag 35 | ⏳ Pending |
+| ID  | Maßnahme                      | Priorität  | Aufwand   | Verantwortlich | Deadline | Status     |
+| --- | ----------------------------- | ---------- | --------- | -------------- | -------- | ---------- |
+| #7  | Event Sourcing implementieren | 🟢 Niedrig | 7-11 Tage | Backend Team   | Tag 35   | ⏳ Pending |
 
 ### 5.2 Zeitpläne und Verantwortlichkeiten
 
 **Gesamtzeitplan:**
+
 - Phase 0: 3-5 Tage (Kritische Test-Probleme)
 - Phase 1: 3-4 Tage (Frontend-Rollen-Prüfung)
 - Phase 2: 1-2 Tage (Dependencies)
@@ -223,6 +236,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 **Gesamtaufwand:** 16-35 Tage (ca. 3-7 Wochen, ohne optionale Phasen)
 
 **Verantwortlichkeiten:**
+
 - Backend Team: #1, #2, #6, #7
 - Frontend Team: #3
 - DevOps Team: #4
@@ -231,24 +245,29 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 ### 5.3 Erwarteter Mehrwert
 
 **Test-Coverage:**
-- >80% Coverage
+
+- > 80% Coverage
 - Weniger Fehler
 - Bessere Wartbarkeit
 
 **Frontend-Rollen-Prüfung:**
+
 - Vollständige Zugriffssteuerung
 - Bessere User Experience
 
 **Dependencies:**
+
 - Keine CVEs
 - Bessere Sicherheit
 
 **Performance:**
+
 - <2s Ladezeit
 - <100ms API-Response
 - Bessere User Experience
 
 **CQRS/Event Sourcing:**
+
 - Bessere Skalierbarkeit
 - Bessere Audit-Trail
 
@@ -256,15 +275,15 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 
 ## 6. STATUS-AMPPE
 
-| Bereich | Score | Status | Kritikalität |
-|---------|-------|--------|--------------|
-| **Sicherheit** | 95/100 | 🟢 Exzellent | Keine kritischen Lücken |
-| **Architektur** | 75/100 | 🟡 Gut | CQRS/ES fehlen (optional) |
-| **Code-Qualität** | 85/100 | 🟢 Gut | Nur 26 as any (meist Tests) |
-| **Test-Coverage** | 25/100 | 🔴 Kritisch | Nur ~20% |
-| **Rollen-System** | 90/100 | 🟢 Exzellent | 233 Prüfungen, 10 RLS |
-| **Dependencies** | 80/100 | 🟡 Gut | 2 moderate CVEs |
-| **Performance** | 70/100 | 🟡 Mittel | Nicht getestet |
+| Bereich           | Score  | Status       | Kritikalität                |
+| ----------------- | ------ | ------------ | --------------------------- |
+| **Sicherheit**    | 95/100 | 🟢 Exzellent | Keine kritischen Lücken     |
+| **Architektur**   | 75/100 | 🟡 Gut       | CQRS/ES fehlen (optional)   |
+| **Code-Qualität** | 85/100 | 🟢 Gut       | Nur 26 as any (meist Tests) |
+| **Test-Coverage** | 25/100 | 🔴 Kritisch  | Nur ~20%                    |
+| **Rollen-System** | 90/100 | 🟢 Exzellent | 233 Prüfungen, 10 RLS       |
+| **Dependencies**  | 80/100 | 🟡 Gut       | 2 moderate CVEs             |
+| **Performance**   | 70/100 | 🟡 Mittel    | Nicht getestet              |
 
 ---
 
@@ -273,22 +292,26 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dokumentation dargestellt.
 
 **Stärken:**
+
 1. ✅ **Exzellente Sicherheit:** 94.6% der API-Routes geschützt
 2. ✅ **Gute Code-Qualität:** Nur 26 as any (meist Tests)
 3. ✅ **Exzellentes Rollen-System:** 233 Prüfungen, 10 RLS
 4. ✅ **Solide Architektur:** Clean Architecture + DDD
 
 **Schwächen:**
+
 1. 🔴 **Kritische Test-Coverage:** Nur ~20% statt >80%
 2. 🟡 **Frontend-Rollen-Prüfung:** Unvollständig
 3. 🟡 **Dependencies:** 2 moderate CVEs
 
 **Risiken:**
+
 1. 🔴 **Hohe Fehleranfälligkeit** durch niedrige Test-Coverage
 2. 🟡 **Unvollständige Zugriffssteuerung** im Frontend
 3. 🟡 **Moderate Sicherheitslücken** durch Dependencies
 
 **Empfehlung:**
+
 - **Sofort:** Phase 0 (Kritische Test-Probleme beheben) starten
 - **Kurzfristig:** Phase 1-3 (Frontend-Rollen-Prüfung + Dependencies + Performance) durchführen
 - **Optional:** Phase 4-5 (CQRS + Event Sourcing) bei Bedarf
@@ -306,6 +329,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 **Status:** ⏳ In Bearbeitung
 
 **Aufgaben:**
+
 - [ ] #1: 2 Test-Dateien mit Syntax-Fehlern reparieren
 - [ ] #2: Test-Coverage auf >80% erhöhen
 
@@ -316,6 +340,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 **Status:** ⏳ Ausstehend
 
 **Aufgaben:**
+
 - [ ] #3: Frontend-Rollen-Prüfung implementieren
 
 **Fortschritt:** 0/1 Aufgaben erledigt
@@ -325,6 +350,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 **Status:** ⏳ Ausstehend
 
 **Aufgaben:**
+
 - [ ] #4: Dependencies aktualisieren (CVEs beheben)
 
 **Fortschritt:** 0/1 Aufgaben erledigt
@@ -334,6 +360,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 **Status:** ⏳ Ausstehend
 
 **Aufgaben:**
+
 - [ ] #5: Performance Tests implementieren
 
 **Fortschritt:** 0/1 Aufgaben erledigt
@@ -343,6 +370,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 **Status:** ⏳ Ausstehend
 
 **Aufgaben:**
+
 - [ ] #6: CQRS implementieren
 
 **Fortschritt:** 0/1 Aufgaben erledigt
@@ -352,6 +380,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 **Status:** ⏳ Ausstehend
 
 **Aufgaben:**
+
 - [ ] #7: Event Sourcing implementieren
 
 **Fortschritt:** 0/1 Aufgaben erledigt
@@ -386,6 +415,7 @@ Das SwingZ-Projekt ist **viel weiter fortgeschritten** als in der veralteten Dok
 ### 9.4 RLS-Policies
 
 Implementiert für folgende Tabellen:
+
 1. clubs
 2. users
 3. user_club_memberships

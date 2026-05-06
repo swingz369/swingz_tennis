@@ -182,9 +182,7 @@ export default function CreateInvoiceDialog({ onSuccess }: CreateInvoiceDialogPr
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Neue Rechnung erstellen</DialogTitle>
-          <DialogDescription>
-            Erstellen Sie eine neue Rechnung für ein Mitglied
-          </DialogDescription>
+          <DialogDescription>Erstellen Sie eine neue Rechnung für ein Mitglied</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -278,7 +276,9 @@ export default function CreateInvoiceDialog({ onSuccess }: CreateInvoiceDialogPr
                           type="number"
                           min="1"
                           value={item.quantity}
-                          onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                          onChange={(e) =>
+                            updateItem(index, 'quantity', parseInt(e.target.value) || 1)
+                          }
                         />
                       </div>
 
@@ -356,9 +356,7 @@ export default function CreateInvoiceDialog({ onSuccess }: CreateInvoiceDialogPr
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Zwischensumme:</span>
-                  <span className="font-medium">
-                    {calculateSubtotal().toFixed(2)} €
-                  </span>
+                  <span className="font-medium">{calculateSubtotal().toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">MwSt:</span>

@@ -71,25 +71,33 @@ export function generatePain008Xml(
       <ReqdExctnDt>${config.executionDate || formatDate(now)}</ReqdExctnDt>
       <Dbtr>
         <Nm>${escapeXml(config.creditorName)}</Nm>
-        ${config.creditorAddress ? `
+        ${
+          config.creditorAddress
+            ? `
         <PstlAdr>
           ${config.creditorAddress.street ? `<StrtNm>${escapeXml(config.creditorAddress.street)}</StrtNm>` : ''}
           ${config.creditorAddress.city ? `<TwnNm>${escapeXml(config.creditorAddress.city)}</TwnNm>` : ''}
           ${config.creditorAddress.postalCode ? `<PstCd>${escapeXml(config.creditorAddress.postalCode)}</PstCd>` : ''}
           ${config.creditorAddress.country ? `<Ctry>${escapeXml(config.creditorAddress.country)}</Ctry>` : ''}
-        </PstlAdr>` : ''}
+        </PstlAdr>`
+            : ''
+        }
       </Dbtr>
       <DbtrAcct>
         <Id>
           <IBAN>${config.creditorAccountIban.replace(/\s/g, '')}</IBAN>
         </Id>
       </DbtrActr>
-      ${config.creditorAccountBic ? `
+      ${
+        config.creditorAccountBic
+          ? `
       <DbtrAgt>
         <FinInstnId>
           <BIC>${config.creditorAccountBic}</BIC>
         </FinInstnId>
-      </DbtrAgt>` : ''}
+      </DbtrAgt>`
+          : ''
+      }
       <ChrgBr>SLEV</ChrgBr>
       <CdtrSchAcctId>
         <Id>
@@ -98,7 +106,7 @@ export function generatePain008Xml(
           </Othr>
         </Id>
       </CdtrSchAcctId>
-      ${transactions.map(tx => generateDirectDebitTransactionInfo(tx)).join('\n')}
+      ${transactions.map((tx) => generateDirectDebitTransactionInfo(tx)).join('\n')}
     </PmtInf>`;
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -162,10 +170,14 @@ function generateDirectDebitTransactionInfo(tx: SepaDirectDebitTransaction): str
           <IBAN>${tx.iban.replace(/\s/g, '')}</IBAN>
         </Id>
       </DbtrAcct>
-      ${tx.remittanceInformation ? `
+      ${
+        tx.remittanceInformation
+          ? `
       <RmtInf>
         <Ustrd>${escapeXml(tx.remittanceInformation)}</Ustrd>
-      </RmtInf>` : ''}
+      </RmtInf>`
+          : ''
+      }
     </DrctDbtTxInf>`;
 
   return directDebitTransactionInfo;
