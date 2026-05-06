@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { checkRateLimitOrFail, rateLimitStrict } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
 // Type guard: validates URL format and protocol
 function isValidUrl(url: string | undefined): url is string {
@@ -48,7 +48,7 @@ function verifyZapierSignature(request: NextRequest, body: string): boolean {
 export async function POST(_request: NextRequest) {
   try {
     // SECURITY: Rate limiting - 10 requests per minute
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }

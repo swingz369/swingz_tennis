@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { EmailService } from '@/infrastructure/email/email.service';
 import { AuditService } from '@/infrastructure/audit/audit.service';
 import { withApiAuth, verifyRole, forbiddenResponse, verifyClubAccess } from '@/lib/api-auth';
-import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
 const inviteSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse'),
@@ -23,7 +23,7 @@ export async function POST(_request: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }

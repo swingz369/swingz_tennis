@@ -15,9 +15,9 @@ import { and, eq, sql, inArray, desc } from 'drizzle-orm';
 import type { CreatePlanEntryRequest, PlanEntryFilter } from '@/lib/types/season-planning';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string; // season_id
-  };
+  }>;
 }
 
 /**
@@ -32,7 +32,7 @@ interface RouteContext {
  * - status: Filter by status
  * - entry_type: Filter by type
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   return withApiAuth(request, async (auth) => {
     const db = getDb();
     try {
-      const { id: seasonId } = params;
+      const { id: seasonId } = await context.params;
       const { searchParams } = new URL(request.url);
 
       // Verify season exists
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         count: entriesWithDetails.length,
       });
     } catch (error) {
-      console.error(`GET /api/seasons/${params.id}/plan-entries error:`, error);
+      console.error(`GET /api/seasons/[id]/plan-entries error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch plan entries' },
         { status: 500 }
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  *
  * Body: CreatePlanEntryRequest
  */
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
   const db = getDb();
   return withCSRFProtection(request, async () => {
     const db = getDb();
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const db = getDb();
       try {
-        const { id: seasonId } = params;
+        const { id: seasonId } = await context.params;
 
         // Only admins can create plan entries
         const isAdmin = await verifyRole(auth, 'admin');
@@ -270,7 +270,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           { status: 201 }
         );
       } catch (error) {
-        console.error(`POST /api/seasons/${params.id}/plan-entries error:`, error);
+        console.error(`POST /api/seasons/[id]/plan-entries error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to create plan entry' },
           { status: 500 }

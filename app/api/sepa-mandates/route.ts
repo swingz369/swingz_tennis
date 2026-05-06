@@ -37,12 +37,10 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const validatedData = validation.data;
-
         // Create mandate
         const mandate = await SEPAMandateService.createMandate(
-          validatedData.memberId,
-          validatedData
+          validation.data.memberId,
+          validation.data
         );
 
         return NextResponse.json({ success: true, mandate });

@@ -109,7 +109,16 @@ export const env = createEnv({
    */
   onValidationError: (error) => {
     console.error('❌ Invalid environment variables:');
-    console.error(error.flatten().fieldErrors);
+    const formatted = error.format();
+    if (formatted._errors) {
+      console.error('General errors:', formatted._errors);
+    }
+    // Log field-specific errors
+    Object.entries(formatted).forEach(([key, value]) => {
+      if (key !== '_errors' && value && typeof value === 'object' && '_errors' in value) {
+        console.error(`${key}:`, (value as { _errors: string[] })._errors);
+      }
+    });
     throw new Error('Invalid environment variables');
   },
 

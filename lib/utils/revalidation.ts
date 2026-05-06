@@ -157,5 +157,5 @@ export function revalidateAll(clubId: string) {
   revalidateDashboard(clubId);
 
   // Revalidate all major paths
-  revalidatePath('/', 'layout');
+  revalidatePath('/', 'layout', 'page');
 }

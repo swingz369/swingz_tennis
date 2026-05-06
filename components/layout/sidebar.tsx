@@ -182,7 +182,7 @@ export function Sidebar({
       )}
       role="navigation"
       aria-label="Main navigation"
-      aria-hidden={!open && 'true'}
+      aria-hidden={!open || undefined}
     >
       {/* Mobile close button */}
       {open && (

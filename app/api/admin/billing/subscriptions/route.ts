@@ -77,7 +77,7 @@ export async function GET(_request: NextRequest) {
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     // Rate limiting (strict for POST)
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }

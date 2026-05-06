@@ -754,3 +754,833 @@ export const seasonPlanningHistoryRelations = relations(seasonPlanningHistory, (
     references: [users.id],
   }),
 }));
+
+// ==============================================================================
+// Trainer Billing Tables
+// ==============================================================================
+
+/**
+ * Billing periods for trainer compensation
+ */
+export const billingPeriods = pgTable(
+  'billing_periods',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    start_date: timestamp('start_date', { withTimezone: true }).notNull(),
+    end_date: timestamp('end_date', { withTimezone: true }).notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('open'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    date_idx: index('billing_periods_date_idx').on(table.start_date, table.end_date),
+    status_idx: index('billing_periods_status_idx').on(table.status),
+  })
+);
+
+/**
+ * Trainer billing records (trainer compensation per period)
+ */
+export const trainerBillings = pgTable(
+  'trainer_billings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    billing_period_id: uuid('billing_period_id')
+      .notNull()
+      .references(() => billingPeriods.id, { onDelete: 'cascade' }),
+    trainer_id: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'restrict' }),
+    trainer_name: varchar('trainer_name', { length: 255 }).notNull(),
+    total_hours: numeric('total_hours', { precision: 10, scale: 2 }).notNull(),
+    hourly_rate: numeric('hourly_rate', { precision: 10, scale: 2 }).notNull(),
+    total_amount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('pending'),
+    invoice_id: uuid('invoice_id'),
+    invoice_number: varchar('invoice_number', { length: 50 }),
+    due_date: timestamp('due_date', { withTimezone: true }),
+    paid_at: timestamp('paid_at', { withTimezone: true }),
+    notes: text('notes'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    period_idx: index('trainer_billings_period_idx').on(table.billing_period_id),
+    trainer_idx: index('trainer_billings_trainer_idx').on(table.trainer_id),
+    status_idx: index('trainer_billings_status_idx').on(table.status),
+    invoice_number_unique: index('trainer_billings_invoice_number_unique').on(table.invoice_number),
+  })
+);
+
+/**
+ * Billing line items (detailed breakdown of trainer hours)
+ */
+export const billingLineItems = pgTable(
+  'billing_line_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    trainer_billing_id: uuid('trainer_billing_id')
+      .notNull()
+      .references(() => trainerBillings.id, { onDelete: 'cascade' }),
+    date: timestamp('date', { withTimezone: true }).notNull(),
+    description: text('description').notNull(),
+    hours: numeric('hours', { precision: 10, scale: 2 }).notNull(),
+    rate: numeric('rate', { precision: 10, scale: 2 }).notNull(),
+    amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+    type: varchar('type', { length: 20 }).notNull(),
+    session_id: uuid('session_id').references(() => sessions.id, { onDelete: 'set null' }),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    billing_idx: index('billing_line_items_billing_idx').on(table.trainer_billing_id),
+    session_idx: index('billing_line_items_session_idx').on(table.session_id),
+    date_idx: index('billing_line_items_date_idx').on(table.date),
+  })
+);
+
+// Relations
+export const billingPeriodsRelations = relations(billingPeriods, ({ many }) => ({
+  trainerBillings: many(trainerBillings),
+}));
+
+export const trainerBillingsRelations = relations(trainerBillings, ({ one, many }) => ({
+  billingPeriod: one(billingPeriods, {
+    fields: [trainerBillings.billing_period_id],
+    references: [billingPeriods.id],
+  }),
+  trainer: one(trainers, {
+    fields: [trainerBillings.trainer_id],
+    references: [trainers.id],
+  }),
+  lineItems: many(billingLineItems),
+}));
+
+export const billingLineItemsRelations = relations(billingLineItems, ({ one }) => ({
+  trainerBilling: one(trainerBillings, {
+    fields: [billingLineItems.trainer_billing_id],
+    references: [trainerBillings.id],
+  }),
+  session: one(sessions, {
+    fields: [billingLineItems.session_id],
+    references: [sessions.id],
+  }),
+}));
+
+// ==============================================================================
+// Hours Log & Attendance Tables
+// ==============================================================================
+
+/**
+ * Hours logs (trainer time tracking)
+ */
+export const hoursLogs = pgTable(
+  'hours_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    trainer_id: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'restrict' }),
+    trainer_name: varchar('trainer_name', { length: 255 }).notNull(),
+    session_id: uuid('session_id').references(() => sessions.id, { onDelete: 'set null' }),
+    date: timestamp('date', { withTimezone: true }).notNull(),
+    start_time: varchar('start_time', { length: 5 }).notNull(), // HH:MM format
+    end_time: varchar('end_time', { length: 5 }).notNull(), // HH:MM format
+    duration: integer('duration').notNull(), // in minutes
+    type: varchar('type', { length: 20 }).notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('pending'),
+    notes: text('notes'),
+    approved_by: varchar('approved_by', { length: 100 }),
+    approved_at: timestamp('approved_at', { withTimezone: true }),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    trainer_idx: index('hours_logs_trainer_idx').on(table.trainer_id),
+    session_idx: index('hours_logs_session_idx').on(table.session_id),
+    date_idx: index('hours_logs_date_idx').on(table.date),
+    status_idx: index('hours_logs_status_idx').on(table.status),
+  })
+);
+
+/**
+ * Attendance records (session participant tracking)
+ */
+export const attendanceRecords = pgTable(
+  'attendance_records',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    session_id: uuid('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    trainer_id: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'restrict' }),
+    trainer_name: varchar('trainer_name', { length: 255 }).notNull(),
+    participant_id: uuid('participant_id').notNull(),
+    participant_name: varchar('participant_name', { length: 255 }).notNull(),
+    date: timestamp('date', { withTimezone: true }).notNull(),
+    status: varchar('status', { length: 20 }).notNull(),
+    check_in_time: varchar('check_in_time', { length: 5 }), // HH:MM format
+    check_out_time: varchar('check_out_time', { length: 5 }), // HH:MM format
+    notes: text('notes'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    session_idx: index('attendance_records_session_idx').on(table.session_id),
+    trainer_idx: index('attendance_records_trainer_idx').on(table.trainer_id),
+    participant_idx: index('attendance_records_participant_idx').on(table.participant_id),
+    date_idx: index('attendance_records_date_idx').on(table.date),
+  })
+);
+
+// Relations
+export const hoursLogsRelations = relations(hoursLogs, ({ one }) => ({
+  trainer: one(trainers, {
+    fields: [hoursLogs.trainer_id],
+    references: [trainers.id],
+  }),
+  session: one(sessions, {
+    fields: [hoursLogs.session_id],
+    references: [sessions.id],
+  }),
+}));
+
+export const attendanceRecordsRelations = relations(attendanceRecords, ({ one }) => ({
+  session: one(sessions, {
+    fields: [attendanceRecords.session_id],
+    references: [sessions.id],
+  }),
+  trainer: one(trainers, {
+    fields: [attendanceRecords.trainer_id],
+    references: [trainers.id],
+  }),
+}));
+
+// ==============================================================================
+// Trainer Availability Table
+// ==============================================================================
+
+/**
+ * Trainer availability slots (when trainers are available/unavailable)
+ */
+export const trainerAvailabilities = pgTable(
+  'trainer_availabilities',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    trainer_id: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'cascade' }),
+    date: timestamp('date', { withTimezone: true }).notNull(),
+    start_time: varchar('start_time', { length: 5 }).notNull(), // HH:MM format
+    end_time: varchar('end_time', { length: 5 }).notNull(), // HH:MM format
+    status: varchar('status', { length: 20 }).notNull().default('available'),
+    notes: text('notes'),
+    recurring_pattern: jsonb('recurring_pattern').$type<{
+      type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+      interval: number;
+      endDate?: string;
+    }>(),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    trainer_idx: index('trainer_availabilities_trainer_idx').on(table.trainer_id),
+    date_idx: index('trainer_availabilities_date_idx').on(table.date),
+    trainer_date_idx: index('trainer_availabilities_trainer_date_idx').on(
+      table.trainer_id,
+      table.date
+    ),
+    status_idx: index('trainer_availabilities_status_idx').on(table.status),
+  })
+);
+
+// Relations
+export const trainerAvailabilitiesRelations = relations(trainerAvailabilities, ({ one }) => ({
+  trainer: one(trainers, {
+    fields: [trainerAvailabilities.trainer_id],
+    references: [trainers.id],
+  }),
+}));
+
+// ==============================================================================
+// Trainer Absences Table
+// ==============================================================================
+
+/**
+ * Trainer absences (vacation, sick leave, personal time off)
+ */
+export const trainerAbsences = pgTable(
+  'trainer_absences',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    trainer_id: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'cascade' }),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    trainer_name: varchar('trainer_name', { length: 100 }).notNull(),
+    type: varchar('type', { length: 20 }).notNull(),
+    start_date: timestamp('start_date', { withTimezone: true, mode: 'date' }).notNull(),
+    end_date: timestamp('end_date', { withTimezone: true, mode: 'date' }).notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('pending'),
+    reason: text('reason'),
+    notes: text('notes'),
+    approved_by: uuid('approved_by'),
+    approved_at: timestamp('approved_at', { withTimezone: true }),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    trainer_idx: index('trainer_absences_trainer_idx').on(table.trainer_id),
+    club_idx: index('trainer_absences_club_idx').on(table.club_id),
+    status_idx: index('trainer_absences_status_idx').on(table.status),
+    type_idx: index('trainer_absences_type_idx').on(table.type),
+    date_range_idx: index('trainer_absences_date_range_idx').on(table.start_date, table.end_date),
+    trainer_dates_idx: index('trainer_absences_trainer_dates_idx').on(
+      table.trainer_id,
+      table.start_date,
+      table.end_date
+    ),
+    club_dates_idx: index('trainer_absences_club_dates_idx').on(
+      table.club_id,
+      table.start_date,
+      table.end_date
+    ),
+  })
+);
+
+// Relations
+export const trainerAbsencesRelations = relations(trainerAbsences, ({ one }) => ({
+  trainer: one(trainers, {
+    fields: [trainerAbsences.trainer_id],
+    references: [trainers.id],
+  }),
+  club: one(clubs, {
+    fields: [trainerAbsences.club_id],
+    references: [clubs.id],
+  }),
+}));
+
+// ==============================================================================
+// Fee Configurations Table
+// ==============================================================================
+
+/**
+ * Fee configurations (pricing rules for memberships, training, courts)
+ */
+export const feeConfigurations = pgTable(
+  'fee_configurations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 200 }).notNull(),
+    description: text('description'),
+    type: varchar('type', { length: 20 }).notNull(),
+    amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 3 }).notNull().default('EUR'),
+    billing_cycle: varchar('billing_cycle', { length: 20 }).notNull(),
+    is_active: boolean('is_active').notNull().default(true),
+    valid_from: timestamp('valid_from', { withTimezone: true, mode: 'date' }),
+    valid_until: timestamp('valid_until', { withTimezone: true, mode: 'date' }),
+    conditions: jsonb('conditions')
+      .$type<{
+        minAge?: number;
+        maxAge?: number;
+        memberType?: string[];
+        trainingGroup?: string[];
+      }>()
+      .default({}),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('fee_configurations_club_idx').on(table.club_id),
+    type_idx: index('fee_configurations_type_idx').on(table.type),
+    is_active_idx: index('fee_configurations_is_active_idx').on(table.is_active),
+    billing_cycle_idx: index('fee_configurations_billing_cycle_idx').on(table.billing_cycle),
+    validity_idx: index('fee_configurations_validity_idx').on(table.valid_from, table.valid_until),
+    club_active_idx: index('fee_configurations_club_active_idx').on(table.club_id, table.is_active),
+    club_type_idx: index('fee_configurations_club_type_idx').on(table.club_id, table.type),
+  })
+);
+
+// Relations
+export const feeConfigurationsRelations = relations(feeConfigurations, ({ one }) => ({
+  club: one(clubs, {
+    fields: [feeConfigurations.club_id],
+    references: [clubs.id],
+  }),
+}));
+
+// ==============================================================================
+// Payment Settings Table
+// ==============================================================================
+
+/**
+ * Payment gateway configurations (Stripe, PayPal, SEPA, Cash)
+ */
+export const paymentSettings = pgTable(
+  'payment_settings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    gateway: varchar('gateway', { length: 20 }).notNull(),
+    gateway_name: varchar('gateway_name', { length: 100 }).notNull(),
+    is_active: boolean('is_active').notNull().default(true),
+    is_default: boolean('is_default').notNull().default(false),
+    config: jsonb('config')
+      .$type<{
+        apiKey?: string;
+        publicKey?: string;
+        secretKey?: string;
+        merchantId?: string;
+        webhookUrl?: string;
+        [key: string]: any;
+      }>()
+      .notNull()
+      .default({}),
+    supported_currencies: text('supported_currencies').array().notNull(),
+    supported_methods: text('supported_methods').array().notNull(),
+    min_amount: numeric('min_amount', { precision: 10, scale: 2 }),
+    max_amount: numeric('max_amount', { precision: 10, scale: 2 }),
+    fees: jsonb('fees')
+      .$type<{
+        fixed?: number;
+        percentage?: number;
+      }>()
+      .default({}),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('payment_settings_club_idx').on(table.club_id),
+    gateway_idx: index('payment_settings_gateway_idx').on(table.gateway),
+    is_active_idx: index('payment_settings_is_active_idx').on(table.is_active),
+    default_idx: index('payment_settings_default_idx').on(table.club_id, table.is_default),
+    club_active_idx: index('payment_settings_club_active_idx').on(table.club_id, table.is_active),
+  })
+);
+
+// Relations
+export const paymentSettingsRelations = relations(paymentSettings, ({ one }) => ({
+  club: one(clubs, {
+    fields: [paymentSettings.club_id],
+    references: [clubs.id],
+  }),
+}));
+
+// ==============================================================================
+// System Settings Table
+// ==============================================================================
+
+/**
+ * System settings (global and club-specific configuration)
+ */
+export const systemSettings = pgTable(
+  'system_settings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id').references(() => clubs.id, { onDelete: 'cascade' }),
+    category: varchar('category', { length: 20 }).notNull(),
+    key: varchar('key', { length: 100 }).notNull(),
+    value: text('value').notNull(),
+    type: varchar('type', { length: 20 }).notNull(),
+    description: text('description'),
+    is_public: boolean('is_public').notNull().default(false),
+    is_required: boolean('is_required').notNull().default(false),
+    validation: jsonb('validation')
+      .$type<{
+        min?: number;
+        max?: number;
+        pattern?: string;
+        enum?: string[];
+      }>()
+      .default({}),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_by: uuid('updated_by'),
+  },
+  (table) => ({
+    club_idx: index('system_settings_club_idx').on(table.club_id),
+    category_idx: index('system_settings_category_idx').on(table.category),
+    key_idx: index('system_settings_key_idx').on(table.key),
+    is_public_idx: index('system_settings_is_public_idx').on(table.is_public),
+    club_category_idx: index('system_settings_club_category_idx').on(table.club_id, table.category),
+    club_key_idx: index('system_settings_club_key_idx').on(table.club_id, table.key),
+  })
+);
+
+// Relations
+export const systemSettingsRelations = relations(systemSettings, ({ one }) => ({
+  club: one(clubs, {
+    fields: [systemSettings.club_id],
+    references: [clubs.id],
+  }),
+}));
+
+// ==============================================================================
+// SEPA Mandate Management
+// ==============================================================================
+
+/**
+ * SEPA direct debit mandates for member payments
+ */
+export const sepaMandates = pgTable(
+  'sepa_mandates',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    clubId: uuid('club_id').references(() => clubs.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id').notNull(),
+    accountHolder: varchar('account_holder', { length: 200 }).notNull(),
+    iban: varchar('iban', { length: 34 }).notNull(),
+    bic: varchar('bic', { length: 11 }).notNull(),
+    bankName: varchar('bank_name', { length: 200 }).notNull(),
+    address: jsonb('address')
+      .$type<{
+        street: string;
+        houseNumber: string;
+        postalCode: string;
+        city: string;
+      }>()
+      .notNull(),
+    mandateReference: varchar('mandate_reference', { length: 50 }).notNull().unique(),
+    creditorId: varchar('creditor_id', { length: 35 }).notNull().default('DE98ZZZ00000000000'),
+    signatureDate: varchar('signature_date', { length: 10 }).notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    revokedAt: varchar('revoked_at', { length: 30 }),
+    revokeReason: text('revoke_reason'),
+    createdAt: varchar('created_at', { length: 30 }).notNull(),
+  },
+  (table) => ({
+    club_idx: index('sepa_mandates_club_idx').on(table.clubId),
+    member_idx: index('sepa_mandates_member_idx').on(table.memberId),
+    active_idx: index('sepa_mandates_is_active_idx').on(table.isActive),
+  })
+);
+
+// Relations
+export const sepaMandatesRelations = relations(sepaMandates, ({ one }) => ({
+  club: one(clubs, {
+    fields: [sepaMandates.clubId],
+    references: [clubs.id],
+  }),
+}));
+
+// ==============================================================================
+// Hourly Rate Management Tables
+// ==============================================================================
+
+/**
+ * Hourly rate tiers for different training types and experience levels
+ */
+export const hourlyRateTiers = pgTable(
+  'hourly_rate_tiers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    baseRate: numeric('base_rate', { precision: 10, scale: 2 }).notNull(),
+    trainingTypes: jsonb('training_types').$type<string[]>().notNull().default([]),
+    experienceLevel: varchar('experience_level', { length: 20 }).notNull(),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('hourly_rate_tiers_club_idx').on(table.club_id),
+    active_idx: index('hourly_rate_tiers_is_active_idx').on(table.isActive),
+    experience_idx: index('hourly_rate_tiers_experience_level_idx').on(table.experienceLevel),
+  })
+);
+
+/**
+ * Individual trainer hourly rates with validity periods
+ */
+export const trainerHourlyRates = pgTable(
+  'trainer_hourly_rates',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    trainerId: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'cascade' }),
+    trainerName: varchar('trainer_name', { length: 100 }).notNull(),
+    baseRate: numeric('base_rate', { precision: 10, scale: 2 }).notNull(),
+    overrideRate: numeric('override_rate', { precision: 10, scale: 2 }),
+    effectiveRate: numeric('effective_rate', { precision: 10, scale: 2 }).notNull(),
+    validFrom: varchar('valid_from', { length: 10 }).notNull(),
+    validUntil: varchar('valid_until', { length: 10 }),
+    reason: text('reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('trainer_hourly_rates_club_idx').on(table.club_id),
+    trainer_idx: index('trainer_hourly_rates_trainer_idx').on(table.trainerId),
+    valid_from_idx: index('trainer_hourly_rates_valid_from_idx').on(table.validFrom),
+  })
+);
+
+/**
+ * Audit trail for trainer rate changes
+ */
+export const rateHistory = pgTable(
+  'rate_history',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    trainerId: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'cascade' }),
+    trainerName: varchar('trainer_name', { length: 100 }).notNull(),
+    oldRate: numeric('old_rate', { precision: 10, scale: 2 }).notNull(),
+    newRate: numeric('new_rate', { precision: 10, scale: 2 }).notNull(),
+    changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow(),
+    changedBy: varchar('changed_by', { length: 100 }).notNull(),
+    reason: text('reason'),
+  },
+  (table) => ({
+    club_idx: index('rate_history_club_idx').on(table.club_id),
+    trainer_idx: index('rate_history_trainer_idx').on(table.trainerId),
+    changed_at_idx: index('rate_history_changed_at_idx').on(table.changedAt),
+  })
+);
+
+// Relations
+export const hourlyRateTiersRelations = relations(hourlyRateTiers, ({ one }) => ({
+  club: one(clubs, {
+    fields: [hourlyRateTiers.club_id],
+    references: [clubs.id],
+  }),
+}));
+
+export const trainerHourlyRatesRelations = relations(trainerHourlyRates, ({ one }) => ({
+  club: one(clubs, {
+    fields: [trainerHourlyRates.club_id],
+    references: [clubs.id],
+  }),
+  trainer: one(trainers, {
+    fields: [trainerHourlyRates.trainerId],
+    references: [trainers.id],
+  }),
+}));
+
+export const rateHistoryRelations = relations(rateHistory, ({ one }) => ({
+  club: one(clubs, {
+    fields: [rateHistory.club_id],
+    references: [clubs.id],
+  }),
+  trainer: one(trainers, {
+    fields: [rateHistory.trainerId],
+    references: [trainers.id],
+  }),
+}));
+
+// ==============================================================================
+// Trainer Profiles Table
+// ==============================================================================
+
+/**
+ * Comprehensive trainer profile information with qualifications and specializations
+ */
+export const trainerProfiles = pgTable(
+  'trainer_profiles',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    user_id: uuid('user_id').notNull(),
+    first_name: varchar('first_name', { length: 100 }).notNull(),
+    last_name: varchar('last_name', { length: 100 }).notNull(),
+    email: varchar('email', { length: 255 }).notNull(),
+    phone: varchar('phone', { length: 50 }).notNull(),
+    dateOfBirth: varchar('date_of_birth', { length: 10 }).notNull(),
+    bio: text('bio'),
+    profileImageUrl: text('profile_image_url'),
+    // Complex JSONB fields
+    qualifications: jsonb('qualifications')
+      .$type<
+        Array<{
+          id: string;
+          name: string;
+          issuer: string;
+          issuedDate: string;
+          expiryDate?: string;
+          certificateUrl?: string;
+          verified: boolean;
+          verifiedAt?: string;
+          verifiedBy?: string;
+        }>
+      >()
+      .notNull()
+      .default([]),
+    specializations: jsonb('specializations')
+      .$type<
+        Array<{
+          id: string;
+          name: string;
+          level: 'beginner' | 'intermediate' | 'advanced' | 'professional';
+        }>
+      >()
+      .notNull()
+      .default([]),
+    experience: jsonb('experience')
+      .$type<{
+        years: number;
+        previousClubs: string[];
+        achievements: string[];
+      }>()
+      .notNull()
+      .default({ years: 0, previousClubs: [], achievements: [] }),
+    status: varchar('status', { length: 20 }).notNull().default('active'),
+    hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }),
+    availability: jsonb('availability')
+      .$type<{
+        monday: boolean;
+        tuesday: boolean;
+        wednesday: boolean;
+        thursday: boolean;
+        friday: boolean;
+        saturday: boolean;
+        sunday: boolean;
+      }>()
+      .notNull()
+      .default({
+        monday: true,
+        tuesday: true,
+        wednesday: true,
+        thursday: true,
+        friday: true,
+        saturday: false,
+        sunday: false,
+      }),
+    preferredTimeSlots: jsonb('preferred_time_slots')
+      .$type<
+        Array<{
+          start: string;
+          end: string;
+        }>
+      >()
+      .notNull()
+      .default([]),
+    languages: jsonb('languages').$type<string[]>().notNull().default(['Deutsch']),
+    emergencyContact: jsonb('emergency_contact')
+      .$type<{
+        name: string;
+        phone: string;
+        relationship: string;
+      }>()
+      .notNull()
+      .default({ name: '', phone: '', relationship: '' }),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('trainer_profiles_club_idx').on(table.club_id),
+    user_idx: index('trainer_profiles_user_idx').on(table.user_id),
+    status_idx: index('trainer_profiles_status_idx').on(table.status),
+    email_idx: index('trainer_profiles_email_idx').on(table.email),
+    club_status_idx: index('trainer_profiles_club_status_idx').on(table.club_id, table.status),
+  })
+);
+
+// Relations
+export const trainerProfilesRelations = relations(trainerProfiles, ({ one }) => ({
+  club: one(clubs, {
+    fields: [trainerProfiles.club_id],
+    references: [clubs.id],
+  }),
+}));
+
+// ==============================================================================
+// Trial Trainings Table
+// ==============================================================================
+
+/**
+ * Trial training sessions (participant tracking, conversion metrics)
+ */
+export const trialTrainings = pgTable(
+  'trial_trainings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    // Participant
+    participant_id: uuid('participant_id').notNull().defaultRandom(),
+    participant_first_name: varchar('participant_first_name', { length: 100 }).notNull(),
+    participant_last_name: varchar('participant_last_name', { length: 100 }).notNull(),
+    participant_email: varchar('participant_email', { length: 255 }).notNull(),
+    participant_phone: varchar('participant_phone', { length: 50 }).notNull(),
+    participant_date_of_birth: timestamp('participant_date_of_birth', {
+      withTimezone: true,
+      mode: 'date',
+    }).notNull(),
+    // Scheduling
+    scheduled_date: timestamp('scheduled_date', { withTimezone: true, mode: 'date' }).notNull(),
+    scheduled_time: varchar('scheduled_time', { length: 5 }).notNull(),
+    duration: integer('duration').notNull(),
+    // Resources
+    trainer_id: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'restrict' }),
+    trainer_name: varchar('trainer_name', { length: 100 }).notNull(),
+    court_id: uuid('court_id')
+      .notNull()
+      .references(() => courts.id, { onDelete: 'restrict' }),
+    court_name: varchar('court_name', { length: 100 }).notNull(),
+    // Status & Notes
+    status: varchar('status', { length: 20 }).notNull().default('scheduled'),
+    notes: text('notes'),
+    // Feedback
+    feedback_rating: integer('feedback_rating'),
+    feedback_comments: text('feedback_comments'),
+    feedback_would_recommend: boolean('feedback_would_recommend'),
+    // Conversion
+    converted_to_member_id: uuid('converted_to_member_id'),
+    // Timestamps
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('trial_trainings_club_idx').on(table.club_id),
+    participant_email_idx: index('trial_trainings_participant_email_idx').on(
+      table.participant_email
+    ),
+    trainer_idx: index('trial_trainings_trainer_idx').on(table.trainer_id),
+    court_idx: index('trial_trainings_court_idx').on(table.court_id),
+    status_idx: index('trial_trainings_status_idx').on(table.status),
+    scheduled_date_idx: index('trial_trainings_scheduled_date_idx').on(table.scheduled_date),
+    club_status_idx: index('trial_trainings_club_status_idx').on(table.club_id, table.status),
+    club_date_idx: index('trial_trainings_club_date_idx').on(table.club_id, table.scheduled_date),
+  })
+);
+
+// Relations
+export const trialTrainingsRelations = relations(trialTrainings, ({ one }) => ({
+  club: one(clubs, {
+    fields: [trialTrainings.club_id],
+    references: [clubs.id],
+  }),
+  trainer: one(trainers, {
+    fields: [trialTrainings.trainer_id],
+    references: [trainers.id],
+  }),
+  court: one(courts, {
+    fields: [trialTrainings.court_id],
+    references: [courts.id],
+  }),
+}));

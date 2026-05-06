@@ -2,13 +2,22 @@ import type {
   TrainerProfile,
   CreateTrainerProfileInput,
   UpdateTrainerProfileInput,
+  TrainerQualification,
 } from '../../domain/entities/trainer.entity';
+import { TrainerProfileRepository } from '../../infrastructure/persistence/repositories/trainer-profile.repository';
+import { isFeatureEnabled } from '../../../lib/features/feature-flags';
 
+/**
+ * TrainerProfileService - Feature-flag-based adapter
+ * Switches between in-memory implementation and Drizzle repository
+ * Feature Flag: USE_TRAINER_PROFILE_REPOSITORY
+ */
 export class TrainerProfileService {
   private static profiles: TrainerProfile[] = [];
+  private static repository = new TrainerProfileRepository();
 
   /**
-   * Generate a unique ID for trainer profile
+   * Generate a unique ID for trainer profile (legacy)
    */
   private static generateId(): string {
     return `trainer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -77,11 +86,18 @@ export class TrainerProfileService {
    * Create a new trainer profile
    */
   static async createTrainerProfile(input: CreateTrainerProfileInput): Promise<TrainerProfile> {
+    // Validate input
     const validation = this.validateTrainerProfileInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
+    // Feature flag switch
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.create(input);
+    }
+
+    // Legacy in-memory implementation
     const now = new Date().toISOString();
     const trainerProfile: TrainerProfile = {
       id: this.generateId(),
@@ -135,6 +151,9 @@ export class TrainerProfileService {
    * Get trainer profile by ID
    */
   static async getTrainerProfileById(id: string): Promise<TrainerProfile | null> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.findById(id);
+    }
     return this.profiles.find((p) => p.id === id) || null;
   }
 
@@ -142,6 +161,9 @@ export class TrainerProfileService {
    * Get trainer profile by user ID
    */
   static async getTrainerProfileByUserId(userId: string): Promise<TrainerProfile | null> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.findByUserId(userId);
+    }
     return this.profiles.find((p) => p.userId === userId) || null;
   }
 
@@ -149,6 +171,20 @@ export class TrainerProfileService {
    * Get all trainer profiles
    */
   static async getAllTrainerProfiles(): Promise<TrainerProfile[]> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.findAll();
+    }
+    return [...this.profiles];
+  }
+
+  /**
+   * Get trainer profiles by club ID (multi-tenant)
+   */
+  static async getTrainerProfilesByClubId(clubId: string): Promise<TrainerProfile[]> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.findByClubId(clubId);
+    }
+    // Legacy: no club filtering in in-memory implementation
     return [...this.profiles];
   }
 
@@ -158,6 +194,9 @@ export class TrainerProfileService {
   static async getTrainerProfilesByStatus(
     status: TrainerProfile['status']
   ): Promise<TrainerProfile[]> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.findByStatus(status);
+    }
     return this.profiles.filter((p) => p.status === status);
   }
 
@@ -165,6 +204,20 @@ export class TrainerProfileService {
    * Get active trainers
    */
   static async getActiveTrainers(): Promise<TrainerProfile[]> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.findActiveTrainers();
+    }
+    return this.profiles.filter((p) => p.status === 'active');
+  }
+
+  /**
+   * Get active trainers by club ID
+   */
+  static async getActiveTrainersByClubId(clubId: string): Promise<TrainerProfile[]> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.findActiveTrainersByClubId(clubId);
+    }
+    // Legacy: no club filtering in in-memory implementation
     return this.profiles.filter((p) => p.status === 'active');
   }
 
@@ -175,6 +228,11 @@ export class TrainerProfileService {
     id: string,
     input: UpdateTrainerProfileInput
   ): Promise<TrainerProfile | null> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.update(id, input);
+    }
+
+    // Legacy in-memory implementation
     const index = this.profiles.findIndex((p) => p.id === id);
     if (index === -1) {
       return null;
@@ -198,6 +256,9 @@ export class TrainerProfileService {
     id: string,
     status: TrainerProfile['status']
   ): Promise<TrainerProfile | null> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.updateStatus(id, status);
+    }
     return this.updateTrainerProfile(id, { status });
   }
 
@@ -211,6 +272,11 @@ export class TrainerProfileService {
       'id' | 'verified' | 'verifiedAt' | 'verifiedBy'
     >
   ): Promise<TrainerProfile | null> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.addQualification(id, qualification);
+    }
+
+    // Legacy in-memory implementation
     const profile = await this.getTrainerProfileById(id);
     if (!profile) {
       return null;
@@ -235,6 +301,11 @@ export class TrainerProfileService {
     qualificationId: string,
     verifiedBy: string
   ): Promise<TrainerProfile | null> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.verifyQualification(trainerId, qualificationId, verifiedBy);
+    }
+
+    // Legacy in-memory implementation
     const profile = await this.getTrainerProfileById(trainerId);
     if (!profile) {
       return null;
@@ -260,6 +331,11 @@ export class TrainerProfileService {
    * Delete trainer profile
    */
   static async deleteTrainerProfile(id: string): Promise<boolean> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.delete(id);
+    }
+
+    // Legacy in-memory implementation
     const index = this.profiles.findIndex((p) => p.id === id);
     if (index === -1) {
       return false;
@@ -272,7 +348,12 @@ export class TrainerProfileService {
   /**
    * Search trainer profiles
    */
-  static async searchTrainerProfiles(query: string): Promise<TrainerProfile[]> {
+  static async searchTrainerProfiles(query: string, clubId?: string): Promise<TrainerProfile[]> {
+    if (isFeatureEnabled('USE_TRAINER_PROFILE_REPOSITORY')) {
+      return await this.repository.search(query, clubId);
+    }
+
+    // Legacy in-memory implementation (no club filtering)
     const lowerQuery = query.toLowerCase();
     return this.profiles.filter(
       (p) =>

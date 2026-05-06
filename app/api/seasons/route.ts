@@ -222,15 +222,20 @@ export async function POST(request: NextRequest) {
           preferences_open: false,
           is_active: false,
           auto_plan_enabled: true,
-          auto_plan_config: body.auto_plan_config || {
-            max_iterations: 1000,
-            optimization_goals: [
+          auto_plan_config: {
+            max_iterations: body.auto_plan_config?.max_iterations ?? 1000,
+            optimization_goals: body.auto_plan_config?.optimization_goals ?? [
               'minimize_conflicts',
               'balance_trainer_load',
               'maximize_preferences',
             ],
-            allow_overbooking: false,
-            prefer_consistent_timeslots: true,
+            allow_overbooking: body.auto_plan_config?.allow_overbooking ?? false,
+            prefer_consistent_timeslots: body.auto_plan_config?.prefer_consistent_timeslots ?? true,
+          } as {
+            max_iterations: number;
+            optimization_goals: string[];
+            allow_overbooking: boolean;
+            prefer_consistent_timeslots: boolean;
           },
         })
         .returning();

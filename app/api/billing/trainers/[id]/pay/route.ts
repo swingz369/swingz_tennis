@@ -1,13 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
     try {
-      await checkRateLimitOrFail(_request, rateLimitStrict);
+      await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
 
       const hasPermission = await verifyRole(auth, 'superadmin');
       if (!hasPermission) {

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import { createStripeCheckoutSession } from '@/lib/stripe/stripe-client';
 
@@ -12,7 +12,7 @@ export async function POST(_request: NextRequest) {
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }

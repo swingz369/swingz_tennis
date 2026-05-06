@@ -7,14 +7,29 @@ import type {
   CreateTrainerHourlyRateInput,
   UpdateTrainerHourlyRateInput,
 } from '../../domain/entities/hourly-rate.entity';
+import {
+  HourlyRateTierRepository,
+  TrainerHourlyRateRepository,
+  RateHistoryRepository,
+} from '../../infrastructure/persistence/repositories/hourly-rate.repository';
+import { isFeatureEnabled } from '../../../lib/features/feature-flags';
 
+/**
+ * HourlyRateService - Feature-flag-based adapter
+ * Switches between in-memory implementation and Drizzle repositories
+ * Feature Flag: USE_HOURLY_RATE_REPOSITORY
+ */
 export class HourlyRateService {
   private static rateTiers: HourlyRateTier[] = [];
   private static trainerRates: TrainerHourlyRate[] = [];
   private static rateHistory: RateHistoryEntry[] = [];
 
+  private static tierRepo = new HourlyRateTierRepository();
+  private static trainerRateRepo = new TrainerHourlyRateRepository();
+  private static historyRepo = new RateHistoryRepository();
+
   /**
-   * Generate a unique ID
+   * Generate a unique ID (legacy)
    */
   private static generateId(): string {
     return `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -107,6 +122,11 @@ export class HourlyRateService {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.tierRepo.create(input);
+    }
+
+    // Legacy in-memory implementation
     const now = new Date().toISOString();
     const rateTier: HourlyRateTier = {
       id: this.generateId(),
@@ -128,6 +148,9 @@ export class HourlyRateService {
    * Get hourly rate tier by ID
    */
   static async getHourlyRateTierById(id: string): Promise<HourlyRateTier | null> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.tierRepo.findById(id);
+    }
     return this.rateTiers.find((t) => t.id === id) || null;
   }
 
@@ -135,6 +158,9 @@ export class HourlyRateService {
    * Get all hourly rate tiers
    */
   static async getAllHourlyRateTiers(): Promise<HourlyRateTier[]> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.tierRepo.findAll();
+    }
     return [...this.rateTiers];
   }
 
@@ -142,6 +168,9 @@ export class HourlyRateService {
    * Get active hourly rate tiers
    */
   static async getActiveHourlyRateTiers(): Promise<HourlyRateTier[]> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.tierRepo.findActive();
+    }
     return this.rateTiers.filter((t) => t.isActive);
   }
 
@@ -152,10 +181,13 @@ export class HourlyRateService {
     id: string,
     input: UpdateHourlyRateTierInput
   ): Promise<HourlyRateTier | null> {
-    const index = this.rateTiers.findIndex((t) => t.id === id);
-    if (index === -1) {
-      return null;
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.tierRepo.update(id, input);
     }
+
+    // Legacy in-memory implementation
+    const index = this.rateTiers.findIndex((t) => t.id === id);
+    if (index === -1) return null;
 
     const existing = this.rateTiers[index];
     const updated: HourlyRateTier = {
@@ -172,10 +204,13 @@ export class HourlyRateService {
    * Delete hourly rate tier
    */
   static async deleteHourlyRateTier(id: string): Promise<boolean> {
-    const index = this.rateTiers.findIndex((t) => t.id === id);
-    if (index === -1) {
-      return false;
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.tierRepo.delete(id);
     }
+
+    // Legacy in-memory implementation
+    const index = this.rateTiers.findIndex((t) => t.id === id);
+    if (index === -1) return false;
 
     this.rateTiers.splice(index, 1);
     return true;
@@ -192,6 +227,11 @@ export class HourlyRateService {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.trainerRateRepo.create(input);
+    }
+
+    // Legacy in-memory implementation
     const now = new Date().toISOString();
     const effectiveRate = input.overrideRate || input.baseRate;
 
@@ -217,6 +257,9 @@ export class HourlyRateService {
    * Get trainer hourly rate by ID
    */
   static async getTrainerHourlyRateById(id: string): Promise<TrainerHourlyRate | null> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.trainerRateRepo.findById(id);
+    }
     return this.trainerRates.find((r) => r.id === id) || null;
   }
 
@@ -226,6 +269,11 @@ export class HourlyRateService {
   static async getTrainerHourlyRateByTrainerId(
     trainerId: string
   ): Promise<TrainerHourlyRate | null> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.trainerRateRepo.findByTrainerId(trainerId);
+    }
+
+    // Legacy in-memory implementation
     const now = new Date();
     return (
       this.trainerRates.find(
@@ -241,6 +289,9 @@ export class HourlyRateService {
    * Get all trainer hourly rates
    */
   static async getAllTrainerHourlyRates(): Promise<TrainerHourlyRate[]> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.trainerRateRepo.findAll();
+    }
     return [...this.trainerRates];
   }
 
@@ -251,10 +302,13 @@ export class HourlyRateService {
     id: string,
     input: UpdateTrainerHourlyRateInput
   ): Promise<TrainerHourlyRate | null> {
-    const index = this.trainerRates.findIndex((r) => r.id === id);
-    if (index === -1) {
-      return null;
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.trainerRateRepo.update(id, input);
     }
+
+    // Legacy in-memory implementation
+    const index = this.trainerRates.findIndex((r) => r.id === id);
+    if (index === -1) return null;
 
     const existing = this.trainerRates[index];
     const oldRate = existing.effectiveRate;
@@ -289,10 +343,13 @@ export class HourlyRateService {
    * Delete trainer hourly rate
    */
   static async deleteTrainerHourlyRate(id: string): Promise<boolean> {
-    const index = this.trainerRates.findIndex((r) => r.id === id);
-    if (index === -1) {
-      return false;
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.trainerRateRepo.delete(id);
     }
+
+    // Legacy in-memory implementation
+    const index = this.trainerRates.findIndex((r) => r.id === id);
+    if (index === -1) return false;
 
     this.trainerRates.splice(index, 1);
     return true;
@@ -302,6 +359,9 @@ export class HourlyRateService {
    * Get rate history for a trainer
    */
   static async getRateHistoryForTrainer(trainerId: string): Promise<RateHistoryEntry[]> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.historyRepo.findByTrainerId(trainerId);
+    }
     return this.rateHistory.filter((h) => h.trainerId === trainerId);
   }
 
@@ -309,6 +369,9 @@ export class HourlyRateService {
    * Get all rate history
    */
   static async getAllRateHistory(): Promise<RateHistoryEntry[]> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.historyRepo.findAll();
+    }
     return [...this.rateHistory];
   }
 
@@ -316,6 +379,10 @@ export class HourlyRateService {
    * Calculate effective rate for a trainer
    */
   static async calculateEffectiveRate(trainerId: string): Promise<number | null> {
+    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
+      return await this.trainerRateRepo.calculateEffectiveRate(trainerId);
+    }
+
     const trainerRate = await this.getTrainerHourlyRateByTrainerId(trainerId);
     return trainerRate ? trainerRate.effectiveRate : null;
   }

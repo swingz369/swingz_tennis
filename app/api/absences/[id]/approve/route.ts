@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { AbsenceService } from '@/src/application/services/absence.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const approveSchema = z.object({
@@ -17,7 +17,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }

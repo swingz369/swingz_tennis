@@ -5,6 +5,7 @@ import { Booking } from '@/domain/entities/booking';
 import type { CancellationReason } from '@/domain/entities/booking';
 import { BookingId, ClubId, MemberId, ScheduleId, SessionId } from '@/domain/value-objects';
 import type { BookingRepository } from '@/domain/repositories/booking-repository.interface';
+import { parsePostgresError } from '@/lib/database-errors';
 
 export class DrizzleBookingRepository implements BookingRepository {
   async findById(id: BookingId): Promise<Booking | null> {
@@ -64,11 +65,16 @@ export class DrizzleBookingRepository implements BookingRepository {
       cancellation_notes: booking.getCancellationNotes() ?? null,
     };
 
-    const existing = await this.findById(booking.getId());
-    if (existing) {
-      await db.update(bookings).set(values).where(eq(bookings.id, booking.getId().getValue()));
-    } else {
-      await db.insert(bookings).values(values);
+    try {
+      const existing = await this.findById(booking.getId());
+      if (existing) {
+        await db.update(bookings).set(values).where(eq(bookings.id, booking.getId().getValue()));
+      } else {
+        await db.insert(bookings).values(values);
+      }
+    } catch (error) {
+      // Parse Postgres errors (including GIST constraint violations)
+      throw parsePostgresError(error);
     }
   }
 

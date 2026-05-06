@@ -83,7 +83,7 @@ export async function getCachedData<T>(
  * await revalidateByTag('members');
  * ```
  */
-export async function revalidateByTag(tag: string) {
+export async function revalidateByTag(tag: string): Promise<void> {
   const { revalidateTag } = await import('next/cache');
   revalidateTag(tag);
 }

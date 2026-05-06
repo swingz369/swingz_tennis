@@ -36,7 +36,7 @@ export async function PATCH(
 ) {
   return withApiAuth(_request, async (auth) => {
     try {
-      await checkRateLimitOrFail(_request, rateLimitStrict);
+      await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
 
       const isAdmin = await verifyRole(auth, 'admin');
       const isTrainer = await verifyRole(auth, 'trainer');

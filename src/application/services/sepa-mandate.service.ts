@@ -4,32 +4,23 @@ import {
   formatIBAN,
   generateMandateReference,
 } from '../validation/schemas/sepa-mandate.schema';
+import type {
+  SEPAMandate,
+  CreateSEPAMandateInput,
+  UpdateSEPAMandateInput,
+} from '../../domain/repositories/sepa-mandate-repository.interface';
+import { SEPAMandateRepository } from '../../infrastructure/persistence/repositories/sepa-mandate.repository';
+import { isFeatureEnabled } from '../../../lib/features/feature-flags';
 
-export interface SEPAMandate {
-  id: string;
-  memberId: string;
-  accountHolder: string;
-  iban: string;
-  bic: string;
-  bankName: string;
-  address: {
-    street: string;
-    houseNumber: string;
-    postalCode: string;
-    city: string;
-  };
-  mandateReference: string;
-  creditorId: string;
-  signatureDate: Date;
-  createdAt: Date;
-  isActive: boolean;
-  revokedAt?: Date;
-  revokeReason?: string;
-}
-
+/**
+ * SEPAMandateService - Feature-flag-based adapter
+ * Switches between in-memory implementation and Drizzle repository
+ * Feature Flag: USE_SEPA_MANDATE_REPOSITORY
+ */
 export class SEPAMandateService {
   private static mandates: Map<string, SEPAMandate> = new Map();
   private static creditorId = 'DE98ZZZ00000000000';
+  private static repository = new SEPAMandateRepository();
 
   /**
    * Create a new SEPA mandate
@@ -43,10 +34,31 @@ export class SEPAMandateService {
       throw new Error('Ungültige IBAN');
     }
 
-    // Generate mandate reference if not provided
-    const mandateReference = data.mandateReference || generateMandateReference(memberId);
-
     // Check if mandate already exists
+    if (isFeatureEnabled('USE_SEPA_MANDATE_REPOSITORY')) {
+      const existingMandate = await this.repository.findActiveMandateByMemberId(memberId);
+      if (existingMandate) {
+        throw new Error('Es existiert bereits ein aktives Mandat für dieses Mitglied');
+      }
+
+      const input: CreateSEPAMandateInput = {
+        memberId,
+        accountHolder: data.accountHolder,
+        iban: data.iban,
+        bic: data.bic,
+        bankName: data.bankName,
+        street: data.street,
+        houseNumber: data.houseNumber,
+        postalCode: data.postalCode,
+        city: data.city,
+        mandateReference: data.mandateReference || generateMandateReference(memberId),
+        signatureDate: data.signatureDate,
+      };
+
+      return await this.repository.create(input);
+    }
+
+    // Legacy in-memory implementation
     const existingMandate = Array.from(this.mandates.values()).find(
       (m) => m.memberId === memberId && m.isActive
     );
@@ -54,6 +66,8 @@ export class SEPAMandateService {
     if (existingMandate) {
       throw new Error('Es existiert bereits ein aktives Mandat für dieses Mitglied');
     }
+
+    const mandateReference = data.mandateReference || generateMandateReference(memberId);
 
     const mandate: SEPAMandate = {
       id: `mandate-${Date.now()}`,
@@ -83,6 +97,9 @@ export class SEPAMandateService {
    * Get mandate by ID
    */
   static async getMandateById(mandateId: string): Promise<SEPAMandate | null> {
+    if (isFeatureEnabled('USE_SEPA_MANDATE_REPOSITORY')) {
+      return await this.repository.findById(mandateId);
+    }
     return this.mandates.get(mandateId) || null;
   }
 
@@ -90,6 +107,9 @@ export class SEPAMandateService {
    * Get active mandate for member
    */
   static async getActiveMandateForMember(memberId: string): Promise<SEPAMandate | null> {
+    if (isFeatureEnabled('USE_SEPA_MANDATE_REPOSITORY')) {
+      return await this.repository.findActiveMandateByMemberId(memberId);
+    }
     return (
       Array.from(this.mandates.values()).find((m) => m.memberId === memberId && m.isActive) || null
     );
@@ -99,6 +119,9 @@ export class SEPAMandateService {
    * Get all mandates for member
    */
   static async getAllMandatesForMember(memberId: string): Promise<SEPAMandate[]> {
+    if (isFeatureEnabled('USE_SEPA_MANDATE_REPOSITORY')) {
+      return await this.repository.findByMemberId(memberId);
+    }
     return Array.from(this.mandates.values()).filter((m) => m.memberId === memberId);
   }
 
@@ -106,6 +129,15 @@ export class SEPAMandateService {
    * Revoke mandate
    */
   static async revokeMandate(mandateId: string, reason: string): Promise<SEPAMandate> {
+    if (isFeatureEnabled('USE_SEPA_MANDATE_REPOSITORY')) {
+      const revoked = await this.repository.revoke(mandateId, reason);
+      if (!revoked) {
+        throw new Error('Mandat nicht gefunden');
+      }
+      return revoked;
+    }
+
+    // Legacy in-memory implementation
     const mandate = this.mandates.get(mandateId);
 
     if (!mandate) {
@@ -131,15 +163,34 @@ export class SEPAMandateService {
     mandateId: string,
     data: Partial<Omit<SEPAMandateFormData, 'acceptTerms' | 'acceptDirectDebit'>>
   ): Promise<SEPAMandate> {
+    // Validate IBAN if provided
+    if (data.iban && !validateIBAN(data.iban)) {
+      throw new Error('Ungültige IBAN');
+    }
+
+    if (isFeatureEnabled('USE_SEPA_MANDATE_REPOSITORY')) {
+      const input: UpdateSEPAMandateInput = {};
+      if (data.accountHolder) input.accountHolder = data.accountHolder;
+      if (data.iban) input.iban = data.iban;
+      if (data.bic) input.bic = data.bic;
+      if (data.bankName) input.bankName = data.bankName;
+      if (data.street) input.street = data.street;
+      if (data.houseNumber) input.houseNumber = data.houseNumber;
+      if (data.postalCode) input.postalCode = data.postalCode;
+      if (data.city) input.city = data.city;
+
+      const updated = await this.repository.update(mandateId, input);
+      if (!updated) {
+        throw new Error('Mandat nicht gefunden');
+      }
+      return updated;
+    }
+
+    // Legacy in-memory implementation
     const mandate = this.mandates.get(mandateId);
 
     if (!mandate) {
       throw new Error('Mandat nicht gefunden');
-    }
-
-    // Validate IBAN if provided
-    if (data.iban && !validateIBAN(data.iban)) {
-      throw new Error('Ungültige IBAN');
     }
 
     // Update fields
@@ -236,7 +287,12 @@ export class SEPAMandateService {
    * Check if member has active mandate
    */
   static async hasActiveMandate(memberId: string): Promise<boolean> {
+    if (isFeatureEnabled('USE_SEPA_MANDATE_REPOSITORY')) {
+      return await this.repository.hasActiveMandate(memberId);
+    }
     const mandate = await this.getActiveMandateForMember(memberId);
     return mandate !== null;
   }
 }
+
+export type { SEPAMandate };

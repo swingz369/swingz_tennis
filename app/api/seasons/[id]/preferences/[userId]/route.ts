@@ -9,10 +9,10 @@ import { and, eq } from 'drizzle-orm';
 import type { UpdatePreferencesRequest } from '@/lib/types/season-planning';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string; // season_id
     userId: string;
-  };
+  }>;
 }
 
 /**
@@ -22,7 +22,7 @@ interface RouteContext {
  * Users can only view their own preference
  * Admins can view any preference
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   return withApiAuth(request, async (auth) => {
     const db = getDb();
     try {
-      const { id: seasonId, userId } = params;
+      const { id: seasonId, userId } = await context.params;
 
       // Verify season exists
       const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         },
       });
     } catch (error) {
-      console.error(`GET /api/seasons/${params.id}/preferences/${params.userId} error:`, error);
+      console.error(`GET /api/seasons/[id]/preferences/${userId} error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch preference' },
         { status: 500 }
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * Users can only update their own preference
  * Admins can update any preference
  */
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   const db = getDb();
   return withCSRFProtection(request, async () => {
     const db = getDb();
@@ -103,7 +103,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const db = getDb();
       try {
-        const { id: seasonId, userId } = params;
+        const { id: seasonId, userId } = await context.params;
 
         // Check permissions
         const isAdmin = await verifyRole(auth, 'admin');
@@ -191,7 +191,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           message: 'Preference updated successfully',
         });
       } catch (error) {
-        console.error(`PATCH /api/seasons/${params.id}/preferences/${params.userId} error:`, error);
+        console.error(`PATCH /api/seasons/[id]/preferences/${userId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to update preference' },
           { status: 500 }
@@ -208,7 +208,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
  * Users can only delete their own preference
  * Admins can delete any preference
  */
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   const db = getDb();
   return withCSRFProtection(request, async () => {
     const db = getDb();
@@ -218,7 +218,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const db = getDb();
       try {
-        const { id: seasonId, userId } = params;
+        const { id: seasonId, userId } = await context.params;
 
         // Check permissions
         const isAdmin = await verifyRole(auth, 'admin');
@@ -254,10 +254,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
           message: 'Preference deleted successfully',
         });
       } catch (error) {
-        console.error(
-          `DELETE /api/seasons/${params.id}/preferences/${params.userId} error:`,
-          error
-        );
+        console.error(`DELETE /api/seasons/${id}/preferences/${userId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to delete preference' },
           { status: 500 }

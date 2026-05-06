@@ -13,7 +13,7 @@ export async function POST(_request: NextRequest) {
     }
 
     // Rate limit
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }

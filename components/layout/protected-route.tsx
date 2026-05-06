@@ -30,7 +30,7 @@ export function useAuth() {
         };
         setUser(demoUser);
         setLoading(false);
-        return;
+        return () => {}; // No cleanup needed for demo mode
       }
     }
 

@@ -39,14 +39,13 @@ export default function SeasonsPage() {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<
       string,
-      { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+      { label: string; variant: 'default' | 'secondary' | 'error' | 'outline' }
     > = {
       draft: { label: 'Entwurf', variant: 'secondary' },
       collecting_preferences: { label: 'Sammelt Präferenzen', variant: 'outline' },
       auto_planning: { label: 'Automatische Planung', variant: 'default' },
       manual_review: { label: 'Manuelle Überprüfung', variant: 'outline' },
-      published: { label: 'Veröffentlicht', variant: 'default' },
-      active: { label: 'Aktiv', variant: 'default' },
+      finalized: { label: 'Finalisiert', variant: 'default' },
       completed: { label: 'Abgeschlossen', variant: 'secondary' },
       archived: { label: 'Archiviert', variant: 'secondary' },
     };

@@ -40,10 +40,8 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const validatedData = validation.data;
-
         // Create member (associated with the authenticated user's club)
-        const member = await MemberService.createMember(validatedData);
+        const member = await MemberService.createMember(validation.data);
 
         return NextResponse.json({ success: true, member });
       } catch (error) {

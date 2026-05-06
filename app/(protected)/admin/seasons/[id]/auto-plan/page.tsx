@@ -97,7 +97,7 @@ export default function AutoPlanPage({ params }: AutoPlanPageProps) {
   const getScoreBadge = (score: number) => {
     if (score >= 80) return <Badge variant="default">Sehr gut</Badge>;
     if (score >= 60) return <Badge variant="secondary">Gut</Badge>;
-    return <Badge variant="destructive">Verbesserungswürdig</Badge>;
+    return <Badge variant="error">Verbesserungswürdig</Badge>;
   };
 
   return (

@@ -11,7 +11,7 @@ export async function POST(_request: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
     if (rateLimitError) {
       return rateLimitError;
     }

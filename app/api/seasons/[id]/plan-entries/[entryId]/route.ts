@@ -15,17 +15,17 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { UpdatePlanEntryRequest } from '@/lib/types/season-planning';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string; // season_id
     entryId: string;
-  };
+  }>;
 }
 
 /**
  * GET /api/seasons/[id]/plan-entries/[entryId]
  * Get a single plan entry with full details
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   return withApiAuth(request, async (auth) => {
     const db = getDb();
     try {
-      const { id: seasonId, entryId } = params;
+      const { id: seasonId, entryId } = await context.params;
 
       // Fetch entry with details
       const [result] = await db
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         entry: entryWithDetails,
       });
     } catch (error) {
-      console.error(`GET /api/seasons/${params.id}/plan-entries/${params.entryId} error:`, error);
+      console.error(`GET /api/seasons/[id]/plan-entries/${entryId} error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch plan entry' },
         { status: 500 }
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
  * PATCH /api/seasons/[id]/plan-entries/[entryId]
  * Update a plan entry
  */
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export async function PATCH(request: NextRequest, context: RouteContext) {
   const db = getDb();
   return withCSRFProtection(request, async () => {
     const db = getDb();
@@ -99,7 +99,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const db = getDb();
       try {
-        const { id: seasonId, entryId } = params;
+        const { id: seasonId, entryId } = await context.params;
 
         // Only admins can update plan entries
         const isAdmin = await verifyRole(auth, 'admin');
@@ -229,10 +229,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           message: 'Plan entry updated successfully',
         });
       } catch (error) {
-        console.error(
-          `PATCH /api/seasons/${params.id}/plan-entries/${params.entryId} error:`,
-          error
-        );
+        console.error(`PATCH /api/seasons/${id}/plan-entries/${entryId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to update plan entry' },
           { status: 500 }
@@ -246,7 +243,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
  * DELETE /api/seasons/[id]/plan-entries/[entryId]
  * Delete a plan entry
  */
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   const db = getDb();
   return withCSRFProtection(request, async () => {
     const db = getDb();
@@ -256,7 +253,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const db = getDb();
       try {
-        const { id: seasonId, entryId } = params;
+        const { id: seasonId, entryId } = await context.params;
 
         // Only admins can delete plan entries
         const isAdmin = await verifyRole(auth, 'admin');
@@ -297,10 +294,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
           message: 'Plan entry deleted successfully',
         });
       } catch (error) {
-        console.error(
-          `DELETE /api/seasons/${params.id}/plan-entries/${params.entryId} error:`,
-          error
-        );
+        console.error(`DELETE /api/seasons/${id}/plan-entries/${entryId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to delete plan entry' },
           { status: 500 }

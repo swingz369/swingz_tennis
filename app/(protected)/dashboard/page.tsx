@@ -48,8 +48,6 @@ export default async function DashboardPage() {
     email: profile?.email || user.email || '',
   };
 
-  console.log('Dashboard - User:', user.id, 'Role:', highestRole);
-
   // Determine highest role
   const roles = memberships.map((m: { role: string }) => m.role);
   const highestRole = roles.includes('superadmin')
@@ -60,7 +58,7 @@ export default async function DashboardPage() {
         ? 'trainer'
         : 'member';
 
-  console.log('Dashboard - User roles:', roles, 'Highest:', highestRole);
+  console.log('Dashboard - User:', user.id, 'Roles:', roles, 'Highest:', highestRole);
 
   // Render dynamic dashboard based on role
   switch (highestRole) {

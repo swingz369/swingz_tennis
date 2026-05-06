@@ -10,9 +10,9 @@ import { AutoPlanningService } from '@/lib/services/auto-planning.service';
 import type { AutoPlanRequest, AutoPlanResponse } from '@/lib/types/season-planning';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string; // season_id
-  };
+  }>;
 }
 
 /**
@@ -25,7 +25,7 @@ interface RouteContext {
  *
  * Returns: AutoPlanResponse with generated entries and metrics
  */
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
   const db = getDb();
   return withCSRFProtection(request, async () => {
     const db = getDb();
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return withApiAuth(request, async (auth) => {
       const db = getDb();
       try {
-        const { id: seasonId } = params;
+        const { id: seasonId } = await context.params;
 
         // Only admins and superadmins can run auto-planning
         const isAdmin = await verifyRole(auth, 'admin');
@@ -196,7 +196,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
         return NextResponse.json(response, { status: 200 });
       } catch (error) {
-        console.error(`POST /api/seasons/${params.id}/auto-plan error:`, error);
+        const { id } = await context.params;
+        console.error(`POST /api/seasons/[id]/auto-plan error:`, error);
         return NextResponse.json(
           {
             error: error instanceof Error ? error.message : 'Auto-planning failed',
@@ -213,13 +214,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
  * GET /api/seasons/[id]/auto-plan/status
  * Get current auto-planning status
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
     try {
-      const { id: seasonId } = params;
+      const { id: seasonId } = await context.params;
 
       // Fetch season
       const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
@@ -248,7 +249,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         },
       });
     } catch (error) {
-      console.error(`GET /api/seasons/${params.id}/auto-plan/status error:`, error);
+      console.error(`GET /api/seasons/[id]/auto-plan/status error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch status' },
         { status: 500 }

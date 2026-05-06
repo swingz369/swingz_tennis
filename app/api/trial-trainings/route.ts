@@ -12,7 +12,7 @@ const createTrialTrainingSchema = z.object({
     email: z.string().email(),
     phone: z.string().min(5),
     dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    age: z.number().optional(),
+    age: z.number().int().positive().optional(),
   }),
   scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   scheduledTime: z.string().regex(/^\d{2}:\d{2}$/),
@@ -46,7 +46,20 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const trialTraining = await TrialTrainingService.createTrialTraining(validation.data);
+      const trialTraining = await TrialTrainingService.createTrialTraining({
+        ...validation.data,
+        participant: {
+          ...validation.data.participant,
+          age: validation.data.participant.age ?? undefined,
+        } as {
+          firstName: string;
+          lastName: string;
+          email: string;
+          phone: string;
+          dateOfBirth: string;
+          age?: number;
+        },
+      });
 
       return NextResponse.json({ success: true, trialTraining });
     } catch (error) {

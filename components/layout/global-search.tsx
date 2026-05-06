@@ -64,7 +64,9 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // Keyboard shortcut Cmd/Ctrl + K
@@ -79,7 +81,9 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       }
     };
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const getTypeLabel = (type: SearchResult['type']) => {

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { CsvPaymentRecord } from '@/lib/csv/payment-import';
 import { parsePaymentCsv, validatePaymentRecords } from '@/lib/csv/payment-import';
@@ -13,7 +13,7 @@ const MAX_RECORDS = 1000;
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     try {
-      await checkRateLimitOrFail(_request, rateLimitStrict);
+      await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
 
       const hasPermission = await verifyRole(auth, 'admin');
       if (!hasPermission) {
