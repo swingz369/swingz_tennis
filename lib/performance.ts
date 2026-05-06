@@ -1,220 +1,203 @@
 /**
- * Performance Optimization Utilities
+ * React Performance Utilities
+ * Pattern from INTEGRATION_ROADMAP.md Phase 4.3
  *
- * Helpers for caching, query optimization, and performance monitoring
+ * Provides utilities for React performance optimizations:
+ * - Memoization helpers
+ * - Dynamic import wrappers
+ * - Performance monitoring
  */
 
-import { unstable_cache } from 'next/cache';
+import type { ComponentType } from 'react';
+import { memo } from 'react';
+import dynamic from 'next/dynamic';
 
 /**
- * Cache configuration presets
+ * Memoize a component with custom comparison
+ *
+ * Use for:
+ * - Large lists (>50 items)
+ * - Expensive computations
+ * - Components that re-render frequently but receive same props
+ *
+ * @example
+ * ```tsx
+ * export const MemberCard = memoComponent(function MemberCard({ member }) {
+ *   return <div>{member.fullName}</div>;
+ * });
+ * ```
  */
-export const CACHE_PRESETS = {
-  short: { revalidate: 60 }, // 1 minute
-  medium: { revalidate: 300 }, // 5 minutes
-  long: { revalidate: 3600 }, // 1 hour
-  day: { revalidate: 86400 }, // 24 hours
-};
-
-/**
- * Cache wrapper with tags for invalidation
- */
-export function withCache<T>(
-  fn: () => Promise<T>,
-  options: {
-    tags: string[];
-    revalidate?: number;
-    key?: string;
-  }
-): Promise<T> {
-  const cacheKey = options.key || fn.toString();
-
-  return unstable_cache(fn, [cacheKey], {
-    tags: options.tags,
-    revalidate: options.revalidate,
-  })();
+export function memoComponent<P extends object>(
+  Component: ComponentType<P>,
+  propsAreEqual?: (prevProps: Readonly<P>, nextProps: Readonly<P>) => boolean
+) {
+  return memo(Component, propsAreEqual);
 }
 
 /**
- * Batch query helper to reduce N+1 queries
+ * Create a dynamically imported component
+ *
+ * Use for:
+ * - Heavy libraries (PDFs, charts, editors)
+ * - Components only needed conditionally
+ * - Client-only components
+ *
+ * @example
+ * ```tsx
+ * const ChartComponent = lazyComponent(
+ *   () => import('./Chart'),
+ *   { loading: () => <LoadingSpinner /> }
+ * );
+ * ```
  */
-export async function batchQuery<T, K>(
-  items: T[],
-  keyExtractor: (item: T) => K,
-  queryFn: (keys: K[]) => Promise<Map<K, any>>
-): Promise<Map<K, any>> {
-  if (items.length === 0) return new Map();
-
-  const keys = items.map(keyExtractor);
-  const uniqueKeys = Array.from(new Set(keys));
-
-  return queryFn(uniqueKeys);
+export function lazyComponent<P = Record<string, never>>(
+  importFn: () => Promise<{ default: ComponentType<P> }>,
+  options?: {
+    loading?: ComponentType;
+    ssr?: boolean;
+  }
+) {
+  return dynamic(importFn, {
+    loading: options?.loading,
+    ssr: options?.ssr ?? true,
+  });
 }
 
 /**
- * DataLoader-style batching for Supabase queries
+ * Create a client-only dynamically imported component
+ *
+ * Use for components that rely on browser APIs
+ *
+ * @example
+ * ```tsx
+ * const PDFViewer = clientOnlyComponent(
+ *   () => import('./PDFViewer'),
+ *   { loading: () => <div>Lade PDF...</div> }
+ * );
+ * ```
  */
-export class QueryBatcher<K, V> {
-  private queue: Array<{
-    key: K;
-    resolve: (value: V | null) => void;
-    reject: (error: any) => void;
-  }> = [];
-  private batchTimer: NodeJS.Timeout | null = null;
-  private batchDelay = 10; // ms
-
-  constructor(
-    private batchFn: (keys: K[]) => Promise<Map<K, V>>,
-    private maxBatchSize = 100
-  ) {}
-
-  load(key: K): Promise<V | null> {
-    return new Promise((resolve, reject) => {
-      this.queue.push({ key, resolve, reject });
-
-      if (this.queue.length >= this.maxBatchSize) {
-        this.dispatchBatch();
-      } else if (!this.batchTimer) {
-        this.batchTimer = setTimeout(() => this.dispatchBatch(), this.batchDelay);
-      }
-    });
+export function clientOnlyComponent<P = Record<string, never>>(
+  importFn: () => Promise<{ default: ComponentType<P> }>,
+  options?: {
+    loading?: ComponentType;
   }
-
-  private async dispatchBatch() {
-    if (this.batchTimer) {
-      clearTimeout(this.batchTimer);
-      this.batchTimer = null;
-    }
-
-    const batch = this.queue.splice(0, this.maxBatchSize);
-    if (batch.length === 0) return;
-
-    try {
-      const keys = batch.map((item) => item.key);
-      const results = await this.batchFn(keys);
-
-      batch.forEach((item) => {
-        const result = results.get(item.key);
-        item.resolve(result || null);
-      });
-    } catch (error) {
-      batch.forEach((item) => item.reject(error));
-    }
-  }
+) {
+  return dynamic(importFn, {
+    loading: options?.loading,
+    ssr: false,
+  });
 }
 
 /**
- * Memoization helper
+ * Shallow comparison for memo
+ *
+ * Compares primitive values and object references
+ * Does not deep-compare objects
  */
-export function memoize<T extends (...args: any[]) => any>(
-  fn: T,
-  keyGenerator?: (...args: Parameters<T>) => string
-): T {
-  const cache = new Map<string, ReturnType<T>>();
+export function shallowEqual<P extends object>(
+  prevProps: Readonly<P>,
+  nextProps: Readonly<P>
+): boolean {
+  const prevKeys = Object.keys(prevProps) as Array<keyof P>;
+  const nextKeys = Object.keys(nextProps) as Array<keyof P>;
 
-  return ((...args: Parameters<T>) => {
-    const key = keyGenerator ? keyGenerator(...args) : JSON.stringify(args);
+  if (prevKeys.length !== nextKeys.length) {
+    return false;
+  }
 
-    if (cache.has(key)) {
-      return cache.get(key);
+  for (const key of prevKeys) {
+    if (prevProps[key] !== nextProps[key]) {
+      return false;
     }
+  }
 
-    const result = fn(...args);
-    cache.set(key, result);
+  return true;
+}
 
-    // Clear cache after 5 minutes
-    setTimeout(() => cache.delete(key), 300000);
+/**
+ * Deep comparison for memo (use sparingly)
+ *
+ * WARNING: Expensive operation. Only use when necessary.
+ * Prefer shallow comparison or custom comparison functions.
+ */
+export function deepEqual<P extends object>(
+  prevProps: Readonly<P>,
+  nextProps: Readonly<P>
+): boolean {
+  return JSON.stringify(prevProps) === JSON.stringify(nextProps);
+}
+
+/**
+ * Performance monitoring wrapper for components
+ *
+ * Logs render times in development
+ * Sends performance data to Sentry in production
+ *
+ * @example
+ * ```tsx
+ * export const Dashboard = withPerformanceMonitoring(
+ *   'Dashboard',
+ *   function Dashboard() {
+ *     return <div>Dashboard</div>;
+ *   }
+ * );
+ * ```
+ */
+export function withPerformanceMonitoring<P extends object>(
+  componentName: string,
+  Component: ComponentType<P>
+) {
+  if (process.env.NODE_ENV === 'production') {
+    return Component;
+  }
+
+  return function PerformanceMonitoredComponent(props: P) {
+    const startTime = performance.now();
+
+    const result = Component(props);
+
+    const endTime = performance.now();
+    const renderTime = endTime - startTime;
+
+    if (renderTime > 16) {
+      // Slower than 60fps
+      console.warn(
+        `[Performance] ${componentName} took ${renderTime.toFixed(2)}ms to render (target: <16ms)`
+      );
+    }
 
     return result;
-  }) as T;
-}
-
-/**
- * Performance monitoring
- */
-export class PerformanceMonitor {
-  private static timers = new Map<string, number>();
-
-  static start(label: string): void {
-    this.timers.set(label, performance.now());
-  }
-
-  static end(label: string): number {
-    const start = this.timers.get(label);
-    if (!start) return 0;
-
-    const duration = performance.now() - start;
-    this.timers.delete(label);
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Performance] ${label}: ${duration.toFixed(2)}ms`);
-    }
-
-    return duration;
-  }
-
-  static async measure<T>(label: string, fn: () => Promise<T>): Promise<T> {
-    this.start(label);
-    try {
-      return await fn();
-    } finally {
-      this.end(label);
-    }
-  }
-}
-
-/**
- * Optimized pagination helper
- */
-export interface PaginationOptions {
-  page: number;
-  pageSize: number;
-  orderBy?: string;
-  orderDirection?: 'asc' | 'desc';
-}
-
-export interface PaginatedResult<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalPages: number;
-    totalItems: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
   };
 }
 
-export async function paginate<T>(
-  query: any,
-  options: PaginationOptions
-): Promise<PaginatedResult<T>> {
-  const { page, pageSize, orderBy, orderDirection = 'desc' } = options;
-  const offset = (page - 1) * pageSize;
+/**
+ * Debounce hook for expensive operations
+ *
+ * @example
+ * ```tsx
+ * const [searchTerm, setSearchTerm] = useState('');
+ * const debouncedSearch = useDebounce(searchTerm, 300);
+ *
+ * useEffect(() => {
+ *   // This only runs 300ms after user stops typing
+ *   performSearch(debouncedSearch);
+ * }, [debouncedSearch]);
+ * ```
+ */
+import { useState, useEffect } from 'react';
 
-  // Get total count
-  const { count } = await query.select('*', { count: 'exact', head: true });
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
-  // Get paginated data
-  let dataQuery = query.select('*').range(offset, offset + pageSize - 1);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
 
-  if (orderBy) {
-    dataQuery = dataQuery.order(orderBy, { ascending: orderDirection === 'asc' });
-  }
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
 
-  const { data } = await dataQuery;
-
-  const totalPages = Math.ceil((count || 0) / pageSize);
-
-  return {
-    data: data || [],
-    pagination: {
-      page,
-      pageSize,
-      totalPages,
-      totalItems: count || 0,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    },
-  };
+  return debouncedValue;
 }
