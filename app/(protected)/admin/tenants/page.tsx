@@ -93,6 +93,8 @@ export default function SuperadminTenantsPage() {
   };
 
   const switchToClub = (clubId: string, clubName: string) => {
+    if (typeof document === 'undefined') return;
+
     // Set cookie for club context (24h expiry)
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);

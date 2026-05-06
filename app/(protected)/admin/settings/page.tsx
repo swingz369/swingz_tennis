@@ -94,7 +94,7 @@ export default function SettingsPage() {
       }
 
       // Check if user is superadmin
-      const isDemo = document.cookie.includes('demo-mode');
+      const isDemo = typeof document !== 'undefined' && document.cookie.includes('demo-mode');
       if (isDemo) {
         setIsSuperAdmin(true);
       }

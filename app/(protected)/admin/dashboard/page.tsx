@@ -39,12 +39,8 @@ export default async function SuperadminDashboardPage() {
 
   if (clubsError) {
     console.error('Error fetching clubs:', clubsError);
-    // Return empty data on error
-    return (
-      <SuperadminDashboardClient
-        data={{ clubs: [], totalClubs: 0, totalMembers: 0, totalTrainers: 0, totalRevenue: 0 }}
-      />
-    );
+    // Throw error to be caught by error boundary
+    throw new Error(`Fehler beim Laden der Vereinsdaten: ${clubsError.message}`);
   }
 
   const clubsData = await Promise.all(

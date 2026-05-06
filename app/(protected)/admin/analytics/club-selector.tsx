@@ -20,6 +20,8 @@ interface ClubSelectorProps {
 
 export function ClubSelector({ clubs, selectedClubId }: ClubSelectorProps) {
   const handleChange = (newClubId: string) => {
+    if (typeof window === 'undefined') return;
+
     const url = new URL(window.location.href);
     url.searchParams.set('clubId', newClubId);
     window.location.href = url.pathname + url.search;

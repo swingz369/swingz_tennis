@@ -23,6 +23,7 @@ import {
   User,
   CreditCard,
   Building2,
+  Clock,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -101,6 +102,7 @@ export function Sidebar({
           icon: CheckCircle,
           badge: approvalCount,
         },
+        { name: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock },
         { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
       ];
     }

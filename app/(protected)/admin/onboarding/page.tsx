@@ -9,6 +9,8 @@ export default function OnboardingPage() {
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const stored = localStorage.getItem('onboarding-completed');
     if (stored) {
       try {
@@ -23,7 +25,9 @@ export default function OnboardingPage() {
     setCompletedSteps((prev) => {
       const newSet = new Set(prev);
       newSet.add(stepId);
-      localStorage.setItem('onboarding-completed', JSON.stringify([...newSet]));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('onboarding-completed', JSON.stringify([...newSet]));
+      }
       return [...newSet];
     });
   };
