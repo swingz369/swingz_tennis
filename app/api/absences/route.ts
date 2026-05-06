@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const absence = await AbsenceService.createAbsence(validation.data);
+      const absence = await AbsenceService.createAbsence(validation.data as any);
 
       return NextResponse.json({ success: true, absence });
     } catch (error) {
