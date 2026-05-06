@@ -17,10 +17,27 @@ export async function GET(req: NextRequest) {
     try {
       // Use Supabase directly instead of repository to avoid domain layer issues
       const supabase = await createClient();
-      const { data: clubs, error } = await supabase
+
+      // CRITICAL: Scope clubs based on user role
+      // - Superadmin: sees ALL clubs
+      // - Admin/Trainer/Member: sees only their own club(s)
+      const isSuperadmin = auth.role === 'superadmin';
+
+      let clubsQuery = supabase
         .from('clubs')
         .select('id, name, status, max_members, created_at')
         .order('created_at', { ascending: false });
+
+      if (!isSuperadmin) {
+        // Filter to clubs where user has membership
+        const userClubIds = auth.memberships.map((m) => m.club_id);
+        console.log('[API /clubs] Non-superadmin user, filtering to clubs:', userClubIds);
+        clubsQuery = clubsQuery.in('id', userClubIds);
+      } else {
+        console.log('[API /clubs] Superadmin user, returning all clubs');
+      }
+
+      const { data: clubs, error } = await clubsQuery;
 
       if (error) {
         console.error('[API /clubs] Database error:', error);
@@ -42,6 +59,8 @@ export async function GET(req: NextRequest) {
           memberCounts[m.club_id] = (memberCounts[m.club_id] || 0) + 1;
         });
       }
+
+      console.log('[API /clubs] Returning', clubs?.length || 0, 'clubs for user role:', auth.role);
 
       return NextResponse.json(
         (clubs || []).map((c) => ({

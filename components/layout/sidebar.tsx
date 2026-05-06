@@ -151,7 +151,9 @@ export function Sidebar({
           name: 'Club-Verwaltung',
           icon: Building2,
           subItems: [
-            { name: 'Clubs', href: '/admin/clubs' },
+            // "Clubs" link only for superadmin (to see all clubs)
+            // Regular admins should use their club dashboard instead
+            ...(isSuperAdmin ? [{ name: 'Clubs', href: '/admin/clubs' }] : []),
             { name: 'Plätze', href: '/admin/courts/manage' },
             { name: 'Trainingszeiten', href: '/admin/schedules' },
           ],

@@ -39,21 +39,31 @@ export default async function SuperadminDashboardPage() {
 
     console.log('[Admin Dashboard] User:', user.email, 'Memberships:', memberships);
 
-    // Check if user has admin/superadmin role
-    const hasAdminRole = memberships?.some(
-      (m: { role: string }) => m.role === 'superadmin' || m.role === 'admin'
-    );
+    // Determine user's highest role
+    const isSuperadmin = memberships?.some((m: { role: string }) => m.role === 'superadmin');
+    const isAdmin = memberships?.some((m: { role: string }) => m.role === 'admin');
 
-    if (!hasAdminRole) {
-      console.log('[Admin Dashboard] User lacks admin role, redirecting');
-      // Redirect non-admins to their club dashboard or member area
-      const firstMembership = memberships?.[0];
-      if (firstMembership) {
-        redirect(`/admin/clubs/${firstMembership.club_id}/dashboard`);
+    // CRITICAL: /admin/dashboard is ONLY for superadmins
+    // Regular admins should be redirected to their club dashboard
+    if (!isSuperadmin) {
+      console.log('[Admin Dashboard] Regular admin detected, redirecting to club dashboard');
+
+      // Find admin membership
+      const adminMembership = memberships?.find((m: { role: string }) => m.role === 'admin');
+
+      if (adminMembership) {
+        // Redirect admin to their specific club dashboard
+        redirect(`/admin/clubs/${adminMembership.club_id}/dashboard`);
+      } else if (isAdmin) {
+        // Fallback: redirect to first membership's club dashboard
+        redirect(`/admin/clubs/${memberships[0].club_id}/dashboard`);
       } else {
+        // Not an admin at all, redirect to member dashboard
         redirect('/dashboard');
       }
     }
+
+    console.log('[Admin Dashboard] Superadmin confirmed, showing platform dashboard');
 
     // Fetch clubs data with proper error handling
     const { data: clubs, error: clubsError } = await supabase.from('clubs').select('id, name');
