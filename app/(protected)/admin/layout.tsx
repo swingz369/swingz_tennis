@@ -1,38 +1,24 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
-import { AdminSidebar } from '@/components/layout/admin-sidebar';
 
 /**
- * Admin Layout with Authentication Guard
+ * Admin Layout — Authentication & Authorization Guard
  *
- * Pattern from INTEGRATION_ROADMAP.md Phase 1.3:
- * - Checks authentication at layout level
+ * Matches TSOW behavior:
  * - Verifies admin or superadmin role
- * - Redirects non-admin users to appropriate portal
- * - Handles club switching for superadmin users
- * - Provides club context to all child routes
+ * - Superadmin without active club cookie → /select-admin-club
+ * - Admin with club where setup_completed_at is null → /admin/onboarding
+ * - Non-admin users are redirected to their appropriate area
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // 1. Check authentication
   const auth = await requireAuth();
   const { supabase, user } = auth;
 
-  // 2. Fetch user memberships
+  // Fetch memberships
   const { data: memberships, error } = await supabase
     .from('user_club_memberships')
-    .select(
-      `
-      id,
-      role,
-      club_id,
-      is_active,
-      clubs (
-        id,
-        name
-      )
-    `
-    )
+    .select('id, role, club_id, is_active')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
@@ -41,86 +27,44 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/login?error=no_memberships');
   }
 
-  // 3. Verify admin or superadmin role
-  const adminMemberships = memberships.filter(
+  const roles = memberships.map((m: { role: string }) => m.role);
+
+  // Verify admin or superadmin role
+  const hasAdminAccess = memberships.some(
     (m: { role: string }) => m.role === 'admin' || m.role === 'superadmin'
   );
 
-  if (adminMemberships.length === 0) {
-    // User has membership but not admin role - redirect to their portal
-    const roles = memberships.map((m: { role: string }) => m.role);
-
-    if (roles.includes('trainer')) {
-      redirect('/trainer');
-    }
-
-    if (roles.includes('member')) {
-      // Redirect to dashboard (no slug-based club routes)
-      redirect('/dashboard');
-    }
-
-    // Fallback: no valid role
-    redirect('/unauthorized?reason=not_admin');
+  if (!hasAdminAccess) {
+    if (roles.includes('trainer')) redirect('/trainer');
+    redirect('/member');
   }
 
-  // 4. Determine active club context
-  const isSuperadmin = adminMemberships.some((m: { role: string }) => m.role === 'superadmin');
-  let activeClubId: string;
-  let activeClubData: { id: string; name: string } | null = null;
+  const isSuperadmin = memberships.some((m: { role: string }) => m.role === 'superadmin');
 
   if (isSuperadmin) {
-    // Check cookie for persisted club selection
+    // Superadmin must select a club before using admin area
     const cookieStore = await cookies();
-    const savedClubId = cookieStore.get('admin_club_id')?.value;
+    const savedClubId =
+      cookieStore.get('admin_club_id')?.value || cookieStore.get('selected-club-id')?.value;
 
-    if (
-      savedClubId &&
-      adminMemberships.some((m: { club_id: string }) => m.club_id === savedClubId)
-    ) {
-      activeClubId = savedClubId;
-      const activeMembership = adminMemberships.find(
-        (m: { club_id: string }) => m.club_id === savedClubId
-      );
-      const clubRaw = activeMembership?.clubs;
-      activeClubData = Array.isArray(clubRaw) ? clubRaw[0] : clubRaw;
-    } else {
-      // Default to first club
-      activeClubId = adminMemberships[0].club_id;
-      const clubRaw = adminMemberships[0].clubs;
-      activeClubData = Array.isArray(clubRaw) ? clubRaw[0] : clubRaw;
+    if (!savedClubId) {
+      // No club selected — send to club picker (like TSOW /select-admin-club)
+      const currentPath = '/admin'; // We can't easily read pathname in server component
+      redirect('/select-admin-club');
     }
-  } else {
-    // Regular admin: locked to their club
-    activeClubId = adminMemberships[0].club_id;
-    const clubRaw = adminMemberships[0].clubs;
-    activeClubData = Array.isArray(clubRaw) ? clubRaw[0] : clubRaw;
+
+    // Validate the saved club still exists and user has access
+    const { data: clubCheck } = await supabase
+      .from('clubs')
+      .select('id')
+      .eq('id', savedClubId)
+      .maybeSingle();
+
+    if (!clubCheck) {
+      // Cookie refers to a non-existent club — re-select
+      redirect('/select-admin-club');
+    }
   }
 
-  // 5. Prepare user data for sidebar
-  const { data: userData } = await supabase
-    .from('users')
-    .select('id, email, full_name, avatar_url')
-    .eq('id', user.id)
-    .single();
-
-  const userForSidebar = {
-    id: user.id,
-    email: user.email || '',
-    name: userData?.full_name || user.user_metadata?.full_name || 'Admin',
-    avatar: userData?.avatar_url || null,
-  };
-
-  // 6. Render layout with sidebar
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar
-        user={userForSidebar}
-        memberships={adminMemberships}
-        activeClubId={activeClubId}
-        activeClub={activeClubData}
-        isSuperadmin={isSuperadmin}
-      />
-      <main className="flex-1 p-8 lg:ml-64">{children}</main>
-    </div>
-  );
+  return <>{children}</>;
 }

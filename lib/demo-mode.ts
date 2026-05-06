@@ -22,12 +22,11 @@ export function isDemoModeEnabled(req?: NextRequest): boolean {
     // For App Router with request
     const cookie = req.cookies.get('demo-mode');
     return !!cookie;
-  } else {
-    // For Server Components without request
-    const cookieStore = await cookies();
-    const cookie = cookieStore.get('demo-mode');
-    return !!cookie;
   }
+
+  // Without request: cannot use cookies() synchronously in a non-async function.
+  // Use isDemoModeEnabledAsync() for Server Components.
+  return false;
 }
 
 /**

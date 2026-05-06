@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -25,21 +25,33 @@ import {
   Building2,
   Clock,
   CalendarRange,
+  MapPin,
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+
+interface Club {
+  id: string;
+  name: string;
+}
 
 export function Sidebar({
   roles,
   open,
   onClose,
   selectedClubId,
+  clubs,
 }: {
   roles?: string[];
   open?: boolean;
   onClose?: () => void;
   selectedClubId?: string | null;
+  clubs?: Club[];
 }) {
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLElement>(null);
+  const [clubSwitcherOpen, setClubSwitcherOpen] = useState(false);
 
   // Handle swipe gestures on mobile
   useEffect(() => {
@@ -58,7 +70,6 @@ export function Sidebar({
 
     const handleTouchEnd = () => {
       if (touchStartX - touchEndX > 50) {
-        // Swipe left - close sidebar
         onClose?.();
       }
     };
@@ -79,32 +90,56 @@ export function Sidebar({
     return undefined;
   }, [open, onClose]);
 
-  const isAdmin = roles?.includes('admin');
-  const isSuperAdmin = roles?.includes('superadmin');
-  const isTrainer = roles?.includes('trainer');
+  // Role detection — use HIGHEST role (superadmin > admin > trainer > member)
+  const isSuperAdmin = roles?.includes('superadmin') ?? false;
+  const isAdmin = roles?.includes('admin') ?? false;
+  const isTrainer = roles?.includes('trainer') ?? false;
+
+  // Active club for display
+  const activeClub = clubs?.find((c) => c.id === selectedClubId) ?? clubs?.[0] ?? null;
+  const hasMultipleClubs = (clubs?.length ?? 0) > 1;
 
   // TODO: Replace with actual counts from API
   const notificationCount = 0;
   const approvalCount = 0;
 
-  // Primary navigation - COMPLETELY SEPARATE for each role
+  const handleSwitchClub = async (clubId: string) => {
+    setClubSwitcherOpen(false);
+    try {
+      const response = await fetch('/api/admin/switch-club', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clubId }),
+      });
+      if (response.ok) {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error switching club:', error);
+    }
+  };
+
+  // Primary navigation — role-based, highest role wins
   const primaryNav = (() => {
     // SUPERADMIN: Platform-wide administration
-    if (isSuperAdmin && !isAdmin) {
+    if (isSuperAdmin) {
       return [
-        { name: 'Superadmin Dashboard', href: '/superadmin/dashboard', icon: Layout },
+        { name: 'Superadmin Dashboard', href: '/superadmin', icon: Layout },
         { name: 'Vereinsübersicht', href: '/superadmin/tenants', icon: Building2 },
         { name: 'Club-Verwaltung', href: '/superadmin/clubs', icon: Building2 },
-        { name: 'Plattform-Analyse', href: '/admin/analytics', icon: TrendingUp },
+        { name: 'Plattform-Analyse', href: '/admin/analytics', icon: BarChart3 },
       ];
     }
 
     // ADMIN: Club-scoped administration
     if (isAdmin) {
       return [
-        { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'Saisonplanung', href: '/admin/seasons', icon: CalendarRange },
-        { name: 'Benutzerverwaltung', href: '/admin/members', icon: Users },
+        { name: 'Dashboard', href: '/admin', icon: Home },
+        { name: 'Mitglieder', href: '/admin/members', icon: Users },
+        { name: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
+        { name: 'Plätze', href: '/admin/courts', icon: MapPin },
+        { name: 'Spielzeiten', href: '/admin/seasons', icon: CalendarRange },
+        { name: 'Buchungen', href: '/bookings', icon: Calendar },
         {
           name: 'Genehmigungen',
           href: '/admin/approvals',
@@ -112,14 +147,12 @@ export function Sidebar({
           badge: approvalCount,
         },
         { name: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock },
-        { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
       ];
     }
 
-    // TRAINER: Training management
+    // TRAINER: Uses bottom nav (no sidebar needed); this is a fallback
     if (isTrainer) {
       return [
-        { name: 'Dashboard', href: '/dashboard', icon: Home },
         { name: 'Trainer Dashboard', href: '/trainer', icon: GraduationCap },
         { name: 'Termin-Verwaltung', href: '/scheduler', icon: Calendar },
         { name: 'Meine Anwesenheit', href: '/attendance-history', icon: TrendingUp },
@@ -132,49 +165,89 @@ export function Sidebar({
       ];
     }
 
-    // Member default navigation
+    // MEMBER: Uses bottom nav; this is a fallback
     return [
-      { name: 'Dashboard', href: '/dashboard', icon: Home },
+      { name: 'Home', href: '/member', icon: Home },
       { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
       { name: 'Trainingszeiten', href: '/training-schedule', icon: Calendar },
       { name: 'Meine Anwesenheit', href: '/attendance-history', icon: TrendingUp },
-      { name: 'Benachrichtigungen', href: '/notifications', icon: Bell, badge: notificationCount },
+      {
+        name: 'Benachrichtigungen',
+        href: '/notifications',
+        icon: Bell,
+        badge: notificationCount,
+      },
     ];
   })();
 
-  // Secondary navigation - less frequently accessed
+  // Secondary navigation
   const secondaryNav = [
     { name: 'Mein Profil', href: '/profile', icon: User },
-    { name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin },
+    ...(!isSuperAdmin
+      ? [{ name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard }]
+      : []),
     { name: 'News & Updates', href: '/news', icon: Newspaper },
-  ].filter((item) => item.showIf !== false);
+  ];
 
-  // Admin categories with sub-items - only for regular admin users
-  const adminCategories =
-    isAdmin && !isSuperAdmin
-      ? [
-          {
-            name: 'Club-Verwaltung',
-            icon: Building2,
-            subItems: [
-              // "Clubs" link only for superadmin (to see all clubs)
-              // Regular admins should use their club dashboard instead
-              ...(isSuperAdmin ? [{ name: 'Clubs', href: '/admin/clubs' }] : []),
-              { name: 'Plätze', href: '/admin/courts/manage' },
-              { name: 'Trainingszeiten', href: '/admin/schedules' },
-            ],
-          },
-          {
-            name: 'Einstellungen',
-            icon: Settings,
-            subItems: [
-              { name: 'Allgemein', href: '/admin/settings' },
-              { name: 'Onboarding', href: '/admin/onboarding' },
-              { name: 'Billing-Konfiguration', href: '/admin/billing' },
-            ],
-          },
-        ]
-      : [];
+  // Category sections with sub-items
+  const categoryNav = (() => {
+    if (isSuperAdmin) {
+      return [
+        {
+          name: 'Plattform-Verwaltung',
+          icon: Settings,
+          subItems: [
+            { name: 'System-Einstellungen', href: '/admin/settings' },
+            { name: 'Billing-Verwaltung', href: '/admin/billing' },
+            { name: 'Audit-Logs', href: '/admin/audit-logs' },
+            { name: 'Verein wechseln', href: '/select-admin-club' },
+          ],
+        },
+      ];
+    }
+
+    if (isAdmin) {
+      return [
+        {
+          name: 'Analytics & Berichte',
+          icon: BarChart3,
+          subItems: [
+            { name: 'Analytics', href: '/admin/analytics' },
+            { name: 'Abrechnung', href: '/admin/billing' },
+          ],
+        },
+        {
+          name: 'Einstellungen',
+          icon: Settings,
+          subItems: [
+            { name: 'Allgemein', href: '/admin/settings' },
+            { name: 'Onboarding', href: '/admin/onboarding' },
+            { name: 'Plätze verwalten', href: '/admin/courts/manage' },
+            { name: 'Trainingszeiten', href: '/admin/schedules' },
+          ],
+        },
+      ];
+    }
+
+    return [];
+  })();
+
+  // Active color theme per role
+  const activeGradient = isSuperAdmin
+    ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg'
+    : isAdmin
+      ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-lg'
+      : isTrainer
+        ? 'bg-gradient-to-r from-[#22c55e] to-[#15803d] text-white shadow-lg'
+        : 'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg';
+
+  const sectionLabel = isSuperAdmin
+    ? 'Plattform'
+    : isAdmin
+      ? 'Administration'
+      : isTrainer
+        ? 'Trainer'
+        : 'Hauptmenü';
 
   return (
     <aside
@@ -201,8 +274,10 @@ export function Sidebar({
           <span className="sr-only">Menü schließen</span>
         </button>
       )}
+
       <ScrollArea className="h-full py-6">
-        <div className="px-4 mb-6">
+        {/* Logo */}
+        <div className="px-4 mb-4">
           <Link
             href="/dashboard"
             className="flex items-center gap-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
@@ -212,18 +287,67 @@ export function Sidebar({
           </Link>
         </div>
 
+        {/* Superadmin Club Switcher */}
+        {isSuperAdmin && hasMultipleClubs && (
+          <div className="mx-3 mb-4 border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setClubSwitcherOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
+                <span className="truncate">{activeClub?.name ?? 'Club auswählen'}</span>
+              </div>
+              {clubSwitcherOpen ? (
+                <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
+              ) : (
+                <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
+              )}
+            </button>
+            {clubSwitcherOpen && (
+              <div className="border-t border-gray-100 dark:border-white/10">
+                {clubs?.map((club) => (
+                  <button
+                    key={club.id}
+                    onClick={() => handleSwitchClub(club.id)}
+                    className={cn(
+                      'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
+                      club.id === (selectedClubId ?? activeClub?.id)
+                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-medium'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                    )}
+                  >
+                    <CheckCircle
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        club.id === (selectedClubId ?? activeClub?.id)
+                          ? 'text-purple-500'
+                          : 'text-transparent'
+                      )}
+                    />
+                    <span className="truncate">{club.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <nav className="flex flex-col gap-1 px-3" role="navigation" aria-label="Hauptnavigation">
-          {/* Primary Navigation */}
+          {/* Section label */}
           <div
             className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
             role="heading"
             aria-level={2}
           >
-            {isAdmin ? 'Administration' : isTrainer ? 'Trainer' : 'Hauptmenü'}
+            {sectionLabel}
           </div>
+
+          {/* Primary Navigation */}
           {primaryNav.map((item) => {
             const isActive =
-              pathname === item.href || (item.href === '/bookings' && pathname === '/courts');
+              pathname === item.href ||
+              (item.href !== '/dashboard' && pathname.startsWith(item.href));
             return (
               <Link
                 key={item.name}
@@ -232,11 +356,7 @@ export function Sidebar({
                 className={cn(
                   'flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   isActive
-                    ? isAdmin
-                      ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-lg'
-                      : isTrainer
-                        ? 'bg-gradient-to-r from-[#22c55e] to-[#15803d] text-white shadow-lg'
-                        : 'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg'
+                    ? activeGradient
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                 )}
                 aria-current={isActive ? 'page' : undefined}
@@ -246,15 +366,18 @@ export function Sidebar({
                   <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                   <span>{item.name}</span>
                 </div>
-                {item.badge !== undefined && (
-                  <NavigationBadge count={item.badge} variant={isAdmin ? 'danger' : 'default'} />
+                {(item as any).badge !== undefined && (
+                  <NavigationBadge
+                    count={(item as any).badge}
+                    variant={isAdmin ? 'danger' : 'default'}
+                  />
                 )}
               </Link>
             );
           })}
 
-          {/* Admin Categories with Sub-Items */}
-          {isAdmin && adminCategories.length > 0 && (
+          {/* Category sections */}
+          {categoryNav.length > 0 && (
             <>
               <div
                 className="mt-6 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
@@ -263,7 +386,7 @@ export function Sidebar({
               >
                 Verwaltung
               </div>
-              {adminCategories.map((category) => (
+              {categoryNav.map((category) => (
                 <NavigationCategory
                   key={category.name}
                   name={category.name}
@@ -275,7 +398,7 @@ export function Sidebar({
             </>
           )}
 
-          {/* Secondary Navigation - Footer Area */}
+          {/* Secondary Navigation */}
           {secondaryNav.length > 0 && (
             <>
               <div
@@ -295,11 +418,11 @@ export function Sidebar({
                     className={cn(
                       'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg'
+                        ? activeGradient
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
-                    aria-label={`${item.name} Seite${isActive ? ' (aktuell)' : ''}`}
+                    aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
                   >
                     <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                     <span>{item.name}</span>

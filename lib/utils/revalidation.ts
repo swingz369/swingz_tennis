@@ -3,8 +3,17 @@
  * Centralized helpers for invalidating Next.js cache after mutations
  */
 
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath, revalidateTag as _revalidateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/server-cache';
+
+/**
+ * Wrapper for revalidateTag — compatible with Next.js 16 which requires a profile arg.
+ * Uses 'default' profile for all standard invalidations.
+ */
+function revalidateTag(tag: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (_revalidateTag as any)(tag, 'default');
+}
 
 /**
  * Revalidate all booking-related caches for a club
@@ -157,5 +166,5 @@ export function revalidateAll(clubId: string) {
   revalidateDashboard(clubId);
 
   // Revalidate all major paths
-  revalidatePath('/', 'layout', 'page');
+  revalidatePath('/', 'layout');
 }

@@ -51,7 +51,7 @@ export default async function AdminPanelV2Page() {
       clubId={clubId}
       clubName={clubName}
       analyticsMetrics={analyticsMetrics}
-      userRole={adminMembership.role}
+      userRole={superadminMembership.role}
     />
   );
 }

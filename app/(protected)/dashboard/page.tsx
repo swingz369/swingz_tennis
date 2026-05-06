@@ -1,82 +1,48 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/infrastructure/external/supabase/server';
-import { MemberDashboard } from '@/components/dashboard/member-dashboard';
-import { TrainerDashboard } from '@/components/dashboard/trainer-dashboard';
-import { AdminDashboard } from '@/components/dashboard/admin-dashboard';
-import { SuperadminDashboard } from '@/components/dashboard/superadmin-dashboard';
+import { requireAuth } from '@/lib/auth';
 
-// Force dynamic rendering since we use cookies
+/**
+ * Dashboard Dispatch Page
+ *
+ * Redirects users to their role-specific area after login — exactly like TSOW:
+ *   superadmin → /superadmin
+ *   admin      → /admin (or /admin/onboarding if setup not complete)
+ *   trainer    → /trainer
+ *   member     → /member
+ */
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireAuth();
 
-  if (!user) {
-    console.error('No user found in dashboard page');
-    redirect('/login');
-  }
-
-  // Fetch user's club memberships to determine role
+  // Fetch active memberships to determine highest role
   const { data: memberships, error } = await supabase
     .from('user_club_memberships')
     .select('role, club_id')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  if (error) {
-    console.error('Error fetching memberships:', error);
-    redirect('/login');
+  if (error || !memberships || memberships.length === 0) {
+    console.warn('[Dashboard Dispatch] No active memberships for user:', user.id);
+    // Show member area with onboarding hint
+    redirect('/member');
   }
 
-  if (!memberships || memberships.length === 0) {
-    console.error('No active memberships found for user:', user.id);
-    redirect('/login');
-  }
-
-  // Fetch user profile for display
-  const { data: profile } = await supabase
-    .from('users')
-    .select('full_name, email')
-    .eq('id', user.id)
-    .single();
-
-  const userDisplay = {
-    name: profile?.full_name || user.email?.split('@')[0] || 'User',
-    email: profile?.email || user.email || '',
-  };
-
-  // Determine highest role
   const roles = memberships.map((m: { role: string }) => m.role);
-  const highestRole = roles.includes('superadmin')
-    ? 'superadmin'
-    : roles.includes('admin')
-      ? 'admin'
-      : roles.includes('trainer')
-        ? 'trainer'
-        : 'member';
 
-  console.log('Dashboard - User:', user.id, 'Roles:', roles, 'Highest:', highestRole);
-
-  // Render dynamic dashboard based on role
-  switch (highestRole) {
-    case 'superadmin':
-      try {
-        return <SuperadminDashboard user={userDisplay} />;
-      } catch (error) {
-        console.error('Error rendering SuperadminDashboard:', error);
-        // Fallback to admin dashboard
-        return <AdminDashboard user={userDisplay} />;
-      }
-    case 'admin':
-      return <AdminDashboard user={userDisplay} />;
-    case 'trainer':
-      return <TrainerDashboard user={userDisplay} />;
-    case 'member':
-      return <MemberDashboard user={userDisplay} />;
-    default:
-      redirect('/login');
+  // Highest role wins (superadmin > admin > trainer > member)
+  if (roles.includes('superadmin')) {
+    redirect('/superadmin');
   }
+
+  if (roles.includes('admin')) {
+    redirect('/admin');
+  }
+
+  if (roles.includes('trainer')) {
+    redirect('/trainer');
+  }
+
+  // Default: member
+  redirect('/member');
 }

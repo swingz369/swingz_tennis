@@ -85,7 +85,8 @@ export async function getCachedData<T>(
  */
 export async function revalidateByTag(tag: string): Promise<void> {
   const { revalidateTag } = await import('next/cache');
-  revalidateTag(tag);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (revalidateTag as any)(tag, 'default');
 }
 
 /**

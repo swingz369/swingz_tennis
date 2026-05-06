@@ -63,8 +63,9 @@ export function useAuth() {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    // Use getUser() instead of getSession() — verifies token server-side (secure)
+    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
+      setUser(authUser ?? null);
       setLoading(false);
     });
 

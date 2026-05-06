@@ -1,256 +1,245 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import {
+  Calendar,
+  Users,
+  Clock,
+  TrendingUp,
+  ChevronRight,
+  CheckCircle,
+  XCircle,
+  Loader2,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import FeedbackList from '@/components/feedback/feedback-list';
-import { useUserMember } from '@/hooks/use-user-data';
-
-interface Attendee {
-  bookingId: string;
-  memberName: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'no_show';
-}
+import { Badge } from '@/components/ui/badge';
 
 interface Session {
   id: string;
-  startTime: string;
-  endTime: string;
-  maxParticipants: number;
-  attendees: Attendee[];
+  timeslot_start: string;
+  timeslot_end: string;
+  status?: string;
+  courts?: { name: string } | { name: string }[];
+  groups?: { name: string } | { name: string }[];
 }
 
-interface DashboardStats {
+interface TrainerStats {
   totalSessions: number;
   upcomingSessions: number;
-  sessionsThisWeek: number;
-  noShows: number;
-  totalAttendees: number;
+  thisWeekSessions: number;
+  attendanceRate: number;
 }
 
-export default function TrainerDashboard() {
-  const { data: memberData } = useUserMember();
+export default function TrainerPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<TrainerStats>({
+    totalSessions: 0,
+    upcomingSessions: 0,
+    thisWeekSessions: 0,
+    attendanceRate: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const res = await fetch('/api/trainer/me', {
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch trainer data');
-        }
-
-        const json = await res.json();
-
-        // Only update state if component is still mounted
-        if (isMounted) {
-          setSessions(json.sessions || []);
-          setStats(json.stats);
-        }
-      } catch (err: unknown) {
-        // Ignore abort errors
-        if (err instanceof Error && err.name === 'AbortError') {
-          return;
-        }
-
-        if (isMounted) {
-          if (err instanceof Error) {
-            setError(err.message);
-          } else {
-            setError('Unknown error');
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/trainer/me', {
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) throw new Error('Fehler beim Laden der Trainer-Daten');
+      const data = await res.json();
+      setSessions(data.sessions ?? []);
+      setStats({
+        totalSessions: data.totalSessions ?? data.sessions?.length ?? 0,
+        upcomingSessions: data.upcomingSessions ?? 0,
+        thisWeekSessions: data.thisWeekSessions ?? 0,
+        attendanceRate: data.attendanceRate ?? 0,
+      });
+    } catch (e: any) {
+      if (e.name !== 'AbortError') {
+        setError(e.message ?? 'Unbekannter Fehler');
       }
-    };
-
-    fetchData();
-
-    // Cleanup function
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      case 'no_show':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-yellow-100 text-yellow-800';
-    }
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  if (loading) return <div className="p-6">Laden...</div>;
-  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('de-DE', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+    });
+
+  const formatTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-[#40916C]" />
+        <p className="text-sm text-muted-foreground">Lade Trainer-Daten…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <XCircle className="h-10 w-10 text-red-400" />
+        <p className="text-sm text-muted-foreground">{error}</p>
+        <button onClick={fetchData} className="text-sm text-[#40916C] hover:underline">
+          Erneut versuchen
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Trainer Dashboard</h1>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Gesamte Sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats?.totalSessions || 0}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Kommende</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats?.upcomingSessions || 0}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Diese Woche</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats?.sessionsThisWeek || 0}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>No-Shows</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{stats?.noShows || 0}</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Trainer Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">Deine Übersicht</p>
       </div>
 
-      {/* Tabs for Sessions and Feedback */}
-      <Tabs defaultValue="sessions" className="w-full">
-        <TabsList>
-          <TabsTrigger value="sessions">Meine Sessions</TabsTrigger>
-          <TabsTrigger value="feedback">Mein Feedback</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="sessions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Meine Sessions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Zeit
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Teilnehmer
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Aktion
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {sessions.map((session: Session) => (
-                      <tr key={session.id}>
-                        <td className="px-4 py-2 text-sm">
-                          {new Date(session.startTime).toLocaleDateString('de-DE', {
-                            weekday: 'short',
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                          <br />
-                          <span className="text-gray-500">
-                            bis{' '}
-                            {new Date(session.endTime).toLocaleTimeString('de-DE', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2 text-sm">
-                          {session.attendees.map((a, i) => (
-                            <div key={i}>{a.memberName}</div>
-                          ))}
-                        </td>
-                        <td className="px-4 py-2 text-sm">
-                          {session.attendees.map((a, i) => (
-                            <span
-                              key={i}
-                              className={`inline-flex items-center px-2 py-1 rounded text-xs mr-1 mb-1 font-medium ${getStatusColor(a.status)}`}
-                            >
-                              {a.status}
-                            </span>
-                          ))}
-                        </td>
-                        <td className="px-4 py-2 text-sm">
-                          {session.attendees.map(
-                            (a, i) =>
-                              a.status === 'confirmed' && (
-                                <span
-                                  key={i}
-                                  className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-600 mr-1 mb-1 rounded"
-                                >
-                                  Kontaktieren Sie den Admin für No-Show
-                                </span>
-                              )
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          {
+            label: 'Gesamt Sessions',
+            value: stats.totalSessions,
+            icon: Calendar,
+            color: 'text-blue-600',
+            bg: 'bg-blue-50 dark:bg-blue-900/20',
+          },
+          {
+            label: 'Kommende',
+            value: stats.upcomingSessions,
+            icon: TrendingUp,
+            color: 'text-green-600',
+            bg: 'bg-green-50 dark:bg-green-900/20',
+          },
+          {
+            label: 'Diese Woche',
+            value: stats.thisWeekSessions,
+            icon: Clock,
+            color: 'text-purple-600',
+            bg: 'bg-purple-50 dark:bg-purple-900/20',
+          },
+          {
+            label: 'Anwesenheitsrate',
+            value: `${stats.attendanceRate}%`,
+            icon: CheckCircle,
+            color: 'text-amber-600',
+            bg: 'bg-amber-50 dark:bg-amber-900/20',
+          },
+        ].map((stat) => (
+          <Card key={stat.label} className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl font-bold mt-0.5">{stat.value}</p>
+                </div>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        ))}
+      </div>
 
-        <TabsContent value="feedback">
-          <Card>
-            <CardHeader>
-              <CardTitle>Feedback von Mitgliedern</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {memberData?.memberId && (
-                <FeedbackList
-                  trainerId={memberData.memberId}
-                  limit={20}
-                  visibleOnly={true}
-                  showMemberInfo={true}
-                  showSessionInfo={true}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Upcoming sessions */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center justify-between">
+            Kommende Einheiten
+            <Link
+              href="/scheduler"
+              className="text-xs text-[#40916C] hover:underline font-normal flex items-center gap-1"
+            >
+              Alle <ChevronRight className="h-3 w-3" />
+            </Link>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sessions.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Keine bevorstehenden Sessions.
+            </p>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-white/10">
+              {sessions.slice(0, 5).map((session) => {
+                const court = Array.isArray(session.courts) ? session.courts[0] : session.courts;
+                const group = Array.isArray(session.groups) ? session.groups[0] : session.groups;
+                return (
+                  <div key={session.id} className="flex items-center gap-3 py-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#40916C]/10 shrink-0">
+                      <Calendar className="h-4 w-4 text-[#40916C]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {group?.name || court?.name || 'Training'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(session.timeslot_start)} · {formatTime(session.timeslot_start)}–
+                        {formatTime(session.timeslot_end)}
+                      </p>
+                    </div>
+                    {session.status && (
+                      <Badge
+                        variant={session.status === 'active' ? 'default' : 'secondary'}
+                        className="text-xs shrink-0"
+                      >
+                        {session.status === 'active' ? 'Aktiv' : session.status}
+                      </Badge>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick links — matches TSOW trainer tab layout */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Schnellzugriff
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Einheiten', href: '/scheduler', icon: Calendar },
+            { label: 'Anwesenheit', href: '/attendance-history', icon: CheckCircle },
+            { label: 'Mein Profil', href: '/profile', icon: Users },
+            { label: 'Abrechnung', href: '/billing', icon: TrendingUp },
+            { label: 'Verfügbarkeit', href: '/scheduler', icon: Clock },
+            { label: 'Nachrichten', href: '/notifications', icon: Users },
+          ].map((action) => (
+            <Link
+              key={action.href + action.label}
+              href={action.href}
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-[#40916C]/40 hover:shadow-sm transition-all"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#40916C]/10">
+                <action.icon className="h-5 w-5 text-[#40916C]" />
+              </div>
+              <span className="text-xs font-medium text-center leading-tight text-gray-700 dark:text-gray-300">
+                {action.label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
