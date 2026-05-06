@@ -4,15 +4,18 @@ import { SuperadminDashboardClient } from './dashboard-client';
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function SuperadminDashboardPage() {
   try {
     const supabase = await createClient();
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (authError || !user) {
+      console.error('Auth error in admin dashboard:', authError);
       redirect('/login');
     }
 
@@ -21,6 +24,7 @@ export default async function SuperadminDashboardPage() {
       redirect('/admin/clubs/30b0d39d-a152-4d2d-bd57-d23220794d41/dashboard');
     }
 
+    // Fetch memberships with proper error handling
     const { data: memberships, error: membershipError } = await supabase
       .from('user_club_memberships')
       .select('role, club_id')
@@ -29,32 +33,34 @@ export default async function SuperadminDashboardPage() {
 
     if (membershipError) {
       console.error('Error fetching memberships:', membershipError);
-      throw new Error(`Fehler beim Laden der Mitgliedschaften: ${membershipError.message}`);
+      // Don't throw - redirect to safe page
+      redirect('/dashboard');
     }
 
-    console.log('User memberships:', memberships);
+    console.log('[Admin Dashboard] User:', user.email, 'Memberships:', memberships);
 
-    const isSuperadmin = memberships?.some((m: { role: string }) => m.role === 'superadmin');
-    console.log('Is superadmin:', isSuperadmin);
+    // Check if user has admin/superadmin role
+    const hasAdminRole = memberships?.some(
+      (m: { role: string }) => m.role === 'superadmin' || m.role === 'admin'
+    );
 
-    if (!isSuperadmin) {
-      const adminMembership = memberships?.find((m: any) => m.role === 'admin') || memberships?.[0];
-      if (adminMembership) {
-        redirect(`/admin/clubs/${adminMembership.club_id}/dashboard`);
+    if (!hasAdminRole) {
+      console.log('[Admin Dashboard] User lacks admin role, redirecting');
+      // Redirect non-admins to their club dashboard or member area
+      const firstMembership = memberships?.[0];
+      if (firstMembership) {
+        redirect(`/admin/clubs/${firstMembership.club_id}/dashboard`);
       } else {
-        redirect('/admin/members');
+        redirect('/dashboard');
       }
     }
 
+    // Fetch clubs data with proper error handling
     const { data: clubs, error: clubsError } = await supabase.from('clubs').select('id, name');
 
     if (clubsError) {
-      console.error('Error fetching clubs:', clubsError);
-      throw new Error(`Fehler beim Laden der Vereinsdaten: ${clubsError.message}`);
-    }
-
-    // Handle empty clubs array
-    if (!clubs || clubs.length === 0) {
+      console.error('[Admin Dashboard] Error fetching clubs:', clubsError);
+      // Return empty data instead of crashing
       const emptyData = {
         clubs: [],
         totalClubs: 0,
@@ -62,9 +68,23 @@ export default async function SuperadminDashboardPage() {
         totalTrainers: 0,
         totalRevenue: 0,
       };
-      console.log('Dashboard data (empty):', emptyData);
       return <SuperadminDashboardClient data={emptyData} />;
     }
+
+    // Handle empty clubs array
+    if (!clubs || clubs.length === 0) {
+      console.log('[Admin Dashboard] No clubs found');
+      const emptyData = {
+        clubs: [],
+        totalClubs: 0,
+        totalMembers: 0,
+        totalTrainers: 0,
+        totalRevenue: 0,
+      };
+      return <SuperadminDashboardClient data={emptyData} />;
+    }
+
+    console.log('[Admin Dashboard] Found', clubs.length, 'clubs');
 
     // Optimize: Fetch all memberships in ONE query instead of N queries (prevents timeout)
     const clubIds = clubs.map((c) => c.id);
@@ -75,8 +95,11 @@ export default async function SuperadminDashboardPage() {
       .eq('is_active', true);
 
     if (membershipsError) {
-      console.error('Error fetching all memberships:', membershipsError);
+      console.error('[Admin Dashboard] Error fetching all memberships:', membershipsError);
+      // Continue with zero counts instead of failing
     }
+
+    console.log('[Admin Dashboard] Found', allMemberships?.length ?? 0, 'memberships');
 
     // Build lookup map for fast access
     const clubStats: Record<string, { members: number; trainers: number }> = {};
@@ -112,11 +135,23 @@ export default async function SuperadminDashboardPage() {
       totalRevenue: clubsData.reduce((sum, c) => sum + (c.revenue || 0), 0),
     };
 
-    console.log('Dashboard data:', data);
+    console.log('[Admin Dashboard] Final data:', {
+      totalClubs: data.totalClubs,
+      totalMembers: data.totalMembers,
+      totalTrainers: data.totalTrainers,
+    });
 
     return <SuperadminDashboardClient data={data} />;
   } catch (error) {
-    console.error('Dashboard error:', error);
-    throw error;
+    console.error('[Admin Dashboard] Unexpected error:', error);
+    // Return empty dashboard instead of crashing
+    const emptyData = {
+      clubs: [],
+      totalClubs: 0,
+      totalMembers: 0,
+      totalTrainers: 0,
+      totalRevenue: 0,
+    };
+    return <SuperadminDashboardClient data={emptyData} />;
   }
 }

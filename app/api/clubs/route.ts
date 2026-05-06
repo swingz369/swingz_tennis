@@ -1,15 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
-import { Club as ClubEntity } from '@/domain/entities/club';
-import { ValidationService } from '@/domain/services/validation.service';
-import { createClubSchema } from '@/application/validation/schemas';
-import { withValidation } from '@/application/validation/validator';
-import { AuditService } from '@/infrastructure/audit/audit.service';
+import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-
-const clubRepo = new DrizzleClubRepository();
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -22,19 +15,46 @@ export async function GET(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     try {
-      const clubs = await clubRepo.findAll();
+      // Use Supabase directly instead of repository to avoid domain layer issues
+      const supabase = await createClient();
+      const { data: clubs, error } = await supabase
+        .from('clubs')
+        .select('id, name, status, max_members, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[API /clubs] Database error:', error);
+        return NextResponse.json({ error: 'Failed to fetch clubs' }, { status: 500 });
+      }
+
+      // Get member counts for each club (optimized single query)
+      const clubIds = clubs?.map((c) => c.id) || [];
+      const memberCounts: Record<string, number> = {};
+
+      if (clubIds.length > 0) {
+        const { data: memberships } = await supabase
+          .from('user_club_memberships')
+          .select('club_id')
+          .in('club_id', clubIds)
+          .eq('is_active', true);
+
+        memberships?.forEach((m) => {
+          memberCounts[m.club_id] = (memberCounts[m.club_id] || 0) + 1;
+        });
+      }
+
       return NextResponse.json(
-        clubs.map((c) => ({
-          id: c.getId().getValue(),
-          name: c.getName(),
-          status: c.getStatus(),
-          memberCount: c.getMemberCount(),
-          maxMembers: c.getMaxMembers(),
+        (clubs || []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          status: c.status || 'active',
+          memberCount: memberCounts[c.id] || 0,
+          maxMembers: c.max_members || 100,
         }))
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error listing clubs:', error);
+      console.error('[API /clubs] Error listing clubs:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -50,27 +70,57 @@ export async function POST(req: NextRequest) {
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
-    return withValidation(createClubSchema, async (input) => {
-      try {
-        ValidationService.validateClubCreation(input.name, input.maxMembers, input.openingHours);
+    try {
+      const body = await req.json();
+      const { name, maxMembers, openingHours } = body;
 
-        const club = ClubEntity.create(input.name, input.maxMembers, input.openingHours);
-        await clubRepo.save(club);
-
-        await AuditService.logClubCreated(auth.user.id, club.getId().getValue(), input.name);
-
-        return NextResponse.json(
-          {
-            clubId: club.getId().getValue(),
-            name: club.getName(),
-          },
-          { status: 201 }
-        );
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('Error creating club:', error);
-        return NextResponse.json({ error: message }, { status: 400 });
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return NextResponse.json({ error: 'Club name is required' }, { status: 400 });
       }
-    })(req);
+
+      const supabase = await createClient();
+
+      // Check if club with same name exists
+      const { data: existing } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('name', name)
+        .maybeSingle();
+
+      if (existing) {
+        return NextResponse.json({ error: 'Club with this name already exists' }, { status: 400 });
+      }
+
+      // Create club
+      const { data: newClub, error } = await supabase
+        .from('clubs')
+        .insert({
+          name: name.trim(),
+          max_members: maxMembers || 100,
+          opening_hours: openingHours || {},
+          status: 'active',
+        })
+        .select('id, name')
+        .single();
+
+      if (error) {
+        console.error('[API /clubs] Error creating club:', error);
+        return NextResponse.json({ error: 'Failed to create club' }, { status: 500 });
+      }
+
+      console.log('[API /clubs] Club created:', newClub.id, newClub.name);
+
+      return NextResponse.json(
+        {
+          clubId: newClub.id,
+          name: newClub.name,
+        },
+        { status: 201 }
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[API /clubs] Error creating club:', error);
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
   });
 }

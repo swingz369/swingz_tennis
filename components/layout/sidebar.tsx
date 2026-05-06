@@ -96,7 +96,7 @@ export function Sidebar({
       return [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
         { name: 'Admin Dashboard', href: '/admin/panel-v2', icon: Layout },
-        { name: 'Saisonplanung', href: '/admin/season-planning', icon: CalendarRange },
+        { name: 'Saisonplanung', href: '/admin/seasons', icon: CalendarRange },
         { name: 'Benutzerverwaltung', href: '/admin/members', icon: Users },
         {
           name: 'Genehmigungen',
