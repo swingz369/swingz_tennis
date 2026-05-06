@@ -24,6 +24,7 @@ import {
   CreditCard,
   Building2,
   Clock,
+  CalendarRange,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -95,6 +96,7 @@ export function Sidebar({
       return [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
         { name: 'Admin Dashboard', href: '/admin/panel-v2', icon: Layout },
+        { name: 'Saisonplanung', href: '/admin/season-planning', icon: CalendarRange },
         { name: 'Benutzerverwaltung', href: '/admin/members', icon: Users },
         {
           name: 'Genehmigungen',
