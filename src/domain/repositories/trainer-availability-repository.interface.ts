@@ -1,4 +1,12 @@
-// Export types for use in implementations
+// Import and export types for use in implementations
+import type {
+  TrainerAvailability,
+  AvailabilityConflict,
+  CreateTrainerAvailabilityInput,
+  UpdateTrainerAvailabilityInput,
+  AvailabilityQuery,
+} from '../entities/trainer-availability.entity';
+
 export type {
   TrainerAvailability,
   AvailabilityConflict,

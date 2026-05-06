@@ -25,7 +25,8 @@ let memberUserId: string;
 let testClubId: string;
 
 describe('Phase 2 Service Migration Integration Tests', () => {
-  let supabase: ReturnType<typeof createClient>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let supabase: ReturnType<typeof createClient<any>>;
 
   beforeAll(async () => {
     supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -43,7 +44,7 @@ describe('Phase 2 Service Migration Integration Tests', () => {
       .select()
       .single();
 
-    testClubId = club.id;
+    testClubId = club!.id;
 
     // Setup test users with different roles
     // Note: In real tests, you'd use auth.admin.createUser

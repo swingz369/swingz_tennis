@@ -24,8 +24,7 @@ export default async function AdminPage() {
 
   // Get active club from cookie
   const cookieStore = await cookies();
-  const clubId =
-    cookieStore.get('admin_club_id')?.value || cookieStore.get('selected-club-id')?.value;
+  const clubId = cookieStore.get('admin_club_id')?.value;
 
   if (!clubId) {
     // Shouldn't happen if layout guard is working, but safety fallback

@@ -143,7 +143,7 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
       return [];
     }
 
-    return result.rows.map((row) => this.mapToDomain(row));
+    return result.map((row) => this.mapToDomain(row));
   }
 
   async update(

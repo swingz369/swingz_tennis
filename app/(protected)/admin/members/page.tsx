@@ -29,7 +29,7 @@ export default async function MembersPage() {
   let effectiveClubId: string;
   if (isSuperAdmin) {
     const cookieStore = await cookies();
-    const selectedClubId = cookieStore.get('selected-club-id')?.value;
+    const selectedClubId = cookieStore.get('admin_club_id')?.value;
     if (selectedClubId && memberships.some((m) => m.club_id === selectedClubId)) {
       effectiveClubId = selectedClubId;
     } else {

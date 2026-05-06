@@ -43,9 +43,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const primaryClubRaw = primaryMembership?.clubs ?? null;
   const primaryClub = Array.isArray(primaryClubRaw) ? primaryClubRaw[0] : primaryClubRaw;
 
-  // Read selected-club-id cookie for superadmin context
+  // Read admin_club_id cookie for superadmin context
   const cookieStore = await cookies();
-  const selectedClubId = cookieStore.get('selected-club-id')?.value;
+  const selectedClubId = cookieStore.get('admin_club_id')?.value;
 
   let selectedClubData: { id: string; name: string } | null = null;
   if (selectedClubId && isSuperAdmin) {

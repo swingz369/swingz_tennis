@@ -20,10 +20,7 @@ Sentry.init({
 
   integrations: [
     // PostgreSQL query tracing
-    Sentry.postgresIntegration({
-      // Record query parameters (be careful with PII)
-      recordQueryParameters: false, // Set to false to avoid logging sensitive data
-    }),
+    Sentry.postgresIntegration(),
   ],
 
   // Scrub sensitive data before sending

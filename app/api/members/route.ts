@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { MemberService } from '@/src/application/services/member.service';
+import type { CreateMemberInput } from '@/src/domain/entities/member.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -31,17 +32,18 @@ export async function POST(request: NextRequest) {
         // Validate request body with Zod
         const validation = validateRequestBody(CreateMemberSchema, body);
         if (!validation.success) {
+          const errors = (validation as { success: false; errors: import('zod').ZodError }).errors;
           return NextResponse.json(
             {
               error: 'Validation failed',
-              details: formatValidationErrors(validation.errors),
+              details: formatValidationErrors(errors),
             },
             { status: 400 }
           );
         }
 
         // Create member (associated with the authenticated user's club)
-        const member = await MemberService.createMember(validation.data);
+        const member = await MemberService.createMember(validation.data as CreateMemberInput);
 
         return NextResponse.json({ success: true, member });
       } catch (error) {
@@ -66,10 +68,11 @@ export async function GET(request: NextRequest) {
       // Validate query parameters with Zod
       const validation = validateQueryParams(MemberQuerySchema, searchParams);
       if (!validation.success) {
+        const errors = (validation as { success: false; errors: import('zod').ZodError }).errors;
         return NextResponse.json(
           {
             error: 'Invalid query parameters',
-            details: formatValidationErrors(validation.errors),
+            details: formatValidationErrors(errors),
           },
           { status: 400 }
         );

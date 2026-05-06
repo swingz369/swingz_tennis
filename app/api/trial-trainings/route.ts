@@ -59,7 +59,7 @@ export async function POST(_request: NextRequest) {
           dateOfBirth: string;
           age?: number;
         },
-      });
+      } as import('@/src/domain/entities/trial-training.entity').CreateTrialTrainingInput);
 
       return NextResponse.json({ success: true, trialTraining });
     } catch (error) {

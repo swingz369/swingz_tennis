@@ -1,4 +1,14 @@
-// Export types for use in implementations
+// Import and export types for use in implementations
+import type {
+  HoursLog,
+  AttendanceRecord,
+  CreateHoursLogInput,
+  UpdateHoursLogInput,
+  CreateAttendanceRecordInput,
+  UpdateAttendanceRecordInput,
+  HoursSummary,
+} from '../entities/hours-log.entity';
+
 export type {
   HoursLog,
   AttendanceRecord,

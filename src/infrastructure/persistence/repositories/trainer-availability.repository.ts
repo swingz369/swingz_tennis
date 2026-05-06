@@ -214,7 +214,7 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     }
 
     // Map conflicts
-    return result.rows.map((row) => ({
+    return result.map((row) => ({
       id: row.id,
       trainerId,
       trainerName: '', // Would need join with trainers table

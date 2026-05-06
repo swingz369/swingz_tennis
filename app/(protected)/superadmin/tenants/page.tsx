@@ -98,7 +98,7 @@ export default function SuperadminTenantsPage() {
     // Set cookie for club context (24h expiry)
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
-    document.cookie = `selected-club-id=${clubId}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
+    document.cookie = `admin_club_id=${clubId}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
 
     toast.success(`Gewechselt zu: ${clubName}`);
     router.push('/admin/members');

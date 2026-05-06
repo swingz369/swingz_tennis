@@ -42,7 +42,7 @@ export class SupabaseStorageService implements StorageService {
     return {
       path,
       url: publicUrl,
-      size: file instanceof Buffer ? file.length : file.size,
+      size: file instanceof Buffer ? file.length : (file as Blob).size,
       mimeType: options?.allowedTypes?.[0] || 'application/octet-stream',
       uploadedAt: new Date(),
     };

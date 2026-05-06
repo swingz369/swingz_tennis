@@ -22,9 +22,10 @@ import type {
 export class HourlyRateTierRepository implements IHourlyRateTierRepository {
   async create(input: CreateHourlyRateTierInput): Promise<HourlyRateTier> {
     try {
-      const now = new Date().toISOString();
+      const now = new Date();
       const [tier] = await db
         .insert(hourlyRateTiers)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .values({
           name: input.name,
           description: input.description,
@@ -34,7 +35,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
           isActive: true,
           createdAt: now,
           updatedAt: now,
-        })
+        } as any)
         .returning();
 
       if (!tier) throw new Error('Failed to create hourly rate tier');
@@ -169,11 +170,12 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
 
   async create(input: CreateTrainerHourlyRateInput): Promise<TrainerHourlyRate> {
     try {
-      const now = new Date().toISOString();
+      const now = new Date();
       const effectiveRate = input.overrideRate || input.baseRate;
 
       const [rate] = await db
         .insert(trainerHourlyRates)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .values({
           trainerId: input.trainerId,
           trainerName: input.trainerName,
@@ -185,7 +187,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
           reason: input.reason,
           createdAt: now,
           updatedAt: now,
-        })
+        } as any)
         .returning();
 
       if (!rate) throw new Error('Failed to create trainer hourly rate');
@@ -294,7 +296,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
           effectiveRate: newEffectiveRate.toString(),
           validUntil: input.validUntil,
           reason: input.reason,
-          updatedAt: new Date().toISOString(),
+          updatedAt: new Date(),
         })
         .where(eq(trainerHourlyRates.id, id))
         .returning();
@@ -350,8 +352,8 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
       baseRate: parseFloat(row.baseRate),
       overrideRate: row.overrideRate ? parseFloat(row.overrideRate) : undefined,
       effectiveRate: parseFloat(row.effectiveRate),
-      validFrom: row.validFrom.toISOString(),
-      validUntil: row.validUntil?.toISOString() ?? undefined,
+      validFrom: row.validFrom,
+      validUntil: row.validUntil ?? undefined,
       reason: row.reason ?? undefined,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -365,9 +367,10 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
 export class RateHistoryRepository implements IRateHistoryRepository {
   async addEntry(entry: Omit<RateHistoryEntry, 'id' | 'changedAt'>): Promise<RateHistoryEntry> {
     try {
-      const now = new Date().toISOString();
+      const now = new Date();
       const [historyEntry] = await db
         .insert(rateHistory)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .values({
           trainerId: entry.trainerId,
           trainerName: entry.trainerName,
@@ -376,7 +379,7 @@ export class RateHistoryRepository implements IRateHistoryRepository {
           changedAt: now,
           changedBy: entry.changedBy,
           reason: entry.reason,
-        })
+        } as any)
         .returning();
 
       if (!historyEntry) throw new Error('Failed to add rate history entry');

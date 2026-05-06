@@ -50,7 +50,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const courtType = await courtService.createCourtType(validation.data);
+      const courtType = await courtService.createCourtType(
+        validation.data as Parameters<typeof courtService.createCourtType>[0]
+      );
       return NextResponse.json({ success: true, courtType }, { status: 201 });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

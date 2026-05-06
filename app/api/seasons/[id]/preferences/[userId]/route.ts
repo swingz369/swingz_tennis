@@ -29,9 +29,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   return withApiAuth(request, async (auth) => {
     const db = getDb();
+    const { id: seasonId, userId } = await context.params;
     try {
-      const { id: seasonId, userId } = await context.params;
-
       // Verify season exists
       const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
 
@@ -102,9 +101,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     return withApiAuth(request, async (auth) => {
       const db = getDb();
+      const { id: seasonId, userId } = await context.params;
       try {
-        const { id: seasonId, userId } = await context.params;
-
         // Check permissions
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
@@ -217,9 +215,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return withApiAuth(request, async (auth) => {
       const db = getDb();
+      const { id: seasonId, userId } = await context.params;
       try {
-        const { id: seasonId, userId } = await context.params;
-
         // Check permissions
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
@@ -254,7 +251,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           message: 'Preference deleted successfully',
         });
       } catch (error) {
-        console.error(`DELETE /api/seasons/${id}/preferences/${userId} error:`, error);
+        console.error(`DELETE /api/seasons/${seasonId}/preferences/${userId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to delete preference' },
           { status: 500 }

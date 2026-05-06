@@ -58,7 +58,7 @@ async function buildAuthContext(
   // Superadmin can select a club via cookie
   let selectedClubId: string | undefined;
   if (effectiveRole === 'superadmin') {
-    const selectedCookie = request.cookies.get('selected-club-id');
+    const selectedCookie = request.cookies.get('admin_club_id');
     if (selectedCookie?.value && memberships.some((m) => m.club_id === selectedCookie.value)) {
       selectedClubId = selectedCookie.value;
     }

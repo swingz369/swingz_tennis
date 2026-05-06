@@ -66,10 +66,8 @@ class TrainerAvailabilityServiceAdapter {
   }
 
   async markTrainerAvailabilityAsBooked(id: string): Promise<TrainerAvailability | null> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.markAsBooked(id);
-    }
-    return TrainerAvailabilityService.markTrainerAvailabilityAsBooked(id);
+    // markAsBooked only exists in the repository implementation
+    return this.repo.markAsBooked(id);
   }
 
   async deleteTrainerAvailability(id: string): Promise<boolean> {
@@ -100,10 +98,8 @@ class TrainerAvailabilityServiceAdapter {
   }
 
   async getAvailableSlots(trainerId: string, date: string): Promise<TrainerAvailability[]> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.getAvailableSlots(trainerId, date);
-    }
-    return TrainerAvailabilityService.getAvailableSlots(trainerId, date);
+    // getAvailableSlots only exists in the repository implementation
+    return this.repo.getAvailableSlots(trainerId, date);
   }
 
   isUsingRepository(): boolean {

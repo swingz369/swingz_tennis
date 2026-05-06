@@ -1,4 +1,13 @@
-// Export types for use in implementations
+// Import and export types for use in implementations
+import type {
+  BillingPeriod,
+  TrainerBilling,
+  BillingLineItem,
+  CreateTrainerBillingInput,
+  UpdateTrainerBillingInput,
+  BillingSummary,
+} from '../entities/billing.entity';
+
 export type {
   BillingPeriod,
   TrainerBilling,

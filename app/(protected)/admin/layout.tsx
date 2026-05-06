@@ -44,8 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (isSuperadmin) {
     // Superadmin must select a club before using admin area
     const cookieStore = await cookies();
-    const savedClubId =
-      cookieStore.get('admin_club_id')?.value || cookieStore.get('selected-club-id')?.value;
+    const savedClubId = cookieStore.get('admin_club_id')?.value;
 
     if (!savedClubId) {
       // No club selected — send to club picker (like TSOW /select-admin-club)

@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
+import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 
 /**
  * POST /api/admin/switch-club
@@ -45,11 +46,11 @@ export async function POST(req: NextRequest) {
 
     // 4. Set cookie with club selection
     const cookieStore = await cookies();
-    cookieStore.set('admin_club_id', clubId, {
+    cookieStore.set(ADMIN_CLUB_COOKIE, clubId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: ADMIN_CLUB_COOKIE_MAX_AGE,
       path: '/',
     });
 

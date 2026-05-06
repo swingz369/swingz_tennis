@@ -84,7 +84,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           existing.setMaxMembers(input.maxMembers);
         }
         if (input.openingHours !== undefined) {
-          existing.setOpeningHours(input.openingHours);
+          existing.setOpeningHours(
+            input.openingHours as Parameters<typeof existing.setOpeningHours>[0]
+          );
         }
         if (input.status !== undefined) {
           existing.setStatus(input.status);

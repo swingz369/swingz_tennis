@@ -123,7 +123,7 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
       return [];
     }
 
-    return result.rows.map((row) => this.mapToDomain(row));
+    return result.map((row) => this.mapToDomain(row));
   }
 
   async search(query: string, clubId: string): Promise<TrialTraining[]> {

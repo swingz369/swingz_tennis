@@ -32,9 +32,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   return withApiAuth(request, async (auth) => {
     const db = getDb();
+    const { id: seasonId, entryId } = await context.params;
     try {
-      const { id: seasonId, entryId } = await context.params;
-
       // Fetch entry with details
       const [result] = await db
         .select({
@@ -98,9 +97,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     return withApiAuth(request, async (auth) => {
       const db = getDb();
+      const { id: seasonId, entryId } = await context.params;
       try {
-        const { id: seasonId, entryId } = await context.params;
-
         // Only admins can update plan entries
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
@@ -229,7 +227,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           message: 'Plan entry updated successfully',
         });
       } catch (error) {
-        console.error(`PATCH /api/seasons/${id}/plan-entries/${entryId} error:`, error);
+        console.error(`PATCH /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to update plan entry' },
           { status: 500 }
@@ -252,9 +250,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return withApiAuth(request, async (auth) => {
       const db = getDb();
+      const { id: seasonId, entryId } = await context.params;
       try {
-        const { id: seasonId, entryId } = await context.params;
-
         // Only admins can delete plan entries
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
@@ -294,7 +291,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           message: 'Plan entry deleted successfully',
         });
       } catch (error) {
-        console.error(`DELETE /api/seasons/${id}/plan-entries/${entryId} error:`, error);
+        console.error(`DELETE /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to delete plan entry' },
           { status: 500 }

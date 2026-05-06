@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const db = getDb();
     // Higher rate limit for expensive operation
     const rateLimitError = await checkRateLimitOrFail(request, {
-      maxRequests: 5,
+      max: 5,
       windowMs: 3600000, // 5 requests per hour
     });
     if (rateLimitError) return rateLimitError;

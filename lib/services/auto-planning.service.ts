@@ -77,7 +77,7 @@ export class AutoPlanningService {
     }
 
     // 2. Fetch all preferences
-    const allPreferences = await db
+    const allPreferences = await getDb()
       .select({
         pref: userTrainingPreferences,
         user_name: sql<string>`COALESCE(users.full_name, users.email)`,
@@ -120,13 +120,13 @@ export class AutoPlanningService {
     }
 
     // 3. Fetch available courts
-    const availableCourts = await db
+    const availableCourts = await getDb()
       .select()
       .from(courts)
       .where(and(eq(courts.club_id, season.club_id), eq(courts.is_active, true)));
 
     // 4. Fetch groups
-    const availableGroups = await db
+    const availableGroups = await getDb()
       .select()
       .from(groups)
       .where(and(eq(groups.club_id, season.club_id), eq(groups.is_active, true)));
@@ -442,11 +442,11 @@ export class AutoPlanningService {
         },
         entries_affected: slots.length,
         conflicts_created: conflicts.length,
-        algorithm_metrics: metrics,
+        algorithm_metrics: metrics as unknown as Record<string, unknown>,
       });
 
     // Update season status
-    await db
+    await getDb()
       .update(seasons)
       .set({
         planning_status: 'manual_review',

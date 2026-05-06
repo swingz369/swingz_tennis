@@ -28,10 +28,11 @@ export async function POST(request: NextRequest) {
         // Validate request body with Zod
         const validation = validateRequestBody(CreateSEPAMandateSchema, body);
         if (!validation.success) {
+          const errors = (validation as { success: false; errors: import('zod').ZodError }).errors;
           return NextResponse.json(
             {
               error: 'Validation failed',
-              details: formatValidationErrors(validation.errors),
+              details: formatValidationErrors(errors),
             },
             { status: 400 }
           );

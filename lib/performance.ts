@@ -8,7 +8,7 @@
  * - Performance monitoring
  */
 
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { memo } from 'react';
 import dynamic from 'next/dynamic';
 
@@ -53,7 +53,7 @@ export function memoComponent<P extends object>(
 export function lazyComponent<P = Record<string, never>>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
   options?: {
-    loading?: ComponentType;
+    loading?: () => ReactNode;
     ssr?: boolean;
   }
 ) {
@@ -79,7 +79,7 @@ export function lazyComponent<P = Record<string, never>>(
 export function clientOnlyComponent<P = Record<string, never>>(
   importFn: () => Promise<{ default: ComponentType<P> }>,
   options?: {
-    loading?: ComponentType;
+    loading?: () => ReactNode;
   }
 ) {
   return dynamic(importFn, {
@@ -145,7 +145,7 @@ export function deepEqual<P extends object>(
  */
 export function withPerformanceMonitoring<P extends object>(
   componentName: string,
-  Component: ComponentType<P>
+  Component: (props: P) => ReactNode
 ) {
   if (process.env.NODE_ENV === 'production') {
     return Component;

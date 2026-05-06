@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { createRateLimitedHandler, RATE_LIMITS } from '@/lib/rate-limit';
+import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 
 export const POST = createRateLimitedHandler('api', async function handler(request: NextRequest) {
   try {
@@ -57,11 +58,11 @@ export const POST = createRateLimitedHandler('api', async function handler(reque
 
     // Set cookie with selected club
     const cookieStore = await cookies();
-    cookieStore.set('selected-club-id', clubId, {
+    cookieStore.set(ADMIN_CLUB_COOKIE, clubId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: ADMIN_CLUB_COOKIE_MAX_AGE,
       path: '/',
     });
 
@@ -80,7 +81,7 @@ export const DELETE = createRateLimitedHandler('api', async function handler(req
   try {
     // Clear the selected club cookie
     const cookieStore = await cookies();
-    cookieStore.delete('selected-club-id');
+    cookieStore.delete(ADMIN_CLUB_COOKIE);
 
     return NextResponse.json({
       success: true,

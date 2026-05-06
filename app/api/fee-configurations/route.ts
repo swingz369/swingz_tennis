@@ -42,7 +42,7 @@ export async function POST(_request: NextRequest) {
       }
 
       const feeConfiguration = await FeeConfigurationService.createFeeConfiguration(
-        validation.data
+        validation.data as import('@/src/domain/entities/fee-configuration.entity').CreateFeeConfigurationInput
       );
 
       return NextResponse.json({ success: true, feeConfiguration });

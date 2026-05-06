@@ -358,7 +358,7 @@ export default function MemberCourtBookings() {
 
                 return (
                   <div
-                    key={courtId}
+                    key={courtId as string}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div className="flex items-center gap-3">

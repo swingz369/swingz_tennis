@@ -31,7 +31,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
     if (query.trim().length < 2) {
       setResults([]);
       setOpen(false);
-      return;
+      return undefined;
     }
 
     debounceRef.current = setTimeout(async () => {
@@ -96,6 +96,8 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         return 'Trainer';
       case 'club':
         return 'Verein';
+      default:
+        return type;
     }
   };
 
