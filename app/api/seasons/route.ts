@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { db } from '@/src/infrastructure/persistence/drizzle';
+import { getDb } from '@/src/infrastructure/persistence/client';
 import {
   seasons,
   userTrainingPreferences,

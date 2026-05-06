@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { db } from '@/src/infrastructure/persistence/drizzle';
+import { getDb } from '@/src/infrastructure/persistence/client';
 import {
   seasons,
   seasonPlanEntries,
@@ -282,7 +282,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         }
 
         // Delete entry
-        await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.id, entryId));
+        await getDb().delete(seasonPlanEntries).where(eq(seasonPlanEntries.id, entryId));
 
         return NextResponse.json({
           success: true,

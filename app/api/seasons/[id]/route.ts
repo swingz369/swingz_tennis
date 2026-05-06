@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { db } from '@/src/infrastructure/persistence/drizzle';
+import { getDb } from '@/src/infrastructure/persistence/client';
 import {
   seasons,
   userTrainingPreferences,
@@ -109,7 +109,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         }
 
         // Fetch existing season
-        const [existingSeason] = await db.select().from(seasons).where(eq(seasons.id, id));
+        const [existingSeason] = await getDb().select().from(seasons).where(eq(seasons.id, id));
 
         if (!existingSeason) {
           return NextResponse.json({ error: 'Season not found' }, { status: 404 });
@@ -189,24 +189,26 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
         // Log status changes to history
         if (body.planning_status && body.planning_status !== existingSeason.planning_status) {
-          await db.insert(seasonPlanningHistory).values({
-            season_id: id,
-            club_id: existingSeason.club_id,
-            action_type:
-              body.planning_status === 'published'
-                ? 'plan_published'
-                : body.planning_status === 'active'
-                  ? 'season_activated'
-                  : body.planning_status === 'collecting_preferences'
-                    ? 'preferences_opened'
-                    : 'manual_edit',
-            actor_id: auth.userId,
-            actor_role: auth.role,
-            details: {
-              old_status: existingSeason.planning_status,
-              new_status: body.planning_status,
-            },
-          });
+          await getDb()
+            .insert(seasonPlanningHistory)
+            .values({
+              season_id: id,
+              club_id: existingSeason.club_id,
+              action_type:
+                body.planning_status === 'published'
+                  ? 'plan_published'
+                  : body.planning_status === 'active'
+                    ? 'season_activated'
+                    : body.planning_status === 'collecting_preferences'
+                      ? 'preferences_opened'
+                      : 'manual_edit',
+              actor_id: auth.userId,
+              actor_role: auth.role,
+              details: {
+                old_status: existingSeason.planning_status,
+                new_status: body.planning_status,
+              },
+            });
         }
 
         return NextResponse.json({
@@ -246,7 +248,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         }
 
         // Fetch existing season
-        const [existingSeason] = await db.select().from(seasons).where(eq(seasons.id, id));
+        const [existingSeason] = await getDb().select().from(seasons).where(eq(seasons.id, id));
 
         if (!existingSeason) {
           return NextResponse.json({ error: 'Season not found' }, { status: 404 });
@@ -263,7 +265,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         }
 
         // Delete season (cascades to related tables)
-        await db.delete(seasons).where(eq(seasons.id, id));
+        await getDb().delete(seasons).where(eq(seasons.id, id));
 
         return NextResponse.json({
           success: true,
