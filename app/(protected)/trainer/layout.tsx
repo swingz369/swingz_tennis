@@ -27,8 +27,7 @@ export default async function TrainerLayout({ children }: { children: React.Reac
       is_active,
       clubs (
         id,
-        name,
-        slug
+        name
       )
     `
     )
@@ -46,16 +45,8 @@ export default async function TrainerLayout({ children }: { children: React.Reac
   );
 
   if (trainerMemberships.length === 0) {
-    // User doesn't have trainer access - redirect to member portal
-    const clubData = memberships[0]?.clubs;
-    const clubSlug = Array.isArray(clubData) ? clubData[0]?.slug : clubData?.slug;
-
-    if (clubSlug) {
-      redirect(`/club/${clubSlug}`);
-    }
-
-    // Fallback: no valid role
-    redirect('/unauthorized?reason=not_trainer');
+    // User doesn't have trainer access - redirect to dashboard
+    redirect('/dashboard');
   }
 
   // 4. Determine primary club for trainer

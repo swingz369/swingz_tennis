@@ -29,8 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       is_active,
       clubs (
         id,
-        name,
-        slug
+        name
       )
     `
     )
@@ -56,12 +55,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
 
     if (roles.includes('member')) {
-      // Redirect to their club dashboard
-      const clubData = memberships[0].clubs;
-      const clubSlug = Array.isArray(clubData) ? clubData[0]?.slug : clubData?.slug;
-      if (clubSlug) {
-        redirect(`/club/${clubSlug}`);
-      }
+      // Redirect to dashboard (no slug-based club routes)
+      redirect('/dashboard');
     }
 
     // Fallback: no valid role
@@ -71,7 +66,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // 4. Determine active club context
   const isSuperadmin = adminMemberships.some((m: { role: string }) => m.role === 'superadmin');
   let activeClubId: string;
-  let activeClubData: { id: string; name: string; slug?: string } | null = null;
+  let activeClubData: { id: string; name: string } | null = null;
 
   if (isSuperadmin) {
     // Check cookie for persisted club selection
