@@ -10,40 +10,33 @@ export default async function SelectAdminClubPage() {
   // Only superadmin can access this page
   const { data: memberships } = await supabase
     .from('user_club_memberships')
-    .select('role, club_id, clubs(id, name)')
+    .select('role')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  const isSuperadmin = memberships?.some((m: any) => m.role === 'superadmin');
+  const isSuperadmin = (memberships ?? []).some((m: any) => m.role === 'superadmin');
 
-  if (!isSuperadmin) {
-    redirect('/dashboard');
-  }
+  if (!isSuperadmin) redirect('/dashboard');
 
-  // Fetch ALL clubs (superadmin sees everything)
+  // Superadmin sees ALL clubs (platform-wide)
   const { data: allClubs } = await supabase.from('clubs').select('id, name, status').order('name');
 
-  // Club stats per club
   const clubsWithStats = await Promise.all(
     (allClubs ?? []).map(async (club: any) => {
-      const { count: memberCount } = await supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-        .eq('is_active', true);
-
-      const { count: trainerCount } = await supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-        .eq('role', 'trainer')
-        .eq('is_active', true);
-
-      return {
-        ...club,
-        memberCount: memberCount ?? 0,
-        trainerCount: trainerCount ?? 0,
-      };
+      const [{ count: memberCount }, { count: trainerCount }] = await Promise.all([
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', club.id)
+          .eq('is_active', true),
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', club.id)
+          .eq('role', 'trainer')
+          .eq('is_active', true),
+      ]);
+      return { ...club, memberCount: memberCount ?? 0, trainerCount: trainerCount ?? 0 };
     })
   );
 

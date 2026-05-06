@@ -1,21 +1,20 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
 /**
- * Admin Layout — Authentication & Authorization Guard
+ * Admin Layout — Auth + Role Guard
  *
- * Matches TSOW behavior:
- * - Verifies admin or superadmin role
- * - Superadmin without active club cookie → /select-admin-club
- * - Admin with club where setup_completed_at is null → /admin/onboarding
- * - Non-admin users are redirected to their appropriate area
+ * Superadmin: muss zuerst einen Verein via /select-admin-club wählen
+ *             (cookie admin_club_id muss gesetzt sein)
+ * Admin:      hat genau einen Verein zugeordnet — direkt weiter
+ * Andere:     werden zu ihrer Rolle weitergeleitet
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
   const { supabase, user } = auth;
 
-  // Fetch memberships
   const { data: memberships, error } = await supabase
     .from('user_club_memberships')
     .select('id, role, club_id, is_active')
@@ -23,44 +22,31 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq('is_active', true);
 
   if (error || !memberships || memberships.length === 0) {
-    console.error('[Admin Layout] Failed to load memberships:', error);
     redirect('/login?error=no_memberships');
   }
 
-  const roles = memberships.map((m: { role: string }) => m.role);
+  const roles = memberships.map((m: any) => m.role as string);
+  const isSuperadmin = roles.includes('superadmin');
+  const isAdmin = roles.includes('admin');
 
-  // Verify admin or superadmin role
-  const hasAdminAccess = memberships.some(
-    (m: { role: string }) => m.role === 'admin' || m.role === 'superadmin'
-  );
-
-  if (!hasAdminAccess) {
+  if (!isSuperadmin && !isAdmin) {
     if (roles.includes('trainer')) redirect('/trainer');
     redirect('/member');
   }
 
-  const isSuperadmin = memberships.some((m: { role: string }) => m.role === 'superadmin');
-
   if (isSuperadmin) {
-    // Superadmin must select a club before using admin area
+    // Superadmin needs a club selected to use admin area
     const cookieStore = await cookies();
-    const savedClubId = cookieStore.get('admin_club_id')?.value;
+    const clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
 
-    if (!savedClubId) {
-      // No club selected — send to club picker (like TSOW /select-admin-club)
-      const currentPath = '/admin'; // We can't easily read pathname in server component
+    if (!clubId) {
       redirect('/select-admin-club');
     }
 
-    // Validate the saved club still exists and user has access
-    const { data: clubCheck } = await supabase
-      .from('clubs')
-      .select('id')
-      .eq('id', savedClubId)
-      .maybeSingle();
+    // Validate club still exists
+    const { data: club } = await supabase.from('clubs').select('id').eq('id', clubId).maybeSingle();
 
-    if (!clubCheck) {
-      // Cookie refers to a non-existent club — re-select
+    if (!club) {
       redirect('/select-admin-club');
     }
   }

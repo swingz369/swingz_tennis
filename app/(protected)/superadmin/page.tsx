@@ -4,10 +4,11 @@ import {
   Building2,
   Users,
   GraduationCap,
-  TrendingUp,
-  ChevronRight,
   Activity,
+  ChevronRight,
   Shield,
+  TrendingUp,
+  Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,10 +18,10 @@ export const dynamic = 'force-dynamic';
 export default async function SuperadminPage() {
   const { supabase, user } = await requireAuth();
 
-  // Platform stats
+  // Platform stats — superadmin queries ALL data directly (no club filter)
   const [
     { count: clubCount },
-    { count: totalMembers },
+    { count: totalUsers },
     { count: totalTrainers },
     { count: activeMembers },
   ] = await Promise.all([
@@ -37,29 +38,27 @@ export default async function SuperadminPage() {
       .eq('is_active', true),
   ]);
 
-  // Recent clubs with member counts
+  // All clubs with member counts
   const { data: clubs } = await supabase
     .from('clubs')
     .select('id, name, status, created_at')
-    .order('created_at', { ascending: false })
-    .limit(8);
+    .order('name');
 
-  // Per-club member counts
   const clubsWithStats = await Promise.all(
     (clubs ?? []).map(async (club: any) => {
-      const { count: members } = await supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-        .eq('is_active', true);
-
-      const { count: trainers } = await supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', club.id)
-        .eq('role', 'trainer')
-        .eq('is_active', true);
-
+      const [{ count: members }, { count: trainers }] = await Promise.all([
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', club.id)
+          .eq('is_active', true),
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', club.id)
+          .eq('role', 'trainer')
+          .eq('is_active', true),
+      ]);
       return { ...club, members: members ?? 0, trainers: trainers ?? 0 };
     })
   );
@@ -74,22 +73,22 @@ export default async function SuperadminPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Willkommen, {firstName}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Plattform-Übersicht · Superadmin</p>
+          <h1 className="text-2xl font-bold tracking-tight">Plattform-Übersicht</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Hallo {firstName} — du siehst alle Vereine
+          </p>
         </div>
         <Badge
           variant="outline"
           className="flex items-center gap-1 border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-300"
         >
-          <Shield className="h-3 w-3" />
-          Superadmin
+          <Shield className="h-3 w-3" /> Superadmin
         </Badge>
       </div>
 
-      {/* Platform KPI cards */}
+      {/* Platform KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
@@ -101,7 +100,7 @@ export default async function SuperadminPage() {
           },
           {
             label: 'Nutzer gesamt',
-            value: totalMembers ?? 0,
+            value: totalUsers ?? 0,
             icon: Users,
             color: 'text-blue-600',
             bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -137,7 +136,7 @@ export default async function SuperadminPage() {
         ))}
       </div>
 
-      {/* All clubs table */}
+      {/* All clubs — click to manage */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
@@ -169,11 +168,12 @@ export default async function SuperadminPage() {
                       Inaktiv
                     </Badge>
                   )}
+                  {/* "Als Admin verwalten" → setzt Cookie + weiter zu /admin */}
                   <Link
-                    href={`/select-admin-club?club=${club.id}`}
-                    className="text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 hover:underline"
+                    href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
+                    className="text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 hover:underline whitespace-nowrap"
                   >
-                    Verwalten →
+                    Als Admin →
                   </Link>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default async function SuperadminPage() {
         </CardContent>
       </Card>
 
-      {/* Quick actions */}
+      {/* Superadmin Quick Actions */}
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Plattform-Verwaltung
@@ -191,8 +191,8 @@ export default async function SuperadminPage() {
           {[
             { label: 'Vereine verwalten', href: '/superadmin/clubs', icon: Building2 },
             { label: 'Vereinsübersicht', href: '/superadmin/tenants', icon: TrendingUp },
-            { label: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
-            { label: 'Einstellungen', href: '/admin/settings', icon: Shield },
+            { label: 'Analytics', href: '/admin/analytics', icon: Activity },
+            { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
           ].map((action) => (
             <Link
               key={action.href}

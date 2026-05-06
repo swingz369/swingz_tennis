@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import Link from 'next/link';
 import {
   Users,
@@ -15,45 +16,44 @@ import {
   Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const { supabase, user } = await requireAuth();
 
-  // Get active club from cookie
-  const cookieStore = await cookies();
-  const clubId = cookieStore.get('admin_club_id')?.value;
+  const { data: memberships } = await supabase
+    .from('user_club_memberships')
+    .select('role, club_id')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
 
-  if (!clubId) {
-    // Shouldn't happen if layout guard is working, but safety fallback
-    redirect('/select-admin-club');
+  const roles = (memberships ?? []).map((m: any) => m.role as string);
+  const isSuperadmin = roles.includes('superadmin');
+
+  // Determine club: Superadmin uses cookie, Admin uses their membership
+  let clubId: string | null = null;
+
+  if (isSuperadmin) {
+    const cookieStore = await cookies();
+    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+    if (!clubId) redirect('/select-admin-club');
+  } else {
+    const adminMembership = (memberships ?? []).find((m: any) => m.role === 'admin');
+    clubId = adminMembership?.club_id || null;
+    if (!clubId) redirect('/member');
   }
 
-  // Fetch club info
+  // Club info
   const { data: club } = await supabase
     .from('clubs')
     .select('id, name, status')
     .eq('id', clubId)
     .single();
 
-  if (!club) {
-    redirect('/select-admin-club');
-  }
+  if (!club) redirect(isSuperadmin ? '/select-admin-club' : '/member');
 
-  // Check user's role in this club
-  const { data: myMembership } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('club_id', clubId)
-    .eq('is_active', true)
-    .maybeSingle();
-
-  const isSuperadmin = myMembership?.role === 'superadmin';
-
-  // Fetch profile
+  // Profile
   const { data: profile } = await supabase
     .from('users')
     .select('full_name')
@@ -62,11 +62,11 @@ export default async function AdminPage() {
 
   const firstName = profile?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'Admin';
 
-  // Club stats — all in parallel
+  // Club KPIs — all parallel
   const [
     { count: memberCount },
     { count: trainerCount },
-    { count: pendingApprovals },
+    { count: pendingBookings },
     { count: activeSessions },
   ] = await Promise.all([
     supabase
@@ -81,13 +81,11 @@ export default async function AdminPage() {
       .eq('club_id', clubId)
       .eq('role', 'trainer')
       .eq('is_active', true),
-    // Pending bookings/approvals
     supabase
       .from('bookings')
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
       .eq('status', 'pending'),
-    // Sessions today
     supabase
       .from('sessions')
       .select('id', { count: 'exact', head: true })
@@ -105,17 +103,9 @@ export default async function AdminPage() {
     .order('created_at', { ascending: false })
     .limit(5);
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Hallo, {firstName}</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -132,7 +122,7 @@ export default async function AdminPage() {
         )}
       </div>
 
-      {/* KPI cards */}
+      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
@@ -152,12 +142,12 @@ export default async function AdminPage() {
             href: '/admin/trainers',
           },
           {
-            label: 'Ausstehende Anfragen',
-            value: pendingApprovals ?? 0,
+            label: 'Offene Anfragen',
+            value: pendingBookings ?? 0,
             icon: CheckCircle,
-            color: pendingApprovals && pendingApprovals > 0 ? 'text-orange-600' : 'text-gray-500',
+            color: (pendingBookings ?? 0) > 0 ? 'text-orange-600' : 'text-gray-500',
             bg:
-              pendingApprovals && pendingApprovals > 0
+              (pendingBookings ?? 0) > 0
                 ? 'bg-orange-50 dark:bg-orange-900/20'
                 : 'bg-gray-50 dark:bg-gray-800/20',
             href: '/admin/approvals',
@@ -191,15 +181,15 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      {/* Alerts: pending approvals */}
-      {pendingApprovals !== null && pendingApprovals > 0 && (
+      {/* Alert: pending bookings */}
+      {(pendingBookings ?? 0) > 0 && (
         <Card className="border-orange-200 bg-orange-50 dark:bg-orange-900/10 dark:border-orange-700/50">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <CheckCircle className="h-5 w-5 text-orange-600 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
-                  {pendingApprovals} ausstehende Buchungsanfragen
+                  {pendingBookings} ausstehende Buchungsanfragen
                 </p>
                 <p className="text-xs text-orange-600 dark:text-orange-400">
                   Bitte zeitnah bearbeiten
@@ -247,9 +237,6 @@ export default async function AdminPage() {
                       <p className="text-sm font-medium truncate">
                         {u?.full_name || u?.email || 'Unbekannt'}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        Beigetreten {formatDate(m.created_at)}
-                      </p>
                     </div>
                   </div>
                 );
@@ -259,7 +246,7 @@ export default async function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* Quick actions */}
+      {/* Quick Actions */}
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Schnellzugriff
@@ -272,16 +259,16 @@ export default async function AdminPage() {
             { label: 'Plätze', href: '/admin/courts', icon: MapPin },
             { label: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock },
             { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
-          ].map((action) => (
+          ].map((a) => (
             <Link
-              key={action.href}
-              href={action.href}
+              key={a.href}
+              href={a.href}
               className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-[#40916C]/40 hover:shadow-sm transition-all bg-white dark:bg-white/5"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#40916C]/10 shrink-0">
-                <action.icon className="h-4 w-4 text-[#40916C]" />
+                <a.icon className="h-4 w-4 text-[#40916C]" />
               </div>
-              <span className="text-sm font-medium">{action.label}</span>
+              <span className="text-sm font-medium">{a.label}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
             </Link>
           ))}

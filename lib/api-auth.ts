@@ -1,21 +1,30 @@
 /**
  * API Authentication Middleware for Supabase SSR
+ *
+ * Role Architecture:
+ *   superadmin → club_id = NULL in DB, platform-wide access
+ *   admin      → club_id = specific club, manages that club
+ *   trainer    → club_id = specific club
+ *   member     → club_id = specific club
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import type { User, Session } from '@supabase/supabase-js';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
 export interface AuthContext {
   user: User;
   session: Session;
   supabase: ReturnType<typeof createServerClient>;
-  clubId: string;
+  /** Active club for this request. NULL for superadmin without selected club. */
+  clubId: string | null;
+  /** Club explicitly chosen by superadmin via cookie */
   selectedClubId?: string;
   role: 'superadmin' | 'admin' | 'trainer' | 'member';
   roles: string[];
-  memberships: Array<{ club_id: string; role: string }>;
+  memberships: Array<{ club_id: string | null; role: string }>;
 }
 
 /**
@@ -32,12 +41,10 @@ async function buildAuthContext(
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  const memberships: Array<{ club_id: string; role: string }> = membershipsData ?? [];
+  const memberships: Array<{ club_id: string | null; role: string }> = membershipsData ?? [];
 
-  // SECURITY FIX: Removed email-based superadmin detection vulnerability
-  // All users must have explicit club memberships in database
   if (memberships.length === 0) {
-    throw new Error('User has no active club membership');
+    throw new Error('User has no active membership');
   }
 
   const roleOrder: Record<string, number> = {
@@ -47,33 +54,47 @@ async function buildAuthContext(
     member: 1,
   };
 
+  // Highest role wins
   let effectiveRole = memberships[0].role as 'superadmin' | 'admin' | 'trainer' | 'member';
   for (let i = 1; i < memberships.length; i++) {
     const role = memberships[i].role as keyof typeof roleOrder;
-    if (roleOrder[role] > roleOrder[effectiveRole]) {
+    if ((roleOrder[role] ?? 0) > (roleOrder[effectiveRole] ?? 0)) {
       effectiveRole = role as 'superadmin' | 'admin' | 'trainer' | 'member';
     }
   }
 
-  // Superadmin can select a club via cookie
+  // Superadmin: no club by default — can select one via cookie for admin actions
   let selectedClubId: string | undefined;
-  if (effectiveRole === 'superadmin') {
-    const selectedCookie = request.cookies.get('admin_club_id');
-    if (selectedCookie?.value && memberships.some((m) => m.club_id === selectedCookie.value)) {
-      selectedClubId = selectedCookie.value;
-    }
-  }
+  let effectiveClubId: string | null = null;
 
-  const effectiveClubId = selectedClubId || memberships[0].club_id;
+  if (effectiveRole === 'superadmin') {
+    const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
+    if (cookieValue) {
+      // Validate the club actually exists (superadmin can access any club)
+      const { data: clubCheck } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('id', cookieValue)
+        .maybeSingle();
+      if (clubCheck) {
+        selectedClubId = cookieValue;
+        effectiveClubId = cookieValue;
+      }
+    }
+    // If no cookie → effectiveClubId stays null (superadmin sees platform view)
+  } else {
+    // Admin/trainer/member: use their assigned club
+    effectiveClubId = memberships.find((m) => m.club_id)?.club_id ?? null;
+  }
 
   return {
     user,
     session: { access_token: '', refresh_token: '' } as any,
     supabase,
     clubId: effectiveClubId,
-    selectedClubId: selectedClubId || undefined,
+    selectedClubId,
     role: effectiveRole,
-    roles: memberships.map((m) => m.role as any),
+    roles: memberships.map((m) => m.role),
     memberships,
   };
 }
@@ -84,13 +105,11 @@ async function buildAuthContext(
 export async function requireAuth(request: NextRequest): Promise<AuthContext> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase credentials not configured');
   }
 
-  // Use tsowapp-style cookie handler with getAll/setAll
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
@@ -108,41 +127,14 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    console.error('Auth error in requireAuth:', error);
     throw new Error('No valid session found. Please log in.');
   }
 
-  // Bearer token fallback
-  const authHeader = request.headers.get('authorization');
-  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-
-  if (bearerToken && supabaseServiceKey) {
-    const adminSupabase = createServerClient(supabaseUrl, supabaseServiceKey, {
-      cookies: { get: () => null, set: () => {}, remove: () => {} },
-    });
-
-    try {
-      const {
-        data: { user },
-      } = await adminSupabase.auth.getUser(bearerToken);
-      if (user) {
-        const userSupabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-          cookies: { get: () => null, set: () => {}, remove: () => {} },
-        });
-        await userSupabase.auth.setSession({ access_token: bearerToken, refresh_token: '' });
-        return await buildAuthContext(userSupabase, user, request);
-      }
-    } catch (e) {
-      console.log('Bearer token validation failed:', e);
-    }
-  }
-
-  // Build auth context from user session
   return await buildAuthContext(supabase, user, request);
 }
 
 /**
- * Authorization check
+ * Authorization check — superadmin always passes
  */
 export async function verifyRole(
   auth: AuthContext,
@@ -154,34 +146,26 @@ export async function verifyRole(
     trainer: 2,
     member: 1,
   };
-  return roleHierarchy[auth.role] >= roleHierarchy[requiredRole];
+  return (roleHierarchy[auth.role] ?? 0) >= (roleHierarchy[requiredRole] ?? 0);
 }
 
 /**
- * Verify user has access to specific club
+ * Verify user has access to a specific club.
+ * Superadmin has access to ALL clubs (even without cookie).
  */
 export function verifyClubAccess(auth: AuthContext, requestedClubId: string): boolean {
   if (auth.role === 'superadmin') return true;
   return auth.clubId === requestedClubId;
 }
 
-/**
- * Helper to create 401 response
- */
-export function unauthorizedResponse(message: string = 'Unauthorized'): NextResponse {
+export function unauthorizedResponse(message = 'Unauthorized'): NextResponse {
   return NextResponse.json({ error: message }, { status: 401 });
 }
 
-/**
- * Helper to create 403 response
- */
-export function forbiddenResponse(message: string = 'Forbidden'): NextResponse {
+export function forbiddenResponse(message = 'Forbidden'): NextResponse {
   return NextResponse.json({ error: message }, { status: 403 });
 }
 
-/**
- * Wrapper for API routes with auth
- */
 export async function withAuth(
   request: NextRequest,
   handler: (auth: AuthContext) => Promise<NextResponse>
@@ -195,14 +179,6 @@ export async function withAuth(
   }
 }
 
-// Backward compatibility
-export async function withApiAuth(
-  request: NextRequest,
-  handler: (auth: AuthContext) => Promise<NextResponse>
-): Promise<NextResponse> {
-  return withAuth(request, handler);
-}
-
-export async function requireApiAuth(request: NextRequest): Promise<AuthContext> {
-  return requireAuth(request);
-}
+// Backward compatibility aliases
+export const withApiAuth = withAuth;
+export const requireApiAuth = requireAuth;
