@@ -79,26 +79,30 @@ export function Sidebar({
     return undefined;
   }, [open, onClose]);
 
-  const isAdmin = roles?.some((r) => r === 'admin' || r === 'superadmin');
+  const isAdmin = roles?.includes('admin');
   const isSuperAdmin = roles?.includes('superadmin');
-  const isTrainer = roles?.includes('trainer') || isAdmin;
-
-  // Superadmin sees "Vereinsübersicht" only when no club is selected
-  const showTenantLink = isSuperAdmin && !selectedClubId;
+  const isTrainer = roles?.includes('trainer');
 
   // TODO: Replace with actual counts from API
-  const notificationCount = 0; // Replace with actual API call
-  const approvalCount = 0; // Replace with actual API call
+  const notificationCount = 0;
+  const approvalCount = 0;
 
-  // Primary navigation - role-based and prioritized
+  // Primary navigation - COMPLETELY SEPARATE for each role
   const primaryNav = (() => {
+    // SUPERADMIN: Platform-wide administration
+    if (isSuperAdmin && !isAdmin) {
+      return [
+        { name: 'Superadmin Dashboard', href: '/superadmin/dashboard', icon: Layout },
+        { name: 'Vereinsübersicht', href: '/superadmin/tenants', icon: Building2 },
+        { name: 'Club-Verwaltung', href: '/superadmin/clubs', icon: Building2 },
+        { name: 'Plattform-Analyse', href: '/admin/analytics', icon: TrendingUp },
+      ];
+    }
+
+    // ADMIN: Club-scoped administration
     if (isAdmin) {
-      const adminNav = [
+      return [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
-        // Admin Dashboard (panel-v2) is SUPERADMIN-ONLY
-        ...(isSuperAdmin
-          ? [{ name: 'Admin Dashboard', href: '/admin/panel-v2', icon: Layout }]
-          : []),
         { name: 'Saisonplanung', href: '/admin/seasons', icon: CalendarRange },
         { name: 'Benutzerverwaltung', href: '/admin/members', icon: Users },
         {
@@ -110,9 +114,9 @@ export function Sidebar({
         { name: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock },
         { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
       ];
-      return adminNav;
     }
 
+    // TRAINER: Training management
     if (isTrainer) {
       return [
         { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -143,36 +147,34 @@ export function Sidebar({
     { name: 'Mein Profil', href: '/profile', icon: User },
     { name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin },
     { name: 'News & Updates', href: '/news', icon: Newspaper },
-    ...(showTenantLink
-      ? [{ name: 'Vereinsübersicht', href: '/admin/tenants', icon: Building2 }]
-      : []),
   ].filter((item) => item.showIf !== false);
 
-  // Admin categories with sub-items - only for admin users
-  const adminCategories = isAdmin
-    ? [
-        {
-          name: 'Club-Verwaltung',
-          icon: Building2,
-          subItems: [
-            // "Clubs" link only for superadmin (to see all clubs)
-            // Regular admins should use their club dashboard instead
-            ...(isSuperAdmin ? [{ name: 'Clubs', href: '/admin/clubs' }] : []),
-            { name: 'Plätze', href: '/admin/courts/manage' },
-            { name: 'Trainingszeiten', href: '/admin/schedules' },
-          ],
-        },
-        {
-          name: 'Einstellungen',
-          icon: Settings,
-          subItems: [
-            { name: 'Allgemein', href: '/admin/settings' },
-            { name: 'Onboarding', href: '/admin/onboarding' },
-            { name: 'Billing-Konfiguration', href: '/admin/billing' },
-          ],
-        },
-      ]
-    : [];
+  // Admin categories with sub-items - only for regular admin users
+  const adminCategories =
+    isAdmin && !isSuperAdmin
+      ? [
+          {
+            name: 'Club-Verwaltung',
+            icon: Building2,
+            subItems: [
+              // "Clubs" link only for superadmin (to see all clubs)
+              // Regular admins should use their club dashboard instead
+              ...(isSuperAdmin ? [{ name: 'Clubs', href: '/admin/clubs' }] : []),
+              { name: 'Plätze', href: '/admin/courts/manage' },
+              { name: 'Trainingszeiten', href: '/admin/schedules' },
+            ],
+          },
+          {
+            name: 'Einstellungen',
+            icon: Settings,
+            subItems: [
+              { name: 'Allgemein', href: '/admin/settings' },
+              { name: 'Onboarding', href: '/admin/onboarding' },
+              { name: 'Billing-Konfiguration', href: '/admin/billing' },
+            ],
+          },
+        ]
+      : [];
 
   return (
     <aside
