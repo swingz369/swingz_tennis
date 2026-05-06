@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
 
 export async function POST(_request: NextRequest) {
@@ -54,7 +54,7 @@ export async function GET(_request: NextRequest) {
       return forbiddenResponse('Trainer or Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

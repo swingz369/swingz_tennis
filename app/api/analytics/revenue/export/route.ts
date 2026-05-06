@@ -5,7 +5,7 @@ import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositor
 import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories/club.repository';
 import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 function isDemoMode(req: NextRequest): boolean {
   const cookies = req.cookies.get('demo-mode');
@@ -62,7 +62,7 @@ export async function GET(_request: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

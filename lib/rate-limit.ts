@@ -202,6 +202,39 @@ export const RATE_LIMITS = {
 } as const;
 
 /**
+ * Helper function to check rate limit and return error response if exceeded
+ */
+export async function checkRateLimitOrFail(
+  request: NextRequest,
+  config: RateLimitConfig
+): Promise<NextResponse | null> {
+  const { limited, response } = await rateLimit(request, config);
+  return limited && response ? response : null;
+}
+
+/**
+ * Alternative withRateLimit signature for inline usage
+ * @deprecated Use the decorator pattern instead
+ */
+export async function applyRateLimit(
+  request: NextRequest,
+  config: RateLimitConfig,
+  handler: () => Promise<NextResponse>
+): Promise<NextResponse> {
+  const { limited, response } = await rateLimit(request, config);
+  if (limited && response) {
+    return response;
+  }
+  return handler();
+}
+
+/**
+ * Predefined rate limit instances for common use cases
+ */
+export const rateLimitStrict = RATE_LIMITS.STRICT;
+export const rateLimitAuth = RATE_LIMITS.AUTH;
+
+/**
  * Example usage in API route:
  *
  * ```ts

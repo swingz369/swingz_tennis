@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 const SYSTEM_SETTINGS_KEYS = [
   'appName',
@@ -33,7 +33,7 @@ const DEMO_SYSTEM_SETTINGS: SystemSettings = {
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     // Rate limiting
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     // Permission check

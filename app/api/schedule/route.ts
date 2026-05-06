@@ -11,7 +11,7 @@ import { getDb } from '@/infrastructure/persistence/client';
 import { eq } from 'drizzle-orm';
 import { sessions } from '@/infrastructure/persistence/schema';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { cache } from '@/lib/utils/cache';
 
 const scheduleRepo = new DrizzleScheduleRepository();
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       return forbiddenResponse('Member access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const clubIdParam = new URL(req.url).searchParams.get('clubId');
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withValidation(optimizeScheduleSchema, async (input) => {
@@ -118,7 +118,7 @@ export async function PUT(req: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     return withValidation(updateSessionsSchema, async (input) => {

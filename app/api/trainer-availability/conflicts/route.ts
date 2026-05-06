@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { TrainerAvailabilityService } from '@/src/application/services/trainer-availability.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

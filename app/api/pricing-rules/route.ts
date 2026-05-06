@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
 import { ClubId, CourtId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     try {
@@ -141,7 +141,7 @@ export async function GET_MATCH(req: NextRequest) {
       return forbiddenResponse('Member access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { ClubId } from '@/domain/value-objects';
 import { courtService } from '@/lib/booking/court.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
       return forbiddenResponse('Member access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     try {

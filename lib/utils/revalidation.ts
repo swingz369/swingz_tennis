@@ -12,8 +12,8 @@ import { CACHE_TAGS } from '@/lib/server-cache';
 export function revalidateBookings(clubId: string, additionalTags?: string[]) {
   revalidateTag(CACHE_TAGS.bookings(clubId));
   revalidateTag(CACHE_TAGS.dashboardKPIs(clubId));
-  revalidatePath('/bookings');
-  revalidatePath('/dashboard');
+  revalidatePath('/bookings', 'page');
+  revalidatePath('/dashboard', 'page');
 
   additionalTags?.forEach((tag) => revalidateTag(tag));
 }
@@ -30,8 +30,8 @@ export function revalidateSessions(clubId: string, sessionId?: string) {
     revalidateTag(CACHE_TAGS.attendance(sessionId));
   }
 
-  revalidatePath('/training-schedule');
-  revalidatePath('/trainer');
+  revalidatePath('/training-schedule', 'page');
+  revalidatePath('/trainer', 'page');
 }
 
 /**
@@ -45,8 +45,8 @@ export function revalidateMembers(clubId: string, memberId?: string) {
     revalidateTag(CACHE_TAGS.member(memberId));
   }
 
-  revalidatePath('/admin/members');
-  revalidatePath('/profile');
+  revalidatePath('/admin/members', 'page');
+  revalidatePath('/profile', 'page');
 }
 
 /**
@@ -60,8 +60,8 @@ export function revalidateTrainers(clubId: string, trainerId?: string) {
     revalidateTag(CACHE_TAGS.trainerAvailability(trainerId));
   }
 
-  revalidatePath('/trainer');
-  revalidatePath('/admin/schedules');
+  revalidatePath('/trainer', 'page');
+  revalidatePath('/admin/schedules', 'page');
 }
 
 /**
@@ -74,8 +74,8 @@ export function revalidateCourts(clubId: string, courtId?: string) {
     revalidateTag(CACHE_TAGS.court(courtId));
   }
 
-  revalidatePath('/courts');
-  revalidatePath('/admin/courts/manage');
+  revalidatePath('/courts', 'page');
+  revalidatePath('/admin/courts/manage', 'page');
 }
 
 /**
@@ -86,8 +86,8 @@ export function revalidateClub(clubId: string) {
   revalidateTag(CACHE_TAGS.settings(clubId));
   revalidateTag(CACHE_TAGS.bookingRules(clubId));
 
-  revalidatePath('/dashboard');
-  revalidatePath('/admin/settings');
+  revalidatePath('/dashboard', 'page');
+  revalidatePath('/admin/settings', 'page');
 }
 
 /**
@@ -97,8 +97,8 @@ export function revalidateDashboard(clubId: string) {
   revalidateTag(CACHE_TAGS.dashboardKPIs(clubId));
   revalidateTag(CACHE_TAGS.analytics(clubId));
 
-  revalidatePath('/dashboard');
-  revalidatePath('/admin/panel-v2');
+  revalidatePath('/dashboard', 'page');
+  revalidatePath('/admin/panel-v2', 'page');
 }
 
 /**
@@ -111,8 +111,8 @@ export function revalidateUser(userId: string) {
   revalidateTag(CACHE_TAGS.bookingsByUser(userId));
   revalidateTag(CACHE_TAGS.attendanceByUser(userId));
 
-  revalidatePath('/profile');
-  revalidatePath('/dashboard');
+  revalidatePath('/profile', 'page');
+  revalidatePath('/dashboard', 'page');
 }
 
 /**
@@ -125,8 +125,8 @@ export function revalidateNews(clubId: string, newsId?: string) {
     revalidateTag(CACHE_TAGS.newsItem(newsId));
   }
 
-  revalidatePath('/news');
-  revalidatePath('/dashboard');
+  revalidatePath('/news', 'page');
+  revalidatePath('/dashboard', 'page');
 }
 
 /**
@@ -139,8 +139,8 @@ export function revalidateApprovals(clubId: string, approvalId?: string) {
     revalidateTag(CACHE_TAGS.approval(approvalId));
   }
 
-  revalidatePath('/admin/approvals');
-  revalidatePath('/admin/panel-v2');
+  revalidatePath('/admin/approvals', 'page');
+  revalidatePath('/admin/panel-v2', 'page');
 }
 
 /**

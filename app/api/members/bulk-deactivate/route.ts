@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
-import { rateLimitStrict } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { z } from 'zod';
 
@@ -18,16 +18,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit: strict (10 requests per minute)
-    const rateLimitResult = await rateLimitStrict(request);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
 
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Too many requests',
-          retryAfter: Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000),
-        },
-        { status: 429 }
-      );
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
     try {

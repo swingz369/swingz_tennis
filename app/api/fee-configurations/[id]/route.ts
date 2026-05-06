@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { FeeConfigurationService } from '@/src/application/services/fee-configuration.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -11,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

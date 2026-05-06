@@ -386,9 +386,7 @@ export default function SeriesBookingForm({
                     {validCount} verfügbar
                   </Badge>
                 )}
-                {conflictCount > 0 && (
-                  <Badge variant="destructive">{conflictCount} Konflikte</Badge>
-                )}
+                {conflictCount > 0 && <Badge variant="error">{conflictCount} Konflikte</Badge>}
               </div>
             </div>
 

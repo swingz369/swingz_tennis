@@ -4,7 +4,7 @@ import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositorie
 import { GroupId, ClubId, MemberId } from '@/domain/value-objects';
 import { GroupEntity } from '@/domain/entities/group.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const groupRepo = new DrizzleGroupRepository();
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       return forbiddenResponse('Member access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     try {

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -12,7 +12,7 @@ export async function POST(_request: NextRequest) {
       return forbiddenResponse('Trainer or admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
@@ -74,7 +74,7 @@ export async function GET(_request: NextRequest) {
       return forbiddenResponse('Trainer or admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

@@ -17,6 +17,12 @@ import {
   GraduationCap,
   Trophy,
   X,
+  Layout,
+  CheckCircle,
+  TrendingUp,
+  User,
+  CreditCard,
+  Building2,
 } from 'lucide-react';
 
 export function Sidebar({

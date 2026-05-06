@@ -6,7 +6,7 @@ import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { cancelBookingSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 const bookingRepo = new DrizzleBookingRepository();
 const auditService = new AuditServiceImpl();
@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

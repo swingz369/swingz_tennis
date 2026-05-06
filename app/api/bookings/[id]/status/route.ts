@@ -6,7 +6,7 @@ import { DrizzleScheduleRepository } from '@/infrastructure/persistence/reposito
 import { updateBookingStatusSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function PATCH(
   _request: NextRequest,
@@ -21,7 +21,7 @@ export async function PATCH(
       return forbiddenResponse('Admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

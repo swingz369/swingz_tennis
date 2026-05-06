@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { AbsenceService } from '@/src/application/services/absence.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import {
   CreateAbsenceSchema,
   validateRequestBody,
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return forbiddenResponse('Trainer or admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

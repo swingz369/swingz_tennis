@@ -13,7 +13,7 @@ import { createBookingSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { SessionId, TrainerId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 const bookingRepo = new DrizzleBookingRepository();
 const scheduleRepo = new DrizzleScheduleRepository();
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

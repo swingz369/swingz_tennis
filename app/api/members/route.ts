@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { MemberService } from '@/src/application/services/member.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { withRateLimit, rateLimit } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import {
   CreateMemberSchema,
@@ -14,129 +14,123 @@ import {
 
 export async function POST(request: NextRequest) {
   return withCSRFProtection(request, async () => {
-    return withRateLimit(
-      request,
-      async () => {
-        return withApiAuth(request, async (auth) => {
-          try {
-            // Admin and trainers can create members
-            const isAdmin = await verifyRole(auth, 'admin');
-            const isTrainer = await verifyRole(auth, 'trainer');
-            if (!isAdmin && !isTrainer) {
-              return forbiddenResponse('Insufficient permissions to create members');
-            }
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+    if (rateLimitError) return rateLimitError;
 
-            const body = await request.json();
+    return withApiAuth(request, async (auth) => {
+      try {
+        // Admin and trainers can create members
+        const isAdmin = await verifyRole(auth, 'admin');
+        const isTrainer = await verifyRole(auth, 'trainer');
+        if (!isAdmin && !isTrainer) {
+          return forbiddenResponse('Insufficient permissions to create members');
+        }
 
-            // Validate request body with Zod
-            const validation = validateRequestBody(CreateMemberSchema, body);
-            if (!validation.success) {
-              return NextResponse.json(
-                {
-                  error: 'Validation failed',
-                  details: formatValidationErrors(validation.errors),
-                },
-                { status: 400 }
-              );
-            }
+        const body = await request.json();
 
-            const validatedData = validation.data;
+        // Validate request body with Zod
+        const validation = validateRequestBody(CreateMemberSchema, body);
+        if (!validation.success) {
+          return NextResponse.json(
+            {
+              error: 'Validation failed',
+              details: formatValidationErrors(validation.errors),
+            },
+            { status: 400 }
+          );
+        }
 
-            // Create member (associated with the authenticated user's club)
-            const member = await MemberService.createMember(validatedData);
+        const validatedData = validation.data;
 
-            return NextResponse.json({ success: true, member });
-          } catch (error) {
-            console.error('Member creation error:', error);
-            return NextResponse.json(
-              { error: error instanceof Error ? error.message : 'Internal server error' },
-              { status: 500 }
-            );
-          }
-        });
-      },
-      rateLimit
-    );
+        // Create member (associated with the authenticated user's club)
+        const member = await MemberService.createMember(validatedData);
+
+        return NextResponse.json({ success: true, member });
+      } catch (error) {
+        console.error('Member creation error:', error);
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : 'Internal server error' },
+          { status: 500 }
+        );
+      }
+    });
   });
 }
 
 export async function GET(request: NextRequest) {
-  return withRateLimit(
-    request,
-    async () => {
-      return withApiAuth(request, async (auth) => {
-        try {
-          const { searchParams } = new URL(request.url);
+  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+  if (rateLimitError) return rateLimitError;
 
-          // Validate query parameters with Zod
-          const validation = validateQueryParams(MemberQuerySchema, searchParams);
-          if (!validation.success) {
-            return NextResponse.json(
-              {
-                error: 'Invalid query parameters',
-                details: formatValidationErrors(validation.errors),
-              },
-              { status: 400 }
-            );
-          }
+  return withApiAuth(request, async (auth) => {
+    try {
+      const { searchParams } = new URL(request.url);
 
-          const { status, type, trainingGroup, search, active, statistics, limit, offset } =
-            validation.data;
+      // Validate query parameters with Zod
+      const validation = validateQueryParams(MemberQuerySchema, searchParams);
+      if (!validation.success) {
+        return NextResponse.json(
+          {
+            error: 'Invalid query parameters',
+            details: formatValidationErrors(validation.errors),
+          },
+          { status: 400 }
+        );
+      }
 
-          if (statistics) {
-            // Note: Statistics are already filtered by RLS policies at database level
-            const stats = await MemberService.getMemberStatistics();
-            return NextResponse.json({ statistics: stats });
-          }
+      const { status, type, trainingGroup, search, active, statistics, limit, offset } =
+        validation.data;
 
-          if (active) {
-            // Note: Active members are filtered by RLS policies at database level
-            const members = await MemberService.getActiveMembers();
-            return NextResponse.json({ members });
-          }
+      if (statistics) {
+        // Note: Statistics are already filtered by RLS policies at database level
+        const stats = await MemberService.getMemberStatistics();
+        return NextResponse.json({ statistics: stats });
+      }
 
-          if (search) {
-            // Note: Search results are filtered by RLS policies at database level
-            const members = await MemberService.searchMembers(search);
-            return NextResponse.json({ members });
-          }
+      if (active) {
+        // Note: Active members are filtered by RLS policies at database level
+        const members = await MemberService.getActiveMembers();
+        return NextResponse.json({ members });
+      }
 
-          if (trainingGroup) {
-            // Note: Training groups are filtered by RLS policies at database level
-            const members = await MemberService.getMembersByTrainingGroup(trainingGroup);
-            return NextResponse.json({ members });
-          }
+      if (search) {
+        // Note: Search results are filtered by RLS policies at database level
+        const members = await MemberService.searchMembers(search);
+        return NextResponse.json({ members });
+      }
 
-          // Query with filters - SECURITY FIX: Always filter by club unless superadmin
-          const query: any = {};
-          if (status) query.status = status;
-          if (type) query.type = type;
+      if (trainingGroup) {
+        // Note: Training groups are filtered by RLS policies at database level
+        const members = await MemberService.getMembersByTrainingGroup(trainingGroup);
+        return NextResponse.json({ members });
+      }
 
-          // Add club filter for non-superadmin users
-          if (auth.role !== 'superadmin') {
-            query.clubId = auth.clubId;
-          }
+      // Query with filters - SECURITY FIX: Always filter by club unless superadmin
+      const query: any = {};
+      if (status) query.status = status;
+      if (type) query.type = type;
 
-          const members = await MemberService.queryMembers(query);
+      // Add club filter for non-superadmin users
+      if (auth.role !== 'superadmin') {
+        query.clubId = auth.clubId;
+      }
 
-          // Apply pagination
-          const paginatedMembers = members.slice(offset, offset + limit);
+      const members = await MemberService.queryMembers(query);
 
-          return NextResponse.json({
-            members: paginatedMembers,
-            pagination: {
-              total: members.length,
-              limit,
-              offset,
-              hasMore: offset + limit < members.length,
-            },
-          });
-        } catch (error) {
-          console.error('Member fetch error:', error);
-          return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-        }
+      // Apply pagination
+      const paginatedMembers = members.slice(offset, offset + limit);
+
+      return NextResponse.json({
+        members: paginatedMembers,
+        pagination: {
+          total: members.length,
+          limit,
+          offset,
+          hasMore: offset + limit < members.length,
+        },
       });
-    },
-    rateLimit
-  );
+    } catch (error) {
+      console.error('Member fetch error:', error);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+  });
 }

@@ -24,7 +24,7 @@ export function isDemoModeEnabled(req?: NextRequest): boolean {
     return !!cookie;
   } else {
     // For Server Components without request
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const cookie = cookieStore.get('demo-mode');
     return !!cookie;
   }

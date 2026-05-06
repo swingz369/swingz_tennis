@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_req: NextRequest) {
   const cookieStore = await cookies();
@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest) {
       return forbiddenResponse('Member access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_req, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

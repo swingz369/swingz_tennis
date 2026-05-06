@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { searchQuerySchema } from '@/application/validation/schemas';
 import { validateQuery } from '@/application/validation/validator';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export interface SearchResult {
   id: string;
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       return forbiddenResponse('Member access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);

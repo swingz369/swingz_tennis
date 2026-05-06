@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { SEPAMandateService } from '@/src/application/services/sepa-mandate.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { withRateLimit, rateLimitStrict } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import {
   CreateSEPAMandateSchema,
@@ -12,51 +12,48 @@ import {
 
 export async function POST(request: NextRequest) {
   return withCSRFProtection(request, async () => {
-    return withRateLimit(
-      request,
-      async () => {
-        return withApiAuth(request, async (auth) => {
-          try {
-            // Only admin can create SEPA mandates
-            const hasPermission = await verifyRole(auth, 'admin');
-            if (!hasPermission) {
-              return forbiddenResponse('Insufficient permissions to create SEPA mandates');
-            }
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
+    if (rateLimitError) return rateLimitError;
 
-            const body = await request.json();
+    return withApiAuth(request, async (auth) => {
+      try {
+        // Only admin can create SEPA mandates
+        const hasPermission = await verifyRole(auth, 'admin');
+        if (!hasPermission) {
+          return forbiddenResponse('Insufficient permissions to create SEPA mandates');
+        }
 
-            // Validate request body with Zod
-            const validation = validateRequestBody(CreateSEPAMandateSchema, body);
-            if (!validation.success) {
-              return NextResponse.json(
-                {
-                  error: 'Validation failed',
-                  details: formatValidationErrors(validation.errors),
-                },
-                { status: 400 }
-              );
-            }
+        const body = await request.json();
 
-            const validatedData = validation.data;
+        // Validate request body with Zod
+        const validation = validateRequestBody(CreateSEPAMandateSchema, body);
+        if (!validation.success) {
+          return NextResponse.json(
+            {
+              error: 'Validation failed',
+              details: formatValidationErrors(validation.errors),
+            },
+            { status: 400 }
+          );
+        }
 
-            // Create mandate
-            const mandate = await SEPAMandateService.createMandate(
-              validatedData.memberId,
-              validatedData
-            );
+        const validatedData = validation.data;
 
-            return NextResponse.json({ success: true, mandate });
-          } catch (error) {
-            console.error('SEPA mandate creation error:', error);
-            return NextResponse.json(
-              { error: error instanceof Error ? error.message : 'Internal server error' },
-              { status: 500 }
-            );
-          }
-        });
-      },
-      rateLimitStrict
-    );
+        // Create mandate
+        const mandate = await SEPAMandateService.createMandate(
+          validatedData.memberId,
+          validatedData
+        );
+
+        return NextResponse.json({ success: true, mandate });
+      } catch (error) {
+        console.error('SEPA mandate creation error:', error);
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : 'Internal server error' },
+          { status: 500 }
+        );
+      }
+    });
   });
 }
 

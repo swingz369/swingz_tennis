@@ -6,7 +6,7 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 import type { BookingStatus } from '@/domain/entities/booking';
 import { ClubId, TrainerId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { cache, CacheKeys, CacheTTL } from '@/lib/utils/cache';
 
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
         return forbiddenResponse('Trainer access required');
       }
 
-      const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
+      const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
       if (rateLimitError) {
         return rateLimitError;
       }

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { feedbackRepository, type Feedback } from '@/lib/repositories/feedback-repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 /**
  * @swagger
@@ -37,7 +37,7 @@ export async function GET(
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
@@ -109,7 +109,7 @@ export async function PATCH(
       return forbiddenResponse('Only admins can update feedback status');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
@@ -183,7 +183,7 @@ export async function DELETE(
       return forbiddenResponse('Only admins can delete feedback');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

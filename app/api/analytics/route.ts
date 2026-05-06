@@ -7,7 +7,7 @@ import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositor
 import { DrizzleCourtRepository } from '@/infrastructure/persistence/repositories/court.repository';
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 // Helper: Check for demo mode cookie
 function isDemoMode(req: NextRequest): boolean {
@@ -55,7 +55,7 @@ export async function GET(_request: NextRequest) {
       return forbiddenResponse('Trainer or admin access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }

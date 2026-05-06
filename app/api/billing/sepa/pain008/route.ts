@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { SepaDirectDebitTransaction, SepaPain008Config } from '@/lib/sepa/pain008-generator';
 import { generatePain008Xml, getPain008FileName } from '@/lib/sepa/pain008-generator';
@@ -9,7 +9,7 @@ import { generatePain008Xml, getPain008FileName } from '@/lib/sepa/pain008-gener
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     try {
-      await checkRateLimitOrFail(_request, rateLimit);
+      await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
 
       const hasPermission = await verifyRole(auth, 'superadmin');
       if (!hasPermission) {

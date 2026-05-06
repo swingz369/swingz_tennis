@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { cookies } from 'next/headers';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 interface Booking {
   id: string;
@@ -66,7 +66,7 @@ export async function GET(_req: NextRequest) {
       return forbiddenResponse('Trainer access required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_req, rateLimit);
+    const rateLimitError = await checkRateLimitOrFail(_req, RATE_LIMITS.STANDARD);
     if (rateLimitError) {
       return rateLimitError;
     }
