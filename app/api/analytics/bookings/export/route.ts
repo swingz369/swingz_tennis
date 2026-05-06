@@ -109,7 +109,7 @@ function convertToCSV(data: object[]): string {
   if (data.length === 0) return '';
 
   const headers = Object.keys(data[0]);
-  const csvRows = [];
+  const csvRows: string[] = [];
   csvRows.push(headers.join(','));
 
   for (const row of data) {

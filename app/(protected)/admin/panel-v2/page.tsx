@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { AdminPanelV2Client } from './admin-panel-v2-client';
-import { analyticsService } from '@/lib/services/analytics-service';
+import { analyticsService, type AnalyticsMetrics } from '@/lib/services/analytics-service';
 
 export default async function AdminPanelV2Page() {
   const supabase = await createClient();
@@ -35,7 +35,7 @@ export default async function AdminPanelV2Page() {
   const clubName = (adminMembership.clubs as any)?.name || 'Admin Panel';
 
   // Fetch analytics data
-  let analyticsMetrics = null;
+  let analyticsMetrics: AnalyticsMetrics | null = null;
   try {
     analyticsMetrics = await analyticsService.getClubAnalytics(clubId);
   } catch (error) {
