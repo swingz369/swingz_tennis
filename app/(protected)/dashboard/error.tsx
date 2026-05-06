@@ -1,60 +1,64 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
 
-export default function Error({
+export default function DashboardError({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error('Dashboard error:', error);
-  }, [error]);
+  console.error('Dashboard page error:', error);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full">
+    <div className="flex items-center justify-center min-h-[60vh] p-6">
+      <Card className="max-w-2xl w-full">
         <CardHeader>
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-red-100">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+            <div>
+              <CardTitle className="text-2xl">Dashboard-Fehler</CardTitle>
+              <CardDescription>
+                Ein Fehler ist beim Laden des Dashboards aufgetreten
+              </CardDescription>
             </div>
           </div>
-          <CardTitle className="text-2xl text-center">Fehler auf dem Dashboard</CardTitle>
-          <CardDescription className="text-center">
-            {error.message ||
-              'Das Dashboard konnte nicht geladen werden. Bitte versuchen Sie es erneut.'}
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button onClick={reset} className="w-full">
-            Erneut versuchen
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => (window.location.href = '/dashboard')}
-            className="w-full"
-          >
-            Zurück zum Dashboard
-          </Button>
-          {error.digest && (
-            <p className="text-xs text-muted-foreground text-center">Fehler-ID: {error.digest}</p>
-          )}
-          {process.env.NODE_ENV === 'development' && (
-            <details className="mt-4">
-              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                Fehlerdetails (Entwicklung)
-              </summary>
-              <pre className="mt-2 p-4 bg-muted rounded text-xs overflow-auto">
-                {error.toString()}
-              </pre>
-            </details>
-          )}
+          <div className="rounded-lg bg-muted p-4">
+            <p className="text-sm font-mono text-muted-foreground">
+              {error.message || 'Unbekannter Fehler'}
+            </p>
+            {error.digest && (
+              <p className="text-xs text-muted-foreground mt-2">Fehler-ID: {error.digest}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={reset} variant="default">
+              Erneut versuchen
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/admin/panel-v2">Zum Admin Panel v2</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/profile">Zu meinem Profil</Link>
+            </Button>
+          </div>
+
+          <div className="pt-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              <strong>Hinweis:</strong> Wenn das Problem weiterhin besteht, verwenden Sie bitte das{' '}
+              <Link href="/admin/panel-v2" className="underline">
+                Admin Panel v2
+              </Link>{' '}
+              als Alternative.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

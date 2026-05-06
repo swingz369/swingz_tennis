@@ -125,9 +125,9 @@ async function setupProdAdmin(userId: string) {
     console.log('\n4️⃣  Creating superadmin membership...');
     const { error: membershipError } = await supabase.from('user_club_memberships').upsert(
       {
-        user_id: userId,
-        club_id: clubId,
-        role: 'superadmin',
+        user_id: userData.id,
+        club_id: club.id,
+        role: 'admin', // Changed from 'superadmin' to 'admin' for club-scoped access
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

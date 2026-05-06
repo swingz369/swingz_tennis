@@ -19,11 +19,6 @@ export default async function SuperadminDashboardPage() {
       redirect('/login');
     }
 
-    // Sonderfall: admin@swingz.com sofort zum Vereinsdashboard leiten
-    if (user.email === 'admin@swingz.com') {
-      redirect('/admin/clubs/30b0d39d-a152-4d2d-bd57-d23220794d41/dashboard');
-    }
-
     // Fetch memberships with proper error handling
     const { data: memberships, error: membershipError } = await supabase
       .from('user_club_memberships')

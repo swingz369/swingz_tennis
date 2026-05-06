@@ -18,6 +18,9 @@ export default async function AdminPanelV2Page() {
     .eq('user_id', user.id)
     .eq('is_active', true);
 
+  // IMPORTANT: panel-v2 is for BOTH admin and superadmin
+  // Regular club admins can access this for their club analytics
+  // Superadmins can access this for any club they manage
   const isAdmin = memberships?.some((m: any) => ['admin', 'superadmin'].includes(m.role));
 
   if (!isAdmin) {
@@ -33,6 +36,7 @@ export default async function AdminPanelV2Page() {
 
   const clubId = adminMembership.club_id;
   const clubName = (adminMembership.clubs as any)?.name || 'Admin Panel';
+  const userRole = adminMembership.role;
 
   // Fetch analytics data
   let analyticsMetrics: AnalyticsMetrics | null = null;

@@ -63,7 +63,13 @@ export default async function DashboardPage() {
   // Render dynamic dashboard based on role
   switch (highestRole) {
     case 'superadmin':
-      return <SuperadminDashboard user={userDisplay} />;
+      try {
+        return <SuperadminDashboard user={userDisplay} />;
+      } catch (error) {
+        console.error('Error rendering SuperadminDashboard:', error);
+        // Fallback to admin dashboard
+        return <AdminDashboard user={userDisplay} />;
+      }
     case 'admin':
       return <AdminDashboard user={userDisplay} />;
     case 'trainer':

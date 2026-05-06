@@ -78,40 +78,64 @@ export async function GET(request: NextRequest) {
 
       // Fetch seasons with stats using subqueries
       const db = getDb();
-      const results = await db
-        .select({
-          season: seasons,
-          total_preferences: sql<number>`COUNT(DISTINCT ${userTrainingPreferences.id})`,
-          submitted_preferences: sql<number>`COUNT(DISTINCT CASE WHEN ${userTrainingPreferences.is_submitted} THEN ${userTrainingPreferences.id} END)`,
-          planned_entries: sql<number>`COUNT(DISTINCT ${seasonPlanEntries.id})`,
-          open_conflicts: sql<number>`COUNT(DISTINCT CASE WHEN ${planningConflicts.status} = 'open' THEN ${planningConflicts.id} END)`,
-          trainers_count: sql<number>`COUNT(DISTINCT CASE WHEN ${userTrainingPreferences.user_role} = 'trainer' THEN ${userTrainingPreferences.id} END)`,
-          groups_covered: sql<number>`COUNT(DISTINCT ${seasonPlanEntries.group_id})`,
-        })
-        .from(seasons)
-        .leftJoin(userTrainingPreferences, eq(seasons.id, userTrainingPreferences.season_id))
-        .leftJoin(seasonPlanEntries, eq(seasons.id, seasonPlanEntries.season_id))
-        .leftJoin(planningConflicts, eq(seasons.id, planningConflicts.season_id))
-        .where(and(...conditions))
-        .groupBy(seasons.id)
-        .orderBy(desc(seasons.created_at));
 
-      // Transform results
-      const seasonsWithStats = results.map((row) => ({
-        ...row.season,
-        total_preferences: Number(row.total_preferences),
-        submitted_preferences: Number(row.submitted_preferences),
-        planned_entries: Number(row.planned_entries),
-        open_conflicts: Number(row.open_conflicts),
-        trainers_count: Number(row.trainers_count),
-        groups_covered: Number(row.groups_covered),
-      }));
+      // TEMPORARY FIX: Check if seasons table exists (for production compatibility)
+      // The seasons table requires migration 20260506_season_planning_system.sql
+      try {
+        const results = await db
+          .select({
+            season: seasons,
+            total_preferences: sql<number>`COUNT(DISTINCT ${userTrainingPreferences.id})`,
+            submitted_preferences: sql<number>`COUNT(DISTINCT CASE WHEN ${userTrainingPreferences.is_submitted} THEN ${userTrainingPreferences.id} END)`,
+            planned_entries: sql<number>`COUNT(DISTINCT ${seasonPlanEntries.id})`,
+            open_conflicts: sql<number>`COUNT(DISTINCT CASE WHEN ${planningConflicts.status} = 'open' THEN ${planningConflicts.id} END)`,
+            trainers_count: sql<number>`COUNT(DISTINCT CASE WHEN ${userTrainingPreferences.user_role} = 'trainer' THEN ${userTrainingPreferences.id} END)`,
+            groups_covered: sql<number>`COUNT(DISTINCT ${seasonPlanEntries.group_id})`,
+          })
+          .from(seasons)
+          .leftJoin(userTrainingPreferences, eq(seasons.id, userTrainingPreferences.season_id))
+          .leftJoin(seasonPlanEntries, eq(seasons.id, seasonPlanEntries.season_id))
+          .leftJoin(planningConflicts, eq(seasons.id, planningConflicts.season_id))
+          .where(and(...conditions))
+          .groupBy(seasons.id)
+          .orderBy(desc(seasons.created_at));
 
-      return NextResponse.json({
-        success: true,
-        seasons: seasonsWithStats,
-        count: seasonsWithStats.length,
-      });
+        // Transform results
+        const seasonsWithStats = results.map((row) => ({
+          ...row.season,
+          total_preferences: Number(row.total_preferences),
+          submitted_preferences: Number(row.submitted_preferences),
+          planned_entries: Number(row.planned_entries),
+          open_conflicts: Number(row.open_conflicts),
+          trainers_count: Number(row.trainers_count),
+          groups_covered: Number(row.groups_covered),
+        }));
+
+        return NextResponse.json({
+          success: true,
+          seasons: seasonsWithStats,
+          count: seasonsWithStats.length,
+        });
+      } catch (dbError: any) {
+        // If table doesn't exist, return empty array with warning
+        if (
+          dbError?.message?.includes('relation') ||
+          dbError?.message?.includes('does not exist') ||
+          dbError?.code === '42P01' // PostgreSQL: undefined_table
+        ) {
+          console.warn(
+            '⚠️  Seasons table not found in database. Run migration: 20260506_season_planning_system.sql'
+          );
+          return NextResponse.json({
+            success: true,
+            seasons: [],
+            count: 0,
+            warning: 'Season planning feature not yet available. Database migration required.',
+          });
+        }
+        // Re-throw other errors
+        throw dbError;
+      }
     } catch (error) {
       console.error('GET /api/seasons error:', error);
       return NextResponse.json(
