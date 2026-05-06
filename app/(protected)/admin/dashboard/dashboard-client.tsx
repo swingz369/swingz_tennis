@@ -24,31 +24,53 @@ interface DashboardData {
 export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
   const router = useRouter();
 
+  // Validate data to prevent React errors
+  if (!data || typeof data !== 'object') {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-red-600">Fehler: Ungültige Dashboard-Daten</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Ensure all values have defaults
+  const safeData = {
+    clubs: Array.isArray(data.clubs) ? data.clubs : [],
+    totalClubs: data.totalClubs ?? 0,
+    totalMembers: data.totalMembers ?? 0,
+    totalTrainers: data.totalTrainers ?? 0,
+    totalRevenue: data.totalRevenue ?? 0,
+  };
+
   const kpiCards = [
     {
       title: 'Vereine',
-      value: data.totalClubs,
+      value: safeData.totalClubs,
       icon: Building2,
       color: 'from-[#1B4332] to-[#2D6A4F]',
       href: '/admin/clubs',
     },
     {
       title: 'Mitglieder',
-      value: data.totalMembers.toLocaleString(),
+      value: safeData.totalMembers.toLocaleString(),
       icon: Users,
       color: 'from-[#3b82f6] to-[#1e3a5f]',
       href: '/admin/members',
     },
     {
       title: 'Trainer',
-      value: data.totalTrainers,
+      value: safeData.totalTrainers,
       icon: UserCheck,
       color: 'from-[#22c55e] to-[#15803d]',
       href: '/admin/members',
     },
     {
       title: 'Umsatz',
-      value: `€${data.totalRevenue.toLocaleString()}`,
+      value: `€${safeData.totalRevenue.toLocaleString()}`,
       icon: Euro,
       color: 'from-[#FF6B35] to-[#ea580c]',
       href: '/admin/billing',
@@ -91,7 +113,7 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {data.clubs.map((club) => (
+            {safeData.clubs.map((club) => (
               <div
                 key={club.id}
                 className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
@@ -114,7 +136,7 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
               </div>
             ))}
 
-            {data.clubs.length === 0 && (
+            {safeData.clubs.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p>Keine Vereine vorhanden</p>
