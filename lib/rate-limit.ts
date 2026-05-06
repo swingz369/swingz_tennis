@@ -6,7 +6,6 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
@@ -153,11 +152,9 @@ function inMemoryRateLimit(
 // ============================================
 
 async function getClientIdentifier(request: NextRequest): Promise<string> {
-  const headersList = await headers();
-
   // Try to get IP from various headers
-  const forwarded = headersList.get('x-forwarded-for');
-  const realIp = headersList.get('x-real-ip');
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
   const ip = forwarded?.split(',')[0] || realIp || 'unknown';
 
   // Add user ID if authenticated (from cookies or headers)

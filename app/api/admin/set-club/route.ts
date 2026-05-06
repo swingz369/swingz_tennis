@@ -8,11 +8,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
-import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { createRateLimitedHandler, RATE_LIMITS } from '@/lib/rate-limit';
 
-export const POST = withRateLimit(RATE_LIMITS.STANDARD)(async function handler(
-  request: NextRequest
-) {
+export const POST = createRateLimitedHandler('api', async function handler(request: NextRequest) {
   try {
     const { clubId } = await request.json();
 
@@ -78,7 +76,7 @@ export const POST = withRateLimit(RATE_LIMITS.STANDARD)(async function handler(
   }
 });
 
-export const DELETE = withRateLimit(RATE_LIMITS.STANDARD)(async function handler() {
+export const DELETE = createRateLimitedHandler('api', async function handler(request: NextRequest) {
   try {
     // Clear the selected club cookie
     const cookieStore = await cookies();
