@@ -1,82 +1,101 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { AuditLogService } from '@/src/application/services/audit-log.service';
-import type {
-  AuditLogFilter,
-  AuditAction,
-  EntityType,
-} from '@/src/domain/entities/audit-log.entity';
+import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-export async function GET(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
-    // Verify admin role
-    const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) {
+/**
+ * @swagger
+ * /api/audit-logs:
+ *   get:
+ *     summary: Get audit logs
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *       - in: query
+ *         name: club_id
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: entity_type
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Audit logs retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
       return forbiddenResponse('Admin access required');
     }
 
-    // Apply strict rate limiting for sensitive data
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
+    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
     if (rateLimitError) {
       return rateLimitError;
     }
 
     try {
-      const searchParams = _request.nextUrl.searchParams;
+      const { searchParams } = new URL(request.url);
+      const limit = parseInt(searchParams.get('limit') || '50');
+      const offset = parseInt(searchParams.get('offset') || '0');
+      const clubId = searchParams.get('club_id');
+      const action = searchParams.get('action');
+      const entityType = searchParams.get('entity_type');
 
-      const filter: AuditLogFilter = {};
+      const supabase = await createClient();
 
-      const startDateParam = searchParams.get('startDate');
-      if (startDateParam) {
-        filter.startDate = new Date(startDateParam);
+      let query = supabase
+        .from('audit_logs')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      // Filter by club if provided
+      if (clubId) {
+        query = query.eq('club_id', clubId);
+      } else {
+        // If no club_id provided, filter by user's club
+        query = query.eq('club_id', auth.clubId);
       }
 
-      const endDateParam = searchParams.get('endDate');
-      if (endDateParam) {
-        filter.endDate = new Date(endDateParam);
+      // Additional filters
+      if (action) {
+        query = query.eq('action', action);
       }
 
-      const actionParam = searchParams.get('action');
-      if (actionParam) {
-        filter.action = actionParam.split(',') as AuditAction[];
+      if (entityType) {
+        query = query.eq('entity_type', entityType);
       }
 
-      const entityTypeParam = searchParams.get('entityType');
-      if (entityTypeParam) {
-        filter.entityType = entityTypeParam.split(',') as EntityType[];
-      }
+      const { data, error, count } = await query;
 
-      const userIdParam = searchParams.get('userId');
-      if (userIdParam) {
-        filter.userId = userIdParam.split(',');
-      }
+      if (error) throw error;
 
-      const userRoleParam = searchParams.get('userRole');
-      if (userRoleParam) {
-        filter.userRole = userRoleParam.split(',');
-      }
-
-      const statusParam = searchParams.get('status');
-      if (statusParam) {
-        filter.status = statusParam.split(',') as ('success' | 'failed' | 'partial')[];
-      }
-
-      const entityIdParam = searchParams.get('entityId');
-      if (entityIdParam) {
-        filter.entityId = entityIdParam;
-      }
-
-      const searchTermParam = searchParams.get('search');
-      if (searchTermParam) {
-        filter.searchTerm = searchTermParam;
-      }
-
-      const auditLogService = new AuditLogService();
-      const logs = await auditLogService.getAuditLogs(filter);
-
-      return NextResponse.json(logs);
+      return NextResponse.json({
+        logs: data || [],
+        total: count || 0,
+        limit,
+        offset,
+      });
     } catch (error) {
       console.error('Error fetching audit logs:', error);
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 });

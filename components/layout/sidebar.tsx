@@ -5,15 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { NavigationBadge } from './navigation-badge';
+import { NavigationCategory } from './navigation-category';
 import {
-  BarChart3,
   Users,
   Calendar,
   Settings,
-  Club,
   CreditCard,
   Home,
-  HelpCircle,
   MapPin,
   TrendingUp,
   Bell,
@@ -23,6 +22,8 @@ import {
   User,
   Newspaper,
   X,
+  Layout,
+  GraduationCap,
 } from 'lucide-react';
 
 export function Sidebar({
@@ -84,34 +85,71 @@ export function Sidebar({
   // Superadmin sees "Vereinsübersicht" only when no club is selected
   const showTenantLink = isSuperAdmin && !selectedClubId;
 
-  const mainNav = [
+  // TODO: Replace with actual counts from API
+  const notificationCount = 0; // Replace with actual API call
+  const approvalCount = 0; // Replace with actual API call
+
+  // Primary navigation - most frequently accessed (ordered by priority)
+  const primaryNav = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
     { name: 'Trainingszeiten', href: '/training-schedule', icon: Calendar },
-    { name: 'Anwesenheit', href: '/attendance-history', icon: TrendingUp },
-    { name: 'News', href: '/news', icon: Newspaper }, // SECURITY FIX: Changed from Bell to Newspaper
-    { name: 'Benachrichtigungen', href: '/notifications', icon: Bell },
-    { name: 'Buchungen', href: '/bookings', icon: Calendar },
-    { name: 'Platz-Kalender', href: '/courts', icon: MapPin },
-    ...(isTrainer ? [{ name: 'Scheduler', href: '/scheduler', icon: Calendar }] : []),
-    { name: 'Abo & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin },
+    { name: 'Meine Anwesenheit', href: '/attendance-history', icon: TrendingUp },
+    { name: 'Benachrichtigungen', href: '/notifications', icon: Bell, badge: notificationCount },
+  ];
+
+  // Secondary navigation - less frequently accessed
+  const secondaryNav = [
     { name: 'Mein Profil', href: '/profile', icon: User },
+    { name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard, showIf: !isSuperAdmin },
+    { name: 'News & Updates', href: '/news', icon: Newspaper },
     ...(showTenantLink
       ? [{ name: 'Vereinsübersicht', href: '/admin/tenants', icon: Building2 }]
       : []),
-  ];
+  ].filter((item) => item.showIf !== false);
 
-  const adminNav = [
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, showIf: isAdmin },
-    { name: 'Onboarding', href: '/admin/onboarding', icon: HelpCircle, showIf: isAdmin },
-    { name: 'Clubs', href: '/admin/clubs', icon: Club, showIf: isAdmin },
-    { name: 'Mitglieder', href: '/admin/members', icon: Users, showIf: isAdmin },
-    { name: 'Trainer', href: '/admin/trainers', icon: Users, showIf: isAdmin },
-    { name: 'Schedules', href: '/admin/schedules', icon: Calendar, showIf: isAdmin },
-    { name: 'Platzverwaltung', href: '/admin/courts/manage', icon: MapPin, showIf: isAdmin },
-    { name: 'Genehmigungen', href: '/admin/approvals', icon: CheckCircle, showIf: isAdmin },
-    { name: 'Einstellungen', href: '/admin/settings', icon: Settings, showIf: isAdmin },
-    { name: 'Billing Admin', href: '/admin/billing', icon: CreditCard, showIf: isAdmin },
+  // Trainer-specific navigation
+  const trainerNav = [
+    { name: 'Trainer Dashboard', href: '/trainer', icon: GraduationCap, showIf: isTrainer },
+    { name: 'Termin-Verwaltung', href: '/scheduler', icon: Calendar, showIf: isTrainer },
   ].filter((item) => item.showIf);
+
+  // Admin navigation - consolidated structure
+  const adminNav = [
+    { name: 'Admin Dashboard', href: '/admin/panel-v2', icon: Layout, showIf: isAdmin },
+    { name: 'Benutzerverwaltung', href: '/admin/members', icon: Users, showIf: isAdmin },
+    {
+      name: 'Genehmigungen',
+      href: '/admin/approvals',
+      icon: CheckCircle,
+      showIf: isAdmin,
+      badge: approvalCount,
+    },
+  ].filter((item) => item.showIf);
+
+  // Admin categories with sub-items
+  const adminCategories = isAdmin
+    ? [
+        {
+          name: 'Club-Verwaltung',
+          icon: Building2,
+          subItems: [
+            { name: 'Clubs', href: '/admin/clubs' },
+            { name: 'Plätze', href: '/admin/courts/manage' },
+            { name: 'Trainingszeiten', href: '/admin/schedules' },
+          ],
+        },
+        {
+          name: 'Einstellungen',
+          icon: Settings,
+          subItems: [
+            { name: 'Allgemein', href: '/admin/settings' },
+            { name: 'Onboarding', href: '/admin/onboarding' },
+            { name: 'Billing-Konfiguration', href: '/admin/billing' },
+          ],
+        },
+      ]
+    : [];
 
   return (
     <aside
@@ -150,6 +188,7 @@ export function Sidebar({
         </div>
 
         <nav className="flex flex-col gap-1 px-3" role="navigation" aria-label="Hauptnavigation">
+          {/* Primary Navigation */}
           <div
             className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
             role="heading"
@@ -157,15 +196,16 @@ export function Sidebar({
           >
             Hauptmenü
           </div>
-          {mainNav.map((item) => {
-            const isActive = pathname === item.href;
+          {primaryNav.map((item) => {
+            const isActive =
+              pathname === item.href || (item.href === '/bookings' && pathname === '/courts');
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 onClick={() => onClose?.()}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  'flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   isActive
                     ? 'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
@@ -173,12 +213,50 @@ export function Sidebar({
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={`${item.name} Seite${isActive ? ' (aktuell)' : ''}`}
               >
-                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                <span>{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  <span>{item.name}</span>
+                </div>
+                {item.badge !== undefined && <NavigationBadge count={item.badge} />}
               </Link>
             );
           })}
 
+          {/* Trainer Navigation */}
+          {isTrainer && trainerNav.length > 0 && (
+            <>
+              <div
+                className="mt-8 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                role="heading"
+                aria-level={2}
+              >
+                Trainer
+              </div>
+              {trainerNav.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => onClose?.()}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      isActive
+                        ? 'bg-gradient-to-r from-[#22c55e] to-[#15803d] text-white shadow-lg'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                    )}
+                    aria-current={isActive ? 'page' : undefined}
+                    aria-label={`${item.name} Seite${isActive ? ' (aktuell)' : ''}`}
+                  >
+                    <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </>
+          )}
+
+          {/* Admin Navigation */}
           {isAdmin && (
             <>
               <div
@@ -196,9 +274,59 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => onClose?.()}
                     className={cn(
-                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      'flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
                       isActive
                         ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-lg'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                    )}
+                    aria-current={isActive ? 'page' : undefined}
+                    aria-label={`${item.name} Seite${isActive ? ' (aktuell)' : ''}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                      <span>{item.name}</span>
+                    </div>
+                    {item.badge !== undefined && (
+                      <NavigationBadge count={item.badge} variant="danger" />
+                    )}
+                  </Link>
+                );
+              })}
+
+              {/* Admin Categories with Sub-Items */}
+              {adminCategories.map((category) => (
+                <NavigationCategory
+                  key={category.name}
+                  name={category.name}
+                  icon={category.icon}
+                  subItems={category.subItems}
+                  onClose={onClose}
+                />
+              ))}
+            </>
+          )}
+
+          {/* Secondary Navigation - Footer Area */}
+          {secondaryNav.length > 0 && (
+            <>
+              <div
+                className="mt-8 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                role="heading"
+                aria-level={2}
+              >
+                Weitere
+              </div>
+              {secondaryNav.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => onClose?.()}
+                    className={cn(
+                      'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      isActive
+                        ? 'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}

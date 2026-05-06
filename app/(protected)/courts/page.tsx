@@ -1,5 +1,5 @@
-import CourtCalendar from '@/components/court-calendar';
+import { redirect } from 'next/navigation';
 
-export default function CourtCalendarPage() {
-  return <CourtCalendar />;
+export default function CourtsRedirect() {
+  redirect('/bookings?tab=courts');
 }

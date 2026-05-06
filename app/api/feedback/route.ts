@@ -1,220 +1,173 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { feedbackRepository } from '@/lib/repositories/feedback-repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { rateLimit, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { withCSRFProtection } from '@/lib/csrf';
-import { z } from 'zod';
 
-const createFeedbackSchema = z.object({
-  trainerId: z.string().uuid(),
-  sessionId: z.string().uuid().optional(),
-  rating: z.number().int().min(1).max(5),
-  teachingQuality: z.number().int().min(1).max(5).optional(),
-  communication: z.number().int().min(1).max(5).optional(),
-  motivation: z.number().int().min(1).max(5).optional(),
-  punctuality: z.number().int().min(1).max(5).optional(),
-  comment: z.string().max(1000).optional(),
-});
-
-// GET /api/feedback - List feedback
-export async function GET(req: NextRequest) {
-  return withApiAuth(req, async (auth) => {
-    // Members can view feedback
+/**
+ * @swagger
+ * /api/feedback:
+ *   post:
+ *     summary: Create new feedback
+ *     tags: [Feedback]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - trainer_id
+ *               - rating
+ *             properties:
+ *               session_id:
+ *                 type: string
+ *                 description: Optional session ID
+ *               trainer_id:
+ *                 type: string
+ *                 description: Trainer ID
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 description: Rating from 1 to 5
+ *               comment:
+ *                 type: string
+ *                 description: Optional feedback comment
+ *     responses:
+ *       201:
+ *         description: Feedback created successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+ */
+export async function POST(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
       return forbiddenResponse('Authentication required');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
-    if (rateLimitError) return rateLimitError;
-
-    const url = new URL(req.url);
-    const trainerId = url.searchParams.get('trainerId');
-    const clubId = url.searchParams.get('clubId');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-
-    if (!trainerId && !clubId) {
-      return NextResponse.json({ error: 'trainerId or clubId required' }, { status: 400 });
+    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
     try {
-      const supabase = await createClient();
+      const body = await request.json();
+      const { session_id, trainer_id, rating, comment } = body;
 
-      let query = supabase
-        .from('trainer_feedback')
-        .select(
-          `
-          id,
-          trainer_id,
-          member_id,
+      // Validate required fields
+      if (!trainer_id) {
+        return NextResponse.json({ error: 'trainer_id is required' }, { status: 400 });
+      }
+
+      if (!rating || rating < 1 || rating > 5) {
+        return NextResponse.json({ error: 'rating must be between 1 and 5' }, { status: 400 });
+      }
+
+      // Check if member has already submitted feedback for this session
+      if (session_id) {
+        const hasSubmitted = await feedbackRepository.hasMemberSubmittedFeedback(
           session_id,
-          rating,
-          teaching_quality,
-          communication,
-          motivation,
-          punctuality,
-          comment,
-          created_at
-        `
-        )
-        .eq('is_visible', true)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+          auth.user.id
+        );
 
-      if (trainerId) {
-        query = query.eq('trainer_id', trainerId);
-      }
-      if (clubId) {
-        query = query.eq('club_id', clubId);
+        if (hasSubmitted) {
+          return NextResponse.json(
+            { error: 'Feedback already submitted for this session' },
+            { status: 400 }
+          );
+        }
       }
 
-      const { data, error } = await query;
+      // Create feedback
+      const feedback = await feedbackRepository.create({
+        club_id: auth.clubId,
+        session_id: session_id || null,
+        trainer_id,
+        member_id: auth.user.id,
+        rating: parseInt(rating),
+        comment: comment || null,
+      });
 
-      if (error) {
-        console.error('Failed to fetch feedback:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
-
-      return NextResponse.json(data);
+      return NextResponse.json(feedback, { status: 201 });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching feedback:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      console.error('Error creating feedback:', error);
+      return NextResponse.json({ error: 'Failed to create feedback' }, { status: 500 });
     }
   });
 }
 
-// POST /api/feedback - Create feedback
-export async function POST(req: NextRequest) {
-  return withCSRFProtection(req, async () => {
-    return withApiAuth(req, async (auth) => {
-      // Only members can create feedback
-      const hasPermission = await verifyRole(auth, 'member');
-      if (!hasPermission) {
-        return forbiddenResponse('Member access required');
-      }
+/**
+ * @swagger
+ * /api/feedback:
+ *   get:
+ *     summary: Get all feedback for the tenant
+ *     tags: [Feedback]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of items to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of items to skip
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, reviewed, archived]
+ *         description: Filter by status
+ *     responses:
+ *       200:
+ *         description: Feedback list retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'member');
+    if (!hasPermission) {
+      return forbiddenResponse('Authentication required');
+    }
 
-      const rateLimitError = await checkRateLimitOrFail(req, rateLimit);
-      if (rateLimitError) return rateLimitError;
+    const rateLimitError = await checkRateLimitOrFail(request, rateLimit);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
 
-      try {
-        const body = await req.json();
-        const validation = createFeedbackSchema.safeParse(body);
+    try {
+      const { searchParams } = new URL(request.url);
+      const limit = parseInt(searchParams.get('limit') || '20');
+      const offset = parseInt(searchParams.get('offset') || '0');
+      const visibleOnly = searchParams.get('visibleOnly') !== 'false';
 
-        if (!validation.success) {
-          return NextResponse.json(
-            { error: 'Invalid input', details: validation.error.issues },
-            { status: 400 }
-          );
-        }
+      const result = await feedbackRepository.findByClub(auth.clubId, {
+        limit,
+        offset,
+        visibleOnly,
+      });
 
-        const {
-          trainerId,
-          sessionId,
-          rating,
-          teachingQuality,
-          communication,
-          motivation,
-          punctuality,
-          comment,
-        } = validation.data;
-
-        const supabase = await createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        // Get member's club
-        const { data: membership } = await supabase
-          .from('user_club_memberships')
-          .select('club_id')
-          .eq('user_id', user.id)
-          .eq('role', 'member')
-          .single();
-
-        if (!membership) {
-          return forbiddenResponse('Member membership required');
-        }
-
-        // Verify trainer belongs to same club
-        const { data: trainerMembership } = await supabase
-          .from('user_club_memberships')
-          .select('club_id')
-          .eq('user_id', trainerId)
-          .eq('club_id', membership.club_id)
-          .single();
-
-        if (!trainerMembership) {
-          return NextResponse.json({ error: 'Trainer not found in your club' }, { status: 404 });
-        }
-
-        // If sessionId provided, verify member was booked for that session
-        if (sessionId) {
-          const { data: booking } = await supabase
-            .from('bookings')
-            .select('id')
-            .eq('session_id', sessionId)
-            .eq('member_id', user.id)
-            .eq('status', 'completed')
-            .single();
-
-          if (!booking) {
-            return NextResponse.json(
-              { error: 'You must complete the session before providing feedback' },
-              { status: 403 }
-            );
-          }
-
-          // Check if feedback already exists for this session
-          const { data: existingFeedback } = await supabase
-            .from('trainer_feedback')
-            .select('id')
-            .eq('member_id', user.id)
-            .eq('session_id', sessionId)
-            .single();
-
-          if (existingFeedback) {
-            return NextResponse.json(
-              { error: 'Feedback already submitted for this session' },
-              { status: 409 }
-            );
-          }
-        }
-
-        // Create feedback
-        const { data: feedback, error } = await supabase
-          .from('trainer_feedback')
-          .insert({
-            member_id: user.id,
-            trainer_id: trainerId,
-            session_id: sessionId || null,
-            club_id: membership.club_id,
-            rating,
-            teaching_quality: teachingQuality || null,
-            communication: communication || null,
-            motivation: motivation || null,
-            punctuality: punctuality || null,
-            comment: comment || null,
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Failed to create feedback:', error);
-          return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-
-        return NextResponse.json(feedback, { status: 201 });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('Error creating feedback:', error);
-        return NextResponse.json({ error: message }, { status: 500 });
-      }
-    });
+      return NextResponse.json({
+        feedback: result.feedback,
+        total: result.total,
+        limit,
+        offset,
+      });
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
+    }
   });
 }

@@ -1,89 +1,103 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { AuditLogService } from '@/src/application/services/audit-log.service';
-import type {
-  AuditLogFilter,
-  AuditAction,
-  EntityType,
-} from '@/src/domain/entities/audit-log.entity';
+import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { format } from 'date-fns';
 
-export async function GET(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
-    // Verify admin role for export
-    const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) {
+/**
+ * @swagger
+ * /api/audit-logs/export:
+ *   get:
+ *     summary: Export audit logs as CSV
+ *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: club_id
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: entity_type
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: CSV file
+ *         content:
+ *           text/csv:
+ *             schema:
+ *               type: string
+ *       401:
+ *         description: Unauthorized
+ */
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) {
       return forbiddenResponse('Admin access required');
     }
 
-    // Apply very strict rate limiting for export (resource intensive)
-    const rateLimitError = await checkRateLimitOrFail(_request, rateLimitStrict);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
-
     try {
-      const searchParams = _request.nextUrl.searchParams;
-      const format = (searchParams.get('format') || 'json') as 'json' | 'csv';
+      const { searchParams } = new URL(request.url);
+      const clubId = searchParams.get('club_id');
+      const action = searchParams.get('action');
+      const entityType = searchParams.get('entity_type');
 
-      const filter: AuditLogFilter = {};
+      const supabase = await createClient();
 
-      const startDateParam = searchParams.get('startDate');
-      if (startDateParam) {
-        filter.startDate = new Date(startDateParam);
+      let query = supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10000); // Max 10k rows for export
+
+      if (clubId) {
+        query = query.eq('club_id', clubId);
+      } else {
+        query = query.eq('club_id', auth.clubId);
       }
 
-      const endDateParam = searchParams.get('endDate');
-      if (endDateParam) {
-        filter.endDate = new Date(endDateParam);
-      }
+      if (action) query = query.eq('action', action);
+      if (entityType) query = query.eq('entity_type', entityType);
 
-      const actionParam = searchParams.get('action');
-      if (actionParam) {
-        filter.action = actionParam.split(',') as AuditAction[];
-      }
+      const { data, error } = await query;
 
-      const entityTypeParam = searchParams.get('entityType');
-      if (entityTypeParam) {
-        filter.entityType = entityTypeParam.split(',') as EntityType[];
-      }
+      if (error) throw error;
 
-      const userIdParam = searchParams.get('userId');
-      if (userIdParam) {
-        filter.userId = userIdParam.split(',');
-      }
+      // Generate CSV
+      const headers = [
+        'Timestamp',
+        'Action',
+        'Entity Type',
+        'Entity ID',
+        'User Email',
+        'IP Address',
+        'Changes',
+      ];
+      const rows = (data || []).map((log: any) => [
+        format(new Date(log.created_at), 'yyyy-MM-dd HH:mm:ss'),
+        log.action,
+        log.entity_type,
+        log.entity_id,
+        log.user_email || '',
+        log.ip_address || '',
+        JSON.stringify(log.changes || {}),
+      ]);
 
-      const userRoleParam = searchParams.get('userRole');
-      if (userRoleParam) {
-        filter.userRole = userRoleParam.split(',');
-      }
+      const csv = [
+        headers.join(','),
+        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+      ].join('\n');
 
-      const statusParam = searchParams.get('status');
-      if (statusParam) {
-        filter.status = statusParam.split(',') as ('success' | 'failed' | 'partial')[];
-      }
-
-      const entityIdParam = searchParams.get('entityId');
-      if (entityIdParam) {
-        filter.entityId = entityIdParam;
-      }
-
-      const searchTermParam = searchParams.get('search');
-      if (searchTermParam) {
-        filter.searchTerm = searchTermParam;
-      }
-
-      const auditLogService = new AuditLogService();
-      const content = await auditLogService.exportAuditLogs(filter, format);
-
-      const contentType = format === 'csv' ? 'text/csv' : 'application/json';
-      const filename = `audit-logs-${new Date().toISOString().split('T')[0]}.${format}`;
-
-      return new NextResponse(content, {
+      return new NextResponse(csv, {
         headers: {
-          'Content-Type': contentType,
-          'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="audit-logs-${format(new Date(), 'yyyy-MM-dd')}.csv"`,
         },
       });
     } catch (error) {

@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import FeedbackList from '@/components/feedback/feedback-list';
+import { useUserMember } from '@/hooks/use-user-data';
 
 interface Attendee {
   bookingId: string;
@@ -26,6 +29,7 @@ interface DashboardStats {
 }
 
 export default function TrainerDashboard() {
+  const { data: memberData } = useUserMember();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,85 +113,113 @@ export default function TrainerDashboard() {
         </Card>
       </div>
 
-      {/* Sessions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Meine Sessions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Zeit
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Teilnehmer
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aktion
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {sessions.map((session: Session) => (
-                  <tr key={session.id}>
-                    <td className="px-4 py-2 text-sm">
-                      {new Date(session.startTime).toLocaleDateString('de-DE', {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                      <br />
-                      <span className="text-gray-500">
-                        bis{' '}
-                        {new Date(session.endTime).toLocaleTimeString('de-DE', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-sm">
-                      {session.attendees.map((a, i) => (
-                        <div key={i}>{a.memberName}</div>
-                      ))}
-                    </td>
-                    <td className="px-4 py-2 text-sm">
-                      {session.attendees.map((a, i) => (
-                        <span
-                          key={i}
-                          className={`inline-flex items-center px-2 py-1 rounded text-xs mr-1 mb-1 font-medium ${getStatusColor(a.status)}`}
-                        >
-                          {a.status}
-                        </span>
-                      ))}
-                    </td>
-                    <td className="px-4 py-2 text-sm">
-                      {session.attendees.map(
-                        (a, i) =>
-                          a.status === 'confirmed' && (
+      {/* Tabs for Sessions and Feedback */}
+      <Tabs defaultValue="sessions" className="w-full">
+        <TabsList>
+          <TabsTrigger value="sessions">Meine Sessions</TabsTrigger>
+          <TabsTrigger value="feedback">Mein Feedback</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="sessions">
+          <Card>
+            <CardHeader>
+              <CardTitle>Meine Sessions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Zeit
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Teilnehmer
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Aktion
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {sessions.map((session: Session) => (
+                      <tr key={session.id}>
+                        <td className="px-4 py-2 text-sm">
+                          {new Date(session.startTime).toLocaleDateString('de-DE', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                          <br />
+                          <span className="text-gray-500">
+                            bis{' '}
+                            {new Date(session.endTime).toLocaleTimeString('de-DE', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-sm">
+                          {session.attendees.map((a, i) => (
+                            <div key={i}>{a.memberName}</div>
+                          ))}
+                        </td>
+                        <td className="px-4 py-2 text-sm">
+                          {session.attendees.map((a, i) => (
                             <span
                               key={i}
-                              className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-600 mr-1 mb-1 rounded"
+                              className={`inline-flex items-center px-2 py-1 rounded text-xs mr-1 mb-1 font-medium ${getStatusColor(a.status)}`}
                             >
-                              Kontaktieren Sie den Admin für No-Show
+                              {a.status}
                             </span>
-                          )
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                          ))}
+                        </td>
+                        <td className="px-4 py-2 text-sm">
+                          {session.attendees.map(
+                            (a, i) =>
+                              a.status === 'confirmed' && (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-600 mr-1 mb-1 rounded"
+                                >
+                                  Kontaktieren Sie den Admin für No-Show
+                                </span>
+                              )
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="feedback">
+          <Card>
+            <CardHeader>
+              <CardTitle>Feedback von Mitgliedern</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {memberData?.memberId && (
+                <FeedbackList
+                  trainerId={memberData.memberId}
+                  limit={20}
+                  visibleOnly={true}
+                  showMemberInfo={true}
+                  showSessionInfo={true}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

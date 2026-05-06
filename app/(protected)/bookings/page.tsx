@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   format,
   eachDayOfInterval,
@@ -11,10 +12,20 @@ import {
   isSameMonth,
   addMonths,
   subMonths,
+  isPast,
 } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Download,
+  MessageSquare,
+  Calendar as CalendarIcon,
+  MapPin,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
@@ -24,9 +35,36 @@ import {
   useCancelBooking,
   useUpdateBookingStatus,
 } from '@/hooks/use-sessions';
+import FeedbackModal from '@/components/feedback/feedback-modal';
+import CourtCalendar from '@/components/court-calendar';
 
 export default function BookingsPage() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams?.get('tab') || 'bookings';
+
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [feedbackModal, setFeedbackModal] = useState<{
+    open: boolean;
+    sessionId: string;
+    trainerId: string;
+    trainerName: string;
+    sessionTitle: string;
+  }>({
+    open: false,
+    sessionId: '',
+    trainerId: '',
+    trainerName: '',
+    sessionTitle: '',
+  });
+
+  // Update tab when URL param changes
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    if (tab && (tab === 'bookings' || tab === 'courts')) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const { data: clubData, error: clubError } = useUserClub();
   const { data: memberData } = useUserMember();
@@ -98,6 +136,23 @@ export default function BookingsPage() {
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
+  const openFeedbackModal = useCallback((session: any, date: Date) => {
+    // Check if session is in the past
+    const sessionDateTime = new Date(date);
+    const [hours, minutes] = session.endTime.split(':');
+    sessionDateTime.setHours(parseInt(hours), parseInt(minutes));
+
+    if (isPast(sessionDateTime)) {
+      setFeedbackModal({
+        open: true,
+        sessionId: session.id,
+        trainerId: session.trainerId,
+        trainerName: session.trainerName || 'Trainer',
+        sessionTitle: `${session.startTime} - ${session.endTime}`,
+      });
+    }
+  }, []);
+
   const handleExportCSV = () => {
     const data = sessions.map((s) => ({
       id: s.id,
@@ -138,149 +193,214 @@ export default function BookingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Buchungen</h1>
-          <p className="text-gray-500">Trainingsbuchungen für deinen Verein</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[100px] text-center font-medium text-sm md:text-base">
-            {format(currentMonth, 'MMMM yyyy', { locale: de })}
-          </span>
-          <Button variant="outline" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <h1 className="text-2xl font-bold text-brand-primary">Buchungen & Kalender</h1>
+          <p className="text-gray-500">
+            Verwalten Sie Ihre Buchungen und sehen Sie die Platzverfügbarkeit
+          </p>
         </div>
       </div>
 
-      {/* Calendar Grid */}
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Laden...</div>
-      ) : (
-        <div className="overflow-x-auto -mx-4 px-4">
-          <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden min-w-[600px]">
-            {/* Day headers */}
-            {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
-              <div
-                key={day}
-                className="bg-gray-50 p-2 md:p-3 text-center font-semibold text-gray-700 text-xs md:text-sm"
-              >
-                {day}
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="bookings" className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Meine Buchungen</span>
+          </TabsTrigger>
+          <TabsTrigger value="courts" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            <span>Platz-Kalender</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Bookings Tab */}
+        <TabsContent value="bookings" className="mt-6">
+          <div className="space-y-4">
+            {/* Calendar Controls */}
+            <div className="flex items-center justify-between gap-2">
+              <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="min-w-[100px] text-center font-medium text-sm md:text-base">
+                  {format(currentMonth, 'MMMM yyyy', { locale: de })}
+                </span>
+                <Button variant="outline" size="icon" onClick={goToNextMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-            ))}
+            </div>
 
-            {/* Calendar days */}
-            {calendarDays.map((day, idx) => {
-              const daySessions = getSessionsForDay(day);
-              const isCurrentMonth = isSameMonth(day, currentMonth);
+            {/* Calendar Grid */}
+            {isLoading ? (
+              <div className="text-center py-12 text-gray-500">Laden...</div>
+            ) : (
+              <div className="overflow-x-auto -mx-4 px-4">
+                <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden min-w-[600px]">
+                  {/* Day headers */}
+                  {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
+                    <div
+                      key={day}
+                      className="bg-gray-50 p-2 md:p-3 text-center font-semibold text-gray-700 text-xs md:text-sm"
+                    >
+                      {day}
+                    </div>
+                  ))}
 
-              return (
-                <div
-                  key={idx}
-                  className={`min-h-[80px] md:min-h-[100px] bg-white p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
-                >
-                  <div className="text-xs font-medium text-gray-500 mb-1">{format(day, 'd')}</div>
-                  <div className="space-y-1">
-                    {daySessions.map((session) => (
+                  {/* Calendar days */}
+                  {calendarDays.map((day, idx) => {
+                    const daySessions = getSessionsForDay(day);
+                    const isCurrentMonth = isSameMonth(day, currentMonth);
+
+                    return (
                       <div
-                        key={session.id}
-                        className={`p-1 rounded text-xs transition-colors cursor-pointer ${
-                          session.bookedByUser
-                            ? 'bg-red-50 text-red-800 border border-red-200'
-                            : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
-                        }`}
-                        onClick={() => !session.bookedByUser && handleBooking(session.id)}
+                        key={idx}
+                        className={`min-h-[80px] md:min-h-[100px] bg-white p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                       >
-                        <div className="flex items-start justify-between gap-1">
-                          <div className="font-medium truncate">{session.startTime}</div>
-                          {session.bookedByUser && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (session.bookingId) {
-                                  handleCancelBooking(session.id, session.bookingId);
-                                }
-                              }}
-                              className="ml-1 p-0.5 rounded hover:bg-red-100 text-red-600 transition-colors"
-                              title="Buchung stornieren"
-                            >
-                              <svg
-                                className="h-3 w-3"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                          )}
+                        <div className="text-xs font-medium text-gray-500 mb-1">
+                          {format(day, 'd')}
                         </div>
-                        <div className="flex items-center gap-1 text-[10px]">
-                          <Clock className="h-3 w-3" />
-                          <span className="truncate">
-                            {session.trainerName || session.trainerId}
-                          </span>
-                        </div>
-                        {session.bookedByUser && session.bookingStatus && (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span
-                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-                                session.bookingStatus === 'confirmed'
-                                  ? 'bg-green-100 text-green-700'
-                                  : session.bookingStatus === 'cancelled'
-                                    ? 'bg-red-100 text-red-700'
-                                    : session.bookingStatus === 'no_show'
-                                      ? 'bg-gray-100 text-gray-700'
-                                      : 'bg-yellow-100 text-yellow-700'
+                        <div className="space-y-1">
+                          {daySessions.map((session) => (
+                            <div
+                              key={session.id}
+                              className={`p-1 rounded text-xs transition-colors cursor-pointer ${
+                                session.bookedByUser
+                                  ? 'bg-red-50 text-red-800 border border-red-200'
+                                  : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
                               }`}
+                              onClick={() => !session.bookedByUser && handleBooking(session.id)}
                             >
-                              {getBookingStatusLabel(session.bookingStatus)}
-                            </span>
-                            {(userRoles.includes('admin') ||
-                              userRoles.includes('superadmin') ||
-                              userRoles.includes('trainer')) && (
-                              <select
-                                value={session.bookingStatus}
-                                onChange={(e) =>
-                                  session.bookingId &&
-                                  handleStatusChange(
-                                    session.bookingId,
-                                    e.target.value as
-                                      | 'pending'
-                                      | 'confirmed'
-                                      | 'cancelled'
-                                      | 'no_show'
-                                  )
-                                }
-                                className="text-[9px] border rounded px-1 py-0.5 bg-white"
-                              >
-                                <option value="pending">Ausstehend</option>
-                                <option value="confirmed">Bestätigt</option>
-                                <option value="cancelled">Storniert</option>
-                                <option value="no_show">Nicht erschienen</option>
-                              </select>
-                            )}
-                          </div>
-                        )}
+                              <div className="flex items-start justify-between gap-1">
+                                <div className="font-medium truncate">{session.startTime}</div>
+                                {session.bookedByUser && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (session.bookingId) {
+                                        handleCancelBooking(session.id, session.bookingId);
+                                      }
+                                    }}
+                                    className="ml-1 p-0.5 rounded hover:bg-red-100 text-red-600 transition-colors"
+                                    title="Buchung stornieren"
+                                  >
+                                    <svg
+                                      className="h-3 w-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 text-[10px]">
+                                <Clock className="h-3 w-3" />
+                                <span className="truncate">
+                                  {session.trainerName || session.trainerId}
+                                </span>
+                              </div>
+                              {session.bookedByUser && session.bookingStatus && (
+                                <div className="flex flex-col gap-1 mt-0.5">
+                                  <div className="flex items-center gap-1">
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                        session.bookingStatus === 'confirmed'
+                                          ? 'bg-green-100 text-green-700'
+                                          : session.bookingStatus === 'cancelled'
+                                            ? 'bg-red-100 text-red-700'
+                                            : session.bookingStatus === 'no_show'
+                                              ? 'bg-gray-100 text-gray-700'
+                                              : 'bg-yellow-100 text-yellow-700'
+                                      }`}
+                                    >
+                                      {getBookingStatusLabel(session.bookingStatus)}
+                                    </span>
+                                    {(userRoles.includes('admin') ||
+                                      userRoles.includes('superadmin') ||
+                                      userRoles.includes('trainer')) && (
+                                      <select
+                                        value={session.bookingStatus}
+                                        onChange={(e) =>
+                                          session.bookingId &&
+                                          handleStatusChange(
+                                            session.bookingId,
+                                            e.target.value as
+                                              | 'pending'
+                                              | 'confirmed'
+                                              | 'cancelled'
+                                              | 'no_show'
+                                          )
+                                        }
+                                        className="text-[9px] border rounded px-1 py-0.5 bg-white"
+                                      >
+                                        <option value="pending">Ausstehend</option>
+                                        <option value="confirmed">Bestätigt</option>
+                                        <option value="cancelled">Storniert</option>
+                                        <option value="no_show">Nicht erschienen</option>
+                                      </select>
+                                    )}
+                                  </div>
+                                  {(() => {
+                                    const sessionDateTime = new Date(day);
+                                    const [hours, minutes] = session.endTime.split(':');
+                                    sessionDateTime.setHours(parseInt(hours), parseInt(minutes));
+                                    return (
+                                      isPast(sessionDateTime) &&
+                                      session.bookingStatus === 'confirmed'
+                                    );
+                                  })() && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openFeedbackModal(session, day);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                      title="Feedback geben"
+                                    >
+                                      <MessageSquare className="h-3 w-3" />
+                                      Feedback
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        </TabsContent>
+
+        {/* Courts Tab */}
+        <TabsContent value="courts" className="mt-6">
+          <CourtCalendar />
+        </TabsContent>
+      </Tabs>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        open={feedbackModal.open}
+        onOpenChange={(open) => setFeedbackModal({ ...feedbackModal, open })}
+        sessionId={feedbackModal.sessionId}
+        trainerId={feedbackModal.trainerId}
+        trainerName={feedbackModal.trainerName}
+        sessionTitle={feedbackModal.sessionTitle}
+      />
     </div>
   );
 }
