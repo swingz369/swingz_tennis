@@ -5,6 +5,9 @@ import { TrainerDashboard } from '@/components/dashboard/trainer-dashboard';
 import { AdminDashboard } from '@/components/dashboard/admin-dashboard';
 import { SuperadminDashboard } from '@/components/dashboard/superadmin-dashboard';
 
+// Force dynamic rendering since we use cookies
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -45,6 +48,8 @@ export default async function DashboardPage() {
     email: profile?.email || user.email || '',
   };
 
+  console.log('Dashboard - User:', user.id, 'Role:', highestRole);
+
   // Determine highest role
   const roles = memberships.map((m: { role: string }) => m.role);
   const highestRole = roles.includes('superadmin')
@@ -54,6 +59,8 @@ export default async function DashboardPage() {
       : roles.includes('trainer')
         ? 'trainer'
         : 'member';
+
+  console.log('Dashboard - User roles:', roles, 'Highest:', highestRole);
 
   // Render dynamic dashboard based on role
   switch (highestRole) {

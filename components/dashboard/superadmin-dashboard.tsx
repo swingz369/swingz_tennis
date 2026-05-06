@@ -15,12 +15,13 @@ interface SuperadminDashboardProps {
  * Optimized: Removed 'use client' as no interactivity needed
  */
 export function SuperadminDashboard({ user }: SuperadminDashboardProps) {
+  // Ensure user has safe defaults
+  const userName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Superadmin';
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Superadmin Dashboard - {user.name?.split(' ')[0] || 'Superadmin'}
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Superadmin Dashboard - {userName}</h1>
         <p className="text-muted-foreground mt-2">Plattform-weite Übersicht und Verwaltung</p>
       </div>
 

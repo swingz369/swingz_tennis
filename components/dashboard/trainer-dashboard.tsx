@@ -15,12 +15,12 @@ interface TrainerDashboardProps {
  * Optimized: Removed 'use client' as no interactivity needed
  */
 export function TrainerDashboard({ user }: TrainerDashboardProps) {
+  const userName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Trainer';
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Trainer Dashboard - {user.name?.split(' ')[0] || 'Trainer'}
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Trainer Dashboard - {userName}</h1>
         <p className="text-muted-foreground mt-2">Übersicht deiner Trainings und Teilnehmer</p>
       </div>
 

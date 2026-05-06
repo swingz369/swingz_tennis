@@ -15,12 +15,12 @@ interface AdminDashboardProps {
  * Optimized: Removed 'use client' as no interactivity needed
  */
 export function AdminDashboard({ user }: AdminDashboardProps) {
+  const userName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Admin';
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Admin Dashboard - {user.name?.split(' ')[0] || 'Admin'}
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard - {userName}</h1>
         <p className="text-muted-foreground mt-2">Vereinsverwaltung und Übersicht</p>
       </div>
 

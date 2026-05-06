@@ -16,12 +16,12 @@ interface MemberDashboardProps {
  * All navigation uses Next.js Link (works in Server Components)
  */
 export function MemberDashboard({ user }: MemberDashboardProps) {
+  const userName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Member';
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Willkommen zurück, {user.name?.split(' ')[0] || 'Member'}!
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Willkommen zurück, {userName}!</h1>
         <p className="text-muted-foreground mt-2">Hier ist deine Übersicht für heute</p>
       </div>
 
