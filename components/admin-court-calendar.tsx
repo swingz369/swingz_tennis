@@ -39,7 +39,7 @@ import {
 import { toast } from 'sonner';
 import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
-import { useSessions } from '@/hooks/use-sessions';
+import { useSessions, type Session } from '@/hooks/use-sessions';
 
 interface AdminCourtCalendarProps {
   onBookCourt?: (courtId: string, date: Date, startTime: string, endTime: string) => void;
@@ -66,7 +66,7 @@ const TIME_SLOTS = [
 ];
 
 interface DraggableSessionProps {
-  session: any;
+  session: Session;
   isDragging?: boolean;
 }
 
@@ -139,8 +139,9 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
       const slotStart = setMinutes(setHours(date, hour), minute);
       const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
 
-      return sessions.find((session) => {
+      return sessions.find((session: Session) => {
         if (!session.courtId || session.courtId !== courtId) return false;
+        if (!session.week) return false; // Guard against undefined week
 
         const sessionDate = new Date(session.week);
         const [startHour, startMinute] = session.startTime.split(':').map(Number);
@@ -163,7 +164,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
     (event: DragStartEvent) => {
       const { active } = event;
       setActiveId(active.id as string);
-      const session = sessions.find((s) => s.id === active.id);
+      const session = sessions.find((s: Session) => s.id === active.id);
       setDraggedSession(session);
     },
     [sessions]
@@ -191,7 +192,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
       }
 
       const targetDate = new Date(targetDateStr);
-      const session = sessions.find((s) => s.id === activeId);
+      const session = sessions.find((s: Session) => s.id === activeId);
 
       if (!session) {
         toast.error('Session nicht gefunden');

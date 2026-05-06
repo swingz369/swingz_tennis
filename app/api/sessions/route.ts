@@ -75,17 +75,25 @@ export async function GET(req: NextRequest) {
 
       // Fetch current user's bookings for this club
       const userBookingsMap = new Map<string, { bookingId: string; status: BookingStatus }>();
+      let bookingsError: string | null = null;
+
       try {
         const supabaseClient = await createClient();
         const {
           data: { user },
         } = await supabaseClient.auth.getUser();
+
         if (user) {
-          const { data: bookings } = await supabaseClient
+          const { data: bookings, error: bookingsQueryError } = await supabaseClient
             .from('bookings')
             .select('id, session_id, status')
             .eq('member_id', user.id)
             .eq('club_id', clubId.getValue());
+
+          if (bookingsQueryError) {
+            throw bookingsQueryError;
+          }
+
           if (bookings) {
             for (const b of bookings) {
               userBookingsMap.set(b.session_id, {
@@ -97,6 +105,8 @@ export async function GET(req: NextRequest) {
         }
       } catch (e) {
         console.error('Failed to fetch user bookings:', e);
+        bookingsError = 'Failed to load booking status';
+        // Continue execution but flag the error
       }
 
       const sessionsList = sessions.map((s) => {
@@ -120,7 +130,18 @@ export async function GET(req: NextRequest) {
         };
       });
 
-      return NextResponse.json(sessionsList);
+      // Include partial error if bookings failed to load
+      const response: any = {
+        sessions: sessionsList,
+      };
+
+      if (bookingsError) {
+        response.warnings = {
+          bookings: bookingsError,
+        };
+      }
+
+      return NextResponse.json(response);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error fetching sessions:', error);

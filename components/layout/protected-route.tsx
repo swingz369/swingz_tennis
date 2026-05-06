@@ -13,22 +13,25 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for demo mode cookie first (client-side)
-    const cookies = document.cookie.split(';');
-    const hasDemoMode = cookies.some((c) => c.trim().startsWith('demo-mode='));
+    // Check for demo mode cookie only in development
+    if (process.env.NODE_ENV === 'development') {
+      const cookies = document.cookie.split(';');
+      const hasDemoMode = cookies.some((c) => c.trim().startsWith('demo-mode='));
 
-    if (hasDemoMode) {
-      const demoUser: User = {
-        id: 'demo-user-123',
-        email: 'demo@swingz.com',
-        user_metadata: { full_name: 'Demo User' },
-        app_metadata: {},
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-      };
-      setUser(demoUser);
-      setLoading(false);
-      return;
+      if (hasDemoMode) {
+        console.warn('[DEV] Demo mode active - bypassing authentication');
+        const demoUser: User = {
+          id: 'demo-user-123',
+          email: 'demo@swingz.com',
+          user_metadata: { full_name: 'Demo User' },
+          app_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+        };
+        setUser(demoUser);
+        setLoading(false);
+        return;
+      }
     }
 
     // Normal Supabase auth flow

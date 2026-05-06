@@ -16,22 +16,44 @@ export interface Session {
   bookedByUser?: boolean;
   bookingId?: string;
   bookingStatus?: 'pending' | 'confirmed' | 'cancelled' | 'no_show';
+  courtId?: string; // For admin court calendar
+  week?: string; // For admin court calendar
 }
 
 export function useSessions(clubId: string | null) {
   return useQuery({
     queryKey: QUERY_KEYS.sessions(clubId || ''),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!clubId) return [];
-      const res = await fetch(`/api/sessions?clubId=${clubId}`, { credentials: 'include' });
+
+      const res = await fetch(`/api/sessions?clubId=${clubId}`, {
+        credentials: 'include',
+        signal, // Support cancellation
+      });
+
       if (!res.ok) {
         throw new Error('Failed to fetch sessions');
       }
+
       const data = await res.json();
+
+      // Handle new response format with warnings
+      if (data.sessions) {
+        // Show warning toast if bookings failed to load
+        if (data.warnings?.bookings) {
+          toast.warning(data.warnings.bookings, {
+            description: 'Deine Buchungen konnten nicht geladen werden',
+          });
+        }
+        return data.sessions;
+      }
+
+      // Fallback for old response format (just array)
       return Array.isArray(data) ? data : [];
     },
     enabled: !!clubId,
     staleTime: STALE_TIMES.SHORT,
+    gcTime: STALE_TIMES.SHORT * 2,
   });
 }
 
@@ -61,20 +83,50 @@ export function useCreateBooking() {
 
       return res.json();
     },
-    onSuccess: (data, variables) => {
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.sessions(variables.clubId) });
+
+      // Snapshot the previous value
+      const previousSessions = queryClient.getQueryData(QUERY_KEYS.sessions(variables.clubId));
+
+      // Optimistically update to the new value
       queryClient.setQueryData(
         QUERY_KEYS.sessions(variables.clubId),
         (old: any) =>
           old?.map((s: any) =>
             s.id === variables.sessionId
-              ? { ...s, bookedByUser: true, bookingId: data.bookingId }
+              ? { ...s, bookedByUser: true, bookingStatus: 'pending' }
+              : s
+          ) || []
+      );
+
+      // Return context with snapshot
+      return { previousSessions };
+    },
+    onSuccess: (data, variables) => {
+      // Use server response as source of truth
+      queryClient.setQueryData(
+        QUERY_KEYS.sessions(variables.clubId),
+        (old: any) =>
+          old?.map((s: any) =>
+            s.id === variables.sessionId
+              ? { ...s, bookedByUser: true, bookingId: data.bookingId, bookingStatus: data.status }
               : s
           ) || []
       );
       toast.success('Buchung erfolgreich');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousSessions) {
+        queryClient.setQueryData(QUERY_KEYS.sessions(variables.clubId), context.previousSessions);
+      }
       toast.error(error instanceof Error ? error.message : 'Buchung fehlgeschlagen');
+    },
+    onSettled: (_data, _error, variables) => {
+      // Always refetch after mutation settles
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sessions(variables.clubId) });
     },
   });
 }
@@ -105,18 +157,39 @@ export function useCancelBooking() {
 
       return res.json();
     },
-    onSuccess: (_data, variables) => {
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.sessions(variables.clubId) });
+
+      // Snapshot the previous value
+      const previousSessions = queryClient.getQueryData(QUERY_KEYS.sessions(variables.clubId));
+
+      // Optimistically update
       queryClient.setQueryData(
         QUERY_KEYS.sessions(variables.clubId),
         (old: any) =>
           old?.map((s: any) =>
-            s.id === variables.sessionId ? { ...s, bookedByUser: false } : s
+            s.id === variables.sessionId
+              ? { ...s, bookedByUser: false, bookingStatus: 'cancelled' }
+              : s
           ) || []
       );
+
+      return { previousSessions };
+    },
+    onSuccess: () => {
       toast.success('Buchung storniert');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousSessions) {
+        queryClient.setQueryData(QUERY_KEYS.sessions(variables.clubId), context.previousSessions);
+      }
       toast.error(error instanceof Error ? error.message : 'Stornierung fehlgeschlagen');
+    },
+    onSettled: (_data, _error, variables) => {
+      // Always refetch after mutation settles
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sessions(variables.clubId) });
     },
   });
 }

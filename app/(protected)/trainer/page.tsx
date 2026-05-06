@@ -36,25 +36,56 @@ export default function TrainerDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let isMounted = true;
+
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/trainer/me');
-        if (!res.ok) throw new Error('Failed to fetch trainer data');
+        setError(null);
+
+        const res = await fetch('/api/trainer/me', {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch trainer data');
+        }
+
         const json = await res.json();
-        setSessions(json.sessions || []);
-        setStats(json.stats);
+
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setSessions(json.sessions || []);
+          setStats(json.stats);
+        }
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('Unknown error');
+        // Ignore abort errors
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+
+        if (isMounted) {
+          if (err instanceof Error) {
+            setError(err.message);
+          } else {
+            setError('Unknown error');
+          }
         }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
+
     fetchData();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, []);
 
   const getStatusColor = (status: string) => {

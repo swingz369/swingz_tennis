@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
-import { fetchJSON } from '@/lib/fetch';
+import { fetchJSON } from '@/lib/fetch-utils';
 
 export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
 
@@ -47,30 +47,56 @@ const ROLE_HIERARCHY: Record<UserRole, number> = {
 export function useUserClub() {
   return useQuery({
     queryKey: QUERY_KEYS.userClub('current'),
-    queryFn: () => fetchJSON<UserClubData>('/api/user/club'),
-    retry: 1,
+    queryFn: ({ signal }) =>
+      fetchJSON<UserClubData>('/api/user/club', {
+        signal, // Support cancellation
+        timeout: 15000, // 15 second timeout
+        retry: {
+          maxAttempts: 3,
+          initialDelay: 1000,
+          backoffMultiplier: 2,
+        },
+      }),
     staleTime: STALE_TIMES.LONG,
+    gcTime: STALE_TIMES.LONG * 2, // Keep in cache longer
   });
 }
 
 export function useUserMember() {
   return useQuery({
     queryKey: QUERY_KEYS.userMember('current'),
-    queryFn: () => fetchJSON<UserMemberData>('/api/user/member'),
-    retry: 1,
+    queryFn: ({ signal }) =>
+      fetchJSON<UserMemberData>('/api/user/member', {
+        signal,
+        timeout: 15000,
+        retry: {
+          maxAttempts: 3,
+          initialDelay: 1000,
+          backoffMultiplier: 2,
+        },
+      }),
     staleTime: STALE_TIMES.LONG,
+    gcTime: STALE_TIMES.LONG * 2,
   });
 }
 
 export function useUserRoles() {
   return useQuery({
     queryKey: QUERY_KEYS.userRoles('current'),
-    queryFn: async () => {
-      const data = await fetchJSON<{ roles: UserRole[] }>('/api/user/roles');
+    queryFn: async ({ signal }) => {
+      const data = await fetchJSON<{ roles: UserRole[] }>('/api/user/roles', {
+        signal,
+        timeout: 15000,
+        retry: {
+          maxAttempts: 3,
+          initialDelay: 1000,
+          backoffMultiplier: 2,
+        },
+      });
       return data.roles;
     },
-    retry: 1,
     staleTime: STALE_TIMES.LONG,
+    gcTime: STALE_TIMES.LONG * 2,
   });
 }
 

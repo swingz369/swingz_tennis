@@ -34,6 +34,7 @@ import {
   useCreateBooking,
   useCancelBooking,
   useUpdateBookingStatus,
+  type Session,
 } from '@/hooks/use-sessions';
 import FeedbackModal from '@/components/feedback/feedback-modal';
 import CourtCalendar from '@/components/court-calendar';
@@ -112,10 +113,10 @@ export default function BookingsPage() {
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  const getSessionsForDay = (date: Date) => {
+  const getSessionsForDay = (date: Date): Session[] => {
     const jsDay = date.getDay();
     const apiDay = jsDay === 0 ? 7 : jsDay;
-    return sessions.filter((s) => s.dayOfWeek === apiDay);
+    return sessions.filter((s: Session) => s.dayOfWeek === apiDay);
   };
 
   const getBookingStatusLabel = (status: string): string => {
@@ -154,7 +155,7 @@ export default function BookingsPage() {
   }, []);
 
   const handleExportCSV = () => {
-    const data = sessions.map((s) => ({
+    const data = sessions.map((s: Session) => ({
       id: s.id,
       status: s.bookingStatus || 'n/a',
       bookedAt: new Date().toISOString(),
