@@ -1,81 +1,83 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { requireAuth } from '@/lib/auth';
 import { cookies } from 'next/headers';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { MembersClient } from './members-client';
 import type { Member } from './member.types';
 
-export default async function MembersPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+export const dynamic = 'force-dynamic';
 
-  // Get all active club memberships for user
-  const { data: membershipsData } = await supabase
+export default async function MembersPage() {
+  const { supabase, user } = await requireAuth();
+
+  // Get user's memberships to determine role
+  const { data: myMemberships } = await supabase
     .from('user_club_memberships')
     .select('club_id, role')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  if (!membershipsData || membershipsData.length === 0) {
-    return <div className="p-6 text-red-600">Kein Vereinszugang gefunden</div>;
+  const isSuperAdmin = (myMemberships ?? []).some((m: any) => m.role === 'superadmin');
+  const isAdmin = (myMemberships ?? []).some((m: any) => m.role === 'admin');
+
+  if (!isSuperAdmin && !isAdmin) {
+    redirect('/dashboard');
   }
 
-  const memberships = membershipsData as Array<{ club_id: string; role: string }>;
+  // Determine active club
+  let clubId: string | null = null;
 
-  // Determine effective clubId: Superadmin uses selected club cookie, non-superadmin uses first membership
-  const isSuperAdmin = memberships.some((m) => m.role === 'superadmin');
-  let effectiveClubId: string;
   if (isSuperAdmin) {
     const cookieStore = await cookies();
-    const selectedClubId = cookieStore.get('admin_club_id')?.value;
-    if (selectedClubId && memberships.some((m) => m.club_id === selectedClubId)) {
-      effectiveClubId = selectedClubId;
-    } else {
-      effectiveClubId = memberships[0].club_id;
-    }
+    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+    if (!clubId) redirect('/select-admin-club');
   } else {
-    effectiveClubId = memberships[0].club_id;
+    const adminMembership = (myMemberships ?? []).find((m: any) => m.role === 'admin');
+    clubId = adminMembership?.club_id || null;
+    if (!clubId) redirect('/dashboard');
   }
 
-  const clubId = effectiveClubId;
-
-  // Fetch members for this club
-  const { data: clubMemberships, error: membershipsError } = await supabase
+  // Fetch all memberships for this club
+  const { data: clubMemberships, error } = await supabase
     .from('user_club_memberships')
     .select('id, user_id, role, is_active, joined_at')
     .eq('club_id', clubId)
     .order('joined_at', { ascending: false });
 
-  if (membershipsError) {
-    console.error('Error fetching members:', membershipsError);
+  if (error) {
     return (
-      <div className="p-6 text-red-600">
-        Fehler beim Laden der Mitglieder: {membershipsError.message}
-      </div>
+      <div className="p-6 text-red-600">Fehler beim Laden der Mitglieder: {error.message}</div>
     );
   }
 
-  // Fetch user details separately
-  const userIds = (clubMemberships || []).map((m) => m.user_id);
-  const { data: usersData } = await supabase
-    .from('users')
-    .select('id, full_name, email')
-    .in('id', userIds);
+  // Fetch user details (match by user_id)
+  const userIds = (clubMemberships ?? []).map((m: any) => m.user_id).filter(Boolean);
 
-  // Create a map for quick lookup
-  const usersMap = new Map(usersData?.map((u) => [u.id, u]) || []);
+  const usersMap = new Map<string, { full_name: string | null; email: string | null }>();
 
-  const initialMembers: Member[] = (clubMemberships || []).map((m: any) => ({
-    id: m.id,
-    user_id: m.user_id,
-    full_name: usersMap.get(m.user_id)?.full_name || 'N/A',
-    email: usersMap.get(m.user_id)?.email || 'N/A',
-    role: m.role as Member['role'],
-    is_active: m.is_active,
-    joined_at: m.joined_at,
-  }));
+  if (userIds.length > 0) {
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, full_name, email')
+      .in('id', userIds);
+
+    (usersData ?? []).forEach((u: any) => {
+      usersMap.set(u.id, { full_name: u.full_name, email: u.email });
+    });
+  }
+
+  const initialMembers: Member[] = (clubMemberships ?? []).map((m: any) => {
+    const userData = usersMap.get(m.user_id);
+    return {
+      id: m.id,
+      user_id: m.user_id,
+      full_name: userData?.full_name || '—',
+      email: userData?.email || '—',
+      role: m.role as Member['role'],
+      is_active: m.is_active,
+      joined_at: m.joined_at,
+    };
+  });
 
   return <MembersClient initialMembers={initialMembers} clubId={clubId} />;
 }

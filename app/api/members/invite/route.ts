@@ -1,137 +1,166 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { createServerClient } from '@supabase/ssr';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { z } from 'zod';
-import { EmailService } from '@/infrastructure/email/email.service';
-import { AuditService } from '@/infrastructure/audit/audit.service';
-import { withApiAuth, verifyRole, forbiddenResponse, verifyClubAccess } from '@/lib/api-auth';
-import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
-const inviteSchema = z.object({
+const InviteSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse'),
-  full_name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben'),
+  full_name: z.string().min(2, 'Name muss mindestens 2 Zeichen haben').optional(),
   role: z.enum(['member', 'trainer', 'admin']).default('member'),
-  club_id: z.string().uuid('Ungültige Vereins-ID'),
+  club_id: z.string().uuid('Ungültige Club-ID').optional(),
 });
 
-// POST /api/members/invite – Invite a new member to a club
-export async function POST(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
-    // Only admins can invite members
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+/**
+ * POST /api/members/invite
+ * Admin lädt ein neues Mitglied per E-Mail ein.
+ * Nutzt Supabase Admin API (service role) um eine Invite-Email zu senden.
+ */
+export async function POST(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    // Only admin and superadmin can invite
+    const isAdmin = await verifyRole(auth, 'admin');
+    if (!isAdmin) {
+      return forbiddenResponse('Admin-Zugriff erforderlich');
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
-    if (rateLimitError) {
-      return rateLimitError;
+    const body = await request.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: 'Ungültiger Request-Body' }, { status: 400 });
     }
 
-    try {
-      const body = await _request.json();
-      const { email, full_name, role, club_id } = inviteSchema.parse(body);
+    const parsed = InviteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validierungsfehler', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
-      // Verify admin has access to target club
-      const hasClubAccess = await verifyClubAccess(auth, club_id);
-      if (!hasClubAccess) {
-        return forbiddenResponse('No access to target club');
+    const { email, full_name, role, club_id: bodyClubId } = parsed.data;
+
+    // Determine target club
+    let targetClubId: string | null = auth.clubId;
+    if (auth.role === 'superadmin') {
+      // Superadmin: use cookie or body club_id
+      const cookieClubId = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
+      targetClubId = bodyClubId || cookieClubId || null;
+    }
+
+    if (!targetClubId) {
+      return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseServiceKey) {
+      return NextResponse.json(
+        { error: 'Server-Konfigurationsfehler: Service-Key fehlt' },
+        { status: 500 }
+      );
+    }
+
+    // Use service role client to invite user (bypasses RLS)
+    const adminSupabase = createServerClient(supabaseUrl, supabaseServiceKey, {
+      cookies: { getAll: () => [], setAll: () => {} },
+    });
+
+    // Check if user already exists in auth.users
+    const { data: existingUsers } = await adminSupabase.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find((u: { email?: string }) => u.email === email);
+
+    let invitedUserId: string;
+
+    if (existingUser) {
+      // User already has an account — just add/update membership
+      invitedUserId = existingUser.id;
+
+      // Check if already member of this club
+      const { data: existingMembership } = await adminSupabase
+        .from('user_club_memberships')
+        .select('id, is_active, role')
+        .eq('user_id', existingUser.id)
+        .eq('club_id', targetClubId)
+        .maybeSingle();
+
+      if (existingMembership) {
+        if (existingMembership.is_active) {
+          return NextResponse.json(
+            { error: 'Dieses Mitglied ist bereits aktiv in diesem Verein' },
+            { status: 409 }
+          );
+        }
+        // Reactivate
+        await adminSupabase
+          .from('user_club_memberships')
+          .update({ is_active: true, role, status: 'active' })
+          .eq('id', existingMembership.id);
+      } else {
+        // New membership
+        await adminSupabase.from('user_club_memberships').insert({
+          user_id: existingUser.id,
+          club_id: targetClubId,
+          role,
+          is_active: true,
+          status: 'active',
+        });
       }
+    } else {
+      // New user — send invite email via Supabase
+      const { data: inviteData, error: inviteError } =
+        await adminSupabase.auth.admin.inviteUserByEmail(email, {
+          data: {
+            full_name: full_name || email.split('@')[0],
+            club_id: targetClubId,
+            role,
+          },
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://swingz.vercel.app'}/dashboard`,
+        });
 
-      const supabase = await createClient();
-
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id, email')
-        .eq('email', email)
-        .single();
-
-      if (existingUser) {
+      if (inviteError || !inviteData?.user) {
+        console.error('[Invite] Error:', inviteError);
         return NextResponse.json(
-          { error: 'Ein Benutzer mit dieser E-Mail-Adresse existiert bereits' },
-          { status: 409 }
+          { error: inviteError?.message || 'Einladung konnte nicht gesendet werden' },
+          { status: 500 }
         );
       }
 
-      // Generate a random password (user will reset via password recovery)
-      const tempPassword = Math.random().toString(36).slice(-9) + 'A1!';
+      invitedUserId = inviteData.user.id;
 
-      // Create auth user
-      const { data: newUser, error: signUpError } = await supabase.auth.admin.createUser({
+      // Ensure user is in public.users table
+      await adminSupabase.from('users').upsert({
+        id: invitedUserId,
         email,
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name,
-          role,
-        },
+        full_name: full_name || email.split('@')[0],
+        updated_at: new Date().toISOString(),
       });
 
-      if (signUpError) {
-        console.error('Error creating user:', signUpError);
-        return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
-      }
-
-      if (!newUser.user) {
-        return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
-      }
-
-      // Add club membership
-      const { error: membershipError } = await supabase.from('user_club_memberships').insert({
-        user_id: newUser.user.id,
-        club_id,
+      // Create membership
+      await adminSupabase.from('user_club_memberships').insert({
+        user_id: invitedUserId,
+        club_id: targetClubId,
         role,
         is_active: true,
+        status: 'active',
       });
-
-      if (membershipError) {
-        console.error('Error creating membership:', membershipError);
-        // Cleanup: delete user if membership fails
-        await supabase.auth.admin.deleteUser(newUser.user.id);
-        return NextResponse.json({ error: 'Failed to add member to club' }, { status: 500 });
-      }
-
-      // Get club name for email
-      const { data: clubData } = await supabase
-        .from('clubs')
-        .select('name')
-        .eq('id', club_id)
-        .single();
-      const clubName = clubData?.name || 'dein Verein';
-
-      // Get base URL from environment or use Vercel URL
-      const baseUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : 'https://swingz.vercel.app');
-
-      // Send invite email
-      EmailService.sendInvitation(email, {
-        memberName: full_name,
-        clubName,
-        loginUrl: `${baseUrl}/login`,
-        resetPasswordUrl: `${baseUrl}/reset-password?email=${encodeURIComponent(email)}`,
-      }).catch(console.error);
-
-      // Audit log
-      await AuditService.logMemberInvited(auth.user.id, newUser.user.id, club_id, role);
-
-      return NextResponse.json({
-        success: true,
-        member: {
-          id: newUser.user.id,
-          email,
-          full_name: full_name,
-          role,
-          is_active: true,
-          joined_at: new Date().toISOString(),
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      return NextResponse.json({ error: message }, { status: 400 });
     }
+
+    // Fetch club name for response
+    const { data: club } = await adminSupabase
+      .from('clubs')
+      .select('name')
+      .eq('id', targetClubId)
+      .single();
+
+    return NextResponse.json({
+      success: true,
+      message: existingUser
+        ? `${email} wurde zum Verein hinzugefügt.`
+        : `Einladung an ${email} wurde gesendet.`,
+      userId: invitedUserId,
+      clubName: club?.name,
+    });
   });
 }
