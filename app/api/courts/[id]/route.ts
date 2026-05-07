@@ -1,206 +1,117 @@
+/**
+ * GET   /api/courts/[id] — Get a single court
+ * PATCH /api/courts/[id] — Update a court (admin only)
+ *
+ * Rewritten to use Supabase client (was broken courtService/Drizzle)
+ */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { courtService } from '@/lib/booking/court.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-// GET /api/courts/[id] – Einzelnen Court abrufen
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const hasRole = await verifyRole(auth, 'member');
-    if (!hasRole) {
-      return forbiddenResponse('Member access required');
-    }
+    if (!hasRole) return forbiddenResponse('Member access required');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const { id: courtId } = await params;
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(courtId)) {
-      return NextResponse.json({ error: 'Invalid court ID format' }, { status: 400 });
+    const { data: court, error } = await auth.supabase
+      .from('courts')
+      .select(
+        'id, club_id, name, number, location, description, status, has_lighting, is_active, created_at'
+      )
+      .eq('id', courtId)
+      .single();
+
+    if (error || !court) {
+      return NextResponse.json({ error: 'Court not found' }, { status: 404 });
     }
 
-    try {
-      const court = await courtService.getCourtById(courtId);
-
-      if (!court) {
-        return NextResponse.json({ error: 'Court not found' }, { status: 404 });
-      }
-
-      // Check club membership (superadmin can access any)
-      if (auth.role !== 'superadmin' && court.club_id !== auth.clubId) {
-        return forbiddenResponse('Cannot access court from different club');
-      }
-
-      return NextResponse.json({
-        id: court.id,
-        clubId: court.club_id,
-        courtTypeId: court.court_type_id,
-        name: court.name,
-        number: court.number,
-        surface: court.surface,
-        location: court.location,
-        description: court.description,
-        status: court.status,
-        hasLighting: court.has_lighting,
-        lightingHoursStart: court.lighting_hours_start,
-        lightingHoursEnd: court.lighting_hours_end,
-        isActive: court.is_active,
-        createdAt: court.created_at,
-        updatedAt: court.updated_at,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching court:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
+    return NextResponse.json({
+      id: court.id,
+      clubId: court.club_id,
+      name: court.name,
+      number: court.number,
+      location: court.location,
+      description: court.description,
+      status: court.status,
+      hasLighting: court.has_lighting,
+      isActive: court.is_active,
+      createdAt: court.created_at,
+    });
   });
 }
 
-// PATCH /api/courts/[id] – Court aktualisieren
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
-    const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) {
-      return forbiddenResponse('Admin access required');
-    }
+    const isAdmin = await verifyRole(auth, 'admin');
+    if (!isAdmin) return forbiddenResponse('Admin access required');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     const { id: courtId } = await params;
+    const body = await req.json().catch(() => null);
+    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(courtId)) {
-      return NextResponse.json({ error: 'Invalid court ID format' }, { status: 400 });
+    // Build update object from provided fields
+    const updates: Record<string, unknown> = {};
+    if (body.name !== undefined) updates.name = body.name;
+    if (body.number !== undefined) updates.number = body.number;
+    if (body.location !== undefined) updates.location = body.location;
+    if (body.description !== undefined) updates.description = body.description;
+    if (body.hasLighting !== undefined) updates.has_lighting = body.hasLighting;
+    if (body.isActive !== undefined) updates.is_active = body.isActive;
+    if (body.status !== undefined) updates.status = body.status;
+    updates.updated_at = new Date().toISOString();
+
+    const { data: court, error } = await auth.supabase
+      .from('courts')
+      .update(updates)
+      .eq('id', courtId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Courts PATCH]', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    try {
-      const body = await req.json();
-      const {
-        name,
-        courtTypeId,
-        number,
-        surface,
-        hasLighting,
-        lightingHoursStart,
-        lightingHoursEnd,
-        location,
-        description,
-        status,
-        isActive,
-        clubId: bodyClubId,
-      } = body;
-
-      // Fetch existing court
-      const existingCourt = await courtService.getCourtById(courtId);
-      if (!existingCourt) {
-        return NextResponse.json({ error: 'Court not found' }, { status: 404 });
-      }
-
-      // SECURITY: Validate club membership for non-superadmin
-      if (auth.role !== 'superadmin' && existingCourt.club_id !== auth.clubId) {
-        return forbiddenResponse('Cannot update court from different club');
-      }
-
-      // Build update object (snake_case for service)
-      const updates: Record<string, any> = {};
-      if (name !== undefined) updates.name = name;
-      if (courtTypeId !== undefined) updates.court_type_id = courtTypeId;
-      if (number !== undefined) updates.number = number;
-      if (surface !== undefined) updates.surface = surface;
-      if (hasLighting !== undefined) updates.has_lighting = hasLighting;
-      if (lightingHoursStart !== undefined) updates.lighting_hours_start = lightingHoursStart;
-      if (lightingHoursEnd !== undefined) updates.lighting_hours_end = lightingHoursEnd;
-      if (location !== undefined) updates.location = location;
-      if (description !== undefined) updates.description = description;
-      if (status !== undefined) updates.status = status;
-      if (isActive !== undefined) updates.is_active = isActive;
-
-      // SECURITY: Disallow clubId changes via PATCH for non-superadmin (and generally)
-      if (bodyClubId !== undefined && auth.role !== 'superadmin') {
-        return NextResponse.json({ error: 'Cannot change clubId' }, { status: 403 });
-      }
-
-      // Call service update
-      const updatedCourt = await courtService.updateCourt(courtId, updates);
-
-      if (!updatedCourt) {
-        return NextResponse.json({ error: 'Failed to update court' }, { status: 500 });
-      }
-
-      return NextResponse.json({
-        success: true,
-        court: {
-          id: updatedCourt.id,
-          clubId: updatedCourt.club_id,
-          courtTypeId: updatedCourt.court_type_id,
-          name: updatedCourt.name,
-          number: updatedCourt.number,
-          surface: updatedCourt.surface,
-          location: updatedCourt.location,
-          description: updatedCourt.description,
-          status: updatedCourt.status,
-          hasLighting: updatedCourt.has_lighting,
-          lightingHoursStart: updatedCourt.lighting_hours_start,
-          lightingHoursEnd: updatedCourt.lighting_hours_end,
-          isActive: updatedCourt.is_active,
-          updatedAt: updatedCourt.updated_at,
-        },
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error updating court:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
+    return NextResponse.json({
+      success: true,
+      court: {
+        id: court.id,
+        name: court.name,
+        number: court.number,
+        hasLighting: court.has_lighting,
+        isActive: court.is_active,
+        status: court.status,
+      },
+    });
   });
 }
 
-// DELETE /api/courts/[id] – Court löschen (soft delete)
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
-    const hasRole = await verifyRole(auth, 'admin');
-    if (!hasRole) {
-      return forbiddenResponse('Admin access required');
-    }
-
-    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
-    if (rateLimitError) return rateLimitError;
+    const isAdmin = await verifyRole(auth, 'admin');
+    if (!isAdmin) return forbiddenResponse('Admin access required');
 
     const { id: courtId } = await params;
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(courtId)) {
-      return NextResponse.json({ error: 'Invalid court ID format' }, { status: 400 });
+    // Soft delete — set is_active = false
+    const { error } = await auth.supabase
+      .from('courts')
+      .update({ is_active: false, status: 'inactive', updated_at: new Date().toISOString() })
+      .eq('id', courtId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    try {
-      const court = await courtService.getCourtById(courtId);
-      if (!court) {
-        return NextResponse.json({ error: 'Court not found' }, { status: 404 });
-      }
-
-      // Check club membership
-      if (auth.role !== 'superadmin' && court.club_id !== auth.clubId) {
-        return forbiddenResponse('Cannot delete court from different club');
-      }
-
-      // Soft delete: set is_active = false via update
-      const success = await courtService.deleteCourt(courtId);
-      if (!success) {
-        return NextResponse.json({ error: 'Failed to delete court' }, { status: 500 });
-      }
-
-      return NextResponse.json({ success: true, message: 'Court deactivated' });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error deleting court:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
+    return NextResponse.json({ success: true });
   });
 }
