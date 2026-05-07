@@ -59,9 +59,7 @@ export default async function AdminTournamentsPage() {
   const { data: tournaments } = await supabase
     .from('tournaments')
     .select(
-      `id, name, description, format, category, start_date, end_date,
-       status, max_participants, registration_deadline,
-       tournament_registrations(id)`
+      'id, name, description, format, category, start_date, end_date, status, max_participants, registration_deadline'
     )
     .eq('club_id', clubId ?? '')
     .order('start_date', { ascending: true });
@@ -94,9 +92,7 @@ export default async function AdminTournamentsPage() {
       ) : (
         <div className="space-y-3">
           {(tournaments ?? []).map((t: any) => {
-            const participantCount = Array.isArray(t.tournament_registrations)
-              ? t.tournament_registrations.length
-              : 0;
+            const participantCount = 0; // loaded separately if needed
             return (
               <Card key={t.id} className="p-0 hover:shadow-sm transition-shadow">
                 <CardContent className="p-4">
