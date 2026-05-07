@@ -35,10 +35,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       id: court.id,
       clubId: court.club_id,
       name: court.name,
-      number: court.number,
-      location: court.location,
-      description: court.description,
-      status: court.status,
+      surface: court.surface,
+      hasIndoor: court.has_indoor,
       hasLighting: court.has_lighting,
       isActive: court.is_active,
       createdAt: court.created_at,
@@ -58,22 +56,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    // Build update object from provided fields
     const updates: Record<string, unknown> = {};
     if (body.name !== undefined) updates.name = body.name;
-    if (body.number !== undefined) updates.number = body.number;
-    if (body.location !== undefined) updates.location = body.location;
-    if (body.description !== undefined) updates.description = body.description;
+    if (body.surface !== undefined) updates.surface = body.surface;
+    if (body.hasIndoor !== undefined) updates.has_indoor = body.hasIndoor;
     if (body.hasLighting !== undefined) updates.has_lighting = body.hasLighting;
     if (body.isActive !== undefined) updates.is_active = body.isActive;
-    if (body.status !== undefined) updates.status = body.status;
-    updates.updated_at = new Date().toISOString();
 
     const { data: court, error } = await auth.supabase
       .from('courts')
-      .update(updates)
+      .select('id, club_id, name, surface, has_indoor, has_lighting, is_active, created_at')
       .eq('id', courtId)
-      .select()
       .single();
 
     if (error) {

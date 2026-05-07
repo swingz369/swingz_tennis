@@ -41,10 +41,10 @@ export async function GET(req: NextRequest) {
     const { data: courts, error } = await auth.supabase
       .from('courts')
       .select(
-        'id, club_id, court_type_id, name, number, location, description, status, has_lighting, is_active, created_at, updated_at'
+        'id, club_id, court_type_id, name, surface, has_indoor, has_lighting, is_active, created_at'
       )
       .eq('club_id', clubId)
-      .order('number', { ascending: true });
+      .order('name', { ascending: true });
 
     if (error) {
       console.error('[Courts GET]', error);
@@ -56,15 +56,15 @@ export async function GET(req: NextRequest) {
       clubId: c.club_id,
       courtTypeId: c.court_type_id,
       name: c.name,
-      number: c.number,
-      surface: 'clay', // default — surface comes from court_types join
-      location: c.location,
-      description: c.description,
-      status: c.status ?? 'active',
+      number: null,
+      surface: c.surface ?? 'clay',
+      location: null,
+      description: null,
+      status: c.is_active ? 'active' : 'inactive',
       hasLighting: c.has_lighting ?? false,
+      hasIndoor: c.has_indoor ?? false,
       isActive: c.is_active ?? true,
       createdAt: c.created_at,
-      updatedAt: c.updated_at,
     }));
 
     return NextResponse.json(courtsList);
@@ -117,12 +117,10 @@ export async function POST(req: NextRequest) {
       .insert({
         club_id: effectiveClubId,
         name,
-        number: number ?? null,
-        location: location || null,
-        description: description || null,
+        surface: body.surface ?? 'clay',
+        has_indoor: body.hasIndoor ?? false,
         has_lighting: hasLighting ?? false,
         is_active: isActive ?? true,
-        status: status || 'active',
       })
       .select()
       .single();
