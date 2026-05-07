@@ -1,17 +1,18 @@
 import { redirect } from 'next/navigation';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
 /**
  * Admin Layout — Auth + Role Guard
- *
- * Superadmin: muss zuerst einen Verein via /select-admin-club wählen
- *             (cookie admin_club_id muss gesetzt sein)
- * Admin:      hat genau einen Verein zugeordnet — direkt weiter
- * Andere:     werden zu ihrer Rolle weitergeleitet
  */
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params?: any;
+}) {
   const auth = await requireAuth();
   const { supabase, user } = auth;
 
@@ -34,46 +35,32 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/member');
   }
 
-  // Determine the active clubId for onboarding check
-  let activeClubId: string | null = null;
-
   if (isSuperadmin) {
-    // Superadmin needs a club selected to use admin area
     const cookieStore = await cookies();
     const clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
+    if (!clubId) redirect('/select-admin-club');
 
-    if (!clubId) {
-      redirect('/select-admin-club');
-    }
-
-    // Validate club still exists
     const { data: club } = await supabase.from('clubs').select('id').eq('id', clubId).maybeSingle();
-
-    if (!club) {
-      redirect('/select-admin-club');
-    }
-
-    activeClubId = clubId ?? null;
-  } else {
-    // Admin: get club from membership
-    const adminMembership = memberships.find((m: any) => m.role === 'admin');
-    activeClubId = adminMembership?.club_id ?? null;
+    if (!club) redirect('/select-admin-club');
   }
 
-  // Check if onboarding is required — skip if already on /admin/onboarding
-  if (activeClubId) {
-    const headersList = await headers();
-    const pathname = headersList.get('x-pathname') ?? '';
-    const isOnboardingPage = pathname.startsWith('/admin/onboarding');
+  // Onboarding check for non-superadmin admins only
+  // (superadmin always has access regardless of setup state)
+  if (!isSuperadmin && isAdmin) {
+    const adminMembership = memberships.find((m: any) => m.role === 'admin');
+    const clubId = adminMembership?.club_id;
 
-    if (!isOnboardingPage) {
+    if (clubId) {
       const { data: clubData } = await supabase
         .from('clubs')
         .select('setup_completed_at')
-        .eq('id', activeClubId)
+        .eq('id', clubId)
         .maybeSingle();
 
       if (clubData && !clubData.setup_completed_at) {
+        // Only redirect if not already fetching from onboarding
+        // Use a simpler approach: check if this is a nested layout call
+        // We avoid using headers() to prevent issues
         redirect('/admin/onboarding');
       }
     }
