@@ -17,9 +17,14 @@ import { Badge } from '@/components/ui/badge';
 
 interface Session {
   id: string;
-  timeslot_start: string;
-  timeslot_end: string;
+  // API returns startTime/endTime (ISO strings from trainer/me route)
+  startTime: string;
+  endTime: string;
+  timeslot_start?: string; // fallback alias
+  timeslot_end?: string;
   status?: string;
+  maxParticipants?: number;
+  attendees?: Array<{ bookingId: string; memberName: string; status: string }>;
   courts?: { name: string } | { name: string }[];
   groups?: { name: string } | { name: string }[];
 }
@@ -52,11 +57,13 @@ export default function TrainerPage() {
       if (!res.ok) throw new Error('Fehler beim Laden der Trainer-Daten');
       const data = await res.json();
       setSessions(data.sessions ?? []);
+      // API returns stats nested under data.stats
+      const stats = data.stats ?? data;
       setStats({
-        totalSessions: data.totalSessions ?? data.sessions?.length ?? 0,
-        upcomingSessions: data.upcomingSessions ?? 0,
-        thisWeekSessions: data.thisWeekSessions ?? 0,
-        attendanceRate: data.attendanceRate ?? 0,
+        totalSessions: stats.totalSessions ?? data.sessions?.length ?? 0,
+        upcomingSessions: stats.upcomingSessions ?? 0,
+        thisWeekSessions: stats.sessionsThisWeek ?? stats.thisWeekSessions ?? 0,
+        attendanceRate: stats.attendanceRate ?? 0,
       });
     } catch (e: any) {
       if (e.name !== 'AbortError') {
@@ -191,8 +198,9 @@ export default function TrainerPage() {
                         {group?.name || court?.name || 'Training'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatDate(session.timeslot_start)} · {formatTime(session.timeslot_start)}–
-                        {formatTime(session.timeslot_end)}
+                        {formatDate(session.startTime || session.timeslot_start || '')} ·{' '}
+                        {formatTime(session.startTime || session.timeslot_start || '')}–
+                        {formatTime(session.endTime || session.timeslot_end || '')}
                       </p>
                     </div>
                     {session.status && (
