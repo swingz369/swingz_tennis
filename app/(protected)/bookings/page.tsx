@@ -116,12 +116,16 @@ export default function BookingsPage() {
   const getSessionsForDay = (date: Date): Session[] => {
     const jsDay = date.getDay();
     const apiDay = jsDay === 0 ? 7 : jsDay;
-    const dateStr = date.toISOString().substring(0, 10); // 'YYYY-MM-DD'
+    // Use local date string to avoid UTC timezone shift (format: YYYY-MM-DD)
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${m}-${d}`;
 
     return sessions.filter((s: Session) => {
       // If session has a specific date (timeslotStart), match exactly
       if ((s as any).timeslotStart) {
-        return (s as any).timeslotStart.substring(0, 10) === dateStr;
+        return String((s as any).timeslotStart).substring(0, 10) === dateStr;
       }
       // Fallback: match by dayOfWeek (for recurring sessions without specific dates)
       return s.dayOfWeek === apiDay;
