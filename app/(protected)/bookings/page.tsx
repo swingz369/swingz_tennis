@@ -116,7 +116,16 @@ export default function BookingsPage() {
   const getSessionsForDay = (date: Date): Session[] => {
     const jsDay = date.getDay();
     const apiDay = jsDay === 0 ? 7 : jsDay;
-    return sessions.filter((s: Session) => s.dayOfWeek === apiDay);
+    const dateStr = date.toISOString().substring(0, 10); // 'YYYY-MM-DD'
+
+    return sessions.filter((s: Session) => {
+      // If session has a specific date (timeslotStart), match exactly
+      if ((s as any).timeslotStart) {
+        return (s as any).timeslotStart.substring(0, 10) === dateStr;
+      }
+      // Fallback: match by dayOfWeek (for recurring sessions without specific dates)
+      return s.dayOfWeek === apiDay;
+    });
   };
 
   const getBookingStatusLabel = (status: string): string => {
