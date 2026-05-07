@@ -103,10 +103,21 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
       }
 
       const data = await res.json();
-      setMembers((prev) => [...prev, data.member]);
+
+      // Add invited member to list (use data from response or build from form)
+      const newMember: Member = data.member ?? {
+        id: data.membershipId ?? `temp-${Date.now()}`,
+        user_id: data.userId ?? '',
+        full_name: inviteForm.full_name || inviteForm.email.split('@')[0],
+        email: inviteForm.email,
+        role: inviteForm.role as Member['role'],
+        is_active: true,
+        joined_at: new Date().toISOString(),
+      };
+      setMembers((prev) => [...prev, newMember]);
       setShowInviteDialog(false);
       setInviteForm({ email: '', full_name: '', role: 'member' });
-      toast.success('Mitglied erfolgreich eingeladen');
+      toast.success(data.message ?? 'Mitglied erfolgreich eingeladen');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Einladung fehlgeschlagen';
       toast.error(message);
