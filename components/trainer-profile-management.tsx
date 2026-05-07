@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   User,
   Phone,
@@ -269,9 +270,38 @@ export default function TrainerProfileManagement() {
   if (isLoading) {
     return (
       <div className="p-4 md:p-6 space-y-6">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
-          <p className="text-gray-500">Laden...</p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-7 w-56" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-2xl border p-5 space-y-4 bg-white dark:bg-[#0f2d22]">
+              <div className="flex items-start gap-3">
+                <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-3.5 w-40" />
+                </div>
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </div>
+              <div className="space-y-2 pt-1">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -327,56 +357,83 @@ export default function TrainerProfileManagement() {
       </div>
 
       {/* Trainer List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTrainers.map((trainer) => (
-          <Card
-            key={trainer.id}
-            className="cursor-pointer hover:shadow-md transition-all"
-            onClick={() => setSelectedTrainer(trainer)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center">
-                    <User className="h-6 w-6 text-brand-primary" />
+      {filteredTrainers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#40916C]/10 mb-5">
+            <GraduationCap className="h-10 w-10 text-[#40916C]" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {searchQuery || statusFilter !== 'all'
+              ? 'Keine Trainer gefunden'
+              : 'Kein Trainer erfasst'}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
+            {searchQuery || statusFilter !== 'all'
+              ? 'Versuche eine andere Suche oder ändere den Filter'
+              : 'Füge deinen ersten Trainer hinzu um loszulegen'}
+          </p>
+          {!searchQuery && statusFilter === 'all' && (
+            <Button
+              size="sm"
+              className="mt-6 bg-[#40916C] hover:bg-[#2d6a4f] text-white gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
+            >
+              <Plus className="h-4 w-4" />
+              Trainer hinzufügen
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredTrainers.map((trainer) => (
+            <Card
+              key={trainer.id}
+              className="cursor-pointer hover:shadow-md transition-all"
+              onClick={() => setSelectedTrainer(trainer)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center">
+                      <User className="h-6 w-6 text-brand-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {trainer.firstName} {trainer.lastName}
+                      </CardTitle>
+                      <p className="text-sm text-gray-600">{trainer.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {trainer.firstName} {trainer.lastName}
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">{trainer.email}</p>
-                  </div>
+                  <Badge variant="outline" className={getStatusColor(trainer.status)}>
+                    {getStatusLabel(trainer.status)}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className={getStatusColor(trainer.status)}>
-                  {getStatusLabel(trainer.status)}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Phone className="h-4 w-4" />
-                  <span>{trainer.phone}</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Award className="h-4 w-4" />
-                  <span>{trainer.qualifications.length} Qualifikationen</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Target className="h-4 w-4" />
-                  <span>{trainer.specializations.length} Spezialisierungen</span>
-                </div>
-                {trainer.hourlyRate && (
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Euro className="h-4 w-4" />
-                    <span>€{trainer.hourlyRate}/Stunde</span>
+                    <Phone className="h-4 w-4" />
+                    <span>{trainer.phone}</span>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Award className="h-4 w-4" />
+                    <span>{trainer.qualifications.length} Qualifikationen</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Target className="h-4 w-4" />
+                    <span>{trainer.specializations.length} Spezialisierungen</span>
+                  </div>
+                  {trainer.hourlyRate && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Euro className="h-4 w-4" />
+                      <span>€{trainer.hourlyRate}/Stunde</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Trainer Details Modal */}
       {selectedTrainer && (

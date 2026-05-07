@@ -476,11 +476,29 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       {/* Empty state */}
       {filteredCourts.length === 0 && (
-        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-          <MapPin className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">Keine Plätze gefunden</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#40916C]/10 mb-5">
+            <MapPin className="h-10 w-10 text-[#40916C]" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {searchQuery ? 'Keine Plätze gefunden' : 'Noch keine Plätze'}
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
+            {searchQuery
+              ? `Keine Plätze für "${searchQuery}" gefunden`
+              : 'Erstelle deine ersten Spielflächen um Buchungen zu ermöglichen'}
+          </p>
           {!searchQuery && (
-            <p className="text-sm mt-1">Erstelle deinen ersten Platz mit &quot;Neuer Platz&quot;</p>
+            <button
+              onClick={() => {
+                resetForm();
+                setShowCreateDialog(true);
+              }}
+              className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-[#40916C] hover:bg-[#2d6a4f] text-white text-sm font-medium rounded-xl transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Platz anlegen
+            </button>
           )}
         </div>
       )}

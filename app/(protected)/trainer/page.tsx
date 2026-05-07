@@ -10,17 +10,17 @@ import {
   ChevronRight,
   CheckCircle,
   XCircle,
-  Loader2,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Session {
   id: string;
-  // API returns startTime/endTime (ISO strings from trainer/me route)
   startTime: string;
   endTime: string;
-  timeslot_start?: string; // fallback alias
+  timeslot_start?: string;
   timeslot_end?: string;
   status?: string;
   maxParticipants?: number;
@@ -57,13 +57,12 @@ export default function TrainerPage() {
       if (!res.ok) throw new Error('Fehler beim Laden der Trainer-Daten');
       const data = await res.json();
       setSessions(data.sessions ?? []);
-      // API returns stats nested under data.stats
-      const stats = data.stats ?? data;
+      const statsData = data.stats ?? data;
       setStats({
-        totalSessions: stats.totalSessions ?? data.sessions?.length ?? 0,
-        upcomingSessions: stats.upcomingSessions ?? 0,
-        thisWeekSessions: stats.sessionsThisWeek ?? stats.thisWeekSessions ?? 0,
-        attendanceRate: stats.attendanceRate ?? 0,
+        totalSessions: statsData.totalSessions ?? data.sessions?.length ?? 0,
+        upcomingSessions: statsData.upcomingSessions ?? 0,
+        thisWeekSessions: statsData.sessionsThisWeek ?? statsData.thisWeekSessions ?? 0,
+        attendanceRate: statsData.attendanceRate ?? 0,
       });
     } catch (e: any) {
       if (e.name !== 'AbortError') {
@@ -90,9 +89,38 @@ export default function TrainerPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-[#40916C]" />
-        <p className="text-sm text-muted-foreground">Lade Trainer-Daten…</p>
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        {/* 2x2 stats grid skeleton */}
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-2xl border p-5 space-y-2 bg-white dark:bg-[#0f2d22]">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-9 w-16" />
+            </div>
+          ))}
+        </div>
+        {/* Sessions list skeleton */}
+        <div className="rounded-2xl border bg-white dark:bg-[#0f2d22]">
+          <div className="px-5 pt-5 pb-3">
+            <Skeleton className="h-5 w-36" />
+          </div>
+          <div className="px-5 pb-5 space-y-0 divide-y divide-gray-100 dark:divide-white/10">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-3 py-4">
+                <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-9 w-24 rounded-lg" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -117,7 +145,7 @@ export default function TrainerPage() {
         <p className="text-sm text-muted-foreground mt-1">Deine Übersicht</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats — 2x2 grid, bigger numbers */}
       <div className="grid grid-cols-2 gap-3">
         {[
           {
@@ -131,8 +159,8 @@ export default function TrainerPage() {
             label: 'Kommende',
             value: stats.upcomingSessions,
             icon: TrendingUp,
-            color: 'text-green-600',
-            bg: 'bg-green-50 dark:bg-green-900/20',
+            color: 'text-[#40916C]',
+            bg: 'bg-[#40916C]/10',
           },
           {
             label: 'Diese Woche',
@@ -149,25 +177,23 @@ export default function TrainerPage() {
             bg: 'bg-amber-50 dark:bg-amber-900/20',
           },
         ].map((stat) => (
-          <Card key={stat.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-0.5">{stat.value}</p>
-                </div>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+          <Card key={stat.label} className="border-0 shadow-sm p-0">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${stat.bg}`}>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
                 </div>
               </div>
+              <p className="text-3xl font-bold tabular-nums">{stat.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Upcoming sessions */}
-      <Card>
-        <CardHeader className="pb-2">
+      {/* Upcoming sessions — bigger touch targets (min 60px) */}
+      <Card className="p-0">
+        <CardHeader className="px-5 pt-5 pb-3">
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             Kommende Einheiten
             <Link
@@ -178,39 +204,49 @@ export default function TrainerPage() {
             </Link>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-5 pb-5">
           {sessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Keine bevorstehenden Sessions.
-            </p>
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5 mb-3">
+                <Calendar className="h-7 w-7 text-gray-300 dark:text-gray-600" />
+              </div>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Keine bevorstehenden Sessions
+              </p>
+            </div>
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-white/10">
               {sessions.slice(0, 5).map((session) => {
                 const court = Array.isArray(session.courts) ? session.courts[0] : session.courts;
                 const group = Array.isArray(session.groups) ? session.groups[0] : session.groups;
+                const startIso = session.startTime || session.timeslot_start || '';
+                const endIso = session.endTime || session.timeslot_end || '';
                 return (
-                  <div key={session.id} className="flex items-center gap-3 py-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#40916C]/10 shrink-0">
+                  <div
+                    key={session.id}
+                    className="flex items-center gap-3 py-3.5"
+                    style={{ minHeight: 60 }}
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#40916C]/10 shrink-0">
                       <Calendar className="h-4 w-4 text-[#40916C]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
                         {group?.name || court?.name || 'Training'}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(session.startTime || session.timeslot_start || '')} ·{' '}
-                        {formatTime(session.startTime || session.timeslot_start || '')}–
-                        {formatTime(session.endTime || session.timeslot_end || '')}
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatDate(startIso)} · {formatTime(startIso)}–{formatTime(endIso)}
                       </p>
                     </div>
-                    {session.status && (
-                      <Badge
-                        variant={session.status === 'active' ? 'default' : 'secondary'}
-                        className="text-xs shrink-0"
-                      >
-                        {session.status === 'active' ? 'Aktiv' : session.status}
-                      </Badge>
-                    )}
+                    {/* Quick attendance button */}
+                    <Link
+                      href={`/attendance-history?session=${session.id}`}
+                      className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-lg bg-[#40916C]/10 hover:bg-[#40916C]/20 transition-colors text-[#40916C] text-xs font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ClipboardCheck className="h-3.5 w-3.5" />
+                      Anwesenheit
+                    </Link>
                   </div>
                 );
               })}
@@ -219,7 +255,7 @@ export default function TrainerPage() {
         </CardContent>
       </Card>
 
-      {/* Quick links — matches TSOW trainer tab layout */}
+      {/* Quick links */}
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Schnellzugriff
@@ -236,9 +272,9 @@ export default function TrainerPage() {
             <Link
               key={action.href + action.label}
               href={action.href}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-[#40916C]/40 hover:shadow-sm transition-all"
+              className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-[#40916C]/40 hover:shadow-sm transition-all active:scale-95"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#40916C]/10">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#40916C]/10">
                 <action.icon className="h-5 w-5 text-[#40916C]" />
               </div>
               <span className="text-xs font-medium text-center leading-tight text-gray-700 dark:text-gray-300">

@@ -115,7 +115,38 @@ export function useCreateBooking() {
               : s
           ) || []
       );
-      toast.success('Buchung erfolgreich');
+
+      // If the booking requires payment, initiate Stripe checkout
+      if (data.bookingId && data.payment_status === 'pending' && data.requiresPayment) {
+        toast.loading('Weiterleitung zur Zahlung…', { id: 'payment-redirect' });
+        fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'booking',
+            bookingId: data.bookingId,
+            clubId: variables.clubId,
+            description: 'Platzbuchung',
+          }),
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            toast.dismiss('payment-redirect');
+            if (result.simulated) {
+              toast.success('Buchung bestätigt (Testzahlung)');
+            } else if (result.url) {
+              window.location.href = result.url;
+            } else {
+              toast.error('Zahlung konnte nicht gestartet werden');
+            }
+          })
+          .catch(() => {
+            toast.dismiss('payment-redirect');
+            toast.error('Fehler beim Starten der Zahlung');
+          });
+      } else {
+        toast.success('Buchung erfolgreich');
+      }
     },
     onError: (error, variables, context) => {
       // Rollback on error

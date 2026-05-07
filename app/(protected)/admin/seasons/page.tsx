@@ -5,7 +5,17 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Calendar, Users, AlertCircle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Plus,
+  Calendar,
+  Users,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  CalendarPlus,
+} from 'lucide-react';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
 
 export default function SeasonsPage() {
@@ -60,10 +70,42 @@ export default function SeasonsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <Clock className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">Lade Seasons...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-8 w-44" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-xl border p-5 space-y-2 bg-white dark:bg-[#0f2d22]">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-8 w-14" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl border p-5 space-y-3 bg-white dark:bg-[#0f2d22]">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="space-y-1 flex-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+              <Skeleton className="h-px w-full" />
+              {[1, 2, 3].map((j) => (
+                <div key={j} className="flex justify-between">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -163,21 +205,24 @@ export default function SeasonsPage() {
 
       {/* Seasons List */}
       {seasons.length === 0 ? (
-        <Card className="flex h-96 flex-col items-center justify-center">
-          <CardHeader>
-            <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-            <CardTitle className="text-center">Keine Seasons vorhanden</CardTitle>
-            <CardDescription className="text-center">
-              Erstellen Sie Ihre erste Season, um mit der Planung zu beginnen
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => router.push('/admin/seasons/new')}>
-              <Plus className="mr-2 h-4 w-4" />
-              Erste Season erstellen
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#40916C]/10 mb-5">
+            <CalendarPlus className="h-10 w-10 text-[#40916C]" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Noch keine Spielzeit
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
+            Erstelle deine erste Spielzeit um die Trainingsplanung zu starten
+          </p>
+          <Button
+            onClick={() => router.push('/admin/seasons/new')}
+            className="mt-6 bg-[#40916C] hover:bg-[#2d6a4f] text-white gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
+          >
+            <Plus className="h-4 w-4" />
+            Spielzeit erstellen
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {seasons.map((season) => (
