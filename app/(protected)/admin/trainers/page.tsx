@@ -1,36 +1,41 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/infrastructure/external/supabase/server';
 import { cookies } from 'next/headers';
+import { requireAuth } from '@/lib/auth';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import TrainerProfileManagement from '@/components/trainer-profile-management';
 
 export default async function AdminTrainersPage() {
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
+  const { supabase, user } = await requireAuth();
 
-  if (!hasDemoMode) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) redirect('/login');
+  // Fetch user's active memberships
+  const { data: membershipsData } = await supabase
+    .from('user_club_memberships')
+    .select('club_id, role')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
 
-    // Optional: check if user has admin role
-    const { data: memberships } = await supabase
-      .from('user_club_memberships')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('is_active', true);
+  const memberships = (membershipsData ?? []) as Array<{ club_id: string | null; role: string }>;
 
-    type Membership = { role: string };
-    const isAdmin = memberships?.some(
-      (m: Membership) => m.role === 'admin' || m.role === 'superadmin'
-    );
-    if (!isAdmin) {
-      // Not admin; could redirect or show error
-      redirect('/dashboard');
-    }
+  const isAdminOrSuperadmin = memberships.some(
+    (m) => m.role === 'admin' || m.role === 'superadmin'
+  );
+
+  if (!isAdminOrSuperadmin) {
+    redirect('/dashboard');
   }
 
-  // Render the existing trainer profile management component
+  const isSuperadmin = memberships.some((m) => m.role === 'superadmin');
+
+  let clubId: string | null = null;
+  if (isSuperadmin) {
+    const cookieStore = await cookies();
+    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null;
+    clubId = cookieClubId;
+  } else {
+    clubId = memberships.find((m) => m.club_id)?.club_id ?? null;
+  }
+
+  // TrainerProfileManagement is a self-contained client component;
+  // it fetches its own data via API routes scoped to the active club.
   return <TrainerProfileManagement />;
 }
