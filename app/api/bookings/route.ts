@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     // Check session exists and get details
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .select('id, timeslot_start, timeslot_end, max_participants, court_id')
+      .select('id, timeslot_start, timeslot_end, max_participants, court_id, schedule_id')
       .eq('id', sessionId)
       .single();
 
@@ -104,7 +104,8 @@ export async function POST(req: NextRequest) {
         club_id: clubId,
         member_id: userId,
         session_id: sessionId,
-        status: 'confirmed', // Auto-confirm for now; can be 'pending' if admin approval needed
+        schedule_id: session.schedule_id,
+        status: 'confirmed',
         session_start_time: session.timeslot_start,
         start_time: session.timeslot_start,
         end_time: session.timeslot_end,
