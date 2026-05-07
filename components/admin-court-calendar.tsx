@@ -105,7 +105,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
   const [draggedSession, setDraggedSession] = useState<any>(null);
 
   const { data: clubData } = useUserClub();
-  const { data: userRoles = [] } = useUserRoles();
+  const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
 
   const clubId = clubData?.clubId ?? null;
 
@@ -265,6 +265,14 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
     };
     return labels[surface] || surface;
   };
+
+  if (rolesLoading) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12 text-gray-500">Laden...</div>
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (

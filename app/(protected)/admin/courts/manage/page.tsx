@@ -3,6 +3,7 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 import { cookies } from 'next/headers';
 import { CourtsManageClient } from './courts-manage-client';
 import type { Court } from '@/lib/types/court-booking';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
 export default async function AdminCourtsManagePage() {
   let initialCourts: Court[] = [];
@@ -32,11 +33,18 @@ export default async function AdminCourtsManagePage() {
   const isSuperAdmin = memberships.some((m) => m.role === 'superadmin');
   let effectiveClubId: string;
   if (isSuperAdmin) {
-    const selectedClubId = cookieStore.get('admin_club_id')?.value;
-    if (selectedClubId && memberships.some((m) => m.club_id === selectedClubId)) {
-      effectiveClubId = selectedClubId;
+    const selectedClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
+    // Superadmin can select any club — validate it exists rather than filtering memberships
+    if (selectedClubId) {
+      const { data: clubCheck } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('id', selectedClubId)
+        .maybeSingle();
+      effectiveClubId =
+        clubCheck?.id ?? (memberships.find((m) => m.club_id)?.club_id || memberships[0].club_id);
     } else {
-      effectiveClubId = memberships[0].club_id;
+      effectiveClubId = memberships.find((m) => m.club_id)?.club_id || memberships[0].club_id;
     }
   } else {
     effectiveClubId = memberships[0].club_id;

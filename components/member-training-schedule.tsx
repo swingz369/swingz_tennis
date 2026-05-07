@@ -32,19 +32,27 @@ export default function MemberTrainingSchedule() {
     return sessions.filter((s) => s.bookedByUser);
   }, [sessions]);
 
+  // Helper to get session date (prefer timeslotStart, fall back to week if it's a date string)
+  const getSessionDate = (session: any): Date => {
+    const ts = session.timeslotStart || session.timeslot_start;
+    if (ts) return new Date(ts);
+    // week field may be a week number string like "1" — not a date; ignore it
+    const w = session.week;
+    if (w && w.length > 4) return new Date(w);
+    return new Date(0);
+  };
+
   const getMonthSessions = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
 
     return memberSessions
       .filter((session) => {
-        const sessionDate = new Date(session.week);
+        const sessionDate = getSessionDate(session);
         return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
       })
       .sort((a, b) => {
-        const dateA = new Date(a.week);
-        const dateB = new Date(b.week);
-        return dateA.getTime() - dateB.getTime();
+        return getSessionDate(a).getTime() - getSessionDate(b).getTime();
       });
   };
 
@@ -54,13 +62,10 @@ export default function MemberTrainingSchedule() {
     const now = new Date();
     return memberSessions
       .filter((session) => {
-        const sessionDate = new Date(session.week);
-        return sessionDate >= now;
+        return getSessionDate(session) >= now;
       })
       .sort((a, b) => {
-        const dateA = new Date(a.week);
-        const dateB = new Date(b.week);
-        return dateA.getTime() - dateB.getTime();
+        return getSessionDate(a).getTime() - getSessionDate(b).getTime();
       })
       .slice(0, 5);
   };
@@ -73,7 +78,7 @@ export default function MemberTrainingSchedule() {
 
   const getSessionStatus = (session: any) => {
     const now = new Date();
-    const sessionDate = new Date(session.week);
+    const sessionDate = getSessionDate(session);
 
     if (session.bookingStatus === 'cancelled') {
       return { label: 'Storniert', color: 'bg-red-100 text-red-700' };
@@ -150,8 +155,7 @@ export default function MemberTrainingSchedule() {
             <div className="text-2xl font-bold">
               {
                 monthSessions.filter((s) => {
-                  const sessionDate = new Date(s.week);
-                  return sessionDate >= new Date();
+                  return getSessionDate(s) >= new Date();
                 }).length
               }
             </div>
@@ -168,8 +172,7 @@ export default function MemberTrainingSchedule() {
             <div className="text-2xl font-bold">
               {
                 monthSessions.filter((s) => {
-                  const sessionDate = new Date(s.week);
-                  return sessionDate < new Date() && s.bookingStatus === 'completed';
+                  return getSessionDate(s) < new Date() && s.bookingStatus === 'completed';
                 }).length
               }
             </div>
@@ -199,7 +202,7 @@ export default function MemberTrainingSchedule() {
                       </div>
                       <div>
                         <div className="font-semibold">
-                          {format(new Date(session.week), 'EEEE, dd. MMMM yyyy', { locale: de })}
+                          {format(getSessionDate(session), 'EEEE, dd. MMMM yyyy', { locale: de })}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
                           <div className="flex items-center gap-1">
@@ -240,7 +243,7 @@ export default function MemberTrainingSchedule() {
             <div className="space-y-2">
               {monthSessions.map((session) => {
                 const status = getSessionStatus(session);
-                const isToday = isSameDay(new Date(session.week), new Date());
+                const isToday = isSameDay(getSessionDate(session), new Date());
 
                 return (
                   <div
@@ -267,7 +270,7 @@ export default function MemberTrainingSchedule() {
                             isToday ? 'text-brand-primary' : 'text-gray-900'
                           }`}
                         >
-                          {format(new Date(session.week), 'EEEE, dd. MMMM', { locale: de })}
+                          {format(getSessionDate(session), 'EEEE, dd. MMMM', { locale: de })}
                           {isToday && (
                             <span className="ml-2 text-xs bg-brand-primary text-white px-2 py-0.5 rounded-full">
                               Heute

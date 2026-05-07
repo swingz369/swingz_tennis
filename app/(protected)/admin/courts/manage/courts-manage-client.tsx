@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -26,11 +26,28 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MoreHorizontal, Edit, Trash2, Lightbulb, Power, Search } from 'lucide-react';
+import {
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Lightbulb,
+  Power,
+  Search,
+  LayoutGrid,
+  List,
+  MapPin,
+  Hash,
+  CheckCircle2,
+  XCircle,
+  ToggleLeft,
+  ToggleRight,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import type { Court } from '@/lib/types/court-booking';
 
 interface CourtsManageClientProps {
@@ -39,49 +56,67 @@ interface CourtsManageClientProps {
   clubId: string;
 }
 
+type ViewMode = 'grid' | 'list';
+
+const SURFACE_LABELS: Record<string, string> = {
+  clay: 'Sand',
+  hard: 'Hartplatz',
+  grass: 'Rasen',
+  carpet: 'Teppich',
+  artificial_grass: 'Kunstrasen',
+};
+
+const SURFACE_COLORS: Record<string, string> = {
+  clay: 'bg-orange-100 text-orange-800 border-orange-200',
+  hard: 'bg-blue-100 text-blue-800 border-blue-200',
+  grass: 'bg-green-100 text-green-800 border-green-200',
+  carpet: 'bg-purple-100 text-purple-800 border-purple-200',
+  artificial_grass: 'bg-teal-100 text-teal-800 border-teal-200',
+};
+
+function getSurfaceLabel(surface: string) {
+  return SURFACE_LABELS[surface] || surface;
+}
+
+function getSurfaceColorClass(surface: string) {
+  return SURFACE_COLORS[surface] || 'bg-gray-100 text-gray-800 border-gray-200';
+}
+
+const emptyForm = {
+  name: '',
+  number: '',
+  courtTypeId: '',
+  surface: '',
+  hasLighting: false,
+  lightingHoursStart: '',
+  lightingHoursEnd: '',
+  location: '',
+  description: '',
+  isActive: true,
+};
+
 export function CourtsManageClient({ initialCourts, courtTypes, clubId }: CourtsManageClientProps) {
   const [courts, setCourts] = useState<Court[]>(initialCourts);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    number: '',
-    courtTypeId: '',
-    surface: '',
-    hasLighting: false,
-    lightingHoursStart: '',
-    lightingHoursEnd: '',
-    location: '',
-    description: '',
-    isActive: true,
-  });
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState(emptyForm);
 
   // Filter courts
   const filteredCourts = courts.filter((court) => {
-    const matchesSearch =
+    if (!searchQuery) return true;
+    return (
       court.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      court.number.toString().includes(searchQuery);
-    return matchesSearch;
+      court.number.toString().includes(searchQuery)
+    );
   });
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      number: '',
-      courtTypeId: '',
-      surface: '',
-      hasLighting: false,
-      lightingHoursStart: '',
-      lightingHoursEnd: '',
-      location: '',
-      description: '',
-      isActive: true,
-    });
-  };
+  const resetForm = () => setFormData(emptyForm);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +136,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           location: formData.location || null,
           description: formData.description || null,
           isActive: formData.isActive,
-          clubId: clubId, // for superadmin, but admin will be forced to own club
+          clubId,
         }),
       });
 
@@ -116,8 +151,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       resetForm();
       toast.success('Platz erfolgreich erstellt');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Erstellen';
-      toast.error(message);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Erstellen');
     } finally {
       setIsSubmitting(false);
     }
@@ -175,14 +209,39 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       resetForm();
       toast.success('Platz erfolgreich aktualisiert');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Aktualisieren';
-      toast.error(message);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Aktualisieren');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleToggleActive = async (court: Court) => {
+    setTogglingId(court.id);
+    try {
+      const res = await fetch(`/api/courts/${court.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !court.is_active }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Aktualisieren');
+      }
+
+      const data = await res.json();
+      setCourts((prev) => prev.map((c) => (c.id === court.id ? data.court : c)));
+      toast.success(
+        data.court.is_active ? `${court.name} wurde aktiviert` : `${court.name} wurde deaktiviert`
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Statuswechsel');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleDeactivate = async () => {
     if (!selectedCourt) return;
     setIsSubmitting(true);
     try {
@@ -192,7 +251,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Löschen');
+        throw new Error(err.error || 'Fehler beim Deaktivieren');
       }
 
       setCourts((prev) => prev.filter((c) => c.id !== selectedCourt.id));
@@ -200,11 +259,15 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       setSelectedCourt(null);
       toast.success('Platz deaktiviert');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler beim Löschen';
-      toast.error(message);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Deaktivieren');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getCourtSurface = (court: Court) => {
+    const ct = courtTypes.find((t) => t.id === court.court_type_id);
+    return (court.surface as string) || ct?.surface || '';
   };
 
   const getCourtTypeName = (courtTypeId: string) => {
@@ -212,21 +275,123 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
     return ct ? ct.name : 'Unbekannt';
   };
 
-  const getCourtSurface = (court: Court) => {
-    const ct = courtTypes.find((t) => t.id === court.court_type_id);
-    return ct?.surface || '';
-  };
-
-  const getSurfaceLabel = (surface: string) => {
-    const labels: Record<string, string> = {
-      clay: 'Sand',
-      hard: 'Hartplatz',
-      grass: 'Rasen',
-      carpet: 'Teppich',
-      artificial_grass: 'Kunstrasen',
-    };
-    return labels[surface] || surface;
-  };
+  // Reusable court form fields
+  const CourtFormFields = () => (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="form-name">Name *</Label>
+          <Input
+            id="form-name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="z.B. Platz 1"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="form-number">Platznummer *</Label>
+          <Input
+            id="form-number"
+            type="number"
+            min="1"
+            value={formData.number}
+            onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+            placeholder="1"
+            required
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="form-courtTypeId">Platztyp *</Label>
+        <select
+          id="form-courtTypeId"
+          value={formData.courtTypeId}
+          onChange={(e) => {
+            const type = courtTypes.find((t) => t.id === e.target.value);
+            setFormData({ ...formData, courtTypeId: e.target.value, surface: type?.surface || '' });
+          }}
+          className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+          required
+        >
+          <option value="">Typ wählen...</option>
+          {courtTypes.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name} ({getSurfaceLabel(type.surface)})
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="form-location">Standort</Label>
+          <Input
+            id="form-location"
+            value={formData.location}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            placeholder="z.B. Hauptgebäude"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="form-description">Beschreibung</Label>
+          <Input
+            id="form-description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder="Optional"
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-3">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.hasLighting}
+            onChange={(e) => setFormData({ ...formData, hasLighting: e.target.checked })}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <span className="flex items-center gap-2 text-sm font-medium">
+            <Lightbulb className="h-4 w-4 text-yellow-500" />
+            Flutlicht vorhanden
+          </span>
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.isActive}
+            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <span className="flex items-center gap-2 text-sm font-medium">
+            <Power className="h-4 w-4 text-green-500" />
+            Platz aktiv
+          </span>
+        </label>
+      </div>
+      {formData.hasLighting && (
+        <div className="grid grid-cols-2 gap-4 pl-7">
+          <div className="space-y-2">
+            <Label htmlFor="form-lightingStart">Flutlicht von</Label>
+            <Input
+              id="form-lightingStart"
+              type="time"
+              value={formData.lightingHoursStart}
+              onChange={(e) => setFormData({ ...formData, lightingHoursStart: e.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="form-lightingEnd">Flutlicht bis</Label>
+            <Input
+              id="form-lightingEnd"
+              type="time"
+              value={formData.lightingHoursEnd}
+              onChange={(e) => setFormData({ ...formData, lightingHoursEnd: e.target.value })}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6">
@@ -236,18 +401,19 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           <h1 className="text-xl md:text-2xl font-bold text-brand-primary dark:text-white">
             Platzverwaltung
           </h1>
-          <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">
-            Verwalte Tennisplätze deines Vereins
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {courts.length} {courts.length === 1 ? 'Platz' : 'Plätze'} ·{' '}
+            {courts.filter((c) => c.is_active).length} aktiv
           </p>
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={resetForm}>
               <Plus className="h-4 w-4" />
               Neuer Platz
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[520px]">
             <form onSubmit={handleCreate}>
               <DialogHeader>
                 <DialogTitle>Neuen Platz anlegen</DialogTitle>
@@ -255,131 +421,13 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                   Erstelle einen neuen Tennisplatz für deinen Verein.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="z.B. Platz 1"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="number">Platznummer *</Label>
-                    <Input
-                      id="number"
-                      type="number"
-                      value={formData.number}
-                      onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                      placeholder="1"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="courtTypeId">Platztyp *</Label>
-                  <select
-                    id="courtTypeId"
-                    value={formData.courtTypeId}
-                    onChange={(e) => {
-                      const type = courtTypes.find((t) => t.id === e.target.value);
-                      setFormData({
-                        ...formData,
-                        courtTypeId: e.target.value,
-                        surface: type?.surface || '',
-                      });
-                    }}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    required
-                  >
-                    <option value="">Typ wählen...</option>
-                    {courtTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name} ({getSurfaceLabel(type.surface)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Standort</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="z.B. Hauptgebäude"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Beschreibung</Label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Optionale Beschreibung"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="hasLighting"
-                    checked={formData.hasLighting}
-                    onChange={(e) => setFormData({ ...formData, hasLighting: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <Label htmlFor="hasLighting" className="flex items-center gap-2">
-                    <Lightbulb className="h-4 w-4" />
-                    Flutlicht vorhanden
-                  </Label>
-                </div>
-                {formData.hasLighting && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="lightingHoursStart">Flutlicht von</Label>
-                      <Input
-                        id="lightingHoursStart"
-                        type="time"
-                        value={formData.lightingHoursStart}
-                        onChange={(e) =>
-                          setFormData({ ...formData, lightingHoursStart: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lightingHoursEnd">Flutlicht bis</Label>
-                      <Input
-                        id="lightingHoursEnd"
-                        type="time"
-                        value={formData.lightingHoursEnd}
-                        onChange={(e) =>
-                          setFormData({ ...formData, lightingHoursEnd: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <Label htmlFor="isActive" className="flex items-center gap-2">
-                    <Power className="h-4 w-4" />
-                    Aktiv
-                  </Label>
-                </div>
-              </div>
+              <CourtFormFields />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
                   Abbrechen
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Wird erstellt...' : 'Erstellen'}
+                  {isSubmitting ? 'Wird erstellt...' : 'Platz erstellen'}
                 </Button>
               </DialogFooter>
             </form>
@@ -387,8 +435,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
         </Dialog>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Input
             placeholder="Suche nach Platzname oder Nummer..."
@@ -398,215 +446,274 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           />
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         </div>
+        <div className="flex items-center border rounded-md overflow-hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'rounded-none px-3',
+              viewMode === 'grid' && 'bg-gray-100 dark:bg-gray-800'
+            )}
+            onClick={() => setViewMode('grid')}
+            aria-label="Rasteransicht"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              'rounded-none px-3',
+              viewMode === 'list' && 'bg-gray-100 dark:bg-gray-800'
+            )}
+            onClick={() => setViewMode('list')}
+            aria-label="Listenansicht"
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Courts Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Nr.</TableHead>
-                <TableHead>Typ</TableHead>
-                <TableHead>Belag</TableHead>
-                <TableHead>Flutlicht</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aktionen</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCourts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                    Keine Plätze gefunden
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredCourts.map((court) => (
-                  <TableRow key={court.id}>
-                    <TableCell className="font-medium">{court.name}</TableCell>
-                    <TableCell>{court.number}</TableCell>
-                    <TableCell>{getCourtTypeName(court.court_type_id)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{getSurfaceLabel(getCourtSurface(court))}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {court.has_lighting ? (
-                        <span className="flex items-center gap-1 text-green-600">
-                          <Lightbulb className="h-4 w-4" /> Ja
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">Nein</span>
+      {/* Empty state */}
+      {filteredCourts.length === 0 && (
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+          <MapPin className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">Keine Plätze gefunden</p>
+          {!searchQuery && (
+            <p className="text-sm mt-1">Erstelle deinen ersten Platz mit &quot;Neuer Platz&quot;</p>
+          )}
+        </div>
+      )}
+
+      {/* Grid view */}
+      {viewMode === 'grid' && filteredCourts.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredCourts.map((court) => {
+            const surface = getCourtSurface(court);
+            const surfaceColorClass = getSurfaceColorClass(surface);
+            return (
+              <Card
+                key={court.id}
+                className={cn(
+                  'relative transition-all hover:shadow-md',
+                  !court.is_active && 'opacity-60'
+                )}
+              >
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-sm">
+                        {court.number}
+                      </div>
+                      <CardTitle className="text-base font-semibold truncate">
+                        {court.name}
+                      </CardTitle>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(court)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Bearbeiten
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => {
+                            setSelectedCourt(court);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Deaktivieren
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-4 pb-4 space-y-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    <span
+                      className={cn(
+                        'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
+                        surfaceColorClass
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={court.is_active ? 'default' : 'secondary'}
-                        className={
-                          court.is_active
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }
+                    >
+                      {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
+                    </span>
+                    {court.has_lighting && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+                        <Lightbulb className="h-3 w-3" />
+                        Flutlicht
+                      </span>
+                    )}
+                  </div>
+                  {court.location && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{court.location}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-1.5">
+                      {court.is_active ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-gray-400" />
+                      )}
+                      <span
+                        className={cn(
+                          'text-xs font-medium',
+                          court.is_active ? 'text-green-600' : 'text-gray-400'
+                        )}
                       >
                         {court.is_active ? 'Aktiv' : 'Inaktiv'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(court)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Bearbeiten
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => {
-                              setSelectedCourt(court);
-                              setShowDeleteDialog(true);
-                            }}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => handleToggleActive(court)}
+                      disabled={togglingId === court.id}
+                      aria-label={court.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                    >
+                      {togglingId === court.id ? (
+                        <span className="text-xs">...</span>
+                      ) : court.is_active ? (
+                        <ToggleRight className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <ToggleLeft className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* List view */}
+      {viewMode === 'list' && filteredCourts.length > 0 && (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <div className="flex items-center gap-1">
+                      <Hash className="h-3.5 w-3.5" />
+                      Nr.
+                    </div>
+                  </TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Typ / Belag</TableHead>
+                  <TableHead>Standort</TableHead>
+                  <TableHead>Flutlicht</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCourts.map((court) => {
+                  const surface = getCourtSurface(court);
+                  return (
+                    <TableRow key={court.id} className={!court.is_active ? 'opacity-60' : ''}>
+                      <TableCell className="font-medium tabular-nums">{court.number}</TableCell>
+                      <TableCell className="font-medium">{court.name}</TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
+                            getSurfaceColorClass(surface)
+                          )}
+                        >
+                          {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {court.location || '—'}
+                      </TableCell>
+                      <TableCell>
+                        {court.has_lighting ? (
+                          <span className="flex items-center gap-1 text-yellow-600 text-sm">
+                            <Lightbulb className="h-4 w-4" /> Ja
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Nein</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          onClick={() => handleToggleActive(court)}
+                          disabled={togglingId === court.id}
+                          className="flex items-center gap-1.5 group"
+                          aria-label={court.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                        >
+                          <Badge
+                            variant={court.is_active ? 'default' : 'secondary'}
+                            className={cn(
+                              'text-xs transition-colors',
+                              court.is_active
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            )}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Deaktivieren
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                            {togglingId === court.id
+                              ? '...'
+                              : court.is_active
+                                ? 'Aktiv'
+                                : 'Inaktiv'}
+                          </Badge>
+                        </button>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(court)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Bearbeiten
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleToggleActive(court)}
+                              disabled={togglingId === court.id}
+                            >
+                              <Power className="h-4 w-4 mr-2" />
+                              {court.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[520px]">
           <form onSubmit={handleUpdate}>
             <DialogHeader>
               <DialogTitle>Platz bearbeiten</DialogTitle>
-              <DialogDescription>Ändere die Details des Tennisplatzes.</DialogDescription>
+              <DialogDescription>
+                Ändere die Details von &quot;{selectedCourt?.name}&quot;.
+              </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Name *</Label>
-                  <Input
-                    id="edit-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-number">Platznummer *</Label>
-                  <Input
-                    id="edit-number"
-                    type="number"
-                    value={formData.number}
-                    onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-courtTypeId">Platztyp *</Label>
-                <select
-                  id="edit-courtTypeId"
-                  value={formData.courtTypeId}
-                  onChange={(e) => {
-                    const type = courtTypes.find((t) => t.id === e.target.value);
-                    setFormData({
-                      ...formData,
-                      courtTypeId: e.target.value,
-                      surface: type?.surface || '',
-                    });
-                  }}
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                  required
-                >
-                  {courtTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} ({getSurfaceLabel(type.surface)})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-location">Standort</Label>
-                <Input
-                  id="edit-location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Beschreibung</Label>
-                <Input
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="edit-hasLighting"
-                  checked={formData.hasLighting}
-                  onChange={(e) => setFormData({ ...formData, hasLighting: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="edit-hasLighting" className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4" />
-                  Flutlicht
-                </Label>
-              </div>
-              {formData.hasLighting && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-lightingHoursStart">von</Label>
-                    <Input
-                      id="edit-lightingHoursStart"
-                      type="time"
-                      value={formData.lightingHoursStart}
-                      onChange={(e) =>
-                        setFormData({ ...formData, lightingHoursStart: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-lightingHoursEnd">bis</Label>
-                    <Input
-                      id="edit-lightingHoursEnd"
-                      type="time"
-                      value={formData.lightingHoursEnd}
-                      onChange={(e) =>
-                        setFormData({ ...formData, lightingHoursEnd: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="edit-isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="edit-isActive" className="flex items-center gap-2">
-                  <Power className="h-4 w-4" />
-                  Aktiv
-                </Label>
-              </div>
-            </div>
+            <CourtFormFields />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
                 Abbrechen
@@ -619,21 +726,21 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Deactivate Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Platz deaktivieren</DialogTitle>
             <DialogDescription>
-              Möchtest du den Platz &quot;{selectedCourt?.name}&quot; wirklich deaktivieren? Dies
-              kann nicht rückgängig gemacht werden.
+              Möchtest du &quot;{selectedCourt?.name}&quot; deaktivieren? Der Platz bleibt erhalten,
+              ist aber nicht mehr buchbar.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
               Abbrechen
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
+            <Button variant="destructive" onClick={handleDeactivate} disabled={isSubmitting}>
               {isSubmitting ? 'Wird deaktiviert...' : 'Deaktivieren'}
             </Button>
           </DialogFooter>

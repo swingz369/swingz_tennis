@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import {
   Home,
   Calendar,
-  MapPin,
   User,
   Menu,
   GraduationCap,
@@ -16,7 +15,7 @@ import {
   Layout,
   Building2,
   BookOpen,
-  MessageSquare,
+  Newspaper,
   CreditCard,
 } from 'lucide-react';
 
@@ -70,9 +69,9 @@ export function MobileBottomNav({
     // Member: 5 tabs like TSOW
     navItems = [
       { name: 'Home', href: '/member', icon: Home },
-      { name: 'Training', href: '/training-schedule', icon: BookOpen },
       { name: 'Buchen', href: '/bookings', icon: Calendar },
-      { name: 'Nachrichten', href: '/notifications', icon: MessageSquare },
+      { name: 'Training', href: '/training-schedule', icon: BookOpen },
+      { name: 'News', href: '/news', icon: Newspaper },
       { name: 'Profil', href: '/profile', icon: User },
     ];
   }

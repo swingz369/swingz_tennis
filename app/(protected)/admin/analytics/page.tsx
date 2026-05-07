@@ -1,71 +1,77 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { cookies } from 'next/headers';
+import { requireAuth } from '@/lib/auth';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { AnalyticsClient } from './analytics-client';
 import { ClubSelector } from './club-selector';
 import type { AnalyticsData } from './analytics-client';
+
+export const dynamic = 'force-dynamic';
 
 export default async function AnalyticsPage({
   searchParams,
 }: {
   searchParams: Promise<{ clubId?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const { supabase, user } = await requireAuth();
 
-  // Get all active club memberships with club details
+  // Get all active club memberships
   const { data: memberships } = await supabase
     .from('user_club_memberships')
     .select('role, club_id')
     .eq('user_id', user.id)
     .eq('is_active', true);
 
-  // Check if user has admin or superadmin role
   const isSuperadmin = memberships?.some((m: any) => m.role === 'superadmin');
   const isAdmin = memberships?.some((m: any) => m.role === 'admin');
 
   if (!isSuperadmin && !isAdmin) {
-    // User has neither admin nor superadmin role
     redirect('/bookings');
   }
 
-  // Now fetch full membership data with club details for the selected club
-  // For regular admins, only show clubs they're admin of
-  // For superadmins, show all clubs they have access to
-  let clubQuery = supabase
-    .from('user_club_memberships')
-    .select('club_id, role, clubs!inner(id, name)')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+  // Build clubs list
+  let clubIds: string[] = [];
 
-  // If not superadmin, filter to only show clubs where user is admin
-  if (!isSuperadmin) {
-    clubQuery = clubQuery.eq('role', 'admin');
+  if (isSuperadmin) {
+    const cookieStore = await cookies();
+    const selectedClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
+    if (selectedClubId) {
+      clubIds = [selectedClubId];
+    } else {
+      // Get all clubs for superadmin
+      const { data: allClubs } = await supabase.from('clubs').select('id').eq('status', 'active');
+      clubIds = (allClubs ?? []).map((c: any) => c.id);
+    }
+  } else {
+    clubIds = (memberships ?? [])
+      .filter((m: any) => m.role === 'admin' && m.club_id)
+      .map((m: any) => m.club_id);
   }
 
-  const { data: membershipsWithClubs, error: clubsError } = await clubQuery;
-
-  if (clubsError || !membershipsWithClubs || membershipsWithClubs.length === 0) {
-    console.error('Error fetching clubs:', clubsError);
+  if (clubIds.length === 0) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-        <p className="text-red-500">
-          Keine Club-Daten gefunden. Bitte kontaktieren Sie den Support.
-        </p>
+        <p className="text-red-500">Keine Club-Daten gefunden.</p>
       </div>
     );
   }
 
-  // Build clubs list (clubs is an object from the join, not an array)
-  const clubs = (membershipsWithClubs as any[]).map((m) => ({
-    id: m.club_id,
-    name: m.clubs?.name || 'Unnamed Club',
-  }));
+  // Fetch club names
+  const { data: clubsData } = await supabase.from('clubs').select('id, name').in('id', clubIds);
 
-  // Determine which club to show
+  const clubs = (clubsData ?? []).map((c: any) => ({ id: c.id, name: c.name }));
+
+  if (clubs.length === 0) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">Analytics</h1>
+        <p className="text-red-500">Keine Club-Daten gefunden.</p>
+      </div>
+    );
+  }
+
+  // Determine which club to display
   const params = await searchParams;
   const clubIdFromParams = params.clubId;
   let effectiveClubId = clubs[0].id;
@@ -73,53 +79,122 @@ export default async function AnalyticsPage({
     effectiveClubId = clubIdFromParams;
   }
 
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 6);
-
   try {
-    const { GetClubAnalyticsUseCase } =
-      await import('@/application/analytics/club-analytics.use-cases');
-    const { DrizzleClubRepository } =
-      await import('@/infrastructure/persistence/repositories/club.repository');
-    const { DrizzleScheduleRepository } =
-      await import('@/infrastructure/persistence/repositories/schedule.repository');
-    const { DrizzleTrainerRepository } =
-      await import('@/infrastructure/persistence/repositories/trainer.repository');
-    const { DrizzleCourtRepository } =
-      await import('@/infrastructure/persistence/repositories/court.repository');
-    const { DrizzleBookingRepository } =
-      await import('@/infrastructure/persistence/repositories/booking.repository');
+    // Fetch analytics data directly via Supabase
+    const [
+      { count: totalMembers },
+      { count: totalTrainers },
+      { count: totalBookings },
+      { data: sessionsData },
+    ] = await Promise.all([
+      supabase
+        .from('user_club_memberships')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', effectiveClubId)
+        .eq('is_active', true),
+      supabase
+        .from('user_club_memberships')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', effectiveClubId)
+        .eq('role', 'trainer')
+        .eq('is_active', true),
+      supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', effectiveClubId),
+      supabase
+        .from('sessions')
+        .select('id, timeslot_start, trainer_id, schedules!inner(club_id)')
+        .eq('schedules.club_id', effectiveClubId)
+        .order('timeslot_start', { ascending: false })
+        .limit(200),
+    ]);
 
-    const getClubAnalyticsUseCase = new GetClubAnalyticsUseCase(
-      new DrizzleClubRepository(),
-      new DrizzleScheduleRepository(),
-      new DrizzleTrainerRepository(),
-      new DrizzleCourtRepository(),
-      new DrizzleBookingRepository()
+    // Bookings over last 6 months grouped by month
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const { data: recentBookings } = await supabase
+      .from('bookings')
+      .select('id, created_at')
+      .eq('club_id', effectiveClubId)
+      .gte('created_at', sixMonthsAgo.toISOString())
+      .order('created_at', { ascending: true });
+
+    // Group bookings by week
+    const bookingsByWeek = new Map<string, number>();
+    (recentBookings ?? []).forEach((b: any) => {
+      const weekKey = b.created_at?.substring(0, 10) ?? '';
+      bookingsByWeek.set(weekKey, (bookingsByWeek.get(weekKey) ?? 0) + 1);
+    });
+
+    const bookingsOverTime = Array.from(bookingsByWeek.entries())
+      .map(([date, bookings]) => ({ date, bookings }))
+      .slice(0, 30);
+
+    // Sessions per trainer
+    const trainerSessionCounts = new Map<string, number>();
+    (sessionsData ?? []).forEach((s: any) => {
+      if (s.trainer_id) {
+        trainerSessionCounts.set(s.trainer_id, (trainerSessionCounts.get(s.trainer_id) ?? 0) + 1);
+      }
+    });
+
+    // Fetch trainer names
+    const trainerIds = Array.from(trainerSessionCounts.keys());
+    const trainerNamesMap = new Map<string, string>();
+    if (trainerIds.length > 0) {
+      const { data: trainerUsers } = await supabase
+        .from('users')
+        .select('id, full_name')
+        .in('id', trainerIds);
+      (trainerUsers ?? []).forEach((u: any) => {
+        trainerNamesMap.set(u.id, u.full_name || 'Trainer');
+      });
+    }
+
+    const sessionsPerTrainer = Array.from(trainerSessionCounts.entries()).map(
+      ([trainerId, sessions]) => ({
+        trainer: trainerNamesMap.get(trainerId) ?? 'Trainer',
+        sessions,
+      })
     );
 
-    const kpis = await getClubAnalyticsUseCase.execute(effectiveClubId, startDate, endDate);
+    // Courts capacity utilization
+    const { data: courts } = await supabase
+      .from('courts')
+      .select('id, name')
+      .eq('club_id', effectiveClubId)
+      .eq('is_active', true);
 
-    // Map ClubKPIs to AnalyticsData expected by AnalyticsClient
-    const analyticsData = {
-      totalMembers: kpis.metrics.totalMembers,
-      totalBookings: kpis.metrics.bookings.total,
-      totalRevenue: kpis.metrics.revenue,
-      totalSessions: kpis.metrics.totalSessions,
-      revenueByClub: [{ club: kpis.name, revenue: kpis.metrics.revenue }],
-      bookingsOverTime: kpis.trends.bookingVolumeByWeek.map((w) => ({
-        date: w.week,
-        bookings: w.bookings,
-      })),
-      sessionsPerTrainer: kpis.sessionsPerTrainer.map((t) => ({
-        trainer: t.trainerName,
-        sessions: t.sessions,
-      })),
-      capacityUtilization: kpis.capacityUtilization.map((c) => ({
-        court: c.courtName,
-        util: c.util,
-      })),
+    const courtSessionCounts = new Map<string, number>();
+    (sessionsData ?? []).forEach((s: any) => {
+      if ((s as any).court_id) {
+        const courtId = (s as any).court_id;
+        courtSessionCounts.set(courtId, (courtSessionCounts.get(courtId) ?? 0) + 1);
+      }
+    });
+
+    const totalSessionCount = sessionsData?.length ?? 0;
+    const capacityUtilization = (courts ?? []).map((c: any) => ({
+      court: c.name,
+      util:
+        totalSessionCount > 0
+          ? Math.round(((courtSessionCounts.get(c.id) ?? 0) / totalSessionCount) * 100)
+          : 0,
+    }));
+
+    const analyticsData: AnalyticsData = {
+      totalMembers: totalMembers ?? 0,
+      totalBookings: totalBookings ?? 0,
+      totalRevenue: 0,
+      totalSessions: totalSessionCount,
+      revenueByClub: [
+        { club: clubs.find((c) => c.id === effectiveClubId)?.name ?? '', revenue: 0 },
+      ],
+      bookingsOverTime,
+      sessionsPerTrainer,
+      capacityUtilization,
     };
 
     return (
@@ -141,8 +216,7 @@ export default async function AnalyticsPage({
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Analytics</h1>
         <p className="text-red-500">
-          Fehler beim Laden der Vereinsstatistiken. Bitte versuchen Sie es später erneut oder
-          kontaktieren Sie den Support.
+          Fehler beim Laden der Vereinsstatistiken. Bitte versuchen Sie es später erneut.
         </p>
       </div>
     );

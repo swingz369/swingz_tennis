@@ -66,14 +66,13 @@ export default async function AdminPage() {
   const [
     { count: memberCount },
     { count: trainerCount },
-    { count: pendingBookings },
+    { count: pendingApprovals },
     { count: activeSessions },
   ] = await Promise.all([
     supabase
       .from('user_club_memberships')
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
-      .eq('role', 'member')
       .eq('is_active', true),
     supabase
       .from('user_club_memberships')
@@ -82,10 +81,10 @@ export default async function AdminPage() {
       .eq('role', 'trainer')
       .eq('is_active', true),
     supabase
-      .from('bookings')
+      .from('user_club_memberships')
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
-      .eq('status', 'pending'),
+      .eq('is_active', false),
     supabase
       .from('sessions')
       .select('id', { count: 'exact', head: true })
@@ -93,12 +92,11 @@ export default async function AdminPage() {
       .lte('timeslot_start', new Date(new Date().setHours(23, 59, 59, 999)).toISOString()),
   ]);
 
-  // Recent members
+  // Recent members — all roles
   const { data: recentMembers } = await supabase
     .from('user_club_memberships')
     .select('id, created_at, users(full_name, email)')
     .eq('club_id', clubId)
-    .eq('role', 'member')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(5);
@@ -143,11 +141,11 @@ export default async function AdminPage() {
           },
           {
             label: 'Offene Anfragen',
-            value: pendingBookings ?? 0,
+            value: pendingApprovals ?? 0,
             icon: CheckCircle,
-            color: (pendingBookings ?? 0) > 0 ? 'text-orange-600' : 'text-gray-500',
+            color: (pendingApprovals ?? 0) > 0 ? 'text-orange-600' : 'text-gray-500',
             bg:
-              (pendingBookings ?? 0) > 0
+              (pendingApprovals ?? 0) > 0
                 ? 'bg-orange-50 dark:bg-orange-900/20'
                 : 'bg-gray-50 dark:bg-gray-800/20',
             href: '/admin/approvals',
@@ -181,15 +179,15 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      {/* Alert: pending bookings */}
-      {(pendingBookings ?? 0) > 0 && (
+      {/* Alert: pending approvals */}
+      {(pendingApprovals ?? 0) > 0 && (
         <Card className="border-orange-200 bg-orange-50 dark:bg-orange-900/10 dark:border-orange-700/50">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <CheckCircle className="h-5 w-5 text-orange-600 shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
-                  {pendingBookings} ausstehende Buchungsanfragen
+                  {pendingApprovals} ausstehende Mitgliedsanfragen
                 </p>
                 <p className="text-xs text-orange-600 dark:text-orange-400">
                   Bitte zeitnah bearbeiten

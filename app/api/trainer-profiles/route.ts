@@ -1,15 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/src/infrastructure/external/supabase/server';
-import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'trainer');
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or admin access required');
+      return forbiddenResponse('Admin access required');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
@@ -19,44 +17,32 @@ export async function POST(_request: NextRequest) {
 
     try {
       const body = await _request.json();
+      const { userId, status } = body;
 
-      const {
-        userId,
-        firstName,
-        lastName,
-        email,
-        phone,
-        dateOfBirth,
-        bio,
-        qualifications,
-        specializations,
-        experience,
-        preferredTimeSlots,
-        languages,
-        emergencyContact,
-      } = body;
-
-      if (!userId || !firstName || !lastName || !email || !phone || !dateOfBirth) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      if (!userId) {
+        return NextResponse.json({ error: 'userId is required' }, { status: 400 });
       }
 
-      const trainerProfile = await TrainerProfileService.createTrainerProfile({
-        userId,
-        firstName,
-        lastName,
-        email,
-        phone,
-        dateOfBirth,
-        bio,
-        qualifications,
-        specializations,
-        experience,
-        preferredTimeSlots,
-        languages,
-        emergencyContact,
-      });
+      const clubId = auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ error: 'No club context' }, { status: 400 });
+      }
 
-      return NextResponse.json({ success: true, trainerProfile });
+      // Update the trainer's status in user_club_memberships or a trainer_profiles table
+      const { data, error } = await auth.supabase
+        .from('user_club_memberships')
+        .update({ ...(status ? { status } : {}) })
+        .eq('user_id', userId)
+        .eq('club_id', clubId)
+        .eq('role', 'trainer')
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, trainerProfile: data });
     } catch (error) {
       console.error('Trainer profile creation error:', error);
       return NextResponse.json(
@@ -80,93 +66,86 @@ export async function GET(_request: NextRequest) {
     }
 
     try {
-      const { searchParams } = new URL(_request.url);
-      const status = searchParams.get('status');
-      const userId = searchParams.get('userId');
-      const search = searchParams.get('search');
-      const active = searchParams.get('active');
+      const supabase = auth.supabase;
 
-      const isAdmin = auth.roles.includes('admin') || auth.roles.includes('superadmin');
-
-      if (status) {
-        let profiles = await TrainerProfileService.getTrainerProfilesByStatus(
-          status as 'active' | 'inactive' | 'on_leave' | 'terminated'
-        );
-        if (isAdmin && auth.role !== 'superadmin' && profiles) {
-          profiles = await filterProfilesByClub(profiles, auth.clubId);
-        }
-        return NextResponse.json({ profiles });
+      // Determine which club to fetch trainers for
+      const clubId = auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ profiles: [] });
       }
 
-      if (userId) {
-        const profile = await TrainerProfileService.getTrainerProfileByUserId(userId);
-        if (!profile) {
-          return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
-        }
-        // Admin (non-super) can only view profiles from own club
-        if (isAdmin && auth.role !== 'superadmin') {
-          const userClub = await getUserClub(profile.userId);
-          if (!userClub || userClub !== auth.clubId) {
-            return forbiddenResponse('Cannot access trainer from different club');
-          }
-        }
-        return NextResponse.json({ profile });
+      // Fetch all active trainers in this club from memberships + user data
+      const { data: memberships, error: membershipsError } = await supabase
+        .from('user_club_memberships')
+        .select('user_id, created_at, is_active')
+        .eq('club_id', clubId)
+        .eq('role', 'trainer')
+        .eq('is_active', true);
+
+      if (membershipsError) {
+        console.error('Trainer memberships fetch error:', membershipsError);
+        return NextResponse.json({ error: membershipsError.message }, { status: 500 });
       }
 
-      if (search) {
-        let profiles = await TrainerProfileService.searchTrainerProfiles(search);
-        if (isAdmin && auth.role !== 'superadmin' && profiles) {
-          profiles = await filterProfilesByClub(profiles, auth.clubId);
-        }
-        return NextResponse.json({ profiles });
+      if (!memberships || memberships.length === 0) {
+        return NextResponse.json({ profiles: [] });
       }
 
-      if (active) {
-        let profiles = await TrainerProfileService.getActiveTrainers();
-        if (isAdmin && auth.role !== 'superadmin' && profiles) {
-          profiles = await filterProfilesByClub(profiles, auth.clubId);
-        }
-        return NextResponse.json({ profiles });
+      const trainerUserIds = memberships.map((m: any) => m.user_id);
+
+      // Fetch user details
+      const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('id, full_name, email, phone, created_at')
+        .in('id', trainerUserIds);
+
+      if (usersError) {
+        console.error('Trainer users fetch error:', usersError);
+        return NextResponse.json({ error: usersError.message }, { status: 500 });
       }
 
-      // GET all profiles
-      let allProfiles = await TrainerProfileService.getAllTrainerProfiles();
-      if (isAdmin && auth.role !== 'superadmin' && allProfiles) {
-        allProfiles = await filterProfilesByClub(allProfiles, auth.clubId);
-      }
-      return NextResponse.json({ profiles: allProfiles });
+      const usersMap = new Map((users ?? []).map((u: any) => [u.id, u]));
+
+      // Build trainer profile objects from membership + user data
+      const profiles = memberships.map((m: any) => {
+        const user = usersMap.get(m.user_id) as any;
+        const nameParts = (user?.full_name || '').split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        return {
+          id: m.user_id,
+          userId: m.user_id,
+          firstName,
+          lastName,
+          email: user?.email || '',
+          phone: user?.phone || '',
+          dateOfBirth: '1990-01-01',
+          status: 'active' as const,
+          qualifications: [],
+          specializations: [],
+          experience: { years: 0, previousClubs: [], achievements: [] },
+          availability: {
+            monday: true,
+            tuesday: true,
+            wednesday: true,
+            thursday: true,
+            friday: true,
+            saturday: false,
+            sunday: false,
+          },
+          preferredTimeSlots: [],
+          languages: ['Deutsch'],
+          emergencyContact: { name: '', phone: '', relationship: '' },
+          createdAt: m.created_at,
+          updatedAt: m.created_at,
+        };
+      });
+
+      return NextResponse.json({ profiles });
     } catch (error) {
       console.error('Trainer profile fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
-}
-
-// Helper to filter trainer profiles by club membership
-async function filterProfilesByClub(profiles: any[], clubId: string): Promise<any[]> {
-  if (!profiles || !Array.isArray(profiles)) return profiles;
-  // Need to filter profiles where trainer belongs to the club
-  // Could query user_club_memberships
-  const supabase = await createClient();
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('user_id')
-    .eq('club_id', clubId)
-    .eq('role', 'trainer')
-    .eq('is_active', true);
-
-  if (!memberships) return [];
-  const trainerUserIds = new Set(memberships.map((m: any) => m.user_id));
-  return profiles.filter((p) => trainerUserIds.has(p.userId));
-}
-
-async function getUserClub(userId: string): Promise<string | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('user_club_memberships')
-    .select('club_id')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .limit(1);
-  return data?.[0]?.club_id || null;
 }

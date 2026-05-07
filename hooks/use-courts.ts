@@ -3,10 +3,22 @@ import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
 
 export interface Court {
   id: string;
+  clubId: string;
+  courtTypeId: string;
   name: string;
-  surface: 'clay' | 'grass' | 'hard' | 'carpet';
-  hasIndoor: boolean;
+  number: number;
+  surface: 'clay' | 'grass' | 'hard' | 'carpet' | 'artificial_grass';
+  location?: string | null;
+  description?: string | null;
+  status?: string;
+  hasLighting: boolean;
+  lightingHoursStart?: string | null;
+  lightingHoursEnd?: string | null;
   isActive: boolean;
+  /** Derived from court_type.is_indoor — may be absent depending on API response */
+  hasIndoor?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export function useCourts(clubId: string | null) {
@@ -19,7 +31,7 @@ export function useCourts(clubId: string | null) {
         throw new Error('Failed to fetch courts');
       }
       const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? (data as Court[]) : [];
     },
     enabled: !!clubId,
     staleTime: STALE_TIMES.MEDIUM,

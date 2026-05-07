@@ -1,15 +1,14 @@
+/**
+ * GET /api/hours-logs — Fetch trainer hours logs via Supabase
+ * POST /api/hours-logs — Create a new hours log entry
+ */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { HoursLogService } from '@/src/application/services/hours-log.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-// Schema for validation - kept for future use
-// const createHoursLogSchema = z.object({...})
-
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    // Verify trainer, admin, or superadmin role
     const isTrainer = await verifyRole(auth, 'trainer');
     const isAdmin = await verifyRole(auth, 'admin');
     const isSuperadmin = await verifyRole(auth, 'superadmin');
@@ -18,11 +17,8 @@ export async function GET(_request: NextRequest) {
       return forbiddenResponse('Trainer, Admin oder Superadmin Zugriff erforderlich');
     }
 
-    // Apply rate limiting
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
+    if (rateLimitError) return rateLimitError;
 
     try {
       const { searchParams } = new URL(_request.url);
@@ -30,47 +26,83 @@ export async function GET(_request: NextRequest) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
       const status = searchParams.get('status');
-      const summary = searchParams.get('summary');
 
-      if (summary) {
-        if (trainerId) {
-          const summary = await HoursLogService.getHoursSummaryForTrainer(trainerId);
-          return NextResponse.json({ summary });
-        }
-        const summaries = await HoursLogService.getAllHoursSummaries();
-        return NextResponse.json({ summaries });
-      }
+      const supabase = auth.supabase;
+
+      let query = supabase
+        .from('hours_logs')
+        .select(
+          'id, trainer_id, trainer_name, date, start_time, end_time, duration, session_id, type, status, notes, approved_by, approved_at, created_at'
+        )
+        .order('date', { ascending: false });
 
       if (trainerId) {
-        // Trainer can only see their own logs, Admin/Superadmin can see all
-        if (isTrainer && !isAdmin && !isSuperadmin && trainerId !== auth.user.id) {
+        // Trainer can only view their own logs
+        if (!isAdmin && !isSuperadmin && trainerId !== auth.user.id) {
           return forbiddenResponse('Trainer können nur ihre eigenen Stundennachweise sehen');
         }
-        const hoursLogs = await HoursLogService.getHoursLogsByTrainerId(trainerId);
-        return NextResponse.json({ hoursLogs });
+        query = query.eq('trainer_id', trainerId);
+      } else if (!isAdmin && !isSuperadmin) {
+        // Non-admin trainer sees only own logs
+        query = query.eq('trainer_id', auth.user.id);
       }
 
       if (status) {
-        const hoursLogs = await HoursLogService.getHoursLogsByStatus(
-          status as 'pending' | 'approved' | 'rejected'
-        );
-        return NextResponse.json({ hoursLogs });
+        query = query.eq('status', status);
       }
 
-      if (startDate && endDate) {
-        const hoursLogs = await HoursLogService.getHoursLogsByDateRange(startDate, endDate);
-        return NextResponse.json({ hoursLogs });
+      if (startDate) {
+        query = query.gte('date', startDate);
       }
 
-      // Get all hours logs (Admin/Superadmin) or only own logs (Trainer)
-      if (isAdmin || isSuperadmin) {
-        const hoursLogs = await HoursLogService.getAllHoursLogs();
-        return NextResponse.json({ hoursLogs });
-      } else {
-        // Trainer sees only their own logs
-        const hoursLogs = await HoursLogService.getHoursLogsByTrainerId(auth.user.id);
-        return NextResponse.json({ hoursLogs });
+      if (endDate) {
+        query = query.lte('date', endDate);
       }
+
+      const { data: rawLogs, error } = await query;
+
+      if (error) {
+        // Table may not exist yet
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          return NextResponse.json({ hoursLogs: [] });
+        }
+        console.error('Hours logs fetch error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      // Resolve trainer names from users table where trainer_name is missing
+      const trainerIds = [
+        ...new Set((rawLogs ?? []).map((l: any) => l.trainer_id).filter(Boolean)),
+      ];
+      const trainerNamesMap = new Map<string, string>();
+
+      if (trainerIds.length > 0) {
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, full_name')
+          .in('id', trainerIds);
+        (users ?? []).forEach((u: any) => {
+          if (u.full_name) trainerNamesMap.set(u.id, u.full_name);
+        });
+      }
+
+      // Transform: convert duration (minutes) to hours (decimal), resolve trainer names
+      const hoursLogs = (rawLogs ?? []).map((log: any) => ({
+        id: log.id,
+        trainer_id: log.trainer_id,
+        trainer_name:
+          trainerNamesMap.get(log.trainer_id) || log.trainer_name || 'Unbekannter Trainer',
+        date: typeof log.date === 'string' ? log.date.substring(0, 10) : log.date,
+        hours: log.duration != null ? Math.round((log.duration / 60) * 100) / 100 : 0,
+        session_id: log.session_id,
+        description: log.notes,
+        status: log.status,
+        created_at: log.created_at,
+        approved_by: log.approved_by,
+        approved_at: log.approved_at,
+      }));
+
+      return NextResponse.json({ hoursLogs });
     } catch (error) {
       console.error('Hours log fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -80,21 +112,58 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    // Only trainer can create hours logs
     const isTrainer = await verifyRole(auth, 'trainer');
     if (!isTrainer) {
       return forbiddenResponse('Nur Trainer können Stundennachweise erstellen');
     }
 
-    // Apply rate limiting
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
+    if (rateLimitError) return rateLimitError;
 
     try {
       const body = await _request.json();
-      const hoursLog = await HoursLogService.createHoursLog(body);
+      const { trainerId, trainerName, date, startTime, endTime, type, sessionId, notes } = body;
+
+      if (!trainerId || !date || !startTime || !endTime || !type) {
+        return NextResponse.json(
+          { error: 'trainerId, date, startTime, endTime, type are required' },
+          { status: 400 }
+        );
+      }
+
+      // Calculate duration in minutes
+      const [sh, sm] = startTime.split(':').map(Number);
+      const [eh, em] = endTime.split(':').map(Number);
+      const duration = eh * 60 + em - (sh * 60 + sm);
+
+      if (duration <= 0) {
+        return NextResponse.json({ error: 'endTime must be after startTime' }, { status: 400 });
+      }
+
+      const supabase = auth.supabase;
+
+      const { data: hoursLog, error } = await supabase
+        .from('hours_logs')
+        .insert({
+          trainer_id: trainerId,
+          trainer_name: trainerName || 'Trainer',
+          date,
+          start_time: startTime,
+          end_time: endTime,
+          duration,
+          type,
+          session_id: sessionId || null,
+          notes: notes || null,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Hours log creation error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
       return NextResponse.json({ hoursLog }, { status: 201 });
     } catch (error) {
       console.error('Hours log creation error:', error);

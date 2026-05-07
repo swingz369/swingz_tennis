@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,16 +26,33 @@ export default function MemberProfile() {
   const { data: memberData, isLoading } = useUserMember();
 
   const [formData, setFormData] = useState({
-    fullName: memberData?.fullName || '',
-    email: memberData?.email || '',
-    phone: memberData?.phone || '',
-    address: memberData?.address || '',
-    city: memberData?.city || '',
-    postalCode: memberData?.postalCode || '',
-    bio: memberData?.bio || '',
-    emergencyContact: memberData?.emergencyContact || '',
-    emergencyPhone: memberData?.emergencyPhone || '',
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    bio: '',
+    emergencyContact: '',
+    emergencyPhone: '',
   });
+
+  // Sync form fields when memberData loads
+  useEffect(() => {
+    if (memberData) {
+      setFormData({
+        fullName: memberData.fullName || '',
+        email: memberData.email || '',
+        phone: memberData.phone || '',
+        address: memberData.address || '',
+        city: memberData.city || '',
+        postalCode: memberData.postalCode || '',
+        bio: memberData.bio || '',
+        emergencyContact: memberData.emergencyContact || '',
+        emergencyPhone: memberData.emergencyPhone || '',
+      });
+    }
+  }, [memberData]);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -51,8 +68,15 @@ export default function MemberProfile() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch('/api/user/member', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Speichern');
+      }
 
       toast.success('Profil erfolgreich aktualisiert');
     } catch (error) {
