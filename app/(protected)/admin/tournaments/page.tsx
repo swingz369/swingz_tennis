@@ -1,14 +1,25 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { requireAuth } from '@/lib/auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Trophy, Calendar, Users, ChevronRight } from 'lucide-react';
+import { Plus, Trophy, Calendar, Users, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-export const dynamic = 'force-dynamic';
+interface Tournament {
+  id: string;
+  name: string;
+  description?: string;
+  format: string;
+  category: string;
+  start_date: string;
+  end_date?: string;
+  status: string;
+  max_participants?: number;
+  registration_deadline?: string;
+  entry_fee?: number;
+}
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Entwurf',
@@ -18,12 +29,12 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Abgesagt',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  registration: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  completed: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+const STATUS_VARIANTS: Record<string, string> = {
+  draft: 'secondary',
+  registration: 'default',
+  active: 'default',
+  completed: 'secondary',
+  cancelled: 'destructive',
 };
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -33,36 +44,26 @@ const FORMAT_LABELS: Record<string, string> = {
   swiss: 'Schweizer System',
 };
 
-export default async function AdminTournamentsPage() {
-  const { supabase, user } = await requireAuth();
+export default function AdminTournamentsPage() {
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
+  useEffect(() => {
+    fetch('/api/tournaments')
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
+      .then((data) => setTournaments(Array.isArray(data) ? data : (data.tournaments ?? [])))
+      .catch((e) => setError(String(e)))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const roles = (memberships ?? []).map((m: any) => m.role as string);
-  const isAdminOrSuperadmin = roles.some((r) => r === 'admin' || r === 'superadmin');
-  if (!isAdminOrSuperadmin) redirect('/dashboard');
-
-  const isSuperadmin = roles.includes('superadmin');
-  let clubId: string | null = null;
-  if (isSuperadmin) {
-    const cookieStore = await cookies();
-    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null;
-    if (!clubId) redirect('/select-admin-club');
-  } else {
-    clubId = (memberships ?? []).find((m: any) => m.role === 'admin')?.club_id ?? null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
-
-  const { data: tournaments } = await supabase
-    .from('tournaments')
-    .select(
-      'id, name, description, format, category, start_date, end_date, status, max_participants, registration_deadline'
-    )
-    .eq('club_id', clubId ?? '')
-    .order('start_date', { ascending: true });
 
   return (
     <div className="space-y-5">
@@ -79,61 +80,70 @@ export default async function AdminTournamentsPage() {
         </Button>
       </div>
 
-      {!tournaments || tournaments.length === 0 ? (
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-700/50 dark:text-red-400">
+          Fehler: {error}
+        </div>
+      )}
+
+      {!loading && tournaments.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-900/20">
             <Trophy className="h-7 w-7 text-amber-500" />
           </div>
-          <p className="text-sm font-medium text-muted-foreground">Noch keine Turniere angelegt</p>
-          <Button asChild size="sm" className="bg-[#40916C] hover:bg-[#2d6a4f] text-white">
+          <h3 className="font-semibold">Noch keine Turniere</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Lege dein erstes Turnier an und lade Mitglieder zur Anmeldung ein.
+          </p>
+          <Button asChild size="sm" className="bg-[#40916C] hover:bg-[#2d6a4f] text-white mt-2">
             <Link href="/admin/tournaments/new">Erstes Turnier anlegen</Link>
           </Button>
         </div>
-      ) : (
+      )}
+
+      {tournaments.length > 0 && (
         <div className="space-y-3">
-          {(tournaments ?? []).map((t: any) => {
-            const participantCount = 0; // loaded separately if needed
-            return (
-              <Card key={t.id} className="p-0 hover:shadow-sm transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 shrink-0">
-                      <Trophy className="h-5 w-5 text-amber-500" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-sm">{t.name}</p>
-                        <Badge className={`text-[10px] border-0 ${STATUS_COLORS[t.status] ?? ''}`}>
-                          {STATUS_LABELS[t.status] ?? t.status}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(t.start_date).toLocaleDateString('de-DE', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {participantCount}/{t.max_participants ?? '∞'}
-                        </span>
-                        {t.format && <span>{FORMAT_LABELS[t.format] ?? t.format}</span>}
-                      </div>
-                      {t.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                          {t.description}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+          {tournaments.map((t) => (
+            <Card key={t.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 shrink-0">
+                  <Trophy className="h-5 w-5 text-amber-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold truncate">{t.name}</p>
+                    <Badge
+                      variant={(STATUS_VARIANTS[t.status] as any) ?? 'secondary'}
+                      className="text-xs"
+                    >
+                      {STATUS_LABELS[t.status] ?? t.status}
+                    </Badge>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground flex-wrap">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(t.start_date).toLocaleDateString('de-DE')}
+                      {t.end_date && ` – ${new Date(t.end_date).toLocaleDateString('de-DE')}`}
+                    </span>
+                    <span>{FORMAT_LABELS[t.format] ?? t.format}</span>
+                    {t.max_participants && (
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        max. {t.max_participants}
+                      </span>
+                    )}
+                    {t.entry_fee && t.entry_fee > 0 && <span>€{t.entry_fee}</span>}
+                  </div>
+                </div>
+                <Link
+                  href={`/admin/tournaments/${t.id}`}
+                  className="text-xs text-[#40916C] hover:underline shrink-0"
+                >
+                  Details →
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>
