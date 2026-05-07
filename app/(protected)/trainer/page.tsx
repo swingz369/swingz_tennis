@@ -13,7 +13,6 @@ import {
   ClipboardCheck,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Session {
@@ -266,7 +265,7 @@ export default function TrainerPage() {
             { label: 'Anwesenheit', href: '/attendance-history', icon: CheckCircle },
             { label: 'Mein Profil', href: '/profile', icon: Users },
             { label: 'Abrechnung', href: '/billing', icon: TrendingUp },
-            { label: 'Verfügbarkeit', href: '/scheduler', icon: Clock },
+            { label: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
             { label: 'Nachrichten', href: '/notifications', icon: Users },
           ].map((action) => (
             <Link

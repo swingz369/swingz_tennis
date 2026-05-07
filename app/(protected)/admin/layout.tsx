@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
@@ -34,6 +34,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/member');
   }
 
+  // Determine the active clubId for onboarding check
+  let activeClubId: string | null = null;
+
   if (isSuperadmin) {
     // Superadmin needs a club selected to use admin area
     const cookieStore = await cookies();
@@ -48,6 +51,31 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
     if (!club) {
       redirect('/select-admin-club');
+    }
+
+    activeClubId = clubId ?? null;
+  } else {
+    // Admin: get club from membership
+    const adminMembership = memberships.find((m: any) => m.role === 'admin');
+    activeClubId = adminMembership?.club_id ?? null;
+  }
+
+  // Check if onboarding is required — skip if already on /admin/onboarding
+  if (activeClubId) {
+    const headersList = await headers();
+    const pathname = headersList.get('x-pathname') ?? '';
+    const isOnboardingPage = pathname.startsWith('/admin/onboarding');
+
+    if (!isOnboardingPage) {
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('setup_completed_at')
+        .eq('id', activeClubId)
+        .maybeSingle();
+
+      if (clubData && !clubData.setup_completed_at) {
+        redirect('/admin/onboarding');
+      }
     }
   }
 

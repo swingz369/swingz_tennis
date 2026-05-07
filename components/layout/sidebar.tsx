@@ -23,14 +23,11 @@ import {
   User,
   CreditCard,
   Building2,
-  Clock,
-  CalendarRange,
   MapPin,
   BarChart3,
   ChevronDown,
   ChevronUp,
   UserPlus,
-  BookOpen,
   DollarSign,
 } from 'lucide-react';
 
@@ -186,6 +183,7 @@ export function Sidebar({
             { name: 'Saisonplanung', href: '/admin/seasons' },
             { name: 'Trainer & Stunden', href: '/admin/trainers' },
             { name: 'Stundennachweise', href: '/admin/hours-logs' },
+            { name: 'Turniere', href: '/admin/tournaments' },
           ],
         },
         courts: {

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/infrastructure/external/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -137,8 +136,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 relative">
-        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-gray-100 to-transparent opacity-50" />
+      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 relative">
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-gray-100 dark:from-gray-800 to-transparent opacity-50" />
 
         <div className="relative w-full max-w-md">
           <div className="lg:hidden mb-8 text-center">
@@ -146,19 +145,24 @@ export default function LoginPage() {
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#40916C] to-[#1B4332] flex items-center justify-center shadow-lg">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-gray-900">SWINGZ</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">SWINGZ</span>
             </div>
           </div>
 
           <Card variant="elevated" className="p-8">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Anmelden</h2>
-              <p className="mt-2 text-gray-500">Melde dich mit deinem Konto an</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Anmelden</h2>
+              <p className="mt-2 text-gray-500 dark:text-gray-400">
+                Melde dich mit deinem Konto an
+              </p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Email
                 </Label>
                 <Input
@@ -168,12 +172,15 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@verein.de"
                   required
-                  className="h-12 rounded-xl border-gray-200 focus:border-[#40916C] focus:ring-[#40916C]/20"
+                  className="h-12 rounded-xl border-gray-200 dark:border-gray-700 focus:border-[#40916C] focus:ring-[#40916C]/20"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Passwort
                 </Label>
                 <div className="relative">
@@ -184,11 +191,11 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="h-12 rounded-xl border-gray-200 focus:border-[#40916C] focus:ring-[#40916C]/20 pr-12"
+                    className="h-12 rounded-xl border-gray-200 dark:border-gray-700 focus:border-[#40916C] focus:ring-[#40916C]/20 pr-12"
                   />
                   <Button
                     type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label="Passwort anzeigen/verstecken"
                   >
@@ -237,17 +244,17 @@ export default function LoginPage() {
 
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-gray-200 dark:border-gray-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-4 text-gray-400">oder</span>
+                  <span className="bg-white dark:bg-gray-900 px-4 text-gray-400">oder</span>
                 </div>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 rounded-xl border-2 border-dashed border-gray-300 text-gray-700 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 transition-all duration-300 font-medium"
+                className="w-full h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 transition-all duration-300 font-medium"
                 onClick={handleDemoLogin}
               >
                 <Sparkles className="mr-2 h-5 w-5" />
@@ -255,23 +262,23 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-8 text-center text-sm text-gray-500">
+            <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
               <p>
                 Noch kein Konto?{' '}
-                <button className="text-[#1B4332] hover:text-[#40916C] font-semibold transition-colors">
+                <button className="text-[#1B4332] hover:text-[#40916C] dark:text-[#52B788] dark:hover:text-[#74C69D] font-semibold transition-colors">
                   Registrierung anfragen
                 </button>
               </p>
             </div>
           </Card>
 
-          <p className="mt-8 text-center text-xs text-gray-400">
+          <p className="mt-8 text-center text-xs text-gray-400 dark:text-gray-500">
             Mit der Anmeldung stimmst du unseren{' '}
-            <button className="text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors">
+            <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 transition-colors">
               Nutzungsbedingungen
             </button>{' '}
             und{' '}
-            <button className="text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors">
+            <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 transition-colors">
               Datenschutzrichtlinie
             </button>{' '}
             zu.

@@ -9,14 +9,13 @@ import {
   MapPin,
   Users,
   Trophy,
-  AlertCircle,
   ChevronRight,
   Clock,
   ArrowRight,
   Zap,
+  GraduationCap,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export const dynamic = 'force-dynamic';
@@ -358,6 +357,18 @@ export default async function MemberPage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             {
+              label: 'Trainer buchen',
+              href: '/member/trainer-booking',
+              icon: GraduationCap,
+              color: 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400',
+            },
+            {
+              label: 'Turniere',
+              href: '/member/tournaments',
+              icon: Trophy,
+              color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+            },
+            {
               label: 'Platz buchen',
               href: '/bookings',
               icon: Calendar,
@@ -372,7 +383,7 @@ export default async function MemberPage() {
             {
               label: 'Profil',
               href: '/profile',
-              icon: Trophy,
+              icon: Users,
               color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
             },
             {

@@ -13,7 +13,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const response = NextResponse.next();
+  const response = NextResponse.next({
+    request: {
+      headers: new Headers({
+        ...Object.fromEntries(request.headers.entries()),
+        'x-pathname': pathname,
+      }),
+    },
+  });
 
   // Set default locale cookie if not present
   const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;

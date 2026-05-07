@@ -254,12 +254,12 @@ export default function BookingsPage() {
               <div className="text-center py-12 text-gray-500">Laden...</div>
             ) : (
               <div className="overflow-x-auto -mx-4 px-4">
-                <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden min-w-[600px]">
+                <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden min-w-[600px]">
                   {/* Day headers */}
                   {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                     <div
                       key={day}
-                      className="bg-gray-50 p-2 md:p-3 text-center font-semibold text-gray-700 text-xs md:text-sm"
+                      className="bg-gray-50 dark:bg-gray-800 p-2 md:p-3 text-center font-semibold text-gray-700 dark:text-gray-300 text-xs md:text-sm"
                     >
                       {day}
                     </div>
@@ -273,9 +273,9 @@ export default function BookingsPage() {
                     return (
                       <div
                         key={idx}
-                        className={`min-h-[80px] md:min-h-[100px] bg-white p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                        className={`min-h-[80px] md:min-h-[100px] bg-white dark:bg-gray-900 p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                       >
-                        <div className="text-xs font-medium text-gray-500 mb-1">
+                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                           {format(day, 'd')}
                         </div>
                         <div className="space-y-1">
@@ -356,7 +356,7 @@ export default function BookingsPage() {
                                               | 'no_show'
                                           )
                                         }
-                                        className="text-[9px] border rounded px-1 py-0.5 bg-white"
+                                        className="text-[9px] border rounded px-1 py-0.5 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
                                       >
                                         <option value="pending">Ausstehend</option>
                                         <option value="confirmed">Bestätigt</option>

@@ -51,6 +51,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     : null;
 
   const userData = {
+    id: user.id,
     name: memberData?.full_name || user.user_metadata?.full_name || 'User',
     email: user.email || '',
     memberId: memberData?.id || null,

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
@@ -10,6 +9,7 @@ import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog'
 import { useGlobalKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 
 interface AppUser {
+  id?: string;
   name?: string;
   email?: string;
   memberId?: string | null;
@@ -31,19 +31,14 @@ interface ProtectedClientLayoutProps {
  */
 export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const pathname = usePathname();
 
   useGlobalKeyboardShortcuts();
 
   const isSuperAdmin = user.roles?.includes('superadmin') ?? false;
   const isAdmin = user.roles?.includes('admin') ?? false;
-  const isTrainer = user.roles?.includes('trainer') ?? false;
 
   // Sidebar visible for admin/superadmin routes; hidden for trainer/member
   const showSidebar = isSuperAdmin || isAdmin;
-
-  // Bottom nav: always visible for trainer/member; on mobile for admin/superadmin
-  const persistentBottomNav = !isSuperAdmin && !isAdmin;
 
   if (showSidebar) {
     // ─── Admin / Superadmin layout: Left sidebar + header ───

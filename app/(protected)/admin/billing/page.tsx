@@ -30,7 +30,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { CreditCard, DollarSign, Plus, Eye } from 'lucide-react';
+import { CreditCard, DollarSign, Plus, Eye, FileText, Loader2 } from 'lucide-react';
 import { addDays } from 'date-fns';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
@@ -65,6 +65,7 @@ export default function BillingPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingInvoices, setGeneratingInvoices] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{ id: string; name: string } | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Subscription['plan']>('pro');
@@ -169,6 +170,29 @@ export default function BillingPage() {
     }
   };
 
+  const handleGenerateInvoices = async () => {
+    setGeneratingInvoices(true);
+    try {
+      const res = await fetch('/api/billing/generate-invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message ?? `${data.created} Rechnung(en) erstellt`);
+        fetchData();
+      } else {
+        toast.error(data.error ?? 'Fehler beim Generieren der Rechnungen');
+      }
+    } catch (err) {
+      console.error('Failed to generate invoices:', err);
+      toast.error('Netzwerkfehler');
+    } finally {
+      setGeneratingInvoices(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -216,6 +240,14 @@ export default function BillingPage() {
           <p className="text-gray-500">Mitgliederabonnements und Rechnungen</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleGenerateInvoices} disabled={generatingInvoices}>
+            {generatingInvoices ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            Rechnungen generieren
+          </Button>
           <CreateInvoiceDialog onSuccess={fetchData} />
           <PaymentImportDialog />
           <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>

@@ -189,7 +189,7 @@ export default function NotificationSettings() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Push Notifications */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-brand-primary/10 rounded-lg">
                 {settings.pushNotifications ? (
@@ -200,7 +200,7 @@ export default function NotificationSettings() {
               </div>
               <div>
                 <div className="font-medium">Push-Benachrichtigungen</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   Erhalte Benachrichtigungen direkt in deinem Browser
                 </div>
               </div>
@@ -219,14 +219,16 @@ export default function NotificationSettings() {
           </div>
 
           {/* Email Notifications */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <User className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <div className="font-medium">E-Mail-Benachrichtigungen</div>
-                <div className="text-sm text-gray-600">Erhalte wichtige Updates per E-Mail</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Erhalte wichtige Updates per E-Mail
+                </div>
               </div>
             </div>
             <Switch
@@ -237,11 +239,13 @@ export default function NotificationSettings() {
 
           {/* Specific Notification Types */}
           <div className="space-y-3">
-            <div className="font-medium text-sm text-gray-700">Benachrichtigungstypen</div>
+            <div className="font-medium text-sm text-gray-700 dark:text-gray-300">
+              Benachrichtigungstypen
+            </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-600" />
+                <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 <span className="text-sm">Buchungsbestätigungen</span>
               </div>
               <Switch
@@ -250,9 +254,9 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-600" />
+                <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 <span className="text-sm">Trainingserinnerungen</span>
               </div>
               <Switch
@@ -261,9 +265,9 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-gray-600" />
+                <Bell className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 <span className="text-sm">News & Updates</span>
               </div>
               <Switch
@@ -272,9 +276,9 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-600" />
+                <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                 <span className="text-sm">Werbung & Angebote</span>
               </div>
               <Switch
@@ -286,12 +290,14 @@ export default function NotificationSettings() {
 
           {/* Reminder Time */}
           <div className="space-y-2">
-            <div className="font-medium text-sm text-gray-700">Erinnerungszeit</div>
+            <div className="font-medium text-sm text-gray-700 dark:text-gray-300">
+              Erinnerungszeit
+            </div>
             <div className="flex items-center gap-4">
               <select
                 value={settings.reminderTime.toString()}
                 onChange={(e) => handleSettingChange('reminderTime', parseInt(e.target.value))}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="1">1 Stunde vorher</option>
                 <option value="2">2 Stunden vorher</option>
@@ -300,7 +306,9 @@ export default function NotificationSettings() {
                 <option value="24">24 Stunden vorher</option>
                 <option value="48">48 Stunden vorher</option>
               </select>
-              <span className="text-sm text-gray-600">vor Trainingssessions</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                vor Trainingssessions
+              </span>
             </div>
           </div>
         </CardContent>
@@ -320,20 +328,18 @@ export default function NotificationSettings() {
           ) : (
             <div className="space-y-3">
               {notifications.map((notification) => {
-                const NotificationIcon = getNotificationIcon(notification.type);
-
                 return (
                   <div
                     key={notification.id}
                     className={`flex items-start gap-3 p-4 rounded-lg border transition-colors ${
                       notification.read
-                        ? 'bg-white border-gray-200'
+                        ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-white/10'
                         : 'bg-brand-primary/5 border-brand-primary/30'
                     }`}
                   >
                     <div
                       className={`p-2 rounded-lg ${
-                        notification.read ? 'bg-gray-100' : 'bg-brand-primary/20'
+                        notification.read ? 'bg-gray-100 dark:bg-gray-800' : 'bg-brand-primary/20'
                       }`}
                     >
                       <Bell className="h-5 w-5" />
@@ -345,9 +351,11 @@ export default function NotificationSettings() {
                           <div className="w-2 h-2 rounded-full bg-brand-primary flex-shrink-0 mt-2" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {notification.message}
+                      </p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-500">
                           {new Date(notification.timestamp).toLocaleString('de-DE')}
                         </span>
                         {notification.actionUrl && (

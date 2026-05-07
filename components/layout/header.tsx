@@ -9,10 +9,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Menu, User, LogOut, Settings, Trophy, ChevronDown, Moon, Sun } from 'lucide-react';
 import { GlobalSearch } from '@/components/layout/global-search';
+import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';
 
 interface HeaderProps {
   user?: {
+    id?: string;
     name?: string;
     email?: string;
     memberId?: string | null;
@@ -90,6 +92,8 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             />
             <span className="sr-only">Theme wechseln</span>
           </Button>
+
+          <NotificationBell userId={user?.id ?? undefined} />
 
           <div className="hidden md:block relative">
             <Button
