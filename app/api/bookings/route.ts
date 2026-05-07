@@ -1,177 +1,165 @@
+/**
+ * POST /api/bookings — Buchung erstellen
+ * GET  /api/bookings — Eigene Buchungen abrufen
+ *
+ * Rewritten to use Supabase client directly (was Drizzle ORM).
+ */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import {
-  CreateBookingUseCase,
-  GetMemberBookingsUseCase,
-} from '@/application/use-cases/booking.use-cases';
-import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
-import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
-import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositories/trainer.repository';
-import { EmailService } from '@/infrastructure/email/email.service';
-import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
-import { createBookingSchema } from '@/application/validation/schemas';
-import { withValidation } from '@/application/validation/validator';
-import { SessionId, TrainerId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-const bookingRepo = new DrizzleBookingRepository();
-const scheduleRepo = new DrizzleScheduleRepository();
-const trainerRepo = new DrizzleTrainerRepository();
-const emailService = new EmailService();
-const auditService = new AuditServiceImpl();
-
-const createBookingUseCase = new CreateBookingUseCase(
-  bookingRepo,
-  scheduleRepo,
-  emailService,
-  auditService
-);
-const getMemberBookingsUseCase = new GetMemberBookingsUseCase(bookingRepo);
-
-// Helper: Check for demo mode cookie
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
-// Mock bookings for demo
-const DEMO_BOOKINGS = [
-  {
-    id: 'demo-booking-1',
-    sessionId: 'demo-session-1',
-    memberId: 'demo-member',
-    bookedAt: new Date().toISOString(),
-  },
-];
-
-// POST /api/bookings – Booking erstellen
+// POST /api/bookings
 export async function POST(req: NextRequest) {
-  // Demo mode: simulate successful booking
-  if (isDemoMode(req)) {
-    const body = await req.json();
-    return NextResponse.json(
-      {
-        bookingId: 'demo-booking-' + Date.now(),
-        sessionId: body.sessionId,
-        memberId: body.memberId,
-      },
-      { status: 201 }
-    );
-  }
-
   return withApiAuth(req, async (auth) => {
-    // Members can create bookings
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
-    }
+    if (!hasPermission) return forbiddenResponse('Authentication required');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
-    if (rateLimitError) {
-      return rateLimitError;
+    if (rateLimitError) return rateLimitError;
+
+    const body = await req.json().catch(() => null);
+    if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+
+    const { sessionId, memberId, clubId } = body;
+    if (!sessionId || !clubId) {
+      return NextResponse.json({ error: 'sessionId and clubId required' }, { status: 400 });
     }
 
-    return withValidation(createBookingSchema, async (input) => {
-      try {
-        const result = await createBookingUseCase.execute({
-          memberId: input.memberId,
-          sessionId: input.sessionId,
-          actorId: auth.user.id,
-        });
-        return NextResponse.json(result, { status: 201 });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('Error creating booking:', error);
-        return NextResponse.json({ error: message }, { status: 400 });
+    const userId = memberId || auth.user.id;
+    const supabase = auth.supabase;
+
+    // Check session exists and get details
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('id, timeslot_start, timeslot_end, max_participants, court_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !session) {
+      return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
+    }
+
+    // Check if already booked
+    const { data: existing } = await supabase
+      .from('bookings')
+      .select('id, status')
+      .eq('session_id', sessionId)
+      .eq('member_id', userId)
+      .neq('status', 'cancelled')
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ error: 'Du hast diese Session bereits gebucht' }, { status: 409 });
+    }
+
+    // Check capacity
+    const { count: bookedCount } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('session_id', sessionId)
+      .in('status', ['confirmed', 'pending']);
+
+    if ((bookedCount ?? 0) >= (session.max_participants ?? 4)) {
+      return NextResponse.json({ error: 'Session ist ausgebucht' }, { status: 409 });
+    }
+
+    // Check booking_rules — how many bookings this week?
+    const { data: rules } = await supabase
+      .from('booking_rules')
+      .select('max_bookings_per_week, cancellation_hours_before')
+      .eq('club_id', clubId)
+      .eq('applies_to_role', 'member')
+      .maybeSingle();
+
+    if (rules?.max_bookings_per_week) {
+      const sessionDate = new Date(session.timeslot_start);
+      const weekStart = new Date(sessionDate);
+      weekStart.setDate(sessionDate.getDate() - sessionDate.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
+
+      const { count: weekBookings } = await supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('member_id', userId)
+        .eq('club_id', clubId)
+        .in('status', ['confirmed', 'pending'])
+        .gte('session_start_time', weekStart.toISOString())
+        .lt('session_start_time', weekEnd.toISOString());
+
+      if ((weekBookings ?? 0) >= rules.max_bookings_per_week) {
+        return NextResponse.json(
+          { error: `Maximum ${rules.max_bookings_per_week} Buchungen pro Woche erreicht` },
+          { status: 409 }
+        );
       }
-    })(req);
+    }
+
+    // Create booking
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert({
+        club_id: clubId,
+        member_id: userId,
+        session_id: sessionId,
+        status: 'confirmed', // Auto-confirm for now; can be 'pending' if admin approval needed
+        session_start_time: session.timeslot_start,
+        start_time: session.timeslot_start,
+        end_time: session.timeslot_end,
+        booking_type: 'session',
+        payment_status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (bookingError) {
+      console.error('[Bookings POST]', bookingError);
+      return NextResponse.json({ error: bookingError.message }, { status: 500 });
+    }
+
+    return NextResponse.json(
+      { bookingId: booking.id, sessionId, memberId: userId, status: booking.status },
+      { status: 201 }
+    );
   });
 }
 
-// GET /api/bookings?memberId=xxx – Buchungen eines Members (mit Session-Details)
+// GET /api/bookings?clubId=xxx — Eigene Buchungen
 export async function GET(req: NextRequest) {
-  // Demo mode: return mock bookings
-  if (isDemoMode(req)) {
-    return NextResponse.json(DEMO_BOOKINGS);
-  }
-
   return withApiAuth(req, async (auth) => {
-    // Members can view bookings
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
-    }
+    if (!hasPermission) return forbiddenResponse('Authentication required');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
-    if (rateLimitError) {
-      return rateLimitError;
+    if (rateLimitError) return rateLimitError;
+
+    const url = new URL(req.url);
+    const clubId = url.searchParams.get('clubId') ?? auth.clubId;
+
+    const { data: bookings, error } = await auth.supabase
+      .from('bookings')
+      .select(
+        `
+        id,
+        status,
+        session_start_time,
+        start_time,
+        end_time,
+        payment_status,
+        session_id,
+        sessions(timeslot_start, timeslot_end, courts(name))
+      `
+      )
+      .eq('member_id', auth.user.id)
+      .order('session_start_time', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    try {
-      const url = new URL(req.url);
-      const memberId = url.searchParams.get('memberId');
-      if (!memberId) {
-        return NextResponse.json({ error: 'memberId query parameter required' }, { status: 400 });
-      }
-
-      // Basic validation
-      if (memberId.length > 100) {
-        return NextResponse.json({ error: 'Member ID too long' }, { status: 400 });
-      }
-
-      // Fetch bookings (just booking info)
-      const result = await getMemberBookingsUseCase.execute({ memberId });
-      const bookings = result.bookings;
-
-      // ✅ Batch-Loading: Collect all session IDs and fetch in one query
-      const sessionIds = bookings.map((b) => SessionId.fromString(b.sessionId));
-
-      // ✅ Fetch all session details in ONE batch query using the new method
-      const sessionDetailsMap = await scheduleRepo.getSessionDetailsByIds(sessionIds);
-
-      // ✅ Collect unique trainer IDs from session details
-      const trainerIds = new Set<string>();
-      for (const [, details] of sessionDetailsMap) {
-        if (details?.trainerId) {
-          trainerIds.add(details.trainerId);
-        }
-      }
-
-      // ✅ Fetch all trainers in ONE batch query using findByIds
-      const trainersMap = new Map<string, string>();
-      if (trainerIds.size > 0) {
-        const trainerIdObjects = Array.from(trainerIds).map((id) => TrainerId.fromString(id));
-        const trainers = await trainerRepo.findByIds(trainerIdObjects);
-        trainers.forEach((trainer) => {
-          trainersMap.set(trainer.trainerId.getValue(), trainer.name);
-        });
-      }
-
-      // ✅ In-memory join (no additional queries)
-      const enriched = bookings.map((b) => {
-        const sessionDetails = sessionDetailsMap.get(b.sessionId);
-        const trainerName = sessionDetails?.trainerId
-          ? trainersMap.get(sessionDetails.trainerId)
-          : undefined;
-
-        return {
-          id: b.id,
-          sessionId: b.sessionId,
-          status: b.status,
-          bookedAt: b.bookedAt,
-          session_start: sessionDetails?.timeslot.getStart(),
-          session_end: sessionDetails?.timeslot.getEnd(),
-          trainer_name: trainerName,
-          clubId: sessionDetails?.clubId.getValue(),
-        };
-      });
-
-      return NextResponse.json(enriched);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching bookings:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
+    return NextResponse.json({ bookings: bookings ?? [] });
   });
 }

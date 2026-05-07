@@ -1,57 +1,39 @@
+/**
+ * PATCH /api/bookings/[id]/status — Buchungsstatus ändern (Admin/Trainer)
+ */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { UpdateBookingStatusUseCase } from '@/application/use-cases/booking-status.use-cases';
-import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
-import { DrizzleScheduleRepository } from '@/infrastructure/persistence/repositories/schedule.repository';
-import { updateBookingStatusSchema } from '@/application/validation/schemas';
-import { withValidation } from '@/application/validation/validator';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-export async function PATCH(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  return withApiAuth(req, async (auth) => {
+    const isTrainer = await verifyRole(auth, 'trainer');
+    if (!isTrainer) return forbiddenResponse('Trainer oder Admin Zugriff erforderlich');
 
-  return withApiAuth(_request, async (auth) => {
-    // Only admins can update booking status
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+    const { id: bookingId } = await params;
+    const body = await req.json().catch(() => null);
+
+    if (!body?.status) {
+      return NextResponse.json({ error: 'status required' }, { status: 400 });
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STANDARD);
-    if (rateLimitError) {
-      return rateLimitError;
+    const validStatuses = ['pending', 'confirmed', 'cancelled', 'no_show'];
+    if (!validStatuses.includes(body.status)) {
+      return NextResponse.json(
+        { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+        { status: 400 }
+      );
     }
 
-    return withValidation(updateBookingStatusSchema, async (input) => {
-      const { status } = input;
+    const { error } = await auth.supabase
+      .from('bookings')
+      .update({ status: body.status })
+      .eq('id', bookingId);
 
-      // Get user's role for authorization
-      const { data: membership } = await auth.supabase
-        .from('user_club_memberships')
-        .select('role')
-        .eq('user_id', auth.user.id)
-        .eq('club_id', auth.clubId)
-        .single();
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-      const isAdmin = membership?.role === 'admin' || membership?.role === 'superadmin';
-
-      // Execute use case
-      const bookingRepo = new DrizzleBookingRepository();
-      const scheduleRepo = new DrizzleScheduleRepository();
-      const useCase = new UpdateBookingStatusUseCase(bookingRepo, scheduleRepo);
-
-      try {
-        await useCase.execute(id, status, [auth.clubId], isAdmin, auth.user.id);
-        return NextResponse.json({ success: true });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        const statusCode = message.includes('Forbidden') ? 403 : 400;
-        return NextResponse.json({ error: message }, { status: statusCode });
-      }
-    })(_request);
+    return NextResponse.json({ success: true, bookingId, status: body.status });
   });
 }

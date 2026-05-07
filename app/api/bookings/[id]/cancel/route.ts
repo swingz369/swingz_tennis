@@ -1,62 +1,71 @@
+/**
+ * POST /api/bookings/[id]/cancel — Buchung stornieren
+ */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { CancelBookingUseCase } from '@/application/use-cases/booking.use-cases';
-import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
-import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
-import { cancelBookingSchema } from '@/application/validation/schemas';
-import { withValidation } from '@/application/validation/validator';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-const bookingRepo = new DrizzleBookingRepository();
-const auditService = new AuditServiceImpl();
-const cancelBookingUseCase = new CancelBookingUseCase(bookingRepo, auditService);
-
-// Helper: Check for demo mode cookie
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
-// PATCH /api/bookings/:id/cancel – Booking stornieren
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
-  // Demo mode: always succeed
-  if (isDemoMode(req)) {
-    return NextResponse.json({
-      success: true,
-      bookingId: id,
-      cancelled: true,
-    });
-  }
-
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
-    // Members can cancel bookings
     const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) {
-      return forbiddenResponse('Authentication required');
+    if (!hasPermission) return forbiddenResponse('Authentication required');
+
+    const { id: bookingId } = await params;
+    const supabase = auth.supabase;
+
+    // Fetch booking to verify ownership
+    const { data: booking, error: fetchError } = await supabase
+      .from('bookings')
+      .select('id, member_id, status, session_start_time, club_id')
+      .eq('id', bookingId)
+      .single();
+
+    if (fetchError || !booking) {
+      return NextResponse.json({ error: 'Buchung nicht gefunden' }, { status: 404 });
     }
 
-    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
-    if (rateLimitError) {
-      return rateLimitError;
+    // Only own bookings or admin
+    const isAdmin = await verifyRole(auth, 'admin');
+    if (booking.member_id !== auth.user.id && !isAdmin) {
+      return forbiddenResponse('Nicht berechtigt diese Buchung zu stornieren');
     }
 
-    return withValidation(cancelBookingSchema, async (input) => {
-      try {
-        const result = await cancelBookingUseCase.execute({
-          bookingId: id,
-          reason: input.reason,
-          notes: input.notes,
-          actorId: auth.user.id,
-        });
-        return NextResponse.json(result);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('Error cancelling booking:', error);
-        return NextResponse.json({ error: message }, { status: 400 });
+    if (booking.status === 'cancelled') {
+      return NextResponse.json({ error: 'Buchung ist bereits storniert' }, { status: 409 });
+    }
+
+    // Check cancellation rules
+    if (!isAdmin && booking.session_start_time) {
+      const { data: rules } = await supabase
+        .from('booking_rules')
+        .select('cancellation_hours_before')
+        .eq('club_id', booking.club_id)
+        .eq('applies_to_role', 'member')
+        .maybeSingle();
+
+      if (rules?.cancellation_hours_before) {
+        const sessionTime = new Date(booking.session_start_time).getTime();
+        const hoursUntil = (sessionTime - Date.now()) / (1000 * 60 * 60);
+        if (hoursUntil < rules.cancellation_hours_before) {
+          return NextResponse.json(
+            {
+              error: `Stornierung nur bis ${rules.cancellation_hours_before}h vor der Session möglich`,
+            },
+            { status: 409 }
+          );
+        }
       }
-    })(req);
+    }
+
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
+      .eq('id', bookingId);
+
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, bookingId });
   });
 }
