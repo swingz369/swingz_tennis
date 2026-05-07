@@ -6,13 +6,7 @@ import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 /**
  * Admin Layout — Auth + Role Guard
  */
-export default async function AdminLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params?: any;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
   const { supabase, user } = auth;
 
