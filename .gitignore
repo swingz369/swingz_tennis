@@ -52,3 +52,63 @@ Thumbs.db
 # PWA generated files
 public/sw.js
 public/workbox-*.js
+
+# Credentials and secrets (CRITICAL)
+Zugansdaten*.txt
+credentials*.txt
+credentials.json
+secrets.txt
+*.key
+*.pem
+*.p12
+*.pfx
+*.cer
+*.crt
+*.der
+
+# Seed output files (NEVER commit generated passwords)
+scripts/seed-output.txt
+scripts/seed-*.txt
+scripts/**/output.txt
+
+# Database dumps
+*.sql
+*.dump
+*.backup
+
+# Test credentials
+.test-credentials.json
+
+# Supabase local config
+supabase/.temp/
+
+# macOS
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# JetBrains
+.idea/
+*.iws
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Vim
+.fuse*
+
+

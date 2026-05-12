@@ -2,44 +2,29 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle } from 'lucide-react';
 
-export default function Error({
-  error,
-  reset,
-}: {
+interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}
+
+export default function ProtectedError({ error, reset }: ErrorProps) {
   useEffect(() => {
     console.error('Protected route error:', error);
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl">Fehler im geschützten Bereich</CardTitle>
-          <CardDescription>
-            {error.message || 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button onClick={reset} className="w-full">
-            Erneut versuchen
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => (window.location.href = '/dashboard')}
-            className="w-full"
-          >
-            Zum Dashboard
-          </Button>
-          {error.digest && (
-            <p className="text-xs text-muted-foreground text-center">Fehler-ID: {error.digest}</p>
-          )}
-        </CardContent>
-      </Card>
+    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+      <AlertCircle className="h-12 w-12 text-destructive" />
+      <h2 className="text-xl font-semibold">Etwas ist schiefgelaufen</h2>
+      <p className="text-muted-foreground text-center max-w-md">
+        Die Seite konnte nicht geladen werden. Bitte versuche es erneut.
+      </p>
+      {process.env.NODE_ENV === 'development' && (
+        <pre className="text-xs text-red-500 bg-red-50 p-2 rounded">{error.message}</pre>
+      )}
+      <Button onClick={reset}>Erneut versuchen</Button>
     </div>
   );
 }

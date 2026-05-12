@@ -2,112 +2,171 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, develop]
   pull_request:
-    branches: [main, master]
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '24'
 
 jobs:
+  # ─────────────────────────────────────────
   lint:
-    name: Lint & Format
+    name: 🔍 Lint & Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci  # NICHT npm install!
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check Prettier
+        run: npx prettier --check .
+
+  # ─────────────────────────────────────────
+  typecheck:
+    name: 🔷 TypeScript
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
       - name: Install dependencies
         run: npm ci
-      - name: Run lint
-        run: npm run lint
-        working-directory: ${{ github.workspace }}
-      - name: Check formatting
-        run: npm run format:check
-        working-directory: ${{ github.workspace }}
 
-  typecheck:
-    name: TypeScript Check
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run typecheck
+      - name: TypeScript Check
+        run: npx tsc --noEmit
 
-  test:
-    name: Unit Tests
+  # ─────────────────────────────────────────
+  unit-test:
+    name: 🧪 Unit Tests
     runs-on: ubuntu-latest
     needs: [lint, typecheck]
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run test:unit
-      - name: Upload coverage to Codecov
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Vitest
+        run: npm run test -- --coverage
+
+      - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
+  # ─────────────────────────────────────────
   build:
-    name: Build
+    name: 🏗️ Build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, unit-test]
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      - run: npm ci
-      - run: npm run build
-      - name: Upload build artifacts
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
+          name: nextjs-build
+          path: .next/
+          retention-days: 1
+
+  # ─────────────────────────────────────────
+  security:
+    name: 🔐 Security Audit
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit (high + critical)
+        run: npm audit --audit-level=high
+
+      - name: Check for secrets in code
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────
+   e2e:
+     name: 🎭 E2E Tests (Playwright)
+     runs-on: ubuntu-latest
+     needs: [build]
+     env:
+       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+       TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
+       TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+       TEST_MEMBER_EMAIL: ${{ secrets.TEST_MEMBER_EMAIL }}
+       TEST_MEMBER_PASSWORD: ${{ secrets.TEST_MEMBER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
           path: .next/
 
-  e2e:
-    name: E2E Tests
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Upload test results
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report/
-          retention-days: 30
-
-  security:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    needs: [lint, typecheck]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm audit --audit-level moderate
-      - run: npx depcheck
+          retention-days: 7

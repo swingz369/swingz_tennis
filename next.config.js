@@ -8,7 +8,11 @@ const nextConfig = {
     // Dangerously allow production builds to successfully complete even if
     // your project has type errors.
     // !! WARN !!
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // Fail build on type errors
+  },
+  eslint: {
+    // Run ESLint during builds (fail on warnings/errors)
+    ignoreDuringBuilds: false,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -39,6 +43,11 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  logging: {
+    fetches: {
+      fullUrl: process.env.NODE_ENV === 'development',
+    },
+  },
   experimental: {
     optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],

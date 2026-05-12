@@ -212,6 +212,10 @@ export default function BookingsPage() {
             Verwalten Sie Ihre Buchungen und sehen Sie die Platzverfügbarkeit
           </p>
         </div>
+        {/* Button to create court booking */}
+        <Button asChild>
+          <a href="/dashboard/bookings/new">Neue Platzbuchung</a>
+        </Button>
       </div>
 
       {/* Tabs */}

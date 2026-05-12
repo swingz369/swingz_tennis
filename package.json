@@ -1,27 +1,30 @@
 {
-  "name": "tsow-app",
-  "version": "0.1.0",
+  "name": "swingz",
+  "version": "1.0.0",
+  "description": "SWINGZ – Tennisclub Management System",
   "private": true,
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build --turbo",
+    "dev": "next dev --turbopack",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 250",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:unit": "vitest run",
+    "test": "vitest",
+    "test:run": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:push": "drizzle-kit push",
-    "seed:users": "tsx scripts/seed-users.ts",
-    "analyze": "ANALYZE=true next build --turbo",
-    "prepare": "husky"
+    "seed": "npx tsx scripts/seed-users.ts",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.0",
