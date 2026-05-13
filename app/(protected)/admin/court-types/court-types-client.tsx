@@ -231,8 +231,10 @@ export function CourtTypesClient() {
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Neuer Platz-Typ
+              <span className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Neuer Platz-Typ
+              </span>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">

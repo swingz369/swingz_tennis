@@ -237,7 +237,13 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   full_name: varchar('full_name', { length: 100 }),
+  phone: varchar('phone', { length: 20 }),
   avatar_url: text('avatar_url'),
+  subscription_tier: varchar('subscription_tier', { length: 50 }).default('free'),
+  subscription_status: varchar('subscription_status', { length: 20 }).default('active'),
+  stripe_customer_id: varchar('stripe_customer_id', { length: 255 }),
+  stripe_subscription_id: varchar('stripe_subscription_id', { length: 255 }),
+  current_period_end: timestamp('current_period_end'),
   created_at: timestamp('created_at').notNull().defaultNow(),
   updated_at: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -286,6 +292,65 @@ export const auditLogs = pgTable(
   })
 );
 
+export const invoices = pgTable(
+  'invoices',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id').notNull(),
+    invoice_number: varchar('invoice_number', { length: 50 }).notNull().unique(),
+    invoice_date: timestamp('invoice_date').notNull().defaultNow(),
+    due_date: timestamp('due_date').notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('draft'),
+    subtotal: numeric('subtotal', { precision: 10, scale: 2 }).notNull().default('0'),
+    tax_amount: numeric('tax_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    total_amount: numeric('total_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    paid_amount: numeric('paid_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    currency: varchar('currency', { length: 3 }).notNull().default('EUR'),
+    notes: text('notes'),
+    sent_at: timestamp('sent_at'),
+    paid_at: timestamp('paid_at'),
+    cancelled_at: timestamp('cancelled_at'),
+    cancellation_reason: varchar('cancellation_reason', { length: 50 }),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('invoices_club_idx').on(table.club_id),
+    member_idx: index('invoices_member_idx').on(table.member_id),
+    invoice_number_unique: index('invoices_invoice_number_unique').on(table.invoice_number),
+    status_idx: index('invoices_status_idx').on(table.status),
+    due_date_idx: index('invoices_due_date_idx').on(table.due_date),
+  })
+);
+
+export const invoiceItems = pgTable(
+  'invoice_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    invoice_id: uuid('invoice_id')
+      .notNull()
+      .references(() => invoices.id, { onDelete: 'cascade' }),
+    description: text('description').notNull(),
+    quantity: integer('quantity').notNull(),
+    unit_price: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
+    tax_rate: numeric('tax_rate', { precision: 5, scale: 2 }).notNull().default('19'),
+    total_price: numeric('total_price', { precision: 10, scale: 2 }).notNull(),
+    item_type: varchar('item_type', { length: 20 }).notNull(),
+    reference_id: uuid('reference_id'),
+    reference_type: varchar('reference_type', { length: 50 }),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    invoice_idx: index('invoice_items_invoice_idx').on(table.invoice_id),
+    reference_idx: index('invoice_items_reference_idx').on(table.reference_id),
+    item_type_idx: index('invoice_items_item_type_idx').on(table.item_type),
+  })
+);
+
 export const courtsRelations = relations(courts, ({ one }) => ({
   club: one(clubs, {
     fields: [courts.club_id],
@@ -293,40 +358,22 @@ export const courtsRelations = relations(courts, ({ one }) => ({
   }),
 }));
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  schedule: one(schedules, {
-    fields: [sessions.schedule_id],
-    references: [schedules.id],
-  }),
-  trainer: one(trainers, {
-    fields: [sessions.trainer_id],
-    references: [trainers.id],
-  }),
-  court: one(courts, {
-    fields: [sessions.court_id],
-    references: [courts.id],
-  }),
-}));
-
-export const schedulesRelations = relations(schedules, ({ one }) => ({
+export const invoicesRelations = relations(invoices, ({ one }) => ({
   club: one(clubs, {
-    fields: [schedules.club_id],
+    fields: [invoices.club_id],
     references: [clubs.id],
   }),
+  member: one(users, {
+    fields: [invoices.member_id],
+    references: [users.id],
+  }),
+  items: many(invoiceItems),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one }) => ({
-  club: one(clubs, {
-    fields: [bookings.club_id],
-    references: [clubs.id],
-  }),
-  schedule: one(schedules, {
-    fields: [bookings.schedule_id],
-    references: [schedules.id],
-  }),
-  session: one(sessions, {
-    fields: [bookings.session_id],
-    references: [sessions.id],
+export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
+  invoice: one(invoices, {
+    fields: [invoiceItems.invoice_id],
+    references: [invoices.id],
   }),
 }));
 

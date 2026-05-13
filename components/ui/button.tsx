@@ -74,9 +74,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button';
 
-    const hasTextContent = React.Children.toArray(children).some(
-      (child) => typeof child === 'string' || typeof child === 'number'
-    );
+    const hasTextContent =
+      React.Children.count(children) > 0 &&
+      React.Children.toArray(children).some(
+        (child) => typeof child === 'string' || typeof child === 'number'
+      );
 
     const computedAriaLabel = ariaLabel || (!hasTextContent ? 'Button' : undefined);
 

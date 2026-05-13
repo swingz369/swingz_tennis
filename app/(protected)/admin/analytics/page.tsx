@@ -81,34 +81,30 @@ export default async function AnalyticsPage({
 
   try {
     // Fetch analytics data directly via Supabase
-    const [
-      { count: totalMembers },
-      { count: totalTrainers },
-      { count: totalBookings },
-      { data: sessionsData },
-    ] = await Promise.all([
-      supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', effectiveClubId)
-        .eq('is_active', true),
-      supabase
-        .from('user_club_memberships')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', effectiveClubId)
-        .eq('role', 'trainer')
-        .eq('is_active', true),
-      supabase
-        .from('bookings')
-        .select('id', { count: 'exact', head: true })
-        .eq('club_id', effectiveClubId),
-      supabase
-        .from('sessions')
-        .select('id, timeslot_start, trainer_id, schedules!inner(club_id)')
-        .eq('schedules.club_id', effectiveClubId)
-        .order('timeslot_start', { ascending: false })
-        .limit(200),
-    ]);
+    const [{ count: totalMembers }, { count: totalBookings }, { data: sessionsData }] =
+      await Promise.all([
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', effectiveClubId)
+          .eq('is_active', true),
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', effectiveClubId)
+          .eq('role', 'trainer')
+          .eq('is_active', true),
+        supabase
+          .from('bookings')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', effectiveClubId),
+        supabase
+          .from('sessions')
+          .select('id, timeslot_start, trainer_id, schedules!inner(club_id)')
+          .eq('schedules.club_id', effectiveClubId)
+          .order('timeslot_start', { ascending: false })
+          .limit(200),
+      ]);
 
     // Bookings over last 6 months grouped by month
     const sixMonthsAgo = new Date();

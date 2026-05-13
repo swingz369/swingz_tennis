@@ -210,8 +210,10 @@ export default function TrainerAvailabilityManager({
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Zeitfenster hinzufügen
+                  <span className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Zeitfenster hinzufügen
+                  </span>
                 </Button>
               </DialogTrigger>
               <DialogContent>

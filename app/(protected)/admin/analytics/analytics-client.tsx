@@ -128,7 +128,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {/* Revenue by Club (Pie) */}
         <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Umsatz nach Verein</h3>
-          <div className="h-64">
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -183,7 +183,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {/* Court Utilization (Bar) */}
         <Card variant="bordered" className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Platzauslastung</h3>
-          <div className="h-64">
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.capacityUtilization} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />

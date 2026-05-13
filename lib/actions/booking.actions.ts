@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser } from '@/lib/auth/guards';
 
 // Zod Schema – wird sowohl Client- als auch Server-seitig genutzt
@@ -86,24 +86,6 @@ export async function createBookingAction(
       .select('id')
       .single();
 
-    if (courtError || !court || !court.is_active) {
-      return { success: false, error: 'Platz nicht verfügbar.' };
-    }
-
-    // 4. Booking erstellen – Doppelbuchungs-Constraint wirft Fehler wenn verletzt
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .insert({
-        court_id: courtId,
-        user_id: user.id, // Immer vom Server setzen, nie vom Client!
-        start_time: startTime,
-        end_time: endTime,
-        notes: notes ?? null,
-        status: 'confirmed',
-      })
-      .select('id')
-      .single();
-
     if (bookingError) {
       // Doppelbuchungs-Fehler erkennen
       if (bookingError.code === '23P01') {
@@ -130,7 +112,7 @@ export async function createBookingAction(
 export async function cancelBookingAction(bookingId: string): Promise<ActionResult> {
   try {
     const user = await getAuthenticatedUser();
-    const supabase = await createServerSupabaseClient();
+    const supabase = createClient();
 
     // Buchung holen
     const { data: booking, error: fetchError } = await supabase

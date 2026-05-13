@@ -88,9 +88,11 @@ export default function PaymentImportDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Upload className="h-4 w-4 mr-2" />
-          Zahlungen importieren
+        <Button>
+          <span className="flex items-center gap-2">
+            <Upload className="h-4 w-4" />
+            Zahlungen importieren
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

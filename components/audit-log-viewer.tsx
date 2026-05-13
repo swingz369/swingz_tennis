@@ -327,7 +327,7 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button variant="ghost" size="sm" onClick={() => setSelectedLog(log)}>
-                                Details
+                                <span>Details</span>
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-2xl">

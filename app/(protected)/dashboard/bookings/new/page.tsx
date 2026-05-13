@@ -1,11 +1,11 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { CreateBookingForm } from '@/components/bookings/CreateBookingForm';
 
 export const dynamic = 'force-dynamic'; // No caching for booking pages
 
 export default async function NewBookingPage() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await createClient();
 
   // Server-seitige Auth-Prüfung
   const {
