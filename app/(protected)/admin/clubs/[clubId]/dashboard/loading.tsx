@@ -1,5 +1,3 @@
-import { Card } from '@/components/ui/card';
-
 export default function ClubDashboardLoading() {
   return (
     <div className="p-6 space-y-6">
