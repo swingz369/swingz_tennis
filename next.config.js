@@ -39,7 +39,8 @@ const nextConfig = {
     minimumCacheTTL: 31536000, // 1 year for static images
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Remove CSP from images block (it's handled in headers() below)
+    // Only keep format/optimization settings here
   },
   compress: true,
   poweredByHeader: false,

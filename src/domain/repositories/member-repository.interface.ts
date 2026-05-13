@@ -15,4 +15,5 @@ export interface MemberRepository {
   findByClub(clubId: ClubId): Promise<Member[]>;
   save(member: Member): Promise<void>;
   exists(id: MemberId): Promise<boolean>;
+  getMemberEmailAndName(id: MemberId): Promise<{ email: string; name: string } | null>;
 }

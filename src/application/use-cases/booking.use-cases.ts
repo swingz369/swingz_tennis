@@ -4,6 +4,9 @@ import { Booking } from '@/domain/entities/booking';
 import type { CancellationReason } from '@/domain/entities/booking';
 import type { BookingRepository } from '@/domain/repositories/booking-repository.interface';
 import type { ScheduleRepository } from '@/domain/repositories/schedule-repository.interface';
+import type { MemberRepository } from '@/domain/repositories/member-repository.interface';
+import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
+import type { CourtRepository } from '@/domain/repositories/court-repository.interface';
 import type { ClubId } from '@/domain/value-objects';
 import { MemberId, SessionId, BookingId } from '@/domain/value-objects';
 import { ValidationService } from '@/domain/services/validation.service';
@@ -27,6 +30,7 @@ export class CreateBookingUseCase {
   constructor(
     @inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository,
     @inject(TOKENS.ScheduleRepository) private scheduleRepository: ScheduleRepository,
+    @inject(TOKENS.MemberRepository) private memberRepository: MemberRepository, // FIX: Use DI instead of direct Supabase
     @inject(TOKENS.EmailService) private emailService: IEmailService,
     @inject(TOKENS.AuditService) private auditService: IAuditService
   ) {}
@@ -92,14 +96,21 @@ export class CreateBookingUseCase {
     }
   ): Promise<void> {
     try {
-      // Note: In a proper implementation, member and club data should be
-      // passed as parameters or retrieved through repositories
-      await this.emailService.sendBookingConfirmation('member@example.com', {
-        memberName: 'Member',
+      const memberData = await this.memberRepository.getMemberEmailAndName(booking.getMemberId());
+      if (!memberData) {
+        console.warn('No member data found for:', booking.getMemberId().getValue());
+        return;
+      }
+
+      const club = await this.clubRepository.findById(sessionDetails.clubId);
+      const clubName = club?.getName() || 'Verein';
+
+      await this.emailService.sendBookingConfirmation(memberData.email, {
+        memberName: memberData.name,
         sessionDate: sessionDetails.timeslot.getStart().toISOString().split('T')[0],
         sessionTime: sessionDetails.timeslot.getStart().toTimeString().slice(0, 5),
-        courtName: 'Court',
-        clubName: 'Club',
+        courtName: 'Platz',
+        clubName,
       });
     } catch (error) {
       console.warn('Failed to send confirmation email:', error);
@@ -119,9 +130,13 @@ export interface CancelBookingOutput {
 }
 
 @injectable()
-export class CancelBookingUseCase {
+export class CreateBookingUseCase {
   constructor(
     @inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository,
+    @inject(TOKENS.ScheduleRepository) private scheduleRepository: ScheduleRepository,
+    @inject(TOKENS.MemberRepository) private memberRepository: MemberRepository,
+    @inject(TOKENS.ClubRepository) private clubRepository: ClubRepository,
+    @inject(TOKENS.EmailService) private emailService: IEmailService,
     @inject(TOKENS.AuditService) private auditService: IAuditService
   ) {}
 
@@ -155,10 +170,7 @@ export class CancelBookingUseCase {
 
   private async sendCancellationEmail(booking: Booking, input: CancelBookingInput): Promise<void> {
     try {
-      const memberDataService = new SupabaseMemberDataService();
-      const memberData = await memberDataService.getMemberEmailAndName(
-        booking.getMemberId().getValue()
-      );
+      const memberData = await this.memberRepository.getMemberEmailAndName(booking.getMemberId());
 
       if (!memberData) {
         console.warn('No email found for member:', booking.getMemberId().getValue());
@@ -172,8 +184,7 @@ export class CancelBookingUseCase {
         day: 'numeric',
       });
 
-      const { EmailService } = await import('@/infrastructure/email/email.service');
-      await EmailService.sendBookingCancellation(memberData.email, {
+      await this.emailService.sendBookingCancellation(memberData.email, {
         memberName: memberData.name,
         reason: input.reason,
         sessionStartFormatted: formattedDate,
@@ -182,28 +193,6 @@ export class CancelBookingUseCase {
     } catch (error) {
       console.warn('Failed to send cancellation email:', error);
     }
-  }
-}
-
-interface IMemberDataService {
-  getMemberEmailAndName(memberId: string): Promise<{ email: string; name: string } | null>;
-}
-
-class SupabaseMemberDataService implements IMemberDataService {
-  async getMemberEmailAndName(memberId: string) {
-    const { createClient } = await import('@/infrastructure/external/supabase/server');
-    const supabase = await createClient();
-    const { data: userData } = await supabase
-      .from('users')
-      .select('full_name, email')
-      .eq('id', memberId)
-      .single();
-
-    if (!userData?.email) return null;
-    return {
-      email: userData.email,
-      name: userData.full_name || 'Mitglied',
-    };
   }
 }
 

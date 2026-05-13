@@ -2,61 +2,30 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
-export default function Error({
-  error,
-  reset,
-}: {
+interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}
+
+export default function BookingsError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    console.error('Bookings error:', error);
+    // In Produktion: Sentry.captureException(error)
+    console.error('Bookings page error:', error);
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader>
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-red-100">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl text-center">Fehler bei den Buchungen</CardTitle>
-          <CardDescription className="text-center">
-            {error.message ||
-              'Die Buchungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button onClick={reset} className="w-full">
-            Erneut versuchen
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => (window.location.href = '/dashboard')}
-            className="w-full"
-          >
-            Zurück zum Dashboard
-          </Button>
-          {error.digest && (
-            <p className="text-xs text-muted-foreground text-center">Fehler-ID: {error.digest}</p>
-          )}
-          {process.env.NODE_ENV === 'development' && (
-            <details className="mt-4">
-              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-                Fehlerdetails (Entwicklung)
-              </summary>
-              <pre className="mt-2 p-4 bg-muted rounded text-xs overflow-auto">
-                {error.toString()}
-              </pre>
-            </details>
-          )}
-        </CardContent>
-      </Card>
+    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+      <AlertCircle className="h-12 w-12 text-destructive" />
+      <h2 className="text-xl font-semibold">Etwas ist schiefgelaufen</h2>
+      <p className="text-muted-foreground text-center max-w-md">
+        Die Buchungen konnten nicht geladen werden. Bitte versuche es erneut.
+      </p>
+      {process.env.NODE_ENV === 'development' && (
+        <pre className="text-xs text-red-500 bg-red-50 p-2 rounded">{error.message}</pre>
+      )}
+      <Button onClick={reset}>Erneut versuchen</Button>
     </div>
   );
 }

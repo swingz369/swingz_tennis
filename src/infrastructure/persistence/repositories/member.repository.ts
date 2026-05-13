@@ -80,6 +80,20 @@ export class DrizzleMemberRepository implements MemberRepository {
     return result[0]?.count > 0;
   }
 
+  async getMemberEmailAndName(id: MemberId): Promise<{ email: string; name: string } | null> {
+    const db = getDb();
+    const result = await db
+      .select({ email: users.email, name: users.full_name })
+      .from(users)
+      .where(eq(users.id, id.getValue()))
+      .limit(1);
+    if (result.length === 0) return null;
+    return {
+      email: result[0].email,
+      name: result[0].full_name || 'Mitglied',
+    };
+  }
+
   private mapToDomain(row: typeof users.$inferSelect): Member {
     return {
       id: MemberId.fromString(row.id),
