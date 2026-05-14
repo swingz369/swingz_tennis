@@ -19,6 +19,13 @@ export async function POST(_request: NextRequest) {
       return rateLimitError;
     }
 
+    // Validate club context
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Vereins Kontext erforderlich' }, { status: 400 });
+    }
+
+    const clubId = auth.clubId!;
+
     try {
       const body = await _request.json();
       const { member_id, due_date, items, notes } = body;
@@ -62,7 +69,7 @@ export async function POST(_request: NextRequest) {
         .from('user_club_memberships')
         .select('club_id')
         .eq('user_id', member_id)
-        .eq('club_id', auth.clubId)
+        .eq('club_id', clubId)
         .eq('is_active', true)
         .single();
 
@@ -75,7 +82,7 @@ export async function POST(_request: NextRequest) {
 
       // Build invoice data
       const createInvoiceData: CreateInvoice = {
-        club_id: auth.clubId,
+        club_id: clubId,
         member_id,
         due_date,
         items: validItems.map((item: any) => ({

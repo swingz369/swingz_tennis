@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions, useCreateBooking, useCancelBooking } from '@/hooks/use-sessions';
 import { exportSessionsToICS, exportSessionToGoogleCalendar } from '@/lib/calendar-export';
 
@@ -117,8 +118,9 @@ export default function DailyCourtView({
       const slotStart = setMinutes(setHours(date, hour), minute);
       const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
 
-      return sessions.find((session) => {
+      return sessions.find((session: Session) => {
         if (!session.courtId || session.courtId !== courtId) return false;
+        if (!session.week) return false;
 
         const sessionDate = new Date(session.week);
         const [startHour, startMinute] = session.startTime.split(':').map(Number);
@@ -269,7 +271,7 @@ export default function DailyCourtView({
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-gray-600">
-                    {sessions.filter((s) => s.courtId === court.id).length} Buchungen
+                    {sessions.filter((s: Session) => s.courtId === court.id).length} Buchungen
                   </div>
                 </div>
               </div>

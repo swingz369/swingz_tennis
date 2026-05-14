@@ -35,8 +35,10 @@ export default async function AdminPanelV2Page() {
   }
 
   const clubId = superadminMembership.club_id;
+  if (!clubId) {
+    redirect('/dashboard'); // Missing club association for superadmin
+  }
   const clubName = (superadminMembership.clubs as any)?.name || 'Admin Panel';
-  const userRole = superadminMembership.role;
 
   // Fetch analytics data
   let analyticsMetrics: AnalyticsMetrics | null = null;

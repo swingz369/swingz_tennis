@@ -33,6 +33,11 @@ export default async function SuperadminDashboardPage() {
   const clubId = superadminMembership.club_id;
   const clubName = (superadminMembership.clubs as any)?.name || 'Platform Dashboard';
 
+  // Redirect if no clubId
+  if (!clubId) {
+    redirect('/dashboard');
+  }
+
   // Fetch analytics data
   let analyticsMetrics: AnalyticsMetrics | null = null;
   try {

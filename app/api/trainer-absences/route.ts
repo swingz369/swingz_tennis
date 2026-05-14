@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check permissions
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for overlapping absences
-    const { data: overlaps } = await supabase
+    const { data: overlaps } = await (supabase as any)
       .from('trainer_absences')
       .select('id')
       .eq('trainer_id', trainer_id)
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create absence
-    const { data: absence, error } = await supabase
+    const { data: absence, error } = await (supabase as any)
       .from('trainer_absences')
       .insert({
         trainer_id,
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     const clubId = searchParams.get('club_id');
 
     // Build query
-    let query = supabase.from('trainer_absences').select('*');
+    let query = (supabase as any).from('trainer_absences').select('*');
 
     if (trainerId) {
       query = query.eq('trainer_id', trainerId);

@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const bulkDeactivateSchema = z.object({
   memberIds: z.array(z.string().uuid()).min(1).max(100),
-  reason: z.string().optional(),
+  reason: z.string().nullable().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -39,16 +39,20 @@ export async function POST(request: NextRequest) {
       const supabase = await createClient();
 
       // Deactivate memberships (soft delete)
+      if (!auth.clubId) {
+        return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+      }
+      const clubId = auth.clubId;
       const { data: deactivated, error } = await supabase
         .from('user_club_memberships')
         .update({
           is_active: false,
           deactivated_at: new Date().toISOString(),
           deactivated_by: auth.user.id,
-          deactivation_reason: reason,
+          deactivation_reason: reason ?? null,
         })
         .in('user_id', memberIds)
-        .eq('club_id', auth.clubId)
+        .eq('club_id', clubId)
         .select('id, user_id');
 
       if (error) {

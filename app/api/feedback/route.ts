@@ -56,6 +56,13 @@ export async function POST(request: NextRequest) {
       return rateLimitError;
     }
 
+    // Validate club context
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+    }
+
+    const clubId = auth.clubId!;
+
     try {
       const body = await request.json();
       const { session_id, trainer_id, rating, comment } = body;
@@ -86,7 +93,7 @@ export async function POST(request: NextRequest) {
 
       // Create feedback
       const feedback = await feedbackRepository.create({
-        club_id: auth.clubId,
+        club_id: clubId,
         session_id: session_id || null,
         trainer_id,
         member_id: auth.user.id,
@@ -147,13 +154,20 @@ export async function GET(request: NextRequest) {
       return rateLimitError;
     }
 
+    // Validate club context
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Club ID required' }, { status: 400 });
+    }
+
+    const clubId = auth.clubId!;
+
     try {
       const { searchParams } = new URL(request.url);
       const limit = parseInt(searchParams.get('limit') || '20');
       const offset = parseInt(searchParams.get('offset') || '0');
       const visibleOnly = searchParams.get('visibleOnly') !== 'false';
 
-      const result = await feedbackRepository.findByClub(auth.clubId, {
+      const result = await feedbackRepository.findByClub(clubId, {
         limit,
         offset,
         visibleOnly,

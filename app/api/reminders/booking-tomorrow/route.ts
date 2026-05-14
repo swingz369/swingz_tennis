@@ -16,7 +16,25 @@ class TempSessionRepository {
       .select('*, trainers(*), courts(*), clubs(*)')
       .gte('timeslot_start', startDate.toISOString())
       .lte('timeslot_end', endDate.toISOString());
-    return data || [];
+    return (data || []).map((session) => ({
+      ...session,
+      trainers: session.trainers
+        ? {
+            name: session.trainers.name,
+            email: session.trainers.email,
+          }
+        : undefined,
+      courts: session.courts
+        ? {
+            name: session.courts.name,
+          }
+        : undefined,
+      clubs: session.clubs
+        ? {
+            name: (session.clubs as any).name,
+          }
+        : undefined,
+    }));
   }
 }
 
@@ -26,10 +44,15 @@ class TempBookingRepository {
     const supabase = await createClient();
     const { data } = await supabase
       .from('bookings')
-      .select('*')
+      .select('id, member_id, session_id, status')
       .in('session_id', sessionIds)
       .eq('status', 'confirmed');
-    return data || [];
+    return (data || []).map((booking) => ({
+      id: booking.id,
+      member_id: booking.member_id as string,
+      session_id: booking.session_id as string,
+      status: booking.status,
+    }));
   }
 }
 
@@ -42,7 +65,7 @@ class TempMemberRepository {
       .select('email, full_name')
       .eq('id', memberId)
       .single();
-    return data;
+    return data as { email: string; full_name: string } | null;
   }
 }
 

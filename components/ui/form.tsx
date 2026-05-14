@@ -58,7 +58,8 @@ const FormLabel = React.forwardRef<
     htmlFor?: string;
   }
 >(({ className, ...props }, ref) => {
-  const { id } = React.useContext(FormItemContext);
+  const context = React.useContext(FormItemContext);
+  const id = context?.id;
   return (
     <label
       ref={ref}
@@ -79,7 +80,8 @@ const FormControl = React.forwardRef<
     asChild?: boolean;
   }
 >(({ className, asChild = false, ...props }, ref) => {
-  const { id } = React.useContext(FormItemContext);
+  const context = React.useContext(FormItemContext);
+  const id = context?.id;
   const Comp = asChild ? Slot : 'div';
 
   return (

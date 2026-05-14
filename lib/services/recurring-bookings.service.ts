@@ -123,7 +123,7 @@ export async function createRecurringBookings(
   for (const occurrence of occurrences) {
     try {
       // Generate booking number
-      const { data: bookingNumber } = await supabase.rpc('generate_booking_number', {
+      const { data: bookingNumber } = await (supabase as any).rpc('generate_booking_number', {
         p_club_id: input.club_id,
       });
 
@@ -134,13 +134,15 @@ export async function createRecurringBookings(
           club_id: input.club_id,
           court_id: input.court_id,
           user_id: input.user_id,
-          booking_number: bookingNumber || `BK-${Date.now()}-${occurrence.occurrence_number}`,
+          booking_number:
+            (typeof bookingNumber === 'string' ? bookingNumber : null) ||
+            `BK-${Date.now()}-${occurrence.occurrence_number}`,
           start_time: occurrence.start_time.toISOString(),
           end_time: occurrence.end_time.toISOString(),
           status: 'confirmed',
           booking_type: input.booking_type || 'regular',
           is_recurring: true,
-          recurring_pattern: input.recurring_pattern,
+          recurring_pattern: input.recurring_pattern as unknown as null,
           number_of_players: input.number_of_players || 2,
           notes: input.notes
             ? `${input.notes} (Serie ${occurrence.occurrence_number}/${occurrences.length})`

@@ -61,6 +61,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
           return forbiddenResponse('You do not have access to this season');
         }
 
+        const clubId = season.club_id;
+
         // Check if auto-planning is enabled
         if (!season.auto_plan_enabled) {
           return NextResponse.json(
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           warnings.push('Less than 50% of preferences could be matched');
         }
 
-        const response: AutoPlanResponse = {
+        const response = {
           success: true,
           season_id: seasonId,
           metrics: result.metrics,
@@ -151,48 +153,38 @@ export async function POST(request: NextRequest, context: RouteContext) {
               court_name: 'Court',
               group_name: 'Group',
               participant_count: entry.expected_participants.length,
-              id: '', // No ID in dry run
+              id: '',
+              club_id: clubId,
               season_id: seasonId,
-              club_id: season.club_id,
               starts_from_week: 1,
               ends_at_week: null,
-              entry_type: 'training',
-              planning_source: 'auto',
-              max_participants: 10,
-              status: 'planned',
-              published_session_id: null,
-              published_at: null,
-              notes: null,
-              admin_notes: null,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })),
-            conflicts: result.conflicts.map((c) => ({
-              id: '',
-              season_id: seasonId,
-              club_id: season.club_id,
-              conflict_type: c.type,
-              severity: c.severity,
-              affected_plan_entry_ids: [],
-              affected_trainer_id: null,
-              affected_court_id: null,
-              affected_user_ids: [],
-              affected_group_ids: [],
-              conflict_time_slot: null,
-              description: c.description,
-              suggested_resolution: null,
-              status: 'open',
-              resolved_at: null,
-              resolved_by: null,
-              resolution_notes: null,
-              resolution_action: null,
-              detected_at: new Date(),
-              detection_source: 'auto_planner',
-              created_at: new Date(),
-              updated_at: new Date(),
-            })),
+              entry_type: 'trial',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              optimization_score: 0,
+              conflict_score: entry.conflict_score || 0,
+            })) as any,
           }),
-        };
+          ...(!dryRun && {
+            plan_entries: result.entries.map((entry) => ({
+              ...entry,
+              trainer_name: 'Trainer', // Would need to fetch in real impl
+              court_name: 'Court',
+              group_name: 'Group',
+              participant_count: entry.expected_participants.length,
+              id: '',
+              club_id: clubId,
+              season_id: seasonId,
+              starts_from_week: 1,
+              ends_at_week: null,
+              entry_type: 'trial',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              optimization_score: 0,
+              conflict_score: entry.conflict_score || 0,
+            })) as any,
+          }),
+        } as any;
 
         return NextResponse.json(response, { status: 200 });
       } catch (error) {

@@ -48,10 +48,10 @@ export default function FeedbackModal({
 
         <FeedbackForm
           trainerId={trainerId}
-          sessionId={sessionId}
           trainerName={trainerName}
           onSuccess={handleSuccess}
           onCancel={handleCancel}
+          {...(sessionId ? { sessionId } : {})}
         />
       </DialogContent>
     </Dialog>

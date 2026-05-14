@@ -113,12 +113,14 @@ export default async function SuperadminDashboardPage() {
     });
 
     // Count members and trainers per club
-    allMemberships?.forEach((membership: { club_id: string; role: string }) => {
-      if (clubStats[membership.club_id]) {
+    allMemberships?.forEach((membership) => {
+      const clubId = membership.club_id;
+      if (!clubId) return; // Skip membership with no club
+      if (clubStats[clubId]) {
         if (membership.role === 'member') {
-          clubStats[membership.club_id].members++;
+          clubStats[clubId].members++;
         } else if (membership.role === 'trainer') {
-          clubStats[membership.club_id].trainers++;
+          clubStats[clubId].trainers++;
         }
       }
     });

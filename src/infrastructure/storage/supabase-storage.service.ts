@@ -118,7 +118,7 @@ export class SupabaseStorageService implements StorageService {
           .data.publicUrl,
         size: file.metadata?.size || 0,
         mimeType: file.metadata?.mimetype || 'application/octet-stream',
-        uploadedAt: new Date(file.created_at),
+        uploadedAt: new Date(file.created_at ?? Date.now()),
       })) || []
     );
   }
@@ -143,7 +143,7 @@ export class SupabaseStorageService implements StorageService {
       url: this.supabase.storage.from(this.bucketName).getPublicUrl(path).data.publicUrl,
       size: file.metadata?.size || 0,
       mimeType: file.metadata?.mimetype || 'application/octet-stream',
-      uploadedAt: new Date(file.created_at),
+      uploadedAt: new Date(file.created_at ?? Date.now()),
     };
   }
 

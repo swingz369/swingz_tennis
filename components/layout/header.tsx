@@ -78,22 +78,16 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl"
+            className="absolute h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label={`Wechsle zu ${theme === 'dark' ? 'hellem' : 'dunklem'} Modus`}
+            aria-label="Theme wechseln"
           >
-            <Sun
-              className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-              aria-hidden="true"
-            />
-            <Moon
-              className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-              aria-hidden="true"
-            />
+            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Theme wechseln</span>
           </Button>
 
-          <NotificationBell userId={user?.id ?? undefined} />
+          {user?.id && <NotificationBell userId={user.id} />}
 
           <div className="hidden md:block relative">
             <Button

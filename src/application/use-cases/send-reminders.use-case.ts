@@ -9,8 +9,7 @@ interface Session {
   timeslot_start: string;
   timeslot_end: string;
   trainer_id: string;
-  court_id: string;
-  club_id: string;
+  court_id: string | null;
   trainers?: { name: string; email?: string };
   courts?: { name: string };
   clubs?: { name: string };

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, MapPin } from 'lucide-react';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 
 export default function MemberTrainingSchedule() {
@@ -29,7 +30,7 @@ export default function MemberTrainingSchedule() {
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
   const memberSessions = useMemo(() => {
-    return sessions.filter((s) => s.bookedByUser);
+    return sessions.filter((s: Session) => s.bookedByUser);
   }, [sessions]);
 
   // Helper to get session date (prefer timeslotStart, fall back to week if it's a date string)
@@ -47,11 +48,11 @@ export default function MemberTrainingSchedule() {
     const monthEnd = endOfMonth(currentMonth);
 
     return memberSessions
-      .filter((session) => {
+      .filter((session: any) => {
         const sessionDate = getSessionDate(session);
         return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
       })
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         return getSessionDate(a).getTime() - getSessionDate(b).getTime();
       });
   };
@@ -61,10 +62,10 @@ export default function MemberTrainingSchedule() {
   const getUpcomingSessions = () => {
     const now = new Date();
     return memberSessions
-      .filter((session) => {
+      .filter((session: any) => {
         return getSessionDate(session) >= now;
       })
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         return getSessionDate(a).getTime() - getSessionDate(b).getTime();
       })
       .slice(0, 5);
@@ -85,7 +86,7 @@ export default function MemberTrainingSchedule() {
     }
 
     if (sessionDate < now) {
-      if (session.bookingStatus === 'completed') {
+      if (session.bookingStatus === 'confirmed') {
         return { label: 'Abgeschlossen', color: 'bg-green-100 text-green-700' };
       }
       if (session.bookingStatus === 'no_show') {
@@ -154,7 +155,7 @@ export default function MemberTrainingSchedule() {
           <CardContent>
             <div className="text-2xl font-bold">
               {
-                monthSessions.filter((s) => {
+                monthSessions.filter((s: any) => {
                   return getSessionDate(s) >= new Date();
                 }).length
               }
@@ -171,8 +172,8 @@ export default function MemberTrainingSchedule() {
           <CardContent>
             <div className="text-2xl font-bold">
               {
-                monthSessions.filter((s) => {
-                  return getSessionDate(s) < new Date() && s.bookingStatus === 'completed';
+                monthSessions.filter((s: any) => {
+                  return getSessionDate(s) < new Date() && s.bookingStatus === 'confirmed';
                 }).length
               }
             </div>
@@ -189,7 +190,7 @@ export default function MemberTrainingSchedule() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {upcomingSessions.map((session) => {
+              {upcomingSessions.map((session: any) => {
                 const status = getSessionStatus(session);
                 return (
                   <div
@@ -241,7 +242,7 @@ export default function MemberTrainingSchedule() {
             </div>
           ) : (
             <div className="space-y-2">
-              {monthSessions.map((session) => {
+              {monthSessions.map((session: any) => {
                 const status = getSessionStatus(session);
                 const isToday = isSameDay(getSessionDate(session), new Date());
 

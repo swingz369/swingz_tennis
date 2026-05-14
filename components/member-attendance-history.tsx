@@ -27,12 +27,13 @@ import {
   Award,
 } from 'lucide-react';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 
 interface AttendanceRecord {
   date: Date;
   status: 'attended' | 'missed' | 'cancelled' | 'upcoming';
-  session: any;
+  session: Session;
 }
 
 export default function MemberAttendanceHistory() {
@@ -48,7 +49,7 @@ export default function MemberAttendanceHistory() {
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
   const memberSessions = useMemo(() => {
-    return sessions.filter((s) => s.bookedByUser);
+    return sessions.filter((s: Session) => s.bookedByUser);
   }, [sessions]);
 
   const getAttendanceRecords = (): AttendanceRecord[] => {
@@ -56,18 +57,20 @@ export default function MemberAttendanceHistory() {
     const monthEnd = endOfMonth(currentMonth);
 
     return memberSessions
-      .filter((session) => {
-        const sessionDate = new Date(session.week);
-        return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
+      .filter((session: Session): session is Session & { week: string } => {
+        return (
+          !!session.week &&
+          isWithinInterval(new Date(session.week), { start: monthStart, end: monthEnd })
+        );
       })
-      .map((session) => {
+      .map((session: Session & { week: string }) => {
         const sessionDate = new Date(session.week);
         const now = new Date();
 
         let status: AttendanceRecord['status'] = 'upcoming';
 
         if (sessionDate < now) {
-          if (session.bookingStatus === 'completed') {
+          if (session.bookingStatus === 'confirmed') {
             status = 'attended';
           } else if (session.bookingStatus === 'cancelled') {
             status = 'cancelled';
@@ -84,17 +87,23 @@ export default function MemberAttendanceHistory() {
           session,
         };
       })
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+      .sort((a: AttendanceRecord, b: AttendanceRecord) => a.date.getTime() - b.date.getTime());
   };
 
   const attendanceRecords = getAttendanceRecords();
 
   const getAttendanceStats = () => {
     const total = attendanceRecords.length;
-    const attended = attendanceRecords.filter((r) => r.status === 'attended').length;
-    const missed = attendanceRecords.filter((r) => r.status === 'missed').length;
-    const cancelled = attendanceRecords.filter((r) => r.status === 'cancelled').length;
-    const upcoming = attendanceRecords.filter((r) => r.status === 'upcoming').length;
+    const attended = attendanceRecords.filter(
+      (r: AttendanceRecord) => r.status === 'attended'
+    ).length;
+    const missed = attendanceRecords.filter((r: AttendanceRecord) => r.status === 'missed').length;
+    const cancelled = attendanceRecords.filter(
+      (r: AttendanceRecord) => r.status === 'cancelled'
+    ).length;
+    const upcoming = attendanceRecords.filter(
+      (r: AttendanceRecord) => r.status === 'upcoming'
+    ).length;
 
     const attendanceRate = total > 0 ? Math.round((attended / (total - upcoming)) * 100) : 0;
 
@@ -112,8 +121,8 @@ export default function MemberAttendanceHistory() {
 
   const getStreak = () => {
     const attendedRecords = attendanceRecords
-      .filter((r) => r.status === 'attended')
-      .sort((a, b) => b.date.getTime() - a.date.getTime());
+      .filter((r: AttendanceRecord) => r.status === 'attended')
+      .sort((a: AttendanceRecord, b: AttendanceRecord) => b.date.getTime() - a.date.getTime());
 
     if (attendedRecords.length === 0) return 0;
 

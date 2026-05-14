@@ -7,7 +7,7 @@ import type { ScheduleRepository } from '@/domain/repositories/schedule-reposito
 import type { MemberRepository } from '@/domain/repositories/member-repository.interface';
 import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
 import type { CourtRepository } from '@/domain/repositories/court-repository.interface';
-import type { ClubId } from '@/domain/value-objects';
+import type { ClubId, ScheduleId } from '@/domain/value-objects';
 import { MemberId, SessionId, BookingId } from '@/domain/value-objects';
 import { ValidationService } from '@/domain/services/validation.service';
 import { BookingNotFoundError, SessionNotFoundError, DoubleBookingError } from '@/domain/errors';
@@ -30,7 +30,8 @@ export class CreateBookingUseCase {
   constructor(
     @inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository,
     @inject(TOKENS.ScheduleRepository) private scheduleRepository: ScheduleRepository,
-    @inject(TOKENS.MemberRepository) private memberRepository: MemberRepository, // FIX: Use DI instead of direct Supabase
+    @inject(TOKENS.MemberRepository) private memberRepository: MemberRepository,
+    @inject(TOKENS.ClubRepository) private clubRepository: ClubRepository,
     @inject(TOKENS.EmailService) private emailService: IEmailService,
     @inject(TOKENS.AuditService) private auditService: IAuditService
   ) {}
@@ -130,7 +131,7 @@ export interface CancelBookingOutput {
 }
 
 @injectable()
-export class CreateBookingUseCase {
+export class CancelBookingUseCase {
   constructor(
     @inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository,
     @inject(TOKENS.ScheduleRepository) private scheduleRepository: ScheduleRepository,
@@ -144,6 +145,12 @@ export class CreateBookingUseCase {
     const booking = await this.bookingRepository.findById(BookingId.fromString(input.bookingId));
     if (!booking) {
       throw new BookingNotFoundError(input.bookingId);
+    }
+
+    // Get session details for email
+    const sessionDetails = await this.scheduleRepository.getSessionDetails(booking.getSessionId());
+    if (!sessionDetails) {
+      throw new Error('Session not found for booking');
     }
 
     const notes = input.notes === null ? undefined : input.notes;
@@ -163,12 +170,21 @@ export class CreateBookingUseCase {
     });
 
     // Send cancellation email (async, don't block response)
-    this.sendCancellationEmail(booking, input).catch(console.error);
+    this.sendCancellationEmail(booking, sessionDetails, input).catch(console.error);
 
     return { success: true };
   }
 
-  private async sendCancellationEmail(booking: Booking, input: CancelBookingInput): Promise<void> {
+  private async sendCancellationEmail(
+    booking: Booking,
+    sessionDetails: {
+      clubId: ClubId;
+      scheduleId: ScheduleId;
+      timeslot: import('@/domain/value-objects').TimeSlot;
+      maxParticipants: number;
+    },
+    input: CancelBookingInput
+  ): Promise<void> {
     try {
       const memberData = await this.memberRepository.getMemberEmailAndName(booking.getMemberId());
 
@@ -177,18 +193,16 @@ export class CreateBookingUseCase {
         return;
       }
 
-      const formattedDate = booking.getBookedAt().toLocaleDateString('de-DE', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
+      const sessionStart = sessionDetails.timeslot.getStart();
+      const sessionDate = sessionStart.toISOString().split('T')[0];
+      const sessionTime = sessionStart.toTimeString().slice(0, 5);
 
       await this.emailService.sendBookingCancellation(memberData.email, {
         memberName: memberData.name,
-        reason: input.reason,
-        sessionStartFormatted: formattedDate,
-        ...(input.notes !== null && input.notes !== undefined ? { notes: input.notes } : {}),
+        sessionDate,
+        sessionTime,
+        courtName: '',
+        reason: input.reason || undefined,
       });
     } catch (error) {
       console.warn('Failed to send cancellation email:', error);

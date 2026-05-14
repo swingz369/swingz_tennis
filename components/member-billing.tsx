@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice } from '@/lib/invoice-pdf';
 import { downloadInvoicePDF, generateInvoiceFromBookings } from '@/lib/invoice-pdf';
@@ -31,15 +32,17 @@ export default function MemberBilling() {
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
-  const memberSessions = sessions.filter((s) => s.bookedByUser);
+  const memberSessions = sessions.filter((s: Session) => s.bookedByUser);
 
   const getMonthSessions = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
 
-    return memberSessions.filter((session) => {
-      const sessionDate = new Date(session.week);
-      return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
+    return memberSessions.filter((session: Session): session is Session & { week: string } => {
+      return (
+        !!session.week &&
+        isWithinInterval(new Date(session.week), { start: monthStart, end: monthEnd })
+      );
     });
   };
 

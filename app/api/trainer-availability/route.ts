@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const clubId = searchParams.get('club_id');
 
     // Build query
-    let query = supabase.from('trainer_availability').select('*');
+    let query = (supabase as any).from('trainer_availability').select('*');
 
     if (trainerId) {
       query = query.eq('trainer_id', trainerId);
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if trainer exists and user has permission
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for conflicts
-    const { data: conflicts } = await supabase
+    const { data: conflicts } = await (supabase as any)
       .from('trainer_availability')
       .select('id')
       .eq('trainer_id', trainer_id)
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create availability
-    const { data: availability, error } = await supabase
+    const { data: availability, error } = await (supabase as any)
       .from('trainer_availability')
       .insert({
         trainer_id,
@@ -155,7 +155,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get availability to check permissions
-    const { data: availability } = await supabase
+    const { data: availability } = await (supabase as any)
       .from('trainer_availability')
       .select('trainer_id')
       .eq('id', availabilityId)
@@ -166,7 +166,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check permissions
-    const { data: profile } = await supabase
+    const { data: profile } = await (supabase as any)
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -181,7 +181,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete availability
-    const { error } = await supabase.from('trainer_availability').delete().eq('id', availabilityId);
+    const { error } = await (supabase as any)
+      .from('trainer_availability')
+      .delete()
+      .eq('id', availabilityId);
 
     if (error) {
       console.error('Error deleting availability:', error);

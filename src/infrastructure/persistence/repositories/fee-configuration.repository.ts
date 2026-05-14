@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, or, desc, sql } from 'drizzle-orm';
+import { eq, and, gte, lte, or, desc, sql, isNull } from 'drizzle-orm';
 import { getDb } from '../client';
 import { feeConfigurations } from '../schema';
 import type { IFeeConfigurationRepository } from '@/domain/repositories/fee-configuration-repository.interface';
@@ -78,11 +78,8 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
         and(
           eq(feeConfigurations.club_id, clubId),
           eq(feeConfigurations.is_active, true),
-          or(eq(feeConfigurations.valid_from, null), lte(feeConfigurations.valid_from, targetDate)),
-          or(
-            eq(feeConfigurations.valid_until, null),
-            gte(feeConfigurations.valid_until, targetDate)
-          )
+          or(isNull(feeConfigurations.valid_from), lte(feeConfigurations.valid_from, targetDate)),
+          or(isNull(feeConfigurations.valid_until), gte(feeConfigurations.valid_until, targetDate))
         )
       )
       .orderBy(desc(feeConfigurations.created_at));

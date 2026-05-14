@@ -81,7 +81,7 @@ export async function DELETE(request: NextRequest) {
           user_id: auth.user.id,
           action: 'session_bulk_deleted',
           resource_type: 'session',
-          resource_id: null,
+          resource_id: null as unknown as string,
           metadata: { reason, count: deleted.length, sessionIds },
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
           user_agent: request.headers.get('user-agent'),

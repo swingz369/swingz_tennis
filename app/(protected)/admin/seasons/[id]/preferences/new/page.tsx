@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -14,8 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Clock, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Save, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import type { WeeklyAvailability, TimeSlot } from '@/lib/types/season-planning';
 

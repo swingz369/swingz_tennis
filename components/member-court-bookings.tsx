@@ -24,6 +24,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import { useCourts } from '@/hooks/use-courts';
 
@@ -39,7 +40,7 @@ export default function MemberCourtBookings() {
   const { data: courts = [], isLoading: courtsLoading } = useCourts(clubId);
 
   const memberSessions = useMemo(() => {
-    return sessions.filter((s) => s.bookedByUser);
+    return sessions.filter((s: Session) => s.bookedByUser);
   }, [sessions]);
 
   const getMonthBookings = () => {
@@ -47,11 +48,13 @@ export default function MemberCourtBookings() {
     const monthEnd = endOfMonth(currentMonth);
 
     return memberSessions
-      .filter((session) => {
-        const sessionDate = new Date(session.week);
-        return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
+      .filter((session: Session): session is Session & { week: string } => {
+        return (
+          !!session.week &&
+          isWithinInterval(new Date(session.week), { start: monthStart, end: monthEnd })
+        );
       })
-      .map((session) => {
+      .map((session: Session & { week: string }) => {
         const court = courts.find((c) => c.id === session.courtId);
         return {
           ...session,
@@ -59,7 +62,7 @@ export default function MemberCourtBookings() {
           courtSurface: court?.surface || 'hard',
         };
       })
-      .sort((a, b) => {
+      .sort((a: Session & { week: string }, b: Session & { week: string }) => {
         const dateA = new Date(a.week);
         const dateB = new Date(b.week);
         return dateA.getTime() - dateB.getTime();
@@ -71,7 +74,7 @@ export default function MemberCourtBookings() {
   const getUpcomingBookings = () => {
     const now = new Date();
     return monthBookings
-      .filter((booking) => {
+      .filter((booking: Session & { week: string }) => {
         const bookingDate = new Date(booking.week);
         return bookingDate >= now;
       })
@@ -172,7 +175,7 @@ export default function MemberCourtBookings() {
           <CardContent>
             <div className="text-2xl font-bold">
               {
-                monthBookings.filter((b) => {
+                monthBookings.filter((b: Session & { week: string }) => {
                   const bookingDate = new Date(b.week);
                   return bookingDate >= new Date();
                 }).length
@@ -189,7 +192,7 @@ export default function MemberCourtBookings() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(monthBookings.map((b) => b.courtId)).size}
+              {new Set(monthBookings.map((b: Session & { courtId: string }) => b.courtId)).size}
             </div>
             <p className="text-xs text-gray-500 mt-1">unterschiedliche Plätze</p>
           </CardContent>
@@ -204,52 +207,54 @@ export default function MemberCourtBookings() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {upcomingBookings.map((booking) => {
-                const status = getBookingStatus(booking);
-                const StatusIcon = status.icon;
+              {upcomingBookings.map(
+                (booking: Session & { week: string; courtName: string; courtSurface: string }) => {
+                  const status = getBookingStatus(booking);
+                  const StatusIcon = status.icon;
 
-                return (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-brand-primary/10 rounded-lg">
-                        <Calendar className="h-5 w-5 text-brand-primary" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">
-                          {format(new Date(booking.week), 'EEEE, dd. MMMM yyyy', { locale: de })}
+                  return (
+                    <div
+                      key={booking.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-brand-primary/10 rounded-lg">
+                          <Calendar className="h-5 w-5 text-brand-primary" />
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>
-                              {booking.startTime} - {booking.endTime}
-                            </span>
+                        <div>
+                          <div className="font-semibold">
+                            {format(new Date(booking.week), 'EEEE, dd. MMMM yyyy', { locale: de })}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{booking.courtName}</span>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>
+                                {booking.startTime} - {booking.endTime}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              <span>{booking.courtName}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <User className="h-4 w-4" />
+                              <span>{booking.trainerName || 'Trainer'}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <User className="h-4 w-4" />
-                            <span>{booking.trainerName || 'Trainer'}</span>
-                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${status.color}`}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {status.label}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${status.color}`}
-                      >
-                        <StatusIcon className="h-3 w-3" />
-                        {status.label}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           </CardContent>
         </Card>
@@ -267,78 +272,80 @@ export default function MemberCourtBookings() {
             </div>
           ) : (
             <div className="space-y-2">
-              {monthBookings.map((booking) => {
-                const status = getBookingStatus(booking);
-                const StatusIcon = status.icon;
-                const isToday = isSameDay(new Date(booking.week), new Date());
+              {monthBookings.map(
+                (booking: Session & { week: string; courtName: string; courtSurface: string }) => {
+                  const status = getBookingStatus(booking);
+                  const StatusIcon = status.icon;
+                  const isToday = isSameDay(new Date(booking.week), new Date());
 
-                return (
-                  <div
-                    key={booking.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                      isToday
-                        ? 'bg-brand-primary/10 border-brand-primary/30'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div
-                        className={`p-3 rounded-lg ${
-                          isToday ? 'bg-brand-primary/20' : 'bg-gray-100'
-                        }`}
-                      >
-                        <Calendar
-                          className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-gray-600'}`}
-                        />
-                      </div>
-                      <div className="flex-1">
+                  return (
+                    <div
+                      key={booking.id}
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                        isToday
+                          ? 'bg-brand-primary/10 border-brand-primary/30'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
                         <div
-                          className={`font-semibold ${
-                            isToday ? 'text-brand-primary' : 'text-gray-900'
+                          className={`p-3 rounded-lg ${
+                            isToday ? 'bg-brand-primary/20' : 'bg-gray-100'
                           }`}
                         >
-                          {format(new Date(booking.week), 'EEEE, dd. MMMM', { locale: de })}
-                          {isToday && (
-                            <span className="ml-2 text-xs bg-brand-primary text-white px-2 py-0.5 rounded-full">
-                              Heute
-                            </span>
-                          )}
+                          <Calendar
+                            className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-gray-600'}`}
+                          />
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-1">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>
-                              {booking.startTime} - {booking.endTime}
-                            </span>
+                        <div className="flex-1">
+                          <div
+                            className={`font-semibold ${
+                              isToday ? 'text-brand-primary' : 'text-gray-900'
+                            }`}
+                          >
+                            {format(new Date(booking.week), 'EEEE, dd. MMMM', { locale: de })}
+                            {isToday && (
+                              <span className="ml-2 text-xs bg-brand-primary text-white px-2 py-0.5 rounded-full">
+                                Heute
+                              </span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{booking.courtName}</span>
-                            <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
-                              {getSurfaceLabel(booking.courtSurface)}
-                            </span>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-1">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>
+                                {booking.startTime} - {booking.endTime}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              <span>{booking.courtName}</span>
+                              <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
+                                {getSurfaceLabel(booking.courtSurface)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <User className="h-4 w-4" />
+                              <span>{booking.trainerName || 'Trainer'}</span>
+                            </div>
+                            {booking.notes && (
+                              <div className="text-xs italic text-gray-500">{booking.notes}</div>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <User className="h-4 w-4" />
-                            <span>{booking.trainerName || 'Trainer'}</span>
-                          </div>
-                          {booking.notes && (
-                            <div className="text-xs italic text-gray-500">{booking.notes}</div>
-                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${status.color}`}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          {status.label}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${status.color}`}
-                      >
-                        <StatusIcon className="h-3 w-3" />
-                        {status.label}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           )}
         </CardContent>
@@ -352,8 +359,12 @@ export default function MemberCourtBookings() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Array.from(new Set(monthBookings.map((b) => b.courtId))).map((courtId) => {
-                const courtBookings = monthBookings.filter((b) => b.courtId === courtId);
+              {Array.from(
+                new Set(monthBookings.map((b: Session & { courtId: string }) => b.courtId))
+              ).map((courtId) => {
+                const courtBookings = monthBookings.filter(
+                  (b: Session & { courtId: string }) => b.courtId === courtId
+                );
                 const court = courts.find((c) => c.id === courtId);
 
                 return (

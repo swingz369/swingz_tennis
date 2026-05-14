@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
-import { createRateLimitedHandler, RATE_LIMITS } from '@/lib/rate-limit';
+import { createRateLimitedHandler } from '@/lib/rate-limit';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 
 export const POST = createRateLimitedHandler('api', async function handler(request: NextRequest) {
@@ -78,6 +78,8 @@ export const POST = createRateLimitedHandler('api', async function handler(reque
 });
 
 export const DELETE = createRateLimitedHandler('api', async function handler(request: NextRequest) {
+  // request is unused but required by signature
+  void request;
   try {
     // Clear the selected club cookie
     const cookieStore = await cookies();

@@ -34,6 +34,9 @@ export default async function BrandingSettingsPage() {
   }
 
   const clubId = memberships[0].club_id;
+  if (!clubId) {
+    redirect('/dashboard'); // Missing club association
+  }
 
   return <BrandingSettingsClient clubId={clubId} />;
 }

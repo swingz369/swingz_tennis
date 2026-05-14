@@ -358,7 +358,7 @@ export const courtsRelations = relations(courts, ({ one }) => ({
   }),
 }));
 
-export const invoicesRelations = relations(invoices, ({ one }) => ({
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
   club: one(clubs, {
     fields: [invoices.club_id],
     references: [clubs.id],

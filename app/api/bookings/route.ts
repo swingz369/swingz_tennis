@@ -136,9 +136,6 @@ export async function GET(req: NextRequest) {
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
-    const url = new URL(req.url);
-    const clubId = url.searchParams.get('clubId') ?? auth.clubId;
-
     const { data: bookings, error } = await auth.supabase
       .from('bookings')
       .select(

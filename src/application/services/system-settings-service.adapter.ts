@@ -131,7 +131,7 @@ class SystemSettingsServiceAdapter {
     if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
       return this.systemSettingsRepo.getAsObject(category, clubId, publicOnly);
     }
-    return SystemSettingsService.getSystemSettingsAsObject(category);
+    return SystemSettingsService.getSystemSettingsAsObject(category ?? undefined);
   }
 
   /**

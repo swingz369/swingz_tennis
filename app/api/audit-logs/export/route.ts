@@ -56,14 +56,17 @@ export async function GET(request: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(10000); // Max 10k rows for export
 
+      if (action) query = query.eq('action', action);
+      // Filter by club if specified
       if (clubId) {
-        query = query.eq('club_id', clubId);
-      } else {
-        query = query.eq('club_id', auth.clubId);
+        // For audit logs, we need to filter by resource_type and resource_id
+        query = query.eq('resource_type', 'club').eq('resource_id', clubId);
+      } else if (auth.clubId) {
+        query = query.eq('resource_type', 'club').eq('resource_id', auth.clubId);
       }
 
       if (action) query = query.eq('action', action);
-      if (entityType) query = query.eq('entity_type', entityType);
+      if (entityType) query = query.eq('resource_type', entityType);
 
       const { data, error } = await query;
 

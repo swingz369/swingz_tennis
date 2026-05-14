@@ -30,7 +30,9 @@ export async function GET(req: NextRequest) {
 
       if (!isSuperadmin) {
         // Filter to clubs where user has membership
-        const userClubIds = auth.memberships.map((m) => m.club_id);
+        const userClubIds = auth.memberships
+          .map((m) => m.club_id)
+          .filter((id): id is string => id !== null);
         console.log('[API /clubs] Non-superadmin user, filtering to clubs:', userClubIds);
         clubsQuery = clubsQuery.in('id', userClubIds);
       } else {
@@ -56,7 +58,9 @@ export async function GET(req: NextRequest) {
           .eq('is_active', true);
 
         memberships?.forEach((m) => {
-          memberCounts[m.club_id] = (memberCounts[m.club_id] || 0) + 1;
+          if (m.club_id) {
+            memberCounts[m.club_id] = (memberCounts[m.club_id] || 0) + 1;
+          }
         });
       }
 

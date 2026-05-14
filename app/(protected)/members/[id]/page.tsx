@@ -6,30 +6,37 @@ import { Calendar, Clock, User, Trophy } from 'lucide-react';
 
 type Member = {
   id: string;
-  user_id: string;
-  full_name: string;
+  full_name: string | null;
   email: string;
-  role: string;
-  is_active: boolean;
-  joined_at: string;
   created_at: string;
   phone: string | null;
-  club_memberships: Array<{
-    clubs: { id: string; name: string; status: string };
-    role: string;
-  }>;
+  club_memberships: any[];
 };
 
 type Booking = {
   id: string;
   status: string;
-  created_at: string;
+  booked_at: string;
+  booking_number: string | null;
+  booking_type: string | null;
+  cancellation_notes: string | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
+  club_id: string;
+  end_time: string | null;
+  is_recurring: boolean | null;
+  member_id: string | null;
+  notes: string | null;
+  payment_status: string | null;
+  schedule_id: string | null;
+  session_id: string | null;
+  session_start_time: string | null;
+  start_time: string | null;
   sessions: {
     id: string;
     timeslot_start: string;
     timeslot_end: string;
     trainer_id: string;
-    schedules: { name: string } | null;
   } | null;
 };
 
@@ -55,7 +62,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
 
   const { data: memberData } = await supabase
     .from('users')
-    .select('*, club_memberships(clubs(name, status))')
+    .select('*, club_memberships(clubs(id, name, status))')
     .eq('id', id)
     .single();
 
@@ -67,7 +74,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
     );
   }
 
-  member = memberData;
+  member = memberData as any;
 
   const { data: bookingsData } = await supabase
     .from('bookings')
@@ -78,8 +85,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
            id,
            timeslot_start,
            timeslot_end,
-           trainer_id,
-           schedules (name)
+           trainer_id
          )
        `
     )
@@ -241,7 +247,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
                   className="flex items-center justify-between p-3 border rounded-lg"
                 >
                   <div className="flex-1">
-                    <p className="font-medium">{booking.sessions?.schedules?.name || 'Training'}</p>
+                    <p className="font-medium">Training</p>
                     <p className="text-sm text-muted-foreground">
                       {booking.sessions?.timeslot_start
                         ? new Date(booking.sessions.timeslot_start).toLocaleString('de-DE')

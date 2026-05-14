@@ -19,6 +19,7 @@ import { ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
+import type { Session } from '@/hooks/use-sessions';
 import {
   useSessions,
   useCreateBooking,
@@ -78,7 +79,7 @@ export function SessionBookings() {
   const getSessionsForDay = (date: Date) => {
     const jsDay = date.getDay();
     const apiDay = jsDay === 0 ? 7 : jsDay;
-    return sessions.filter((s) => s.dayOfWeek === apiDay);
+    return sessions.filter((s: Session) => s.dayOfWeek === apiDay);
   };
 
   const getBookingStatusLabel = (status: string): string => {
@@ -100,7 +101,7 @@ export function SessionBookings() {
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
   const handleExportCSV = () => {
-    const data = sessions.map((s) => ({
+    const data = sessions.map((s: Session) => ({
       id: s.id,
       status: s.bookingStatus || 'n/a',
       bookedAt: new Date().toISOString(),
@@ -173,7 +174,7 @@ export function SessionBookings() {
                       {format(day, 'd')}
                     </div>
                     <div className="space-y-1">
-                      {daySessions.map((session) => (
+                      {daySessions.map((session: Session) => (
                         <div
                           key={session.id}
                           className={`p-1 rounded text-xs transition-colors cursor-pointer ${

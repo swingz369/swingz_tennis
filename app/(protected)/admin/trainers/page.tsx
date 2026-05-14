@@ -1,7 +1,5 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import TrainerProfileManagement from '@/components/trainer-profile-management';
 
 export default async function AdminTrainersPage() {
@@ -22,17 +20,6 @@ export default async function AdminTrainersPage() {
 
   if (!isAdminOrSuperadmin) {
     redirect('/dashboard');
-  }
-
-  const isSuperadmin = memberships.some((m) => m.role === 'superadmin');
-
-  let clubId: string | null = null;
-  if (isSuperadmin) {
-    const cookieStore = await cookies();
-    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null;
-    clubId = cookieClubId;
-  } else {
-    clubId = memberships.find((m) => m.club_id)?.club_id ?? null;
   }
 
   // TrainerProfileManagement is a self-contained client component;

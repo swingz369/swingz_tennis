@@ -51,7 +51,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     user_id: memberData.user_id,
     full_name: userData?.full_name || 'Unbekannt',
     email: userData?.email || '',
-    role: memberData.role,
+    role: memberData.role as 'member' | 'trainer' | 'admin' | 'superadmin',
     is_active: memberData.is_active,
     joined_at: memberData.joined_at,
   };

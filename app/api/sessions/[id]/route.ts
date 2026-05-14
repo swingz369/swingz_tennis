@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const supabase = await createClient();
 
       // Fetch the session with club_id for authorization
-      const { data: session, error: fetchErr } = await supabase
+      const { data: sessionRaw, error: fetchErr } = await (supabase as any)
         .from('sessions')
         .select(
           `
@@ -52,6 +52,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         )
         .eq('id', id)
         .single();
+      const session = sessionRaw as {
+        id: string;
+        trainer_id: string;
+        schedule_id: string | null;
+        timeslot_start: string;
+        timeslot_end: string;
+        court_id: string;
+        club_id: string;
+      } | null;
 
       if (fetchErr || !session) {
         return NextResponse.json({ error: 'Session not found' }, { status: 404 });
@@ -178,11 +187,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       const supabase = await createClient();
 
       // Fetch the session to check permissions
-      const { data: session, error: fetchErr } = await supabase
+      const { data: sessionRaw2, error: fetchErr } = await (supabase as any)
         .from('sessions')
         .select('id, trainer_id, club_id')
         .eq('id', id)
         .single();
+      const session = sessionRaw2 as { id: string; trainer_id: string; club_id: string } | null;
 
       if (fetchErr || !session) {
         return NextResponse.json({ error: 'Session not found' }, { status: 404 });

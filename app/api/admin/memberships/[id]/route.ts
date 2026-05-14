@@ -5,14 +5,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import {
-  withAuth,
-  verifyRole,
-  forbiddenResponse,
-  unauthorizedResponse,
-  type AuthContext,
-} from '@/lib/api-auth';
-import { createServerClient } from '@supabase/ssr';
+import { withAuth, verifyRole, forbiddenResponse, type AuthContext } from '@/lib/api-auth';
 
 type RouteContext = {
   params: Promise<{ id: string }>;

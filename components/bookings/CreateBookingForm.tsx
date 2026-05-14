@@ -1,7 +1,7 @@
 // components/bookings/CreateBookingForm.tsx
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,14 +13,7 @@ import {
   type CreateBookingInput,
 } from '@/lib/actions/booking.actions';
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -82,7 +75,7 @@ export function CreateBookingForm({ courts }: CreateBookingFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Court Auswahl */}
-        <FormField
+        <Controller
           control={form.control}
           name="courtId"
           render={({ field }) => (
@@ -108,7 +101,7 @@ export function CreateBookingForm({ courts }: CreateBookingFormProps) {
         />
 
         {/* Startzeit */}
-        <FormField
+        <Controller
           control={form.control}
           name="startTime"
           render={({ field }) => (
@@ -123,7 +116,7 @@ export function CreateBookingForm({ courts }: CreateBookingFormProps) {
         />
 
         {/* Endzeit */}
-        <FormField
+        <Controller
           control={form.control}
           name="endTime"
           render={({ field }) => (
@@ -138,7 +131,7 @@ export function CreateBookingForm({ courts }: CreateBookingFormProps) {
         />
 
         {/* Notizen */}
-        <FormField
+        <Controller
           control={form.control}
           name="notes"
           render={({ field }) => (

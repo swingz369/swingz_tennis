@@ -121,7 +121,7 @@ export async function GET(_req: NextRequest) {
       const attendees = [];
       for (const b of s.bookings || []) {
         // Fetch user details for this booking's member_id
-        const { data: userData } = await supabase.auth.admin.getUserById(b.member_id);
+        const { data: userData } = await supabase.auth.admin.getUserById(b.member_id ?? '');
         const memberName =
           userData?.user?.user_metadata?.full_name || userData?.user?.email || 'Unbekannt';
 

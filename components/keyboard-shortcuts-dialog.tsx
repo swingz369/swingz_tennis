@@ -150,10 +150,10 @@ export function KeyboardShortcutsDialog() {
                     >
                       <span className="text-sm">{shortcut.description}</span>
                       {renderKey(shortcut.key, {
-                        metaKey: shortcut.metaKey,
-                        shiftKey: shortcut.shiftKey,
-                        ctrlKey: shortcut.ctrlKey,
-                        altKey: shortcut.altKey,
+                        ...(shortcut.metaKey !== undefined && { metaKey: shortcut.metaKey }),
+                        ...(shortcut.shiftKey !== undefined && { shiftKey: shortcut.shiftKey }),
+                        ...(shortcut.ctrlKey !== undefined && { ctrlKey: shortcut.ctrlKey }),
+                        ...(shortcut.altKey !== undefined && { altKey: shortcut.altKey }),
                       })}
                     </div>
                   ))}

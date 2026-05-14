@@ -60,6 +60,9 @@ export async function createBookingAction(
 
     const { courtId, startTime, endTime, notes } = parsed.data;
 
+    // Create Supabase client
+    const supabase = await createClient();
+
     // 3. Court existiert und ist aktiv? Gib auch club_id zurück
     const { data: court, error: courtError } = await supabase
       .from('courts')
@@ -112,7 +115,7 @@ export async function createBookingAction(
 export async function cancelBookingAction(bookingId: string): Promise<ActionResult> {
   try {
     const user = await getAuthenticatedUser();
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Buchung holen
     const { data: booking, error: fetchError } = await supabase

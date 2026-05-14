@@ -68,7 +68,7 @@ export class BackgroundJobQueue {
   async enqueue(options: EnqueueJobOptions): Promise<string> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase.rpc('enqueue_job', {
+    const { data, error } = await (supabase as any).rpc('enqueue_job', {
       p_job_name: options.jobName,
       p_job_type: options.jobType,
       p_payload: options.payload || {},
@@ -117,7 +117,7 @@ export class BackgroundJobQueue {
   async getJob(jobId: string): Promise<BackgroundJob | null> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('background_jobs')
       .select('*')
       .eq('id', jobId)
@@ -144,7 +144,7 @@ export class BackgroundJobQueue {
   }): Promise<BackgroundJob[]> {
     const supabase = await createClient();
 
-    let query = supabase
+    let query = (supabase as any)
       .from('background_jobs')
       .select('*')
       .order('created_at', { ascending: false });
@@ -180,7 +180,7 @@ export class BackgroundJobQueue {
   async getPendingJobs(limit = 10): Promise<BackgroundJob[]> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase.rpc('get_pending_jobs', {
+    const { data, error } = await (supabase as any).rpc('get_pending_jobs', {
       p_limit: limit,
     });
 
@@ -197,7 +197,7 @@ export class BackgroundJobQueue {
   async startJob(jobId: string): Promise<boolean> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase.rpc('start_job', {
+    const { data, error } = await (supabase as any).rpc('start_job', {
       p_job_id: jobId,
     });
 
@@ -214,7 +214,7 @@ export class BackgroundJobQueue {
   async completeJob(jobId: string, result?: Record<string, any>): Promise<boolean> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase.rpc('complete_job', {
+    const { data, error } = await (supabase as any).rpc('complete_job', {
       p_job_id: jobId,
       p_result: result || {},
     });
@@ -233,7 +233,7 @@ export class BackgroundJobQueue {
   async failJob(jobId: string, errorMessage: string, stackTrace?: string): Promise<boolean> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase.rpc('fail_job', {
+    const { data, error } = await (supabase as any).rpc('fail_job', {
       p_job_id: jobId,
       p_error_message: errorMessage,
       p_stack_trace: stackTrace || null,
@@ -252,7 +252,7 @@ export class BackgroundJobQueue {
   async cancelJob(jobId: string): Promise<boolean> {
     const supabase = await createClient();
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('background_jobs')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', jobId)
@@ -271,7 +271,7 @@ export class BackgroundJobQueue {
   async getJobHistory(jobId: string): Promise<any[]> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('job_execution_log')
       .select('*')
       .eq('job_id', jobId)
@@ -297,7 +297,9 @@ export class BackgroundJobQueue {
   }> {
     const supabase = await createClient();
 
-    let query = supabase.from('background_jobs').select('status', { count: 'exact', head: false });
+    let query = (supabase as any)
+      .from('background_jobs')
+      .select('status', { count: 'exact', head: false });
 
     if (filters?.jobName) {
       query = query.eq('job_name', filters.jobName);
@@ -315,10 +317,10 @@ export class BackgroundJobQueue {
 
     const stats = {
       total: data?.length || 0,
-      pending: data?.filter((j) => j.status === 'pending').length || 0,
-      running: data?.filter((j) => j.status === 'running').length || 0,
-      completed: data?.filter((j) => j.status === 'completed').length || 0,
-      failed: data?.filter((j) => j.status === 'failed').length || 0,
+      pending: data?.filter((j: any) => j.status === 'pending').length || 0,
+      running: data?.filter((j: any) => j.status === 'running').length || 0,
+      completed: data?.filter((j: any) => j.status === 'completed').length || 0,
+      failed: data?.filter((j: any) => j.status === 'failed').length || 0,
       successRate: 0,
     };
 

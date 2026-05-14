@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useUserClub } from '@/hooks/use-user-data';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import { useRouter } from 'next/navigation';
 
@@ -39,26 +40,32 @@ export default function MemberDashboard() {
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
-  const memberSessions = sessions.filter((s) => s.bookedByUser);
+  const memberSessions = sessions.filter((s: Session) => s.bookedByUser);
 
   const calculateStats = (): DashboardStats => {
     const now = new Date();
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
 
-    const monthSessions = memberSessions.filter((session) => {
-      const sessionDate = new Date(session.week);
-      return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
-    });
+    const monthSessions = memberSessions.filter(
+      (session: Session): session is Session & { week: string } => {
+        return (
+          !!session.week &&
+          isWithinInterval(new Date(session.week), { start: monthStart, end: monthEnd })
+        );
+      }
+    );
 
-    const upcomingSessions = monthSessions.filter((session) => {
+    const upcomingSessions = monthSessions.filter((session: Session) => {
+      if (!session.week) return false;
       const sessionDate = new Date(session.week);
       return sessionDate >= now;
     }).length;
 
-    const completedSessions = monthSessions.filter((session) => {
+    const completedSessions = monthSessions.filter((session: Session) => {
+      if (!session.week) return false;
       const sessionDate = new Date(session.week);
-      return sessionDate < now && session.bookingStatus === 'completed';
+      return sessionDate < now && session.bookingStatus === 'confirmed';
     }).length;
 
     const totalBookings = monthSessions.length;
@@ -78,11 +85,13 @@ export default function MemberDashboard() {
   const getNextSession = () => {
     const now = new Date();
     const upcoming = memberSessions
-      .filter((s) => {
+      .filter((s: Session) => {
+        if (!s.week) return false;
         const sessionDate = new Date(s.week);
         return sessionDate >= now;
       })
-      .sort((a, b) => {
+      .sort((a: Session, b: Session) => {
+        if (!a.week || !b.week) return 0;
         const dateA = new Date(a.week);
         const dateB = new Date(b.week);
         return dateA.getTime() - dateB.getTime();
@@ -91,22 +100,24 @@ export default function MemberDashboard() {
     return upcoming[0] || null;
   };
 
-  const nextSession = getNextSession();
-
   const getRecentActivity = () => {
     const now = new Date();
     return memberSessions
-      .filter((s) => {
+      .filter((s: Session) => {
+        if (!s.week) return false;
         const sessionDate = new Date(s.week);
         return sessionDate < now;
       })
-      .sort((a, b) => {
+      .sort((a: Session, b: Session) => {
+        if (!a.week || !b.week) return 0;
         const dateA = new Date(a.week);
         const dateB = new Date(b.week);
         return dateB.getTime() - dateA.getTime();
       })
       .slice(0, 5);
   };
+
+  const nextSession = getNextSession();
 
   const recentActivity = getRecentActivity();
 
@@ -256,7 +267,7 @@ export default function MemberDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentActivity.map((session) => (
+                {recentActivity.map((session: Session & { week: string }) => (
                   <div
                     key={session.id}
                     className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/5"
@@ -276,14 +287,14 @@ export default function MemberDashboard() {
                     </div>
                     <div
                       className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-                        session.bookingStatus === 'completed'
-                          ? 'bg-[#dcfce7] text-[#15803d] dark:bg-[#15803d]/20 dark:text-[#4ade80]'
+                        session.bookingStatus === 'confirmed'
+                          ? 'bg-[#dcfce7] text-[#15803d] dark:bg-[#15803d]/20 dark:text-[#15803d]'
                           : session.bookingStatus === 'cancelled'
                             ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                             : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'
                       }`}
                     >
-                      {session.bookingStatus === 'completed'
+                      {session.bookingStatus === 'confirmed'
                         ? 'Abgeschlossen'
                         : session.bookingStatus === 'cancelled'
                           ? 'Storniert'

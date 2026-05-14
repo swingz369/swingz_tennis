@@ -71,10 +71,11 @@ export async function GET(request: NextRequest) {
 
       // Filter by club if provided
       if (clubId) {
-        query = query.eq('club_id', clubId);
-      } else {
+        // For audit logs, we need to filter by resource_type and resource_id
+        query = query.eq('resource_type', 'club').eq('resource_id', clubId);
+      } else if (auth.clubId) {
         // If no club_id provided, filter by user's club
-        query = query.eq('club_id', auth.clubId);
+        query = query.eq('resource_type', 'club').eq('resource_id', auth.clubId);
       }
 
       // Additional filters
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
       }
 
       if (entityType) {
-        query = query.eq('entity_type', entityType);
+        query = query.eq('resource_type', entityType);
       }
 
       const { data, error, count } = await query;

@@ -15,13 +15,12 @@ import {
   AlertCircle,
   CheckCircle,
   TrendingUp,
-  Users,
   Calendar,
   Zap,
   Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { AutoPlanResponse, AlgorithmMetrics } from '@/lib/types/season-planning';
+import type { AutoPlanResponse } from '@/lib/types/season-planning';
 
 interface AutoPlanPageProps {
   params: {
@@ -32,7 +31,6 @@ interface AutoPlanPageProps {
 export default function AutoPlanPage({ params }: AutoPlanPageProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [dryRun, setDryRun] = useState(true);
   const [result, setResult] = useState<AutoPlanResponse | null>(null);
 
   const [config, setConfig] = useState({

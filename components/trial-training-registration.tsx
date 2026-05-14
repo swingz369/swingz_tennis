@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Clock, User, Mail, Phone, Send, CheckCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub } from '@/hooks/use-user-data';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 
 export default function TrialTrainingRegistration() {
@@ -31,7 +32,7 @@ export default function TrialTrainingRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
-  const availableSessions = sessions.filter((s) => !s.bookedByUser);
+  const availableSessions = sessions.filter((s: Session) => !s.bookedByUser);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -93,8 +94,8 @@ export default function TrialTrainingRegistration() {
 
   const handleSessionSelect = (sessionId: string) => {
     setSelectedSession(sessionId);
-    const session = sessions.find((s) => s.id === sessionId);
-    if (session) {
+    const session = sessions.find((s: Session) => s.id === sessionId);
+    if (session && session.week) {
       setFormData((prev) => ({
         ...prev,
         preferredDate: session.week,
@@ -157,8 +158,9 @@ export default function TrialTrainingRegistration() {
               </div>
             ) : (
               <div className="space-y-2">
-                {availableSessions.slice(0, 5).map((session) => {
+                {availableSessions.slice(0, 5).map((session: Session) => {
                   const isSelected = selectedSession === session.id;
+                  if (!session.week) return null;
                   const sessionDate = new Date(session.week);
 
                   return (

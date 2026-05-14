@@ -29,6 +29,7 @@ import {
 import { toast } from 'sonner';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
+import type { Session } from '@/hooks/use-sessions';
 import { useSessions, useCreateBooking, useCancelBooking } from '@/hooks/use-sessions';
 import { exportSessionsToICS, exportSessionToGoogleCalendar } from '@/lib/calendar-export';
 
@@ -115,8 +116,9 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
       const slotStart = setMinutes(setHours(date, hour), minute);
       const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000); // 1 hour slots
 
-      return sessions.find((session) => {
+      return sessions.find((session: Session) => {
         if (!session.courtId || session.courtId !== courtId) return false;
+        if (!session.week) return false;
 
         const sessionDate = new Date(session.week);
         const [startHour, startMinute] = session.startTime.split(':').map(Number);

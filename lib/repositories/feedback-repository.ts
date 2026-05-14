@@ -12,10 +12,10 @@ export interface Feedback {
   motivation: number | null;
   punctuality: number | null;
   comment: string | null;
-  is_visible: boolean;
-  is_flagged: boolean;
-  created_at: string;
-  updated_at: string;
+  is_visible: boolean | null;
+  is_flagged: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface CreateFeedbackInput {

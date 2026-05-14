@@ -20,6 +20,13 @@ export async function POST(_request: NextRequest) {
         return forbiddenResponse('Admin access required');
       }
 
+      // Validate club context
+      if (!auth.clubId) {
+        return NextResponse.json({ error: 'Vereins Kontext erforderlich' }, { status: 400 });
+      }
+
+      const clubId = auth.clubId!;
+
       const formData = await _request.formData();
       const file = formData.get('file') as File;
 
@@ -91,7 +98,7 @@ export async function POST(_request: NextRequest) {
           }
 
           await billingEngine.createPayment({
-            club_id: auth.clubId,
+            club_id: clubId,
             member_id: memberId,
             amount: Math.min(Math.max(record.amount, 0), 1000000),
             payment_method: record.paymentMethod,

@@ -90,7 +90,7 @@ export class DrizzleMemberRepository implements MemberRepository {
     if (result.length === 0) return null;
     return {
       email: result[0].email,
-      name: result[0].full_name || 'Mitglied',
+      name: result[0].name || 'Mitglied',
     };
   }
 

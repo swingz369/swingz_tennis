@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
-import { Building2, Users, UserCheck, Calendar, DollarSign, BarChart3 } from 'lucide-react';
+import { Building2, Users, UserCheck, Calendar, BarChart3 } from 'lucide-react';
 
 export default async function ClubDashboardPage({
   params,
@@ -25,8 +24,7 @@ export default async function ClubDashboardPage({
     .eq('is_active', true);
 
   const hasAccess = memberships?.some(
-    (m: { role: string; club_id: string }) =>
-      (m.role === 'superadmin' || m.role === 'admin') && m.club_id === clubId
+    (m) => (m.role === 'superadmin' || m.role === 'admin') && m.club_id === clubId
   );
 
   if (!hasAccess) {
