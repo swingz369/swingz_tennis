@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
@@ -52,10 +52,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         .maybeSingle();
 
       if (clubData && !clubData.setup_completed_at) {
-        // Only redirect if not already fetching from onboarding
-        // Use a simpler approach: check if this is a nested layout call
-        // We avoid using headers() to prevent issues
-        redirect('/admin/onboarding');
+        const headersList = await headers();
+        const pathname = headersList.get('x-pathname') ?? headersList.get('x-invoke-path') ?? '';
+        const isOnboarding = pathname.includes('/admin/onboarding');
+        if (!isOnboarding) {
+          redirect('/admin/onboarding');
+        }
       }
     }
   }

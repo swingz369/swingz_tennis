@@ -18,17 +18,11 @@ const PUBLIC_ROUTES = [
   '/api/auth/logout',
 ];
 
-// Routen die nur bestimmte Rollen sehen dürfen
-const ROLE_PROTECTED_ROUTES: Record<string, string[]> = {
-  '/superadmin': ['superadmin'],
-  '/admin': ['superadmin', 'admin'],
-  '/trainer': ['superadmin', 'admin', 'trainer'],
-  '/dashboard': ['superadmin', 'admin', 'trainer', 'member'],
-};
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  let response = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   // Supabase Session refreshen
   const supabase = createServerClient(
@@ -43,7 +37,7 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             request.cookies.set({ name, value, ...options } as any)
           );
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set({ name, value, ...options } as any)
           );
@@ -58,33 +52,27 @@ export async function middleware(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
+  // Demo-Modus Check (Cookie-basiert)
+  const isDemoMode = request.cookies.get('demo-mode')?.value === 'true';
+
   // 1. Öffentliche Routen → durchlassen
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
   if (isPublic) return response;
 
-  // 2. Nicht eingeloggt → Login
+  // 2. Nicht eingeloggt + kein Demo-Modus → Login
   if (error || !user) {
+    // Demo-Modus Nutzer erlaubenDashboard & co. zu sehen
+    if (isDemoMode && pathname.startsWith('/dashboard')) {
+      return response;
+    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 3. Rolle aus JWT-Claims lesen (muss in Supabase Auth konfiguriert sein)
-  const userRole = (user.user_metadata?.role as string) ?? 'member';
-
-  // 4. Rollen-basierte Route Protection
-  for (const [protectedPath, allowedRoles] of Object.entries(ROLE_PROTECTED_ROUTES)) {
-    if (pathname.startsWith(protectedPath)) {
-      if (!allowedRoles.includes(userRole)) {
-        // Falsche Rolle → Dashboard (nicht Fehlerseite)
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-      }
-    }
-  }
-
-  // 5. Eingeloggt auf /login → Dashboard
+  // 3. Eingeloggt auf /login → Dashboard
   if (pathname === '/login' && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
