@@ -14,6 +14,8 @@ const PUBLIC_ROUTES = [
   '/', // Landing Page
   '/about',
   '/contact',
+  '/api/auth/login',
+  '/api/auth/logout',
 ];
 
 // Routen die nur bestimmte Rollen sehen dürfen
