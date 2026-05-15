@@ -16,10 +16,13 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, Save, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUserClub } from '@/hooks/use-user-data';
 
 export default function NewSeasonPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { data: clubData } = useUserClub();
+  const clubId = clubData?.clubId ?? null;
   const [formData, setFormData] = useState({
     name: '',
     season_type: 'summer' as 'summer' | 'winter',
@@ -42,12 +45,17 @@ export default function NewSeasonPage() {
         return;
       }
 
+      if (!clubId) {
+        toast.error('Kein Vereinszugang gefunden. Bitte neu anmelden.');
+        return;
+      }
+
       const response = await fetch('/api/seasons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          club_id: 'REPLACE_WITH_ACTUAL_CLUB_ID', // TODO: Get from auth context
+          club_id: clubId,
         }),
       });
 

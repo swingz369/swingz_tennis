@@ -12,6 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
   User,
   Phone,
   Calendar,
@@ -104,6 +111,10 @@ export default function TrainerProfileManagement() {
   >('all');
   const [isLoading, setIsLoading] = useState(true);
   const [editForm, setEditForm] = useState<Partial<TrainerProfile>>({});
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   useEffect(() => {
     loadTrainers();
@@ -123,6 +134,32 @@ export default function TrainerProfileManagement() {
       toast.error('Fehler beim Laden der Trainer');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleInviteTrainer = async () => {
+    if (!inviteEmail) {
+      toast.error('Bitte eine E-Mail-Adresse eingeben');
+      return;
+    }
+    setInviteLoading(true);
+    try {
+      const res = await fetch('/api/members/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail, full_name: inviteName || undefined, role: 'trainer' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Fehler beim Einladen');
+      toast.success(data.message ?? 'Trainer erfolgreich eingeladen');
+      setInviteOpen(false);
+      setInviteEmail('');
+      setInviteName('');
+      loadTrainers();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setInviteLoading(false);
     }
   };
 
@@ -320,7 +357,7 @@ export default function TrainerProfileManagement() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setInviteOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Neuer Trainer
           </Button>
@@ -373,8 +410,9 @@ export default function TrainerProfileManagement() {
               : 'Füge deinen ersten Trainer hinzu um loszulegen'}
           </p>
           {!searchQuery && statusFilter === 'all' && (
-            <Button
+          <Button
               size="sm"
+              onClick={() => setInviteOpen(true)}
               className="mt-6 bg-[#40916C] hover:bg-[#2d6a4f] text-white gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
             >
               <Plus className="h-4 w-4" />
@@ -907,6 +945,52 @@ export default function TrainerProfileManagement() {
           </Card>
         </div>
       )}
+
+      {/* Invite Trainer Dialog */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Neuen Trainer einladen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-email">E-Mail-Adresse *</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                placeholder="trainer@beispiel.de"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-name">Name (optional)</Label>
+              <Input
+                id="invite-name"
+                placeholder="Vor- und Nachname"
+                value={inviteName}
+                onChange={(e) => setInviteName(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Der Trainer erhält eine Einladungs-E-Mail und wird dem Verein mit der Rolle
+              &quot;Trainer&quot; hinzugefügt.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteOpen(false)} disabled={inviteLoading}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleInviteTrainer}
+              disabled={inviteLoading || !inviteEmail}
+              className="bg-[#40916C] hover:bg-[#2d6a4f] text-white"
+            >
+              {inviteLoading ? 'Einladen…' : 'Trainer einladen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
