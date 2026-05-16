@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Trophy, Calendar, Users, CheckCircle, Clock, Euro } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { IconBox } from '@/components/ui/icon-box';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -148,9 +149,7 @@ export default function MemberTournamentsPage() {
         <div className="text-center py-10 text-red-500 text-sm">{error}</div>
       ) : tournaments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-900/20">
-            <Trophy className="h-7 w-7 text-amber-500" />
-          </div>
+          <IconBox icon={Trophy} size="lg" variant="amber" className="h-16 w-16" />
           <p className="text-sm font-medium text-muted-foreground">Keine Turniere verfügbar</p>
         </div>
       ) : (
@@ -170,9 +169,7 @@ export default function MemberTournamentsPage() {
               <Card key={t.id} className="p-0">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 shrink-0">
-                      <Trophy className="h-5 w-5 text-amber-500" />
-                    </div>
+                    <IconBox icon={Trophy} size="md" variant="amber" className="h-11 w-11" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-sm">{t.name}</p>
@@ -234,7 +231,8 @@ export default function MemberTournamentsPage() {
                         {canRegister && (
                           <Button
                             size="sm"
-                            className="h-8 text-xs bg-brand-light hover:bg-brand-light/80 text-white"
+                            variant="brand"
+                            className="h-8 text-xs"
                             onClick={() => {
                               setConfirmTournament(t);
                               setRegisterError(null);
@@ -305,11 +303,7 @@ export default function MemberTournamentsPage() {
             >
               Abbrechen
             </Button>
-            <Button
-              className="bg-brand-light hover:bg-brand-light/80 text-white"
-              onClick={handleRegister}
-              disabled={registerLoading}
-            >
+            <Button variant="brand" onClick={handleRegister} disabled={registerLoading}>
               {registerLoading ? 'Anmelden…' : 'Jetzt anmelden'}
             </Button>
           </DialogFooter>

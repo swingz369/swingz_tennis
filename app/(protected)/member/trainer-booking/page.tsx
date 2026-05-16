@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { IconBox } from '@/components/ui/icon-box';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -175,7 +176,7 @@ export default function MemberTrainerBookingPage() {
           Deine Einzelstunde wurde gebucht. Du erhältst eine Bestätigung.
         </p>
         <Button
-          className="bg-brand-light hover:bg-brand-light/80 text-white"
+          variant="brand"
           onClick={() => {
             setBookingSuccess(false);
             setSelectedTrainer(null);
@@ -218,9 +219,7 @@ export default function MemberTrainerBookingPage() {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-light/10 shrink-0">
-                      <User className="h-5 w-5 text-brand-light" />
-                    </div>
+                    <IconBox icon={User} size="md" variant="light" className="h-12 w-12" />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm">{trainer.full_name}</p>
                       <p className="text-xs text-muted-foreground truncate">{trainer.email}</p>
@@ -393,11 +392,7 @@ export default function MemberTrainerBookingPage() {
             >
               Abbrechen
             </Button>
-            <Button
-              className="bg-brand-light hover:bg-brand-light/80 text-white"
-              onClick={handleBook}
-              disabled={bookingLoading}
-            >
+            <Button variant="brand" onClick={handleBook} disabled={bookingLoading}>
               {bookingLoading ? 'Buchen…' : 'Jetzt buchen'}
             </Button>
           </DialogFooter>

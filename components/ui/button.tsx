@@ -25,6 +25,8 @@ const buttonVariants = cva(
         gradient:
           'bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light text-white shadow-lg hover:shadow-xl focus-visible:ring-brand-light/50',
         link: 'text-brand-light underline-offset-4 hover:underline',
+        brand:
+          'bg-brand-light hover:bg-brand-light/80 text-white shadow-md hover:shadow-lg focus-visible:ring-brand-light/50',
       },
       size: {
         sm: 'h-9 px-4 text-sm gap-1.5',

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { IconBox } from '@/components/ui/icon-box';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 import { analytics } from '@/lib/analytics';
@@ -546,9 +547,7 @@ export default function LandingPage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-white" />
-              </div>
+              <IconBox icon={Trophy} size="md" variant="gradient-primary" iconClassName="h-6 w-6" />
               <span className="text-xl font-bold text-white">SWINGZ</span>
             </div>
 
