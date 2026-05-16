@@ -134,7 +134,7 @@ export default function SuperadminTenantsPage() {
               key={club.id}
               className="hover:shadow-xl transition-all duration-200 border-2 hover:border-brand-primary"
             >
-              <CardHeader className="bg-gradient-to-r bg-gradient-primary text-white">
+              <CardHeader className="bg-gradient-primary text-white">
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <Building2 className="h-6 w-6" />
                   <span className="truncate">{club.name}</span>

@@ -67,7 +67,7 @@ export function NavigationCategory({
                 className={cn(
                   'block rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'bg-gradient-to-r bg-gradient-accent text-white shadow-lg'
+                    ? 'bg-gradient-accent text-white shadow-lg'
                     : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                 )}
                 aria-current={isActive ? 'page' : undefined}

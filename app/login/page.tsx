@@ -136,7 +136,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900 relative">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gray-50 dark:bg-gray-900 relative">
         <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-gradient-to-bl from-gray-100 dark:from-gray-800 to-transparent opacity-50" />
 
         <div className="relative w-full max-w-md">
@@ -149,7 +149,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <Card variant="elevated" className="p-8">
+          <Card variant="elevated" className="p-6 sm:p-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Anmelden</h2>
               <p className="mt-2 text-gray-500 dark:text-gray-400">
@@ -212,7 +212,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 rounded-xl bg-gradient-to-r bg-gradient-primary text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+                className="w-full h-12 rounded-xl bg-gradient-primary text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
                 disabled={loading}
               >
                 {loading ? (

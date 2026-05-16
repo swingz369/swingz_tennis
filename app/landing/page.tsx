@@ -101,7 +101,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="relative min-h-[100vh] flex items-center overflow-hidden">
+      <section className="relative min-h-[100svh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <div
             className="absolute inset-0"
@@ -115,10 +115,10 @@ export default function LandingPage() {
             }}
           />
 
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-20 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
+          <div className="absolute inset-0 opacity-20 overflow-hidden">
+            <div className="absolute top-20 left-10 w-36 sm:w-48 h-36 sm:h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
             <div
-              className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
+              className="absolute top-40 right-20 w-48 sm:w-64 h-48 sm:h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
               style={{ animationDelay: '5s' }}
             />
           </div>
@@ -138,7 +138,7 @@ export default function LandingPage() {
           </svg>
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-8 pt-32 pb-20">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-16 sm:pb-20">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="text-center lg:text-left">
               <div className="animate-in animate-in-delay-1">
@@ -152,35 +152,35 @@ export default function LandingPage() {
               </div>
 
               <h1 className="animate-in animate-in-delay-2">
-                <span className="block text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight">
                   Optimale
                 </span>
-                <span className="block text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight mt-2">
-                  <span className="text-gradient-primary bg-gradient-to-r from-green-400 via-brand-light to-green-300 bg-clip-text text-transparent">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight mt-2">
+                  <span className="text-gradient-primary bg-clip-text text-transparent">
                     Trainingspläne.
                   </span>
                 </span>
-                <span className="block text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight mt-2">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight mt-2">
                   Maximale
                 </span>
-                <span className="block text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight mt-2">
-                  <span className="text-gradient-accent bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 bg-clip-text text-transparent">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight mt-2">
+                  <span className="text-gradient-accent bg-clip-text text-transparent">
                     Performance.
                   </span>
                 </span>
               </h1>
 
-              <p className="mt-8 text-lg sm:text-xl text-white/70 leading-relaxed max-w-xl mx-auto lg:mx-0 animate-in animate-in-delay-3">
+              <p className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-white/70 leading-relaxed max-w-xl mx-auto lg:mx-0 animate-in animate-in-delay-3">
                 Die KI-gesteuerte Scheduler-Plattform für Tennisclubs. Automatisiere die
                 Trainingsplanung, erhöhe die Auslastung und biete deinen Mitgliedern ein
                 <span className="text-white font-medium"> Premium-Erlebnis</span>.
               </p>
 
-              <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-in animate-in-delay-4">
+              <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start animate-in animate-in-delay-4">
                 <Link href="/login">
                   <button
                     type="button"
-                    className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light px-8 py-4 text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2 focus:ring-offset-brand-950 overflow-hidden"
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2 focus:ring-offset-brand-950 overflow-hidden min-h-[48px]"
                     style={{
                       boxShadow:
                         '0 0 60px -12px rgba(64, 145, 108, 0.5), 0 8px 32px -8px rgba(27, 67, 50, 0.4)',
@@ -198,7 +198,7 @@ export default function LandingPage() {
                 <Link href="/login">
                   <button
                     type="button"
-                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-8 py-4 text-lg font-medium text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-brand-950"
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[48px]"
                     onClick={() => analytics.featureUsed('landing_learn_more')}
                   >
                     <Play className="h-5 w-5" />
@@ -207,12 +207,12 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              <div className="mt-12 flex items-center gap-8 justify-center lg:justify-start animate-in animate-in-delay-5">
+              <div className="mt-10 sm:mt-12 flex items-center gap-6 sm:gap-8 justify-center lg:justify-start animate-in animate-in-delay-5">
                 <div className="flex -space-x-3">
                   {['A', 'M', 'S', 'L'].map((letter, i) => (
                     <div
                       key={i}
-                      className="h-10 w-10 rounded-full bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary border-2 border-brand-950 flex items-center justify-center text-white text-sm font-semibold"
+                      className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-brand-light to-brand-primary border-2 border-brand-950 flex items-center justify-center text-white text-xs sm:text-sm font-semibold"
                     >
                       {letter}
                     </div>
@@ -357,8 +357,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="relative -mt-1 z-10 bg-white py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <section className="relative -mt-1 z-10 bg-white py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
@@ -400,22 +400,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-gray-50 py-32 relative overflow-hidden">
+      <section className="bg-gray-50 py-20 sm:py-32 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-gray-100 to-transparent opacity-50" />
 
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 relative">
-          <div className="text-center mb-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center mb-14 sm:mb-20">
             <span className="inline-block px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-4">
               Features
             </span>
-            <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
               Warum{' '}
-              <span className="text-gradient-primary bg-gradient-to-r bg-gradient-to-br from-brand-primary to-brand-light bg-clip-text text-transparent">
-                SWINGZ
-              </span>
-              ?
+              <span className="text-gradient-primary bg-clip-text text-transparent">SWINGZ</span>?
             </h2>
-            <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
               Revolutioniere deine Trainingsplanung mit modernster KI und durchdachtem Design.
             </p>
           </div>
@@ -489,7 +486,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="relative py-32 overflow-hidden">
+      <section className="relative py-20 sm:py-32 overflow-hidden">
         <div className="absolute inset-0">
           <div
             className="absolute inset-0"
@@ -503,19 +500,19 @@ export default function LandingPage() {
           <div className="absolute inset-0 noise opacity-[0.03]" />
         </div>
 
-        <div className="relative mx-auto max-w-4xl px-6 lg:px-8 text-center">
-          <h2 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight">
             Bereit für die nächste Saison?
           </h2>
-          <p className="mt-6 text-xl text-white/70 max-w-2xl mx-auto">
+          <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-white/70 max-w-2xl mx-auto">
             Starte jetzt kostenlos und erlebe die Zukunft des Vereinsmanagements.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <Link href="/login">
               <button
                 type="button"
-                className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 px-8 py-4 text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-950"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[48px]"
                 style={{
                   boxShadow:
                     '0 0 60px -12px rgba(255, 107, 53, 0.5), 0 8px 32px -8px rgba(255, 107, 53, 0.4)',
@@ -529,7 +526,7 @@ export default function LandingPage() {
             <Link href="/login">
               <button
                 type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-8 py-4 text-lg font-medium text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[48px]"
               >
                 <ArrowRight className="h-5 w-5" />
                 Mehr erfahren
@@ -543,19 +540,19 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-gray-900 py-16 relative overflow-hidden">
+      <footer className="bg-gray-900 py-12 sm:py-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-950" />
 
-        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold text-white">SWINGZ</span>
             </div>
 
-            <div className="flex items-center gap-8 text-sm text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm text-gray-400">
               <a href="#" className="hover:text-white transition-colors">
                 Impressum
               </a>

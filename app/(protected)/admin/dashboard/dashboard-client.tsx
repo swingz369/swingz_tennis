@@ -119,7 +119,7 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
                 className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-2 bg-gradient-to-br bg-gradient-primary rounded-lg text-white">
+                  <div className="p-2 bg-gradient-primary rounded-lg text-white">
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div>

@@ -278,10 +278,10 @@ export function Sidebar({
   const activeGradient = isSuperAdmin
     ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg'
     : isAdmin
-      ? 'bg-gradient-to-r bg-gradient-accent text-white shadow-lg'
+      ? 'bg-gradient-accent text-white shadow-lg'
       : isTrainer
         ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg'
-        : 'bg-gradient-to-r bg-gradient-primary text-white shadow-lg';
+        : 'bg-gradient-primary text-white shadow-lg';
 
   const sectionLabel = isSuperAdmin
     ? 'Plattform'
