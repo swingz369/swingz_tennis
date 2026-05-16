@@ -93,7 +93,7 @@ export default function SchedulerPage() {
           </div>
           {session.bookedByUser && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-gray-600">
+        <div className="flex items-center gap-1 text-[11px] text-gray-600">
           <Clock className="h-3 w-3" />
           <span>
             {session.startTime} - {session.endTime}
@@ -309,7 +309,7 @@ function SessionCard({
             <div className="text-xs font-semibold text-brand-primary truncate">
               {session.groupNames?.[0] || 'Gruppe'}
             </div>
-            <div className="text-[10px] text-gray-500 truncate">
+            <div className="text-[11px] text-gray-500 truncate">
               {session.trainerName || session.trainerId.slice(0, 6)}
             </div>
           </div>

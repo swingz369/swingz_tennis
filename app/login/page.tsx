@@ -97,7 +97,7 @@ export default function LoginPage() {
 
             <h1 className="text-4xl font-bold leading-tight max-w-md">
               Willkommen zurück bei{' '}
-              <span className="text-gradient-primary bg-gradient-to-r from-green-400 to-brand-light bg-clip-text text-transparent">
+              <span className="text-gradient-primary bg-clip-text text-transparent">
                 Premium Tennis Club Management
               </span>
             </h1>
@@ -265,22 +265,31 @@ export default function LoginPage() {
             <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
               <p>
                 Noch kein Konto?{' '}
-                <button className="text-brand-primary hover:text-brand-light dark:text-brand-light dark:hover:text-brand-light/80 font-semibold transition-colors">
+                <a
+                  href="/register"
+                  className="text-brand-primary hover:text-brand-light dark:text-brand-light dark:hover:text-brand-light/80 font-semibold transition-colors"
+                >
                   Registrierung anfragen
-                </button>
+                </a>
               </p>
             </div>
           </Card>
 
           <p className="mt-8 text-center text-xs text-gray-400 dark:text-gray-500">
             Mit der Anmeldung stimmst du unseren{' '}
-            <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 transition-colors">
+            <a
+              href="/terms"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 transition-colors"
+            >
               Nutzungsbedingungen
-            </button>{' '}
+            </a>{' '}
             und{' '}
-            <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 transition-colors">
+            <a
+              href="/privacy"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 transition-colors"
+            >
               Datenschutzrichtlinie
-            </button>{' '}
+            </a>{' '}
             zu.
           </p>
         </div>

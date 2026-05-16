@@ -183,7 +183,7 @@ export default function LandingPage() {
                     className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2 focus:ring-offset-brand-950 overflow-hidden min-h-[48px]"
                     style={{
                       boxShadow:
-                        '0 0 60px -12px rgba(64, 145, 108, 0.5), 0 8px 32px -8px rgba(27, 67, 50, 0.4)',
+                        '0 0 60px -12px hsl(var(--brand-primary-light) / 0.5), 0 8px 32px -8px hsl(var(--brand-primary) / 0.4)',
                     }}
                     onClick={() =>
                       analytics.signUp('landing_hero_cta', heroCtaVariant || 'default')
@@ -243,12 +243,12 @@ export default function LandingPage() {
                           dx="0"
                           dy="25"
                           stdDeviation="25"
-                          floodColor="rgba(27, 67, 50, 0.5)"
+                          floodColor="hsl(var(--brand-primary) / 0.5)"
                         />
                       </filter>
                       <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
-                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0.7" />
+                        <stop offset="0%" stopColor="hsl(0 0% 100% / 0.9)" />
+                        <stop offset="100%" stopColor="hsl(0 0% 100% / 0.7)" />
                       </linearGradient>
                     </defs>
 
@@ -383,7 +383,7 @@ export default function LandingPage() {
                 label: 'KI-Optimierungen',
                 value: '10K+',
                 icon: Brain,
-                color: 'from-green-300 to-brand-light',
+                color: 'from-brand-light to-brand-primary',
               },
             ].map((stat, idx) => (
               <div key={idx} className="text-center group">
@@ -460,7 +460,7 @@ export default function LandingPage() {
                 title: 'Demo-Modus',
                 description:
                   'Probiere alle Funktionen sofort aus – kein Account nötig. Starte in unter 30 Sekunden.',
-                gradient: 'from-green-300 to-brand-light',
+                gradient: 'from-brand-light to-brand-primary',
                 highlight: true,
               },
             ].map((feature, idx) => (
@@ -469,7 +469,7 @@ export default function LandingPage() {
                 className={`group relative bg-white rounded-3xl p-8 shadow-sm border border-gray-100 transition-all duration-500 hover:shadow-xl hover:-translate-y-2 ${feature.highlight ? 'ring-2 ring-brand-primary/20' : ''}`}
               >
                 {feature.highlight && (
-                  <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r bg-gradient-to-br from-brand-primary to-brand-light text-white text-xs font-semibold rounded-full">
+                  <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-br from-brand-primary to-brand-light text-white text-xs font-semibold rounded-full">
                     Empfohlen
                   </div>
                 )}
@@ -515,7 +515,7 @@ export default function LandingPage() {
                 className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[48px]"
                 style={{
                   boxShadow:
-                    '0 0 60px -12px rgba(255, 107, 53, 0.5), 0 8px 32px -8px rgba(255, 107, 53, 0.4)',
+                    '0 0 60px -12px hsl(var(--brand-accent) / 0.5), 0 8px 32px -8px hsl(var(--brand-accent) / 0.4)',
                 }}
               >
                 <Sparkles className="h-5 w-5" />

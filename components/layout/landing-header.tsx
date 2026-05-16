@@ -13,7 +13,7 @@ export function LandingHeader() {
           <Link href="/" className="flex items-center gap-3">
             <div
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brandPrimary to-brandPrimary/80"
-              style={{ boxShadow: '0 12px 40px -8px rgba(27, 67, 50, 0.6)' }}
+              style={{ boxShadow: '0 12px 40px -8px hsl(var(--brand-primary) / 0.6)' }}
             >
               <Trophy className="h-6 w-6 text-white" />
             </div>

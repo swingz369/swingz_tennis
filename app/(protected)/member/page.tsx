@@ -133,7 +133,7 @@ export default async function MemberPage() {
       {/* Nächste Session — most important card at top */}
       {nextSession ? (
         <Link href="/training-schedule">
-          <Card className="border-0 shadow-sm bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary/80 text-white cursor-pointer hover:shadow-md transition-shadow p-0">
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-brand-light to-brand-primary/80 text-white cursor-pointer hover:shadow-md transition-shadow p-0">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">

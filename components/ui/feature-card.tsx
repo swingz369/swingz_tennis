@@ -15,7 +15,7 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
         ref={ref}
         className={cn(
           'group relative rounded-2xl bg-white p-8 shadow-soft transition-all duration-300',
-          'hover:shadow-[0_12px_40px_-8px_rgba(27,67,50,0.3)] hover:-translate-y-1',
+          'hover:shadow-[0_12px_40px_-8px_hsl(var(--brand-primary)/0.3)] hover:-translate-y-1',
           highlight && 'border-2 border-brandPrimary/20',
           className
         )}

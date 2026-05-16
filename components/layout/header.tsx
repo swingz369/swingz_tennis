@@ -54,10 +54,10 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         <Link href="/dashboard" className="flex items-center gap-3 group" aria-label="SwingZ Home">
           <div className="relative">
             <div
-              className="absolute inset-0 bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300"
+              className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300"
               aria-hidden="true"
             />
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
               <Trophy className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
           </div>
@@ -99,7 +99,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               aria-label="Benutzermenü öffnen"
             >
               <Avatar className="h-7 w-7 border-2 border-brand-light/30">
-                <AvatarFallback className="bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary text-white text-xs font-semibold">
+                <AvatarFallback className="bg-gradient-to-br from-brand-light to-brand-primary text-white text-xs font-semibold">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>

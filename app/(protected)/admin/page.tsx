@@ -491,7 +491,7 @@ export default async function AdminPage() {
               icon: UserPlus,
               color: 'text-blue-600 dark:text-blue-400',
               bg: 'bg-blue-50 dark:bg-blue-900/20',
-              accent: '#3B82F6',
+              accentClass: 'text-blue-600 dark:text-blue-400',
             },
             {
               label: 'Session planen',
@@ -500,7 +500,7 @@ export default async function AdminPage() {
               icon: Calendar,
               color: 'text-brand-light dark:text-brand-light',
               bg: 'bg-brand-light/10',
-              accent: '#40916C',
+              accentClass: 'text-brand-light dark:text-brand-light',
             },
             {
               label: 'Rechnung erstellen',
@@ -509,7 +509,7 @@ export default async function AdminPage() {
               icon: Receipt,
               color: 'text-brand-accent',
               bg: 'bg-orange-50 dark:bg-orange-900/20',
-              accent: '#FF6B35',
+              accentClass: 'text-brand-accent dark:text-brand-accent',
             },
             {
               label: 'Platz sperren',
@@ -518,7 +518,7 @@ export default async function AdminPage() {
               icon: LockKeyhole,
               color: 'text-purple-600 dark:text-purple-400',
               bg: 'bg-purple-50 dark:bg-purple-900/20',
-              accent: '#9333EA',
+              accentClass: 'text-purple-600 dark:text-purple-400',
             },
           ].map((action) => (
             <Link key={action.href + action.label} href={action.href}>
@@ -536,10 +536,8 @@ export default async function AdminPage() {
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{action.desc}</p>
                   </div>
                   <div className="mt-auto flex items-center gap-1">
-                    <span className="text-xs font-medium" style={{ color: action.accent }}>
-                      Öffnen
-                    </span>
-                    <ArrowUpRight className="h-3 w-3" style={{ color: action.accent }} />
+                    <span className={`text-xs font-medium ${action.accentClass}`}>Öffnen</span>
+                    <ArrowUpRight className={`h-3 w-3 ${action.accentClass}`} />
                   </div>
                 </CardContent>
               </Card>

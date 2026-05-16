@@ -206,7 +206,7 @@ export default function MemberDashboard() {
           <CardContent className="relative p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center text-white shadow-lg">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center text-white shadow-lg">
                   <Calendar className="h-7 w-7" />
                 </div>
                 <div>

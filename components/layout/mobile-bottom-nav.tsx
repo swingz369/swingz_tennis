@@ -102,7 +102,7 @@ export function MobileBottomNav({
               className={cn(
                 'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px] flex-1',
                 isActive
-                  ? 'text-brand-light dark:text-brand-light dark:text-brand-light'
+                  ? 'text-brand-light dark:text-brand-light'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               )}
               aria-current={isActive ? 'page' : undefined}
