@@ -27,24 +27,29 @@ import {
   isAfter,
 } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Button } from '@/components/ui/button';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  MapPin,
-  Calendar as CalendarIcon,
-  GripVertical,
-} from 'lucide-react';
+import { Clock, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
 import { useSessions, type Session } from '@/hooks/use-sessions';
-import { CALENDAR_TIME_SLOTS as TIME_SLOTS, getSurfaceLabel } from '@/lib/court-calendar-utils';
+import { CALENDAR_TIME_SLOTS as TIME_SLOTS } from '@/lib/court-calendar-utils';
+import {
+  CourtCalendarHeader,
+  CourtCalendarGrid,
+  WeekDaysHeaderRow,
+  CourtRowHeader,
+  CourtCalendarLegend,
+} from '@/components/court-calendar-shared';
 
 interface AdminCourtCalendarProps {
   onBookCourt?: (courtId: string, date: Date, startTime: string, endTime: string) => void;
 }
+
+const ADMIN_LEGEND_ITEMS = [
+  { label: 'Verfügbar', className: 'bg-green-50 border border-dashed border-green-300' },
+  { label: 'Session (verschiebbar)', className: 'bg-blue-50 border border-blue-200' },
+  { label: 'Gebucht', className: 'bg-red-50 border border-red-200' },
+];
 
 interface DraggableSessionProps {
   session: Session;
@@ -122,7 +127,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
 
       return sessions.find((session: Session) => {
         if (!session.courtId || session.courtId !== courtId) return false;
-        if (!session.week) return false; // Guard against undefined week
+        if (!session.week) return false;
 
         const sessionDate = new Date(session.week);
         const [startHour, startMinute] = session.startTime.split(':').map(Number);
@@ -151,9 +156,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
     [sessions]
   );
 
-  const handleDragOver = useCallback((_event: DragOverEvent) => {
-    // Handle drag over visual feedback if needed
-  }, []);
+  const handleDragOver = useCallback((_event: DragOverEvent) => {}, []);
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
@@ -163,7 +166,6 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
 
       if (!over || !activeId) return;
 
-      // Parse the drop target ID (format: courtId-date-timeSlot)
       const targetId = over.id as string;
       const [targetCourtId, targetDateStr, targetTimeSlot] = targetId.split('-');
 
@@ -180,14 +182,12 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
         return;
       }
 
-      // Check if the target slot is available (no conflicting session)
       const existingSession = getSessionForCourtAndTime(targetCourtId, targetDate, targetTimeSlot);
       if (existingSession && existingSession.id !== activeId) {
         toast.error('Dieser Platz ist bereits belegt');
         return;
       }
 
-      // Calculate new end time based on session duration
       const [startHour, startMin] = session.startTime.split(':').map(Number);
       const [endHour, endMin] = session.endTime.split(':').map(Number);
       const oldStart = new Date(session.week);
@@ -202,7 +202,6 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
       const newEndDate = new Date(newStartDate.getTime() + durationMs);
       const endTimeStr = `${String(newEndDate.getHours()).padStart(2, '0')}:${String(newEndDate.getMinutes()).padStart(2, '0')}`;
 
-      // Call API to update session
       try {
         const response = await fetch(`/api/sessions/${activeId}`, {
           method: 'PATCH',
@@ -224,11 +223,6 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
         toast.success(
           `Session verschoben nach ${targetCourtId} am ${format(targetDate, 'dd.MM', { locale: de })} um ${targetTimeSlot}`
         );
-
-        // Refetch sessions to reflect change
-        // The useSessions hook should handle this via mutation or query invalidation
-        // For now, we can window.location.reload() or trigger a refetch if available
-        // window.location.reload(); // Simple but effective
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Fehler beim Verschieben';
         toast.error(message);
@@ -280,125 +274,66 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
       onDragEnd={handleDragEnd}
     >
       <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-primary">Admin Platz-Kalender</h1>
-            <p className="text-gray-500">Drag & Drop zum Verschieben von Sessions</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push('/courts/daily')}>
-              <CalendarIcon className="h-4 w-4 mr-2" />
-              Tagesansicht
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Heute
-            </Button>
-            <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="min-w-[150px] text-center font-medium text-sm md:text-base">
-              {format(weekStart, 'dd.MM', { locale: de })} -{' '}
-              {format(weekEnd, 'dd.MM.yyyy', { locale: de })}
-            </span>
-            <Button variant="outline" size="icon" onClick={goToNextWeek}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <CourtCalendarHeader
+          title="Admin Platz-Kalender"
+          subtitle="Drag & Drop zum Verschieben von Sessions"
+          weekStart={weekStart}
+          weekEnd={weekEnd}
+          onGoPrevious={goToPreviousWeek}
+          onGoNext={goToNextWeek}
+          onGoToday={goToToday}
+          onGoDaily={() => router.push('/courts/daily')}
+        />
 
-        {/* Calendar Grid */}
-        <div className="overflow-x-auto -mx-4 px-4">
-          <div className="min-w-[800px]">
-            {/* Time slots header */}
-            <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-gray-200 rounded-t-lg overflow-hidden">
-              <div className="bg-gray-50 p-2 text-center font-semibold text-gray-700 text-xs">
-                Platz
-              </div>
-              {weekDays.map((day) => (
-                <div
-                  key={day.toISOString()}
-                  className="bg-gray-50 p-2 text-center font-semibold text-gray-700 text-xs"
-                >
-                  <div>{format(day, 'EEE', { locale: de })}</div>
-                  <div className="text-[10px] text-gray-500">{format(day, 'dd.MM')}</div>
-                </div>
-              ))}
-            </div>
+        <CourtCalendarGrid>
+          <WeekDaysHeaderRow weekDays={weekDays} />
 
-            {/* Court rows */}
-            {courts.map((court) => (
-              <div key={court.id} className="border-b border-gray-200 last:border-b-0">
-                {/* Court header */}
-                <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-gray-100">
-                  <div className="bg-white p-2 flex items-center gap-2 border-r border-gray-200">
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{court.name}</div>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                        <MapPin className="h-3 w-3" />
-                        <span>{getSurfaceLabel(court.surface)}</span>
-                        {court.hasIndoor && <span>• Indoor</span>}
-                      </div>
+          {courts.map((court) => (
+            <div key={court.id} className="border-b border-gray-200 last:border-b-0">
+              <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-gray-100">
+                <CourtRowHeader court={court} />
+                {weekDays.map((day) => (
+                  <div
+                    key={day.toISOString()}
+                    className={`p-1 min-h-[300px] bg-white ${
+                      isSameDay(day, new Date()) ? 'bg-blue-50/30' : ''
+                    }`}
+                  >
+                    <div className="space-y-0.5">
+                      {TIME_SLOTS.map((timeSlot) => {
+                        const session = getSessionForCourtAndTime(court.id, day, timeSlot);
+                        const dropTargetId = `${court.id}-${day.toISOString()}-${timeSlot}`;
+
+                        return (
+                          <div
+                            key={timeSlot}
+                            id={dropTargetId}
+                            className={`h-6 rounded text-[10px] flex items-center justify-center transition-colors ${
+                              session
+                                ? 'bg-transparent'
+                                : 'bg-green-50 text-green-700 hover:bg-green-100 border border-dashed border-green-300'
+                            }`}
+                          >
+                            {session ? (
+                              <DraggableSession
+                                session={session}
+                                isDragging={activeId === session.id}
+                              />
+                            ) : (
+                              <span className="text-[10px] opacity-50">{timeSlot}</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  {weekDays.map((day) => (
-                    <div
-                      key={day.toISOString()}
-                      className={`p-1 min-h-[300px] bg-white ${
-                        isSameDay(day, new Date()) ? 'bg-blue-50/30' : ''
-                      }`}
-                    >
-                      {/* Time slots for this day */}
-                      <div className="space-y-0.5">
-                        {TIME_SLOTS.map((timeSlot) => {
-                          const session = getSessionForCourtAndTime(court.id, day, timeSlot);
-                          const dropTargetId = `${court.id}-${day.toISOString()}-${timeSlot}`;
-
-                          return (
-                            <div
-                              key={timeSlot}
-                              id={dropTargetId}
-                              className={`h-6 rounded text-[10px] flex items-center justify-center transition-colors ${
-                                session
-                                  ? 'bg-transparent'
-                                  : 'bg-green-50 text-green-700 hover:bg-green-100 border border-dashed border-green-300'
-                              }`}
-                            >
-                              {session ? (
-                                <DraggableSession
-                                  session={session}
-                                  isDragging={activeId === session.id}
-                                />
-                              ) : (
-                                <span className="text-[10px] opacity-50">{timeSlot}</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          ))}
+        </CourtCalendarGrid>
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-4 text-xs text-gray-600">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-50 border border-dashed border-green-300 rounded"></div>
-            <span>Verfügbar</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-50 border border-blue-200 rounded"></div>
-            <span>Session (verschiebbar)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-50 border border-red-200 rounded"></div>
-            <span>Gebucht</span>
-          </div>
-        </div>
+        <CourtCalendarLegend items={ADMIN_LEGEND_ITEMS} />
       </div>
 
       <DragOverlay>

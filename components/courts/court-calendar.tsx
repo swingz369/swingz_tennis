@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { addDays, startOfWeek, endOfWeek, format, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 
 interface Court {
   id: string;
@@ -190,23 +191,6 @@ export default function CourtCalendar() {
     }
   };
 
-  const getSurfaceTypeLabel = (surfaceType: string) => {
-    switch (surfaceType) {
-      case 'clay':
-        return 'Sand';
-      case 'hard':
-        return 'Hartplatz';
-      case 'grass':
-        return 'Rasen';
-      case 'carpet':
-        return 'Teppich';
-      case 'artificial_grass':
-        return 'Kunstrasen';
-      default:
-        return surfaceType;
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -354,7 +338,7 @@ export default function CourtCalendar() {
                   </div>
                   <div>
                     <span className="text-gray-600">Typ:</span>{' '}
-                    {getSurfaceTypeLabel(
+                    {getSurfaceLabel(
                       courts.find((c) => c.id === selectedCourt)?.court_type?.surface_type || ''
                     )}
                   </div>

@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 import type { Court } from '@/lib/types/court-booking';
 
 interface CourtsManageClientProps {
@@ -58,14 +59,6 @@ interface CourtsManageClientProps {
 
 type ViewMode = 'grid' | 'list';
 
-const SURFACE_LABELS: Record<string, string> = {
-  clay: 'Sand',
-  hard: 'Hartplatz',
-  grass: 'Rasen',
-  carpet: 'Teppich',
-  artificial_grass: 'Kunstrasen',
-};
-
 const SURFACE_COLORS: Record<string, string> = {
   clay: 'bg-orange-100 text-orange-800 border-orange-200',
   hard: 'bg-blue-100 text-blue-800 border-blue-200',
@@ -73,10 +66,6 @@ const SURFACE_COLORS: Record<string, string> = {
   carpet: 'bg-purple-100 text-purple-800 border-purple-200',
   artificial_grass: 'bg-teal-100 text-teal-800 border-teal-200',
 };
-
-function getSurfaceLabel(surface: string) {
-  return SURFACE_LABELS[surface] || surface;
-}
 
 function getSurfaceColorClass(surface: string) {
   return SURFACE_COLORS[surface] || 'bg-gray-100 text-gray-800 border-gray-200';

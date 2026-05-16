@@ -106,6 +106,8 @@ export {
   FullPageLoading,
 } from './loading-skeletons';
 export { StatsCard } from './stats-card';
+export { IconBox } from './icon-box';
+export type { IconBoxVariant, IconBoxSize } from './icon-box';
 export { FeatureCard } from './feature-card';
 export {
   Form,

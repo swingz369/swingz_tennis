@@ -35,6 +35,7 @@ export function getSurfaceLabel(surface: string): string {
     grass: 'Rasen',
     hard: 'Hartplatz',
     carpet: 'Teppich',
+    artificial_grass: 'Kunstrasen',
   };
   return labels[surface] || surface;
 }

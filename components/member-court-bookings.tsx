@@ -27,6 +27,7 @@ import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import { useCourts } from '@/hooks/use-courts';
+import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 
 export default function MemberCourtBookings() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -110,16 +111,6 @@ export default function MemberCourtBookings() {
     }
 
     return { label: 'Ausstehend', color: 'bg-yellow-100 text-yellow-700', icon: Clock };
-  };
-
-  const getSurfaceLabel = (surface: string) => {
-    const labels: Record<string, string> = {
-      clay: 'Sand',
-      grass: 'Rasen',
-      hard: 'Hartplatz',
-      carpet: 'Teppich',
-    };
-    return labels[surface] || surface;
   };
 
   if (sessionsLoading || courtsLoading) {
