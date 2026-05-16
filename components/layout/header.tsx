@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
+import { IconBox } from '@/components/ui/icon-box';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Menu, User, LogOut, Settings, Trophy, ChevronDown, Moon, Sun } from 'lucide-react';
@@ -57,9 +58,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300"
               aria-hidden="true"
             />
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
-              <Trophy className="h-5 w-5 text-white" aria-hidden="true" />
-            </div>
+            <IconBox icon={Trophy} size="md" variant="gradient-primary" />
           </div>
           <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
             SWINGZ

@@ -216,7 +216,8 @@ export default function SeasonsPage() {
           </p>
           <Button
             onClick={() => router.push('/admin/seasons/new')}
-            className="mt-6 bg-brand-light hover:bg-brand-light/80 text-white gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
+            variant="brand"
+            className="mt-6 gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
           >
             <Plus className="h-4 w-4" />
             Spielzeit erstellen

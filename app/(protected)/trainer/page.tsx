@@ -270,9 +270,7 @@ export default function TrainerPage() {
               href={action.href}
               className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all active:scale-95"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-light/10">
-                <action.icon className="h-5 w-5 text-brand-light" />
-              </div>
+              <IconBox icon={action.icon} size="md" variant="light" className="h-11 w-11" />
               <span className="text-xs font-medium text-center leading-tight text-gray-700 dark:text-gray-300">
                 {action.label}
               </span>

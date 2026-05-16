@@ -6,6 +6,7 @@ import { Plus, Trophy, Calendar, Users, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { IconBox } from '@/components/ui/icon-box';
 
 interface Tournament {
   id: string;
@@ -72,11 +73,7 @@ export default function AdminTournamentsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Turniere</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Turnierverwaltung des Vereins</p>
         </div>
-        <Button
-          asChild
-          size="sm"
-          className="bg-brand-light hover:bg-brand-light/80 text-white gap-1.5"
-        >
+        <Button asChild size="sm" variant="brand" className="gap-1.5">
           <Link href="/admin/tournaments/new">
             <Plus className="h-4 w-4" />
             Neues Turnier
@@ -92,18 +89,12 @@ export default function AdminTournamentsPage() {
 
       {!loading && tournaments.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-900/20">
-            <Trophy className="h-7 w-7 text-amber-500" />
-          </div>
+          <IconBox icon={Trophy} size="lg" variant="amber" className="h-16 w-16" />
           <h3 className="font-semibold">Noch keine Turniere</h3>
           <p className="text-sm text-muted-foreground max-w-xs">
             Lege dein erstes Turnier an und lade Mitglieder zur Anmeldung ein.
           </p>
-          <Button
-            asChild
-            size="sm"
-            className="bg-brand-light hover:bg-brand-light/80 text-white mt-2"
-          >
+          <Button asChild size="sm" variant="brand" className="mt-2">
             <Link href="/admin/tournaments/new">Erstes Turnier anlegen</Link>
           </Button>
         </div>
@@ -114,9 +105,7 @@ export default function AdminTournamentsPage() {
           {tournaments.map((t) => (
             <Card key={t.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 shrink-0">
-                  <Trophy className="h-5 w-5 text-amber-500" />
-                </div>
+                <IconBox icon={Trophy} size="md" variant="amber" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold truncate">{t.name}</p>

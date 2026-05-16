@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { IconBox } from '@/components/ui/icon-box';
 import { cn } from '@/lib/utils';
 
 interface Club {
@@ -60,9 +61,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
-            <Trophy className="h-5 w-5 text-white" />
-          </div>
+          <IconBox icon={Trophy} size="md" variant="gradient-primary" className="h-9 w-9" />
           <div>
             <span className="text-white font-bold text-lg">SWINGZ</span>
             <span className="ml-2 text-xs text-white/40 font-medium">Superadmin</span>

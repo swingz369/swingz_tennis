@@ -60,9 +60,13 @@ export default function LandingPage() {
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
-                  <Trophy className="h-6 w-6 text-white" />
-                </div>
+                <IconBox
+                  icon={Trophy}
+                  size="md"
+                  variant="gradient-primary"
+                  className="h-11 w-11"
+                  iconClassName="h-6 w-6"
+                />
               </div>
               <span className="text-2xl font-bold tracking-tight text-white">SWINGZ</span>
             </Link>
