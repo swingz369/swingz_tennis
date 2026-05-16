@@ -178,7 +178,7 @@ export default function TrainerAvailabilityPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Verfügbarkeit</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Verfügbarkeit</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Deine verfügbaren Zeitfenster</p>
         </div>
         <Button

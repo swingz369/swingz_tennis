@@ -70,7 +70,7 @@ export default function AdminTournamentsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Turniere</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Turniere</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Turnierverwaltung des Vereins</p>
         </div>
         <Button asChild size="sm" variant="brand" className="gap-1.5">

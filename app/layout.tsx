@@ -44,7 +44,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const cookieStore = await cookies();
   const locale = cookieStore.get('NEXT_LOCALE')?.value || 'de';
   return (
-    <html lang={locale} className={`${dmSans.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang={locale}
+      className={`${dmSans.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
