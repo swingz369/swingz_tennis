@@ -314,7 +314,7 @@ export default async function AdminPage() {
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                       {kpi.label}
                     </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1.5 tabular-nums">
+                    <p className="text-2xl font-bold text-brand-primary mt-1.5 tabular-nums">
                       {kpi.value}
                     </p>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{kpi.sub}</p>

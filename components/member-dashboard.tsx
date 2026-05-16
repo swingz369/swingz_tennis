@@ -133,9 +133,7 @@ export default function MemberDashboard() {
     <div className="p-4 md:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-            Willkommen zurück!
-          </h1>
+          <h1 className="text-3xl font-bold text-brand-primary">Willkommen zurück!</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             Dein Überblick für {format(currentMonth, 'MMMM yyyy', { locale: de })}
           </p>
@@ -184,9 +182,7 @@ export default function MemberDashboard() {
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     {stat.label}
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                    {stat.value}
-                  </p>
+                  <p className="text-3xl font-bold text-brand-primary mt-2">{stat.value}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{stat.sublabel}</p>
                 </div>
                 <div
@@ -213,7 +209,7 @@ export default function MemberDashboard() {
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Nächste Session
                   </p>
-                  <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">
+                  <p className="text-xl font-bold text-brand-primary mt-1">
                     {format(new Date(nextSession.week), 'EEEE, dd. MMMM', { locale: de })}
                   </p>
                   <p className="text-gray-600 dark:text-gray-300">

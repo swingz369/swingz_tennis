@@ -177,9 +177,7 @@ export default async function MemberPage() {
                   </span>
                 )}
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
-                {bookingCount}
-              </p>
+              <p className="text-3xl font-bold text-brand-primary tabular-nums">{bookingCount}</p>
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">Buchungen</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">bevorstehend</p>
             </CardContent>

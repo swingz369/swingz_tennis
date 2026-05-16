@@ -115,7 +115,7 @@ export default function SuperadminTenantsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Tenant Übersicht</h1>
+        <h1 className="text-3xl font-bold text-brand-primary mb-2">Tenant Übersicht</h1>
         <p className="text-gray-600 dark:text-gray-400">
           Wählen Sie einen Verein aus, um dessen Administration zu öffnen.
         </p>

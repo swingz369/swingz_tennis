@@ -425,7 +425,7 @@ export default function TrainerProfileManagement() {
           <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-2xl bg-brandPrimary/10 mb-6 shadow-glow-primary">
             <GraduationCap className="h-10 w-10 text-brandPrimary" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h3 className="text-2xl font-bold text-brand-primary">
             {searchQuery || statusFilter !== 'all' ? 'Keine Treffer' : 'Noch keine Trainer'}
           </h3>
           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-sm mx-auto">

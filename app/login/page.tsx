@@ -151,7 +151,7 @@ export default function LoginPage() {
 
           <Card variant="elevated" className="p-6 sm:p-8">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Anmelden</h2>
+              <h2 className="text-2xl font-bold text-brand-primary">Anmelden</h2>
               <p className="mt-2 text-gray-500 dark:text-gray-400">
                 Melde dich mit deinem Konto an
               </p>
