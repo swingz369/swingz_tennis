@@ -5,14 +5,8 @@ import { Trophy, Calendar, Users, CheckCircle, Clock, Euro } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 
 interface Tournament {
   id: string;
@@ -130,7 +124,7 @@ export default function MemberTournamentsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Turniere</h1>
+        <h1 className="text-2xl font-bold text-brand-primary">Turniere</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Vereinsturniere und Anmeldung</p>
       </div>
 
@@ -261,54 +255,47 @@ export default function MemberTournamentsPage() {
       )}
 
       {/* Confirm registration dialog */}
-      <Dialog open={!!confirmTournament} onOpenChange={() => setConfirmTournament(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-amber-500" />
-              Für Turnier anmelden
-            </DialogTitle>
-          </DialogHeader>
-          {confirmTournament && (
-            <div className="space-y-3 py-2">
-              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 p-4 space-y-2">
-                <p className="font-semibold text-sm">{confirmTournament.name}</p>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  {new Date(confirmTournament.start_date).toLocaleDateString('de-DE', {
-                    weekday: 'long',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  })}
-                </div>
-                {confirmTournament.entry_fee > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Euro className="h-4 w-4" />
-                    Startgebühr: {confirmTournament.entry_fee.toFixed(2)} €
-                  </div>
-                )}
+      <ConfirmDialog
+        open={!!confirmTournament}
+        onOpenChange={() => setConfirmTournament(null)}
+        title={
+          <span className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-amber-500" />
+            Für Turnier anmelden
+          </span>
+        }
+        confirmLabel={registerLoading ? 'Anmelden…' : 'Jetzt anmelden'}
+        variant="brand"
+        loading={registerLoading}
+        onConfirm={handleRegister}
+      >
+        {confirmTournament && (
+          <div className="space-y-3 py-2">
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 p-4 space-y-2">
+              <p className="font-semibold text-sm">{confirmTournament.name}</p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                {new Date(confirmTournament.start_date).toLocaleDateString('de-DE', {
+                  weekday: 'long',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Durch die Anmeldung bestätigst du deine Teilnahme an diesem Turnier.
-              </p>
-              {registerError && <p className="text-xs text-red-500">{registerError}</p>}
+              {confirmTournament.entry_fee > 0 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Euro className="h-4 w-4" />
+                  Startgebühr: {confirmTournament.entry_fee.toFixed(2)} €
+                </div>
+              )}
             </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmTournament(null)}
-              disabled={registerLoading}
-            >
-              Abbrechen
-            </Button>
-            <Button variant="brand" onClick={handleRegister} disabled={registerLoading}>
-              {registerLoading ? 'Anmelden…' : 'Jetzt anmelden'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <p className="text-xs text-muted-foreground">
+              Durch die Anmeldung bestätigst du deine Teilnahme an diesem Turnier.
+            </p>
+            {registerError && <p className="text-xs text-red-500">{registerError}</p>}
+          </div>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }

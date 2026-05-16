@@ -224,9 +224,7 @@ export default async function AdminPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Hallo, {firstName}
-          </h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Hallo, {firstName}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {club.name}
             <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>

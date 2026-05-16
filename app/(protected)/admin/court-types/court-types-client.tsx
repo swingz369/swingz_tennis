@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -609,25 +610,16 @@ export function CourtTypesClient() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Platz-Typ deaktivieren</DialogTitle>
-            <DialogDescription>
-              Möchtest du den Platz-Typ &quot;{selectedType?.name}&quot; wirklich deaktivieren?
-              Bestehende Plätze mit diesem Typ bleiben erhalten.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Abbrechen
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
-              {isSubmitting ? 'Wird deaktiviert...' : 'Deaktivieren'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Platz-Typ deaktivieren"
+        description={`Möchtest du den Platz-Typ "${selectedType?.name}" wirklich deaktivieren? Bestehende Plätze mit diesem Typ bleiben erhalten.`}
+        confirmLabel={isSubmitting ? 'Wird deaktiviert…' : 'Deaktivieren'}
+        variant="destructive"
+        loading={isSubmitting}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

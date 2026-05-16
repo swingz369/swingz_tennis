@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -734,25 +735,16 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       </Dialog>
 
       {/* Deactivate Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Platz deaktivieren</DialogTitle>
-            <DialogDescription>
-              Möchtest du &quot;{selectedCourt?.name}&quot; deaktivieren? Der Platz bleibt erhalten,
-              ist aber nicht mehr buchbar.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Abbrechen
-            </Button>
-            <Button variant="destructive" onClick={handleDeactivate} disabled={isSubmitting}>
-              {isSubmitting ? 'Wird deaktiviert...' : 'Deaktivieren'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Platz deaktivieren"
+        description={`Möchtest du "${selectedCourt?.name}" deaktivieren? Der Platz bleibt erhalten, ist aber nicht mehr buchbar.`}
+        confirmLabel={isSubmitting ? 'Wird deaktiviert…' : 'Deaktivieren'}
+        variant="destructive"
+        loading={isSubmitting}
+        onConfirm={handleDeactivate}
+      />
     </div>
   );
 }

@@ -13,14 +13,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 
 interface Trainer {
   id: string;
@@ -193,7 +187,7 @@ export default function MemberTrainerBookingPage() {
     return (
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Trainer buchen</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Trainer buchen</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Wähle einen Trainer für deine Einzelstunde
           </p>
@@ -260,7 +254,7 @@ export default function MemberTrainerBookingPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-bold tracking-tight">{selectedTrainer.full_name}</h1>
+          <h1 className="text-xl font-bold text-brand-primary">{selectedTrainer.full_name}</h1>
           <p className="text-xs text-muted-foreground">Verfügbare Zeitfenster wählen</p>
         </div>
       </div>
@@ -345,59 +339,52 @@ export default function MemberTrainerBookingPage() {
       )}
 
       {/* Confirm booking dialog */}
-      <Dialog open={!!confirmSlot} onOpenChange={() => setConfirmSlot(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-brand-light" />
-              Stunde buchen
-            </DialogTitle>
-          </DialogHeader>
-          {confirmSlot && (
-            <div className="space-y-3 py-2">
-              <div className="rounded-xl bg-brand-light/5 p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-brand-light" />
-                  <span className="text-sm font-medium">{selectedTrainer?.full_name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    {new Date(confirmSlot.date).toLocaleDateString('de-DE', {
-                      weekday: 'long',
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    {confirmSlot.start_time} – {confirmSlot.end_time} Uhr
-                  </span>
-                </div>
+      <ConfirmDialog
+        open={!!confirmSlot}
+        onOpenChange={() => setConfirmSlot(null)}
+        title={
+          <span className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-brand-light" />
+            Stunde buchen
+          </span>
+        }
+        confirmLabel={bookingLoading ? 'Buchen…' : 'Jetzt buchen'}
+        variant="brand"
+        loading={bookingLoading}
+        onConfirm={handleBook}
+      >
+        {confirmSlot && (
+          <div className="space-y-3 py-2">
+            <div className="rounded-xl bg-brand-light/5 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-brand-light" />
+                <span className="text-sm font-medium">{selectedTrainer?.full_name}</span>
               </div>
-              {confirmSlot.notes && (
-                <p className="text-xs text-muted-foreground">{confirmSlot.notes}</p>
-              )}
-              {bookingError && <p className="text-xs text-red-500">{bookingError}</p>}
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">
+                  {new Date(confirmSlot.date).toLocaleDateString('de-DE', {
+                    weekday: 'long',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">
+                  {confirmSlot.start_time} – {confirmSlot.end_time} Uhr
+                </span>
+              </div>
             </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmSlot(null)}
-              disabled={bookingLoading}
-            >
-              Abbrechen
-            </Button>
-            <Button variant="brand" onClick={handleBook} disabled={bookingLoading}>
-              {bookingLoading ? 'Buchen…' : 'Jetzt buchen'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            {confirmSlot.notes && (
+              <p className="text-xs text-muted-foreground">{confirmSlot.notes}</p>
+            )}
+            {bookingError && <p className="text-xs text-red-500">{bookingError}</p>}
+          </div>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }
