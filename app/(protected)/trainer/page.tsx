@@ -12,6 +12,7 @@ import {
   XCircle,
   ClipboardCheck,
 } from 'lucide-react';
+import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -206,9 +207,7 @@ export default function TrainerPage() {
         <CardContent className="px-5 pb-5">
           {sessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5 mb-3">
-                <Calendar className="h-7 w-7 text-gray-300 dark:text-gray-600" />
-              </div>
+              <IconBox icon={Calendar} size="lg" variant="gray" className="mb-3" />
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Keine bevorstehenden Sessions
               </p>
@@ -226,9 +225,7 @@ export default function TrainerPage() {
                     className="flex items-center gap-3 py-3.5"
                     style={{ minHeight: 60 }}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light/10 shrink-0">
-                      <Calendar className="h-4 w-4 text-brand-light" />
-                    </div>
+                    <IconBox icon={Calendar} size="md" variant="light" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
                         {group?.name || court?.name || 'Training'}

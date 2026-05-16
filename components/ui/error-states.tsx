@@ -2,6 +2,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 
+// Re-export EmptyState from the canonical implementation
+// (avoids duplication — both error-states.tsx and empty-state.tsx had separate implementations)
+export { EmptyState } from '@/components/ui/empty-state';
+export type { EmptyStateProps } from '@/components/ui/empty-state';
+
 interface QueryErrorProps {
   error: Error;
   onRetry?: () => void;
@@ -58,37 +63,6 @@ export function QueryError({
               {error.toString()}
             </pre>
           </details>
-        )}
-      </Card>
-    </div>
-  );
-}
-
-interface EmptyStateProps {
-  title: string;
-  description: string;
-  icon?: React.ReactNode;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
-
-export function EmptyState({ title, description, icon, action }: EmptyStateProps) {
-  return (
-    <div className="flex items-center justify-center min-h-[400px] p-6">
-      <Card className="w-full max-w-md p-6 text-center">
-        {icon && (
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-gray-100">{icon}</div>
-          </div>
-        )}
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
-        <p className="text-gray-600 mb-6">{description}</p>
-        {action && (
-          <Button onClick={action.onClick} variant="default">
-            {action.label}
-          </Button>
         )}
       </Card>
     </div>

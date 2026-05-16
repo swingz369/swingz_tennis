@@ -19,6 +19,7 @@ import {
   Activity,
   ArrowUpRight,
 } from 'lucide-react';
+import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -201,9 +202,7 @@ export default async function AdminPage() {
       {(pendingApprovals ?? 0) > 0 && (
         <div className="rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 border border-orange-200 dark:border-orange-700/50 px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/40 shrink-0">
-              <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-            </div>
+            <IconBox icon={AlertTriangle} size="sm" variant="orange" />
             <div className="min-w-0">
               <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
                 {pendingApprovals} ausstehende Mitgliedsanfragen
@@ -341,9 +340,7 @@ export default async function AdminPage() {
           <CardHeader className="px-5 pt-5 pb-3">
             <CardTitle className="text-sm font-semibold flex items-center justify-between text-gray-900 dark:text-white">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-light/10">
-                  <Calendar className="h-3.5 w-3.5 text-brand-light" />
-                </div>
+                <IconBox icon={Calendar} size="xs" variant="light" />
                 Heute im Verein
                 {(activeSessions ?? 0) > 0 && (
                   <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20">
@@ -362,9 +359,7 @@ export default async function AdminPage() {
           <CardContent className="px-5 pb-5">
             {(todaySessions ?? []).length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5 mb-3">
-                  <Calendar className="h-7 w-7 text-gray-300 dark:text-gray-600" />
-                </div>
+                <IconBox icon={Calendar} size="lg" variant="gray" className="mb-3" />
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Keine Sessions heute
                 </p>
@@ -386,9 +381,7 @@ export default async function AdminPage() {
                     : null;
                   return (
                     <div key={s.id} className="flex items-center gap-3 py-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-light/10 shrink-0">
-                        <Clock className="h-4 w-4 text-brand-light" />
-                      </div>
+                      <IconBox icon={Clock} size="sm" variant="light" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                           {court?.name ?? 'Platz'}
@@ -415,18 +408,15 @@ export default async function AdminPage() {
         <Card className="lg:col-span-2 border border-gray-200 dark:border-white/10 shadow-sm p-0">
           <CardHeader className="px-5 pt-5 pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                <Activity className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-              </div>
+              {' '}
+              <IconBox icon={Activity} size="xs" variant="blue" />
               Neueste Aktivitäten
             </CardTitle>
           </CardHeader>
           <CardContent className="px-5 pb-5">
             {recentActivity.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 dark:bg-white/5 mb-3">
-                  <Activity className="h-7 w-7 text-gray-300 dark:text-gray-600" />
-                </div>
+                <IconBox icon={Activity} size="lg" variant="gray" className="mb-3" />
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Noch keine Aktivitäten
                 </p>
@@ -565,9 +555,7 @@ export default async function AdminPage() {
               href={a.href}
               className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all bg-white dark:bg-white/5 group"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-light/10 shrink-0">
-                <a.icon className="h-4 w-4 text-brand-light" />
-              </div>
+              <IconBox icon={a.icon} size="sm" variant="light" />
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                 {a.label}
               </span>

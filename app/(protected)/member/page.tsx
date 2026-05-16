@@ -15,6 +15,7 @@ import {
   Zap,
   GraduationCap,
 } from 'lucide-react';
+import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -288,9 +289,7 @@ export default async function MemberPage() {
                 : b.sessions?.courts;
               return (
                 <div key={b.id} className="flex items-center gap-3 py-3 group">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light/10 shrink-0">
-                    <MapPin className="h-4 w-4 text-brand-light" />
-                  </div>
+                  <IconBox icon={MapPin} size="md" variant="light" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate text-gray-900 dark:text-white">
                       {court?.name ?? 'Platz'}
@@ -328,9 +327,7 @@ export default async function MemberPage() {
               const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
               return (
                 <div key={s.id} className="flex items-center gap-3 py-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 shrink-0">
-                    <Clock className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  </div>
+                  <IconBox icon={Clock} size="md" variant="green" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate text-gray-900 dark:text-white">
                       {court?.name ?? 'Training'}
