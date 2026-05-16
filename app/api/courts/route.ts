@@ -82,16 +82,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    const {
-      name,
-      number,
-      hasLighting,
-      location,
-      description,
-      clubId: bodyClubId,
-      isActive,
-      status,
-    } = body;
+    const { name, hasLighting, clubId: bodyClubId, isActive } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });

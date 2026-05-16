@@ -102,9 +102,11 @@ export async function POST(req: NextRequest) {
       .from('bookings')
       .insert({
         club_id: clubId,
+        user_id: auth.user.id,
         member_id: userId,
         session_id: sessionId,
         schedule_id: session.schedule_id,
+        court_id: session.court_id ?? '',
         status: 'confirmed',
         session_start_time: session.timeslot_start,
         start_time: session.timeslot_start,

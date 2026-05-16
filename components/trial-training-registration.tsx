@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Clock, User, Mail, Phone, Send, CheckCircle, Info } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Send, CheckCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub } from '@/hooks/use-user-data';
 import type { Session } from '@/hooks/use-sessions';

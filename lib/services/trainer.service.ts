@@ -34,7 +34,7 @@ export async function getTrainerAvailability(
     return [];
   }
 
-  return (data as any) || [];
+  return (data as TrainerAvailability[]) || [];
 }
 
 /**
@@ -64,7 +64,7 @@ export async function setTrainerAvailability(
     return null;
   }
 
-  return data as any;
+  return data as TrainerAvailability;
 }
 
 /**
@@ -73,7 +73,7 @@ export async function setTrainerAvailability(
 export async function deleteTrainerAvailability(id: string): Promise<boolean> {
   const supabase = await createClient();
 
-  const { error } = await supabase.from('trainer_availability').delete().eq('id', id);
+  const { error } = await (supabase as any).from('trainer_availability').delete().eq('id', id);
 
   if (error) {
     console.error('Error deleting trainer availability:', error);
@@ -110,7 +110,7 @@ export async function getTrainerAbsences(
     return [];
   }
 
-  return (data as any) || [];
+  return (data as TrainerAbsence[]) || [];
 }
 
 /**
@@ -132,7 +132,7 @@ export async function createTrainerAbsence(
     return null;
   }
 
-  return data as any;
+  return data as TrainerAbsence;
 }
 
 /**
@@ -159,7 +159,7 @@ export async function updateTrainerAbsence(
     return null;
   }
 
-  return data as any;
+  return data as TrainerAbsence;
 }
 
 /**
@@ -188,7 +188,7 @@ export async function getTrainerAssignment(
   const supabase = await createClient();
 
   const { data, error } = await (supabase as any)
-    .from('trainer_assignments')
+    .from('trainer_assignments' as any)
     .select('*')
     .eq('user_id', userId)
     .eq('club_id', clubId)
@@ -209,7 +209,7 @@ export async function getClubTrainers(clubId: string): Promise<TrainerWithDetail
   const supabase = await createClient();
 
   const { data: assignments, error } = await (supabase as any)
-    .from('trainer_assignments')
+    .from('trainer_assignments' as any)
     .select(
       `
       *,
@@ -257,7 +257,7 @@ export async function isTrainerAvailable(
 ): Promise<boolean> {
   const supabase = await createClient();
 
-  const { data, error } = await (supabase as any).rpc('is_trainer_available', {
+  const { data, error } = await (supabase as any).rpc('is_trainer_available' as any, {
     p_user_id: userId,
     p_club_id: clubId,
     p_datetime: datetime.toISOString(),
@@ -280,7 +280,7 @@ export async function getAvailableTrainers(
 ): Promise<AvailableTrainer[]> {
   const supabase = await createClient();
 
-  const { data, error } = await (supabase as any).rpc('get_available_trainers', {
+  const { data, error } = await (supabase as any).rpc('get_available_trainers' as any, {
     p_club_id: clubId,
     p_datetime: datetime.toISOString(),
   });
@@ -304,7 +304,7 @@ export async function updateTrainerAssignment(
   const supabase = await createClient();
 
   const { data, error } = await (supabase as any)
-    .from('trainer_assignments')
+    .from('trainer_assignments' as any)
     .upsert(
       {
         user_id: userId,

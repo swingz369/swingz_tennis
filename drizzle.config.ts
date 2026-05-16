@@ -1,4 +1,6 @@
-export default {
+import type { Config } from 'drizzle-kit';
+
+const config: Config = {
   schema: './src/infrastructure/persistence/schema.ts',
   out: './drizzle',
   dialect: 'postgresql',
@@ -6,3 +8,5 @@ export default {
     url: process.env.DATABASE_URL!,
   },
 };
+
+export default config;

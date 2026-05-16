@@ -164,10 +164,9 @@ export default async function AnalyticsPage({
       .eq('is_active', true);
 
     const courtSessionCounts = new Map<string, number>();
-    (sessionsData ?? []).forEach((s: any) => {
-      if ((s as any).court_id) {
-        const courtId = (s as any).court_id;
-        courtSessionCounts.set(courtId, (courtSessionCounts.get(courtId) ?? 0) + 1);
+    (sessionsData ?? []).forEach((s: Record<string, unknown> & { court_id?: string }) => {
+      if (s.court_id) {
+        courtSessionCounts.set(s.court_id, (courtSessionCounts.get(s.court_id) ?? 0) + 1);
       }
     });
 

@@ -1,4 +1,4 @@
-import { eq, and, or, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { getDb } from '../client';
 import { pricing_rules } from '../schema';
 import type { PricingRule } from '@/domain/entities/pricing-rule.entity';

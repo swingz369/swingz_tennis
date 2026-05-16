@@ -27,7 +27,6 @@ interface RouteContext {
  * - user_role: Filter by role (admin only)
  */
 export async function GET(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
@@ -115,9 +114,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
  * Body: SubmitPreferencesRequest
  */
 export async function POST(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   return withCSRFProtection(request, async () => {
-    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 

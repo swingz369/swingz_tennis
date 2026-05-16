@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositories/group.repository';
-import { GroupId, ClubId, MemberId } from '@/domain/value-objects';
 import { GroupEntity } from '@/domain/entities/group.entity';
+import { ClubId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -15,14 +15,6 @@ const createGroupSchema = z.object({
   description: z.string().optional().nullable(),
   level: z.enum(['beginner', 'intermediate', 'advanced', 'elite']),
   ageGroup: z.enum(['junior', 'senior']),
-});
-
-const updateGroupSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().optional().nullable(),
-  level: z.enum(['beginner', 'intermediate', 'advanced', 'elite']).optional(),
-  ageGroup: z.enum(['junior', 'senior']).optional(),
-  isActive: z.boolean().optional(),
 });
 
 // GET /api/groups – Gruppen des Clubs abrufen

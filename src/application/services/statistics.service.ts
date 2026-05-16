@@ -12,18 +12,6 @@ import { HoursLogService } from './hours-log.service';
 import { TrialTrainingService } from './trial-training.service';
 
 export class StatisticsService {
-  private memberService: MemberService;
-  private billingService: BillingService;
-  private hoursLogService: HoursLogService;
-  private trialTrainingService: TrialTrainingService;
-
-  constructor() {
-    this.memberService = new MemberService();
-    this.billingService = new BillingService();
-    this.hoursLogService = new HoursLogService();
-    this.trialTrainingService = new TrialTrainingService();
-  }
-
   async generateStatistics(
     period: 'daily' | 'weekly' | 'monthly' | 'yearly',
     startDate: Date,
@@ -141,7 +129,7 @@ export class StatisticsService {
     };
   }
 
-  async calculateCourtStatistics(startDate: Date, endDate: Date): Promise<CourtStatistics> {
+  async calculateCourtStatistics(_startDate: Date, _endDate: Date): Promise<CourtStatistics> {
     const totalCourts = 6;
     const totalBookings = 150;
     const utilizationRate = 75;

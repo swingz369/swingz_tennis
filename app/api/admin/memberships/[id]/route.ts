@@ -148,9 +148,12 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
       // Audit log the change
       try {
+        const memberUser = Array.isArray(currentMembership.users)
+          ? currentMembership.users[0]
+          : currentMembership.users;
         const auditDetails: any = {
           membership_id: id,
-          user_email: currentMembership.users?.email,
+          user_email: memberUser?.email,
           club_id: currentMembership.club_id,
           changes: {},
         };

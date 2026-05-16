@@ -5,7 +5,6 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { getDb } from '@/src/infrastructure/persistence/client';
 import {
-  seasons,
   seasonPlanEntries,
   trainers,
   courts,
@@ -26,7 +25,6 @@ interface RouteContext {
  * Get a single plan entry with full details
  */
 export async function GET(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
@@ -89,9 +87,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
  * Update a plan entry
  */
 export async function PATCH(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   return withCSRFProtection(request, async () => {
-    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
@@ -242,9 +238,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
  * Delete a plan entry
  */
 export async function DELETE(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   return withCSRFProtection(request, async () => {
-    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 

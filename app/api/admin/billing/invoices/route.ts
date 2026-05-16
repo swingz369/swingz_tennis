@@ -16,6 +16,10 @@ export async function GET(_request: NextRequest) {
 
     try {
       const supabase = auth.supabase;
+      const clubId = auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ error: 'No club selected' }, { status: 400 });
+      }
 
       // Fetch invoices for the current club, joining with users for member name
       const { data: invoicesData, error: invoicesError } = await supabase
@@ -33,7 +37,7 @@ export async function GET(_request: NextRequest) {
           users!inner(full_name, email)
         `
         )
-        .eq('club_id', auth.clubId)
+        .eq('club_id', clubId)
         .order('due_date', { ascending: false });
 
       if (invoicesError) {

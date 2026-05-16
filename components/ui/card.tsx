@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
-  'rounded-2xl bg-white dark:bg-[#0f2d22] transition-all duration-500 ease-out',
+  'rounded-2xl bg-white dark:bg-surface-dark transition-all duration-500 ease-out',
   {
     variants: {
       variant: {
@@ -12,10 +12,10 @@ const cardVariants = cva(
         elevated:
           'border border-gray-100 dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-2',
         bordered:
-          'border-2 border-gray-200 dark:border-white/20 hover:border-[#40916C]/50 hover:shadow-xl',
+          'border-2 border-gray-200 dark:border-white/20 hover:border-brand-light/50 hover:shadow-xl',
         flat: 'bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10',
         gradient:
-          'bg-gradient-to-br from-white via-gray-50/50 to-white dark:from-[#0f2d22] dark:via-[#1B4332]/20 dark:to-[#0f2d22] border border-gray-100 dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-1',
+          'bg-gradient-to-br from-white via-gray-50/50 to-white dark:from-surface-dark dark:via-brand-primary/20 dark:to-surface-dark border border-gray-100 dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-1',
         glass:
           'bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl',
       },

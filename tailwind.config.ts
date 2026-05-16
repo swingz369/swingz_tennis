@@ -88,8 +88,10 @@ const config: Config = {
         glass: '0 0 0 1px rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.1)',
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #1B4332 0%, #40916C 100%)',
-        'gradient-accent': 'linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%)',
+        'gradient-primary':
+          'linear-gradient(135deg, hsl(var(--brand-primary)) 0%, hsl(var(--brand-primary-light)) 100%)',
+        'gradient-accent':
+          'linear-gradient(135deg, hsl(var(--brand-accent)) 0%, hsl(26 100% 75%) 100%)',
         'gradient-hero': gradients.hero,
         'gradient-mesh': gradients.mesh,
         'gradient-radial': gradients.primaryRadial,

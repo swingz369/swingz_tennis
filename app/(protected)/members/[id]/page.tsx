@@ -43,7 +43,6 @@ type Booking = {
 export default async function MemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  let member: Member | null = null;
   let bookings: Booking[] = [];
 
   // Normal Supabase flow
@@ -74,7 +73,14 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
     );
   }
 
-  member = memberData as any;
+  const member: Member = {
+    id: memberData.id,
+    full_name: memberData.full_name ?? null,
+    email: memberData.email ?? '',
+    created_at: memberData.created_at ?? '',
+    phone: ((memberData as Record<string, unknown>).phone as string | null) ?? null,
+    club_memberships: ((memberData as Record<string, unknown>).club_memberships as any[]) ?? [],
+  };
 
   const { data: bookingsData } = await supabase
     .from('bookings')
@@ -94,15 +100,6 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
     .limit(10);
 
   bookings = bookingsData || [];
-
-  // If member is still null, show an error (should not happen)
-  if (!member) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Fehler beim Laden des Mitgliedsprofils</p>
-      </div>
-    );
-  }
 
   // Stats (both modes) – only use bookings data we have
   const totalBookings = bookings.length;

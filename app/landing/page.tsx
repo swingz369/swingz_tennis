@@ -58,8 +58,8 @@ export default function LandingPage() {
           <nav className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1B4332] to-[#2D6A4F] rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#1B4332] to-[#40916C] shadow-lg">
+                <div className="absolute inset-0 bg-gradient-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
                   <Trophy className="h-6 w-6 text-white" />
                 </div>
               </div>
@@ -107,23 +107,19 @@ export default function LandingPage() {
             className="absolute inset-0"
             style={{
               background: `
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(64, 145, 108, 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 40% at 100% 50%, rgba(30, 58, 95, 0.2) 0%, transparent 50%),
-                radial-gradient(ellipse 50% 50% at 0% 80%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
-                linear-gradient(180deg, #0A3D2E 0%, #1B4332 50%, #0f2d22 100%)
+                radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--brand-primary-light) / 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 100% 50%, hsl(var(--brand-secondary) / 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 50% at 0% 80%, hsl(var(--brand-accent) / 0.1) 0%, transparent 50%),
+                linear-gradient(180deg, hsl(150 50% 12%) 0%, hsl(var(--brand-primary)) 50%, hsl(150 30% 10%) 100%)
               `,
             }}
           />
 
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-20 left-10 w-72 h-72 bg-[#40916C]/20 rounded-full blur-3xl animate-aurora" />
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-20 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
             <div
-              className="absolute top-40 right-20 w-96 h-96 bg-[#FF6B35]/10 rounded-full blur-3xl animate-aurora"
+              className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
               style={{ animationDelay: '5s' }}
-            />
-            <div
-              className="absolute bottom-20 left-1/3 w-80 h-80 bg-[#1e3a5f]/20 rounded-full blur-3xl animate-aurora"
-              style={{ animationDelay: '10s' }}
             />
           </div>
 
@@ -148,8 +144,8 @@ export default function LandingPage() {
               <div className="animate-in animate-in-delay-1">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-sm font-medium mb-8">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6B35] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF6B35]"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent"></span>
                   </span>
                   KI-gestützte Saisonplanung
                 </div>
@@ -160,7 +156,7 @@ export default function LandingPage() {
                   Optimale
                 </span>
                 <span className="block text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight mt-2">
-                  <span className="text-gradient-primary bg-gradient-to-r from-[#52B788] via-[#40916C] to-[#74C69D] bg-clip-text text-transparent">
+                  <span className="text-gradient-primary bg-gradient-to-r from-green-400 via-brand-light to-green-300 bg-clip-text text-transparent">
                     Trainingspläne.
                   </span>
                 </span>
@@ -168,7 +164,7 @@ export default function LandingPage() {
                   Maximale
                 </span>
                 <span className="block text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight mt-2">
-                  <span className="text-gradient-accent bg-gradient-to-r from-[#FF6B35] via-[#FF8C5A] to-[#FFAB76] bg-clip-text text-transparent">
+                  <span className="text-gradient-accent bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 bg-clip-text text-transparent">
                     Performance.
                   </span>
                 </span>
@@ -184,7 +180,7 @@ export default function LandingPage() {
                 <Link href="/login">
                   <button
                     type="button"
-                    className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#40916C] px-8 py-4 text-lg font-semibold text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#40916C] focus:ring-offset-2 focus:ring-offset-[#0A3D2E] overflow-hidden"
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light px-8 py-4 text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2 focus:ring-offset-brand-950 overflow-hidden"
                     style={{
                       boxShadow:
                         '0 0 60px -12px rgba(64, 145, 108, 0.5), 0 8px 32px -8px rgba(27, 67, 50, 0.4)',
@@ -202,7 +198,7 @@ export default function LandingPage() {
                 <Link href="/login">
                   <button
                     type="button"
-                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-8 py-4 text-lg font-medium text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[#0A3D2E]"
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-8 py-4 text-lg font-medium text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-brand-950"
                     onClick={() => analytics.featureUsed('landing_learn_more')}
                   >
                     <Play className="h-5 w-5" />
@@ -216,7 +212,7 @@ export default function LandingPage() {
                   {['A', 'M', 'S', 'L'].map((letter, i) => (
                     <div
                       key={i}
-                      className="h-10 w-10 rounded-full bg-gradient-to-br from-[#40916C] to-[#1B4332] border-2 border-[#0A3D2E] flex items-center justify-center text-white text-sm font-semibold"
+                      className="h-10 w-10 rounded-full bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary border-2 border-brand-950 flex items-center justify-center text-white text-sm font-semibold"
                     >
                       {letter}
                     </div>
@@ -231,16 +227,16 @@ export default function LandingPage() {
 
             <div className="relative hidden lg:block">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/20 to-[#40916C]/20 rounded-3xl blur-3xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-accent/20 to-brand-light/20 rounded-3xl blur-3xl" />
 
                 <div className="relative animate-float">
                   <svg width="400" height="400" viewBox="0 0 200 200" className="drop-shadow-2xl">
                     <defs>
                       <radialGradient id="ballGradient" cx="30%" cy="30%" r="70%">
-                        <stop offset="0%" stopColor="#74C69D" />
-                        <stop offset="40%" stopColor="#40916C" />
-                        <stop offset="70%" stopColor="#1B4332" />
-                        <stop offset="100%" stopColor="#0A3D2E" />
+                        <stop offset="0%" stopColor="hsl(150 38% 63%)" />
+                        <stop offset="40%" stopColor="hsl(var(--brand-primary-light))" />
+                        <stop offset="70%" stopColor="hsl(var(--brand-primary))" />
+                        <stop offset="100%" stopColor="hsl(150 50% 12%)" />
                       </radialGradient>
                       <filter id="ballGlitch" x="-50%" y="-50%" width="200%" height="200%">
                         <feDropShadow
@@ -272,14 +268,14 @@ export default function LandingPage() {
                     />
                     <path
                       d="M100 30 A 60 60 0 0 1 100 170"
-                      stroke="#ffffff"
+                      stroke="white"
                       strokeWidth="4"
                       fill="none"
                       opacity="0.6"
                     />
                     <path
                       d="M100 45 A 50 50 0 0 1 100 155"
-                      stroke="#ffffff"
+                      stroke="white"
                       strokeWidth="3"
                       fill="none"
                       opacity="0.4"
@@ -307,16 +303,12 @@ export default function LandingPage() {
                   </svg>
                 </div>
 
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-[#FF6B35]/30 to-transparent rounded-full blur-2xl animate-pulse" />
-                <div
-                  className="absolute -bottom-10 -left-10 w-40 h-40 bg-gradient-to-tr from-[#40916C]/30 to-transparent rounded-full blur-2xl animate-pulse"
-                  style={{ animationDelay: '1s' }}
-                />
+                <div className="absolute -top-8 -right-8 w-28 h-28 bg-gradient-to-br from-brand-accent/20 to-transparent rounded-full blur-2xl opacity-70" />
               </div>
 
               <div className="absolute top-10 right-0 glass-dark rounded-2xl p-4 shadow-2xl animate-float-slow">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-accent to-orange-700 flex items-center justify-center">
                     <Brain className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -331,7 +323,7 @@ export default function LandingPage() {
                 style={{ animationDelay: '2s' }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#40916C] to-[#1B4332] flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
                     <Calendar className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -373,25 +365,25 @@ export default function LandingPage() {
                 label: 'Aktive Vereine',
                 value: '1,200+',
                 icon: Shield,
-                color: 'from-[#40916C] to-[#1B4332]',
+                color: 'bg-gradient-to-br from-brand-light to-brand-primary',
               },
               {
                 label: 'Trainings geplant',
                 value: '50K+',
                 icon: Calendar,
-                color: 'from-[#FF6B35] to-[#ea580c]',
+                color: 'from-brand-accent to-orange-700',
               },
               {
                 label: 'Mitglieder',
                 value: '85K+',
                 icon: Users,
-                color: 'from-[#1e3a5f] to-[#334e68]',
+                color: 'from-brand-secondary to-blue-800',
               },
               {
                 label: 'KI-Optimierungen',
                 value: '10K+',
                 icon: Brain,
-                color: 'from-[#74C69D] to-[#40916C]',
+                color: 'from-green-300 to-brand-light',
               },
             ].map((stat, idx) => (
               <div key={idx} className="text-center group">
@@ -413,12 +405,12 @@ export default function LandingPage() {
 
         <div className="mx-auto max-w-7xl px-6 lg:px-8 relative">
           <div className="text-center mb-20">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-[#1B4332]/10 text-[#1B4332] text-sm font-semibold mb-4">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-4">
               Features
             </span>
             <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">
               Warum{' '}
-              <span className="text-gradient-primary bg-gradient-to-r from-[#1B4332] to-[#40916C] bg-clip-text text-transparent">
+              <span className="text-gradient-primary bg-gradient-to-r bg-gradient-to-br from-brand-primary to-brand-light bg-clip-text text-transparent">
                 SWINGZ
               </span>
               ?
@@ -435,7 +427,7 @@ export default function LandingPage() {
                 title: 'KI-gestützte Optimierung',
                 description:
                   'Automatische Wochenplanung unter Berücksichtigung von Trainer-Kapazitäten, Gruppenbedürfnissen und Hallenverfügbarkeit.',
-                gradient: 'from-[#40916C] to-[#1B4332]',
+                gradient: 'bg-gradient-to-br from-brand-light to-brand-primary',
                 highlight: true,
               },
               {
@@ -443,44 +435,44 @@ export default function LandingPage() {
                 title: 'Intuitive Buchungsansicht',
                 description:
                   'Monatskalender mit Drag & Drop – verschiebe Sessions mit einem Klick und sieh sofort Verfügbarkeiten.',
-                gradient: 'from-[#FF6B35] to-[#ea580c]',
+                gradient: 'from-brand-accent to-orange-700',
               },
               {
                 icon: BarChart3,
                 title: 'Echtzeit Analytics',
                 description:
                   'Umfassende Dashboards mit KPIs, Auslastungsstatistiken und KI-Genauigkeit auf einen Blick.',
-                gradient: 'from-[#1e3a5f] to-[#486581]',
+                gradient: 'from-brand-secondary to-blue-700',
               },
               {
                 icon: Users,
                 title: 'Mitglieder-Management',
                 description:
                   'Verwalte alle Mitglieder, Gruppen und Buchungen zentral – mit personalisierten Zugängen.',
-                gradient: 'from-[#FF6B35] to-[#FF8C5A]',
+                gradient: 'bg-gradient-accent',
               },
               {
                 icon: Shield,
                 title: 'Sicher & Skalierbar',
                 description:
                   'Enterprise-Grade Security mit Role-Based Access und Multi-Club-Support für große Verbände.',
-                gradient: 'from-[#40916C] to-[#2D6A4F]',
+                gradient: 'from-brand-light to-brand-primary',
               },
               {
                 icon: Zap,
                 title: 'Demo-Modus',
                 description:
                   'Probiere alle Funktionen sofort aus – kein Account nötig. Starte in unter 30 Sekunden.',
-                gradient: 'from-[#74C69D] to-[#40916C]',
+                gradient: 'from-green-300 to-brand-light',
                 highlight: true,
               },
             ].map((feature, idx) => (
               <div
                 key={idx}
-                className={`group relative bg-white rounded-3xl p-8 shadow-sm border border-gray-100 transition-all duration-500 hover:shadow-xl hover:-translate-y-2 ${feature.highlight ? 'ring-2 ring-[#1B4332]/20' : ''}`}
+                className={`group relative bg-white rounded-3xl p-8 shadow-sm border border-gray-100 transition-all duration-500 hover:shadow-xl hover:-translate-y-2 ${feature.highlight ? 'ring-2 ring-brand-primary/20' : ''}`}
               >
                 {feature.highlight && (
-                  <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r from-[#1B4332] to-[#40916C] text-white text-xs font-semibold rounded-full">
+                  <div className="absolute -top-3 right-6 px-3 py-1 bg-gradient-to-r bg-gradient-to-br from-brand-primary to-brand-light text-white text-xs font-semibold rounded-full">
                     Empfohlen
                   </div>
                 )}
@@ -503,8 +495,8 @@ export default function LandingPage() {
             className="absolute inset-0"
             style={{
               background: `
-                radial-gradient(ellipse 80% 50% at 80% 50%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
-                linear-gradient(135deg, #0A3D2E 0%, #1B4332 50%, #0f2d22 100%)
+                radial-gradient(ellipse 80% 50% at 80% 50%, hsl(var(--brand-accent) / 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, hsl(150 50% 12%) 0%, hsl(var(--brand-primary)) 50%, hsl(150 30% 10%) 100%)
               `,
             }}
           />
@@ -523,7 +515,7 @@ export default function LandingPage() {
             <Link href="/login">
               <button
                 type="button"
-                className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF6B35] via-[#FF8C5A] to-[#FFAB76] px-8 py-4 text-lg font-semibold text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:ring-offset-2 focus:ring-offset-[#0A3D2E]"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 px-8 py-4 text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-950"
                 style={{
                   boxShadow:
                     '0 0 60px -12px rgba(255, 107, 53, 0.5), 0 8px 32px -8px rgba(255, 107, 53, 0.4)',
@@ -557,7 +549,7 @@ export default function LandingPage() {
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#40916C] to-[#1B4332] flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold text-white">SWINGZ</span>

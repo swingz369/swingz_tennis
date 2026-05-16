@@ -22,10 +22,9 @@ export default function MemberTrainingSchedule() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const { data: clubData } = useUserClub();
-  const { data: memberData } = useUserMember();
+  useUserMember();
 
   const clubId = clubData?.clubId ?? null;
-  const memberId = memberData?.memberId ?? null;
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
 

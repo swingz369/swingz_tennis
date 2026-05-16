@@ -41,10 +41,9 @@ export default function MemberAttendanceHistory() {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
 
   const { data: clubData } = useUserClub();
-  const { data: memberData } = useUserMember();
+  useUserMember();
 
   const clubId = clubData?.clubId ?? null;
-  const memberId = memberData?.memberId ?? null;
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
@@ -338,7 +337,7 @@ export default function MemberAttendanceHistory() {
                     <div className="text-xs font-medium text-gray-700 mb-1">{format(day, 'd')}</div>
                     {attendance && (
                       <div
-                        className={`p-1 rounded text-[10px] flex items-center justify-center gap-1 ${getStatusColor(attendance.status)}`}
+                        className={`p-1 rounded text-[11px] flex items-center justify-center gap-1 ${getStatusColor(attendance.status)}`}
                       >
                         {getStatusIcon(attendance.status)}
                       </div>

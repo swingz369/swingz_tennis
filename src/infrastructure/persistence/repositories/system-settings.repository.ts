@@ -1,4 +1,4 @@
-import { eq, and, isNull, desc, sql } from 'drizzle-orm';
+import { eq, and, isNull, sql } from 'drizzle-orm';
 import { getDb } from '../client';
 import { systemSettings } from '../schema';
 import type { ISystemSettingsRepository } from '@/domain/repositories/system-settings-repository.interface';

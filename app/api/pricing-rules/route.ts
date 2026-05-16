@@ -23,8 +23,6 @@ const pricingRuleSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-const updatePricingRuleSchema = pricingRuleSchema.partial();
-
 // GET /api/pricing-rules – Alle Regeln (mit clubId Filter)
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {

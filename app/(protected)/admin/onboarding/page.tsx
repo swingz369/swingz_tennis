@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -13,7 +16,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { CheckCircle2, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  Loader2,
+  Zap,
+  Building2,
+  MapPin,
+  CalendarRange,
+  Users,
+  PartyPopper,
+  ArrowRight,
+  Circle,
+  Sparkles,
+} from 'lucide-react';
 
 type ClubData = {
   id: string;
@@ -27,13 +44,13 @@ type ClubData = {
 
 const TOTAL_STEPS = 6;
 
-const STEP_LABELS = [
-  'Willkommen',
-  'Vereinsdaten',
-  'Platz anlegen',
-  'Buchungsregeln',
-  'Trainer einladen',
-  'Fertig',
+const STEPS = [
+  { label: 'Start', icon: Sparkles },
+  { label: 'Verein', icon: Building2 },
+  { label: 'Platz', icon: MapPin },
+  { label: 'Regeln', icon: CalendarRange },
+  { label: 'Trainer', icon: Users },
+  { label: 'Fertig', icon: PartyPopper },
 ];
 
 export default function OnboardingPage() {
@@ -41,7 +58,6 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [club, setClub] = useState<ClubData | null>(null);
-
   // Step 2 – Club data
   const [clubForm, setClubForm] = useState({
     name: '',
@@ -73,14 +89,12 @@ export default function OnboardingPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        // Get current user's club via memberships
         const meRes = await fetch('/api/me');
         if (!meRes.ok) return;
         const me = await meRes.json();
         const clubId = me?.clubId;
         if (!clubId) return;
 
-        // Fetch club details
         const res = await fetch(`/api/clubs/${clubId}`);
         if (!res.ok) return;
         const data = await res.json();
@@ -94,7 +108,6 @@ export default function OnboardingPage() {
           website: data.website ?? '',
         });
 
-        // Load booking rules
         const rulesRes = await fetch('/api/booking-rules');
         if (rulesRes.ok) {
           const rules = await rulesRes.json();
@@ -135,7 +148,7 @@ export default function OnboardingPage() {
   }, [club?.id, clubForm]);
 
   const saveCourtData = useCallback(async () => {
-    if (!courtForm.name.trim()) return true; // skip empty
+    if (!courtForm.name.trim()) return true;
     setLoading(true);
     try {
       const res = await fetch('/api/courts', {
@@ -184,7 +197,7 @@ export default function OnboardingPage() {
   }, [rulesForm]);
 
   const saveTrainerInvite = useCallback(async () => {
-    if (!trainerForm.email.trim()) return true; // skipped
+    if (!trainerForm.email.trim()) return true;
     setLoading(true);
     try {
       const res = await fetch('/api/members/invite', {
@@ -248,95 +261,114 @@ export default function OnboardingPage() {
     setStep((s) => s + 1);
   };
 
-  const goBack = () => setStep((s) => Math.max(1, s - 1));
+  const goBack = () => {
+    setStep((s) => Math.max(1, s - 1));
+  };
 
-  const skipStep = () => setStep((s) => s + 1);
+  const skipStep = () => {
+    setStep((s) => s + 1);
+  };
 
-  // ── Render helpers ──────────────────────────────────────────────────────────
+  // ── Stepper ────────────────────────────────────────────────────────────
 
-  const renderProgressBar = () => (
-    <div className="w-full mb-8">
-      <div className="flex items-center justify-between mb-2">
-        {STEP_LABELS.map((label, i) => {
+  const renderStepper = () => (
+    <div className="w-full mb-10">
+      <div className="flex items-center justify-between">
+        {STEPS.map((s, i) => {
           const stepNum = i + 1;
           const isCompleted = stepNum < step;
           const isCurrent = stepNum === step;
+          const StepIcon = s.icon;
+
           return (
-            <div key={stepNum} className="flex flex-col items-center gap-1 flex-1">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                  isCompleted
-                    ? 'bg-green-500 text-white'
-                    : isCurrent
-                      ? 'bg-green-600 text-white ring-2 ring-green-300'
-                      : 'bg-gray-200 text-gray-500'
-                }`}
-              >
-                {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : stepNum}
+            <div key={stepNum} className="flex items-center flex-1 last:flex-none">
+              <div className="flex flex-col items-center gap-2 relative">
+                {/* Connector line (except last) */}
+                {stepNum < TOTAL_STEPS && (
+                  <div
+                    className={`absolute top-5 left-full h-0.5 w-[calc(100%+0.5rem)] -translate-y-1/2 transition-colors duration-500 ${
+                      isCompleted ? 'bg-brand-primary' : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+
+                {/* Circle */}
+                <div
+                  className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    isCompleted
+                      ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/20'
+                      : isCurrent
+                        ? 'bg-brand-primary text-white ring-4 ring-brand-primary/20 shadow-lg shadow-brand-primary/30 scale-110'
+                        : 'bg-white border-2 border-gray-200 text-gray-400'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <CheckCircle2 className="w-5 h-5" />
+                  ) : isCurrent ? (
+                    <StepIcon className="w-5 h-5" />
+                  ) : (
+                    <Circle className="w-4 h-4" />
+                  )}
+                </div>
+
+                {/* Label */}
+                <span
+                  className={`text-xs font-medium whitespace-nowrap hidden sm:block transition-colors duration-300 ${
+                    isCurrent
+                      ? 'text-brand-primary font-semibold'
+                      : isCompleted
+                        ? 'text-brand-primary/70'
+                        : 'text-gray-400'
+                  }`}
+                >
+                  {s.label}
+                </span>
               </div>
-              <span
-                className={`text-xs hidden sm:block ${
-                  isCurrent ? 'text-green-700 font-medium' : 'text-gray-400'
-                }`}
-              >
-                {label}
-              </span>
             </div>
           );
         })}
       </div>
-      <div className="h-1 bg-gray-200 rounded-full mt-1">
-        <div
-          className="h-1 bg-green-500 rounded-full transition-all duration-500"
-          style={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}
-        />
-      </div>
     </div>
   );
 
-  const renderStep = () => {
+  // ── Step Content ────────────────────────────────────────────────────────
+
+  const renderStepContent = () => {
     switch (step) {
       case 1:
         return (
-          <div className="text-center space-y-6 py-8">
-            <div className="flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mx-auto">
-              <svg
-                className="w-10 h-10 text-green-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
+          <div className="text-center space-y-8 py-6">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-brand-primary/10 rounded-full">
+              <Zap className="w-12 h-12 text-brand-primary" />
             </div>
-            <div>
+            <div className="space-y-3">
               <h2 className="text-3xl font-bold text-gray-900">Willkommen bei SwingZ!</h2>
-              <p className="text-gray-500 mt-3 text-lg">
-                Richte deinen Verein in wenigen Schritten ein
+              <p className="text-gray-500 text-lg max-w-md mx-auto">
+                Richte deinen Verein in wenigen Minuten ein – Schritt für Schritt.
               </p>
-              <p className="text-gray-400 mt-2 text-sm">
-                Dieser Assistent führt dich durch alle wichtigen Einstellungen.
-              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-500">
+              {STEPS.slice(1, -1).map((s) => (
+                <Badge key={s.label} variant="secondary" className="gap-1.5 px-3 py-1.5">
+                  <s.icon className="w-3.5 h-3.5" />
+                  {s.label}
+                </Badge>
+              ))}
             </div>
             <Button
               size="lg"
-              className="bg-green-600 hover:bg-green-700 text-white px-8"
+              className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 shadow-lg shadow-brand-primary/20"
               onClick={() => setStep(2)}
             >
               Los geht&apos;s
-              <ChevronRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         );
 
       case 2:
         return (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Vereinsdaten</h2>
               <p className="text-gray-500 text-sm mt-1">
@@ -351,6 +383,7 @@ export default function OnboardingPage() {
                   value={clubForm.name}
                   onChange={(e) => setClubForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="TC Beispiel e.V."
+                  className="mt-1.5"
                 />
               </div>
               <div>
@@ -360,6 +393,7 @@ export default function OnboardingPage() {
                   value={clubForm.city}
                   onChange={(e) => setClubForm((f) => ({ ...f, city: e.target.value }))}
                   placeholder="München"
+                  className="mt-1.5"
                 />
               </div>
               <div>
@@ -369,6 +403,7 @@ export default function OnboardingPage() {
                   value={clubForm.address}
                   onChange={(e) => setClubForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="Musterstraße 1"
+                  className="mt-1.5"
                 />
               </div>
               <div>
@@ -378,6 +413,7 @@ export default function OnboardingPage() {
                   value={clubForm.phone}
                   onChange={(e) => setClubForm((f) => ({ ...f, phone: e.target.value }))}
                   placeholder="+49 89 123456"
+                  className="mt-1.5"
                 />
               </div>
               <div>
@@ -388,6 +424,7 @@ export default function OnboardingPage() {
                   value={clubForm.email}
                   onChange={(e) => setClubForm((f) => ({ ...f, email: e.target.value }))}
                   placeholder="info@verein.de"
+                  className="mt-1.5"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -397,6 +434,7 @@ export default function OnboardingPage() {
                   value={clubForm.website}
                   onChange={(e) => setClubForm((f) => ({ ...f, website: e.target.value }))}
                   placeholder="https://www.verein.de"
+                  className="mt-1.5"
                 />
               </div>
             </div>
@@ -405,12 +443,11 @@ export default function OnboardingPage() {
 
       case 3:
         return (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Ersten Platz anlegen</h2>
               <p className="text-gray-500 text-sm mt-1">
-                Füge deinen ersten Tennisplatz hinzu. Du kannst weitere Plätze später in der
-                Platzverwaltung ergänzen.
+                Füge deinen ersten Tennisplatz hinzu. Weitere Plätze kannst du später ergänzen.
               </p>
             </div>
             <div className="space-y-4">
@@ -421,6 +458,7 @@ export default function OnboardingPage() {
                   value={courtForm.name}
                   onChange={(e) => setCourtForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Platz 1"
+                  className="mt-1.5"
                 />
               </div>
               <div>
@@ -429,7 +467,7 @@ export default function OnboardingPage() {
                   value={courtForm.surface}
                   onValueChange={(v) => setCourtForm((f) => ({ ...f, surface: v }))}
                 >
-                  <SelectTrigger id="courtSurface">
+                  <SelectTrigger id="courtSurface" className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -442,7 +480,7 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <Label>Standort</Label>
-                <div className="flex gap-3 mt-1">
+                <div className="flex gap-3 mt-2">
                   <Button
                     type="button"
                     variant={courtForm.hasIndoor ? 'outline' : 'default'}
@@ -450,7 +488,7 @@ export default function OnboardingPage() {
                     onClick={() => setCourtForm((f) => ({ ...f, hasIndoor: false }))}
                     className={
                       !courtForm.hasIndoor
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
                         : 'text-gray-600'
                     }
                   >
@@ -463,7 +501,7 @@ export default function OnboardingPage() {
                     onClick={() => setCourtForm((f) => ({ ...f, hasIndoor: true }))}
                     className={
                       courtForm.hasIndoor
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
                         : 'text-gray-600'
                     }
                   >
@@ -477,17 +515,19 @@ export default function OnboardingPage() {
 
       case 4:
         return (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Buchungsregeln</h2>
               <p className="text-gray-500 text-sm mt-1">
-                Lege fest, wie lange Mitglieder Plätze buchen dürfen und wie weit im Voraus.
+                Lege fest, wie Mitglieder Plätze buchen können.
               </p>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-              Diese Regeln gelten für alle Mitglieder deines Vereins. Du kannst sie jederzeit in den
-              Einstellungen anpassen.
-            </div>
+            <Card className="bg-blue-50/50 border-blue-200">
+              <CardContent className="pt-4 text-sm text-blue-800">
+                Diese Regeln gelten für alle Mitglieder. Du kannst sie jederzeit in den
+                Einstellungen anpassen.
+              </CardContent>
+            </Card>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="maxDuration">Max. Buchungsdauer (Minuten)</Label>
@@ -504,13 +544,12 @@ export default function OnboardingPage() {
                       max_booking_duration_minutes: Number(e.target.value),
                     }))
                   }
+                  className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">
-                  Empfohlen: 90 Minuten (Standard für Tennisspiele)
-                </p>
+                <p className="text-xs text-gray-400 mt-1.5">Empfohlen: 90 Minuten</p>
               </div>
               <div>
-                <Label htmlFor="advanceDays">Vorasbuchung (Tage)</Label>
+                <Label htmlFor="advanceDays">Vorausbuchung (Tage)</Label>
                 <Input
                   id="advanceDays"
                   type="number"
@@ -523,8 +562,9 @@ export default function OnboardingPage() {
                       advance_booking_days: Number(e.target.value),
                     }))
                   }
+                  className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-400 mt-1.5">
                   Wie viele Tage im Voraus können Mitglieder buchen?
                 </p>
               </div>
@@ -542,6 +582,7 @@ export default function OnboardingPage() {
                       max_bookings_per_week: Number(e.target.value),
                     }))
                   }
+                  className="mt-1.5"
                 />
               </div>
             </div>
@@ -550,11 +591,11 @@ export default function OnboardingPage() {
 
       case 5:
         return (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Ersten Trainer einladen</h2>
               <p className="text-gray-500 text-sm mt-1">
-                Lade deinen ersten Trainer ein. Dieser erhält eine E-Mail-Einladung.
+                Lade deinen ersten Trainer per E-Mail ein.
               </p>
             </div>
             <div className="space-y-4">
@@ -565,6 +606,7 @@ export default function OnboardingPage() {
                   value={trainerForm.name}
                   onChange={(e) => setTrainerForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="Max Mustermann"
+                  className="mt-1.5"
                 />
               </div>
               <div>
@@ -575,31 +617,43 @@ export default function OnboardingPage() {
                   value={trainerForm.email}
                   onChange={(e) => setTrainerForm((f) => ({ ...f, email: e.target.value }))}
                   placeholder="trainer@beispiel.de"
+                  className="mt-1.5"
                 />
               </div>
             </div>
             <p className="text-xs text-gray-400">
-              Du kannst diesen Schritt überspringen und Trainer später über die Trainerverwaltung
-              einladen.
+              Du kannst diesen Schritt überspringen und Trainer später einladen.
             </p>
           </div>
         );
 
       case 6:
         return (
-          <div className="text-center space-y-6 py-8">
-            <div className="flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mx-auto">
-              <CheckCircle2 className="w-10 h-10 text-green-600" />
+          <div className="text-center space-y-8 py-6">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-brand-primary/10 rounded-full">
+              <CheckCircle2 className="w-12 h-12 text-brand-primary" />
             </div>
-            <div>
+            <div className="space-y-3">
               <h2 className="text-3xl font-bold text-gray-900">Einrichtung abgeschlossen!</h2>
-              <p className="text-gray-500 mt-3 text-lg">
-                Dein Verein ist jetzt bereit. Du kannst das Dashboard erkunden.
+              <p className="text-gray-500 text-lg max-w-md mx-auto">
+                Dein Verein ist jetzt bereit. Entdecke jetzt dein Dashboard.
               </p>
+            </div>
+            <div className="flex justify-center gap-3 text-sm text-gray-500">
+              {STEPS.slice(1, -1).map((s) => (
+                <Badge
+                  key={s.label}
+                  variant="secondary"
+                  className="gap-1.5 px-3 py-1.5 bg-brand-primary/10 border-brand-primary/20"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-brand-primary" />
+                  {s.label}
+                </Badge>
+              ))}
             </div>
             <Button
               size="lg"
-              className="bg-green-600 hover:bg-green-700 text-white px-8"
+              className="bg-brand-primary hover:bg-brand-primary/90 text-white px-8 shadow-lg shadow-brand-primary/20"
               onClick={goNext}
               disabled={loading}
             >
@@ -621,53 +675,61 @@ export default function OnboardingPage() {
   const isOptionalStep = step === 3 || step === 5;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-brand-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {renderProgressBar()}
+        <Card className="border-0 shadow-xl shadow-gray-200/50 ring-1 ring-gray-100">
+          <CardHeader className="pb-2">{renderStepper()}</CardHeader>
 
-          <div className="min-h-[320px] flex flex-col">
-            <div className="flex-1">{renderStep()}</div>
+          <Separator />
 
-            {/* Navigation buttons */}
-            {step > 1 && step < 6 && (
-              <div className="flex items-center justify-between pt-6 mt-6 border-t">
-                <Button
-                  variant="ghost"
-                  onClick={goBack}
-                  disabled={loading}
-                  className="text-gray-500"
-                >
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  Zurück
-                </Button>
-
-                <div className="flex gap-2">
-                  {isOptionalStep && (
-                    <Button
-                      variant="outline"
-                      onClick={skipStep}
-                      disabled={loading}
-                      className="text-gray-500"
-                    >
-                      Überspringen
-                    </Button>
-                  )}
-                  <Button
-                    onClick={goNext}
-                    disabled={loading}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Weiter
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
-                </div>
+          <CardContent className="pt-6">
+            <div className="min-h-[340px] flex flex-col">
+              {' '}
+              <div
+                className="flex-1 animate-in fade-in slide-in-from-right-4 duration-300"
+                key={step}
+              >
+                {renderStepContent()}
               </div>
-            )}
-          </div>
-        </div>
+              {/* Navigation */}
+              {step > 1 && step < 6 && (
+                <div className="flex items-center justify-between pt-6 mt-6 border-t">
+                  <Button
+                    variant="ghost"
+                    onClick={goBack}
+                    disabled={loading}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    Zurück
+                  </Button>
+
+                  <div className="flex gap-2">
+                    {isOptionalStep && (
+                      <Button
+                        variant="outline"
+                        onClick={skipStep}
+                        disabled={loading}
+                        className="text-gray-500"
+                      >
+                        Überspringen
+                      </Button>
+                    )}
+                    <Button
+                      onClick={goNext}
+                      disabled={loading}
+                      className="bg-brand-primary hover:bg-brand-primary/90 text-white shadow-md shadow-brand-primary/10"
+                    >
+                      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Weiter
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         <p className="text-center text-gray-400 text-xs mt-4">
           Schritt {step} von {TOTAL_STEPS}

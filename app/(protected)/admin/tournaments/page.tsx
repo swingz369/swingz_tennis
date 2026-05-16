@@ -72,7 +72,11 @@ export default function AdminTournamentsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Turniere</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Turnierverwaltung des Vereins</p>
         </div>
-        <Button asChild size="sm" className="bg-[#40916C] hover:bg-[#2d6a4f] text-white gap-1.5">
+        <Button
+          asChild
+          size="sm"
+          className="bg-brand-light hover:bg-brand-light/80 text-white gap-1.5"
+        >
           <Link href="/admin/tournaments/new">
             <Plus className="h-4 w-4" />
             Neues Turnier
@@ -95,7 +99,11 @@ export default function AdminTournamentsPage() {
           <p className="text-sm text-muted-foreground max-w-xs">
             Lege dein erstes Turnier an und lade Mitglieder zur Anmeldung ein.
           </p>
-          <Button asChild size="sm" className="bg-[#40916C] hover:bg-[#2d6a4f] text-white mt-2">
+          <Button
+            asChild
+            size="sm"
+            className="bg-brand-light hover:bg-brand-light/80 text-white mt-2"
+          >
             <Link href="/admin/tournaments/new">Erstes Turnier anlegen</Link>
           </Button>
         </div>
@@ -137,7 +145,7 @@ export default function AdminTournamentsPage() {
                 </div>
                 <Link
                   href={`/admin/tournaments/${t.id}`}
-                  className="text-xs text-[#40916C] hover:underline shrink-0"
+                  className="text-xs text-brand-light hover:underline shrink-0"
                 >
                   Details →
                 </Link>

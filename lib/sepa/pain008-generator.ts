@@ -1,5 +1,3 @@
-import { SepaMandate, Payment } from '../types/billing';
-
 export interface SepaDirectDebitTransaction {
   paymentId: string;
   mandateId: string;
@@ -39,19 +37,6 @@ export function generatePain008Xml(
   const creationTimestamp = now.toISOString();
   const numberOfTransactions = transactions.length;
   const controlSum = transactions.reduce((sum, tx) => sum + tx.amount, 0).toFixed(2);
-
-  const paymentTypeInformation = `
-    <PmtTpInf>
-      <SvcLvl>
-        <Cd>SEPA</Cd>
-      </SvcLvl>
-      <LclInstrm>
-        <Cd>CORE</Cd>
-      </LclInstrm>
-      <SeqTp>
-        <Cd>RCUR</Cd>
-      </SeqTp>
-    </PmtTpInf>`;
 
   const paymentInformation = `
     <PmtInf>
@@ -130,12 +115,6 @@ export function generatePain008Xml(
 
 function generateDirectDebitTransactionInfo(tx: SepaDirectDebitTransaction): string {
   const endToEndId = tx.endToEndId || `SWINGZ-${tx.paymentId}`;
-  const mandateRelatedInformation = `
-    <MndtRltdInf>
-      <MndtId>${escapeXml(tx.mandateReference)}</MndtId>
-      <DtOfSgntr>${formatDate(new Date())}</DtOfSgntr>
-      <AmdmntInd>false</AmdmntInd>
-    </MndtRltdInf>`;
 
   const directDebitTransactionInfo = `
     <DrctDbtTxInf>

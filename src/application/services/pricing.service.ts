@@ -1,7 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import type { ClubId, CourtId } from '@/domain/value-objects';
 import type { PricingRuleRepository } from '@/domain/repositories';
-import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
 import { TOKENS } from '@/application/container';
 
 export interface PriceInfo {
@@ -12,10 +11,7 @@ export interface PriceInfo {
 
 @injectable()
 export class PricingService {
-  constructor(
-    @inject(TOKENS.PricingRuleRepository) private pricingRepo: PricingRuleRepository,
-    @inject(TOKENS.ClubRepository) private clubRepo: ClubRepository
-  ) {}
+  constructor(@inject(TOKENS.PricingRuleRepository) private pricingRepo: PricingRuleRepository) {}
 
   async getPriceForBooking(
     clubId: ClubId,
@@ -45,7 +41,6 @@ export class PricingService {
     }
 
     // Fallback to club default
-    const club = await this.clubRepo.findById(clubId);
     // Club entity currently doesn't expose defaultHourlyRate; fetch from DB directly or add to domain
     // For now, we'll fetch from DB via clubRepo's internal DB call or extend Club domain
     // We'll read from DB inline:

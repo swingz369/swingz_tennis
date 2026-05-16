@@ -2,8 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { FeeConfigurationService } from '@/src/application/services/fee-configuration.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { RATE_LIMITS, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
+import type { CreateFeeConfigurationInput } from '@/src/domain/entities/fee-configuration.entity';
 
 const createFeeConfigSchema = z.object({
   name: z.string().min(1),
@@ -42,7 +43,7 @@ export async function POST(_request: NextRequest) {
       }
 
       const feeConfiguration = await FeeConfigurationService.createFeeConfiguration(
-        validation.data as import('@/src/domain/entities/fee-configuration.entity').CreateFeeConfigurationInput
+        validation.data as CreateFeeConfigurationInput
       );
 
       return NextResponse.json({ success: true, feeConfiguration });
@@ -78,10 +79,15 @@ export async function GET(_request: NextRequest) {
       const memberAge = searchParams.get('memberAge');
 
       if (active && memberType && memberAge) {
-        // Get all active configs and filter client-side for now
-        // TODO: Implement getApplicableFeeConfigurations in service
-        const allConfigs = await FeeConfigurationService.getAllFeeConfigurations();
-        const configs = allConfigs.filter((c: { isActive: boolean }) => c.isActive);
+        // Filter active configs by member type and age
+        const memberAgeNum = parseInt(memberAge, 10);
+        if (isNaN(memberAgeNum)) {
+          return NextResponse.json({ error: 'Invalid memberAge parameter' }, { status: 400 });
+        }
+        const configs = await FeeConfigurationService.calculateFeeForMember(
+          memberType,
+          memberAgeNum
+        );
         return NextResponse.json({ feeConfigurations: configs });
       }
 

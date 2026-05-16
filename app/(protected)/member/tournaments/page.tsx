@@ -176,11 +176,11 @@ export default function MemberTournamentsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-sm">{t.name}</p>
-                        <Badge className={`text-[10px] border-0 ${STATUS_COLORS[t.status] ?? ''}`}>
+                        <Badge className={`text-[11px] border-0 ${STATUS_COLORS[t.status] ?? ''}`}>
                           {STATUS_LABELS[t.status] ?? t.status}
                         </Badge>
                         {isRegistered && (
-                          <Badge className="text-[10px] border-0 bg-[#40916C]/10 text-[#40916C]">
+                          <Badge className="text-[11px] border-0 bg-brand-light/10 text-brand-light">
                             Angemeldet
                           </Badge>
                         )}
@@ -234,7 +234,7 @@ export default function MemberTournamentsPage() {
                         {canRegister && (
                           <Button
                             size="sm"
-                            className="h-8 text-xs bg-[#40916C] hover:bg-[#2d6a4f] text-white"
+                            className="h-8 text-xs bg-brand-light hover:bg-brand-light/80 text-white"
                             onClick={() => {
                               setConfirmTournament(t);
                               setRegisterError(null);
@@ -247,7 +247,7 @@ export default function MemberTournamentsPage() {
                           <span className="text-xs text-red-500 font-medium">Ausgebucht</span>
                         )}
                         {isRegistered && (
-                          <span className="text-xs text-[#40916C] font-medium flex items-center gap-1">
+                          <span className="text-xs text-brand-light font-medium flex items-center gap-1">
                             <CheckCircle className="h-3 w-3" />
                             Angemeldet
                           </span>
@@ -306,7 +306,7 @@ export default function MemberTournamentsPage() {
               Abbrechen
             </Button>
             <Button
-              className="bg-[#40916C] hover:bg-[#2d6a4f] text-white"
+              className="bg-brand-light hover:bg-brand-light/80 text-white"
               onClick={handleRegister}
               disabled={registerLoading}
             >

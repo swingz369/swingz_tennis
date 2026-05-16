@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createBrowserClient } from '@supabase/ssr';
+import { createBrowserClient, type CookieOptions } from '@supabase/ssr';
 
 export const createClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -23,7 +23,7 @@ export const createClient = () => {
         }
         return undefined;
       },
-      set(name: string, value: string, options: any) {
+      set(name: string, value: string, options: CookieOptions) {
         // Set cookie with proper security settings
         let cookie = `${name}=${value}`;
 
@@ -41,7 +41,7 @@ export const createClient = () => {
 
         document.cookie = cookie;
       },
-      remove(name: string, options: any) {
+      remove(name: string, options: CookieOptions) {
         // Remove cookie by setting expiration to past
         const cookie = `${name}=; path=${options?.path || '/'}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
         document.cookie = cookie;

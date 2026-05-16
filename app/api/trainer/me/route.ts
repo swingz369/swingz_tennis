@@ -5,22 +5,6 @@ import { cookies } from 'next/headers';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-interface Booking {
-  id: string;
-  status: string;
-  member_id: string;
-}
-
-interface Session {
-  id: string;
-  schedule_id: string | null;
-  timeslot_start: string;
-  timeslot_end: string;
-  max_participants: number;
-  trainer_id: string;
-  bookings: Booking[];
-}
-
 interface TransformedSession {
   id: string;
   startTime: string;

@@ -2,29 +2,62 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import Link from 'next/link';
 
-interface ErrorProps {
+export default function ProtectedError({
+  error,
+  reset,
+}: {
   error: Error & { digest?: string };
   reset: () => void;
-}
-
-export default function ProtectedError({ error, reset }: ErrorProps) {
+}) {
   useEffect(() => {
+    // Report to Sentry in production
+    if (process.env.NODE_ENV === 'production') {
+      import('@sentry/nextjs')
+        .then((Sentry) => {
+          Sentry.captureException(error);
+        })
+        .catch(() => {});
+    }
     console.error('Protected route error:', error);
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-      <AlertCircle className="h-12 w-12 text-destructive" />
-      <h2 className="text-xl font-semibold">Etwas ist schiefgelaufen</h2>
-      <p className="text-muted-foreground text-center max-w-md">
-        Die Seite konnte nicht geladen werden. Bitte versuche es erneut.
-      </p>
-      {process.env.NODE_ENV === 'development' && (
-        <pre className="text-xs text-red-500 bg-red-50 p-2 rounded">{error.message}</pre>
-      )}
-      <Button onClick={reset}>Erneut versuchen</Button>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+          <AlertTriangle className="h-8 w-8 text-destructive" />
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Etwas ist schiefgelaufen
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {error.message || 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.'}
+          </p>
+          {error.digest && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+              Fehler-ID: {error.digest}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button onClick={reset} variant="default" className="gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Erneut versuchen
+          </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/dashboard">
+              <Home className="h-4 w-4" />
+              Zum Dashboard
+            </Link>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

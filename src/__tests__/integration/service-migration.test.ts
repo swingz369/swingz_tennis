@@ -32,7 +32,7 @@ describe('Phase 2 Service Migration Integration Tests', () => {
     supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     // Setup test club
-    const { data: club } = await supabase
+    const { data: club, error: clubError } = await supabase
       .from('clubs')
       .insert({
         name: 'Test Tennis Club - Integration',
@@ -44,7 +44,10 @@ describe('Phase 2 Service Migration Integration Tests', () => {
       .select()
       .single();
 
-    testClubId = club!.id;
+    if (!club || clubError) {
+      throw new Error(`Failed to create test club: ${clubError?.message ?? 'null returned'}`);
+    }
+    testClubId = club.id;
 
     // Setup test users with different roles
     // Note: In real tests, you'd use auth.admin.createUser

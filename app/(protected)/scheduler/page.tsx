@@ -124,7 +124,7 @@ export default function SchedulerPage() {
       <div
         ref={setNodeRef}
         className={`min-h-[60px] border-r border-gray-200 last:border-r-0 p-2 transition-colors ${
-          isOver ? 'bg-[#2D6A4F]/10' : 'hover:bg-gray-50'
+          isOver ? 'bg-brand-light/10' : 'hover:bg-gray-50'
         }`}
       >
         {sessions.map((session) => (
@@ -188,7 +188,7 @@ export default function SchedulerPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1B4332]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
       </div>
     );
   }
@@ -294,7 +294,7 @@ function SessionCard({
   dragging?: boolean;
 }) {
   const timeDisplay = `${session.startTime} – ${session.endTime}`;
-  const bgColor = 'bg-white border-l-4 border-l-[#40916C] shadow-sm';
+  const bgColor = 'bg-white border-l-4 border-l-brand-light shadow-sm';
   const dragHandle = <GripVertical size={14} className="text-gray-400" />;
 
   if (compact || dragging) {

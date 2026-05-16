@@ -1,12 +1,10 @@
-import { eq, inArray, sql, and, gte, lte } from 'drizzle-orm';
+import { eq, inArray, sql, and } from 'drizzle-orm';
 import { getDb } from '../client';
 import { groups } from '../schema';
 import type { Group } from '@/domain/entities/group.entity';
 import { GroupEntity } from '@/domain/entities/group.entity';
 import { GroupId, ClubId, MemberId } from '@/domain/value-objects';
 import type { GroupRepository } from '@/domain/repositories/group-repository.interface';
-import type { MemberId as DomainMemberId } from '@/domain/value-objects/ids';
-
 export class DrizzleGroupRepository implements GroupRepository {
   async findById(id: GroupId): Promise<Group | null> {
     const db = getDb();

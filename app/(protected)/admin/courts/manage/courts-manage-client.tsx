@@ -477,8 +477,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       {/* Empty state */}
       {filteredCourts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#40916C]/10 mb-5">
-            <MapPin className="h-10 w-10 text-[#40916C]" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
+            <MapPin className="h-10 w-10 text-brand-light" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
             {searchQuery ? 'Keine Plätze gefunden' : 'Noch keine Plätze'}
@@ -494,7 +494,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                 resetForm();
                 setShowCreateDialog(true);
               }}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-[#40916C] hover:bg-[#2d6a4f] text-white text-sm font-medium rounded-xl transition-colors"
+              className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-light hover:bg-brand-light/80 text-white text-sm font-medium rounded-xl transition-colors"
             >
               <Plus className="h-4 w-4" />
               Platz anlegen

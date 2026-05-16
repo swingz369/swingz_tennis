@@ -4,7 +4,6 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { readFileSync } from 'fs';
 
 async function executeSql() {
   const supabaseUrl = 'https://qeckztuzeymuwwtyoryi.supabase.co';

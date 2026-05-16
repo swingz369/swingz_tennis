@@ -11,13 +11,6 @@ const supabase = createClient(supabaseUrl, serviceKey, {
   },
 });
 
-interface ClubInfo {
-  id: string;
-  name: string;
-  created_at: string;
-  resourceCount: number;
-}
-
 async function getClubResources(clubId: string) {
   const { data: memberships } = await supabase
     .from('user_club_memberships')

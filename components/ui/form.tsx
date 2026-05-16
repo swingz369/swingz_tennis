@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const formVariants = cva('space-y-6', {
@@ -14,14 +14,6 @@ const Form = React.forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLForm
   }
 );
 Form.displayName = 'Form';
-
-const FormFieldContext = React.createContext<
-  | {
-      id?: string;
-      name?: string;
-    }
-  | undefined
->(undefined);
 
 const FormField = React.forwardRef<
   HTMLDivElement,
@@ -80,8 +72,6 @@ const FormControl = React.forwardRef<
     asChild?: boolean;
   }
 >(({ className, asChild = false, ...props }, ref) => {
-  const context = React.useContext(FormItemContext);
-  const id = context?.id;
   const Comp = asChild ? Slot : 'div';
 
   return (

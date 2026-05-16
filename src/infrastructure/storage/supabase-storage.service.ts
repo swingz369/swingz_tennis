@@ -27,7 +27,7 @@ export class SupabaseStorageService implements StorageService {
     path: string,
     options?: UploadOptions
   ): Promise<StorageFile> {
-    const { data, error } = await this.supabase.storage.from(this.bucketName).upload(path, file, {
+    const { error } = await this.supabase.storage.from(this.bucketName).upload(path, file, {
       contentType: options?.allowedTypes?.[0],
       upsert: true,
       metadata: options?.metadata,

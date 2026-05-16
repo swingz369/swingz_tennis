@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const supabase = await createClient();
 
       // Fetch the session with club_id for authorization
-      const { data: sessionRaw, error: fetchErr } = await (supabase as any)
+      const { data: sessionRaw, error: fetchErr } = await supabase
         .from('sessions')
         .select(
           `

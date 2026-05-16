@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
               .from('user_club_memberships')
               .select('role')
               .eq('user_id', auth.user.id)
-              .eq('club_id', auth.clubId)
+              .eq('club_id', auth.clubId ?? '')
               .single()
           ).data?.role || ''
         )

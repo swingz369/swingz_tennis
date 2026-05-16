@@ -12,7 +12,7 @@ export default async function RootPage() {
     if (user) {
       redirect('/dashboard');
     }
-  } catch (error) {
+  } catch (_error) {
     // Supabase not available or user not authenticated, show landing page
     console.log('User not authenticated, showing landing page');
   }

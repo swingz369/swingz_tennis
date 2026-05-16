@@ -36,7 +36,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     updates.updated_at = new Date().toISOString();
 
-    const { error } = await auth.supabase.from('clubs').update(updates).eq('id', id);
+    const { error } = await auth.supabase
+      .from('clubs')
+      .update(updates as any)
+      .eq('id', id);
 
     if (error) {
       console.error('[Club Setup PATCH]', error);

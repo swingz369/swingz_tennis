@@ -64,12 +64,21 @@ export function ProtectedPageWrapper({
           timestamp: new Date().toISOString(),
         });
 
-        // TODO: Report to error tracking service (Sentry, etc.)
-        // if (process.env.NODE_ENV === 'production') {
-        //   captureException(error, {
-        //     contexts: { errorInfo, pageName },
-        //   });
-        // }
+        // Report to error tracking service (Sentry) in production
+        if (process.env.NODE_ENV === 'production') {
+          import('@sentry/nextjs')
+            .then((Sentry) => {
+              Sentry.captureException(error, {
+                contexts: {
+                  reactErrorInfo: {
+                    componentStack: errorInfo?.componentStack || null,
+                  },
+                },
+                tags: { pageName: pageName || 'unknown' },
+              });
+            })
+            .catch(() => {});
+        }
       }}
       showDetails={showErrorDetails}
     >

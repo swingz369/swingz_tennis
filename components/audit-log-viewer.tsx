@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search,
-  Filter,
   Download,
   Clock,
   User,
@@ -59,12 +58,7 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
   const [filterEntityType, setFilterEntityType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  useEffect(() => {
-    loadAuditLogs();
-    loadSummary();
-  }, [searchTerm, filterAction, filterEntityType, filterStatus]);
-
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -83,7 +77,12 @@ export function AuditLogViewer({ className }: AuditLogViewerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, filterAction, filterEntityType, filterStatus]);
+
+  useEffect(() => {
+    loadAuditLogs();
+    loadSummary();
+  }, [searchTerm, filterAction, filterEntityType, filterStatus, loadAuditLogs]);
 
   const loadSummary = async () => {
     try {

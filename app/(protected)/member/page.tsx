@@ -35,8 +35,8 @@ export default async function MemberPage() {
     redirect('/dashboard');
   }
 
-  const clubRaw = membership.clubs as any;
-  const club = Array.isArray(clubRaw) ? clubRaw[0] : clubRaw;
+  const clubsData = membership.clubs;
+  const club = Array.isArray(clubsData) ? clubsData[0] : clubsData;
   const clubId = membership.club_id;
 
   // Fetch user profile
@@ -72,31 +72,30 @@ export default async function MemberPage() {
     .limit(3);
 
   // Unread notifications
-  const { count: unreadNotifications } = await supabase
-    .from('notifications' as any)
+  const { count: unreadCount } = await supabase
+    .from('notifications')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
-    .eq('read', false)
-    .then((r: any) => ({ count: r.count ?? 0 }));
+    .eq('read', false);
 
   // Open invoices
-  const { count: openInvoices } = await supabase
-    .from('invoices' as any)
+  const { count: openInvCount } = await supabase
+    .from('invoices')
     .select('id', { count: 'exact', head: true })
     .eq('member_id', user.id)
-    .eq('status', 'open')
-    .then((r: any) => ({ count: r.count ?? 0 }));
+    .eq('status', 'open');
 
   const bookingCount = upcomingBookings?.length ?? 0;
-  const notifCount = (unreadNotifications as any) ?? 0;
-  const invoiceCount = (openInvoices as any) ?? 0;
+  const notifCount = unreadCount ?? 0;
+  const invoiceCount = openInvCount ?? 0;
 
   // Next session (soonest upcoming)
   const nextSession = (nextSessions ?? []).length > 0 ? nextSessions![0] : null;
   const nextCourt = nextSession
-    ? Array.isArray((nextSession as any).courts)
-      ? (nextSession as any).courts[0]
-      : (nextSession as any).courts
+    ? (() => {
+        const c = nextSession.courts;
+        return c ? (Array.isArray(c) ? c[0] : c) : null;
+      })()
     : null;
 
   const formatDate = (iso: string) => {
@@ -134,7 +133,7 @@ export default async function MemberPage() {
       {/* Nächste Session — most important card at top */}
       {nextSession ? (
         <Link href="/training-schedule">
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-[#40916C] to-[#2d6a4f] text-white cursor-pointer hover:shadow-md transition-shadow p-0">
+          <Card className="border-0 shadow-sm bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary/80 text-white cursor-pointer hover:shadow-md transition-shadow p-0">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -145,8 +144,8 @@ export default async function MemberPage() {
                     Nächste Session
                   </p>
                 </div>
-                {isToday((nextSession as any).timeslot_start) && (
-                  <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">
+                {isToday(nextSession.timeslot_start) && (
+                  <span className="text-[11px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full">
                     HEUTE
                   </span>
                 )}
@@ -155,9 +154,8 @@ export default async function MemberPage() {
                 <div>
                   <p className="text-lg font-bold text-white">{nextCourt?.name ?? 'Training'}</p>
                   <p className="text-sm text-white/80 mt-0.5">
-                    {formatDate((nextSession as any).timeslot_start)} ·{' '}
-                    {formatTime((nextSession as any).timeslot_start)}–
-                    {formatTime((nextSession as any).timeslot_end)}
+                    {formatDate(nextSession.timeslot_start)} ·{' '}
+                    {formatTime(nextSession.timeslot_start)}–{formatTime(nextSession.timeslot_end)}
                   </p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-white/70" />
@@ -170,12 +168,12 @@ export default async function MemberPage() {
       {/* Stat cards — taller, more breathing room */}
       <div className="grid grid-cols-2 gap-3">
         <Link href="/bookings">
-          <Card className="border-0 shadow-sm bg-gradient-to-br from-[#40916C]/10 to-[#1B4332]/5 hover:shadow-md transition-shadow cursor-pointer p-0">
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-brand-light/10 to-brand-primary/5 hover:shadow-md transition-shadow cursor-pointer p-0">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <Calendar className="h-5 w-5 text-[#40916C]" />
+                <Calendar className="h-5 w-5 text-brand-light" />
                 {bookingCount > 0 && (
-                  <span className="text-[10px] font-bold bg-[#40916C]/10 text-[#40916C] px-1.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold bg-brand-light/10 text-brand-light px-1.5 py-0.5 rounded-full">
                     {bookingCount}
                   </span>
                 )}
@@ -203,7 +201,7 @@ export default async function MemberPage() {
                   className={`h-5 w-5 ${invoiceCount > 0 ? 'text-red-500' : 'text-gray-400'}`}
                 />
                 {invoiceCount > 0 && (
-                  <span className="text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded-full">
                     {invoiceCount}
                   </span>
                 )}
@@ -277,7 +275,7 @@ export default async function MemberPage() {
               Nächste Buchungen
               <Link
                 href="/bookings"
-                className="text-xs text-[#40916C] hover:underline font-normal flex items-center gap-1"
+                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </Link>
@@ -290,8 +288,8 @@ export default async function MemberPage() {
                 : b.sessions?.courts;
               return (
                 <div key={b.id} className="flex items-center gap-3 py-3 group">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#40916C]/10 shrink-0">
-                    <MapPin className="h-4 w-4 text-[#40916C]" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light/10 shrink-0">
+                    <MapPin className="h-4 w-4 text-brand-light" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate text-gray-900 dark:text-white">
@@ -301,7 +299,7 @@ export default async function MemberPage() {
                       {formatDate(b.session_start_time)} · {formatTime(b.session_start_time)}
                     </p>
                   </div>
-                  <Badge className="text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700/30 shrink-0">
+                  <Badge className="text-[11px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700/30 shrink-0">
                     Bestätigt
                   </Badge>
                 </div>
@@ -319,7 +317,7 @@ export default async function MemberPage() {
               Nächste Trainingseinheiten
               <Link
                 href="/training-schedule"
-                className="text-xs text-[#40916C] hover:underline font-normal flex items-center gap-1"
+                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </Link>
@@ -372,7 +370,7 @@ export default async function MemberPage() {
               label: 'Platz buchen',
               href: '/bookings',
               icon: Calendar,
-              color: 'bg-[#40916C]/10 text-[#40916C]',
+              color: 'bg-brand-light/10 text-brand-light',
             },
             {
               label: 'Training',
@@ -408,7 +406,7 @@ export default async function MemberPage() {
             <Link
               key={action.href}
               href={action.href}
-              className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-[#40916C]/40 hover:shadow-sm transition-all active:scale-95"
+              className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all active:scale-95"
             >
               <div
                 className={`flex h-11 w-11 items-center justify-center rounded-xl ${action.color}`}

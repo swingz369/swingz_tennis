@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Calendar, Clock, Users } from 'lucide-react';
-import { addDays, startOfWeek, endOfWeek, format, isSameDay, isToday } from 'date-fns';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { addDays, startOfWeek, endOfWeek, format, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 interface Court {
@@ -111,12 +111,6 @@ export default function CourtCalendar() {
     fetchCourts();
   }, []);
 
-  useEffect(() => {
-    if (courts.length > 0) {
-      fetchSchedules();
-    }
-  }, [courts, currentWeek]);
-
   const fetchCourts = async () => {
     try {
       const response = await fetch('/api/courts');
@@ -134,7 +128,7 @@ export default function CourtCalendar() {
     }
   };
 
-  const fetchSchedules = async () => {
+  const fetchSchedules = useCallback(async () => {
     const startDate = format(currentWeek, 'yyyy-MM-dd');
     const endDate = format(endOfWeek(currentWeek, { weekStartsOn: 1 }), 'yyyy-MM-dd');
 
@@ -155,7 +149,13 @@ export default function CourtCalendar() {
     }
 
     setSchedules(newSchedules);
-  };
+  }, [currentWeek, courts]);
+
+  useEffect(() => {
+    if (courts.length > 0) {
+      fetchSchedules();
+    }
+  }, [courts, currentWeek, fetchSchedules]);
 
   const handlePreviousWeek = () => {
     setCurrentWeek(addDays(currentWeek, -7));

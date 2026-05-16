@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -151,23 +151,6 @@ export default function CreateInvoiceDialog({ onSuccess }: CreateInvoiceDialogPr
       toast.error('Fehler bei der Rechnungserstellung');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getItemTypeLabel = (type: string) => {
-    switch (type) {
-      case 'membership_fee':
-        return 'Mitgliedsbeitrag';
-      case 'training_fee':
-        return 'Trainingsgebühr';
-      case 'court_fee':
-        return 'Platzgebühr';
-      case 'dunning_fee':
-        return 'Mahngebühr';
-      case 'other':
-        return 'Sonstiges';
-      default:
-        return type;
     }
   };
 

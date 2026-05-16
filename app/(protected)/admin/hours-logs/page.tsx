@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,10 +44,6 @@ export default function HoursLogsOverviewPage() {
     fetchHoursLogs();
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [logs, statusFilter, searchTerm, selectedMonth]);
-
   const fetchHoursLogs = async () => {
     try {
       const response = await fetch('/api/hours-logs');
@@ -63,7 +59,7 @@ export default function HoursLogsOverviewPage() {
     }
   };
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...logs];
 
     // Status filter
@@ -84,7 +80,11 @@ export default function HoursLogsOverviewPage() {
     }
 
     setFilteredLogs(filtered);
-  };
+  }, [logs, statusFilter, searchTerm, selectedMonth]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [logs, statusFilter, searchTerm, selectedMonth, applyFilters]);
 
   const handleApprove = async (logId: string) => {
     try {

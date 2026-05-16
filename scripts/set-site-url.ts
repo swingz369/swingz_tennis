@@ -25,7 +25,7 @@ async function setSiteUrl() {
     } else {
       console.log('Current config:', currentConfig);
     }
-  } catch (e) {
+  } catch (_e) {
     console.log('Could not fetch current config (may not exist yet)');
   }
 
@@ -45,8 +45,8 @@ async function setSiteUrl() {
     } else {
       console.log('✅ site_url updated successfully');
     }
-  } catch (e) {
-    console.error('Failed to update site_url:', e);
+  } catch (_e) {
+    console.error('Failed to update site_url:', _e);
   }
 
   // Update redirect_urls similarly
@@ -65,8 +65,8 @@ async function setSiteUrl() {
     } else {
       console.log('✅ redirect_urls updated successfully');
     }
-  } catch (e) {
-    console.error('Failed to update redirect_urls:', e);
+  } catch (_e) {
+    console.error('Failed to update redirect_urls:', _e);
   }
 }
 

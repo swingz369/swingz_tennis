@@ -3,7 +3,6 @@
  * Run with: npx tsx scripts/test-admin-pages.ts
  */
 
-import { glob } from 'glob';
 import { readFileSync } from 'fs';
 import path from 'path';
 

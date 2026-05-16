@@ -5,6 +5,7 @@ import type { CreateMemberInput } from '@/src/domain/entities/member.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
+import type { ZodError } from 'zod';
 import {
   CreateMemberSchema,
   MemberQuerySchema,
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
         // Validate request body with Zod
         const validation = validateRequestBody(CreateMemberSchema, body);
         if (!validation.success) {
-          const errors = (validation as { success: false; errors: import('zod').ZodError }).errors;
+          const errors = (validation as { success: false; errors: ZodError }).errors;
           return NextResponse.json(
             {
               error: 'Validation failed',
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       // Validate query parameters with Zod
       const validation = validateQueryParams(MemberQuerySchema, searchParams);
       if (!validation.success) {
-        const errors = (validation as { success: false; errors: import('zod').ZodError }).errors;
+        const errors = (validation as { success: false; errors: ZodError }).errors;
         return NextResponse.json(
           {
             error: 'Invalid query parameters',

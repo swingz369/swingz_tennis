@@ -56,11 +56,11 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A1628] via-[#0f2d22] to-[#1A2E44] flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-brand-950 via-surface-dark to-brand-secondary/40 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#1B4332] to-[#40916C] shadow-lg">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
             <Trophy className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -98,7 +98,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Verein suchen…"
-              className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-[#40916C] focus:ring-[#40916C]"
+              className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-brand-light focus:ring-brand-light"
             />
           </div>
 
@@ -113,13 +113,13 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
                 onClick={() => handleSelect(club.id)}
                 disabled={selecting !== null}
                 className={cn(
-                  'w-full flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-[#40916C]/50 transition-all text-left group',
+                  'w-full flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-brand-light/50 transition-all text-left group',
                   selecting === club.id && 'opacity-60 cursor-wait',
                   selecting !== null && selecting !== club.id && 'opacity-40'
                 )}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#1B4332]/60 to-[#40916C]/40 shrink-0">
-                  <Building2 className="h-6 w-6 text-[#52B788]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary/60 to-brand-light/40 shrink-0">
+                  <Building2 className="h-6 w-6 text-brand-light dark:text-brand-light" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -141,7 +141,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
                     </span>
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-[#52B788] transition-colors shrink-0" />
+                <ChevronRight className="h-5 w-5 text-white/30 group-hover:text-brand-light dark:text-brand-light transition-colors shrink-0" />
               </button>
             ))}
           </div>

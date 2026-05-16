@@ -8,7 +8,7 @@
  * - Request cancellation support
  */
 
-import { isApiError, ApiError } from './api-error';
+import { isApiError } from './api-error';
 
 export interface FetchOptions extends RequestInit {
   timeout?: number; // milliseconds

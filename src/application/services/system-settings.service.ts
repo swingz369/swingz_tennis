@@ -62,7 +62,7 @@ export class SystemSettingsService {
     if (input.type === 'json' || input.type === 'array') {
       try {
         JSON.parse(input.value);
-      } catch (e) {
+      } catch (_e) {
         errors.push('Wert muss gültiges JSON sein');
       }
     }
@@ -477,4 +477,6 @@ export class SystemSettingsService {
 }
 
 // Initialize mock data
-SystemSettingsService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  SystemSettingsService.initializeMockData();
+}

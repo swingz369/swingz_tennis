@@ -571,4 +571,6 @@ export class HoursLogService {
 }
 
 // Initialize mock data
-HoursLogService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  HoursLogService.initializeMockData();
+}

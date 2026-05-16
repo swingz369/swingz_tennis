@@ -71,17 +71,17 @@ export default function LoginPage() {
             className="absolute inset-0"
             style={{
               background: `
-                radial-gradient(ellipse 100% 100% at 30% 0%, rgba(64, 145, 108, 0.25) 0%, transparent 50%),
-                radial-gradient(ellipse 80% 80% at 70% 100%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
-                linear-gradient(135deg, #0A3D2E 0%, #1B4332 50%, #0f2d22 100%)
+                radial-gradient(ellipse 100% 100% at 30% 0%, hsl(var(--brand-primary-light) / 0.25) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 80% at 70% 100%, hsl(var(--brand-accent) / 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, hsl(150 50% 12%) 0%, hsl(var(--brand-primary)) 50%, hsl(150 30% 10%) 100%)
               `,
             }}
           />
           <div className="absolute inset-0 noise opacity-[0.02]" />
 
-          <div className="absolute top-20 left-20 w-64 h-64 bg-[#40916C]/20 rounded-full blur-3xl animate-aurora" />
+          <div className="absolute top-20 left-20 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
           <div
-            className="absolute bottom-20 right-20 w-80 h-80 bg-[#FF6B35]/10 rounded-full blur-3xl animate-aurora"
+            className="absolute bottom-20 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
             style={{ animationDelay: '5s' }}
           />
         </div>
@@ -89,7 +89,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-16 text-white">
           <div>
             <div className="flex items-center gap-3 mb-12">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#40916C] to-[#1B4332] flex items-center justify-center shadow-lg">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
                 <Trophy className="h-7 w-7 text-white" />
               </div>
               <span className="text-2xl font-bold">SWINGZ</span>
@@ -97,7 +97,7 @@ export default function LoginPage() {
 
             <h1 className="text-4xl font-bold leading-tight max-w-md">
               Willkommen zurück bei{' '}
-              <span className="text-gradient-primary bg-gradient-to-r from-[#52B788] to-[#40916C] bg-clip-text text-transparent">
+              <span className="text-gradient-primary bg-gradient-to-r from-green-400 to-brand-light bg-clip-text text-transparent">
                 Premium Tennis Club Management
               </span>
             </h1>
@@ -109,7 +109,7 @@ export default function LoginPage() {
 
           <div className="space-y-6">
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF8C5A] flex items-center justify-center">
+              <div className="h-12 w-12 rounded-xl bg-gradient-accent flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -142,7 +142,7 @@ export default function LoginPage() {
         <div className="relative w-full max-w-md">
           <div className="lg:hidden mb-8 text-center">
             <div className="inline-flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#40916C] to-[#1B4332] flex items-center justify-center shadow-lg">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
               <span className="text-2xl font-bold text-gray-900 dark:text-white">SWINGZ</span>
@@ -172,7 +172,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@verein.de"
                   required
-                  className="h-12 rounded-xl border-gray-200 dark:border-gray-700 focus:border-[#40916C] focus:ring-[#40916C]/20"
+                  className="h-12 rounded-xl border-gray-200 dark:border-gray-700 focus:border-brand-light focus:ring-brand-light/20"
                 />
               </div>
 
@@ -191,7 +191,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="h-12 rounded-xl border-gray-200 dark:border-gray-700 focus:border-[#40916C] focus:ring-[#40916C]/20 pr-12"
+                    className="h-12 rounded-xl border-gray-200 dark:border-gray-700 focus:border-brand-light focus:ring-brand-light/20 pr-12"
                   />
                   <Button
                     type="button"
@@ -212,7 +212,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+                className="w-full h-12 rounded-xl bg-gradient-to-r bg-gradient-primary text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
                 disabled={loading}
               >
                 {loading ? (
@@ -254,7 +254,7 @@ export default function LoginPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 transition-all duration-300 font-medium"
+                className="w-full h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5 transition-all duration-300 font-medium"
                 onClick={handleDemoLogin}
               >
                 <Sparkles className="mr-2 h-5 w-5" />
@@ -265,7 +265,7 @@ export default function LoginPage() {
             <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
               <p>
                 Noch kein Konto?{' '}
-                <button className="text-[#1B4332] hover:text-[#40916C] dark:text-[#52B788] dark:hover:text-[#74C69D] font-semibold transition-colors">
+                <button className="text-brand-primary hover:text-brand-light dark:text-brand-light dark:hover:text-brand-light/80 font-semibold transition-colors">
                   Registrierung anfragen
                 </button>
               </p>

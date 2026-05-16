@@ -27,7 +27,9 @@ export async function GET(_req: NextRequest) {
     }
 
     // Fetch full user profile from users table
-    const { data: userProfile } = await auth.supabase
+    // Note: Some columns (address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth)
+    // may not exist in the generated Database type yet — cast needed for dynamic columns
+    const { data: userProfile } = await (auth.supabase as any)
       .from('users')
       .select(
         'id, full_name, email, phone, address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth'
@@ -78,7 +80,10 @@ export async function PATCH(_req: NextRequest) {
       if (emergencyContact !== undefined) updateData.emergency_contact = emergencyContact;
       if (emergencyPhone !== undefined) updateData.emergency_phone = emergencyPhone;
 
-      const { error } = await auth.supabase.from('users').update(updateData).eq('id', auth.user.id);
+      const { error } = await (auth.supabase as any)
+        .from('users')
+        .update(updateData)
+        .eq('id', auth.user.id);
 
       if (error) {
         console.error('Profile update error:', error);

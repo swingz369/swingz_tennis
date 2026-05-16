@@ -20,14 +20,13 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
   ChevronRight,
-  Clock,
   MapPin,
   Calendar as CalendarIcon,
   Download,
   ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
+import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions, useCreateBooking, useCancelBooking } from '@/hooks/use-sessions';
@@ -63,7 +62,6 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
 
   const { data: clubData } = useUserClub();
   const { data: memberData } = useUserMember();
-  const { data: userRoles = [] } = useUserRoles();
 
   const clubId = clubData?.clubId ?? null;
   const memberId = memberData?.memberId ?? null;
@@ -135,14 +133,6 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
       });
     },
     [sessions]
-  );
-
-  const isSlotAvailable = useCallback(
-    (courtId: string, date: Date, timeSlot: string) => {
-      const session = getSessionForCourtAndTime(courtId, date, timeSlot);
-      return !session;
-    },
-    [getSessionForCourtAndTime]
   );
 
   const handleBookSlot = useCallback(
@@ -329,7 +319,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-[9px]">{timeSlot}</span>
+                              <span className="text-[10px]">{timeSlot}</span>
                             )}
                           </div>
                         );

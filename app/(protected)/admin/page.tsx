@@ -136,7 +136,7 @@ export default async function AdminPage() {
       .limit(3),
     // Monthly revenue from paid invoices
     supabase
-      .from('invoices' as any)
+      .from('invoices')
       .select('amount')
       .eq('status', 'paid')
       .gte('created_at', monthStart.toISOString())
@@ -235,7 +235,7 @@ export default async function AdminPage() {
               className={
                 isSuperadmin
                   ? 'text-purple-600 dark:text-purple-400'
-                  : 'text-[#FF6B35] dark:text-[#FF6B35]'
+                  : 'text-brand-accent dark:text-brand-accent'
               }
             >
               {isSuperadmin ? 'Superadmin' : 'Admin'}
@@ -277,9 +277,9 @@ export default async function AdminPage() {
             label: 'Trainer',
             value: (trainerCount ?? 0).toLocaleString('de-DE'),
             icon: GraduationCap,
-            color: 'text-[#40916C] dark:text-[#52b788]',
-            bg: 'bg-[#40916C]/10 dark:bg-[#40916C]/20',
-            border: 'hover:border-[#40916C]/30',
+            color: 'text-brand-light dark:text-brand-light',
+            bg: 'bg-brand-light/10 dark:bg-brand-light/20',
+            border: 'hover:border-brand-light/30',
             href: '/admin/trainers',
             sub: 'aktive Trainer',
           },
@@ -302,7 +302,7 @@ export default async function AdminPage() {
                   )
                 : '—',
             icon: CreditCard,
-            color: 'text-[#FF6B35]',
+            color: 'text-brand-accent',
             bg: 'bg-orange-50 dark:bg-orange-900/20',
             border: 'hover:border-orange-200 dark:hover:border-orange-700/50',
             href: '/admin/billing',
@@ -341,19 +341,19 @@ export default async function AdminPage() {
           <CardHeader className="px-5 pt-5 pb-3">
             <CardTitle className="text-sm font-semibold flex items-center justify-between text-gray-900 dark:text-white">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#40916C]/10">
-                  <Calendar className="h-3.5 w-3.5 text-[#40916C]" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-light/10">
+                  <Calendar className="h-3.5 w-3.5 text-brand-light" />
                 </div>
                 Heute im Verein
                 {(activeSessions ?? 0) > 0 && (
-                  <Badge className="text-[10px] px-1.5 py-0 bg-[#40916C]/10 text-[#40916C] border-[#40916C]/20">
+                  <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20">
                     {activeSessions}
                   </Badge>
                 )}
               </div>
               <Link
                 href="/admin/seasons"
-                className="text-xs font-normal text-[#40916C] hover:underline flex items-center gap-1"
+                className="text-xs font-normal text-brand-light hover:underline flex items-center gap-1"
               >
                 Alle Sessions <ChevronRight className="h-3 w-3" />
               </Link>
@@ -386,8 +386,8 @@ export default async function AdminPage() {
                     : null;
                   return (
                     <div key={s.id} className="flex items-center gap-3 py-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#40916C]/10 shrink-0">
-                        <Clock className="h-4 w-4 text-[#40916C]" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-light/10 shrink-0">
+                        <Clock className="h-4 w-4 text-brand-light" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -400,7 +400,7 @@ export default async function AdminPage() {
                           )}
                         </p>
                       </div>
-                      <Badge className="shrink-0 text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700/30">
+                      <Badge className="shrink-0 text-[11px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700/30">
                         Aktiv
                       </Badge>
                     </div>
@@ -437,14 +437,16 @@ export default async function AdminPage() {
                   <div key={item.id} className="flex items-center gap-3 py-2.5">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
-                        item.type === 'join' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-[#40916C]/10'
+                        item.type === 'join'
+                          ? 'bg-blue-100 dark:bg-blue-900/30'
+                          : 'bg-brand-light/10'
                       }`}
                     >
                       <span
                         className={`text-xs font-semibold ${
                           item.type === 'join'
                             ? 'text-blue-700 dark:text-blue-300'
-                            : 'text-[#40916C]'
+                            : 'text-brand-light'
                         }`}
                       >
                         {item.name.charAt(0).toUpperCase()}
@@ -459,10 +461,10 @@ export default async function AdminPage() {
                       </p>
                     </div>
                     <div
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                         item.type === 'join'
                           ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                          : 'bg-[#40916C]/10 text-[#40916C]'
+                          : 'bg-brand-light/10 text-brand-light'
                       }`}
                     >
                       {item.type === 'join' ? 'Beitritt' : 'Buchung'}
@@ -496,8 +498,8 @@ export default async function AdminPage() {
               desc: 'Saisonplanung verwalten',
               href: '/admin/seasons',
               icon: Calendar,
-              color: 'text-[#40916C] dark:text-[#52b788]',
-              bg: 'bg-[#40916C]/10',
+              color: 'text-brand-light dark:text-brand-light',
+              bg: 'bg-brand-light/10',
               accent: '#40916C',
             },
             {
@@ -505,7 +507,7 @@ export default async function AdminPage() {
               desc: 'Abrechnungen & Zahlungen',
               href: '/admin/billing',
               icon: Receipt,
-              color: 'text-[#FF6B35]',
+              color: 'text-brand-accent',
               bg: 'bg-orange-50 dark:bg-orange-900/20',
               accent: '#FF6B35',
             },
@@ -563,10 +565,10 @@ export default async function AdminPage() {
             <Link
               key={a.href}
               href={a.href}
-              className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-[#40916C]/40 hover:shadow-sm transition-all bg-white dark:bg-white/5 group"
+              className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all bg-white dark:bg-white/5 group"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#40916C]/10 shrink-0">
-                <a.icon className="h-4 w-4 text-[#40916C]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-light/10 shrink-0">
+                <a.icon className="h-4 w-4 text-brand-light" />
               </div>
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                 {a.label}

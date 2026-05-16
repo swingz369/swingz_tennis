@@ -10,14 +10,16 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import type { User, Session } from '@supabase/supabase-js';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import type { User } from '@supabase/supabase-js';
+import type { Database } from '@/types/supabase';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
 export interface AuthContext {
   user: User;
-  session: Session;
-  supabase: ReturnType<typeof createServerClient>;
+  /** SSR context does not have a real session object; use supabase.auth.getSession() if needed */
+  session: null;
+  supabase: ReturnType<typeof createServerClient<Database>>;
   /** Active club for this request. NULL for superadmin without selected club. */
   clubId: string | null;
   /** Club explicitly chosen by superadmin via cookie */
@@ -31,8 +33,8 @@ export interface AuthContext {
  * Build AuthContext from user and request
  */
 async function buildAuthContext(
-  supabase: ReturnType<typeof createServerClient>,
-  user: any,
+  supabase: ReturnType<typeof createServerClient<Database>>,
+  user: User,
   request: NextRequest
 ): Promise<AuthContext> {
   const { data: membershipsData } = await supabase
@@ -89,7 +91,7 @@ async function buildAuthContext(
 
   return {
     user,
-    session: { access_token: '', refresh_token: '' } as any,
+    session: null,
     supabase,
     clubId: effectiveClubId,
     selectedClubId,
@@ -110,12 +112,12 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
     throw new Error('Supabase credentials not configured');
   }
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(_cookiesToSet) {
+      setAll(_cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
         // No-op in request context (read-only)
       },
     },

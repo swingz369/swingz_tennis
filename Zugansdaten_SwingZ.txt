@@ -1,9 +1,0 @@
-Login-Daten für alle Rollen
-Email	Passwort	Rolle
-superadmin@swingz.com	SuperPass123!	Superadmin
-admin@swingz.com	AdminPass123!	Admin
-trainer@swingz.com	TrainerPass123!	Trainer
-member@swingz.com	MemberPass123!	Mitglied
-Demo-Modus: demo@swingz.com hat ALLE 4 Rollen gleichzeitig.
-
-

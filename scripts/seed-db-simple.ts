@@ -102,6 +102,6 @@ async function seed() {
   }
 }
 
-seed().catch((e) => {
+seed().catch((_e) => {
   process.exit(1);
 });

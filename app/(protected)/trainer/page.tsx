@@ -96,14 +96,14 @@ export default function TrainerPage() {
         {/* 2x2 stats grid skeleton */}
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl border p-5 space-y-2 bg-white dark:bg-[#0f2d22]">
+            <div key={i} className="rounded-2xl border p-5 space-y-2 bg-white dark:bg-surface-dark">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-9 w-16" />
             </div>
           ))}
         </div>
         {/* Sessions list skeleton */}
-        <div className="rounded-2xl border bg-white dark:bg-[#0f2d22]">
+        <div className="rounded-2xl border bg-white dark:bg-surface-dark">
           <div className="px-5 pt-5 pb-3">
             <Skeleton className="h-5 w-36" />
           </div>
@@ -129,7 +129,7 @@ export default function TrainerPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <XCircle className="h-10 w-10 text-red-400" />
         <p className="text-sm text-muted-foreground">{error}</p>
-        <button onClick={fetchData} className="text-sm text-[#40916C] hover:underline">
+        <button onClick={fetchData} className="text-sm text-brand-light hover:underline">
           Erneut versuchen
         </button>
       </div>
@@ -158,8 +158,8 @@ export default function TrainerPage() {
             label: 'Kommende',
             value: stats.upcomingSessions,
             icon: TrendingUp,
-            color: 'text-[#40916C]',
-            bg: 'bg-[#40916C]/10',
+            color: 'text-brand-light',
+            bg: 'bg-brand-light/10',
           },
           {
             label: 'Diese Woche',
@@ -197,7 +197,7 @@ export default function TrainerPage() {
             Kommende Einheiten
             <Link
               href="/scheduler"
-              className="text-xs text-[#40916C] hover:underline font-normal flex items-center gap-1"
+              className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1"
             >
               Alle <ChevronRight className="h-3 w-3" />
             </Link>
@@ -226,8 +226,8 @@ export default function TrainerPage() {
                     className="flex items-center gap-3 py-3.5"
                     style={{ minHeight: 60 }}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#40916C]/10 shrink-0">
-                      <Calendar className="h-4 w-4 text-[#40916C]" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-light/10 shrink-0">
+                      <Calendar className="h-4 w-4 text-brand-light" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
@@ -240,7 +240,7 @@ export default function TrainerPage() {
                     {/* Quick attendance button */}
                     <Link
                       href={`/attendance-history?session=${session.id}`}
-                      className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-lg bg-[#40916C]/10 hover:bg-[#40916C]/20 transition-colors text-[#40916C] text-xs font-medium"
+                      className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-lg bg-brand-light/10 hover:bg-brand-light/20 transition-colors text-brand-light text-xs font-medium"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <ClipboardCheck className="h-3.5 w-3.5" />
@@ -271,10 +271,10 @@ export default function TrainerPage() {
             <Link
               key={action.href + action.label}
               href={action.href}
-              className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-[#40916C]/40 hover:shadow-sm transition-all active:scale-95"
+              className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all active:scale-95"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#40916C]/10">
-                <action.icon className="h-5 w-5 text-[#40916C]" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-light/10">
+                <action.icon className="h-5 w-5 text-brand-light" />
               </div>
               <span className="text-xs font-medium text-center leading-tight text-gray-700 dark:text-gray-300">
                 {action.label}

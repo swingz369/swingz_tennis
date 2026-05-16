@@ -338,5 +338,7 @@ export class FeeConfigurationService {
   }
 }
 
-// Initialize mock data
-FeeConfigurationService.initializeMockData();
+// Initialize mock data (development only)
+if (process.env.NODE_ENV !== 'production') {
+  FeeConfigurationService.initializeMockData();
+}

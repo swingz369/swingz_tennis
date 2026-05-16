@@ -411,5 +411,7 @@ export class MemberService {
   }
 }
 
-// Initialize mock data
-MemberService.initializeMockData();
+// Initialize mock data (development only)
+if (process.env.NODE_ENV !== 'production') {
+  MemberService.initializeMockData();
+}

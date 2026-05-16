@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { RATE_LIMITS, rateLimitStrict, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Upload, Download, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import { getCsvFileName, generatePaymentCsvTemplate } from '@/lib/csv/payment-import';
+import { generatePaymentCsvTemplate } from '@/lib/csv/payment-import';
 
 interface ImportResult {
   success: boolean;

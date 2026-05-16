@@ -112,7 +112,9 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
                 <label className="text-sm font-medium">Typ</label>
                 <Select
                   value={filters.type}
-                  onValueChange={(value) => setFilters({ ...filters, type: value as any })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, type: value as AdvancedSearchFilters['type'] })
+                  }
                 >
                   <SelectTrigger aria-label="Typ auswählen">
                     <SelectValue />
@@ -179,7 +181,9 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
                 <label className="text-sm font-medium">Sortieren nach</label>
                 <Select
                   value={filters.sortBy}
-                  onValueChange={(value) => setFilters({ ...filters, sortBy: value as any })}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, sortBy: value as AdvancedSearchFilters['sortBy'] })
+                  }
                 >
                   <SelectTrigger aria-label="Sortierung auswählen">
                     <SelectValue />
@@ -219,7 +223,12 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
                 <label className="text-sm font-medium">Reihenfolge</label>
                 <Select
                   value={filters.sortOrder}
-                  onValueChange={(value) => setFilters({ ...filters, sortOrder: value as any })}
+                  onValueChange={(value) =>
+                    setFilters({
+                      ...filters,
+                      sortOrder: value as AdvancedSearchFilters['sortOrder'],
+                    })
+                  }
                 >
                   <SelectTrigger aria-label="Sortierreihenfolge">
                     <SelectValue />

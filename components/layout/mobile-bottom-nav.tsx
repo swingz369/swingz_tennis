@@ -79,7 +79,7 @@ export function MobileBottomNav({
   return (
     <nav
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0f2d22] border-t border-gray-200 dark:border-white/10 safe-area-pb',
+        'fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-white/10 safe-area-pb',
         !persistent && 'md:hidden',
         className
       )}
@@ -102,7 +102,7 @@ export function MobileBottomNav({
               className={cn(
                 'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px] flex-1',
                 isActive
-                  ? 'text-[#40916C] dark:text-[#52B788]'
+                  ? 'text-brand-light dark:text-brand-light dark:text-brand-light'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               )}
               aria-current={isActive ? 'page' : undefined}
@@ -120,7 +120,7 @@ export function MobileBottomNav({
         {(isSuperAdmin || isAdmin) && onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px] flex-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-[#40916C]"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px] flex-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-light"
             aria-label="Hauptmenü öffnen"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />

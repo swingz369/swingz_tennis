@@ -183,7 +183,7 @@ export default function TrainerAvailabilityPage() {
         </div>
         <Button
           size="sm"
-          className="bg-[#40916C] hover:bg-[#2d6a4f] text-white gap-1.5"
+          className="bg-brand-light hover:bg-brand-light/80 text-white gap-1.5"
           onClick={() => {
             setAddDate(toLocalDateString(new Date()));
             setAddOpen(true);
@@ -199,7 +199,7 @@ export default function TrainerAvailabilityPage() {
         <Card className="border-0 shadow-sm p-0">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
-              <CheckCircle className="h-4 w-4 text-[#40916C]" />
+              <CheckCircle className="h-4 w-4 text-brand-light" />
               <p className="text-xs text-muted-foreground">Diese Woche verfügbar</p>
             </div>
             <p className="text-2xl font-bold tabular-nums">
@@ -266,8 +266,8 @@ export default function TrainerAvailabilityPage() {
             return (
               <div key={idx} className="min-h-24">
                 <div
-                  className={`text-center text-[11px] font-semibold mb-1 py-1 rounded-lg ${
-                    isToday ? 'bg-[#40916C] text-white' : 'text-muted-foreground'
+                  className={`text-center text-[10px] font-semibold mb-1 py-1 rounded-lg ${
+                    isToday ? 'bg-brand-light text-white' : 'text-muted-foreground'
                   }`}
                 >
                   <div>{DAY_NAMES[idx]}</div>
@@ -285,14 +285,14 @@ export default function TrainerAvailabilityPage() {
                       }`}
                     >
                       <div className="font-medium">{slot.start_time}</div>
-                      <div className="text-[9px] opacity-75">{slot.end_time}</div>
+                      <div className="text-[10px] opacity-75">{slot.end_time}</div>
                       {slot.status === 'available' && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteSlot(slot.id);
                           }}
-                          className="mt-0.5 text-[9px] opacity-60 hover:opacity-100 flex items-center gap-0.5"
+                          className="mt-0.5 text-[10px] opacity-60 hover:opacity-100 flex items-center gap-0.5"
                         >
                           <Trash2 className="h-2.5 w-2.5" />
                         </button>
@@ -314,7 +314,7 @@ export default function TrainerAvailabilityPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[#40916C]" />
+              <Clock className="h-4 w-4 text-brand-light" />
               Verfügbarkeit hinzufügen
             </DialogTitle>
           </DialogHeader>
@@ -364,7 +364,7 @@ export default function TrainerAvailabilityPage() {
               Abbrechen
             </Button>
             <Button
-              className="bg-[#40916C] hover:bg-[#2d6a4f] text-white"
+              className="bg-brand-light hover:bg-brand-light/80 text-white"
               onClick={handleAddSlot}
               disabled={addLoading}
             >

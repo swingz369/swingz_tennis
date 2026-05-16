@@ -17,6 +17,9 @@ export const clubs = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 200 }).notNull(),
+    slug: varchar('slug', { length: 200 }),
+    timezone: varchar('timezone', { length: 50 }).default('Europe/Berlin'),
+    default_session_duration_minutes: integer('default_session_duration_minutes').default(60),
     max_members: integer('max_members').notNull().default(500),
     opening_hours: jsonb('opening_hours')
       .$type<{

@@ -83,7 +83,7 @@ export function SuperadminDashboard({ user }: SuperadminDashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-l-4 border-[#40916C] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-light pl-4 py-2">
               <div>
                 <p className="font-medium">Tennis Berlin</p>
                 <p className="text-sm text-muted-foreground">
@@ -94,7 +94,7 @@ export function SuperadminDashboard({ user }: SuperadminDashboardProps) {
                 <Link href="/admin/clubs">Details</Link>
               </Button>
             </div>
-            <div className="flex items-center justify-between border-l-4 border-[#40916C] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-light pl-4 py-2">
               <div>
                 <p className="font-medium">Squash Munich</p>
                 <p className="text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ export function SuperadminDashboard({ user }: SuperadminDashboardProps) {
                 <Link href="/admin/clubs">Details</Link>
               </Button>
             </div>
-            <div className="flex items-center justify-between border-l-4 border-[#40916C] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-light pl-4 py-2">
               <div>
                 <p className="font-medium">Badminton Hamburg</p>
                 <p className="text-sm text-muted-foreground">

@@ -21,6 +21,10 @@ export async function GET(_request: NextRequest) {
 
     try {
       const supabase = auth.supabase;
+      const clubId = auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ error: 'No club selected' }, { status: 400 });
+      }
 
       // Fetch members of the current club with subscription info
       const { data: memberships, error: membersError } = await supabase
@@ -38,7 +42,7 @@ export async function GET(_request: NextRequest) {
           )
         `
         )
-        .eq('club_id', auth.clubId)
+        .eq('club_id', clubId)
         .eq('is_active', true)
         .eq('role', 'member'); // only members have subscriptions
 
@@ -90,13 +94,17 @@ export async function POST(_request: NextRequest) {
       return withValidation(assignSubscriptionSchema, async (input) => {
         const { memberId, plan } = input;
         const supabase = auth.supabase;
+        const clubId = auth.clubId;
+        if (!clubId) {
+          return NextResponse.json({ error: 'No club selected' }, { status: 400 });
+        }
 
         // Verify that the member belongs to the admin's club
         const { data: membership, error: membershipError } = await supabase
           .from('user_club_memberships')
           .select('club_id')
           .eq('user_id', memberId)
-          .eq('club_id', auth.clubId)
+          .eq('club_id', clubId)
           .eq('is_active', true)
           .single();
 
@@ -108,15 +116,13 @@ export async function POST(_request: NextRequest) {
         }
 
         // Update member's subscription fields
-        const updateData: Record<string, string | boolean> = {
-          subscription_tier: plan,
-          subscription_status: 'active',
-          updated_at: new Date().toISOString(),
-        };
-
         const { error: updateError } = await supabase
           .from('users')
-          .update(updateData)
+          .update({
+            subscription_tier: plan,
+            subscription_status: 'active',
+            updated_at: new Date().toISOString(),
+          })
           .eq('id', memberId);
 
         if (updateError) {

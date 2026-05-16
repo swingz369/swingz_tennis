@@ -6,19 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Save,
-  Camera,
-  Shield,
-  Bell,
-  CreditCard,
-  FileText,
-  AlertCircle,
-} from 'lucide-react';
+import { User, Save, Camera, Shield, Bell, CreditCard, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserMember } from '@/hooks/use-user-data';
 
@@ -56,9 +44,33 @@ export default function MemberProfile() {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  // Placeholder for SEPA mandate info - TODO: implement actual data fetching
-  const hasActiveMandate = false;
-  const mandateInfo = null;
+  // SEPA mandate info - fetched from API
+  const [hasActiveMandate, setHasActiveMandate] = useState(false);
+  const [mandateInfo, setMandateInfo] = useState<{
+    mandateReference?: string;
+    iban?: string;
+    signatureDate?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    fetch('/api/sepa-mandates?active=true', { signal: ac.signal })
+      .then((res) => res.json())
+      .then((data) => {
+        const mandates = data?.mandates || data || [];
+        if (Array.isArray(mandates) && mandates.length > 0) {
+          const active = mandates[0];
+          setHasActiveMandate(true);
+          setMandateInfo({
+            mandateReference: active.mandateReference || active.mandate_reference,
+            iban: active.iban,
+            signatureDate: active.signatureDate || active.signature_date,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -251,6 +263,59 @@ export default function MemberProfile() {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* SEPA-Mandat */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            SEPA-Lastschriftmandat
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hasActiveMandate && mandateInfo ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm font-medium text-green-700">Aktives Mandat</span>
+              </div>
+              {mandateInfo.mandateReference && (
+                <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
+                  <span className="text-gray-500">Mandatsreferenz:</span>
+                  <span className="font-mono text-xs">{mandateInfo.mandateReference}</span>
+                </div>
+              )}
+              {mandateInfo.iban && (
+                <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
+                  <span className="text-gray-500">IBAN:</span>
+                  <span className="font-mono text-xs">{mandateInfo.iban}</span>
+                </div>
+              )}
+              {mandateInfo.signatureDate && (
+                <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
+                  <span className="text-gray-500">Unterschrieben am:</span>
+                  <span>{new Date(mandateInfo.signatureDate).toLocaleDateString('de-DE')}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-start gap-3 text-sm text-gray-500">
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-gray-700">Kein aktives SEPA-Mandat</p>
+                <p className="mt-1">
+                  Du hast noch kein SEPA-Lastschriftmandat erteilt. Ein Mandat wird für die
+                  automatische Zahlungsabwicklung benötigt.
+                </p>
+                <Button variant="outline" size="sm" className="mt-3 gap-2">
+                  <FileText className="h-4 w-4" />
+                  Mandat erteilen
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -2,7 +2,6 @@ import type {
   TrainerProfile,
   CreateTrainerProfileInput,
   UpdateTrainerProfileInput,
-  TrainerQualification,
 } from '../../domain/entities/trainer.entity';
 import { TrainerProfileRepository } from '../../infrastructure/persistence/repositories/trainer-profile.repository';
 import { isFeatureEnabled } from '../../../lib/features/feature-flags';
@@ -506,4 +505,6 @@ export class TrainerProfileService {
 }
 
 // Initialize mock data
-TrainerProfileService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  TrainerProfileService.initializeMockData();
+}

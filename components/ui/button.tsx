@@ -9,22 +9,22 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#40916C]/50',
+          'bg-gradient-primary text-white shadow-md hover:shadow-lg hover:brightness-105 focus-visible:ring-brand-light/50',
         primary:
-          'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#40916C]/50',
+          'bg-gradient-primary text-white shadow-lg hover:shadow-xl hover:brightness-110 focus-visible:ring-brand-light/50',
         secondary:
-          'bg-[#1e3a5f] text-white shadow-md hover:bg-[#1e3a5f]/90 hover:shadow-lg focus-visible:ring-[#1e3a5f]/50',
+          'bg-brand-secondary text-white shadow-md hover:bg-brand-secondary/90 hover:shadow-lg focus-visible:ring-brand-secondary/50',
         outline:
-          'border-2 border-gray-200 dark:border-white/20 bg-transparent text-gray-700 dark:text-white hover:border-[#40916C] hover:text-[#40916C] hover:bg-[#40916C]/5 focus-visible:ring-[#40916C]/50',
+          'border-2 border-gray-200 dark:border-white/20 bg-transparent text-gray-700 dark:text-white hover:border-brand-light hover:text-brand-light hover:bg-brand-light/5 focus-visible:ring-brand-light/50',
         ghost:
           'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white focus-visible:ring-gray-300',
         destructive:
           'bg-red-600 text-white shadow-md hover:bg-red-700 hover:shadow-lg focus-visible:ring-red-500',
         accent:
-          'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#FF6B35]/50',
+          'bg-gradient-accent text-white shadow-lg hover:shadow-xl focus-visible:ring-brand-accent/50',
         gradient:
-          'bg-gradient-to-r from-[#1B4332] via-[#2D6A4F] to-[#40916C] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] focus-visible:ring-[#40916C]/50',
-        link: 'text-[#40916C] underline-offset-4 hover:underline',
+          'bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light text-white shadow-lg hover:shadow-xl focus-visible:ring-brand-light/50',
+        link: 'text-brand-light underline-offset-4 hover:underline',
       },
       size: {
         sm: 'h-9 px-4 text-sm gap-1.5',

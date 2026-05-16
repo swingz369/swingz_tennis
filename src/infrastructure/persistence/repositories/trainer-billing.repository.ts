@@ -1,4 +1,4 @@
-import { eq, and, sum, count, desc } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { getDb } from '../client';
 import { trainerBillings } from '../schema';
 import type {
@@ -126,8 +126,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async calculateSummary(billingPeriodId: string): Promise<BillingSummary> {
-    const db = getDb();
-
     const billings = await this.findByBillingPeriod(billingPeriodId);
 
     const totalTrainers = billings.length;

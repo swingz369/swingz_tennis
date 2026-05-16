@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 export function CourtBookings() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate] = useState(new Date());
 
   // Placeholder data - in real implementation, fetch from API
   const courts = [
@@ -59,7 +59,7 @@ export function CourtBookings() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="font-semibold flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-[#40916C]" />
+                    <MapPin className="h-4 w-4 text-brand-light" />
                     {court.name}
                   </h3>
                   <p className="text-sm text-muted-foreground">

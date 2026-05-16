@@ -51,28 +51,28 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
       title: 'Vereine',
       value: safeData.totalClubs,
       icon: Building2,
-      color: 'from-[#1B4332] to-[#2D6A4F]',
+      color: 'bg-gradient-primary',
       href: '/admin/clubs',
     },
     {
       title: 'Mitglieder',
       value: safeData.totalMembers.toLocaleString(),
       icon: Users,
-      color: 'from-[#3b82f6] to-[#1e3a5f]',
+      color: 'from-blue-500 to-brand-secondary',
       href: '/admin/members',
     },
     {
       title: 'Trainer',
       value: safeData.totalTrainers,
       icon: UserCheck,
-      color: 'from-[#22c55e] to-[#15803d]',
+      color: 'from-green-500 to-green-700',
       href: '/admin/members',
     },
     {
       title: 'Umsatz',
       value: `€${safeData.totalRevenue.toLocaleString()}`,
       icon: Euro,
-      color: 'from-[#FF6B35] to-[#ea580c]',
+      color: 'from-brand-accent to-orange-700',
       href: '/admin/billing',
     },
   ];
@@ -119,7 +119,7 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
                 className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-2 bg-gradient-to-br from-[#1B4332] to-[#2D6A4F] rounded-lg text-white">
+                  <div className="p-2 bg-gradient-to-br bg-gradient-primary rounded-lg text-white">
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div>

@@ -85,7 +85,7 @@ export function TrainerDashboard({ user }: TrainerDashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-l-4 border-[#FF6B35] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-accent pl-4 py-2">
               <div>
                 <p className="font-medium">Anfänger Gruppe A</p>
                 <p className="text-sm text-muted-foreground">
@@ -96,7 +96,7 @@ export function TrainerDashboard({ user }: TrainerDashboardProps) {
                 <Link href="/scheduler">Anwesenheit erfassen</Link>
               </Button>
             </div>
-            <div className="flex items-center justify-between border-l-4 border-[#FF6B35] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-accent pl-4 py-2">
               <div>
                 <p className="font-medium">Fortgeschrittene</p>
                 <p className="text-sm text-muted-foreground">
@@ -107,7 +107,7 @@ export function TrainerDashboard({ user }: TrainerDashboardProps) {
                 <Link href="/scheduler">Details</Link>
               </Button>
             </div>
-            <div className="flex items-center justify-between border-l-4 border-[#FF6B35] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-accent pl-4 py-2">
               <div>
                 <p className="font-medium">Privat-Training</p>
                 <p className="text-sm text-muted-foreground">

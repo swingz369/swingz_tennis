@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,11 +31,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSeason();
-  }, [params.id]);
-
-  const fetchSeason = async () => {
+  const fetchSeason = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/seasons/${params.id}`);
@@ -51,7 +47,11 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchSeason();
+  }, [params.id, fetchSeason]);
 
   const handleOpenPreferences = async () => {
     try {

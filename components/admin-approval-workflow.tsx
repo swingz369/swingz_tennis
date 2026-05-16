@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ import {
   Download,
   Eye,
   MapPin,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -63,98 +64,9 @@ export interface RegistrationRequest {
   notes?: string;
 }
 
-const MOCK_REGISTRATIONS: RegistrationRequest[] = [
-  {
-    id: '1',
-    type: 'registration',
-    status: 'pending',
-    applicant: {
-      firstName: 'Max',
-      lastName: 'Mustermann',
-      email: 'max.mustermann@example.com',
-      phone: '+49 123 456 7890',
-      dateOfBirth: '1990-05-15',
-    },
-    address: {
-      street: 'Musterstraße',
-      houseNumber: '123',
-      postalCode: '12345',
-      city: 'Musterstadt',
-    },
-    tennisInfo: {
-      experience: 'intermediate',
-      playingLevel: 'ntr4',
-      preferredDays: ['Montag', 'Mittwoch'],
-      goals: 'Verbesserung der Technik und Match-Praxis',
-    },
-    additionalInfo: {
-      motivation: 'Ich möchte meine Tennisfähigkeiten verbessern und regelmäßig trainieren.',
-      availability: 'Abends und Wochenende',
-      specialRequirements: 'Keine',
-    },
-    submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    type: 'application',
-    status: 'pending',
-    applicant: {
-      firstName: 'Anna',
-      lastName: 'Schmidt',
-      email: 'anna.schmidt@example.com',
-      phone: '+49 987 654 3210',
-      dateOfBirth: '1985-08-22',
-    },
-    address: {
-      street: 'Beispielweg',
-      houseNumber: '45',
-      postalCode: '54321',
-      city: 'Beispielstadt',
-    },
-    tennisInfo: {
-      experience: 'advanced',
-      playingLevel: 'ntr6',
-      preferredDays: ['Dienstag', 'Donnerstag', 'Samstag'],
-      goals: 'Turnierteilnahme und Wettkampferfahrung',
-    },
-    additionalInfo: {
-      motivation: 'Ich suche einen Club mit starkem Turnierprogramm.',
-      availability: 'Flexible',
-      previousClubs: 'TC Musterstadt, TC Beispielstadt',
-    },
-    submittedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    type: 'trial',
-    status: 'approved',
-    applicant: {
-      firstName: 'Thomas',
-      lastName: 'Müller',
-      email: 'thomas.mueller@example.com',
-      phone: '+49 555 123 4567',
-      dateOfBirth: '1995-12-03',
-    },
-    address: {
-      street: 'Teststraße',
-      houseNumber: '78',
-      postalCode: '98765',
-      city: 'Teststadt',
-    },
-    tennisInfo: {
-      experience: 'beginner',
-      playingLevel: 'ntr',
-      preferredDays: ['Freitag'],
-      goals: 'Grundlagen lernen und Spaß am Tennis',
-    },
-    submittedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    reviewedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-    reviewedBy: 'Admin User',
-  },
-];
-
 export default function AdminApprovalWorkflow() {
-  const [registrations, setRegistrations] = useState<RegistrationRequest[]>(MOCK_REGISTRATIONS);
+  const [registrations, setRegistrations] = useState<RegistrationRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
     'all'
   );
@@ -165,6 +77,32 @@ export default function AdminApprovalWorkflow() {
   const [searchQuery, setSearchQuery] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Fetch registrations from API
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    async function fetchRegistrations() {
+      try {
+        const res = await fetch('/api/admin/approvals', {
+          signal: abortController.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setRegistrations(data.registrations || []);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch registrations:', err);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchRegistrations();
+    return () => abortController.abort();
+  }, []);
 
   const filteredRegistrations = registrations.filter((reg) => {
     const matchesTab = selectedTab === 'all' || reg.status === selectedTab;
@@ -228,8 +166,16 @@ export default function AdminApprovalWorkflow() {
 
   const handleApprove = async (requestId: string) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch('/api/admin/approvals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: requestId, action: 'approve' }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Approval failed');
+      }
 
       const request = registrations.find((r) => r.id === requestId);
       if (!request) {
@@ -237,27 +183,23 @@ export default function AdminApprovalWorkflow() {
         return;
       }
 
-      // Send approval email
-      try {
-        await fetch('/api/emails/onboarding', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'approval',
-            recipientName: `${request.applicant.firstName} ${request.applicant.lastName}`,
-            recipientEmail: request.applicant.email,
-            clubName: 'SwingZ Tennis Club',
-            memberType: request.type === 'trial' ? 'trial' : 'member',
-            startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            assignedGroup: request.tennisInfo.preferredDays[0] || 'Gruppe A',
-            clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-            clubPhone: '+49 123 456 7890',
-            clubEmail: 'info@swingz.app',
-          }),
-        });
-      } catch (emailError) {
-        console.error('Failed to send approval email:', emailError);
-      }
+      // Send approval email (fire and forget)
+      fetch('/api/emails/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'approval',
+          recipientName: `${request.applicant.firstName} ${request.applicant.lastName}`,
+          recipientEmail: request.applicant.email,
+          clubName: 'SwingZ Tennis Club',
+          memberType: request.type === 'trial' ? 'trial' : 'member',
+          startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          assignedGroup: request.tennisInfo.preferredDays[0] || 'Gruppe A',
+          clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
+          clubPhone: '+49 123 456 7890',
+          clubEmail: 'info@swingz.app',
+        }),
+      }).catch(() => {});
 
       setRegistrations((prev) =>
         prev.map((reg) =>
@@ -289,8 +231,20 @@ export default function AdminApprovalWorkflow() {
     }
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch('/api/admin/approvals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: requestId,
+          action: 'reject',
+          rejectionReason,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Rejection failed');
+      }
 
       const request = registrations.find((r) => r.id === requestId);
       if (!request) {
@@ -298,25 +252,21 @@ export default function AdminApprovalWorkflow() {
         return;
       }
 
-      // Send rejection email
-      try {
-        await fetch('/api/emails/onboarding', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'rejection',
-            recipientName: `${request.applicant.firstName} ${request.applicant.lastName}`,
-            recipientEmail: request.applicant.email,
-            clubName: 'SwingZ Tennis Club',
-            reason: rejectionReason,
-            clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-            clubPhone: '+49 123 456 7890',
-            clubEmail: 'info@swingz.app',
-          }),
-        });
-      } catch (emailError) {
-        console.error('Failed to send rejection email:', emailError);
-      }
+      // Send rejection email (fire and forget)
+      fetch('/api/emails/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'rejection',
+          recipientName: `${request.applicant.firstName} ${request.applicant.lastName}`,
+          recipientEmail: request.applicant.email,
+          clubName: 'SwingZ Tennis Club',
+          reason: rejectionReason,
+          clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
+          clubPhone: '+49 123 456 7890',
+          clubEmail: 'info@swingz.app',
+        }),
+      }).catch(() => {});
 
       setRegistrations((prev) =>
         prev.map((reg) =>
@@ -344,8 +294,16 @@ export default function AdminApprovalWorkflow() {
 
   const handlePutOnHold = async (requestId: string) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch('/api/admin/approvals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: requestId, action: 'hold' }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Hold failed');
+      }
 
       setRegistrations((prev) =>
         prev.map((reg) =>
@@ -374,8 +332,16 @@ export default function AdminApprovalWorkflow() {
 
   const handleSaveNotes = async (requestId: string) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const res = await fetch('/api/admin/approvals', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: requestId, action: 'update_notes', notes }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Save failed');
+      }
 
       setRegistrations((prev) =>
         prev.map((reg) => (reg.id === requestId ? { ...reg, notes } : reg))
@@ -518,7 +484,15 @@ export default function AdminApprovalWorkflow() {
         </TabsList>
 
         <TabsContent value={selectedTab} className="mt-6">
-          {filteredRegistrations.length === 0 ? (
+          {isLoading ? (
+            <Card>
+              <CardContent className="py-12">
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : filteredRegistrations.length === 0 ? (
             <Card>
               <CardContent className="py-12">
                 <div className="text-center">

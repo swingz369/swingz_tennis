@@ -4,6 +4,7 @@ import { TrialTrainingService } from '@/src/application/services/trial-training.
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
+import type { CreateTrialTrainingInput } from '@/src/domain/entities/trial-training.entity';
 
 const createTrialTrainingSchema = z.object({
   participant: z.object({
@@ -59,7 +60,7 @@ export async function POST(_request: NextRequest) {
           dateOfBirth: string;
           age?: number;
         },
-      } as import('@/src/domain/entities/trial-training.entity').CreateTrialTrainingInput);
+      } as CreateTrialTrainingInput);
 
       return NextResponse.json({ success: true, trialTraining });
     } catch (error) {

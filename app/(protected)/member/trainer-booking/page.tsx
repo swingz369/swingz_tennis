@@ -168,14 +168,14 @@ export default function MemberTrainerBookingPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-          <CheckCircle className="h-8 w-8 text-[#40916C]" />
+          <CheckCircle className="h-8 w-8 text-brand-light" />
         </div>
         <h2 className="text-xl font-bold">Buchung erfolgreich!</h2>
         <p className="text-sm text-muted-foreground">
           Deine Einzelstunde wurde gebucht. Du erhältst eine Bestätigung.
         </p>
         <Button
-          className="bg-[#40916C] hover:bg-[#2d6a4f] text-white"
+          className="bg-brand-light hover:bg-brand-light/80 text-white"
           onClick={() => {
             setBookingSuccess(false);
             setSelectedTrainer(null);
@@ -213,13 +213,13 @@ export default function MemberTrainerBookingPage() {
             {trainers.map((trainer) => (
               <Card
                 key={trainer.id}
-                className="cursor-pointer hover:border-[#40916C]/40 hover:shadow-sm transition-all p-0"
+                className="cursor-pointer hover:border-brand-light/40 hover:shadow-sm transition-all p-0"
                 onClick={() => setSelectedTrainer(trainer)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#40916C]/10 shrink-0">
-                      <User className="h-5 w-5 text-[#40916C]" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-light/10 shrink-0">
+                      <User className="h-5 w-5 text-brand-light" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm">{trainer.full_name}</p>
@@ -229,7 +229,7 @@ export default function MemberTrainerBookingPage() {
                           {trainer.specialties.slice(0, 3).map((s) => (
                             <Badge
                               key={s}
-                              className="text-[10px] bg-[#40916C]/10 text-[#40916C] border-0"
+                              className="text-[11px] bg-brand-light/10 text-brand-light border-0"
                             >
                               {s}
                             </Badge>
@@ -309,11 +309,11 @@ export default function MemberTrainerBookingPage() {
               <div key={idx} className="min-h-24">
                 <div
                   className={`text-center text-[11px] font-semibold mb-1 py-1 rounded-lg ${
-                    isToday ? 'bg-[#40916C] text-white' : 'text-muted-foreground'
+                    isToday ? 'bg-brand-light text-white' : 'text-muted-foreground'
                   }`}
                 >
                   <div>{DAY_NAMES[idx]}</div>
-                  <div className="text-[10px] font-normal">{day.getDate()}</div>
+                  <div className="text-[11px] font-normal">{day.getDate()}</div>
                 </div>
                 <div className="space-y-1">
                   {daySlots.map((slot) => (
@@ -323,10 +323,10 @@ export default function MemberTrainerBookingPage() {
                         setConfirmSlot(slot);
                         setBookingError(null);
                       }}
-                      className="w-full text-left rounded-md px-1.5 py-1 text-[10px] leading-tight bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors cursor-pointer"
+                      className="w-full text-left rounded-md px-1.5 py-1 text-[11px] leading-tight bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors cursor-pointer"
                     >
                       <div className="font-medium">{slot.start_time}</div>
-                      <div className="text-[9px] opacity-75">{slot.end_time}</div>
+                      <div className="text-[11px] opacity-75">{slot.end_time}</div>
                     </button>
                   ))}
                   {daySlots.length === 0 && (
@@ -350,15 +350,15 @@ export default function MemberTrainerBookingPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-[#40916C]" />
+              <Calendar className="h-4 w-4 text-brand-light" />
               Stunde buchen
             </DialogTitle>
           </DialogHeader>
           {confirmSlot && (
             <div className="space-y-3 py-2">
-              <div className="rounded-xl bg-[#40916C]/5 p-4 space-y-2">
+              <div className="rounded-xl bg-brand-light/5 p-4 space-y-2">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-[#40916C]" />
+                  <User className="h-4 w-4 text-brand-light" />
                   <span className="text-sm font-medium">{selectedTrainer?.full_name}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -394,7 +394,7 @@ export default function MemberTrainerBookingPage() {
               Abbrechen
             </Button>
             <Button
-              className="bg-[#40916C] hover:bg-[#2d6a4f] text-white"
+              className="bg-brand-light hover:bg-brand-light/80 text-white"
               onClick={handleBook}
               disabled={bookingLoading}
             >

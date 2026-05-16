@@ -152,28 +152,28 @@ export default function MemberDashboard() {
             label: 'Gesamt Buchungen',
             value: stats.totalBookings,
             icon: Calendar,
-            color: 'from-[#40916C] to-[#1B4332]',
+            color: 'bg-gradient-to-br from-brand-light to-brand-primary',
             sublabel: 'diesen Monat',
           },
           {
             label: 'Kommende Sessions',
             value: stats.upcomingSessions,
             icon: Clock,
-            color: 'from-[#3b82f6] to-[#1e3a5f]',
+            color: 'from-blue-500 to-brand-secondary',
             sublabel: 'geplant',
           },
           {
             label: 'Abgeschlossen',
             value: stats.completedSessions,
             icon: Trophy,
-            color: 'from-[#22c55e] to-[#15803d]',
+            color: 'from-green-500 to-green-700',
             sublabel: 'Trainings',
           },
           {
             label: 'Anwesenheitsrate',
             value: `${stats.attendanceRate}%`,
             icon: TrendingUp,
-            color: 'from-[#FF6B35] to-[#ea580c]',
+            color: 'from-brand-accent to-orange-700',
             sublabel: 'dieses Monat',
           },
         ].map((stat, idx) => (
@@ -202,11 +202,11 @@ export default function MemberDashboard() {
 
       {nextSession && (
         <Card variant="gradient" className="overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#40916C]/10 via-transparent to-[#FF6B35]/5" />
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-light/10 via-transparent to-brand-accent/5" />
           <CardContent className="relative p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[#40916C] to-[#1B4332] flex items-center justify-center text-white shadow-lg">
+                <div className="h-14 w-14 rounded-2xl bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center text-white shadow-lg">
                   <Calendar className="h-7 w-7" />
                 </div>
                 <div>
@@ -249,7 +249,7 @@ export default function MemberDashboard() {
                 <Button
                   key={idx}
                   variant="outline"
-                  className="h-auto py-6 flex flex-col items-center gap-3 rounded-xl hover:border-[#40916C] hover:text-[#40916C]"
+                  className="h-auto py-6 flex flex-col items-center gap-3 rounded-xl hover:border-brand-light hover:text-brand-light"
                   onClick={() => router.push(action.href)}
                 >
                   <action.icon className="h-6 w-6" />
@@ -273,8 +273,8 @@ export default function MemberDashboard() {
                     className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-white/5"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gradient-to-br from-[#40916C]/20 to-[#1B4332]/20 rounded-lg">
-                        <Calendar className="h-4 w-4 text-[#40916C]" />
+                      <div className="p-2 bg-gradient-to-br from-brand-light/20 to-brand-primary/20 rounded-lg">
+                        <Calendar className="h-4 w-4 text-brand-light" />
                       </div>
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white">
@@ -288,7 +288,7 @@ export default function MemberDashboard() {
                     <div
                       className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
                         session.bookingStatus === 'confirmed'
-                          ? 'bg-[#dcfce7] text-[#15803d] dark:bg-[#15803d]/20 dark:text-[#15803d]'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-700/20 dark:text-green-700'
                           : session.bookingStatus === 'cancelled'
                             ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                             : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400'

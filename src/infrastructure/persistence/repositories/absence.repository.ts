@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, or, desc, ne } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, ne } from 'drizzle-orm';
 import { getDb } from '../client';
 import { trainerAbsences } from '../schema';
 import type { IAbsenceRepository } from '@/domain/repositories/absence-repository.interface';

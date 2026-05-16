@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { FileText, User, Clock, Search, Download, Filter, RefreshCw } from 'lucide-react';
+import { FileText, User, Clock, Search, Download, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -37,11 +37,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
 
   const ITEMS_PER_PAGE = 50;
 
-  useEffect(() => {
-    fetchLogs();
-  }, [clubId, page]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
@@ -59,13 +55,17 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       const data = await response.json();
       setLogs(data.logs || []);
       setTotalPages(Math.ceil((data.total || 0) / ITEMS_PER_PAGE));
-    } catch (error) {
-      console.error('Error fetching audit logs:', error);
+    } catch (_error) {
+      console.error('Error fetching audit logs:', _error);
       toast.error('Failed to load audit logs');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [clubId, page]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [clubId, page, fetchLogs]);
 
   const handleExport = async () => {
     try {
@@ -88,12 +88,14 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       document.body.removeChild(a);
 
       toast.success('Audit logs exported');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to export logs');
     }
   };
 
-  const getActionColor = (action: string) => {
+  const getActionColor = (
+    action: string
+  ): 'success' | 'default' | 'error' | 'info' | 'secondary' => {
     switch (action.toLowerCase()) {
       case 'create':
         return 'success';
@@ -209,7 +211,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant={getActionColor(log.action) as any}>{log.action}</Badge>
+                        <Badge variant={getActionColor(log.action)}>{log.action}</Badge>
                         <span className="text-sm font-medium text-gray-700">{log.entity_type}</span>
                         <span className="text-sm text-gray-500">#{log.entity_id.slice(0, 8)}</span>
                       </div>

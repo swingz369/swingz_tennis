@@ -250,7 +250,7 @@ export function SessionBookings() {
                                         | 'no_show'
                                     )
                                   }
-                                  className="text-[9px] border rounded px-1 py-0.5 bg-white dark:bg-gray-950"
+                                  className="text-[10px] border rounded px-1 py-0.5 bg-white dark:bg-gray-950"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <option value="pending">Ausstehend</option>

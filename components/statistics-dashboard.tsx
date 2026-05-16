@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,11 +35,7 @@ export function StatisticsDashboard({ className }: StatisticsDashboardProps) {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, [period]);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const [metricsRes, statsRes] = await Promise.all([
@@ -58,7 +54,11 @@ export function StatisticsDashboard({ className }: StatisticsDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [period, loadDashboardData]);
 
   const handleExport = async (format: 'pdf' | 'excel' | 'csv') => {
     try {

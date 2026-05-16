@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import StarRating from './star-rating';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,11 +45,7 @@ export default function FeedbackList({
     totalFeedback: number;
   } | null>(null);
 
-  useEffect(() => {
-    fetchFeedback();
-  }, [trainerId, limit, visibleOnly]);
-
-  const fetchFeedback = async () => {
+  const fetchFeedback = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -80,7 +76,11 @@ export default function FeedbackList({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [trainerId, limit, visibleOnly]);
+
+  useEffect(() => {
+    fetchFeedback();
+  }, [trainerId, limit, visibleOnly, fetchFeedback]);
 
   if (isLoading) {
     return (

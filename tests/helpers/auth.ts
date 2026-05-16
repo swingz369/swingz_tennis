@@ -30,7 +30,7 @@ export async function mockAuthSession(page: Page, roles: string[]) {
   await page.addInitScript(
     ({ roles }) => {
       // Override window.location to prevent actual navigation during tests
-      const originalLocation = window.location;
+      void window.location;
 
       // Store mock session in localStorage
       localStorage.setItem(

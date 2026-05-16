@@ -7,7 +7,7 @@ import { getDb } from '@/src/infrastructure/persistence/client';
 import { seasons } from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
 import { AutoPlanningService } from '@/lib/services/auto-planning.service';
-import type { AutoPlanRequest, AutoPlanResponse } from '@/lib/types/season-planning';
+import type { AutoPlanRequest } from '@/lib/types/season-planning';
 
 interface RouteContext {
   params: Promise<{
@@ -26,9 +26,7 @@ interface RouteContext {
  * Returns: AutoPlanResponse with generated entries and metrics
  */
 export async function POST(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   return withCSRFProtection(request, async () => {
-    const db = getDb();
     // Higher rate limit for expensive operation
     const rateLimitError = await checkRateLimitOrFail(request, {
       max: 5,
@@ -188,8 +186,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         return NextResponse.json(response, { status: 200 });
       } catch (error) {
-        const { id } = await context.params;
-        console.error(`POST /api/seasons/[id]/auto-plan error:`, error);
+        const { id: _id } = await context.params;
+        console.error(`POST /api/seasons/[id]/auto-plan error (season ${_id}):`, error);
         return NextResponse.json(
           {
             error: error instanceof Error ? error.message : 'Auto-planning failed',

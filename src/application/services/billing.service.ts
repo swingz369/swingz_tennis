@@ -189,7 +189,6 @@ export class BillingService {
     type: 'training' | 'preparation' | 'meeting' | 'other',
     sessionId?: string
   ): Promise<BillingLineItem> {
-    const now = new Date().toISOString();
     const billingLineItem: BillingLineItem = {
       id: this.generateId(),
       trainerBillingId,
@@ -284,7 +283,9 @@ export class BillingService {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
       .toISOString()
       .split('T')[0];
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+    const _lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+      .toISOString()
+      .split('T')[0];
 
     this.billingPeriods = [
       {
@@ -298,7 +299,7 @@ export class BillingService {
       {
         id: 'period-last',
         startDate: lastMonthStart,
-        endDate: lastMonthEnd,
+        endDate: _lastMonthEnd,
         status: 'closed',
         createdAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString(),
         updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -400,5 +401,7 @@ export class BillingService {
   }
 }
 
-// Initialize mock data
-BillingService.initializeMockData();
+// Initialize mock data (development only)
+if (process.env.NODE_ENV !== 'production') {
+  BillingService.initializeMockData();
+}

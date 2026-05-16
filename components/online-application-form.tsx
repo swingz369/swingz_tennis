@@ -7,17 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Send,
-  Info,
-  FileText,
-  CheckCircle,
-} from 'lucide-react';
+import { User, MapPin, Calendar, Send, Info, FileText, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ApplicationFormData {
@@ -137,8 +127,16 @@ export default function OnlineApplicationForm() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Submission failed');
+      }
 
       toast.success('Bewerbung erfolgreich eingereicht! Wir werden uns in Kürze bei dir melden.');
       setFormData(INITIAL_FORM_DATA);

@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { data: court, error } = await auth.supabase
       .from('courts')
       .select(
-        'id, club_id, name, number, location, description, status, has_lighting, is_active, created_at'
+        'id, club_id, name, number, location, description, status, surface, has_indoor, has_lighting, is_active, created_at'
       )
       .eq('id', courtId)
       .single();
@@ -65,13 +65,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { data: court, error } = await auth.supabase
       .from('courts')
-      .select('id, club_id, name, surface, has_indoor, has_lighting, is_active, created_at')
+      .select(
+        'id, club_id, name, number, surface, status, has_indoor, has_lighting, is_active, created_at'
+      )
       .eq('id', courtId)
       .single();
 
     if (error) {
       console.error('[Courts PATCH]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Apply updates after reading current state
+    if (Object.keys(updates).length > 0) {
+      const { error: updateError } = await auth.supabase
+        .from('courts')
+        .update(updates as any)
+        .eq('id', courtId);
+      if (updateError) {
+        console.error('[Courts PATCH update]', updateError);
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json({

@@ -1,10 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from '@/lib/env';
 import type { MemberBillingSummary, ClubBillingStats } from '../types/billing';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 export class StatsService {
   private static instance: StatsService;

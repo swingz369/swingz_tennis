@@ -63,7 +63,7 @@ export async function POST(_request: NextRequest) {
             clubAddress,
             clubPhone,
             clubEmail,
-          } as any);
+          });
           break;
 
         case 'trial':
@@ -76,7 +76,7 @@ export async function POST(_request: NextRequest) {
             clubAddress,
             clubPhone,
             clubEmail,
-          } as any);
+          });
           break;
 
         case 'approval':
@@ -90,7 +90,7 @@ export async function POST(_request: NextRequest) {
             clubAddress,
             clubPhone,
             clubEmail,
-          } as any);
+          });
           break;
 
         case 'rejection':

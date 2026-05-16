@@ -4,6 +4,7 @@ import { SEPAMandateService } from '@/src/application/services/sepa-mandate.serv
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
+import type { ZodError } from 'zod';
 import {
   CreateSEPAMandateSchema,
   validateRequestBody,
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
         // Validate request body with Zod
         const validation = validateRequestBody(CreateSEPAMandateSchema, body);
         if (!validation.success) {
-          const errors = (validation as { success: false; errors: import('zod').ZodError }).errors;
+          const errors = (validation as { success: false; errors: ZodError }).errors;
           return NextResponse.json(
             {
               error: 'Validation failed',

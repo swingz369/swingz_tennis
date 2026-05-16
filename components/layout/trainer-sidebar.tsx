@@ -34,7 +34,7 @@ interface TrainerSidebarProps {
   isAlsoAdmin: boolean;
 }
 
-export function TrainerSidebar({ user, club, clubId, isAlsoAdmin }: TrainerSidebarProps) {
+export function TrainerSidebar({ user, club, isAlsoAdmin }: TrainerSidebarProps) {
   const pathname = usePathname();
 
   const navigationItems = [

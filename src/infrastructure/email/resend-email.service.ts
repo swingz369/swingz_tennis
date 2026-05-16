@@ -53,7 +53,7 @@ export class ResendEmailService implements EmailService {
   }
 
   async sendSessionReminder(
-    sessionId: string,
+    _sessionId: string,
     recipients: EmailRecipient[],
     sessionDetails: {
       date: Date;
@@ -77,7 +77,7 @@ export class ResendEmailService implements EmailService {
   }
 
   async sendInvoice(
-    invoiceId: string,
+    _invoiceId: string,
     recipient: EmailRecipient,
     invoiceDetails: {
       invoiceNumber: string;
@@ -98,7 +98,7 @@ export class ResendEmailService implements EmailService {
   }
 
   async sendDunningNotice(
-    invoiceId: string,
+    _invoiceId: string,
     recipient: EmailRecipient,
     level: 1 | 2 | 3,
     dueDate: Date,
@@ -182,7 +182,7 @@ export class ResendEmailService implements EmailService {
   }
 
   private renderBookingCancellation(
-    booking: Booking,
+    _booking: Booking,
     recipient: EmailRecipient,
     reason: string
   ): string {

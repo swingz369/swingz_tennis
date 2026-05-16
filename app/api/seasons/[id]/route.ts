@@ -4,15 +4,8 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { getDb } from '@/src/infrastructure/persistence/client';
-import {
-  seasons,
-  userTrainingPreferences,
-  seasonPlanEntries,
-  planningConflicts,
-  seasonPlanningHistory,
-} from '@/src/infrastructure/persistence/schema';
-import { and, eq, sql } from 'drizzle-orm';
-import type { UpdateSeasonRequest } from '@/lib/types/season-planning';
+import { seasons } from '@/src/infrastructure/persistence/schema';
+import { eq } from 'drizzle-orm';
 
 interface RouteContext {
   params: Promise<{
@@ -30,7 +23,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
   return withCSRFProtection(request, async () => {
     return withApiAuth(request, async (auth) => {
-      const db = getDb();
       try {
         const { id } = await context.params;
 

@@ -117,7 +117,7 @@ export function KeyboardShortcutsDialog() {
       {/* Trigger Button - Hidden, only for accessibility */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 p-3 rounded-full bg-[#40916C] text-white shadow-lg hover:bg-[#2D6A4F] transition-colors z-50"
+        className="fixed bottom-4 right-4 p-3 rounded-full bg-brand-light text-white shadow-lg hover:bg-brand-light/80 transition-colors z-50"
         aria-label="Keyboard Shortcuts anzeigen"
         title="Keyboard Shortcuts (Shift + ?)"
       >

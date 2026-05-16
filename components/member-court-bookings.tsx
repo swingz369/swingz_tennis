@@ -32,7 +32,7 @@ export default function MemberCourtBookings() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const { data: clubData } = useUserClub();
-  const { data: memberData } = useUserMember();
+  useUserMember();
 
   const clubId = clubData?.clubId ?? null;
 

@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import StarRating from '@/components/feedback/star-rating';
-import { Eye, EyeOff, Flag, Trash2, Search, Filter, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Flag, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -48,8 +47,8 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
 
       const data = await response.json();
       setFeedback(data.feedback || []);
-    } catch (error) {
-      console.error('Error fetching feedback:', error);
+    } catch (_error) {
+      console.error('Error fetching feedback:', _error);
       toast.error('Failed to load feedback');
     } finally {
       setIsLoading(false);
@@ -71,7 +70,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
       );
 
       toast.success(`Feedback ${!currentVisibility ? 'shown' : 'hidden'}`);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to update feedback');
     }
   };
@@ -94,7 +93,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
       );
 
       toast.success(`Feedback ${!currentFlagged ? 'flagged' : 'unflagged'}`);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to flag feedback');
     }
   };
@@ -110,7 +109,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
 
       setFeedback((prev) => prev.filter((f) => f.id !== id));
       toast.success('Feedback deleted');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to delete feedback');
     }
   };
@@ -150,7 +149,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
 
       setSelectedIds(new Set());
       toast.success(`${selectedIds.size} feedback items updated`);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to perform bulk action');
     }
   };

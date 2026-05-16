@@ -1,4 +1,4 @@
-import { eq, and, lte, gte, desc } from 'drizzle-orm';
+import { eq, and, lte, desc } from 'drizzle-orm';
 import { db } from '../db';
 import { hourlyRateTiers, trainerHourlyRates, rateHistory } from '../schema';
 import type {

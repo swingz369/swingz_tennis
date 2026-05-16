@@ -16,7 +16,7 @@ async function testAuthFlow() {
   console.log('\n1️⃣  Testing Supabase Connection...');
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  const { data: healthCheck, error: healthError } = await supabase
+  const { data: _healthCheck, error: healthError } = await supabase
     .from('clubs')
     .select('id')
     .limit(1);

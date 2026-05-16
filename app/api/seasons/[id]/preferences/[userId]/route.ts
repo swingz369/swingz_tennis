@@ -23,7 +23,6 @@ interface RouteContext {
  * Admins can view any preference
  */
 export async function GET(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
@@ -93,9 +92,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
  * Admins can update any preference
  */
 export async function PATCH(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   return withCSRFProtection(request, async () => {
-    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
@@ -207,9 +204,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
  * Admins can delete any preference
  */
 export async function DELETE(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   return withCSRFProtection(request, async () => {
-    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 

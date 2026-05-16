@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, addDays, startOfWeek, parseISO, isSameDay, isToday } from 'date-fns';
+import { format, addDays, startOfWeek, parseISO, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Calendar,
   Clock,
@@ -18,12 +17,8 @@ import {
   Mail,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  Filter,
-  Search,
   Download,
   Users,
-  Target,
   BookOpen,
   Plus,
 } from 'lucide-react';

@@ -8,16 +8,14 @@ import {
   seasonPlanEntries,
   planningConflicts,
   seasonPlanningHistory,
-  trainers,
   courts,
   groups,
 } from '@/src/infrastructure/persistence/schema';
-import { and, eq, sql, inArray } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type {
   AutoPlanConfig,
   AlgorithmMetrics,
   WeeklyAvailability,
-  TimeSlot,
   DayOfWeek,
 } from '@/lib/types/season-planning';
 
@@ -184,7 +182,7 @@ export class AutoPlanningService {
     entries: PlanningSlot[];
     conflicts: Array<{ type: string; description: string; severity: string }>;
   }> {
-    const { trainerPrefs, memberPrefs, courts, groups, config } = params;
+    const { trainerPrefs, memberPrefs, courts, groups } = params;
     const plannedSlots: PlanningSlot[] = [];
     const conflicts: Array<{ type: string; description: string; severity: string }> = [];
 
@@ -466,7 +464,7 @@ export class AutoPlanningService {
 
   private static countPreferencesMatched(
     slots: PlanningSlot[],
-    members: MemberPreference[]
+    _members: MemberPreference[]
   ): number {
     const matchedUsers = new Set<string>();
     slots.forEach((slot) => slot.expected_participants.forEach((uid) => matchedUsers.add(uid)));

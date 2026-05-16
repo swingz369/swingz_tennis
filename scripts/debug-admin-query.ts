@@ -35,7 +35,7 @@ async function debugAdminQuery() {
   console.log('\n---\n');
 
   console.log('Query 3: Get all roles for this club');
-  const { data: roles, error: err3 } = await supabase
+  const { data: roles, error: _err3 } = await supabase
     .from('user_club_memberships')
     .select('role')
     .eq('club_id', clubId);

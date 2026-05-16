@@ -11,18 +11,6 @@ const supabase = createClient(supabaseUrl, serviceKey, {
   },
 });
 
-interface Club {
-  id: string;
-  name: string;
-}
-
-interface UserMembership {
-  user_id: string;
-  club_id: string;
-  role: string;
-  is_active: boolean;
-}
-
 async function comprehensiveClubSetup() {
   console.log('🔧 Comprehensive Club Setup & Validation\n');
   console.log('='.repeat(60));
@@ -115,7 +103,7 @@ async function comprehensiveClubSetup() {
       console.log(`\n⚠️  Multiple admins found (${adminCount}), keeping first one only`);
 
       const admins = memberships!.filter((m) => m.role === 'admin');
-      const toKeep = admins[0];
+      const _toKeep = admins[0];
       const toDeactivate = admins.slice(1);
 
       for (const admin of toDeactivate) {

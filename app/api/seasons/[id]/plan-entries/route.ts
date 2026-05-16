@@ -11,8 +11,8 @@ import {
   courts,
   groups,
 } from '@/src/infrastructure/persistence/schema';
-import { and, eq, sql, inArray, desc } from 'drizzle-orm';
-import type { CreatePlanEntryRequest, PlanEntryFilter } from '@/lib/types/season-planning';
+import { and, eq, sql, inArray } from 'drizzle-orm';
+import type { CreatePlanEntryRequest } from '@/lib/types/season-planning';
 
 interface RouteContext {
   params: Promise<{
@@ -33,7 +33,6 @@ interface RouteContext {
  * - entry_type: Filter by type
  */
 export async function GET(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
@@ -130,9 +129,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
  * Body: CreatePlanEntryRequest
  */
 export async function POST(request: NextRequest, context: RouteContext) {
-  const db = getDb();
   return withCSRFProtection(request, async () => {
-    const db = getDb();
     const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 

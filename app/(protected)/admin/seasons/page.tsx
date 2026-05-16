@@ -79,7 +79,7 @@ export default function SeasonsPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-xl border p-5 space-y-2 bg-white dark:bg-[#0f2d22]">
+            <div key={i} className="rounded-xl border p-5 space-y-2 bg-white dark:bg-surface-dark">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-8 w-14" />
               <Skeleton className="h-3 w-20" />
@@ -88,7 +88,7 @@ export default function SeasonsPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl border p-5 space-y-3 bg-white dark:bg-[#0f2d22]">
+            <div key={i} className="rounded-xl border p-5 space-y-3 bg-white dark:bg-surface-dark">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-8 w-8 rounded-full" />
                 <div className="space-y-1 flex-1">
@@ -205,8 +205,8 @@ export default function SeasonsPage() {
       {/* Seasons List */}
       {seasons.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#40916C]/10 mb-5">
-            <CalendarPlus className="h-10 w-10 text-[#40916C]" />
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
+            <CalendarPlus className="h-10 w-10 text-brand-light" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
             Noch keine Spielzeit
@@ -216,7 +216,7 @@ export default function SeasonsPage() {
           </p>
           <Button
             onClick={() => router.push('/admin/seasons/new')}
-            className="mt-6 bg-[#40916C] hover:bg-[#2d6a4f] text-white gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
+            className="mt-6 bg-brand-light hover:bg-brand-light/80 text-white gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
           >
             <Plus className="h-4 w-4" />
             Spielzeit erstellen

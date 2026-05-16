@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,9 +12,9 @@ import {
   Clock,
   Tag,
   TrendingUp,
-  Info,
   AlertTriangle,
   CheckCircle,
+  Loader2,
 } from 'lucide-react';
 
 export interface NewsItem {
@@ -30,74 +30,49 @@ export interface NewsItem {
   isPinned?: boolean;
 }
 
-const MOCK_NEWS: NewsItem[] = [
-  {
-    id: '1',
-    title: 'Neue Trainingsgruppen ab nächster Woche',
-    content:
-      'Ab kommender Woche starten wir neue Trainingsgruppen für Anfänger und Fortgeschrittene. Die Anmeldung ist jetzt möglich. Plätze sind begrenzt, also sichere dir deinen Platz frühzeitig!',
-    type: 'announcement',
-    priority: 'high',
-    publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    author: 'SwingZ Team',
-    tags: ['Training', 'Neuigkeiten'],
-    isPinned: true,
-  },
-  {
-    id: '2',
-    title: 'Wartungsarbeiten am Platz 3',
-    content:
-      'Am kommenden Wochenende führen wir Wartungsarbeiten an Platz 3 durch. Der Platz wird von Samstag bis Montag nicht verfügbar sein. Bitte buche deine Sessions entsprechend um.',
-    type: 'maintenance',
-    priority: 'urgent',
-    publishedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    author: 'Facility Management',
-    tags: ['Wartung', 'Platz 3'],
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Sommerturnier Anmeldung',
-    content:
-      'Die Anmeldung für unser jährliches Sommerturnier ist jetzt offen! Melde dich und dein Team an bis zum 15. Juni. Preise und Turnierdetails findest du auf unserer Webseite.',
-    type: 'event',
-    priority: 'medium',
-    publishedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    author: 'Event Team',
-    tags: ['Turnier', 'Sommer'],
-  },
-  {
-    id: '4',
-    title: 'Neue Trainer im Team',
-    content:
-      'Wir freuen uns, zwei neue Trainer in unserem Team begrüßen zu dürfen! Anna Schmidt und Thomas Müller bringen jahrelange Erfahrung mit und werden unsere Trainingsangebote erweitern.',
-    type: 'update',
-    priority: 'low',
-    publishedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    author: 'SwingZ Team',
-    tags: ['Personal', 'Neuigkeiten'],
-  },
-];
-
 export default function NewsAnnouncements() {
-  const [news, setNews] = useState<NewsItem[]>(MOCK_NEWS);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pinned' | 'recent'>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  const getNewsIcon = (type: NewsItem['type']) => {
-    switch (type) {
-      case 'announcement':
-        return <Bell className="h-5 w-5 text-blue-600" />;
-      case 'update':
-        return <TrendingUp className="h-5 w-5 text-green-600" />;
-      case 'maintenance':
-        return <AlertTriangle className="h-5 w-5 text-orange-600" />;
-      case 'event':
-        return <Calendar className="h-5 w-5 text-purple-600" />;
-      default:
-        return <Info className="h-5 w-5 text-gray-600" />;
+  // Fetch news from API
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    async function fetchNews() {
+      try {
+        const res = await fetch('/api/news', {
+          signal: abortController.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: NewsItem[] = (data.news || []).map((n: any) => ({
+            id: n.id,
+            title: n.title || '',
+            content: n.content || '',
+            type: n.type || 'announcement',
+            priority: n.priority || 'medium',
+            publishedAt: n.published_at || n.created_at || new Date().toISOString(),
+            author: n.author || 'SwingZ Team',
+            tags: n.tags || [],
+            expiresAt: n.expires_at || undefined,
+            isPinned: n.is_pinned || false,
+          }));
+          setNews(mapped);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch news:', err);
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
-  };
+
+    fetchNews();
+    return () => abortController.abort();
+  }, []);
 
   const getPriorityColor = (priority: NewsItem['priority']) => {
     switch (priority) {
@@ -218,7 +193,15 @@ export default function NewsAnnouncements() {
 
       {/* News List */}
       <div className="space-y-4">
-        {sortedNews.length === 0 ? (
+        {isLoading ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            </CardContent>
+          </Card>
+        ) : sortedNews.length === 0 ? (
           <Card>
             <CardContent className="py-12">
               <div className="text-center">
@@ -229,7 +212,6 @@ export default function NewsAnnouncements() {
           </Card>
         ) : (
           sortedNews.map((item) => {
-            const NewsIcon = getNewsIcon(item.type);
             const expired = isExpired(item);
 
             return (

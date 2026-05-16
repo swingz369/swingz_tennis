@@ -47,17 +47,17 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0A3D2E]/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/10"
+      className="sticky top-0 z-50 w-full bg-white/80 dark:bg-brand-950/80 backdrop-blur-xl border-b border-gray-100 dark:border-white/10"
       role="banner"
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/dashboard" className="flex items-center gap-3 group" aria-label="SwingZ Home">
           <div className="relative">
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#40916C] to-[#1B4332] rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300"
+              className="absolute inset-0 bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur opacity-0 group-hover:opacity-50 transition-opacity duration-300"
               aria-hidden="true"
             />
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#1B4332] to-[#40916C] shadow-lg">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br bg-gradient-to-br from-brand-primary to-brand-light shadow-lg">
               <Trophy className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
           </div>
@@ -98,8 +98,8 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               aria-haspopup="menu"
               aria-label="Benutzermenü öffnen"
             >
-              <Avatar className="h-7 w-7 border-2 border-[#40916C]/30">
-                <AvatarFallback className="bg-gradient-to-br from-[#40916C] to-[#1B4332] text-white text-xs font-semibold">
+              <Avatar className="h-7 w-7 border-2 border-brand-light/30">
+                <AvatarFallback className="bg-gradient-to-br bg-gradient-to-br from-brand-light to-brand-primary text-white text-xs font-semibold">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -115,7 +115,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   aria-hidden="true"
                 />
                 <div
-                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-[#0f2d22] py-2 shadow-xl ring-1 ring-gray-100 dark:ring-white/10 z-50"
+                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-surface-dark py-2 shadow-xl ring-1 ring-gray-100 dark:ring-white/10 z-50"
                   role="menu"
                   aria-label="Benutzermenü"
                 >

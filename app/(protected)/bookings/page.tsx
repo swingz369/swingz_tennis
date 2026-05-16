@@ -124,8 +124,9 @@ export default function BookingsPage() {
 
     return sessions.filter((s: Session) => {
       // If session has a specific date (timeslotStart), match exactly
-      if ((s as any).timeslotStart) {
-        return String((s as any).timeslotStart).substring(0, 10) === dateStr;
+      const ts = (s as Session & { timeslotStart?: string }).timeslotStart;
+      if (ts) {
+        return String(ts).substring(0, 10) === dateStr;
       }
       // Fallback: match by dayOfWeek (for recurring sessions without specific dates)
       return s.dayOfWeek === apiDay;
@@ -322,7 +323,7 @@ export default function BookingsPage() {
                                   </button>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 text-[10px]">
+                              <div className="flex items-center gap-1 text-[11px]">
                                 <Clock className="h-3 w-3" />
                                 <span className="truncate">
                                   {session.trainerName || session.trainerId}
@@ -332,7 +333,7 @@ export default function BookingsPage() {
                                 <div className="flex flex-col gap-1 mt-0.5">
                                   <div className="flex items-center gap-1">
                                     <span
-                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
                                         session.bookingStatus === 'confirmed'
                                           ? 'bg-green-100 text-green-700'
                                           : session.bookingStatus === 'cancelled'
@@ -360,7 +361,7 @@ export default function BookingsPage() {
                                               | 'no_show'
                                           )
                                         }
-                                        className="text-[9px] border rounded px-1 py-0.5 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+                                        className="text-[11px] border rounded px-1 py-0.5 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
                                       >
                                         <option value="pending">Ausstehend</option>
                                         <option value="confirmed">Bestätigt</option>
@@ -383,7 +384,7 @@ export default function BookingsPage() {
                                         e.stopPropagation();
                                         openFeedbackModal(session, day);
                                       }}
-                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
                                       title="Feedback geben"
                                     >
                                       <MessageSquare className="h-3 w-3" />

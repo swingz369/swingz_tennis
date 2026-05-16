@@ -4,6 +4,31 @@ import type { BookingRepository } from '@/domain/repositories';
 import type { ScheduleRepository } from '@/domain/repositories';
 import { BookingId } from '@/domain/value-objects';
 
+// Mock external services to prevent real Supabase/email calls in tests
+vi.mock('@/infrastructure/audit/audit.service', () => ({
+  AuditService: {
+    logBookingStatusChanged: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('@/infrastructure/email/email.service', () => ({
+  EmailService: {
+    sendBookingStatusChanged: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock('@/infrastructure/external/supabase/server', () => ({
+  createClient: vi.fn().mockResolvedValue({
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }),
+  }),
+}));
+
 // Mock Booking Entity helper
 function createMockBooking(
   id: string = 'booking-1',

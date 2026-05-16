@@ -1,4 +1,3 @@
-import { ValueObject } from '../value-objects/ids';
 import type { ClubId } from '../value-objects/ids';
 import type { CourtId } from '../value-objects/ids';
 

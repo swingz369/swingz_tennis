@@ -22,7 +22,7 @@ export async function validateBooking(input: CreateBookingInput): Promise<Bookin
 
   try {
     // Call the PostgreSQL validation function
-    const { data, error } = await (supabase as any).rpc('validate_booking_rules', {
+    const { data, error } = await (supabase as any).rpc('validate_booking_rules' as any, {
       p_user_id: input.user_id,
       p_club_id: input.club_id,
       p_court_id: input.court_id,
@@ -40,7 +40,7 @@ export async function validateBooking(input: CreateBookingInput): Promise<Bookin
       };
     }
 
-    if (!data || (data as any[]).length === 0) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
       return {
         is_valid: false,
         error_code: 'NO_RESPONSE',
@@ -48,7 +48,7 @@ export async function validateBooking(input: CreateBookingInput): Promise<Bookin
       };
     }
 
-    return (data as any[])[0];
+    return (data as any)[0];
   } catch (error) {
     console.error('Booking validation exception:', error);
     return {
@@ -82,7 +82,7 @@ export async function getBookingRulesForRole(
     return null;
   }
 
-  return data;
+  return data as BookingRule | null;
 }
 
 /**
@@ -103,7 +103,7 @@ export async function getClubBookingRules(clubId: string): Promise<BookingRule[]
     return [];
   }
 
-  return data || [];
+  return (data as BookingRule[]) || [];
 }
 
 /**
@@ -116,7 +116,7 @@ export async function getMemberBookingPreferences(
   const supabase = await createClient();
 
   const { data, error } = await (supabase as any)
-    .from('member_booking_preferences')
+    .from('member_booking_preferences' as any)
     .select('*')
     .eq('user_id', userId)
     .eq('club_id', clubId)
@@ -141,7 +141,7 @@ export async function updateMemberBookingPreferences(
   const supabase = await createClient();
 
   const { data, error } = await (supabase as any)
-    .from('member_booking_preferences')
+    .from('member_booking_preferences' as any)
     .upsert({
       user_id: userId,
       club_id: clubId,
@@ -171,7 +171,7 @@ export async function getActiveRestrictions(
   const supabase = await createClient();
 
   let query = (supabase as any)
-    .from('booking_restrictions')
+    .from('booking_restrictions' as any)
     .select('*')
     .eq('club_id', clubId)
     .eq('is_active', true);
@@ -203,9 +203,8 @@ export async function createBookingRestriction(
   restriction: Omit<BookingRestriction, 'id' | 'created_at' | 'updated_at'>
 ): Promise<BookingRestriction | null> {
   const supabase = await createClient();
-
   const { data, error } = await (supabase as any)
-    .from('booking_restrictions')
+    .from('booking_restrictions' as any)
     .insert(restriction)
     .select()
     .single();
@@ -250,7 +249,7 @@ export async function isTimeSlotAvailable(
 
   // Check for restrictions
   const { data: restrictions, error: restrictionError } = await (supabase as any)
-    .from('booking_restrictions')
+    .from('booking_restrictions' as any)
     .select('name, restriction_type')
     .eq('club_id', clubId)
     .eq('is_active', true)

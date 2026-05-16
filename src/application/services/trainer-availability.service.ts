@@ -479,4 +479,6 @@ export class TrainerAvailabilityService {
 }
 
 // Initialize mock data
-TrainerAvailabilityService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  TrainerAvailabilityService.initializeMockData();
+}

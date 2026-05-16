@@ -25,15 +25,18 @@ describe('RLS Policy Tests for Phase 2 Services', () => {
     serviceRoleClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     // Create test club
-    const { data: club } = await serviceRoleClient
+    const { data: club, error: clubError } = await serviceRoleClient
       .from('clubs')
       .insert({ name: 'RLS Test Club', slug: 'rls-test-club' })
       .select()
       .single();
+    if (!club || clubError) {
+      throw new Error(`Failed to create test club: ${clubError?.message ?? 'null returned'}`);
+    }
     testClubId = club.id;
 
     // Create test trainer
-    const { data: trainer } = await serviceRoleClient
+    const { data: trainer, error: trainerError } = await serviceRoleClient
       .from('trainers')
       .insert({
         club_id: testClubId,
@@ -42,6 +45,9 @@ describe('RLS Policy Tests for Phase 2 Services', () => {
       })
       .select()
       .single();
+    if (!trainer || trainerError) {
+      throw new Error(`Failed to create test trainer: ${trainerError?.message ?? 'null returned'}`);
+    }
     testTrainerId = trainer.id;
   });
 

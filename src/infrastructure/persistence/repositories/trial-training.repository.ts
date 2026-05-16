@@ -1,4 +1,4 @@
-import { eq, and, desc, gte, lte, ilike, or, sql } from 'drizzle-orm';
+import { eq, and, desc, ilike, or, sql } from 'drizzle-orm';
 import { getDb } from '../client';
 import { trialTrainings } from '../schema';
 import type { ITrialTrainingRepository } from '@/domain/repositories/trial-training-repository.interface';

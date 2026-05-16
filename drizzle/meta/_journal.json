@@ -15,6 +15,13 @@
       "when": 1778017404900,
       "tag": "0001_flaky_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778884359570,
+      "tag": "0002_whole_sway",
+      "breakpoints": true
     }
   ]
 }

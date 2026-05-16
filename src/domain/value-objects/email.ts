@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 export class Email {
   private readonly value: string;
 

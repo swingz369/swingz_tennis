@@ -10,7 +10,9 @@ export class AuditLogService {
   private auditLogs: Map<string, AuditLog> = new Map();
 
   constructor() {
-    this.initializeMockData();
+    if (process.env.NODE_ENV !== 'production') {
+      this.initializeMockData();
+    }
   }
 
   async logAction(params: {

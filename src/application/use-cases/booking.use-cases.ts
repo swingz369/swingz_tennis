@@ -6,9 +6,9 @@ import type { BookingRepository } from '@/domain/repositories/booking-repository
 import type { ScheduleRepository } from '@/domain/repositories/schedule-repository.interface';
 import type { MemberRepository } from '@/domain/repositories/member-repository.interface';
 import type { ClubRepository } from '@/domain/repositories/club-repository.interface';
-import type { CourtRepository } from '@/domain/repositories/court-repository.interface';
 import type { ClubId, ScheduleId } from '@/domain/value-objects';
 import { MemberId, SessionId, BookingId } from '@/domain/value-objects';
+import type { TimeSlot } from '@/domain/value-objects';
 import { ValidationService } from '@/domain/services/validation.service';
 import { BookingNotFoundError, SessionNotFoundError, DoubleBookingError } from '@/domain/errors';
 import type { IEmailService, IAuditService } from '@/domain/services';
@@ -92,7 +92,7 @@ export class CreateBookingUseCase {
     booking: Booking,
     sessionDetails: {
       clubId: ClubId;
-      timeslot: import('@/domain/value-objects').TimeSlot;
+      timeslot: TimeSlot;
       maxParticipants: number;
     }
   ): Promise<void> {
@@ -136,7 +136,6 @@ export class CancelBookingUseCase {
     @inject(TOKENS.BookingRepository) private bookingRepository: BookingRepository,
     @inject(TOKENS.ScheduleRepository) private scheduleRepository: ScheduleRepository,
     @inject(TOKENS.MemberRepository) private memberRepository: MemberRepository,
-    @inject(TOKENS.ClubRepository) private clubRepository: ClubRepository,
     @inject(TOKENS.EmailService) private emailService: IEmailService,
     @inject(TOKENS.AuditService) private auditService: IAuditService
   ) {}
@@ -180,7 +179,7 @@ export class CancelBookingUseCase {
     sessionDetails: {
       clubId: ClubId;
       scheduleId: ScheduleId;
-      timeslot: import('@/domain/value-objects').TimeSlot;
+      timeslot: TimeSlot;
       maxParticipants: number;
     },
     input: CancelBookingInput

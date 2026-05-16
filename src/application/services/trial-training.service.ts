@@ -417,4 +417,6 @@ export class TrialTrainingService {
 }
 
 // Initialize mock data
-TrialTrainingService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  TrialTrainingService.initializeMockData();
+}

@@ -26,3 +26,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ success: true });
   });
 }
+
+// DELETE /api/user/notifications/[id] — deletes a single notification
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const cookieStore = await cookies();
+  if (cookieStore.get('demo-mode')) {
+    return NextResponse.json({ success: true });
+  }
+
+  const { id } = await params;
+
+  return withApiAuth(req, async (auth) => {
+    const { error } = await auth.supabase
+      .from('notifications')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', auth.user.id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  });
+}

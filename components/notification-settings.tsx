@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -15,6 +15,7 @@ import {
   XCircle,
   Settings,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,46 +39,9 @@ export interface NotificationSettings {
   reminderTime: number; // hours before session
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'booking',
-    title: 'Buchung bestätigt',
-    message: 'Deine Buchung für Training am 15. Mai wurde bestätigt.',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    read: false,
-    actionUrl: '/bookings',
-  },
-  {
-    id: '2',
-    type: 'reminder',
-    title: 'Erinnerung: Training morgen',
-    message: 'Vergiss nicht dein Training morgen um 10:00 Uhr mit Trainer Max.',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    read: false,
-    actionUrl: '/training-schedule',
-  },
-  {
-    id: '3',
-    type: 'announcement',
-    title: 'Neue Trainingsgruppe verfügbar',
-    message: 'Es gibt jetzt Plätze in der Anfänger-Gruppe am Dienstagabend.',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    actionUrl: '/news',
-  },
-  {
-    id: '4',
-    type: 'system',
-    title: 'Willkommen bei SwingZ',
-    message: 'Vielen Dank für deine Anmeldung! Hier sind einige Tipps für den Start.',
-    timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-  },
-];
-
 export default function NotificationSettings() {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<NotificationSettings>({
     emailNotifications: true,
     pushNotifications: true,
@@ -88,39 +52,79 @@ export default function NotificationSettings() {
     reminderTime: 24,
   });
 
+  // Fetch notifications from API
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    async function fetchNotifications() {
+      try {
+        const res = await fetch('/api/user/notifications', {
+          signal: abortController.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: Notification[] = (data.notifications || []).map((n: any) => ({
+            id: n.id,
+            type: n.type || 'system',
+            title: n.title || '',
+            message: n.message || '',
+            timestamp: n.created_at || n.timestamp || new Date().toISOString(),
+            read: n.read || false,
+            actionUrl: n.action_url || undefined,
+          }));
+          setNotifications(mapped);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch notifications:', err);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchNotifications();
+    return () => abortController.abort();
+  }, []);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'booking':
-        return <Calendar className="h-5 w-5 text-blue-600" />;
-      case 'reminder':
-        return <Clock className="h-5 w-5 text-orange-600" />;
-      case 'announcement':
-        return <Bell className="h-5 w-5 text-purple-600" />;
-      case 'system':
-        return <User className="h-5 w-5 text-green-600" />;
-      default:
-        return <Bell className="h-5 w-5 text-gray-600" />;
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await fetch(`/api/user/notifications/${id}`, { method: 'PATCH' });
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      toast.success('Benachrichtigung als gelesen markiert');
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
     }
   };
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    toast.success('Benachrichtigung als gelesen markiert');
+  const handleMarkAllAsRead = async () => {
+    try {
+      await fetch('/api/user/notifications/mark-all-read', { method: 'POST' });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success('Alle Benachrichtigungen als gelesen markiert');
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    toast.success('Alle Benachrichtigungen als gelesen markiert');
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await fetch(`/api/user/notifications/${id}`, { method: 'DELETE' });
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      toast.success('Benachrichtigung gelöscht');
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
   };
 
-  const handleDeleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-    toast.success('Benachrichtigung gelöscht');
-  };
-
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
+    await Promise.all(
+      notifications.map((n) =>
+        fetch(`/api/user/notifications/${n.id}`, { method: 'DELETE' }).catch(() => {})
+      )
+    );
     setNotifications([]);
     toast.success('Alle Benachrichtigungen gelöscht');
   };
@@ -320,7 +324,11 @@ export default function NotificationSettings() {
           <CardTitle>Letzte Benachrichtigungen</CardTitle>
         </CardHeader>
         <CardContent>
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <BellOff className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>Keine Benachrichtigungen</p>

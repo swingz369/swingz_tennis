@@ -399,7 +399,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
                                   isDragging={activeId === session.id}
                                 />
                               ) : (
-                                <span className="text-[9px] opacity-50">{timeSlot}</span>
+                                <span className="text-[10px] opacity-50">{timeSlot}</span>
                               )}
                             </div>
                           );

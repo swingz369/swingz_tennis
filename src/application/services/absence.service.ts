@@ -292,7 +292,6 @@ export class AbsenceService {
    */
   static initializeMockData(): void {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
 
     this.absences = [
       {
@@ -328,4 +327,6 @@ export class AbsenceService {
 }
 
 // Initialize mock data
-AbsenceService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  AbsenceService.initializeMockData();
+}

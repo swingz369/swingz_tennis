@@ -181,7 +181,7 @@ export function AnalyticsDashboard({ metrics, clubName }: AnalyticsDashboardProp
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {metrics.monthlyData.map((month, idx) => (
+            {metrics.monthlyData.map((month) => (
               <div key={month.month} className="flex items-center gap-4">
                 <div className="w-24 text-sm font-medium text-gray-600">{month.month}</div>
                 <div className="flex-1 space-y-2">

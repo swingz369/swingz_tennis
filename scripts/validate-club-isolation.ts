@@ -92,7 +92,7 @@ async function validateClubIsolation() {
       console.log('⚠️  WARN: No trainers assigned to club');
     } else {
       // Check if trainers exist in trainers table
-      const trainerUserIds = trainerMemberships.map((t) => t.user_id);
+      const _trainerUserIds = trainerMemberships.map((t) => t.user_id);
       const { data: users } = await supabase.auth.admin.listUsers();
 
       const { data: trainerRecords } = await supabase

@@ -10,8 +10,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import {
   User,
-  Mail,
-  Phone,
   MapPin,
   Calendar,
   CheckCircle,

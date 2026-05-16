@@ -110,7 +110,7 @@ export function MemberDashboard({ user, noMembership }: MemberDashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-l-4 border-[#40916C] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-light pl-4 py-2">
               <div>
                 <p className="font-medium">Gruppen-Training Fortgeschritten</p>
                 <p className="text-sm text-muted-foreground">Mittwoch, 18:00 - 19:30</p>
@@ -119,7 +119,7 @@ export function MemberDashboard({ user, noMembership }: MemberDashboardProps) {
                 <Link href="/training-schedule">Details</Link>
               </Button>
             </div>
-            <div className="flex items-center justify-between border-l-4 border-[#40916C] pl-4 py-2">
+            <div className="flex items-center justify-between border-l-4 border-brand-light pl-4 py-2">
               <div>
                 <p className="font-medium">Einzel-Training</p>
                 <p className="text-sm text-muted-foreground">Freitag, 17:00 - 18:00</p>

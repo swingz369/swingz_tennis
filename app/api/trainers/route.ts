@@ -37,15 +37,19 @@ export async function GET(request: NextRequest) {
     const profileMap: Record<string, any> = {};
 
     if (trainerIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('trainer_profiles' as any)
-        .select('user_id, specialties, bio')
-        .in('user_id', trainerIds)
-        .catch(() => ({ data: null }));
+      try {
+        const result = await supabase
+          .from('trainer_profiles' as any)
+          .select('user_id, specialties, bio')
+          .in('user_id', trainerIds);
+        const profiles = result.data;
 
-      (profiles ?? []).forEach((p: any) => {
-        profileMap[p.user_id] = p;
-      });
+        (profiles ?? []).forEach((p: any) => {
+          profileMap[p.user_id] = p;
+        });
+      } catch {
+        // Table may not exist — skip profiles
+      }
     }
 
     const trainers = (data ?? []).map((m: any) => {

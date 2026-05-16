@@ -482,4 +482,6 @@ export class HourlyRateService {
 }
 
 // Initialize mock data
-HourlyRateService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  HourlyRateService.initializeMockData();
+}

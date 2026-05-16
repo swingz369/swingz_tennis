@@ -748,7 +748,7 @@ Dein ${clubName}-Team
    * Generate rejection email
    */
   static generateRejectionEmail(data: OnboardingEmailData & { reason: string }): EmailTemplate {
-    const { recipientName, clubName, clubAddress, clubPhone, clubEmail, reason } = data;
+    const { recipientName, clubName, clubPhone, clubEmail, reason } = data;
 
     const subject = `Deine Bewerbung bei ${clubName}`;
 

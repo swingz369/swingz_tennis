@@ -101,9 +101,29 @@ export function Sidebar({
   const activeClub = clubs?.find((c) => c.id === selectedClubId) ?? clubs?.[0] ?? null;
   const hasMultipleClubs = (clubs?.length ?? 0) > 1;
 
-  // TODO: Replace with actual counts from API
-  const notificationCount = 0;
-  const approvalCount = 0;
+  // Fetch notification and approval counts from API
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [approvalCount, setApprovalCount] = useState(0);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    // Fetch notification count (all roles)
+    fetch('/api/user/notifications/count', { signal: abortController.signal })
+      .then((res) => res.json())
+      .then((data) => setNotificationCount(data?.count ?? 0))
+      .catch(() => {});
+
+    // Fetch pending approval count (admin only)
+    if (isAdmin) {
+      fetch('/api/admin/approvals/count', { signal: abortController.signal })
+        .then((res) => res.json())
+        .then((data) => setApprovalCount(data?.count ?? 0))
+        .catch(() => {});
+    }
+
+    return () => abortController.abort();
+  }, [isAdmin]);
 
   const handleSwitchClub = async (clubId: string) => {
     setClubSwitcherOpen(false);
@@ -121,8 +141,26 @@ export function Sidebar({
     }
   };
 
+  interface NavItem {
+    name: string;
+    href: string;
+    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+    badge?: number;
+  }
+
+  // ... (keep the existing code)
+
+  // Secondary navigation (defined early so primaryNav can reference it for trainer fallback)
+  const secondaryNav: NavItem[] = [
+    { name: 'Mein Profil', href: '/profile', icon: User },
+    ...(!isSuperAdmin
+      ? [{ name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard }]
+      : []),
+    { name: 'News & Updates', href: '/news', icon: Newspaper },
+  ];
+
   // Primary navigation — role-based, highest role wins
-  const primaryNav = (() => {
+  const primaryNav: NavItem[] = (() => {
     // SUPERADMIN: Platform-wide administration
     if (isSuperAdmin) {
       return [
@@ -145,6 +183,7 @@ export function Sidebar({
           icon: Bell,
           badge: notificationCount,
         },
+        ...(secondaryNav as NavItem[]),
       ];
     }
 
@@ -215,15 +254,6 @@ export function Sidebar({
       }
     : null;
 
-  // Secondary navigation
-  const secondaryNav = [
-    { name: 'Mein Profil', href: '/profile', icon: User },
-    ...(!isSuperAdmin
-      ? [{ name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard }]
-      : []),
-    { name: 'News & Updates', href: '/news', icon: Newspaper },
-  ];
-
   // Category sections with sub-items (superadmin only now)
   const categoryNav = (() => {
     if (isSuperAdmin) {
@@ -248,10 +278,10 @@ export function Sidebar({
   const activeGradient = isSuperAdmin
     ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg'
     : isAdmin
-      ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] text-white shadow-lg'
+      ? 'bg-gradient-to-r bg-gradient-accent text-white shadow-lg'
       : isTrainer
-        ? 'bg-gradient-to-r from-[#22c55e] to-[#15803d] text-white shadow-lg'
-        : 'bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white shadow-lg';
+        ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg'
+        : 'bg-gradient-to-r bg-gradient-primary text-white shadow-lg';
 
   const sectionLabel = isSuperAdmin
     ? 'Plattform'
@@ -265,7 +295,7 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'h-[calc(100vh-4rem)] w-64 border-r border-gray-100 dark:border-white/10 bg-white dark:bg-[#0f2d22] transition-transform duration-300',
+        'h-[calc(100vh-4rem)] w-64 border-r border-gray-100 dark:border-white/10 bg-white dark:bg-surface-dark transition-transform duration-300',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0'
@@ -279,7 +309,7 @@ export function Sidebar({
       {open && (
         <button
           onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#40916C]"
+          className="md:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-light"
           aria-label="Menü schließen"
         >
           <X className="h-5 w-5" />
@@ -351,7 +381,7 @@ export function Sidebar({
             <>
               {/* Section 1 – ÜBERSICHT (single link, no collapse) */}
               <div
-                className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-400/60 dark:text-white/30"
+                className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-widest text-gray-400/60 dark:text-white/30"
                 role="heading"
                 aria-level={2}
               >
@@ -367,7 +397,7 @@ export function Sidebar({
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-[#40916C]/20 text-[#40916C] dark:bg-[#40916C]/20 dark:text-[#74c69d]'
+                        ? 'bg-brand-light/20 text-brand-light dark:bg-brand-light/20 dark:text-green-300'
                         : 'text-gray-600 dark:text-gray-300 hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
@@ -499,8 +529,8 @@ export function Sidebar({
                       <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                       <span>{item.name}</span>
                     </div>
-                    {(item as any).badge !== undefined && (
-                      <NavigationBadge count={(item as any).badge} variant="default" />
+                    {(item as NavItem).badge != null && (item as NavItem).badge !== undefined && (
+                      <NavigationBadge count={(item as NavItem).badge!} variant="default" />
                     )}
                   </Link>
                 );
@@ -613,7 +643,7 @@ function AdminSection({
         className={cn(
           'w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-widest transition-all duration-200',
           hasActiveChild
-            ? 'text-[#74c69d] dark:text-[#74c69d]'
+            ? 'text-green-300 dark:text-green-300'
             : 'text-gray-400/70 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60'
         )}
         aria-expanded={isOpen}
@@ -645,7 +675,7 @@ function AdminSection({
                 className={cn(
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-[#40916C]/15 text-[#74c69d] dark:text-[#74c69d]'
+                    ? 'bg-brand-light/15 text-green-300 dark:text-green-300'
                     : 'text-gray-500 dark:text-gray-400 hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                 )}
                 aria-current={isActive ? 'page' : undefined}

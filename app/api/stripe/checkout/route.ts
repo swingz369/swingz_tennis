@@ -118,22 +118,16 @@ export async function POST(_request: NextRequest) {
       const successUrl = `${baseUrl}/bookings?payment=success`;
       const cancelUrl = `${baseUrl}/bookings?payment=cancelled`;
 
-      // --- Stripe not configured → simulate ---
+      // --- Stripe not configured → return error ---
       const stripe = getStripe();
       if (!stripe) {
-        // Graceful fallback: mark booking confirmed/paid immediately
-        if (bookingId) {
-          await auth.supabase
-            .from('bookings')
-            .update({ status: 'confirmed', payment_status: 'paid' })
-            .eq('id', bookingId);
-        }
-
-        return NextResponse.json({
-          url: '/bookings?payment=simulated',
-          sessionId: 'sim_123',
-          simulated: true,
-        });
+        return NextResponse.json(
+          {
+            error:
+              'Zahlungsdienstleister ist nicht konfiguriert. Bitte wende dich an den Administrator.',
+          },
+          { status: 503 }
+        );
       }
 
       // --- Create real Stripe Checkout Session ---

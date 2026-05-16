@@ -313,4 +313,6 @@ export class PaymentSettingsService {
 }
 
 // Initialize mock data
-PaymentSettingsService.initializeMockData();
+if (process.env.NODE_ENV !== 'production') {
+  PaymentSettingsService.initializeMockData();
+}
