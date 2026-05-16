@@ -40,30 +40,11 @@ import { toast } from 'sonner';
 import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
 import { useSessions, type Session } from '@/hooks/use-sessions';
+import { CALENDAR_TIME_SLOTS as TIME_SLOTS, getSurfaceLabel } from '@/lib/court-calendar-utils';
 
 interface AdminCourtCalendarProps {
   onBookCourt?: (courtId: string, date: Date, startTime: string, endTime: string) => void;
 }
-
-const TIME_SLOTS = [
-  '06:00',
-  '07:00',
-  '08:00',
-  '09:00',
-  '10:00',
-  '11:00',
-  '12:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-  '17:00',
-  '18:00',
-  '19:00',
-  '20:00',
-  '21:00',
-  '22:00',
-];
 
 interface DraggableSessionProps {
   session: Session;
@@ -255,16 +236,6 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
     },
     [activeId, sessions, getSessionForCourtAndTime]
   );
-
-  const getSurfaceLabel = (surface: string) => {
-    const labels: Record<string, string> = {
-      clay: 'Sand',
-      grass: 'Rasen',
-      hard: 'Hartplatz',
-      carpet: 'Teppich',
-    };
-    return labels[surface] || surface;
-  };
 
   if (rolesLoading) {
     return (

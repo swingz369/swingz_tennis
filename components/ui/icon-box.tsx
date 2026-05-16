@@ -97,7 +97,7 @@ export function IconBox({
         className
       )}
     >
-      <Icon className={cn(sizes.icon, iconClassName)} />
+      <Icon className={cn(sizes.icon, iconClassName)} aria-hidden="true" />
     </div>
   );
 }

@@ -21,31 +21,12 @@ import { useCourts } from '@/hooks/use-courts';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions, useCreateBooking, useCancelBooking } from '@/hooks/use-sessions';
 import { exportSessionsToICS, exportSessionToGoogleCalendar } from '@/lib/calendar-export';
+import { CALENDAR_TIME_SLOTS as TIME_SLOTS, getSurfaceLabel } from '@/lib/court-calendar-utils';
 
 interface DailyCourtViewProps {
   selectedDate?: Date;
   onDateChange?: (date: Date) => void;
 }
-
-const TIME_SLOTS = [
-  '06:00',
-  '07:00',
-  '08:00',
-  '09:00',
-  '10:00',
-  '11:00',
-  '12:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-  '17:00',
-  '18:00',
-  '19:00',
-  '20:00',
-  '21:00',
-  '22:00',
-];
 
 export default function DailyCourtView({
   selectedDate: initialDate,
@@ -167,16 +148,6 @@ export default function DailyCourtView({
     },
     [clubId, cancelBooking]
   );
-
-  const getSurfaceLabel = (surface: string) => {
-    const labels: Record<string, string> = {
-      clay: 'Sand',
-      grass: 'Rasen',
-      hard: 'Hartplatz',
-      carpet: 'Teppich',
-    };
-    return labels[surface] || surface;
-  };
 
   const getBookingStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
