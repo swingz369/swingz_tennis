@@ -1,0 +1,126 @@
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+// GET: List family members
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Get family group for this user
+    const { data: familyLink } = await (supabase as any)
+      .from('family_accounts')
+      .select('family_group_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!familyLink) {
+      return NextResponse.json({ familyMembers: [] });
+    }
+
+    // Get all members in the family group
+    const { data: familyMembers } = await (supabase as any)
+      .from('family_accounts')
+      .select('user_id, relationship, users(full_name, email)')
+      .eq('family_group_id', familyLink.family_group_id)
+      .order('created_at');
+
+    return NextResponse.json({
+      familyGroupId: familyLink.family_group_id,
+      members: (familyMembers || []).map((m: any) => ({
+        userId: m.user_id,
+        name: (m.users as any)?.full_name || 'Unbekannt',
+        email: (m.users as any)?.email || '',
+        relationship: m.relationship,
+        isSelf: m.user_id === user.id,
+      })),
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// POST: Add family member (via invite code)
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { inviteCode } = await request.json();
+
+    if (inviteCode) {
+      // Joining via invite code
+      const { data: invite } = await (supabase as any)
+        .from('family_invites')
+        .select('*')
+        .eq('code', inviteCode.toUpperCase().trim())
+        .eq('is_used', false)
+        .maybeSingle();
+
+      if (!invite) {
+        return NextResponse.json(
+          { error: 'Ungültiger oder bereits verwendeter Code' },
+          { status: 400 }
+        );
+      }
+
+      // Add to family group
+      await (supabase as any).from('family_accounts').insert({
+        family_group_id: invite.family_group_id,
+        user_id: user.id,
+        relationship: 'family',
+      });
+
+      // Mark invite as used
+      await (supabase as any)
+        .from('family_invites')
+        .update({ is_used: true, used_by: user.id })
+        .eq('id', invite.id);
+
+      return NextResponse.json({ success: true, message: 'Familienmitglied hinzugefügt' });
+    }
+
+    // Creating a new family group
+    const { data: existingLink } = await (supabase as any)
+      .from('family_accounts')
+      .select('family_group_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (existingLink) {
+      return NextResponse.json({ error: 'Bereits Teil einer Familie' }, { status: 409 });
+    }
+
+    // Create family group and add self
+    const familyGroupId = crypto.randomUUID();
+    await (supabase as any).from('family_accounts').insert({
+      family_group_id: familyGroupId,
+      user_id: user.id,
+      relationship: 'primary',
+    });
+
+    // Generate invite code
+    const newInviteCode = `FAM${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    await (supabase as any).from('family_invites').insert({
+      family_group_id: familyGroupId,
+      code: newInviteCode,
+      created_by: user.id,
+    });
+
+    return NextResponse.json({
+      success: true,
+      familyGroupId,
+      inviteCode: newInviteCode,
+      message: 'Familie erstellt! Teile diesen Code mit deinen Familienmitgliedern',
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

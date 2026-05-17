@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, Users, Star, Clock, AlertCircle, Download } from 'lucide-react';
@@ -162,51 +163,41 @@ export default function TrialTrainingAnalytics() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Gesamt</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.total}</div>
-            <p className="text-xs text-gray-500 mt-1">Probetrainings</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Users}
+          value={analytics.total}
+          label="Gesamt"
+          sublabel="Probetrainings"
+          iconClassName="bg-blue-100"
+          valueClassName="text-blue-600"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Konversionsrate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.conversionRate}%</div>
-            <p className="text-xs text-gray-500 mt-1">Von Abgeschlossen zu Mitglied</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={TrendingUp}
+          value={`${analytics.conversionRate}%`}
+          label="Konversionsrate"
+          sublabel="Von Abgeschlossen zu Mitglied"
+          iconClassName="bg-green-100"
+          valueClassName="text-green-600"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Durchschnittsbewertung
-            </CardTitle>
-            <Star className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.averageRating.toFixed(1)}</div>
-            <p className="text-xs text-gray-500 mt-1">Von 5 Sternen</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Star}
+          value={analytics.averageRating.toFixed(1)}
+          label="Durchschnittsbewertung"
+          sublabel="Von 5 Sternen"
+          iconClassName="bg-yellow-100"
+          valueClassName="text-yellow-600"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Durchschnittsdauer</CardTitle>
-            <Clock className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.averageDuration} Min</div>
-            <p className="text-xs text-gray-500 mt-1">Pro Training</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Clock}
+          value={`${analytics.averageDuration} Min`}
+          label="Durchschnittsdauer"
+          sublabel="Pro Training"
+          iconClassName="bg-purple-100"
+          valueClassName="text-purple-600"
+        />
       </div>
 
       {/* Status Breakdown */}

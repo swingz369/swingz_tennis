@@ -1,0 +1,233 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Trophy, ArrowRight, Mail, MapPin, Phone, Send, Sparkles } from 'lucide-react';
+
+export default function ContactPage() {
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, this would send an email or create a support ticket
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-gray-900">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <nav className="flex h-20 items-center justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold text-white">SWINGZ</span>
+            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="text-white/90 hover:text-white hover:bg-white/10"
+                >
+                  Anmelden
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="accent">Kostenlos starten</Button>
+              </Link>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="bg-gray-50 py-20 sm:py-28">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+          <span className="inline-block px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-4">
+            Kontakt
+          </span>
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">
+            Wir sind für dich da
+          </h1>
+          <p className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Hast du Fragen zu SWINGZ? Möchtest du einen Testzugang oder ein individuelles Angebot?
+            Wir freuen uns auf deine Nachricht.
+          </p>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* Form */}
+            <div>
+              {submitted ? (
+                <div className="bg-green-50 border border-green-100 rounded-3xl p-8 text-center">
+                  <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                    <Send className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Nachricht gesendet!</h3>
+                  <p className="text-gray-600">
+                    Wir melden uns in Kürze bei dir. In der Regel antworten wir innerhalb von 24
+                    Stunden.
+                  </p>
+                  <Button variant="outline" className="mt-6" onClick={() => setSubmitted(false)}>
+                    Neue Nachricht
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Vorname *</Label>
+                      <Input
+                        id="firstName"
+                        required
+                        className="h-12 rounded-xl border-gray-200"
+                        placeholder="Max"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Nachname *</Label>
+                      <Input
+                        id="lastName"
+                        required
+                        className="h-12 rounded-xl border-gray-200"
+                        placeholder="Mustermann"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-Mail *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      className="h-12 rounded-xl border-gray-200"
+                      placeholder="max@verein.de"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="club">Vereinsname</Label>
+                    <Input
+                      id="club"
+                      className="h-12 rounded-xl border-gray-200"
+                      placeholder="z.B. TC Grün-Weiß"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Nachricht *</Label>
+                    <textarea
+                      id="message"
+                      required
+                      rows={5}
+                      className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brandPrimary/20 focus:border-brand-light resize-none"
+                      placeholder="Beschreibe dein Anliegen..."
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full h-12 rounded-xl bg-gradient-primary text-white shadow-lg"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Nachricht senden
+                  </Button>
+                </form>
+              )}
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-8">
+              <div className="bg-gray-50 rounded-3xl p-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Kontaktmöglichkeiten</h3>
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-xl bg-brand-primary/10 flex items-center justify-center shrink-0">
+                      <Mail className="h-5 w-5 text-brand-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">E-Mail</p>
+                      <a
+                        href="mailto:info@swingz.app"
+                        className="text-brand-primary hover:underline"
+                      >
+                        info@swingz.app
+                      </a>
+                      <p className="text-sm text-gray-500 mt-1">Wir antworten innerhalb von 24h</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-xl bg-brand-accent/10 flex items-center justify-center shrink-0">
+                      <Phone className="h-5 w-5 text-brand-accent" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">Telefon</p>
+                      <a href="tel:+491234567890" className="text-brand-primary hover:underline">
+                        +49 123 4567890
+                      </a>
+                      <p className="text-sm text-gray-500 mt-1">Mo–Fr, 9:00–17:00 Uhr</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
+                      <MapPin className="h-5 w-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">Adresse</p>
+                      <p className="text-gray-600">SWINGZ GmbH</p>
+                      <p className="text-gray-600">Musterstraße 123</p>
+                      <p className="text-gray-600">12345 Berlin</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-brand-primary to-brand-light rounded-3xl p-8 text-white">
+                <Sparkles className="h-8 w-8 mb-4" />
+                <h3 className="text-xl font-bold mb-2">Testzugang anfragen</h3>
+                <p className="text-white/80 mb-6">
+                  Teste SWINGZ 30 Tage kostenlos und unverbindlich.
+                </p>
+                <Link href="/register">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full bg-white text-brand-primary hover:bg-white/90"
+                  >
+                    Jetzt Testzugang sichern
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 py-8 border-t border-gray-800">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
+            <Link href="/about" className="hover:text-white transition-colors">
+              Über uns
+            </Link>
+            <Link href="/" className="hover:text-white transition-colors">
+              Startseite
+            </Link>
+            <Link href="/login" className="hover:text-white transition-colors">
+              Anmelden
+            </Link>
+          </div>
+          <p>© 2025 SWINGZ – Premium Tennis Club Management</p>
+        </div>
+      </footer>
+    </div>
+  );
+}

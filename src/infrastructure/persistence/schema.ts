@@ -1191,7 +1191,7 @@ export const paymentSettings = pgTable(
         secretKey?: string;
         merchantId?: string;
         webhookUrl?: string;
-        [key: string]: any;
+        [key: string]: string | undefined;
       }>()
       .notNull()
       .default({}),

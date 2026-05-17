@@ -1,15 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth } from '@/lib/api-auth';
 
 // POST /api/user/notifications/mark-all-read — marks all notifications as read
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ success: true });
-  }
-
   return withApiAuth(req, async (auth) => {
     const { error } = await auth.supabase
       .from('notifications')

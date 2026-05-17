@@ -1,15 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth } from '@/lib/api-auth';
 
 // PATCH /api/user/notifications/[id] — marks a single notification as read
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ success: true });
-  }
-
   const { id } = await params;
 
   return withApiAuth(req, async (auth) => {
@@ -29,11 +23,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 // DELETE /api/user/notifications/[id] — deletes a single notification
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ success: true });
-  }
-
   const { id } = await params;
 
   return withApiAuth(req, async (auth) => {

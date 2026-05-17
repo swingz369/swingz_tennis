@@ -29,6 +29,7 @@ import {
   ChevronUp,
   UserPlus,
   DollarSign,
+  Clock,
 } from 'lucide-react';
 
 interface Club {
@@ -54,6 +55,15 @@ export function Sidebar({
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLElement>(null);
   const [clubSwitcherOpen, setClubSwitcherOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  // Detect mobile to apply aria-hidden correctly on desktop vs mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Handle swipe gestures on mobile
   useEffect(() => {
@@ -176,7 +186,9 @@ export function Sidebar({
       return [
         { name: 'Trainer Dashboard', href: '/trainer', icon: GraduationCap },
         { name: 'Termin-Verwaltung', href: '/scheduler', icon: Calendar },
+        { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
         { name: 'Meine Anwesenheit', href: '/attendance-history', icon: TrendingUp },
+        { name: 'Gamification', href: '/gamification', icon: Trophy },
         {
           name: 'Benachrichtigungen',
           href: '/notifications',
@@ -193,6 +205,7 @@ export function Sidebar({
       { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
       { name: 'Trainingszeiten', href: '/training-schedule', icon: Calendar },
       { name: 'Meine Anwesenheit', href: '/attendance-history', icon: TrendingUp },
+      { name: 'Gamification', href: '/gamification', icon: Trophy },
       {
         name: 'Benachrichtigungen',
         href: '/notifications',
@@ -240,6 +253,7 @@ export function Sidebar({
           subItems: [
             { name: 'Abrechnung', href: '/admin/billing' },
             { name: 'Analytics', href: '/admin/analytics' },
+            { name: 'Berichte', href: '/admin/reports' },
           ],
         },
         settings: {
@@ -249,6 +263,7 @@ export function Sidebar({
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
             { name: 'News & Kommunikation', href: '/news' },
             { name: 'Onboarding', href: '/admin/onboarding' },
+            { name: 'Shop', href: '/shop' },
           ],
         },
       }
@@ -303,7 +318,7 @@ export function Sidebar({
       )}
       role="navigation"
       aria-label="Main navigation"
-      aria-hidden={!open || undefined}
+      aria-hidden={isMobile === true && !open ? true : undefined}
     >
       {/* Mobile close button */}
       {open && (

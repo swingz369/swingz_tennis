@@ -7,54 +7,6 @@ import { DrizzleScheduleRepository } from '@/infrastructure/persistence/reposito
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
-const DEMO_BOOKINGS = [
-  {
-    id: 'b1',
-    memberName: 'Max Mustermann',
-    date: '2025-01-15',
-    time: '10:00',
-    court: 'Platz 1',
-    status: 'Bestätigt',
-  },
-  {
-    id: 'b2',
-    memberName: 'Anna Schmidt',
-    date: '2025-01-16',
-    time: '14:00',
-    court: 'Platz 2',
-    status: 'Bestätigt',
-  },
-  {
-    id: 'b3',
-    memberName: 'Tom Müller',
-    date: '2025-01-17',
-    time: '09:00',
-    court: 'Platz 3',
-    status: 'Storniert',
-  },
-  {
-    id: 'b4',
-    memberName: 'Lisa Weber',
-    date: '2025-01-18',
-    time: '16:00',
-    court: 'Platz 1',
-    status: 'Bestätigt',
-  },
-  {
-    id: 'b5',
-    memberName: 'Mike Berger',
-    date: '2025-01-19',
-    time: '11:00',
-    court: 'Platz 4',
-    status: 'Warteliste',
-  },
-];
-
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
@@ -72,16 +24,6 @@ export async function GET(_request: NextRequest) {
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-    }
-
-    if (isDemoMode(_request)) {
-      const csv = convertToCSV(DEMO_BOOKINGS);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename="bookings-export.csv"',
-        },
-      });
     }
 
     try {

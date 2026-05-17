@@ -210,7 +210,10 @@ export class SEPAMandateService {
   /**
    * Validate mandate data
    */
-  static validateMandateData(data: any): { valid: boolean; errors: string[] } {
+  static validateMandateData(data: Record<string, string | undefined>): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!data.accountHolder || data.accountHolder.length < 2) {

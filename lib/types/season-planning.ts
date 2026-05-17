@@ -170,6 +170,17 @@ export interface AutoPlanConfig {
   optimization_goals: OptimizationGoal[];
   allow_overbooking: boolean;
   prefer_consistent_timeslots: boolean;
+  maxParticipantsPerSession?: number;
+  preferredDays?: string[];
+  preferredTimeSlots?: Array<{
+    start: string;
+    end: string;
+    start_time?: string;
+    end_time?: string;
+  }>;
+  skillLevels?: string[];
+  avoidTrainerOverload?: boolean;
+  balanceGroupSizes?: boolean;
 }
 
 export type OptimizationGoal =
@@ -284,6 +295,7 @@ export interface AutoPlanRequest {
   season_id: string;
   config?: Partial<AutoPlanConfig>;
   dry_run?: boolean; // Preview only, don't save
+  use_ai?: boolean; // Use AI-powered scheduling (V2)
 }
 
 export interface AutoPlanResponse {

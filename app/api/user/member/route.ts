@@ -1,20 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_req: NextRequest) {
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
-  if (hasDemoMode) {
-    return NextResponse.json({
-      memberId: 'demo-member',
-      fullName: 'Demo User',
-      email: 'demo@swingz.com',
-    });
-  }
-
   return withApiAuth(_req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {

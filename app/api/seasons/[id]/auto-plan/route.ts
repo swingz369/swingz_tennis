@@ -22,6 +22,7 @@ interface RouteContext {
  * Body: AutoPlanRequest
  * - config?: Partial<AutoPlanConfig> - Override default config
  * - dry_run?: boolean - Preview only, don't save
+ * - use_ai?: boolean - Use AI-powered scheduling (default: false, uses deterministic)
  *
  * Returns: AutoPlanResponse with generated entries and metrics
  */
@@ -92,6 +93,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         };
 
         const dryRun = body.dry_run || false;
+        const useAI = body.use_ai || false;
 
         // Update season status
         if (!dryRun) {
@@ -101,13 +103,29 @@ export async function POST(request: NextRequest, context: RouteContext) {
             .where(eq(seasons.id, seasonId));
         }
 
-        // Run auto-planning algorithm
-        console.log(`Starting auto-planning for season ${seasonId} (dry_run: ${dryRun})`);
+        // Run auto-planning algorithm (AI or deterministic)
+        console.log(
+          `Starting auto-planning for season ${seasonId} (dry_run: ${dryRun}, ai: ${useAI})`
+        );
         const startTime = Date.now();
 
         let result;
+        let aiEnhanced = false;
+        let modelUsed = 'none';
+
         try {
-          result = await AutoPlanningService.generatePlan(seasonId, finalConfig, dryRun);
+          if (useAI) {
+            const aiResult = await AutoPlanningService.generatePlanAI(
+              seasonId,
+              finalConfig,
+              dryRun
+            );
+            result = aiResult;
+            aiEnhanced = aiResult.aiEnhanced;
+            modelUsed = aiResult.modelUsed;
+          } else {
+            result = await AutoPlanningService.generatePlan(seasonId, finalConfig, dryRun);
+          }
         } catch (error) {
           // Revert status on failure
           if (!dryRun) {
@@ -120,7 +138,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         const endTime = Date.now();
-        console.log(`Auto-planning completed in ${endTime - startTime}ms`);
+        console.log(
+          `Auto-planning completed in ${endTime - startTime}ms (ai: ${aiEnhanced}, model: ${modelUsed})`
+        );
 
         // Build warnings
         const warnings: string[] = [];
@@ -137,17 +157,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
           warnings.push('Less than 50% of preferences could be matched');
         }
 
+        if (aiEnhanced) {
+          warnings.push(`AI-enhanced planning (${modelUsed})`);
+        }
+
         const response = {
           success: true,
           season_id: seasonId,
           metrics: result.metrics,
           entries_created: result.entries.length,
           conflicts_detected: result.conflicts.length,
+          ai_enhanced: aiEnhanced,
+          model_used: modelUsed,
           warnings,
           ...(dryRun && {
             plan_entries: result.entries.map((entry) => ({
               ...entry,
-              trainer_name: 'Trainer', // Would need to fetch in real impl
+              trainer_name: 'Trainer',
               court_name: 'Court',
               group_name: 'Group',
               participant_count: entry.expected_participants.length,
@@ -166,7 +192,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           ...(!dryRun && {
             plan_entries: result.entries.map((entry) => ({
               ...entry,
-              trainer_name: 'Trainer', // Would need to fetch in real impl
+              trainer_name: 'Trainer',
               court_name: 'Court',
               group_name: 'Group',
               participant_count: entry.expected_participants.length,

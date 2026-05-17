@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '../test-utils';
 import { QueryError, EmptyState, NotFound, AccessDenied } from '@/components/ui/error-states';
+import { MapPin } from 'lucide-react';
 
 describe('Error States Components', () => {
   describe('QueryError', () => {
@@ -52,14 +53,15 @@ describe('Error States Components', () => {
     });
 
     it('should render icon when provided', () => {
-      render(
-        <EmptyState
-          title="No data"
-          description="No data available"
-          icon={<div data-testid="test-icon">Icon</div>}
-        />
+      const { container } = render(
+        <EmptyState title="No data" description="No data available" icon={MapPin} />
       );
-      expect(screen.getByTestId('test-icon')).toBeInTheDocument();
+      // EmptyState wraps icon in a div with rounded-full class
+      const iconContainer = container.querySelector('.rounded-full');
+      expect(iconContainer).toBeInTheDocument();
+      // The icon SVG should be inside
+      const svg = container.querySelector('svg');
+      expect(svg).toBeInTheDocument();
     });
   });
 

@@ -2,21 +2,22 @@
  * RLS (Row Level Security) Policy Tests
  * Tests access control for all 11 migrated services with different user roles
  *
- * User Roles:
- * - superadmin: Full access across all clubs
- * - admin: Full access within their club
- * - trainer: Limited access within their club
- * - member: Read-only access to their own data
+ * NOTE: These tests require a running Supabase instance with the complete schema
+ * applied. They are skipped automatically when SUPABASE_SERVICE_ROLE_KEY
+ * is not configured.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-describe('RLS Policy Tests for Phase 2 Services', () => {
+const hasSupabase = !!SUPABASE_SERVICE_KEY;
+const describeIntegration = hasSupabase ? describe : describe.skip;
+
+describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
   let serviceRoleClient: SupabaseClient;
   let testClubId: string;
   let testTrainerId: string;

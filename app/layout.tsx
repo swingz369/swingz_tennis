@@ -5,6 +5,7 @@ import { Providers } from './providers';
 import { Toaster } from 'sonner';
 import { cookies } from 'next/headers';
 import { QueryProvider } from './query-provider';
+import { ServiceWorkerRegistration } from '@/components/sw-registration';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body className={`${dmSans.className} antialiased`}>
+        <ServiceWorkerRegistration />
         <QueryProvider>
           <Providers>{children}</Providers>
           <Toaster position="top-right" richColors />

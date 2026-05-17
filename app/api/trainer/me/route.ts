@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { cookies } from 'next/headers';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,32 +17,6 @@ interface TransformedSession {
 }
 
 export async function GET(_req: NextRequest) {
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
-  if (hasDemoMode) {
-    return NextResponse.json({
-      stats: {
-        totalSessions: 3,
-        upcomingSessions: 2,
-        sessionsThisWeek: 2,
-        noShows: 1,
-        totalAttendees: 12,
-      },
-      sessions: [
-        {
-          id: 'demo-session-1',
-          startTime: new Date().toISOString(),
-          endTime: new Date(Date.now() + 3600000).toISOString(),
-          maxParticipants: 4,
-          attendees: [
-            { bookingId: 'b1', memberName: 'Demo Member 1', status: 'confirmed' },
-            { bookingId: 'b2', memberName: 'Demo Member 2', status: 'pending' },
-          ],
-        },
-      ],
-    });
-  }
-
   return withApiAuth(_req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) {

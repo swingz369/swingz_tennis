@@ -40,7 +40,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     } catch {
       // Ignore errors if not logged in via Supabase
     }
-    document.cookie = 'demo-mode=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     setUserMenuOpen(false);
     router.push('/login');
     router.refresh();

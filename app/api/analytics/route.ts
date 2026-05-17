@@ -9,42 +9,6 @@ import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositor
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-// Helper: Check for demo mode cookie
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
-// Mock analytics data for demo
-const DEMO_ANALYTICS = {
-  success: true,
-  data: {
-    totalMembers: 120,
-    totalBookings: 450,
-    totalRevenue: 12500,
-    totalSessions: 85,
-    revenueByClub: [{ club: 'Demo Tennis Club', revenue: 12500 }],
-    bookingsOverTime: [
-      { date: '2025-W01', bookings: 45 },
-      { date: '2025-W02', bookings: 52 },
-      { date: '2025-W03', bookings: 48 },
-      { date: '2025-W04', bookings: 61 },
-    ],
-    sessionsPerTrainer: [
-      { trainer: 'Max Mustermann', sessions: 22 },
-      { trainer: 'Anna Schmidt', sessions: 18 },
-      { trainer: 'Tom Müller', sessions: 15 },
-    ],
-    capacityUtilization: [
-      { court: 'Platz 1', util: 78 },
-      { court: 'Platz 2', util: 65 },
-      { court: 'Platz 3', util: 82 },
-      { court: 'Platz 4', util: 71 },
-      { court: 'Platz 5', util: 55 },
-    ],
-  },
-};
-
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     // Only trainers and admins can view analytics
@@ -67,11 +31,6 @@ export async function GET(_request: NextRequest) {
 
     if (!clubId || !startDate || !endDate) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
-    }
-
-    // Demo mode: return mock analytics
-    if (isDemoMode(_request)) {
-      return NextResponse.json(DEMO_ANALYTICS);
     }
 
     try {

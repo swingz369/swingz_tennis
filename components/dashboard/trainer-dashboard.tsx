@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { Users, Calendar, TrendingUp, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -26,55 +27,31 @@ export function TrainerDashboard({ user }: TrainerDashboardProps) {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Heute Sessions</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">4</div>
-            <p className="text-xs text-muted-foreground">+2 morgen geplant</p>
-            <Button asChild variant="link" className="mt-2 p-0 h-auto">
-              <Link href="/scheduler">Zum Scheduler</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <StatCard icon={Calendar} value={4} label="Heute Sessions" sublabel="+2 morgen geplant">
+          <Button asChild variant="link" className="p-0 h-auto">
+            <Link href="/scheduler">Zum Scheduler</Link>
+          </Button>
+        </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Teilnehmer</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">28</div>
-            <p className="text-xs text-muted-foreground">Aktive Schüler</p>
-            <Button asChild variant="link" className="mt-2 p-0 h-auto">
-              <Link href="/admin/members">Alle ansehen</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <StatCard icon={Users} value={28} label="Teilnehmer" sublabel="Aktive Schüler">
+          <Button asChild variant="link" className="p-0 h-auto">
+            <Link href="/admin/members">Alle ansehen</Link>
+          </Button>
+        </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Anwesenheitsrate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">92%</div>
-            <p className="text-xs text-muted-foreground">Letzte 30 Tage</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={TrendingUp}
+          value="92%"
+          label="Anwesenheitsrate"
+          sublabel="Letzte 30 Tage"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Einnahmen (Monat)</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€2,450</div>
-            <p className="text-xs text-muted-foreground">+12% zum Vormonat</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={DollarSign}
+          value="€2,450"
+          label="Einnahmen (Monat)"
+          sublabel="+12% zum Vormonat"
+        />
       </div>
 
       {/* Today's Schedule */}

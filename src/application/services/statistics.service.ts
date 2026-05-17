@@ -358,7 +358,7 @@ export class StatisticsService {
     ];
   }
 
-  private calculateAverageMembershipDuration(members: any[]): number {
+  private calculateAverageMembershipDuration(members: Array<{ createdAt: string | Date }>): number {
     if (members.length === 0) return 0;
 
     const durations = members
@@ -373,10 +373,12 @@ export class StatisticsService {
     return Math.floor(durations.reduce((sum, d) => sum + d, 0) / durations.length);
   }
 
-  private groupRevenueByMonth(billing: any[]): Array<{ month: string; revenue: number }> {
+  private groupRevenueByMonth(
+    billing: Array<{ totalAmount: number; createdAt: string | Date }>
+  ): Array<{ month: string; revenue: number }> {
     const monthlyRevenue = billing.reduce(
       (acc, b) => {
-        const month = new Date(b.period.startDate).toLocaleString('de-DE', {
+        const month = new Date(b.createdAt).toLocaleString('de-DE', {
           month: 'short',
           year: 'numeric',
         });

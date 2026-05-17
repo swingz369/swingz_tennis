@@ -107,7 +107,7 @@ export function revalidateDashboard(clubId: string) {
   revalidateTag(CACHE_TAGS.analytics(clubId));
 
   revalidatePath('/dashboard', 'page');
-  revalidatePath('/admin/panel-v2', 'page');
+  revalidatePath('/superadmin/dashboard', 'page');
 }
 
 /**
@@ -149,7 +149,7 @@ export function revalidateApprovals(clubId: string, approvalId?: string) {
   }
 
   revalidatePath('/admin/approvals', 'page');
-  revalidatePath('/admin/panel-v2', 'page');
+  revalidatePath('/superadmin/dashboard', 'page');
 }
 
 /**

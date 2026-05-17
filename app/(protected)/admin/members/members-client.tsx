@@ -204,6 +204,12 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                 <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   E-Mail
                 </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                  Telefon
+                </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider hidden xl:table-cell">
+                  Adresse
+                </th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Rolle
                 </th>
@@ -222,7 +228,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
               {filteredMembers.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={8}
                     className="px-4 md:px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     Keine Mitglieder gefunden
@@ -241,6 +247,12 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                     </td>
                     <td className="px-4 md:px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400 text-sm">
                       {member.email}
+                    </td>
+                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400 text-sm hidden lg:table-cell">
+                      {member.phone || '—'}
+                    </td>
+                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400 text-sm hidden xl:table-cell">
+                      {member.address ? `${member.address}, ${member.city || ''}` : '—'}
                     </td>
                     <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                       <span

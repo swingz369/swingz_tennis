@@ -7,6 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
+import {
+  STATUS_LABELS,
+  STATUS_VARIANTS,
+  FORMAT_LABELS_SHORT as FORMAT_LABELS,
+} from '@/src/constants/tournaments';
 
 interface Tournament {
   id: string;
@@ -21,29 +26,6 @@ interface Tournament {
   registration_deadline?: string;
   entry_fee?: number;
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Entwurf',
-  registration: 'Anmeldung',
-  active: 'Aktiv',
-  completed: 'Abgeschlossen',
-  cancelled: 'Abgesagt',
-};
-
-const STATUS_VARIANTS: Record<string, string> = {
-  draft: 'secondary',
-  registration: 'default',
-  active: 'default',
-  completed: 'secondary',
-  cancelled: 'destructive',
-};
-
-const FORMAT_LABELS: Record<string, string> = {
-  single_elimination: 'K.O.',
-  double_elimination: 'Doppel-K.O.',
-  round_robin: 'Jeder gegen jeden',
-  swiss: 'Schweizer System',
-};
 
 export default function AdminTournamentsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -109,10 +91,7 @@ export default function AdminTournamentsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold truncate">{t.name}</p>
-                    <Badge
-                      variant={(STATUS_VARIANTS[t.status] as any) ?? 'secondary'}
-                      className="text-xs"
-                    >
+                    <Badge variant={STATUS_VARIANTS[t.status] ?? 'secondary'} className="text-xs">
                       {STATUS_LABELS[t.status] ?? t.status}
                     </Badge>
                   </div>

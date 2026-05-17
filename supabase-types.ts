@@ -83,7 +83,6 @@ export type Database = {
           resource_id: string;
           resource_type: string;
           user_agent: string | null;
-          user_id: string | null;
         };
         Insert: {
           action: string;
@@ -96,7 +95,6 @@ export type Database = {
           resource_id: string;
           resource_type: string;
           user_agent?: string | null;
-          user_id?: string | null;
         };
         Update: {
           action?: string;
@@ -109,7 +107,6 @@ export type Database = {
           resource_id?: string;
           resource_type?: string;
           user_agent?: string | null;
-          user_id?: string | null;
         };
         Relationships: [
           {
@@ -271,23 +268,17 @@ export type Database = {
           cancelled_at: string | null;
           club_id: string;
           court_id: string;
-          created_at: string;
           end_time: string | null;
           id: string;
           is_recurring: boolean | null;
-          member_id: string | null;
+          member_id: string;
           notes: string | null;
-          number_of_players: number | null;
-          payment_id: string | null;
           payment_status: string | null;
-          recurring_pattern: Json | null;
-          schedule_id: string | null;
-          session_id: string | null;
-          session_start_time: string | null;
-          start_time: string;
+          schedule_id: string;
+          session_id: string;
+          session_start_time: string;
+          start_time: string | null;
           status: string;
-          updated_at: string;
-          user_id: string;
         };
         Insert: {
           booked_at?: string;
@@ -298,23 +289,17 @@ export type Database = {
           cancelled_at?: string | null;
           club_id: string;
           court_id: string;
-          created_at?: string;
           end_time?: string | null;
           id?: string;
           is_recurring?: boolean | null;
-          member_id?: string | null;
+          member_id: string;
           notes?: string | null;
-          number_of_players?: number | null;
-          payment_id?: string | null;
           payment_status?: string | null;
-          recurring_pattern?: Json | null;
-          schedule_id?: string | null;
-          session_id?: string | null;
-          session_start_time?: string | null;
-          start_time: string;
+          schedule_id: string;
+          session_id: string;
+          session_start_time: string;
+          start_time?: string | null;
           status?: string;
-          updated_at?: string;
-          user_id: string;
         };
         Update: {
           booked_at?: string;
@@ -325,23 +310,17 @@ export type Database = {
           cancelled_at?: string | null;
           club_id?: string;
           court_id?: string;
-          created_at?: string;
           end_time?: string | null;
           id?: string;
           is_recurring?: boolean | null;
-          member_id?: string | null;
+          member_id?: string;
           notes?: string | null;
-          number_of_players?: number | null;
-          payment_id?: string | null;
           payment_status?: string | null;
-          recurring_pattern?: Json | null;
-          schedule_id?: string | null;
-          session_id?: string | null;
-          session_start_time?: string | null;
+          schedule_id?: string;
+          session_id?: string;
+          session_start_time?: string;
           start_time?: string | null;
           status?: string;
-          updated_at?: string;
-          user_id?: string;
         };
         Relationships: [
           {
@@ -352,7 +331,7 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
-            foreignKeyName: 'bookings_court_id_courts_id_fk';
+            foreignKeyName: 'bookings_court_id_fkey';
             columns: ['court_id'];
             isOneToOne: false;
             referencedRelation: 'courts';
@@ -370,13 +349,6 @@ export type Database = {
             columns: ['session_id'];
             isOneToOne: false;
             referencedRelation: 'sessions';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'bookings_user_id_users_id_fk';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -2864,7 +2836,6 @@ export type Database = {
           created_at: string;
           deactivated_at: string | null;
           deactivated_by: string | null;
-          deactivation_reason: string | null;
           id: string;
           is_active: boolean;
           joined_at: string;
@@ -2878,7 +2849,6 @@ export type Database = {
           created_at?: string;
           deactivated_at?: string | null;
           deactivated_by?: string | null;
-          deactivation_reason?: string | null;
           id?: string;
           is_active?: boolean;
           joined_at?: string;
@@ -2892,7 +2862,6 @@ export type Database = {
           created_at?: string;
           deactivated_at?: string | null;
           deactivated_by?: string | null;
-          deactivation_reason?: string | null;
           id?: string;
           is_active?: boolean;
           joined_at?: string;
@@ -3007,14 +2976,21 @@ export type Database = {
       };
       users: {
         Row: {
+          address: string | null;
           avatar_url: string | null;
           billing_email: string | null;
+          bio: string | null;
+          city: string | null;
           created_at: string;
           current_period_end: string | null;
+          date_of_birth: string | null;
           email: string;
+          emergency_contact: string | null;
+          emergency_phone: string | null;
           full_name: string | null;
           id: string;
           phone: string | null;
+          postal_code: string | null;
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
           subscription_status: string | null;
@@ -3022,14 +2998,21 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          address?: string | null;
           avatar_url?: string | null;
           billing_email?: string | null;
+          bio?: string | null;
+          city?: string | null;
           created_at?: string;
           current_period_end?: string | null;
+          date_of_birth?: string | null;
           email: string;
+          emergency_contact?: string | null;
+          emergency_phone?: string | null;
           full_name?: string | null;
           id?: string;
           phone?: string | null;
+          postal_code?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           subscription_status?: string | null;
@@ -3037,14 +3020,21 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          address?: string | null;
           avatar_url?: string | null;
           billing_email?: string | null;
+          bio?: string | null;
+          city?: string | null;
           created_at?: string;
           current_period_end?: string | null;
+          date_of_birth?: string | null;
           email?: string;
+          emergency_contact?: string | null;
+          emergency_phone?: string | null;
           full_name?: string | null;
           id?: string;
           phone?: string | null;
+          postal_code?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           subscription_status?: string | null;

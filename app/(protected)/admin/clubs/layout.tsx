@@ -23,7 +23,7 @@ export default async function ClubsLayout({ children }: { children: React.ReactN
     const adminMembership = memberships?.find((m: { role: string }) => m.role === 'admin');
 
     if (adminMembership) {
-      redirect('/admin/panel-v2');
+      redirect('/admin/members');
     } else {
       redirect('/dashboard');
     }

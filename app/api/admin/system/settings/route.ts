@@ -18,12 +18,7 @@ type SystemSettings = {
   stripePublicKey: string;
 };
 
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
-const DEMO_SYSTEM_SETTINGS: SystemSettings = {
+const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   appName: 'SWINGZ',
   emailNotifications: true,
   reminderDaysBefore: 1,
@@ -41,24 +36,18 @@ export async function GET(_request: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Admin access required');
 
     try {
-      if (isDemoMode(_request)) {
-        return NextResponse.json(DEMO_SYSTEM_SETTINGS);
-      }
-
       const supabase = await createClient();
 
       // Fetch system settings
       const { data: settings, error } = await supabase.from('system_settings').select('key, value');
 
       if (error) {
-        // If table doesn't exist, return defaults
-        return NextResponse.json(DEMO_SYSTEM_SETTINGS);
+        return NextResponse.json(DEFAULT_SYSTEM_SETTINGS);
       }
 
       // Convert array of {key, value} to object
       const settingsObj: Partial<SystemSettings> = {};
       for (const { key, value } of settings) {
-        // Parse values based on expected type
         if (key === 'emailNotifications') {
           settingsObj.emailNotifications = value === 'true';
         } else if (key === 'reminderDaysBefore') {
@@ -70,14 +59,14 @@ export async function GET(_request: NextRequest) {
         }
       }
 
-      // Ensure all keys are present (fill missing with defaults)
+      // Ensure all keys are present
       const finalSettings: SystemSettings = {
-        appName: settingsObj.appName || DEMO_SYSTEM_SETTINGS.appName,
+        appName: settingsObj.appName || DEFAULT_SYSTEM_SETTINGS.appName,
         emailNotifications:
-          settingsObj.emailNotifications ?? DEMO_SYSTEM_SETTINGS.emailNotifications,
+          settingsObj.emailNotifications ?? DEFAULT_SYSTEM_SETTINGS.emailNotifications,
         reminderDaysBefore:
-          settingsObj.reminderDaysBefore ?? DEMO_SYSTEM_SETTINGS.reminderDaysBefore,
-        stripePublicKey: settingsObj.stripePublicKey ?? DEMO_SYSTEM_SETTINGS.stripePublicKey,
+          settingsObj.reminderDaysBefore ?? DEFAULT_SYSTEM_SETTINGS.reminderDaysBefore,
+        stripePublicKey: settingsObj.stripePublicKey ?? DEFAULT_SYSTEM_SETTINGS.stripePublicKey,
       };
 
       return NextResponse.json(finalSettings);
@@ -100,12 +89,6 @@ export async function PUT(_request: NextRequest) {
     if (!hasPermission) return forbiddenResponse('Admin access required');
 
     try {
-      if (isDemoMode(_request)) {
-        // In demo mode, just pretend to save
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return NextResponse.json({ success: true, message: 'Saved (demo)' });
-      }
-
       const supabase = await createClient();
       const input = await _request.json();
 

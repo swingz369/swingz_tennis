@@ -82,7 +82,7 @@ export function WeekDaysHeaderRow({ weekDays }: { weekDays: Date[] }) {
           className="bg-gray-50 p-2 text-center font-semibold text-gray-700 text-xs"
         >
           <div>{format(day, 'EEE', { locale: de })}</div>
-          <div className="text-[10px] text-gray-500">{format(day, 'dd.MM')}</div>
+          <div className="text-[11px] text-gray-500">{format(day, 'dd.MM')}</div>
         </div>
       ))}
     </div>
@@ -99,7 +99,7 @@ export function CourtRowHeader({
     <div className="bg-white p-2 flex items-center gap-2 border-r border-gray-200">
       <div className="flex-1">
         <div className="font-medium text-sm">{court.name}</div>
-        <div className="flex items-center gap-1 text-[10px] text-gray-500">
+        <div className="flex items-center gap-1 text-[11px] text-gray-500">
           <MapPin className="h-3 w-3" />
           <span>{getSurfaceLabel(court.surface)}</span>
           {court.hasIndoor && <span>• Indoor</span>}

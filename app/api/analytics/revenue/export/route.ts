@@ -7,54 +7,6 @@ import { DrizzleScheduleRepository } from '@/infrastructure/persistence/reposito
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
-const DEMO_REVENUE = {
-  totalRevenue: 12500,
-  payments: [
-    {
-      id: 'p1',
-      memberName: 'Max Mustermann',
-      amount: 150,
-      date: '2025-01-10',
-      method: 'Kreditkarte',
-      time: '10:00',
-    },
-    {
-      id: 'p2',
-      memberName: 'Anna Schmidt',
-      amount: 150,
-      date: '2025-01-11',
-      method: 'Lastschrift',
-      time: '14:00',
-    },
-    {
-      id: 'p3',
-      memberName: 'Tom Müller',
-      amount: 200,
-      date: '2025-01-12',
-      method: 'Kreditkarte',
-      time: '09:00',
-    },
-    {
-      id: 'p4',
-      memberName: 'Lisa Weber',
-      amount: 150,
-      date: '2025-01-13',
-      method: 'Bar',
-      time: '16:00',
-    },
-  ],
-  monthlyBreakdown: [
-    { month: 'Jan', revenue: 4200 },
-    { month: 'Feb', revenue: 3800 },
-    { month: 'Mar', revenue: 4500 },
-  ],
-};
-
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
@@ -73,19 +25,6 @@ export async function GET(_request: NextRequest) {
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-    }
-
-    if (isDemoMode(_request)) {
-      if (format === 'pdf') {
-        return generatePDFExport(DEMO_REVENUE, clubId);
-      }
-      const csv = convertRevenueToCSV(DEMO_REVENUE);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename="revenue-export.csv"',
-        },
-      });
     }
 
     try {

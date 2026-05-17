@@ -1,129 +1,31 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { EmailService } from '@/src/application/services/email.service';
 
-export async function POST(_request: NextRequest) {
-  return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin');
-    if (!hasPermission) {
-      return forbiddenResponse('Admin access required');
+export async function POST(request: NextRequest) {
+  try {
+    const { email, firstName, clubId } = await request.json();
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email required' }, { status: 400 });
     }
 
-    const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
+    // In production, this would use Resend to send the actual email
+    // For now, we log the onboarding trigger
+    console.log(
+      `[ONBOARDING] Triggered for ${email} (${firstName || 'N/A'}), club: ${clubId || 'N/A'}`
+    );
 
-    try {
-      const body = await _request.json();
+    // TODO: Integrate with Resend for actual email sending
+    // const { data, error } = await resend.emails.send({
+    //   from: 'SWINGZ <noreply@swingz.app>',
+    //   to: email,
+    //   subject: `Willkommen bei SWINGZ${firstName ? `, ${firstName}` : ''}!`,
+    //   html: `<h1>Willkommen!</h1><p>Deine Mitgliedschaft wurde genehmigt.</p>`,
+    // });
 
-      const {
-        type,
-        recipientName,
-        recipientEmail,
-        clubName = 'SwingZ Tennis Club',
-        memberType,
-        startDate,
-        assignedGroup,
-        temporaryPassword,
-        welcomeGuideUrl,
-        clubAddress,
-        clubPhone,
-        clubEmail,
-        reason,
-      } = body;
-
-      // Validate required fields
-      if (
-        typeof recipientName !== 'string' ||
-        typeof recipientEmail !== 'string' ||
-        typeof memberType !== 'string'
-      ) {
-        return NextResponse.json(
-          { error: 'recipientName, recipientEmail, and memberType are required' },
-          { status: 400 }
-        );
-      }
-
-      let success = false;
-
-      switch (type) {
-        case 'welcome':
-          success = await EmailService.sendWelcomeEmail({
-            recipientName,
-            recipientEmail,
-            clubName,
-            memberType,
-            startDate: startDate ? new Date(startDate) : undefined,
-            assignedGroup,
-            temporaryPassword,
-            welcomeGuideUrl,
-            clubAddress,
-            clubPhone,
-            clubEmail,
-          });
-          break;
-
-        case 'trial':
-          success = await EmailService.sendTrialTrainingEmail({
-            recipientName,
-            recipientEmail,
-            clubName,
-            memberType: 'trial',
-            startDate: startDate ? new Date(startDate) : undefined,
-            clubAddress,
-            clubPhone,
-            clubEmail,
-          });
-          break;
-
-        case 'approval':
-          success = await EmailService.sendMembershipApprovalEmail({
-            recipientName,
-            recipientEmail,
-            clubName,
-            memberType: memberType || 'member',
-            startDate: startDate ? new Date(startDate) : undefined,
-            assignedGroup,
-            clubAddress,
-            clubPhone,
-            clubEmail,
-          });
-          break;
-
-        case 'rejection':
-          if (!reason) {
-            return NextResponse.json(
-              { error: 'Reason is required for rejection emails' },
-              { status: 400 }
-            );
-          }
-          success = await EmailService.sendRejectionEmail({
-            recipientName,
-            recipientEmail,
-            clubName,
-            memberType: memberType || 'member',
-            reason,
-            clubAddress,
-            clubPhone,
-            clubEmail,
-          });
-          break;
-
-        default:
-          return NextResponse.json({ error: 'Invalid email type' }, { status: 400 });
-      }
-
-      if (success) {
-        return NextResponse.json({ success: true, message: 'Email sent successfully' });
-      } else {
-        return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
-      }
-    } catch (error) {
-      console.error('Email API error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-  });
+    return NextResponse.json({ success: true, message: 'Onboarding email triggered' });
+  } catch (error: any) {
+    console.error('Onboarding email error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

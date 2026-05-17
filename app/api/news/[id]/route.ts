@@ -1,15 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth } from '@/lib/api-auth';
 
 // GET /api/news/[id] — returns a single news item
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ news: null });
-  }
-
   const { id } = await params;
 
   return withApiAuth(req, async (auth) => {
@@ -29,11 +23,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 // PATCH /api/news/[id] — update a news item (admin only)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ success: true });
-  }
-
   const { id } = await params;
 
   return withApiAuth(req, async (auth) => {
@@ -59,11 +48,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 // DELETE /api/news/[id] — delete a news item (admin only)
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ success: true });
-  }
-
   const { id } = await params;
 
   return withApiAuth(req, async (auth) => {

@@ -79,7 +79,7 @@ export interface Report {
   type: 'members' | 'revenue' | 'courts' | 'trainers' | 'custom';
   format: 'pdf' | 'excel' | 'csv';
   filters: ReportFilters;
-  data: any;
+  data: Record<string, unknown>;
   generatedAt: Date;
   generatedBy: string;
   fileUrl?: string;

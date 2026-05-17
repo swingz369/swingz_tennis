@@ -15,15 +15,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -46,6 +37,8 @@ import {
   XCircle,
   ToggleLeft,
   ToggleRight,
+  ArrowLeft,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -89,9 +82,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
   const [courts, setCourts] = useState<Court[]>(initialCourts);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showInlineForm, setShowInlineForm] = useState<'create' | 'edit' | null>(null);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -137,7 +129,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       const data = await res.json();
       setCourts((prev) => [...prev, data.court]);
-      setShowCreateDialog(false);
+      setShowInlineForm(null);
       resetForm();
       toast.success('Platz erfolgreich erstellt');
     } catch (err) {
@@ -162,7 +154,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       description: court.description || '',
       isActive: court.is_active,
     });
-    setShowEditDialog(true);
+    setShowInlineForm('edit');
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -194,7 +186,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       const data = await res.json();
       setCourts((prev) => prev.map((c) => (c.id === selectedCourt.id ? data.court : c)));
-      setShowEditDialog(false);
+      setShowInlineForm(null);
       setSelectedCourt(null);
       resetForm();
       toast.success('Platz erfolgreich aktualisiert');
@@ -263,6 +255,12 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
   const getCourtTypeName = (courtTypeId: string) => {
     const ct = courtTypes.find((t) => t.id === courtTypeId);
     return ct ? ct.name : 'Unbekannt';
+  };
+
+  const handleCloseForm = () => {
+    setShowInlineForm(null);
+    setSelectedCourt(null);
+    resetForm();
   };
 
   // Reusable court form fields
@@ -396,294 +394,162 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             {courts.filter((c) => c.is_active).length} aktiv
           </p>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" onClick={resetForm}>
-              <Plus className="h-4 w-4" />
-              Neuer Platz
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[520px]">
-            <form onSubmit={handleCreate}>
-              <DialogHeader>
-                <DialogTitle>Neuen Platz anlegen</DialogTitle>
-                <DialogDescription>
-                  Erstelle einen neuen Tennisplatz für deinen Verein.
-                </DialogDescription>
-              </DialogHeader>
+        {!showInlineForm && (
+          <Button
+            className="gap-2"
+            onClick={() => {
+              resetForm();
+              setShowInlineForm('create');
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Neuer Platz
+          </Button>
+        )}
+      </div>
+
+      {/* Inline Create/Edit Form */}
+      {showInlineForm && (
+        <Card className="border-brandPrimary/20 shadow-md animate-in">
+          <CardHeader className="border-b border-gray-100 dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" onClick={handleCloseForm} className="shrink-0">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div>
+                  <CardTitle>
+                    {showInlineForm === 'create' ? 'Neuen Platz anlegen' : `Platz bearbeiten`}
+                  </CardTitle>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    {showInlineForm === 'create'
+                      ? 'Erstelle einen neuen Tennisplatz für deinen Verein.'
+                      : `Ändere die Details von "${selectedCourt?.name}".`}
+                  </p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={handleCloseForm}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={showInlineForm === 'create' ? handleCreate : handleUpdate}>
               <CourtFormFields />
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+              <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-white/10">
+                <Button type="button" variant="outline" onClick={handleCloseForm}>
                   Abbrechen
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Wird erstellt...' : 'Platz erstellen'}
+                  {isSubmitting
+                    ? 'Wird gespeichert...'
+                    : showInlineForm === 'create'
+                      ? 'Platz erstellen'
+                      : 'Speichern'}
                 </Button>
-              </DialogFooter>
+              </div>
             </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Input
-            placeholder="Suche nach Platzname oder Nummer..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        </div>
-        <div className="flex items-center border rounded-md overflow-hidden">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'rounded-none px-3',
-              viewMode === 'grid' && 'bg-gray-100 dark:bg-gray-800'
-            )}
-            onClick={() => setViewMode('grid')}
-            aria-label="Rasteransicht"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'rounded-none px-3',
-              viewMode === 'list' && 'bg-gray-100 dark:bg-gray-800'
-            )}
-            onClick={() => setViewMode('list')}
-            aria-label="Listenansicht"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Empty state */}
-      {filteredCourts.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
-            <MapPin className="h-10 w-10 text-brand-light" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {searchQuery ? 'Keine Plätze gefunden' : 'Noch keine Plätze'}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
-            {searchQuery
-              ? `Keine Plätze für "${searchQuery}" gefunden`
-              : 'Erstelle deine ersten Spielflächen um Buchungen zu ermöglichen'}
-          </p>
-          {!searchQuery && (
-            <button
-              onClick={() => {
-                resetForm();
-                setShowCreateDialog(true);
-              }}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-light hover:bg-brand-light/80 text-white text-sm font-medium rounded-xl transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Platz anlegen
-            </button>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Grid view */}
-      {viewMode === 'grid' && filteredCourts.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredCourts.map((court) => {
-            const surface = getCourtSurface(court);
-            const surfaceColorClass = getSurfaceColorClass(surface);
-            return (
-              <Card
-                key={court.id}
+      {/* Search & View Toggle (hidden during inline form) */}
+      {!showInlineForm && (
+        <>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Input
+                placeholder="Suche nach Platzname oder Nummer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            </div>
+            <div className="flex items-center border rounded-md overflow-hidden">
+              <Button
+                variant="ghost"
+                size="sm"
                 className={cn(
-                  'relative transition-all hover:shadow-md',
-                  !court.is_active && 'opacity-60'
+                  'rounded-none px-3',
+                  viewMode === 'grid' && 'bg-gray-100 dark:bg-gray-800'
                 )}
+                onClick={() => setViewMode('grid')}
+                aria-label="Rasteransicht"
               >
-                <CardHeader className="pb-2 pt-4 px-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-sm">
-                        {court.number}
-                      </div>
-                      <CardTitle className="text-base font-semibold truncate">
-                        {court.name}
-                      </CardTitle>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(court)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Bearbeiten
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => {
-                            setSelectedCourt(court);
-                            setShowDeleteDialog(true);
-                          }}
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Deaktivieren
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 space-y-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    <span
-                      className={cn(
-                        'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
-                        surfaceColorClass
-                      )}
-                    >
-                      {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
-                    </span>
-                    {court.has_lighting && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-                        <Lightbulb className="h-3 w-3" />
-                        Flutlicht
-                      </span>
-                    )}
-                  </div>
-                  {court.location && (
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate">{court.location}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-1.5">
-                      {court.is_active ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-gray-400" />
-                      )}
-                      <span
-                        className={cn(
-                          'text-xs font-medium',
-                          court.is_active ? 'text-green-600' : 'text-gray-400'
-                        )}
-                      >
-                        {court.is_active ? 'Aktiv' : 'Inaktiv'}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => handleToggleActive(court)}
-                      disabled={togglingId === court.id}
-                      aria-label={court.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                    >
-                      {togglingId === court.id ? (
-                        <span className="text-xs">...</span>
-                      ) : court.is_active ? (
-                        <ToggleRight className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <ToggleLeft className="h-4 w-4 text-gray-400" />
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  'rounded-none px-3',
+                  viewMode === 'list' && 'bg-gray-100 dark:bg-gray-800'
+                )}
+                onClick={() => setViewMode('list')}
+                aria-label="Listenansicht"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
 
-      {/* List view */}
-      {viewMode === 'list' && filteredCourts.length > 0 && (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <div className="flex items-center gap-1">
-                      <Hash className="h-3.5 w-3.5" />
-                      Nr.
-                    </div>
-                  </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Typ / Belag</TableHead>
-                  <TableHead>Standort</TableHead>
-                  <TableHead>Flutlicht</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCourts.map((court) => {
-                  const surface = getCourtSurface(court);
-                  return (
-                    <TableRow key={court.id} className={!court.is_active ? 'opacity-60' : ''}>
-                      <TableCell className="font-medium tabular-nums">{court.number}</TableCell>
-                      <TableCell className="font-medium">{court.name}</TableCell>
-                      <TableCell>
-                        <span
-                          className={cn(
-                            'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
-                            getSurfaceColorClass(surface)
-                          )}
-                        >
-                          {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {court.location || '—'}
-                      </TableCell>
-                      <TableCell>
-                        {court.has_lighting ? (
-                          <span className="flex items-center gap-1 text-yellow-600 text-sm">
-                            <Lightbulb className="h-4 w-4" /> Ja
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-sm">Nein</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          onClick={() => handleToggleActive(court)}
-                          disabled={togglingId === court.id}
-                          className="flex items-center gap-1.5 group"
-                          aria-label={court.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                        >
-                          <Badge
-                            variant={court.is_active ? 'default' : 'secondary'}
-                            className={cn(
-                              'text-xs transition-colors',
-                              court.is_active
-                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            )}
-                          >
-                            {togglingId === court.id
-                              ? '...'
-                              : court.is_active
-                                ? 'Aktiv'
-                                : 'Inaktiv'}
-                          </Badge>
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-right">
+          {/* Empty state */}
+          {filteredCourts.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
+                <MapPin className="h-10 w-10 text-brand-light" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {searchQuery ? 'Keine Plätze gefunden' : 'Noch keine Plätze'}
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
+                {searchQuery
+                  ? `Keine Plätze für "${searchQuery}" gefunden`
+                  : 'Erstelle deine ersten Spielflächen um Buchungen zu ermöglichen'}
+              </p>
+              {!searchQuery && (
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowInlineForm('create');
+                  }}
+                  className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-light hover:bg-brand-light/80 text-white text-sm font-medium rounded-xl transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Platz anlegen
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Grid view */}
+          {viewMode === 'grid' && filteredCourts.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredCourts.map((court) => {
+                const surface = getCourtSurface(court);
+                const surfaceColorClass = getSurfaceColorClass(surface);
+                return (
+                  <Card
+                    key={court.id}
+                    className={cn(
+                      'relative transition-all hover:shadow-md',
+                      !court.is_active && 'opacity-60'
+                    )}
+                  >
+                    <CardHeader className="pb-2 pt-4 px-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold text-sm">
+                            {court.number}
+                          </div>
+                          <CardTitle className="text-base font-semibold truncate">
+                            {court.name}
+                          </CardTitle>
+                        </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -692,47 +558,190 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                               <Edit className="h-4 w-4 mr-2" />
                               Bearbeiten
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => handleToggleActive(court)}
-                              disabled={togglingId === court.id}
+                              className="text-red-600"
+                              onClick={() => {
+                                setSelectedCourt(court);
+                                setShowDeleteDialog(true);
+                              }}
                             >
-                              <Power className="h-4 w-4 mr-2" />
-                              {court.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Deaktivieren
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4 space-y-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        <span
+                          className={cn(
+                            'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
+                            surfaceColorClass
+                          )}
+                        >
+                          {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
+                        </span>
+                        {court.has_lighting && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+                            <Lightbulb className="h-3 w-3" />
+                            Flutlicht
+                          </span>
+                        )}
+                      </div>
+                      {court.location && (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">{court.location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center gap-1.5">
+                          {court.is_active ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-gray-400" />
+                          )}
+                          <span
+                            className={cn(
+                              'text-xs font-medium',
+                              court.is_active ? 'text-green-600' : 'text-gray-400'
+                            )}
+                          >
+                            {court.is_active ? 'Aktiv' : 'Inaktiv'}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => handleToggleActive(court)}
+                          disabled={togglingId === court.id}
+                          aria-label={court.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                        >
+                          {togglingId === court.id ? (
+                            <span className="text-xs">...</span>
+                          ) : court.is_active ? (
+                            <ToggleRight className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <ToggleLeft className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
 
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[520px]">
-          <form onSubmit={handleUpdate}>
-            <DialogHeader>
-              <DialogTitle>Platz bearbeiten</DialogTitle>
-              <DialogDescription>
-                Ändere die Details von &quot;{selectedCourt?.name}&quot;.
-              </DialogDescription>
-            </DialogHeader>
-            <CourtFormFields />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          {/* List view */}
+          {viewMode === 'list' && filteredCourts.length > 0 && (
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        <div className="flex items-center gap-1">
+                          <Hash className="h-3.5 w-3.5" />
+                          Nr.
+                        </div>
+                      </TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Typ / Belag</TableHead>
+                      <TableHead>Standort</TableHead>
+                      <TableHead>Flutlicht</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCourts.map((court) => {
+                      const surface = getCourtSurface(court);
+                      return (
+                        <TableRow key={court.id} className={!court.is_active ? 'opacity-60' : ''}>
+                          <TableCell className="font-medium tabular-nums">{court.number}</TableCell>
+                          <TableCell className="font-medium">{court.name}</TableCell>
+                          <TableCell>
+                            <span
+                              className={cn(
+                                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
+                                getSurfaceColorClass(surface)
+                              )}
+                            >
+                              {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-500">
+                            {court.location || '—'}
+                          </TableCell>
+                          <TableCell>
+                            {court.has_lighting ? (
+                              <span className="flex items-center gap-1 text-yellow-600 text-sm">
+                                <Lightbulb className="h-4 w-4" /> Ja
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-sm">Nein</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <button
+                              onClick={() => handleToggleActive(court)}
+                              disabled={togglingId === court.id}
+                              className="flex items-center gap-1.5 group"
+                              aria-label={court.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                            >
+                              <Badge
+                                variant={court.is_active ? 'default' : 'secondary'}
+                                className={cn(
+                                  'text-xs transition-colors',
+                                  court.is_active
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                )}
+                              >
+                                {togglingId === court.id
+                                  ? '...'
+                                  : court.is_active
+                                    ? 'Aktiv'
+                                    : 'Inaktiv'}
+                              </Badge>
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEdit(court)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Bearbeiten
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleActive(court)}
+                                  disabled={togglingId === court.id}
+                                >
+                                  <Power className="h-4 w-4 mr-2" />
+                                  {court.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Deactivate Confirmation Dialog */}
       <ConfirmDialog

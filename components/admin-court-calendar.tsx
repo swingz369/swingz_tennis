@@ -74,7 +74,7 @@ function DraggableSession({ session, isDragging }: DraggableSessionProps) {
         </div>
         {session.bookedByUser && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
       </div>
-      <div className="flex items-center gap-1 text-[10px] text-gray-600">
+      <div className="flex items-center gap-1 text-[11px] text-gray-600">
         <Clock className="h-3 w-3" />
         <span>
           {session.startTime} - {session.endTime}
@@ -308,7 +308,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
                           <div
                             key={timeSlot}
                             id={dropTargetId}
-                            className={`h-6 rounded text-[10px] flex items-center justify-center transition-colors ${
+                            className={`h-6 rounded text-[11px] flex items-center justify-center transition-colors ${
                               session
                                 ? 'bg-transparent'
                                 : 'bg-green-50 text-green-700 hover:bg-green-100 border border-dashed border-green-300'
@@ -320,7 +320,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
                                 isDragging={activeId === session.id}
                               />
                             ) : (
-                              <span className="text-[10px] opacity-50">{timeSlot}</span>
+                              <span className="text-[11px] opacity-50">{timeSlot}</span>
                             )}
                           </div>
                         );

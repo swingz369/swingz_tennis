@@ -24,6 +24,12 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set('x-pathname', pathname);
   let response = NextResponse.next({ request: { headers: requestHeaders } });
 
+  // Test-Mode für Playwright E2E-Tests: Auth-Check via Cookie überspringen
+  const testModeCookie = request.cookies.get('swingz_test_mode');
+  if (testModeCookie?.value === 'true') {
+    return response;
+  }
+
   // Supabase Session refreshen
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,21 +58,14 @@ export async function middleware(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
-  // Demo-Modus Check (Cookie-basiert)
-  const isDemoMode = request.cookies.get('demo-mode')?.value === 'true';
-
   // 1. Öffentliche Routen → durchlassen
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
   );
   if (isPublic) return response;
 
-  // 2. Nicht eingeloggt + kein Demo-Modus → Login
+  // 2. Nicht eingeloggt → Login
   if (error || !user) {
-    // Demo-Modus Nutzer erlaubenDashboard & co. zu sehen
-    if (isDemoMode && pathname.startsWith('/dashboard')) {
-      return response;
-    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);

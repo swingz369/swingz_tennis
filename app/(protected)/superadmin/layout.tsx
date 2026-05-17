@@ -32,7 +32,7 @@ export default async function SuperadminLayout({ children }: { children: React.R
     const roles = memberships?.map((m: { role: string }) => m.role) ?? [];
 
     if (roles.includes('admin')) {
-      redirect('/admin/dashboard');
+      redirect('/admin/members');
     } else if (roles.includes('trainer')) {
       redirect('/trainer');
     } else {

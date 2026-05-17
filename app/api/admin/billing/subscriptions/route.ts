@@ -2,11 +2,12 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { AuditService } from '@/infrastructure/audit/audit.service';
+import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { assignSubscriptionSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 
 // const memberRepo = new DrizzleMemberRepository(); // Will be used in future for advanced member queries
+const auditService = new AuditServiceImpl();
 
 // GET /api/admin/billing/subscriptions – Alle Abonnements (SuperAdmin only)
 export async function GET(_request: NextRequest) {
@@ -130,7 +131,13 @@ export async function POST(_request: NextRequest) {
         }
 
         // Audit log
-        await AuditService.logSubscriptionAssigned(auth.user.id, memberId, plan);
+        await auditService.log({
+          userId: auth.user.id,
+          action: 'create',
+          entityType: 'payment',
+          entityId: memberId,
+          details: { plan },
+        });
 
         return NextResponse.json({ success: true });
       })(_request);

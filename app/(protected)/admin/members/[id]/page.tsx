@@ -39,12 +39,28 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     return <div className="p-6 text-gray-500">Mitglied nicht gefunden</div>;
   }
 
-  // Fetch user details separately
-  const { data: userData } = await supabase
+  // Fetch full user details (extended fields available after migration)
+  const { data: userData } = (await supabase
     .from('users')
-    .select('id, full_name, email')
+    .select(
+      'id, full_name, email, phone, address, city, postal_code, date_of_birth, bio, emergency_contact, emergency_phone'
+    )
     .eq('id', memberData.user_id)
-    .single();
+    .single()) as unknown as {
+    data: {
+      id: string;
+      full_name: string | null;
+      email: string | null;
+      phone: string | null;
+      address: string | null;
+      city: string | null;
+      postal_code: string | null;
+      date_of_birth: string | null;
+      bio: string | null;
+      emergency_contact: string | null;
+      emergency_phone: string | null;
+    } | null;
+  };
 
   member = {
     id: memberData.id,
@@ -54,6 +70,14 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     role: memberData.role as 'member' | 'trainer' | 'admin' | 'superadmin',
     is_active: memberData.is_active,
     joined_at: memberData.joined_at,
+    phone: userData?.phone || null,
+    address: userData?.address || null,
+    city: userData?.city || null,
+    postal_code: userData?.postal_code || null,
+    date_of_birth: userData?.date_of_birth || null,
+    bio: userData?.bio || null,
+    emergency_contact: userData?.emergency_contact || null,
+    emergency_phone: userData?.emergency_phone || null,
   };
 
   if (!member) {

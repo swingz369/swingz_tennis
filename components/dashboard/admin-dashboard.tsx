@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { Users, Calendar, DollarSign, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -26,61 +27,34 @@ export function AdminDashboard({ user }: AdminDashboardProps) {
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mitglieder</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">320</div>
-            <p className="text-xs text-muted-foreground">+12 diesen Monat</p>
-            <Button asChild variant="link" className="mt-2 p-0 h-auto">
-              <Link href="/admin/members">Verwalten</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <StatCard icon={Users} value={320} label="Mitglieder" sublabel="+12 diesen Monat">
+          <Button asChild variant="link" className="p-0 h-auto">
+            <Link href="/admin/members">Verwalten</Link>
+          </Button>
+        </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aktive Sessions</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">45</div>
-            <p className="text-xs text-muted-foreground">Diese Woche</p>
-            <Button asChild variant="link" className="mt-2 p-0 h-auto">
-              <Link href="/admin/schedules">Planen</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <StatCard icon={Calendar} value={45} label="Aktive Sessions" sublabel="Diese Woche">
+          <Button asChild variant="link" className="p-0 h-auto">
+            <Link href="/admin/schedules">Planen</Link>
+          </Button>
+        </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Umsatz (Monat)</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€24,500</div>
-            <p className="text-xs text-muted-foreground">+18% zum Vormonat</p>
-            <Button asChild variant="link" className="mt-2 p-0 h-auto">
-              <Link href="/admin/billing">Details</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={DollarSign}
+          value="€24,500"
+          label="Umsatz (Monat)"
+          sublabel="+18% zum Vormonat"
+        >
+          <Button asChild variant="link" className="p-0 h-auto">
+            <Link href="/admin/billing">Details</Link>
+          </Button>
+        </StatCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Auslastung</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">78%</div>
-            <p className="text-xs text-muted-foreground">Court-Belegung</p>
-            <Button asChild variant="link" className="mt-2 p-0 h-auto">
-              <Link href="/admin/analytics">Analyse</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <StatCard icon={TrendingUp} value="78%" label="Auslastung" sublabel="Court-Belegung">
+          <Button asChild variant="link" className="p-0 h-auto">
+            <Link href="/admin/analytics">Analyse</Link>
+          </Button>
+        </StatCard>
       </div>
 
       {/* Pending Actions */}

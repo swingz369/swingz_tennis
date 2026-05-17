@@ -278,7 +278,7 @@ export default function BookingsPage() {
                     return (
                       <div
                         key={idx}
-                        className={`min-h-[80px] md:min-h-[100px] bg-white dark:bg-gray-900 p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                        className={`min-h-[5rem] md:min-h-[6.25rem] bg-white dark:bg-gray-900 p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                       >
                         <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                           {format(day, 'd')}

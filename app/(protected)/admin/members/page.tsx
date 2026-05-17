@@ -53,16 +53,31 @@ export default async function MembersPage() {
   // Fetch user details (match by user_id)
   const userIds = (clubMemberships ?? []).map((m: any) => m.user_id).filter(Boolean);
 
-  const usersMap = new Map<string, { full_name: string | null; email: string | null }>();
+  const usersMap = new Map<
+    string,
+    {
+      full_name: string | null;
+      email: string | null;
+      phone: string | null;
+      address: string | null;
+      city: string | null;
+    }
+  >();
 
   if (userIds.length > 0) {
     const { data: usersData } = await supabase
       .from('users')
-      .select('id, full_name, email')
+      .select('id, full_name, email, phone, address, city')
       .in('id', userIds);
 
     (usersData ?? []).forEach((u: any) => {
-      usersMap.set(u.id, { full_name: u.full_name, email: u.email });
+      usersMap.set(u.id, {
+        full_name: u.full_name,
+        email: u.email,
+        phone: u.phone,
+        address: u.address,
+        city: u.city,
+      });
     });
   }
 
@@ -73,6 +88,9 @@ export default async function MembersPage() {
       user_id: m.user_id,
       full_name: userData?.full_name || '—',
       email: userData?.email || '—',
+      phone: userData?.phone || null,
+      address: userData?.address || null,
+      city: userData?.city || null,
       role: m.role as Member['role'],
       is_active: m.is_active,
       joined_at: m.joined_at,

@@ -2,21 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UpdateBookingStatusUseCase } from '@/application/use-cases/booking-status.use-cases';
 import type { BookingRepository } from '@/domain/repositories';
 import type { ScheduleRepository } from '@/domain/repositories';
+import type { IAuditService, IEmailService } from '@/domain/services';
 import { BookingId } from '@/domain/value-objects';
 
 // Mock external services to prevent real Supabase/email calls in tests
-vi.mock('@/infrastructure/audit/audit.service', () => ({
-  AuditService: {
-    logBookingStatusChanged: vi.fn().mockResolvedValue(undefined),
-  },
-}));
-
-vi.mock('@/infrastructure/email/email.service', () => ({
-  EmailService: {
-    sendBookingStatusChanged: vi.fn().mockResolvedValue(undefined),
-  },
-}));
-
 vi.mock('@/infrastructure/external/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
     from: vi.fn().mockReturnValue({
@@ -70,9 +59,28 @@ describe('UpdateBookingStatusUseCase', () => {
     vi.clearAllMocks();
     mockBookingRepo = createMockBookingRepo();
     mockScheduleRepo = createMockScheduleRepo();
+    const mockAuditService: IAuditService = {
+      log: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn().mockResolvedValue([]),
+      getEntityAuditTrail: vi.fn().mockResolvedValue([]),
+      getUserAuditTrail: vi.fn().mockResolvedValue([]),
+    };
+    const mockEmailService: IEmailService = {
+      sendBookingConfirmation: vi.fn().mockResolvedValue(undefined),
+      sendBookingCancellation: vi.fn().mockResolvedValue(undefined),
+      sendSessionReminder: vi.fn().mockResolvedValue(undefined),
+      sendInvoice: vi.fn().mockResolvedValue(undefined),
+      sendDunningNotice: vi.fn().mockResolvedValue(undefined),
+      sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+      sendPasswordReset: vi.fn().mockResolvedValue(undefined),
+      sendCustomEmail: vi.fn().mockResolvedValue(undefined),
+      sendBulkEmail: vi.fn().mockResolvedValue(undefined),
+    };
     useCase = new UpdateBookingStatusUseCase(
       mockBookingRepo as unknown as BookingRepository,
-      mockScheduleRepo as unknown as ScheduleRepository
+      mockScheduleRepo as unknown as ScheduleRepository,
+      mockAuditService,
+      mockEmailService
     );
   });
 

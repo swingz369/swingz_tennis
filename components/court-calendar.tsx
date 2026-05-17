@@ -208,7 +208,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
                       return (
                         <div
                           key={timeSlot}
-                          className={`h-6 rounded text-[10px] flex items-center justify-center cursor-pointer transition-colors ${
+                          className={`h-6 rounded text-[11px] flex items-center justify-center cursor-pointer transition-colors ${
                             isAvailable
                               ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
                               : session?.bookedByUser
@@ -250,7 +250,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
                               )}
                             </div>
                           ) : (
-                            <span className="text-[10px]">{timeSlot}</span>
+                            <span className="text-[11px]">{timeSlot}</span>
                           )}
                         </div>
                       );

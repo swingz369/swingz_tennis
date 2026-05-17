@@ -1,5 +1,5 @@
-import AdminApprovalWorkflow from '@/components/admin-approval-workflow';
+import AdminApprovals from '@/components/admin-approvals';
 
-export default function AdminApprovalWorkflowPage() {
-  return <AdminApprovalWorkflow />;
+export default function AdminApprovalsPage() {
+  return <AdminApprovals />;
 }

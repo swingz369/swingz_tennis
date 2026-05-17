@@ -93,10 +93,17 @@ export default function SettingsPage() {
         }));
       }
 
-      // Check if user is superadmin
-      const isDemo = typeof document !== 'undefined' && document.cookie.includes('demo-mode');
-      if (isDemo) {
-        setIsSuperAdmin(true);
+      // Check if user is superadmin (via roles API)
+      try {
+        const rolesRes = await fetch('/api/user/roles');
+        if (rolesRes.ok) {
+          const { roles } = await rolesRes.json();
+          if (roles?.includes('superadmin')) {
+            setIsSuperAdmin(true);
+          }
+        }
+      } catch {
+        // Non-critical: superadmin tab stays hidden on error
       }
     } catch (err) {
       console.error('Failed to fetch settings:', err);

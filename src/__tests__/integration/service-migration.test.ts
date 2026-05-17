@@ -8,6 +8,10 @@
  * 3. Test with feature flags ON (Drizzle repository)
  * 4. Test RLS policies with different user roles
  * 5. Test gradual rollout (0% → 25% → 50% → 100%)
+ *
+ * NOTE: These tests require a running Supabase instance (local or remote)
+ * with the complete schema applied. They are skipped automatically
+ * when SUPABASE_SERVICE_ROLE_KEY is not configured.
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
@@ -17,6 +21,11 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
+// Skip integration tests if no service role key is configured
+// (CI/local environments without Supabase should not run these)
+const hasSupabase = !!SUPABASE_SERVICE_KEY;
+const describeIntegration = hasSupabase ? describe : describe.skip;
+
 // Test user IDs (to be created in beforeAll)
 let superadminUserId: string;
 let adminUserId: string;
@@ -24,7 +33,7 @@ let trainerUserId: string;
 let memberUserId: string;
 let testClubId: string;
 
-describe('Phase 2 Service Migration Integration Tests', () => {
+describeIntegration('Phase 2 Service Migration Integration Tests', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let supabase: ReturnType<typeof createClient<any>>;
 

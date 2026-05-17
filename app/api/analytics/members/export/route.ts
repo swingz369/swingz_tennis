@@ -6,11 +6,6 @@ import { DrizzleMemberRepository } from '@/infrastructure/persistence/repositori
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
-function isDemoMode(req: NextRequest): boolean {
-  const cookies = req.cookies.get('demo-mode');
-  return !!cookies?.value;
-}
-
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
@@ -28,53 +23,6 @@ export async function GET(_request: NextRequest) {
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-    }
-
-    if (isDemoMode(_request)) {
-      const DEMO_MEMBERS = [
-        {
-          id: '1',
-          name: 'Max Mustermann',
-          email: 'max@example.com',
-          joinDate: '2024-01-15',
-          status: 'Aktiv',
-        },
-        {
-          id: '2',
-          name: 'Anna Schmidt',
-          email: 'anna@example.com',
-          joinDate: '2024-02-20',
-          status: 'Aktiv',
-        },
-        {
-          id: '3',
-          name: 'Tom Müller',
-          email: 'tom@example.com',
-          joinDate: '2024-03-10',
-          status: 'Aktiv',
-        },
-        {
-          id: '4',
-          name: 'Lisa Weber',
-          email: 'lisa@example.com',
-          joinDate: '2024-04-05',
-          status: 'Inaktiv',
-        },
-        {
-          id: '5',
-          name: 'Mike Berger',
-          email: 'mike@example.com',
-          joinDate: '2025-05-12',
-          status: 'Aktiv',
-        },
-      ];
-      const csv = convertToCSV(DEMO_MEMBERS);
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename="members-export.csv"',
-        },
-      });
     }
 
     try {

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
@@ -275,62 +276,50 @@ export default function TrialTrainingManagement() {
         <>
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Geplant</CardTitle>
-                <Calendar className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{scheduledCount}</div>
-                <p className="text-xs text-gray-500 mt-1">Ausstehende Trainings</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              icon={Calendar}
+              value={scheduledCount}
+              label="Geplant"
+              sublabel="Ausstehende Trainings"
+              iconClassName="bg-blue-100"
+              valueClassName="text-blue-600"
+            />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Abgeschlossen</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{completedCount}</div>
-                <p className="text-xs text-gray-500 mt-1">Erfolgreich absolviert</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              icon={CheckCircle}
+              value={completedCount}
+              label="Abgeschlossen"
+              sublabel="Erfolgreich absolviert"
+              iconClassName="bg-green-100"
+              valueClassName="text-green-600"
+            />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Konvertiert</CardTitle>
-                <Star className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{convertedCount}</div>
-                <p className="text-xs text-gray-500 mt-1">Zu Mitgliedern geworden</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              icon={Star}
+              value={convertedCount}
+              label="Konvertiert"
+              sublabel="Zu Mitgliedern geworden"
+              iconClassName="bg-purple-100"
+              valueClassName="text-purple-600"
+            />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
-                  Nicht erschienen
-                </CardTitle>
-                <XCircle className="h-4 w-4 text-orange-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{noShowCount}</div>
-                <p className="text-xs text-gray-500 mt-1">Ohne Absage</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              icon={XCircle}
+              value={noShowCount}
+              label="Nicht erschienen"
+              sublabel="Ohne Absage"
+              iconClassName="bg-orange-100"
+              valueClassName="text-orange-600"
+            />
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Konversionsrate</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{conversionRate}%</div>
-                <p className="text-xs text-gray-500 mt-1">Von Abgeschlossen zu Konvertiert</p>
-              </CardContent>
-            </Card>
+            <StatCard
+              icon={TrendingUp}
+              value={`${conversionRate}%`}
+              label="Konversionsrate"
+              sublabel="Von Abgeschlossen zu Konvertiert"
+              iconClassName="bg-green-100"
+              valueClassName="text-green-600"
+            />
           </div>
 
           {/* Filters */}

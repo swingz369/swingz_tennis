@@ -4,6 +4,7 @@ import type {
   AuditLogSummary,
   AuditAction,
   EntityType,
+  AuditChange,
 } from '../../domain/entities/audit-log.entity';
 
 export class AuditLogService {
@@ -23,8 +24,8 @@ export class AuditLogService {
     userName: string;
     userEmail: string;
     userRole: string;
-    changes?: any[];
-    metadata?: Record<string, any>;
+    changes?: AuditChange[];
+    metadata?: Record<string, unknown>;
     status?: 'success' | 'failed' | 'partial';
     errorMessage?: string;
     ipAddress?: string;

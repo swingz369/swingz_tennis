@@ -7,6 +7,12 @@ import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
+import {
+  STATUS_LABELS,
+  STATUS_COLORS,
+  FORMAT_LABELS,
+  CATEGORY_LABELS,
+} from '@/src/constants/tournaments';
 
 interface Tournament {
   id: string;
@@ -25,38 +31,6 @@ interface Tournament {
   participantCount: number;
   myRegistration?: { id: string; status: string } | null;
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Entwurf',
-  registration: 'Anmeldung offen',
-  active: 'Aktiv',
-  completed: 'Abgeschlossen',
-  cancelled: 'Abgesagt',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  registration: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  completed: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-};
-
-const FORMAT_LABELS: Record<string, string> = {
-  single_elimination: 'K.O.-System',
-  double_elimination: 'Doppel-K.O.',
-  round_robin: 'Jeder gegen jeden',
-  swiss: 'Schweizer System',
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  open: 'Offen',
-  men: 'Herren',
-  women: 'Damen',
-  mixed: 'Mixed',
-  junior: 'Junioren',
-  senior: 'Senioren',
-};
 
 export default function MemberTournamentsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);

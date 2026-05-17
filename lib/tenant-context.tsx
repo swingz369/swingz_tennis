@@ -39,9 +39,6 @@ export function TenantProvider({ children }: TenantProviderProps) {
           .find((row) => row.startsWith('tenant-club='))
           ?.split('=')[1];
 
-        // If no cookie, check for demo mode or default
-        const isDemo = document.cookie.includes('demo-mode=true');
-
         if (cookieClubId) {
           setClubId(cookieClubId);
           const res = await fetch(`/api/branding?clubId=${cookieClubId}`);
@@ -56,11 +53,6 @@ export function TenantProvider({ children }: TenantProviderProps) {
             setBranding(merged);
             applyBrandingToDOM(merged);
           }
-        } else if (isDemo) {
-          // Demo mode: use default branding
-          const demoBranding = { ...DEFAULT_BRANDING, clubId: 'demo' };
-          setBranding(demoBranding);
-          applyBrandingToDOM(demoBranding);
         } else {
           // No tenant context, use defaults
           setBranding(DEFAULT_BRANDING);

@@ -10,6 +10,26 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
+function isTableNotFound(error: { code?: string; message?: string }): boolean {
+  return (
+    error.code === '42P01' ||
+    (error.message?.includes('relation') ?? false) ||
+    (error.message?.includes('does not exist') ?? false)
+  );
+}
+
+function migrationRequiredResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      error: 'Season planning database tables not yet configured.',
+      detail: 'The seasons table does not exist. Run the migration script to create it.',
+      migration_command:
+        'psql "$DATABASE_URL" -f supabase/migrations/20260506_season_planning_system.sql',
+    },
+    { status: 503 }
+  );
+}
+
 export async function GET(request: NextRequest) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
@@ -151,13 +171,18 @@ export async function POST(request: NextRequest) {
       const supabase = auth.supabase;
 
       // Check for duplicate season
-      const { data: existing } = await supabase
+      const { data: existing, error: checkError } = await supabase
         .from('seasons')
         .select('id')
         .eq('club_id', body.club_id)
         .eq('season_type', body.season_type)
         .eq('year', body.year)
         .maybeSingle();
+
+      // Table may not exist yet — return graceful error instead of 500
+      if (checkError && isTableNotFound(checkError)) {
+        return migrationRequiredResponse();
+      }
 
       if (existing) {
         return NextResponse.json(
@@ -189,6 +214,10 @@ export async function POST(request: NextRequest) {
 
       if (insertError) {
         console.error('POST /api/seasons insert error:', insertError);
+        // Table may not exist yet — return graceful error instead of 500
+        if (isTableNotFound(insertError)) {
+          return migrationRequiredResponse();
+        }
         return NextResponse.json({ error: insertError.message }, { status: 500 });
       }
 

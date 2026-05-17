@@ -4,13 +4,14 @@ import { DrizzleClubRepository } from '@/infrastructure/persistence/repositories
 import { ClubId } from '@/domain/value-objects';
 import { updateClubSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
-import { AuditService } from '@/infrastructure/audit/audit.service';
+import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { clubs } from '@/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
 
 const clubRepo = new DrizzleClubRepository();
+const auditService = new AuditServiceImpl();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
@@ -105,7 +106,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         }
 
         try {
-          await AuditService.logClubUpdated(auth.user.id, id, input);
+          await auditService.log({
+            userId: auth.user.id,
+            action: 'update',
+            entityType: 'club',
+            entityId: id,
+            details: input as unknown as Record<string, unknown>,
+          });
         } catch (auditError) {
           console.warn('Failed to record audit log:', auditError);
         }
@@ -142,7 +149,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       await clubRepo.delete(clubId);
 
       try {
-        await AuditService.logClubDeleted(auth.user.id, id);
+        await auditService.log({
+          userId: auth.user.id,
+          action: 'delete',
+          entityType: 'club',
+          entityId: id,
+          details: {},
+        });
       } catch (auditError) {
         console.warn('Audit log failed:', auditError);
       }

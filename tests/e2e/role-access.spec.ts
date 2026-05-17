@@ -1,321 +1,140 @@
 import { test, expect } from '@playwright/test';
+import { loginAsRoleAware } from '../helpers/auth';
 
 test.describe('Role-based Access Control', () => {
   test.describe('Superadmin Navigation and Access', () => {
-    test('superadmin sees correct navigation items', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['superadmin'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-superadmin', email: 'superadmin@test.com' },
-            roles: ['superadmin'],
-          }),
-        });
-      });
-
-      await page.goto('/superadmin/dashboard');
-
-      // Superadmin should see platform-wide navigation
-      await expect(page.getByRole('link', { name: /Superadmin Dashboard/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Vereinsübersicht/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Club-Verwaltung/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Plattform-Analyse/i })).toBeVisible();
-
-      // Should see "Plattform" heading
-      await expect(page.getByText('PLATTFORM')).toBeVisible();
+    test.beforeEach(async ({ page }) => {
+      await loginAsRoleAware(
+        page,
+        process.env.TEST_SUPERADMIN_EMAIL!,
+        process.env.TEST_SUPERADMIN_PASSWORD!
+      );
     });
 
-    test('superadmin does NOT see club-scoped admin navigation', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['superadmin'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-superadmin', email: 'superadmin@test.com' },
-            roles: ['superadmin'],
-          }),
-        });
-      });
-
-      await page.goto('/superadmin/dashboard');
-
-      // Superadmin should NOT see club-specific items
-      await expect(page.getByRole('link', { name: /^Saisonplanung$/i })).not.toBeVisible();
-      await expect(page.getByRole('link', { name: /^Benutzerverwaltung$/i })).not.toBeVisible();
-      await expect(page.getByRole('link', { name: /^Genehmigungen$/i })).not.toBeVisible();
-
-      // Should NOT see "Administration" heading
-      await expect(page.getByText('ADMINISTRATION')).not.toBeVisible();
+    test('superadmin sees correct navigation items in sidebar', async ({ page }) => {
+      await page.goto('/superadmin', { waitUntil: 'networkidle' });
+      const sidebar = page.locator('aside[role="navigation"]');
+      await expect(sidebar).toBeVisible({ timeout: 10000 });
+      // Sidebar links
+      await expect(sidebar.getByRole('link', { name: /Superadmin Dashboard/i })).toBeVisible();
+      await expect(sidebar.getByRole('link', { name: /Vereinsübersicht/i })).toBeVisible();
+      await expect(sidebar.getByRole('link', { name: /Club-Verwaltung/i })).toBeVisible();
+      await expect(sidebar.getByRole('link', { name: /Plattform-Analyse/i })).toBeVisible();
+      // Section labels (use heading to avoid ambiguous matches with link names)
+      await expect(sidebar.getByRole('heading', { name: /Plattform/i })).toBeVisible();
+      await expect(sidebar.getByRole('heading', { name: /Verwaltung/i })).toBeVisible();
     });
 
-    test('superadmin can access /superadmin/* routes', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['superadmin'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-superadmin', email: 'superadmin@test.com' },
-            roles: ['superadmin'],
-          }),
-        });
-      });
-
-      // Test access to superadmin routes
-      await page.goto('/superadmin/dashboard');
-      expect(page.url()).toContain('/superadmin/dashboard');
-
-      await page.goto('/superadmin/tenants');
-      expect(page.url()).toContain('/superadmin/tenants');
-
-      await page.goto('/superadmin/clubs');
-      expect(page.url()).toContain('/superadmin/clubs');
+    test('superadmin can access /superadmin/ routes', async ({ page }) => {
+      await page.goto('/superadmin', { waitUntil: 'networkidle' });
+      expect(page.url()).toContain('/superadmin');
+      await page.goto('/superadmin/tenants', { waitUntil: 'domcontentloaded' });
+      await expect(page).toHaveURL(/\/superadmin\/tenants/);
     });
   });
 
   test.describe('Admin Navigation and Access', () => {
-    test('admin sees correct navigation items', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['admin'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-admin', email: 'admin@test.com' },
-            roles: ['admin'],
-          }),
-        });
-      });
-
-      await page.goto('/dashboard');
-
-      // Admin should see club-scoped navigation
-      await expect(page.getByRole('link', { name: /^Dashboard$/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Saisonplanung/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Benutzerverwaltung/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Genehmigungen/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Stundennachweise/i })).toBeVisible();
-
-      // Should see "Administration" heading
-      await expect(page.getByText('ADMINISTRATION')).toBeVisible();
+    test.beforeEach(async ({ page }) => {
+      await loginAsRoleAware(page, process.env.TEST_ADMIN_EMAIL!, process.env.TEST_ADMIN_PASSWORD!);
     });
 
-    test('admin does NOT see superadmin navigation', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['admin'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-admin', email: 'admin@test.com' },
-            roles: ['admin'],
-          }),
-        });
-      });
-
-      await page.goto('/dashboard');
-
-      // Admin should NOT see superadmin items
-      await expect(page.getByRole('link', { name: /Superadmin Dashboard/i })).not.toBeVisible();
-      await expect(page.getByRole('link', { name: /Vereinsübersicht/i })).not.toBeVisible();
-      await expect(page.getByRole('link', { name: /^Club-Verwaltung$/i })).not.toBeVisible();
-      await expect(page.getByRole('link', { name: /Plattform-Analyse/i })).not.toBeVisible();
-
-      // Should NOT see "Plattform" heading
-      await expect(page.getByText('PLATTFORM')).not.toBeVisible();
+    test('admin sees correct sidebar structure', async ({ page }) => {
+      await page.goto('/admin', { waitUntil: 'networkidle' });
+      const sidebar = page.locator('aside[role="navigation"]');
+      await expect(sidebar).toBeVisible({ timeout: 10000 });
+      // Direct overview link
+      await expect(sidebar.getByRole('link', { name: /Dashboard/i })).toBeVisible();
+      // Section header buttons (collapsible sections)
+      await expect(sidebar.getByRole('button', { name: /Mitglieder/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Training/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Plätze & Buchungen/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Finanzen/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Einstellungen/i })).toBeVisible();
+      // Übersicht section heading
+      await expect(sidebar.getByRole('heading', { name: /Übersicht/i })).toBeVisible();
+      // Superadmin items should NOT be visible in admin sidebar
+      await expect(sidebar.getByText('Superadmin Dashboard')).not.toBeVisible();
+      await expect(sidebar.getByText('Plattform')).not.toBeVisible();
     });
 
-    test('admin CANNOT access /superadmin/* routes', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['admin'] }),
-        });
+    test('admin CANNOT access /superadmin/ routes', async ({ page }) => {
+      await page.goto('/superadmin/dashboard', { waitUntil: 'networkidle' });
+      await page.waitForURL((url) => !url.pathname.includes('/superadmin/dashboard'), {
+        timeout: 15000,
       });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-admin', email: 'admin@test.com' },
-            roles: ['admin'],
-          }),
-        });
-      });
-
-      // Attempt to access superadmin route - should be blocked/redirected
-      await page.goto('/superadmin/dashboard');
-
-      // Should be redirected away or see 403/unauthorized
       expect(page.url()).not.toContain('/superadmin/dashboard');
     });
 
-    test('admin can access /admin/* routes', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['admin'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-admin', email: 'admin@test.com' },
-            roles: ['admin'],
-          }),
-        });
-      });
-
-      // Test access to admin routes
-      await page.goto('/admin/members');
-      expect(page.url()).toContain('/admin/members');
-
-      await page.goto('/admin/seasons');
-      expect(page.url()).toContain('/admin/seasons');
+    test('admin can access /admin/ routes', async ({ page }) => {
+      await page.goto('/admin/members', { waitUntil: 'networkidle' });
+      await expect(page).toHaveURL(/\/admin\/members/);
     });
   });
 
   test.describe('Trainer Navigation', () => {
-    test('trainer sees correct navigation items', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['trainer'] }),
-        });
-      });
+    test.beforeEach(async ({ page }) => {
+      await loginAsRoleAware(
+        page,
+        process.env.TEST_TRAINER_EMAIL!,
+        process.env.TEST_TRAINER_PASSWORD!
+      );
+    });
 
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-trainer', email: 'trainer@test.com' },
-            roles: ['trainer'],
-          }),
-        });
-      });
-
-      await page.goto('/dashboard');
-
-      // Trainer should see trainer-specific navigation
-      await expect(page.getByRole('link', { name: /Trainer Dashboard/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Termin-Verwaltung/i })).toBeVisible();
-
-      // Should see "Trainer" heading
-      await expect(page.getByText('TRAINER')).toBeVisible();
+    test('trainer sees correct bottom nav items', async ({ page }) => {
+      await page.goto('/trainer', { waitUntil: 'networkidle' });
+      // Trainer has NO sidebar — uses bottom nav (persistent)
+      const bottomNav = page.locator('nav[aria-label="Navigation"]');
+      await expect(bottomNav).toBeVisible({ timeout: 10000 });
+      await expect(bottomNav.getByRole('link', { name: /Übersicht/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Einheiten/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Anwesenheit/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Abrechnung/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Profil/i })).toBeVisible();
     });
 
     test('trainer CANNOT access admin or superadmin routes', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['trainer'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-trainer', email: 'trainer@test.com' },
-            roles: ['trainer'],
-          }),
-        });
-      });
-
-      // Attempt to access admin route
-      await page.goto('/admin/members');
+      await page.goto('/admin/members', { waitUntil: 'networkidle' });
+      await page.waitForURL((url) => !url.pathname.includes('/admin/members'), { timeout: 15000 });
       expect(page.url()).not.toContain('/admin/members');
 
-      // Attempt to access superadmin route
-      await page.goto('/superadmin/dashboard');
+      await page.goto('/superadmin/dashboard', { waitUntil: 'networkidle' });
+      await page.waitForURL((url) => !url.pathname.includes('/superadmin/dashboard'), {
+        timeout: 15000,
+      });
       expect(page.url()).not.toContain('/superadmin/dashboard');
     });
   });
 
   test.describe('Member Navigation', () => {
-    test('member sees correct navigation items', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['member'] }),
-        });
-      });
+    test.beforeEach(async ({ page }) => {
+      await loginAsRoleAware(
+        page,
+        process.env.TEST_MEMBER_EMAIL!,
+        process.env.TEST_MEMBER_PASSWORD!
+      );
+    });
 
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-member', email: 'member@test.com' },
-            roles: ['member'],
-          }),
-        });
-      });
-
-      await page.goto('/dashboard');
-
-      // Member should see basic navigation
-      await expect(page.getByRole('link', { name: /^Dashboard$/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Buchungen & Kalender/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /Trainingszeiten/i })).toBeVisible();
-
-      // Should see "Hauptmenü" heading
-      await expect(page.getByText('HAUPTMENÜ')).toBeVisible();
+    test('member sees correct bottom nav items', async ({ page }) => {
+      await page.goto('/member', { waitUntil: 'networkidle' });
+      // Member has NO sidebar — uses bottom nav (persistent)
+      const bottomNav = page.locator('nav[aria-label="Navigation"]');
+      await expect(bottomNav).toBeVisible({ timeout: 10000 });
+      await expect(bottomNav.getByRole('link', { name: /Home/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Buchen/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Training/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /News/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Profil/i })).toBeVisible();
     });
 
     test('member CANNOT access admin or superadmin routes', async ({ page }) => {
-      await page.route('**/api/user/roles', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({ roles: ['member'] }),
-        });
-      });
-
-      await page.route('**/api/auth/session', async (route) => {
-        await route.fulfill({
-          status: 200,
-          body: JSON.stringify({
-            user: { id: 'test-member', email: 'member@test.com' },
-            roles: ['member'],
-          }),
-        });
-      });
-
-      // Attempt to access admin route
-      await page.goto('/admin/members');
+      await page.goto('/admin/members', { waitUntil: 'networkidle' });
+      await page.waitForURL((url) => !url.pathname.includes('/admin/members'), { timeout: 15000 });
       expect(page.url()).not.toContain('/admin/members');
 
-      // Attempt to access superadmin route
-      await page.goto('/superadmin/dashboard');
+      await page.goto('/superadmin/dashboard', { waitUntil: 'networkidle' });
+      await page.waitForURL((url) => !url.pathname.includes('/superadmin/dashboard'), {
+        timeout: 15000,
+      });
       expect(page.url()).not.toContain('/superadmin/dashboard');
     });
   });

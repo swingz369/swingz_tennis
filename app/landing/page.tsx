@@ -28,13 +28,6 @@ export default function LandingPage() {
   const heroCtaVariant = getVariant('landing_hero_cta');
 
   useEffect(() => {
-    const cookies = document.cookie.split(';');
-    const hasDemoMode = cookies.some((c) => c.trim().startsWith('demo-mode='));
-    if (hasDemoMode) {
-      router.replace('/dashboard');
-      return;
-    }
-
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
       if (data.session?.user) {
@@ -182,7 +175,7 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start animate-in animate-in-delay-4">
-                <Link href="/login">
+                <Link href="/contact">
                   <button
                     type="button"
                     className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-primary via-brand-primary/80 to-brand-light px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2 focus:ring-offset-brand-950 overflow-hidden min-h-[48px]"
@@ -196,18 +189,18 @@ export default function LandingPage() {
                   >
                     <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                     <Sparkles className="h-5 w-5 relative z-10" />
-                    <span className="relative z-10">{heroCtaVariant || 'Demo starten'}</span>
+                    <span className="relative z-10">{heroCtaVariant || 'Testzugang anfragen'}</span>
                     <ChevronRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </Link>
-                <Link href="/login">
+                <Link href="/contact">
                   <button
                     type="button"
                     className="group inline-flex items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-6 sm:px-8 py-3.5 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[48px]"
                     onClick={() => analytics.featureUsed('landing_learn_more')}
                   >
                     <Play className="h-5 w-5" />
-                    Mehr erfahren
+                    Kontakt aufnehmen
                   </button>
                 </Link>
               </div>
@@ -462,9 +455,9 @@ export default function LandingPage() {
               },
               {
                 icon: Zap,
-                title: 'Demo-Modus',
+                title: 'Integrationen & API',
                 description:
-                  'Probiere alle Funktionen sofort aus – kein Account nötig. Starte in unter 30 Sekunden.',
+                  'Nahtlose Anbindung an bestehende Systeme über REST-API, Webhooks und Zapier-Integration – für maximale Flexibilität.',
                 gradient: 'from-brand-light to-brand-primary',
                 highlight: true,
               },
@@ -488,6 +481,156 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="bg-white py-20 sm:py-32 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-gray-50 to-transparent opacity-50" />
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center mb-14 sm:mb-20">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-brand-accent/10 text-brand-accent text-sm font-semibold mb-4">
+              Preise
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
+              Für jeden Verein die{' '}
+              <span className="text-gradient-accent bg-clip-text text-transparent">
+                richtige Lösung
+              </span>
+            </h2>
+            <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+              Flexible Preismodelle – vom kleinen Verein bis zum großen Verband.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                name: 'Starter',
+                subtitle: 'Für kleine Vereine',
+                price: '29',
+                period: '/Monat',
+                description: 'Ideale Lösung für Vereine mit bis zu 50 Mitgliedern.',
+                features: [
+                  'Bis zu 50 Mitglieder',
+                  '5 aktive Trainer',
+                  'Basis-Stundenplan',
+                  'Einfache Buchungsverwaltung',
+                  'E-Mail-Support',
+                ],
+                cta: 'Kostenlos starten',
+                popular: false,
+                gradient: 'from-gray-100 to-gray-50',
+                badgeBorder: 'border-gray-200',
+                iconColor: 'text-green-600',
+              },
+              {
+                name: 'Professional',
+                subtitle: 'Für wachsende Clubs',
+                price: '79',
+                period: '/Monat',
+                description: 'Die optimale Ausstattung für Clubs mit bis zu 200 Mitgliedern.',
+                features: [
+                  'Bis zu 200 Mitglieder',
+                  'Unbegrenzte Trainer',
+                  'KI-gestützte Optimierung',
+                  'Echtzeit-Analytics',
+                  'Drag & Drop Kalender',
+                  'Mitglieder-Management',
+                  'Prioritäts-Support',
+                ],
+                cta: 'Jetzt starten',
+                popular: true,
+                gradient: 'from-brand-primary to-brand-light',
+                badgeBorder: 'border-brand-primary/30',
+                iconColor: 'text-brand-primary',
+              },
+              {
+                name: 'Enterprise',
+                subtitle: 'Für Verbände & große Anlagen',
+                price: '199',
+                period: '/Monat',
+                description: 'Maximale Skalierbarkeit für große Tennisanlagen und Verbände.',
+                features: [
+                  'Unbegrenzte Mitglieder',
+                  'Multi-Club-Support',
+                  'Individuelle API-Integration',
+                  'White-Label-Option',
+                  'SLA-Garantie (99,9%)',
+                  'Dedizierter Account-Manager',
+                  'Individuelle Schulungen',
+                ],
+                cta: 'Kontakt aufnehmen',
+                popular: false,
+                gradient: 'from-brand-accent to-orange-600',
+                badgeBorder: 'border-gray-200',
+                iconColor: 'text-brand-accent',
+              },
+            ].map((plan, idx) => (
+              <div
+                key={idx}
+                className={`relative flex flex-col bg-white rounded-3xl border ${plan.badgeBorder} shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-2 overflow-hidden ${plan.popular ? 'ring-2 ring-brand-primary/30 scale-105 z-10' : ''}`}
+              >
+                {plan.popular && (
+                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-brand-primary to-brand-light text-white text-center text-sm font-semibold py-2.5 tracking-wide">
+                    Meistgewählt
+                  </div>
+                )}
+
+                <div className={`p-8 pt-12 ${plan.popular ? 'pt-16' : ''}`}>
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold text-gray-900">{plan.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{plan.subtitle}</p>
+
+                    <div className="mt-6 flex items-baseline justify-center gap-0.5">
+                      <span className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
+                        €{plan.price}
+                      </span>
+                      <span className="text-gray-400 text-sm">{plan.period}</span>
+                    </div>
+
+                    <p className="mt-4 text-sm text-gray-600 leading-relaxed">{plan.description}</p>
+                  </div>
+
+                  <ul className="mt-8 space-y-4" role="list">
+                    {plan.features.map((feature, fIdx) => (
+                      <li key={fIdx} className="flex items-start gap-3">
+                        <svg
+                          className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.iconColor}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-sm text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-8">
+                    <Link
+                      href="/contact"
+                      className={`group flex items-center justify-center gap-2 w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-brand-primary to-brand-light text-white shadow-lg hover:shadow-xl'
+                          : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
+                      }`}
+                    >
+                      {plan.cta}
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-12 text-center text-sm text-gray-400">
+            Alle Preise zzgl. MwSt. · Keine versteckten Kosten · Jederzeit kündbar
+          </p>
         </div>
       </section>
 
@@ -524,7 +667,7 @@ export default function LandingPage() {
                 }}
               >
                 <Sparkles className="h-5 w-5" />
-                Demo starten
+                Kostenlos testen
                 <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>

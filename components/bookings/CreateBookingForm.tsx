@@ -7,11 +7,8 @@ import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import {
-  createBookingSchema,
-  createBookingAction,
-  type CreateBookingInput,
-} from '@/lib/actions/booking.actions';
+import { createBookingSchema, type CreateBookingInput } from '@/lib/schemas/booking.schema';
+import { createBookingAction } from '@/lib/actions/booking.actions';
 
 import { Form, FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';

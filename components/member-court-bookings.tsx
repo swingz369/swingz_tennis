@@ -12,6 +12,7 @@ import {
 } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
@@ -147,47 +148,29 @@ export default function MemberCourtBookings() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Diesen Monat</CardTitle>
-            <Calendar className="h-4 w-4 text-brand-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{monthBookings.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Platzbuchungen</p>
-          </CardContent>
-        </Card>
+        <StatCard icon={Calendar} value={monthBookings.length} label="Platzbuchungen" />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Kommende</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                monthBookings.filter((b: Session & { week: string }) => {
-                  const bookingDate = new Date(b.week);
-                  return bookingDate >= new Date();
-                }).length
-              }
-            </div>
-            <p className="text-xs text-gray-500 mt-1">noch bevorstehend</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Clock}
+          value={
+            monthBookings.filter((b: Session & { week: string }) => {
+              const bookingDate = new Date(b.week);
+              return bookingDate >= new Date();
+            }).length
+          }
+          label="Kommende"
+          sublabel="noch bevorstehend"
+          iconClassName="bg-blue-100"
+          valueClassName="text-blue-600"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Verschiedene Plätze</CardTitle>
-            <MapPin className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(monthBookings.map((b: Session & { courtId: string }) => b.courtId)).size}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">unterschiedliche Plätze</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={MapPin}
+          value={new Set(monthBookings.map((b: Session & { courtId: string }) => b.courtId)).size}
+          label="Verschiedene Plätze"
+          sublabel="unterschiedliche Plätze"
+          iconClassName="bg-green-100"
+        />
       </div>
 
       {/* Upcoming Bookings */}

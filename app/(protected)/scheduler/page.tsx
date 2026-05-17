@@ -225,7 +225,7 @@ export default function SchedulerPage() {
       >
         {/* Schedule Grid */}
         <Card variant="elevated" padding="none" className="overflow-x-auto">
-          <div className="min-w-[900px]">
+          <div className="min-w-[768px]">
             {/* Header row with days */}
             <div className="grid grid-cols-8 border-b border-gray-200 bg-gray-50">
               <div className="p-3 text-sm font-medium text-gray-500 border-r border-gray-200">

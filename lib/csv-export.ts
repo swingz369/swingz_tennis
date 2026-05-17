@@ -100,12 +100,18 @@ export function exportMembersCSV(
     role: string;
     is_active: boolean;
     joined_at: string;
+    phone?: string | null;
+    address?: string | null;
+    city?: string | null;
   }[]
 ): void {
   const headers: Record<string, string> = {
     id: 'Mitglieds-ID',
     full_name: 'Name',
     email: 'E-Mail',
+    phone: 'Telefon',
+    address: 'Adresse',
+    city: 'Stadt',
     role: 'Rolle',
     is_active: 'Aktiv',
     joined_at: 'Beigetreten am',
@@ -115,6 +121,9 @@ export function exportMembersCSV(
     id: m.id,
     full_name: m.full_name,
     email: m.email,
+    phone: m.phone || '',
+    address: m.address || '',
+    city: m.city || '',
     role: m.role,
     is_active: m.is_active ? 'Ja' : 'Nein',
     joined_at: new Date(m.joined_at).toLocaleDateString('de-DE'),

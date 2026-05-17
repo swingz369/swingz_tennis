@@ -1,17 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { cookies } from 'next/headers';
 import BrandingSettingsClient from './branding-client';
 
 export default async function BrandingSettingsPage() {
-  const cookieStore = await cookies();
-  const hasDemoMode = cookieStore.get('demo-mode');
-
-  // In demo mode, render client with demo club ID
-  if (hasDemoMode) {
-    return <BrandingSettingsClient clubId="demo" />;
-  }
-
   const supabase = await createClient();
   const {
     data: { user },

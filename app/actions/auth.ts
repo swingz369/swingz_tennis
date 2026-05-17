@@ -15,7 +15,6 @@ export async function clearAuthCookiesAndRedirect() {
   cookieStore.delete('sb-access-token');
   cookieStore.delete('sb-refresh-token');
   cookieStore.delete('sb-session-token');
-  cookieStore.delete('demo-mode');
 
   redirect('/login');
 }

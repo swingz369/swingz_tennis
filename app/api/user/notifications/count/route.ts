@@ -1,15 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth } from '@/lib/api-auth';
 
 export async function GET(req: NextRequest) {
-  // Demo mode: return 0 unread
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ count: 0 });
-  }
-
   return withApiAuth(req, async (auth) => {
     const { count, error } = await auth.supabase
       .from('notifications')

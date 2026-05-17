@@ -1,5 +1,6 @@
 // Auto-Planning Algorithm Service
 // Optimizes season planning based on user preferences and constraints
+// Supports both deterministic greedy algorithm and AI-powered scheduling (V2)
 
 import { getDb } from '@/src/infrastructure/persistence/client';
 import {
@@ -18,6 +19,8 @@ import type {
   WeeklyAvailability,
   DayOfWeek,
 } from '@/lib/types/season-planning';
+import { aiScheduleServiceV2 } from '@/lib/ai/schedule-generator-v2';
+import type { ScheduleGenerationInput } from '@/lib/ai/schedule-generator-v2';
 
 interface TrainerPreference {
   trainer_id: string;
@@ -166,6 +169,194 @@ export class AutoPlanningService {
       conflicts: detectedConflicts,
       metrics,
     };
+  }
+
+  /**
+   * AI-powered auto-planning function (V2)
+   * Uses Anthropic Claude / OpenAI to generate optimized schedules
+   * Falls back to deterministic algorithm if AI is unavailable
+   */
+  static async generatePlanAI(
+    seasonId: string,
+    config: AutoPlanConfig,
+    dryRun: boolean = false
+  ): Promise<{
+    entries: PlanningSlot[];
+    conflicts: Array<{ type: string; description: string; severity: string }>;
+    metrics: AlgorithmMetrics;
+    aiEnhanced: boolean;
+    modelUsed: string;
+  }> {
+    const startTime = Date.now();
+
+    const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+    if (!season) throw new Error('Season not found');
+
+    const allPreferences = await getDb()
+      .select({
+        pref: userTrainingPreferences,
+        user_name: sql<string>`COALESCE(users.full_name, users.email)`,
+      })
+      .from(userTrainingPreferences)
+      .leftJoin(sql`users`, sql`users.id = ${userTrainingPreferences.user_id}`)
+      .where(
+        and(
+          eq(userTrainingPreferences.season_id, seasonId),
+          eq(userTrainingPreferences.is_submitted, true)
+        )
+      );
+
+    const availableCourts = await getDb()
+      .select()
+      .from(courts)
+      .where(and(eq(courts.club_id, season.club_id), eq(courts.is_active, true)));
+
+    if (!aiScheduleServiceV2.isAvailable()) {
+      console.log('[AutoPlanning] AI not available, using deterministic algorithm');
+      const result = await this.generatePlan(seasonId, config, dryRun);
+      return { ...result, aiEnhanced: false, modelUsed: 'none' };
+    }
+
+    const planningData = {
+      members: allPreferences
+        .filter(({ pref }) => pref.user_role !== 'trainer')
+        .slice(0, 30)
+        .map(({ pref, user_name }) => ({
+          id: pref.user_id,
+          name: user_name || 'Unknown',
+          skillLevel: pref.preferred_level || 'intermediate',
+          availability: this.flattenAvailability(pref.weekly_availability as WeeklyAvailability),
+        })),
+      trainers: allPreferences
+        .filter(({ pref }) => pref.user_role === 'trainer')
+        .map(({ pref, user_name }) => ({
+          id: pref.user_id,
+          name: user_name || 'Unknown',
+          specialization: pref.can_teach_groups?.[0] || 'general',
+          availability: this.flattenAvailability(pref.weekly_availability as WeeklyAvailability),
+        })),
+      courts: availableCourts.map((c) => ({
+        id: c.id,
+        name: c.name || `Court ${c.id.slice(0, 8)}`,
+        capacity: 12, // Courts table has no capacity column; use default
+      })),
+    };
+
+    const aiInput: ScheduleGenerationInput = {
+      clubId: season.club_id,
+      startDate: season.start_date || new Date(),
+      endDate: season.end_date || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      constraints: {
+        maxParticipantsPerSession: config.maxParticipantsPerSession || 12,
+        preferredDays: config.preferredDays,
+        preferredTimeSlots: config.preferredTimeSlots?.map((s: any) => ({
+          start: s.start || s.start_time,
+          end: s.end || s.end_time,
+        })),
+        skillLevels: config.skillLevels,
+        avoidTrainerOverload: config.avoidTrainerOverload !== false,
+        balanceGroupSizes: config.balanceGroupSizes !== false,
+      },
+    };
+
+    const aiResult = await aiScheduleServiceV2.generateSchedule(aiInput, planningData);
+
+    if (!aiResult.success) {
+      console.warn('[AutoPlanning] AI generation failed, using fallback:', aiResult.reasoning);
+      const result = await this.generatePlan(seasonId, config, dryRun);
+      return {
+        ...result,
+        aiEnhanced: false,
+        modelUsed: 'none',
+        conflicts: [
+          ...result.conflicts,
+          {
+            type: 'ai_failed',
+            description: `AI scheduling failed: ${aiResult.reasoning}. Used fallback.`,
+            severity: 'low',
+          },
+        ],
+      };
+    }
+
+    const dayOfWeekMap: Record<number, DayOfWeek> = { 0: 6, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };
+    const plannedSlots: PlanningSlot[] = aiResult.sessions.map((s) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const startH = pad(s.startTime.getHours());
+      const startM = pad(s.startTime.getMinutes());
+      const startS = pad(s.startTime.getSeconds());
+      const endH = pad(s.endTime.getHours());
+      const endM = pad(s.endTime.getMinutes());
+      const endS = pad(s.endTime.getSeconds());
+
+      return {
+        day_of_week: dayOfWeekMap[s.startTime.getDay()] || 0,
+        start_time: `${startH}:${startM}:${startS}`,
+        end_time: `${endH}:${endM}:${endS}`,
+        duration_minutes: Math.round((s.endTime.getTime() - s.startTime.getTime()) / 60000),
+        trainer_id: s.trainerId,
+        court_id: s.courtId,
+        group_id: null,
+        expected_participants: s.participants,
+        preference_match_score: s.confidence * 100,
+        conflict_score: 0,
+      };
+    });
+
+    const endTime = Date.now();
+    const sessionCount = aiResult.sessions.length;
+    const metrics: AlgorithmMetrics = {
+      iterations: sessionCount,
+      runtime_ms: endTime - startTime,
+      score:
+        sessionCount > 0
+          ? aiResult.sessions.reduce((sum, s) => sum + s.confidence * 100, 0) / sessionCount
+          : 0,
+      conflicts_detected: (aiResult.warnings || []).length,
+      preferences_matched: aiResult.sessions.reduce((sum, s) => sum + s.participants.length, 0),
+      trainer_utilization: this.calculateTrainerUtilization(plannedSlots, []),
+      court_utilization: this.calculateCourtUtilization(plannedSlots, availableCourts),
+    };
+
+    const conflicts: Array<{ type: string; description: string; severity: string }> = (
+      aiResult.warnings || []
+    ).map((w) => ({
+      type: 'ai_warning',
+      description: w,
+      severity: 'low' as const,
+    }));
+
+    if (!dryRun) {
+      await this.savePlanToDatabase(seasonId, season.club_id, plannedSlots, conflicts, metrics);
+    }
+
+    return {
+      entries: plannedSlots,
+      conflicts,
+      metrics,
+      aiEnhanced: true,
+      modelUsed: aiResult.modelUsed,
+    };
+  }
+
+  /**
+   * Flatten WeeklyAvailability to day-name strings for AI input
+   */
+  private static flattenAvailability(availability: WeeklyAvailability): string[] {
+    if (!availability) return [];
+    const dayNames = [
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+      'sunday',
+    ] as const;
+    return dayNames.filter((day) => {
+      const slots = availability[day];
+      return slots && Array.isArray(slots) && slots.length > 0;
+    });
   }
 
   /**

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +9,6 @@ import { Trophy, Sparkles, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,12 +32,6 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.error?.includes('fetch failed') || data.error?.includes('Connection')) {
-          console.warn('Supabase not available - using demo mode');
-          document.cookie = 'demo-mode=true; path=/';
-          window.location.href = '/';
-          return;
-        }
         setError(data.error || 'Login failed');
         return;
       }
@@ -55,12 +47,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    document.cookie = 'demo-mode=true; path=/';
-    analytics.login('demo', true);
-    router.push('/');
   };
 
   return (
@@ -197,7 +183,7 @@ export default function LoginPage() {
                     type="button"
                     className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label="Passwort anzeigen/verstecken"
+                    aria-label="Ein-/Ausblenden"
                   >
                     {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
                   </Button>
@@ -250,16 +236,6 @@ export default function LoginPage() {
                   <span className="bg-white dark:bg-gray-900 px-4 text-gray-400">oder</span>
                 </div>
               </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-brand-accent hover:text-brand-accent hover:bg-brand-accent/5 transition-all duration-300 font-medium"
-                onClick={handleDemoLogin}
-              >
-                <Sparkles className="mr-2 h-5 w-5" />
-                Demo-Modus starten
-              </Button>
             </form>
 
             <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">

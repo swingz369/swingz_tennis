@@ -15,8 +15,8 @@ import {
   Layout,
   Building2,
   BookOpen,
-  Newspaper,
   CreditCard,
+  Clock,
 } from 'lucide-react';
 
 interface MobileBottomNavProps {
@@ -57,11 +57,13 @@ export function MobileBottomNav({
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else if (isTrainer) {
-    // Trainer: 5 tabs like TSOW
+    // Trainer: 7 tabs
     navItems = [
       { name: 'Übersicht', href: '/trainer', icon: Home },
-      { name: 'Einheiten', href: '/trainer/sessions', icon: Calendar },
+      { name: 'Einheiten', href: '/scheduler', icon: Calendar },
       { name: 'Anwesenheit', href: '/attendance-history', icon: ClipboardCheck },
+      { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
+      { name: 'Gamification', href: '/gamification', icon: GraduationCap },
       { name: 'Abrechnung', href: '/billing', icon: CreditCard },
       { name: 'Profil', href: '/profile', icon: User },
     ];
@@ -71,7 +73,7 @@ export function MobileBottomNav({
       { name: 'Home', href: '/member', icon: Home },
       { name: 'Buchen', href: '/bookings', icon: Calendar },
       { name: 'Training', href: '/training-schedule', icon: BookOpen },
-      { name: 'News', href: '/news', icon: Newspaper },
+      { name: 'Gamification', href: '/gamification', icon: GraduationCap },
       { name: 'Profil', href: '/profile', icon: User },
     ];
   }

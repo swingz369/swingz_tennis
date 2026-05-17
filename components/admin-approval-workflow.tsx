@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -396,49 +397,40 @@ export default function AdminApprovalWorkflow() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Ausstehend</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingCount}</div>
-            <p className="text-xs text-gray-500 mt-1">Warten auf Entscheidung</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Clock}
+          value={pendingCount}
+          label="Ausstehend"
+          sublabel="Warten auf Entscheidung"
+          iconClassName="bg-yellow-100"
+          valueClassName="text-yellow-600"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Genehmigt</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{approvedCount}</div>
-            <p className="text-xs text-gray-500 mt-1">Erfolgreich genehmigt</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={CheckCircle}
+          value={approvedCount}
+          label="Genehmigt"
+          sublabel="Erfolgreich genehmigt"
+          iconClassName="bg-green-100"
+          valueClassName="text-green-600"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Abgelehnt</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{rejectedCount}</div>
-            <p className="text-xs text-gray-500 mt-1">Abgelehnte Anträge</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={XCircle}
+          value={rejectedCount}
+          label="Abgelehnt"
+          sublabel="Abgelehnte Anträge"
+          iconClassName="bg-red-100"
+          valueClassName="text-red-600"
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Gesamt</CardTitle>
-            <FileText className="h-4 w-4 text-gray-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{registrations.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Alle Anträge</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={FileText}
+          value={registrations.length}
+          label="Gesamt"
+          sublabel="Alle Anträge"
+          iconClassName="bg-gray-100"
+        />
       </div>
 
       {/* Filters */}

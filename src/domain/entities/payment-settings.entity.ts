@@ -10,7 +10,7 @@ export interface PaymentSettings {
     secretKey?: string;
     merchantId?: string;
     webhookUrl?: string;
-    [key: string]: any;
+    [key: string]: string | undefined;
   };
   supportedCurrencies: string[];
   supportedMethods: string[];
@@ -33,7 +33,7 @@ export interface CreatePaymentSettingsInput {
     secretKey?: string;
     merchantId?: string;
     webhookUrl?: string;
-    [key: string]: any;
+    [key: string]: string | undefined;
   };
   supportedCurrencies: string[];
   supportedMethods: string[];
@@ -55,7 +55,7 @@ export interface UpdatePaymentSettingsInput {
     secretKey?: string;
     merchantId?: string;
     webhookUrl?: string;
-    [key: string]: any;
+    [key: string]: string | undefined;
   };
   supportedCurrencies?: string[];
   supportedMethods?: string[];

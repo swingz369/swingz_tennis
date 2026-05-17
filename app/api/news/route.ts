@@ -1,15 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth } from '@/lib/api-auth';
 
 // GET /api/news — returns news for the current user's club
 export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ news: [] });
-  }
-
   return withApiAuth(req, async (auth) => {
     // Build query based on role
     let query = auth.supabase
@@ -37,11 +31,6 @@ export async function GET(req: NextRequest) {
 
 // POST /api/news — create a news item (admin only)
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ success: true, id: 'demo-news-id' });
-  }
-
   return withApiAuth(req, async (auth) => {
     if (auth.role !== 'admin' && auth.role !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

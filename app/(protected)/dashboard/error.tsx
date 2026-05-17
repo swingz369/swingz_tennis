@@ -43,7 +43,7 @@ export default function DashboardError({
               Erneut versuchen
             </Button>
             <Button asChild variant="outline">
-              <Link href="/admin/panel-v2">Zum Admin Panel v2</Link>
+              <Link href="/superadmin/dashboard">Zum Superadmin Dashboard</Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/profile">Zu meinem Profil</Link>
@@ -53,8 +53,8 @@ export default function DashboardError({
           <div className="pt-4 border-t">
             <p className="text-sm text-muted-foreground">
               <strong>Hinweis:</strong> Wenn das Problem weiterhin besteht, verwenden Sie bitte das{' '}
-              <Link href="/admin/panel-v2" className="underline">
-                Admin Panel v2
+              <Link href="/superadmin/dashboard" className="underline">
+                Superadmin Dashboard
               </Link>{' '}
               als Alternative.
             </p>

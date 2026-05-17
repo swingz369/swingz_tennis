@@ -1,15 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { withApiAuth } from '@/lib/api-auth';
 
 // GET /api/admin/approvals/count — returns count of pending registrations
 export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ count: 0 });
-  }
-
   return withApiAuth(req, async (auth) => {
     if (auth.role !== 'admin' && auth.role !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

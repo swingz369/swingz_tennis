@@ -1,156 +1,108 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { withApiAuth } from '@/lib/api-auth';
+import { createClient } from '@/lib/supabase/server';
 
-// GET /api/admin/approvals — returns registration requests (admin only)
-export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ registrations: [] });
-  }
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  return withApiAuth(req, async (auth) => {
-    if (auth.role !== 'admin' && auth.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // Verify admin role
+    const { data: membership } = await supabase
+      .from('user_club_memberships')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'superadmin'])
+      .maybeSingle();
 
-    const url = new URL(req.url);
-    const status = url.searchParams.get('status');
-    const type = url.searchParams.get('type');
-    const search = url.searchParams.get('search');
+    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (auth.supabase as any)
+    const { data, error } = await (supabase as any)
       .from('registration_requests')
       .select('*')
-      .order('submitted_at', { ascending: false })
-      .limit(100);
+      .order('created_at', { ascending: false });
 
-    if (auth.role !== 'superadmin' && auth.clubId) {
-      query = query.eq('club_id', auth.clubId);
-    }
-    if (status && status !== 'all') {
-      query = query.eq('status', status);
-    }
-    if (type && type !== 'all') {
-      query = query.eq('type', type);
-    }
-    if (search) {
-      query = query.or(
-        `applicant_first_name.ilike.%${search}%,applicant_last_name.ilike.%${search}%,applicant_email.ilike.%${search}%`
-      );
-    }
+    if (error) throw error;
 
-    const { data, error } = await query;
-
-    if (error) {
-      // Table may not exist yet — return empty gracefully
-      return NextResponse.json({ registrations: [] });
-    }
-
-    // Map DB columns to RegistrationRequest interface
-    const registrations = (data ?? []).map((r: any) => ({
-      id: r.id,
-      type: r.type || 'registration',
-      status: r.status || 'pending',
-      applicant: {
-        firstName: r.applicant_first_name || '',
-        lastName: r.applicant_last_name || '',
-        email: r.applicant_email || '',
-        phone: r.applicant_phone || '',
-        dateOfBirth: r.applicant_date_of_birth || '',
-      },
-      address: {
-        street: r.address_street || '',
-        houseNumber: r.address_house_number || '',
-        postalCode: r.address_postal_code || '',
-        city: r.address_city || '',
-      },
-      tennisInfo: {
-        experience: r.tennis_experience || '',
-        playingLevel: r.tennis_playing_level || '',
-        preferredDays: r.tennis_preferred_days || [],
-        goals: r.tennis_goals || '',
-      },
-      additionalInfo: r.additional_info || undefined,
-      submittedAt: r.submitted_at || new Date().toISOString(),
-      reviewedAt: r.reviewed_at || undefined,
-      reviewedBy: r.reviewed_by || undefined,
-      rejectionReason: r.rejection_reason || undefined,
-      notes: r.notes || undefined,
-    }));
-
-    return NextResponse.json({ registrations });
-  });
+    return NextResponse.json({ requests: data });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
 
-// PATCH /api/admin/approvals — approve, reject, or hold a registration
-export async function PATCH(req: NextRequest) {
-  const cookieStore = await cookies();
-  if (cookieStore.get('demo-mode')) {
-    return NextResponse.json({ success: true });
-  }
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  return withApiAuth(req, async (auth) => {
-    if (auth.role !== 'admin' && auth.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Verify admin
+    const { data: membership } = await supabase
+      .from('user_club_memberships')
+      .select('role, club_id')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'superadmin'])
+      .maybeSingle();
+
+    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const { id, status, rejectionReason } = await request.json();
+
+    if (!id || !status) {
+      return NextResponse.json({ error: 'ID und Status erforderlich' }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { id, action, rejectionReason, notes } = body;
-
-    if (!id || !action) {
-      return NextResponse.json({ error: 'id and action are required' }, { status: 400 });
-    }
-
-    if (!['approve', 'reject', 'hold', 'update_notes'].includes(action)) {
-      return NextResponse.json(
-        { error: 'action must be approve, reject, hold, or update_notes' },
-        { status: 400 }
-      );
-    }
-
-    if (action === 'reject' && !rejectionReason) {
-      return NextResponse.json(
-        { error: 'rejectionReason is required for reject action' },
-        { status: 400 }
-      );
-    }
-
-    const statusMap: Record<string, string> = {
-      approve: 'approved',
-      reject: 'rejected',
-      hold: 'on_hold',
+    const updateData: Record<string, unknown> = {
+      status,
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
     };
 
-    // update_notes only changes notes, not status
-    const updateData: Record<string, any> =
-      action === 'update_notes'
-        ? {}
-        : {
-            status: statusMap[action],
-            reviewed_at: new Date().toISOString(),
-            reviewed_by: auth.user.email || 'Unknown',
-          };
-
-    if (rejectionReason) {
+    if (status === 'rejected' && rejectionReason) {
       updateData.rejection_reason = rejectionReason;
     }
-    if (notes !== undefined) {
-      updateData.notes = notes;
-    }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (auth.supabase as any)
+    const { error } = await (supabase as any)
       .from('registration_requests')
       .update(updateData)
       .eq('id', id);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) throw error;
+
+    if (status === 'approved') {
+      const { data: registration } = await (supabase as any)
+        .from('registration_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      let warning: string | undefined;
+      if (registration) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/emails/onboarding`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: registration.email,
+              firstName: registration.first_name,
+              clubId: registration.club_id || membership.club_id,
+            }),
+          });
+        } catch (e) {
+          console.error('Onboarding email trigger failed:', e);
+          warning = 'Mitglied genehmigt, aber Willkommens-Mail konnte nicht gesendet werden.';
+        }
+      }
+      return NextResponse.json({ success: true, warning });
     }
 
     return NextResponse.json({ success: true });
-  });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

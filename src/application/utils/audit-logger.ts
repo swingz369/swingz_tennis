@@ -1,5 +1,5 @@
 import { AuditLogService } from '@/src/application/services/audit-log.service';
-import type { AuditAction, EntityType } from '@/src/domain/entities/audit-log.entity';
+import type { AuditAction, EntityType, AuditChange } from '@/src/domain/entities/audit-log.entity';
 
 export class AuditLogger {
   private static auditLogService: AuditLogService = new AuditLogService();
@@ -12,8 +12,8 @@ export class AuditLogger {
     userName: string;
     userEmail: string;
     userRole: string;
-    changes?: any[];
-    metadata?: Record<string, any>;
+    changes?: AuditChange[];
+    metadata?: Record<string, unknown>;
     status?: 'success' | 'failed' | 'partial';
     errorMessage?: string;
     ipAddress?: string;
@@ -33,7 +33,7 @@ export class AuditLogger {
     userName: string,
     userEmail: string,
     userRole: string,
-    data?: any,
+    data?: Record<string, unknown>,
     ipAddress?: string,
     userAgent?: string
   ) {
@@ -58,7 +58,7 @@ export class AuditLogger {
     userName: string,
     userEmail: string,
     userRole: string,
-    changes: any[],
+    changes: AuditChange[],
     ipAddress?: string,
     userAgent?: string
   ) {
@@ -83,7 +83,7 @@ export class AuditLogger {
     userName: string,
     userEmail: string,
     userRole: string,
-    data?: any,
+    data?: Record<string, unknown>,
     ipAddress?: string,
     userAgent?: string
   ) {
@@ -108,7 +108,7 @@ export class AuditLogger {
     userName: string,
     userEmail: string,
     userRole: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
     ipAddress?: string,
     userAgent?: string
   ) {
@@ -201,7 +201,7 @@ export class AuditLogger {
     userEmail: string,
     userRole: string,
     format: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
     ipAddress?: string,
     userAgent?: string
   ) {
@@ -228,7 +228,7 @@ export class AuditLogger {
     userEmail: string,
     userRole: string,
     errorMessage: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
     ipAddress?: string,
     userAgent?: string
   ) {

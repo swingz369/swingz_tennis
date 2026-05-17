@@ -168,7 +168,7 @@ export function SessionBookings() {
                 return (
                   <div
                     key={idx}
-                    className={`min-h-[80px] md:min-h-[100px] bg-white dark:bg-gray-950 p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                    className={`min-h-[5rem] md:min-h-[6.25rem] bg-white dark:bg-gray-950 p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                   >
                     <div className="text-xs font-medium text-muted-foreground mb-1">
                       {format(day, 'd')}
@@ -213,7 +213,7 @@ export function SessionBookings() {
                               </button>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 text-[10px]">
+                          <div className="flex items-center gap-1 text-[11px]">
                             <Clock className="h-3 w-3" />
                             <span className="truncate">
                               {session.trainerName || session.trainerId}
@@ -222,7 +222,7 @@ export function SessionBookings() {
                           {session.bookedByUser && session.bookingStatus && (
                             <div className="flex items-center gap-1 mt-0.5">
                               <span
-                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
                                   session.bookingStatus === 'confirmed'
                                     ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200'
                                     : session.bookingStatus === 'cancelled'
@@ -250,7 +250,7 @@ export function SessionBookings() {
                                         | 'no_show'
                                     )
                                   }
-                                  className="text-[10px] border rounded px-1 py-0.5 bg-white dark:bg-gray-950"
+                                  className="text-[11px] border rounded px-1 py-0.5 bg-white dark:bg-gray-950"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <option value="pending">Ausstehend</option>

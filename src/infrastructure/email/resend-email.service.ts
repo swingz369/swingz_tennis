@@ -88,12 +88,56 @@ export class ResendEmailService implements EmailService {
   ): Promise<void> {
     if (!env.RESEND_API_KEY) return;
 
-    // TODO: Attach PDF invoice
+    // Generate PDF invoice attachment using existing utility
+    let attachments: Array<{ filename: string; content: string }> = [];
+    try {
+      const { generateInvoicePDFBase64 } = await import('@/lib/pdf/invoice-pdf-utils');
+
+      const pdfBase64 = await generateInvoicePDFBase64({
+        invoice: {
+          id: _invoiceId,
+          invoice_number: invoiceDetails.invoiceNumber,
+          amount: invoiceDetails.amount,
+          due_date: invoiceDetails.dueDate.toISOString(),
+          status: 'sent',
+          member_id: '',
+          club_id: '',
+          created_at: new Date().toISOString(),
+          items: invoiceDetails.items.map((item, idx) => ({
+            id: `item-${idx}`,
+            invoice_id: _invoiceId,
+            description: item.description,
+            quantity: 1,
+            unit_price: item.amount,
+            total_price: item.amount,
+            created_at: new Date().toISOString(),
+          })),
+        } as any,
+        clubName: 'SwingZ Tennis Club',
+        clubAddress: '',
+        clubEmail: this.fromEmail,
+        clubPhone: '',
+        memberName: recipient.name || 'Mitglied',
+        memberAddress: '',
+        memberEmail: recipient.email,
+      });
+
+      attachments = [
+        {
+          filename: `Rechnung-${invoiceDetails.invoiceNumber}.pdf`,
+          content: pdfBase64,
+        },
+      ];
+    } catch (pdfError) {
+      console.warn('Failed to generate PDF attachment, sending without it:', pdfError);
+    }
+
     await this.resend.emails.send({
       from: this.fromEmail,
       to: recipient.email,
       subject: `Rechnung ${invoiceDetails.invoiceNumber} - SwingZ`,
       html: this.renderInvoice(invoiceDetails, recipient),
+      attachments,
     });
   }
 

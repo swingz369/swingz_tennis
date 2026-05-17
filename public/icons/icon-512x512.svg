@@ -1,4 +1,30 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#1B4332"/>
-  <text x="256" y="256" font-family="Arial, sans-serif" font-size="64" fill="white" text-anchor="middle" dominant-baseline="middle">SZ</text>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B4332"/>
+      <stop offset="100%" style="stop-color:#2D6A4F"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="80" fill="url(#bg)"/>
+
+  <!-- Tennis ball -->
+  <circle cx="256" cy="230" r="110" fill="#D4F57A" stroke="white" stroke-width="8"/>
+
+  <!-- Tennis ball curve lines -->
+  <path d="M182 145 Q256 190 330 145" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <path d="M182 315 Q256 270 330 315" fill="none" stroke="white" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Tennis racket handles -->
+  <line x1="256" y1="340" x2="256" y2="448" stroke="white" stroke-width="10" stroke-linecap="round"/>
+  <line x1="228" y1="432" x2="284" y2="432" stroke="white" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Racket head -->
+  <ellipse cx="256" cy="230" rx="132" ry="84" fill="none" stroke="white" stroke-width="9"/>
+  <line x1="182" y1="188" x2="330" y2="188" fill="none" stroke="white" stroke-width="4" opacity="0.6"/>
+  <line x1="172" y1="230" x2="340" y2="230" fill="none" stroke="white" stroke-width="4" opacity="0.6"/>
+  <line x1="182" y1="272" x2="330" y2="272" fill="none" stroke="white" stroke-width="4" opacity="0.6"/>
+  <line x1="208" y1="158" x2="208" y2="302" fill="none" stroke="white" stroke-width="4" opacity="0.6"/>
+  <line x1="256" y1="148" x2="256" y2="312" fill="none" stroke="white" stroke-width="4" opacity="0.6"/>
+  <line x1="304" y1="158" x2="304" y2="302" fill="none" stroke="white" stroke-width="4" opacity="0.6"/>
 </svg>

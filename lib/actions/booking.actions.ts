@@ -1,36 +1,10 @@
 // lib/actions/booking.actions.ts
 'use server';
 
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser } from '@/lib/auth/guards';
-
-// Zod Schema – wird sowohl Client- als auch Server-seitig genutzt
-export const createBookingSchema = z
-  .object({
-    courtId: z.string().uuid('Ungültige Court-ID'),
-    startTime: z.string().datetime('Ungültige Startzeit'),
-    endTime: z.string().datetime('Ungültige Endzeit'),
-    notes: z.string().max(500).optional(),
-  })
-  .refine((data) => new Date(data.endTime) > new Date(data.startTime), {
-    message: 'Endzeit muss nach Startzeit liegen',
-    path: ['endTime'],
-  })
-  .refine(
-    (data) => {
-      const duration = new Date(data.endTime).getTime() - new Date(data.startTime).getTime();
-      return duration <= 3 * 60 * 60 * 1000; // Max 3 Stunden
-    },
-    { message: 'Maximale Buchungsdauer ist 3 Stunden', path: ['endTime'] }
-  )
-  .refine((data) => new Date(data.startTime) > new Date(), {
-    message: 'Buchungen können nicht in der Vergangenheit liegen',
-    path: ['startTime'],
-  });
-
-export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+import { createBookingSchema, type CreateBookingInput } from '@/lib/schemas/booking.schema';
 
 export type ActionResult<T = void> =
   | { success: true; data: T }

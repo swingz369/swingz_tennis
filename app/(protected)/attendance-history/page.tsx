@@ -1,5 +1,5 @@
-import MemberAttendanceHistory from '@/components/member-attendance-history';
+import AttendanceHistory from '@/components/attendance-history';
 
-export default function MemberAttendanceHistoryPage() {
-  return <MemberAttendanceHistory />;
+export default function AttendanceHistoryPage() {
+  return <AttendanceHistory />;
 }
