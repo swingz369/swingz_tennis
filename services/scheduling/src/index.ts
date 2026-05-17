@@ -7,6 +7,27 @@ import Redis from 'ioredis';
 const app = express();
 app.use(express.json());
 
+// API-Key Authentication Middleware
+const SCHEDULER_API_KEY = process.env.SCHEDULER_API_KEY;
+
+function requireApiKey(req: express.Request, res: express.Response, next: express.NextFunction) {
+  // Skip auth if no API key configured (dev mode fallback)
+  if (!SCHEDULER_API_KEY) {
+    console.warn('⚠️  SCHEDULER_API_KEY not set — scheduler is running unprotected!');
+    return next();
+  }
+
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey !== SCHEDULER_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized — invalid or missing API key' });
+  }
+
+  next();
+}
+
+// Apply API key auth to all /api routes
+app.use('/api', requireApiKey);
+
 const supabase = createClient(
   process.env.SUPABASE_URL || 'http://localhost:8000',
   process.env.SUPABASE_SERVICE_ROLE_KEY || 'service-key'
@@ -137,23 +158,11 @@ Antworte AUSSCHLIESSLICH mit valide JSON, keine Erklärungen!
       console.error('AI Response Parse Error:', parseError);
       console.error('Raw AI Response:', aiResponse);
 
-      // Fallback: Manueller Plan
-      scheduleData = {
-        schedule: {
-          week: `${year}-W15`,
-          sessions: [
-            {
-              day: 'monday',
-              start_time: '17:00',
-              duration_minutes: 90,
-              trainer_id: trainers?.[0]?.id || 't-1',
-              group_id: schedule?.training_groups?.[0]?.id || 'g-1',
-              court: 'Court 1',
-              notes: 'Standard-Training (KI-Fehler)',
-            },
-          ],
-        },
-      };
+      return res.status(422).json({
+        success: false,
+        error: 'KI-Antwort konnte nicht verarbeitet werden',
+        detail: process.env.NODE_ENV === 'development' ? String(parseError) : undefined,
+      });
     }
 
     // Cache in Redis
@@ -172,7 +181,7 @@ Antworte AUSSCHLIESSLICH mit valide JSON, keine Erklärungen!
     res.json({
       success: true,
       data: scheduleData,
-      source: aiResponse ? 'ai' : 'fallback',
+      source: 'ai',
     });
   } catch (error) {
     console.error('Scheduling error:', error);

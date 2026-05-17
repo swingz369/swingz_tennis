@@ -47,21 +47,18 @@ export async function getAuthenticatedUser(): Promise<AuthUser> {
     demo: 0,
   };
 
+  // Find the membership with the highest role — clubId must match that membership
   let effectiveRole = memberships[0].role as UserRole;
-  let effectiveClubId: string | null = null;
+  let effectiveClubId: string | null = memberships[0].club_id ?? null;
 
-  for (let i = 0; i < memberships.length; i++) {
+  for (let i = 1; i < memberships.length; i++) {
     const m = memberships[i];
     const roleValue = roleHierarchy[m.role] ?? 0;
     const currentValue = roleHierarchy[effectiveRole] ?? 0;
 
     if (roleValue > currentValue) {
       effectiveRole = m.role as UserRole;
-    }
-
-    // Track club ID for non-superadmin roles
-    if (m.role !== 'superadmin' && m.club_id) {
-      effectiveClubId = m.club_id;
+      effectiveClubId = m.club_id ?? null;
     }
   }
 

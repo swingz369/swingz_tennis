@@ -114,6 +114,7 @@ export function useOptimizeSchedule() {
     mutationFn: async ({ clubId }: { clubId: string }) => {
       const res = await fetch('/api/schedule/optimize', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clubId }),
       });

@@ -53,6 +53,7 @@ export function MobileBottomNav({
     navItems = [
       { name: 'Dashboard', href: '/admin', icon: Home },
       { name: 'Mitglieder', href: '/admin/members', icon: Users },
+      { name: 'Buchungen', href: '/bookings', icon: Calendar },
       { name: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
       { name: 'Profil', href: '/profile', icon: User },
     ];
@@ -68,12 +69,13 @@ export function MobileBottomNav({
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else {
-    // Member: 5 tabs like TSOW
+    // Member: 6 tabs like TSOW
     navItems = [
       { name: 'Home', href: '/member', icon: Home },
       { name: 'Buchen', href: '/bookings', icon: Calendar },
       { name: 'Training', href: '/training-schedule', icon: BookOpen },
       { name: 'Gamification', href: '/gamification', icon: GraduationCap },
+      { name: 'Abrechnung', href: '/billing', icon: CreditCard },
       { name: 'Profil', href: '/profile', icon: User },
     ];
   }

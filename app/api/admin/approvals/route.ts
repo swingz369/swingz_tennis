@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import crypto from 'crypto';
 
 export async function GET() {
   try {
@@ -83,6 +84,76 @@ export async function PATCH(request: NextRequest) {
 
       let warning: string | undefined;
       if (registration) {
+        // 1. Create Supabase Auth user via Admin API
+        try {
+          const adminClient = await createAdminClient();
+          const tempPassword = crypto.randomBytes(24).toString('base64url');
+
+          const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
+            email: registration.email,
+            password: tempPassword,
+            email_confirm: true,
+            user_metadata: {
+              first_name: registration.first_name,
+              last_name: registration.last_name,
+              phone: registration.phone,
+            },
+          });
+
+          if (createError || !authUser?.user) {
+            console.error('Failed to create Auth user:', createError);
+            return NextResponse.json(
+              { error: 'Mitglied genehmigt, aber Account-Erstellung fehlgeschlagen' },
+              { status: 500 }
+            );
+          }
+
+          // 2. Insert into users table
+          const { error: userInsertError } = await (adminClient as any).from('users').insert({
+            id: authUser.user.id,
+            email: registration.email,
+            first_name: registration.first_name,
+            last_name: registration.last_name,
+            phone: registration.phone,
+            playing_level: registration.playing_level,
+            created_at: new Date().toISOString(),
+          });
+
+          if (userInsertError) {
+            console.error('Failed to insert user — cleaning up Auth user:', userInsertError);
+            await adminClient.auth.admin.deleteUser(authUser.user.id);
+            return NextResponse.json(
+              { error: 'Mitglied genehmigt, aber Profil-Erstellung fehlgeschlagen' },
+              { status: 500 }
+            );
+          }
+
+          // 3. Insert into user_club_memberships
+          const clubId = registration.club_id || membership.club_id;
+          if (clubId) {
+            const { error: membershipError } = await (adminClient as any)
+              .from('user_club_memberships')
+              .insert({
+                user_id: authUser.user.id,
+                club_id: clubId,
+                role: 'member',
+                is_active: true,
+              });
+
+            if (membershipError) {
+              console.error('Failed to insert membership:', membershipError);
+              warning = 'Mitglied erstellt, aber Vereinszuordnung konnte nicht gespeichert werden.';
+            }
+          }
+        } catch (e) {
+          console.error('Auth user creation failed:', e);
+          return NextResponse.json(
+            { error: 'Mitglied genehmigt, aber Account-Erstellung fehlgeschlagen' },
+            { status: 500 }
+          );
+        }
+
+        // 4. Send onboarding email (existing flow)
         try {
           await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/emails/onboarding`, {
             method: 'POST',
@@ -95,7 +166,8 @@ export async function PATCH(request: NextRequest) {
           });
         } catch (e) {
           console.error('Onboarding email trigger failed:', e);
-          warning = 'Mitglied genehmigt, aber Willkommens-Mail konnte nicht gesendet werden.';
+          warning =
+            'Mitglied genehmigt und Account erstellt, aber Willkommens-Mail konnte nicht gesendet werden.';
         }
       }
       return NextResponse.json({ success: true, warning });

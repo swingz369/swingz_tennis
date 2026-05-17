@@ -160,6 +160,21 @@ export async function POST(_request: NextRequest) {
       const xml = generatePain008Xml(transactions, config);
       const fileName = getPain008FileName();
 
+      // Mark payments as processing to prevent double-export
+      const statusResults = await Promise.allSettled(
+        validPayments.map((p) =>
+          billingEngine.updatePaymentStatus(p.id, 'processing', {
+            processed_at: new Date().toISOString(),
+          })
+        )
+      );
+
+      for (const result of statusResults) {
+        if (result.status === 'rejected') {
+          console.error('Failed to update payment status during SEPA export:', result.reason);
+        }
+      }
+
       return new NextResponse(xml, {
         headers: {
           'Content-Type': 'application/xml',
