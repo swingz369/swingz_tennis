@@ -12,6 +12,7 @@ const PUBLIC_ROUTES = [
   '/forgot-password',
   '/reset-password',
   '/', // Landing Page
+  '/landing', // Also available at /landing
   '/about',
   '/contact',
   '/api/auth/login',
