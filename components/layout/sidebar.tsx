@@ -26,7 +26,6 @@ import {
   MapPin,
   BarChart3,
   ChevronDown,
-  ChevronUp,
   UserPlus,
   DollarSign,
   Clock,
@@ -36,6 +35,37 @@ interface Club {
   id: string;
   name: string;
 }
+
+const roleColors = {
+  superadmin: {
+    gradient: 'from-purple-500 to-purple-700',
+    bg: 'bg-purple-50 dark:bg-purple-900/20',
+    text: 'text-purple-700 dark:text-purple-300',
+    light: 'purple',
+    ring: 'ring-purple-300/40',
+  },
+  admin: {
+    gradient: 'from-brand-light to-brand-primary',
+    bg: 'bg-brand-light/10 dark:bg-brand-light/15',
+    text: 'text-brand-light dark:text-green-300',
+    light: 'brand-light',
+    ring: 'ring-brand-light/30',
+  },
+  trainer: {
+    gradient: 'from-emerald-500 to-emerald-700',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    text: 'text-emerald-600 dark:text-emerald-300',
+    light: 'emerald',
+    ring: 'ring-emerald-300/40',
+  },
+  member: {
+    gradient: 'from-brand-primary to-brand-dark',
+    bg: 'bg-brand-light/10 dark:bg-brand-light/15',
+    text: 'text-brand-light dark:text-green-300',
+    light: 'brand-light',
+    ring: 'ring-brand-light/30',
+  },
+};
 
 export function Sidebar({
   roles,
@@ -107,6 +137,15 @@ export function Sidebar({
   const isAdmin = roles?.includes('admin') ?? false;
   const isTrainer = roles?.includes('trainer') ?? false;
 
+  const currentRole = isSuperAdmin
+    ? 'superadmin'
+    : isAdmin
+      ? 'admin'
+      : isTrainer
+        ? 'trainer'
+        : 'member';
+  const colors = roleColors[currentRole];
+
   // Active club for display
   const activeClub = clubs?.find((c) => c.id === selectedClubId) ?? clubs?.[0] ?? null;
   const hasMultipleClubs = (clubs?.length ?? 0) > 1;
@@ -157,8 +196,6 @@ export function Sidebar({
     icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
     badge?: number;
   }
-
-  // ... (keep the existing code)
 
   // Secondary navigation (defined early so primaryNav can reference it for trainer fallback)
   const secondaryNav: NavItem[] = [
@@ -290,14 +327,7 @@ export function Sidebar({
   })();
 
   // Active color theme per role
-  const activeGradient = isSuperAdmin
-    ? 'bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg'
-    : isAdmin
-      ? 'bg-gradient-accent text-white shadow-lg'
-      : isTrainer
-        ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow-lg'
-        : 'bg-gradient-primary text-white shadow-lg';
-
+  const activeGradient = `bg-gradient-to-r ${colors.gradient} text-white shadow-lg`;
   const sectionLabel = isSuperAdmin
     ? 'Plattform'
     : isAdmin
@@ -310,11 +340,11 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'h-[calc(100vh-4rem)] w-64 border-r border-gray-100 dark:border-white/10 bg-white dark:bg-surface-dark transition-transform duration-300',
+        'h-[calc(100vh-4rem)] w-64 border-r border-gray-200/60 dark:border-white/[0.06] bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl transition-transform duration-300 ease-out',
         'md:translate-x-0',
         open
-          ? 'fixed inset-y-0 left-0 z-50 translate-x-0'
-          : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:relative md:translate-x-0'
+          ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
+          : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:relative md:translate-x-0 md:shadow-none'
       )}
       role="navigation"
       aria-label="Main navigation"
@@ -324,7 +354,7 @@ export function Sidebar({
       {open && (
         <button
           onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-light"
+          className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
           aria-label="Menü schließen"
         >
           <X className="h-5 w-5" />
@@ -333,45 +363,60 @@ export function Sidebar({
       )}
 
       <ScrollArea className="h-full py-6">
-        {/* Logo */}
-        <div className="px-4 mb-4">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
-          >
-            <Trophy className="h-5 w-5" />
-            <span className="text-sm font-medium">SWINGZ v2.0</span>
-          </Link>
+        {/* Logo + Role badge */}
+        <div className="px-4 mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <Link href="/dashboard" className="flex items-center gap-2 group">
+              <div className="relative">
+                <div className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                <Trophy className="h-5 w-5 text-gray-700 dark:text-gray-200 relative" />
+              </div>
+              <span className="text-sm font-bold tracking-tight text-gray-800 dark:text-white">
+                SWINGZ
+              </span>
+            </Link>
+            <span
+              className={cn(
+                'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
+                colors.bg,
+                colors.text
+              )}
+            >
+              {sectionLabel}
+            </span>
+          </div>
+          <div className="h-px bg-gradient-to-r from-transparent via-gray-200/50 dark:via-white/10 to-transparent" />
         </div>
 
         {/* Superadmin Club Switcher */}
         {isSuperAdmin && hasMultipleClubs && (
-          <div className="mx-3 mb-4 border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+          <div className="mx-3 mb-4 border border-gray-200/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+              className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/[0.04] transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
                 <span className="truncate">{activeClub?.name ?? 'Club auswählen'}</span>
               </div>
-              {clubSwitcherOpen ? (
-                <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
-              ) : (
-                <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />
-              )}
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200',
+                  clubSwitcherOpen && 'rotate-180'
+                )}
+              />
             </button>
             {clubSwitcherOpen && (
-              <div className="border-t border-gray-100 dark:border-white/10">
+              <div className="border-t border-gray-200/60 dark:border-white/[0.06] overflow-hidden animate-slide-down">
                 {clubs?.map((club) => (
                   <button
                     key={club.id}
                     onClick={() => handleSwitchClub(club.id)}
                     className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
+                      'w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors',
                       club.id === (selectedClubId ?? activeClub?.id)
                         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-medium'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04]'
                     )}
                   >
                     <CheckCircle
@@ -396,7 +441,7 @@ export function Sidebar({
             <>
               {/* Section 1 – ÜBERSICHT (single link, no collapse) */}
               <div
-                className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-widest text-gray-400/60 dark:text-white/30"
+                className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
                 role="heading"
                 aria-level={2}
               >
@@ -410,22 +455,38 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => onClose?.()}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group',
                       isActive
-                        ? 'bg-brand-light/20 text-brand-light dark:bg-brand-light/20 dark:text-green-300'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                        ? `${colors.bg} ${colors.text} shadow-sm`
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    <span>Dashboard</span>
+                    <item.icon
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-transform duration-200',
+                        isActive && 'scale-110'
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span className="relative">
+                      Dashboard
+                      {isActive && (
+                        <span
+                          className={cn(
+                            'absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full',
+                            colors.text.replace('text-', 'bg-').replace('dark:text-', 'dark:bg-')
+                          )}
+                        />
+                      )}
+                    </span>
                   </Link>
                 );
               })()}
 
               {/* Separator */}
               <div
-                className="my-3 border-t border-white/10 dark:border-white/[0.06]"
+                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -436,6 +497,7 @@ export function Sidebar({
                 subItems={adminNav.members.subItems}
                 pathname={pathname}
                 onClose={onClose}
+                colors={colors}
                 extraAction={
                   onInvite
                     ? {
@@ -450,9 +512,8 @@ export function Sidebar({
                 }
               />
 
-              {/* Separator */}
               <div
-                className="my-3 border-t border-white/10 dark:border-white/[0.06]"
+                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -463,11 +524,11 @@ export function Sidebar({
                 subItems={adminNav.training.subItems}
                 pathname={pathname}
                 onClose={onClose}
+                colors={colors}
               />
 
-              {/* Separator */}
               <div
-                className="my-3 border-t border-white/10 dark:border-white/[0.06]"
+                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -478,11 +539,11 @@ export function Sidebar({
                 subItems={adminNav.courts.subItems}
                 pathname={pathname}
                 onClose={onClose}
+                colors={colors}
               />
 
-              {/* Separator */}
               <div
-                className="my-3 border-t border-white/10 dark:border-white/[0.06]"
+                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -493,11 +554,11 @@ export function Sidebar({
                 subItems={adminNav.finance.subItems}
                 pathname={pathname}
                 onClose={onClose}
+                colors={colors}
               />
 
-              {/* Separator */}
               <div
-                className="my-3 border-t border-white/10 dark:border-white/[0.06]"
+                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -508,13 +569,14 @@ export function Sidebar({
                 subItems={adminNav.settings.subItems}
                 pathname={pathname}
                 onClose={onClose}
+                colors={colors}
               />
             </>
           ) : (
             <>
               {/* Section label */}
               <div
-                className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
                 role="heading"
                 aria-level={2}
               >
@@ -532,16 +594,22 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => onClose?.()}
                     className={cn(
-                      'flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      'group flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                       isActive
                         ? activeGradient
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                     aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
                   >
                     <div className="flex items-center gap-3">
-                      <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                      <item.icon
+                        className={cn(
+                          'h-5 w-5 shrink-0 transition-transform duration-200',
+                          isActive && 'scale-110'
+                        )}
+                        aria-hidden="true"
+                      />
                       <span>{item.name}</span>
                     </div>
                     {(item as NavItem).badge != null && (item as NavItem).badge !== undefined && (
@@ -555,7 +623,7 @@ export function Sidebar({
               {categoryNav.length > 0 && (
                 <>
                   <div
-                    className="mt-6 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                    className="mt-6 mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
                     role="heading"
                     aria-level={2}
                   >
@@ -577,7 +645,7 @@ export function Sidebar({
               {secondaryNav.length > 0 && (
                 <>
                   <div
-                    className="mt-8 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                    className="mt-8 mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
                     role="heading"
                     aria-level={2}
                   >
@@ -591,15 +659,21 @@ export function Sidebar({
                         href={item.href}
                         onClick={() => onClose?.()}
                         className={cn(
-                          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                           isActive
                             ? activeGradient
-                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
                         )}
                         aria-current={isActive ? 'page' : undefined}
                         aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
                       >
-                        <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <item.icon
+                          className={cn(
+                            'h-5 w-5 shrink-0 transition-transform duration-200',
+                            isActive && 'scale-110'
+                          )}
+                          aria-hidden="true"
+                        />
                         <span>{item.name}</span>
                       </Link>
                     );
@@ -630,6 +704,7 @@ interface AdminSectionProps {
   subItems: AdminSubItem[];
   pathname: string;
   onClose?: () => void;
+  colors: typeof roleColors.admin;
   extraAction?: {
     label: string;
     icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
@@ -643,6 +718,7 @@ function AdminSection({
   subItems,
   pathname,
   onClose,
+  colors,
   extraAction,
 }: AdminSectionProps) {
   const hasActiveChild = subItems.some(
@@ -656,30 +732,38 @@ function AdminSection({
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          'w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-widest transition-all duration-200',
+          'w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-200',
           hasActiveChild
-            ? 'text-green-300 dark:text-green-300'
-            : 'text-gray-400/70 dark:text-white/40 hover:text-gray-600 dark:hover:text-white/60'
+            ? colors.text
+            : 'text-gray-400/50 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
       >
         <div className="flex items-center gap-2.5">
-          <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <Icon
+            className={cn(
+              'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
+              hasActiveChild && 'scale-110'
+            )}
+            aria-hidden="true"
+          />
           <span>{label}</span>
         </div>
         <ChevronDown
-          className={cn(
-            'h-3 w-3 transition-transform duration-200 opacity-50',
-            isOpen && 'rotate-180'
-          )}
+          className={cn('h-3 w-3 transition-all duration-300 opacity-50', isOpen && 'rotate-180')}
           aria-hidden="true"
         />
       </button>
 
-      {/* Sub-items */}
-      {isOpen && (
-        <div className="ml-3 pl-3 border-l border-white/10 dark:border-white/[0.08] space-y-0.5">
+      {/* Sub-items with smooth animation */}
+      <div
+        className={cn(
+          'overflow-hidden transition-all duration-300 ease-out',
+          isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        )}
+      >
+        <div className="ml-3 pl-3 border-l border-gray-200/50 dark:border-white/[0.06] space-y-0.5 pb-0.5">
           {subItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -690,12 +774,22 @@ function AdminSection({
                 className={cn(
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-brand-light/15 text-green-300 dark:text-green-300'
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                    ? `${colors.bg} ${colors.text} shadow-sm`
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <span>{item.name}</span>
+                <div className="flex items-center gap-2">
+                  {isActive && (
+                    <span
+                      className={cn(
+                        'h-1.5 w-1.5 rounded-full',
+                        colors.text.replace('text-', 'bg-').replace('dark:text-', 'dark:bg-')
+                      )}
+                    />
+                  )}
+                  <span>{item.name}</span>
+                </div>
                 {item.badge !== undefined && (
                   <NavigationBadge count={item.badge} variant="danger" />
                 )}
@@ -706,14 +800,14 @@ function AdminSection({
           {extraAction && (
             <button
               onClick={extraAction.onClick}
-              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition-all duration-150"
+              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-150"
             >
               <extraAction.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
               <span>{extraAction.label}</span>
             </button>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

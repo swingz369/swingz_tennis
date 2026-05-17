@@ -1,8 +1,18 @@
 'use client';
 
+import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, UserCheck, Euro, ArrowRight } from 'lucide-react';
+import {
+  Building2,
+  Users,
+  UserCheck,
+  Euro,
+  ArrowRight,
+  TrendingUp,
+  Activity,
+  Award,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface ClubData {
@@ -21,23 +31,74 @@ interface DashboardData {
   totalRevenue: number;
 }
 
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+  gradient,
+  href,
+  delay,
+}: {
+  title: string;
+  value: number | string;
+  icon: React.ElementType;
+  gradient: string;
+  href: string;
+  delay: number;
+}) {
+  const router = useRouter();
+
+  return (
+    <ScrollReveal delay={delay}>
+      <Card
+        variant="elevated"
+        className="group cursor-pointer hover-lift transition-all duration-300"
+        onClick={() => router.push(href)}
+      >
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                {typeof value === 'number' ? (
+                  <AnimatedCounter value={value} />
+                ) : (
+                  <span className="tabular-nums">{value}</span>
+                )}
+              </p>
+            </div>
+            <div
+              className={`p-3.5 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl`}
+            >
+              <Icon className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-light opacity-0 group-hover:opacity-100 transition-opacity">
+            Details anzeigen
+            <ArrowRight className="h-3 w-3" />
+          </div>
+        </CardContent>
+      </Card>
+    </ScrollReveal>
+  );
+}
+
 export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
   const router = useRouter();
 
-  // Validate data to prevent React errors
   if (!data || typeof data !== 'object') {
     return (
-      <div className="p-6">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-red-600">Fehler: Ungültige Dashboard-Daten</p>
+      <div className="p-6 min-h-[60vh] flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <Activity className="h-12 w-12 mx-auto mb-4 text-red-400" />
+            <p className="text-red-600 font-medium">Fehler: Ungültige Dashboard-Daten</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Ensure all values have defaults
   const safeData = {
     clubs: Array.isArray(data.clubs) ? data.clubs : [],
     totalClubs: data.totalClubs ?? 0,
@@ -46,108 +107,157 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
     totalRevenue: data.totalRevenue ?? 0,
   };
 
-  const kpiCards = [
-    {
-      title: 'Vereine',
-      value: safeData.totalClubs,
-      icon: Building2,
-      color: 'bg-gradient-primary',
-      href: '/admin/clubs',
-    },
-    {
-      title: 'Mitglieder',
-      value: safeData.totalMembers.toLocaleString(),
-      icon: Users,
-      color: 'from-blue-500 to-brand-secondary',
-      href: '/admin/members',
-    },
-    {
-      title: 'Trainer',
-      value: safeData.totalTrainers,
-      icon: UserCheck,
-      color: 'from-green-500 to-green-700',
-      href: '/admin/members',
-    },
-    {
-      title: 'Umsatz',
-      value: `€${safeData.totalRevenue.toLocaleString()}`,
-      icon: Euro,
-      color: 'from-brand-accent to-orange-700',
-      href: '/admin/billing',
-    },
-  ];
-
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Plattform Dashboard</h1>
-        <p className="text-gray-500">Übersicht aller Vereine</p>
-      </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <ScrollReveal>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
+          <div className="absolute inset-0 bg-noise opacity-5" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
+          <div className="relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-white/70 mb-1">Superadmin</p>
+                <h1 className="text-3xl font-bold">Plattform Dashboard</h1>
+                <p className="text-white/70 mt-2">Übersicht aller Vereine und Kennzahlen</p>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm px-4 py-2.5">
+                <Award className="h-5 w-5 text-brand-accent" />
+                <span className="text-sm font-medium">{safeData.totalClubs} Vereine</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
 
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpiCards.map((kpi) => (
-          <Card
-            key={kpi.title}
-            variant="elevated"
-            className="cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => router.push(kpi.href)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1">{kpi.value}</p>
-                </div>
-                <div className={`p-3 rounded-xl bg-gradient-to-br ${kpi.color} text-white`}>
-                  <kpi.icon className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <StatCard
+          title="Vereine"
+          value={safeData.totalClubs}
+          icon={Building2}
+          gradient="from-emerald-500 to-brand-primary"
+          href="/admin/clubs"
+          delay={0}
+        />
+        <StatCard
+          title="Mitglieder"
+          value={safeData.totalMembers}
+          icon={Users}
+          gradient="from-blue-500 to-indigo-600"
+          href="/admin/members"
+          delay={100}
+        />
+        <StatCard
+          title="Trainer"
+          value={safeData.totalTrainers}
+          icon={UserCheck}
+          gradient="from-green-500 to-emerald-700"
+          href="/admin/trainers"
+          delay={200}
+        />
+        <StatCard
+          title="Umsatz"
+          value={`€${safeData.totalRevenue.toLocaleString()}`}
+          icon={Euro}
+          gradient="from-brand-accent to-orange-700"
+          href="/admin/billing"
+          delay={300}
+        />
       </div>
 
-      <Card variant="bordered">
-        <CardHeader>
-          <CardTitle>Vereine</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {safeData.clubs.map((club) => (
-              <div
-                key={club.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+      {/* Club List */}
+      <ScrollReveal delay={200}>
+        <Card
+          variant="bordered"
+          className="overflow-hidden border-0 shadow-sm bg-white dark:bg-white/5 backdrop-blur-sm"
+        >
+          <CardHeader className="border-b border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-brand-primary to-brand-dark text-white shadow-sm">
+                  <Building2 className="h-4 w-4" />
+                </div>
+                <span>Alle Vereine</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/admin/clubs')}
+                className="text-xs"
               >
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-gradient-primary rounded-lg text-white">
-                    <Building2 className="h-5 w-5" />
+                <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+                Verwalten
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-gray-100 dark:divide-white/10">
+              {safeData.clubs.map((club) => (
+                <div
+                  key={club.id}
+                  className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/80 dark:hover:bg-white/[0.03] transition-all duration-200 group cursor-pointer"
+                  onClick={() => router.push(`/admin/clubs/${club.id}/dashboard`)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-primary/10 to-brand-dark/10 dark:from-white/5 dark:to-white/[0.02] flex items-center justify-center text-brand-primary dark:text-brand-light group-hover:scale-110 transition-transform">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
+                        {club.name}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span className="tabular-nums">{club.members}</span> Mitglieder ·{' '}
+                        <span className="tabular-nums">{club.trainers}</span> Trainer
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{club.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {club.members} Mitglieder · {club.trainers} Trainer
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="hidden sm:flex items-center gap-4 text-xs text-gray-400">
+                      <span>€{club.revenue.toLocaleString()}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 transition-all duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/admin/clubs/${club.id}/dashboard`);
+                      }}
+                    >
+                      Details
+                      <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/clubs`)}>
-                  Details
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </div>
-            ))}
+              ))}
+            </div>
 
             {safeData.clubs.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>Keine Vereine vorhanden</p>
-                <Button variant="link" onClick={() => router.push('/admin/clubs')}>
-                  Ersten Verein anlegen
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="h-16 w-16 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
+                  <Building2 className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+                </div>
+                <p className="font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Keine Vereine vorhanden
+                </p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                  Erstelle den ersten Verein, um zu starten
+                </p>
+                <Button
+                  variant="default"
+                  onClick={() => router.push('/admin/clubs/new')}
+                  className="bg-brand-primary hover:bg-brand-dark text-white"
+                >
+                  Verein anlegen
                 </Button>
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </ScrollReveal>
     </div>
   );
 }

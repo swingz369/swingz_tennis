@@ -1,7 +1,15 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import Link from 'next/link';
-import { Building2, Users, UserCheck, Calendar, BarChart3 } from 'lucide-react';
+import { ClubDashboardClient } from './club-dashboard-client';
+
+export const dynamic = 'force-dynamic';
+
+interface MenuItem {
+  label: string;
+  href: string;
+  icon: string;
+  desc: string;
+}
 
 export default async function ClubDashboardPage({
   params,
@@ -35,7 +43,13 @@ export default async function ClubDashboardPage({
   const { data: club } = await supabase.from('clubs').select('id, name').eq('id', clubId).single();
 
   if (!club) {
-    return <div className="p-6">Verein nicht gefunden</div>;
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-500">Verein nicht gefunden</p>
+        </div>
+      </div>
+    );
   }
 
   // Statistiken
@@ -56,101 +70,46 @@ export default async function ClubDashboardPage({
       supabase.from('courts').select('*', { count: 'exact', head: true }).eq('club_id', clubId),
     ]);
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       label: 'Mitglieder',
       href: `/admin/members?clubId=${clubId}`,
-      icon: Users,
+      icon: 'members',
       desc: 'Mitglieder verwalten',
     },
     {
       label: 'Trainer',
       href: `/admin/trainers?clubId=${clubId}`,
-      icon: UserCheck,
+      icon: 'trainers',
       desc: 'Trainer verwalten',
     },
     {
       label: 'Plätze',
       href: `/admin/courts?clubId=${clubId}`,
-      icon: Building2,
+      icon: 'courts',
       desc: 'Plätze verwalten',
     },
     {
       label: 'Stundenplan',
       href: `/admin/schedules?clubId=${clubId}`,
-      icon: Calendar,
+      icon: 'schedule',
       desc: 'Stundenplan erstellen',
     },
     {
       label: 'Statistiken',
       href: `/admin/analytics?clubId=${clubId}`,
-      icon: BarChart3,
+      icon: 'analytics',
       desc: 'Auswertungen',
     },
   ];
 
+  const stats = {
+    members: membersCount ?? 0,
+    trainers: trainersCount ?? 0,
+    courts: courtsCount ?? 0,
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-brand-primary">{club.name}</h1>
-        <p className="text-gray-500">Vereins-Administration</p>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-6 border rounded-xl bg-white dark:bg-gray-900">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-blue-100 text-blue-600">
-              <Users className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Mitglieder</p>
-              <p className="text-3xl font-bold">{membersCount || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-6 border rounded-xl bg-white dark:bg-gray-900">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-green-100 text-green-600">
-              <UserCheck className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Trainer</p>
-              <p className="text-3xl font-bold">{trainersCount || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-6 border rounded-xl bg-white dark:bg-gray-900">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-              <Building2 className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Plätze</p>
-              <p className="text-3xl font-bold">{courtsCount || 0}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Menu */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {menuItems.map((item) => (
-          <Link
-            key={item.label}
-            href={item.href}
-            className="flex flex-col p-6 border rounded-xl hover:shadow-lg transition-shadow bg-white dark:bg-gray-900"
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                <item.icon className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-semibold">{item.label}</h3>
-            </div>
-            <p className="text-sm text-gray-500">{item.desc}</p>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <ClubDashboardClient clubName={club.name} stats={stats} menuItems={menuItems} clubId={clubId} />
   );
 }

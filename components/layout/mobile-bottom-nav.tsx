@@ -83,14 +83,34 @@ export function MobileBottomNav({
   return (
     <nav
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-white/10 safe-area-pb',
+        'fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-gray-200/60 dark:border-white/[0.06] safe-area-pb',
         !persistent && 'md:hidden',
         className
       )}
       role="navigation"
       aria-label="Navigation"
     >
-      <div className="flex justify-around items-center h-16 px-2">
+      <div className="relative flex justify-around items-center h-16 px-2">
+        {/* Active indicator background */}
+        {navItems.map((item) => {
+          const isActive =
+            pathname === item.href ||
+            (item.href !== '/member' &&
+              item.href !== '/trainer' &&
+              item.href !== '/admin' &&
+              item.href !== '/superadmin' &&
+              pathname.startsWith(item.href));
+          return isActive ? (
+            <div
+              key={`indicator-${item.name}`}
+              className="absolute bottom-1 h-[3px] w-10 rounded-full bg-brand-light dark:bg-brand-light transition-all duration-300"
+              style={{
+                left: `${(navItems.indexOf(item) / navItems.length) * 100 + 50 / navItems.length}%`,
+                transform: 'translateX(-50%)',
+              }}
+            />
+          ) : null;
+        })}
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -104,19 +124,31 @@ export function MobileBottomNav({
               key={item.name}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px] flex-1',
+                'group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1',
                 isActive
                   ? 'text-brand-light dark:text-brand-light'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-white/[0.03]'
               )}
               aria-current={isActive ? 'page' : undefined}
               aria-label={`${item.name}${isActive ? ' (aktuelle Seite)' : ''}`}
             >
-              <item.icon
-                className={cn('h-5 w-5 transition-transform', isActive && 'scale-110')}
-                aria-hidden="true"
-              />
-              <span className="text-xs font-medium leading-tight">{item.name}</span>
+              <div className="relative">
+                <item.icon
+                  className={cn(
+                    'h-5 w-5 transition-all duration-300',
+                    isActive && 'scale-110 drop-shadow-sm'
+                  )}
+                  aria-hidden="true"
+                />
+              </div>
+              <span
+                className={cn(
+                  'text-[10px] font-medium leading-tight transition-all duration-300',
+                  isActive ? 'opacity-100 translate-y-0' : 'opacity-80'
+                )}
+              >
+                {item.name}
+              </span>
             </Link>
           );
         })}
@@ -124,11 +156,14 @@ export function MobileBottomNav({
         {(isSuperAdmin || isAdmin) && onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px] flex-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-light"
+            className="group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-white/[0.03]"
             aria-label="Hauptmenü öffnen"
           >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-            <span className="text-xs font-medium">Menü</span>
+            <Menu
+              className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
+              aria-hidden="true"
+            />
+            <span className="text-[10px] font-medium leading-tight">Menü</span>
           </button>
         )}
       </div>
