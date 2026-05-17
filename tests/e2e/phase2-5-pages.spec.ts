@@ -12,8 +12,8 @@ test.describe('Public Registration Page', () => {
   test('registration page loads without auth', async ({ page }) => {
     await page.goto(`${BASE_URL}/register`, { waitUntil: 'networkidle', timeout: 15000 });
     await expect(page.locator('body')).toBeVisible();
-    // Should show registration form
-    await expect(page.locator('form, [role="form"]').first()).toBeVisible({ timeout: 8000 });
+    // Should show registration card with form fields
+    await expect(page.getByText('Mitglied werden')).toBeVisible({ timeout: 8000 });
   });
 
   test('registration form has required fields', async ({ page }) => {
@@ -141,18 +141,14 @@ test.describe('Gamification Page', () => {
     );
   });
 
-  test('gamification accessible from sidebar training', async ({ page }) => {
-    await page.goto('/admin', { waitUntil: 'networkidle', timeout: 20000 });
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
-    await expect(sidebar).toBeVisible({ timeout: 10000 });
-
-    // Expand "Training" section
-    const trainingButton = sidebar.getByRole('button', { name: /Training/i });
-    await expect(trainingButton).toBeVisible({ timeout: 5000 });
-    await trainingButton.click();
-
-    // Click "Gamification"
-    const gamificationLink = sidebar.getByRole('link', { name: /Gamification/i });
+  test('gamification accessible from member sidebar', async ({ page }) => {
+    await loginAs(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
+    await page.goto('/member', { waitUntil: 'networkidle', timeout: 20000 });
+    await expect(page.locator('body')).toBeVisible();
+    // Members use bottom nav, click Gamification tab
+    const bottomNav = page.locator('nav[aria-label="Navigation"]');
+    await expect(bottomNav).toBeVisible({ timeout: 10000 });
+    const gamificationLink = bottomNav.getByRole('link', { name: /Gamification/i });
     await expect(gamificationLink).toBeVisible({ timeout: 5000 });
     await gamificationLink.click();
     await expect(page).toHaveURL(/\/gamification/, { timeout: 8000 });
@@ -183,13 +179,13 @@ test.describe('Trainer Availability Page', () => {
     });
   });
 
-  test('trainer availability accessible from sidebar', async ({ page }) => {
+  test('trainer availability accessible from bottom nav', async ({ page }) => {
     await loginAs(page, process.env.TEST_TRAINER_EMAIL!, process.env.TEST_TRAINER_PASSWORD!);
     await page.goto('/trainer', { waitUntil: 'networkidle', timeout: 20000 });
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
-    await expect(sidebar).toBeVisible({ timeout: 10000 });
-
-    const availabilityLink = sidebar.getByRole('link', { name: /Verfügbarkeit/i });
+    // Trainers use bottom nav (no sidebar) — click "Verfügbarkeit" tab
+    const bottomNav = page.locator('nav[aria-label="Navigation"]');
+    await expect(bottomNav).toBeVisible({ timeout: 10000 });
+    const availabilityLink = bottomNav.getByRole('link', { name: /Verfügbarkeit/i });
     await expect(availabilityLink).toBeVisible({ timeout: 5000 });
     await availabilityLink.click();
     await expect(page).toHaveURL(/\/trainer\/availability/, { timeout: 8000 });

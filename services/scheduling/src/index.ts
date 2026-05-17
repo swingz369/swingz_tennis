@@ -99,23 +99,30 @@ JSON FORMAT:
 Antworte AUSSCHLIESSLICH mit valide JSON, keine Erklärungen!
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'Du bist ein Tennis-Trainingsplaner. Du erstellst strukturierte JSON-Pläne.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 1500,
-    });
-
-    const aiResponse = completion.choices[0].message.content;
+    // Try OpenAI API with fallback on failure
+    const aiResponse = await (async (): Promise<string | null> => {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Du bist ein Tennis-Trainingsplaner. Du erstellst strukturierte JSON-Pläne.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.3,
+          max_tokens: 1500,
+        });
+        return completion.choices[0]?.message?.content ?? null;
+      } catch (apiError) {
+        console.error('OpenAI API call failed — using rule-based fallback:', apiError);
+        return null;
+      }
+    })();
     let scheduleData;
 
     try {

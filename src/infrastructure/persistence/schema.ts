@@ -64,16 +64,23 @@ export const clubMemberships = pgTable(
   })
 );
 
-export const trainers = pgTable('trainers', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 100 }).notNull(),
-  specialties: jsonb('specialties').$type<string[]>().notNull().default([]),
-  max_hours_per_week: integer('max_hours_per_week').notNull().default(30),
-  is_active: boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
-});
+export const trainers = pgTable(
+  'trainers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    name: varchar('name', { length: 100 }).notNull(),
+    specialties: jsonb('specialties').$type<string[]>().notNull().default([]),
+    max_hours_per_week: integer('max_hours_per_week').notNull().default(30),
+    is_active: boolean('is_active').notNull().default(true),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    is_active_idx: index('trainers_is_active_idx').on(table.is_active),
+    created_at_idx: index('trainers_created_at_idx').on(table.created_at),
+  })
+);
 
 export const trainerClubs = pgTable(
   'trainer_club',
@@ -93,31 +100,49 @@ export const trainerClubs = pgTable(
   })
 );
 
-export const courts = pgTable('courts', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  club_id: uuid('club_id')
-    .notNull()
-    .references(() => clubs.id, { onDelete: 'cascade' }),
-  name: varchar('name', { length: 100 }).notNull(),
-  surface: varchar('surface', { length: 20 }).notNull().default('hard'),
-  has_indoor: boolean('has_indoor').notNull().default(false),
-  is_active: boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-});
+export const courts = pgTable(
+  'courts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    surface: varchar('surface', { length: 20 }).notNull().default('hard'),
+    has_indoor: boolean('has_indoor').notNull().default(false),
+    is_active: boolean('is_active').notNull().default(true),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('courts_club_idx').on(table.club_id),
+    is_active_idx: index('courts_is_active_idx').on(table.is_active),
+    created_at_idx: index('courts_created_at_idx').on(table.created_at),
+  })
+);
 
-export const schedules = pgTable('schedules', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  club_id: uuid('club_id')
-    .notNull()
-    .references(() => clubs.id, { onDelete: 'cascade' }),
-  season_type: varchar('season_type', { length: 20 }).notNull(),
-  season_year: integer('season_year').notNull(),
-  season_start_date: timestamp('season_start_date').notNull(),
-  season_end_date: timestamp('season_end_date').notNull(),
-  is_active: boolean('is_active').notNull().default(true),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
-});
+export const schedules = pgTable(
+  'schedules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    season_type: varchar('season_type', { length: 20 }).notNull(),
+    season_year: integer('season_year').notNull(),
+    season_start_date: timestamp('season_start_date').notNull(),
+    season_end_date: timestamp('season_end_date').notNull(),
+    is_active: boolean('is_active').notNull().default(true),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('schedules_club_idx').on(table.club_id),
+    season_type_idx: index('schedules_season_type_idx').on(table.season_type),
+    season_year_idx: index('schedules_season_year_idx').on(table.season_year),
+    is_active_idx: index('schedules_is_active_idx').on(table.is_active),
+    created_at_idx: index('schedules_created_at_idx').on(table.created_at),
+  })
+);
 
 export const trainingGroups = pgTable('training_groups', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -236,20 +261,27 @@ export const bookings = pgTable(
   })
 );
 
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  full_name: varchar('full_name', { length: 100 }),
-  phone: varchar('phone', { length: 20 }),
-  avatar_url: text('avatar_url'),
-  subscription_tier: varchar('subscription_tier', { length: 50 }).default('free'),
-  subscription_status: varchar('subscription_status', { length: 20 }).default('active'),
-  stripe_customer_id: varchar('stripe_customer_id', { length: 255 }),
-  stripe_subscription_id: varchar('stripe_subscription_id', { length: 255 }),
-  current_period_end: timestamp('current_period_end'),
-  created_at: timestamp('created_at').notNull().defaultNow(),
-  updated_at: timestamp('updated_at').notNull().defaultNow(),
-});
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    full_name: varchar('full_name', { length: 100 }),
+    phone: varchar('phone', { length: 20 }),
+    avatar_url: text('avatar_url'),
+    subscription_tier: varchar('subscription_tier', { length: 50 }).default('free'),
+    subscription_status: varchar('subscription_status', { length: 20 }).default('active'),
+    stripe_customer_id: varchar('stripe_customer_id', { length: 255 }),
+    stripe_subscription_id: varchar('stripe_subscription_id', { length: 255 }),
+    current_period_end: timestamp('current_period_end'),
+    created_at: timestamp('created_at').notNull().defaultNow(),
+    updated_at: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    created_at_idx: index('users_created_at_idx').on(table.created_at),
+    subscription_status_idx: index('users_subscription_status_idx').on(table.subscription_status),
+  })
+);
 
 export const userClubMemberships = pgTable(
   'user_club_memberships',

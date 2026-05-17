@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { requireAuthApi } from '@/lib/auth';
 
 // GET: Validate coupon
 export async function GET(request: NextRequest) {
@@ -49,11 +50,9 @@ export async function GET(request: NextRequest) {
 // POST: Create coupon (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = await requireAuthApi();
+    if ('error' in auth) return auth.error;
+    const { supabase, user } = auth;
 
     const { data: membership } = await supabase
       .from('user_club_memberships')
