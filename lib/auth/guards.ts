@@ -5,7 +5,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
-export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member' | 'demo';
+export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
 
 export interface AuthUser {
   id: string;
@@ -44,7 +44,6 @@ export async function getAuthenticatedUser(): Promise<AuthUser> {
     admin: 3,
     trainer: 2,
     member: 1,
-    demo: 0,
   };
 
   // Find the membership with the highest role — clubId must match that membership

@@ -17,11 +17,6 @@ export async function createBookingAction(
     // 1. Server-seitige Auth-Prüfung (IMMER!)
     const user = await getAuthenticatedUser();
 
-    // Demo-User darf nicht buchen
-    if (user.role === 'demo') {
-      return { success: false, error: 'Demo-User können keine Buchungen erstellen.' };
-    }
-
     // 2. Server-seitige Validierung (IMMER! Client kann manipuliert werden)
     const parsed = createBookingSchema.safeParse(input);
     if (!parsed.success) {

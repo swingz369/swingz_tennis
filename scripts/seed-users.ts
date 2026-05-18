@@ -21,7 +21,6 @@ const seedUsers = [
   { email: 'admin@swingz.local', role: 'admin' },
   { email: 'trainer@swingz.local', role: 'trainer' },
   { email: 'member@swingz.local', role: 'member' },
-  { email: 'demo@swingz.local', role: 'demo' },
 ];
 
 async function seedDatabase() {
