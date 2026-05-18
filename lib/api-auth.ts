@@ -56,12 +56,16 @@ async function buildAuthContext(
     member: 1,
   };
 
-  // Highest role wins
+  // Highest role wins — track which membership granted it
   let effectiveRole = memberships[0].role as 'superadmin' | 'admin' | 'trainer' | 'member';
+  let effectiveMembership = memberships[0];
+
   for (let i = 1; i < memberships.length; i++) {
-    const role = memberships[i].role as keyof typeof roleOrder;
+    const m = memberships[i];
+    const role = m.role as keyof typeof roleOrder;
     if ((roleOrder[role] ?? 0) > (roleOrder[effectiveRole] ?? 0)) {
       effectiveRole = role as 'superadmin' | 'admin' | 'trainer' | 'member';
+      effectiveMembership = m;
     }
   }
 
@@ -72,7 +76,6 @@ async function buildAuthContext(
   if (effectiveRole === 'superadmin') {
     const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
     if (cookieValue) {
-      // Validate the club actually exists (superadmin can access any club)
       const { data: clubCheck } = await supabase
         .from('clubs')
         .select('id')
@@ -83,10 +86,9 @@ async function buildAuthContext(
         effectiveClubId = cookieValue;
       }
     }
-    // If no cookie → effectiveClubId stays null (superadmin sees platform view)
   } else {
-    // Admin/trainer/member: use their assigned club
-    effectiveClubId = memberships.find((m) => m.club_id)?.club_id ?? null;
+    // effectiveClubId comes from the membership that granted the effective role
+    effectiveClubId = effectiveMembership.club_id ?? null;
   }
 
   return {
