@@ -88,11 +88,6 @@ const RESTRICTED_ROUTES: Record<string, string[]> = {
 };
 
 async function setupAuthMock(page: Page, role: string) {
-  // Test-Mode-Cookie setzen, damit Middleware Auth-Check überspringt
-  await page
-    .context()
-    .addCookies([{ name: 'swingz_test_mode', value: 'true', domain: 'localhost', path: '/' }]);
-
   // Register catch-all FIRST (Playwright uses reverse-order: last-registered handler wins)
   await page.route('**/api/**', async (route) => {
     const url = route.request().url();

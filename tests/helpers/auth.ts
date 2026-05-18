@@ -37,17 +37,11 @@ async function doLogin(
 }
 
 /**
- * Real API login with swingz_test_mode cookie to bypass rate limiting.
- * NOTE: Sets cookie in browser context → middleware ROLE CHECKS are ALSO bypassed.
- * Use this for tests that need server-rendered content but don't need role-based redirects.
+ * Real API login with swingz_test_mode sent only as a header on the login request
+ * (not stored in browser context) to bypass rate limiting without affecting middleware behavior.
  */
 export async function loginAs(page: Page, email: string, password: string): Promise<void> {
-  // Set test mode cookie in browser context BEFORE login
-  await page
-    .context()
-    .addCookies([{ name: 'swingz_test_mode', value: 'true', domain: 'localhost', path: '/' }]);
-
-  const targetUrl = await doLogin(page, email, password);
+  const targetUrl = await doLogin(page, email, password, 'swingz_test_mode=true');
   await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 }
 
