@@ -5,16 +5,9 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
-    // E2E Test Mode: Skip rate limiting when swingz_test_mode cookie is set
-    const testMode = request.cookies.get('swingz_test_mode')?.value === 'true';
-
-    if (!testMode) {
-      // SECURITY FIX: Add strict rate limiting to prevent brute force attacks
-      // Limit: 5 login attempts per 15 minutes per IP
-      const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.AUTH);
-      if (rateLimitError) {
-        return rateLimitError;
-      }
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.AUTH);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
     const { email, password } = await request.json();
