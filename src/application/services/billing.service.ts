@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+import { env } from '@/lib/env';
 import type {
   BillingPeriod,
   TrainerBilling,
@@ -7,106 +9,171 @@ import type {
   BillingSummary,
 } from '../../domain/entities/billing.entity';
 
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+// ── row-to-domain mappers ──────────────────────────────────────────────────
+
+function rowToBillingPeriod(row: Record<string, unknown>): BillingPeriod {
+  return {
+    id: row.id as string,
+    startDate: row.start_date as string,
+    endDate: row.end_date as string,
+    status: row.status as BillingPeriod['status'],
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function rowToTrainerBilling(row: Record<string, unknown>): TrainerBilling {
+  return {
+    id: row.id as string,
+    billingPeriodId: row.billing_period_id as string,
+    trainerId: row.trainer_id as string,
+    trainerName: row.trainer_name as string,
+    totalHours: Number(row.total_hours),
+    hourlyRate: Number(row.hourly_rate),
+    totalAmount: Number(row.total_amount),
+    status: row.status as TrainerBilling['status'],
+    invoiceId: row.invoice_id as string | undefined,
+    invoiceNumber: row.invoice_number as string | undefined,
+    dueDate: row.due_date as string | undefined,
+    paidAt: row.paid_at as string | undefined,
+    notes: row.notes as string | undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function rowToBillingLineItem(row: Record<string, unknown>): BillingLineItem {
+  return {
+    id: row.id as string,
+    trainerBillingId: row.trainer_billing_id as string,
+    date: row.date as string,
+    description: row.description as string,
+    hours: Number(row.hours),
+    rate: Number(row.rate),
+    amount: Number(row.amount),
+    type: row.type as BillingLineItem['type'],
+    sessionId: row.session_id as string | undefined,
+  };
+}
+
+// ── service ───────────────────────────────────────────────────────────────
+
 export class BillingService {
-  private static billingPeriods: BillingPeriod[] = [];
-  private static trainerBillings: TrainerBilling[] = [];
-  private static billingLineItems: BillingLineItem[] = [];
-
-  /**
-   * Generate a unique ID
-   */
-  private static generateId(): string {
-    return `billing-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
-
   /**
    * Create a new billing period
    */
   static async createBillingPeriod(startDate: string, endDate: string): Promise<BillingPeriod> {
-    const now = new Date().toISOString();
-    const billingPeriod: BillingPeriod = {
-      id: this.generateId(),
-      startDate,
-      endDate,
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
-    };
+    const { data, error } = await supabase
+      .from('billing_periods')
+      .insert({ start_date: startDate, end_date: endDate, status: 'open' })
+      .select()
+      .single();
 
-    this.billingPeriods.push(billingPeriod);
-    return billingPeriod;
+    if (error || !data) {
+      throw new Error(`Failed to create billing period: ${error?.message}`);
+    }
+    return rowToBillingPeriod(data as Record<string, unknown>);
   }
 
   /**
    * Get billing period by ID
    */
   static async getBillingPeriodById(id: string): Promise<BillingPeriod | null> {
-    return this.billingPeriods.find((p) => p.id === id) || null;
+    const { data, error } = await supabase
+      .from('billing_periods')
+      .select()
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to get billing period: ${error.message}`);
+    return data ? rowToBillingPeriod(data as Record<string, unknown>) : null;
   }
 
   /**
    * Get all billing periods
    */
   static async getAllBillingPeriods(): Promise<BillingPeriod[]> {
-    return [...this.billingPeriods];
+    const { data, error } = await supabase
+      .from('billing_periods')
+      .select()
+      .order('start_date', { ascending: false });
+
+    if (error) throw new Error(`Failed to get billing periods: ${error.message}`);
+    return (data ?? []).map((r) => rowToBillingPeriod(r as Record<string, unknown>));
   }
 
   /**
    * Get current billing period
    */
   static async getCurrentBillingPeriod(): Promise<BillingPeriod | null> {
-    const now = new Date();
-    return (
-      this.billingPeriods.find(
-        (p) => p.status === 'open' && new Date(p.startDate) <= now && new Date(p.endDate) >= now
-      ) || null
-    );
+    const now = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('billing_periods')
+      .select()
+      .eq('status', 'open')
+      .lte('start_date', now)
+      .gte('end_date', now)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to get current billing period: ${error.message}`);
+    return data ? rowToBillingPeriod(data as Record<string, unknown>) : null;
   }
 
   /**
    * Close billing period
    */
   static async closeBillingPeriod(id: string): Promise<BillingPeriod | null> {
-    const index = this.billingPeriods.findIndex((p) => p.id === id);
-    if (index === -1) {
-      return null;
-    }
+    const { data, error } = await supabase
+      .from('billing_periods')
+      .update({ status: 'closed', updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .maybeSingle();
 
-    this.billingPeriods[index].status = 'closed';
-    this.billingPeriods[index].updatedAt = new Date().toISOString();
-
-    return this.billingPeriods[index];
+    if (error) throw new Error(`Failed to close billing period: ${error.message}`);
+    return data ? rowToBillingPeriod(data as Record<string, unknown>) : null;
   }
 
   /**
    * Create trainer billing
    */
   static async createTrainerBilling(input: CreateTrainerBillingInput): Promise<TrainerBilling> {
-    const now = new Date().toISOString();
-    const trainerBilling: TrainerBilling = {
-      id: this.generateId(),
-      billingPeriodId: input.billingPeriodId,
-      trainerId: input.trainerId,
-      trainerName: input.trainerName,
-      totalHours: input.totalHours,
-      hourlyRate: input.hourlyRate,
-      totalAmount: input.totalAmount,
-      status: 'pending',
-      dueDate: input.dueDate,
-      notes: input.notes,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const { data, error } = await supabase
+      .from('trainer_billings')
+      .insert({
+        billing_period_id: input.billingPeriodId,
+        trainer_id: input.trainerId,
+        trainer_name: input.trainerName,
+        total_hours: input.totalHours,
+        hourly_rate: input.hourlyRate,
+        total_amount: input.totalAmount,
+        status: 'pending',
+        due_date: input.dueDate ?? null,
+        notes: input.notes ?? null,
+      })
+      .select()
+      .single();
 
-    this.trainerBillings.push(trainerBilling);
-    return trainerBilling;
+    if (error || !data) {
+      throw new Error(`Failed to create trainer billing: ${error?.message}`);
+    }
+    return rowToTrainerBilling(data as Record<string, unknown>);
   }
 
   /**
    * Get trainer billing by ID
    */
   static async getTrainerBillingById(id: string): Promise<TrainerBilling | null> {
-    return this.trainerBillings.find((b) => b.id === id) || null;
+    const { data, error } = await supabase
+      .from('trainer_billings')
+      .select()
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw new Error(`Failed to get trainer billing: ${error.message}`);
+    return data ? rowToTrainerBilling(data as Record<string, unknown>) : null;
   }
 
   /**
@@ -115,24 +182,40 @@ export class BillingService {
   static async getTrainerBillingsByBillingPeriod(
     billingPeriodId: string
   ): Promise<TrainerBilling[]> {
-    return this.trainerBillings.filter((b) => b.billingPeriodId === billingPeriodId);
+    const { data, error } = await supabase
+      .from('trainer_billings')
+      .select()
+      .eq('billing_period_id', billingPeriodId);
+
+    if (error) throw new Error(`Failed to get trainer billings by period: ${error.message}`);
+    return (data ?? []).map((r) => rowToTrainerBilling(r as Record<string, unknown>));
   }
 
   /**
    * Get trainer billings by trainer ID
    */
   static async getTrainerBillingsByTrainerId(trainerId: string): Promise<TrainerBilling[]> {
-    return this.trainerBillings.filter((b) => b.trainerId === trainerId);
+    const { data, error } = await supabase
+      .from('trainer_billings')
+      .select()
+      .eq('trainer_id', trainerId);
+
+    if (error) throw new Error(`Failed to get trainer billings by trainer: ${error.message}`);
+    return (data ?? []).map((r) => rowToTrainerBilling(r as Record<string, unknown>));
   }
 
   /**
-   * Get all trainer billings
+   * Get all trainer billings, optionally filtered by status
    */
   static async getAllTrainerBillings(status?: string): Promise<TrainerBilling[]> {
+    let query = supabase.from('trainer_billings').select();
     if (status) {
-      return this.trainerBillings.filter((b) => b.status === status);
+      query = query.eq('status', status);
     }
-    return [...this.trainerBillings];
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to get trainer billings: ${error.message}`);
+    return (data ?? []).map((r) => rowToTrainerBilling(r as Record<string, unknown>));
   }
 
   /**
@@ -142,20 +225,23 @@ export class BillingService {
     id: string,
     input: UpdateTrainerBillingInput
   ): Promise<TrainerBilling | null> {
-    const index = this.trainerBillings.findIndex((b) => b.id === id);
-    if (index === -1) {
-      return null;
-    }
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (input.status !== undefined) patch.status = input.status;
+    if (input.invoiceId !== undefined) patch.invoice_id = input.invoiceId;
+    if (input.invoiceNumber !== undefined) patch.invoice_number = input.invoiceNumber;
+    if (input.dueDate !== undefined) patch.due_date = input.dueDate;
+    if (input.paidAt !== undefined) patch.paid_at = input.paidAt;
+    if (input.notes !== undefined) patch.notes = input.notes;
 
-    const existing = this.trainerBillings[index];
-    const updated: TrainerBilling = {
-      ...existing,
-      ...input,
-      updatedAt: new Date().toISOString(),
-    };
+    const { data, error } = await supabase
+      .from('trainer_billings')
+      .update(patch)
+      .eq('id', id)
+      .select()
+      .maybeSingle();
 
-    this.trainerBillings[index] = updated;
-    return updated;
+    if (error) throw new Error(`Failed to update trainer billing: ${error.message}`);
+    return data ? rowToTrainerBilling(data as Record<string, unknown>) : null;
   }
 
   /**
@@ -189,20 +275,25 @@ export class BillingService {
     type: 'training' | 'preparation' | 'meeting' | 'other',
     sessionId?: string
   ): Promise<BillingLineItem> {
-    const billingLineItem: BillingLineItem = {
-      id: this.generateId(),
-      trainerBillingId,
-      date,
-      description,
-      hours,
-      rate,
-      amount: hours * rate,
-      type,
-      sessionId,
-    };
+    const { data, error } = await supabase
+      .from('billing_line_items')
+      .insert({
+        trainer_billing_id: trainerBillingId,
+        date,
+        description,
+        hours,
+        rate,
+        amount: hours * rate,
+        type,
+        session_id: sessionId ?? null,
+      })
+      .select()
+      .single();
 
-    this.billingLineItems.push(billingLineItem);
-    return billingLineItem;
+    if (error || !data) {
+      throw new Error(`Failed to create billing line item: ${error?.message}`);
+    }
+    return rowToBillingLineItem(data as Record<string, unknown>);
   }
 
   /**
@@ -211,23 +302,30 @@ export class BillingService {
   static async getBillingLineItemsByTrainerBilling(
     trainerBillingId: string
   ): Promise<BillingLineItem[]> {
-    return this.billingLineItems.filter((i) => i.trainerBillingId === trainerBillingId);
+    const { data, error } = await supabase
+      .from('billing_line_items')
+      .select()
+      .eq('trainer_billing_id', trainerBillingId);
+
+    if (error) throw new Error(`Failed to get billing line items: ${error.message}`);
+    return (data ?? []).map((r) => rowToBillingLineItem(r as Record<string, unknown>));
   }
 
   /**
    * Get all billing line items
    */
   static async getAllBillingLineItems(): Promise<BillingLineItem[]> {
-    return [...this.billingLineItems];
+    const { data, error } = await supabase.from('billing_line_items').select();
+
+    if (error) throw new Error(`Failed to get billing line items: ${error.message}`);
+    return (data ?? []).map((r) => rowToBillingLineItem(r as Record<string, unknown>));
   }
 
   /**
    * Calculate billing summary for a billing period
    */
   static async calculateBillingSummary(billingPeriodId: string): Promise<BillingSummary> {
-    const periodBillings = this.trainerBillings.filter(
-      (b) => b.billingPeriodId === billingPeriodId
-    );
+    const periodBillings = await this.getTrainerBillingsByBillingPeriod(billingPeriodId);
 
     const totalTrainers = periodBillings.length;
     const totalHours = periodBillings.reduce((sum, b) => sum + b.totalHours, 0);
@@ -258,150 +356,19 @@ export class BillingService {
   }
 
   /**
-   * Generate invoice number
+   * Generate invoice number based on current DB count
    */
-  static generateInvoiceNumber(): string {
+  static async generateInvoiceNumber(): Promise<string> {
     const year = new Date().getFullYear();
     const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const count =
-      this.trainerBillings.filter((b) => b.invoiceNumber?.startsWith(`INV-${year}${month}`))
-        .length + 1;
-    return `INV-${year}${month}-${String(count).padStart(4, '0')}`;
+    const prefix = `INV-${year}${month}`;
+
+    const { count } = await supabase
+      .from('trainer_billings')
+      .select('id', { count: 'exact', head: true })
+      .like('invoice_number', `${prefix}%`);
+
+    const next = (count ?? 0) + 1;
+    return `${prefix}-${String(next).padStart(4, '0')}`;
   }
-
-  /**
-   * Initialize with mock data (for development)
-   */
-  static initializeMockData(): void {
-    const now = new Date();
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString()
-      .split('T')[0];
-    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      .toISOString()
-      .split('T')[0];
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      .toISOString()
-      .split('T')[0];
-    const _lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-      .toISOString()
-      .split('T')[0];
-
-    this.billingPeriods = [
-      {
-        id: 'period-current',
-        startDate: currentMonthStart,
-        endDate: currentMonthEnd,
-        status: 'open',
-        createdAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'period-last',
-        startDate: lastMonthStart,
-        endDate: _lastMonthEnd,
-        status: 'closed',
-        createdAt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
-
-    this.trainerBillings = [
-      {
-        id: 'billing-1',
-        billingPeriodId: 'period-last',
-        trainerId: 'trainer-1',
-        trainerName: 'Thomas Müller',
-        totalHours: 45,
-        hourlyRate: 50,
-        totalAmount: 2250,
-        status: 'paid',
-        invoiceNumber: 'INV-202504-0001',
-        dueDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        paidAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'billing-2',
-        billingPeriodId: 'period-last',
-        trainerId: 'trainer-2',
-        trainerName: 'Julia Weber',
-        totalHours: 38,
-        hourlyRate: 55,
-        totalAmount: 2090,
-        status: 'paid',
-        invoiceNumber: 'INV-202504-0002',
-        dueDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        paidAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'billing-3',
-        billingPeriodId: 'period-current',
-        trainerId: 'trainer-1',
-        trainerName: 'Thomas Müller',
-        totalHours: 32,
-        hourlyRate: 50,
-        totalAmount: 1600,
-        status: 'pending',
-        createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'billing-4',
-        billingPeriodId: 'period-current',
-        trainerId: 'trainer-2',
-        trainerName: 'Julia Weber',
-        totalHours: 28,
-        hourlyRate: 55,
-        totalAmount: 1540,
-        status: 'pending',
-        createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
-
-    this.billingLineItems = [
-      {
-        id: 'line-1',
-        trainerBillingId: 'billing-1',
-        date: '2025-04-01',
-        description: 'Training Session 1',
-        hours: 2,
-        rate: 50,
-        amount: 100,
-        type: 'training',
-        sessionId: 'session-1',
-      },
-      {
-        id: 'line-2',
-        trainerBillingId: 'billing-1',
-        date: '2025-04-02',
-        description: 'Training Session 2',
-        hours: 1.5,
-        rate: 50,
-        amount: 75,
-        type: 'training',
-        sessionId: 'session-2',
-      },
-      {
-        id: 'line-3',
-        trainerBillingId: 'billing-2',
-        date: '2025-04-01',
-        description: 'Training Session 3',
-        hours: 2,
-        rate: 55,
-        amount: 110,
-        type: 'training',
-        sessionId: 'session-3',
-      },
-    ];
-  }
-}
-
-// Initialize mock data (development only)
-if (process.env.NODE_ENV !== 'production') {
-  BillingService.initializeMockData();
 }

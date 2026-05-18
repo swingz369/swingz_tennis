@@ -18,13 +18,22 @@ export async function POST(request: NextRequest) {
 
     return withApiAuth(request, async (auth) => {
       try {
-        // Only admin can create SEPA mandates
-        const hasPermission = await verifyRole(auth, 'admin');
-        if (!hasPermission) {
+        // Admin can create mandates for any member; members can only sign their own
+        const isAdmin = await verifyRole(auth, 'admin');
+        const isMember = await verifyRole(auth, 'member');
+        if (!isAdmin && !isMember) {
           return forbiddenResponse('Insufficient permissions to create SEPA mandates');
         }
 
         const body = await request.json();
+
+        // Members can only create mandates for themselves
+        if (!isAdmin && body.memberId && body.memberId !== auth.user.id) {
+          return forbiddenResponse('Members can only create mandates for themselves');
+        }
+        if (!isAdmin) {
+          body.memberId = auth.user.id;
+        }
 
         // Validate request body with Zod
         const validation = validateRequestBody(CreateSEPAMandateSchema, body);

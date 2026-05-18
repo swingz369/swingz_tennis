@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format, addDays, startOfWeek, parseISO, isToday } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +49,7 @@ export default function TrainerAvailabilityCalendar() {
         throw new Error('Failed to load availabilities');
       }
       const data = await response.json();
-      setAvailabilities(data.availabilities || []);
+            setAvailabilities(data.availabilities || []);
     } catch (error) {
       console.error('Failed to load availabilities:', error);
       toast.error('Fehler beim Laden der Verfügbarkeiten');
@@ -63,7 +63,12 @@ export default function TrainerAvailabilityCalendar() {
       const response = await fetch('/api/trainer-availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          date: editForm.date,
+          start_time: editForm.startTime,
+          end_time: editForm.endTime,
+          notes: editForm.notes,
+        }),
       });
 
       if (!response.ok) {
@@ -72,7 +77,19 @@ export default function TrainerAvailabilityCalendar() {
       }
 
       const data = await response.json();
-      setAvailabilities([...availabilities, data.availability]);
+      const slot = data.slot;
+      const now = new Date().toISOString();
+      setAvailabilities([...availabilities, {
+        id: slot.id,
+        trainerId: slot.trainer_id,
+        date: slot.date,
+        startTime: slot.start_time,
+        endTime: slot.end_time,
+        status: slot.status,
+        notes: slot.notes,
+        createdAt: slot.created_at || now,
+        updatedAt: slot.updated_at || now,
+      }]);
       setEditForm({});
       toast.success('Verfügbarkeit erfolgreich erstellt');
     } catch (error) {

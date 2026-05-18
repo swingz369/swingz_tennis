@@ -4,6 +4,10 @@ import type { Payment, CreatePayment, PaymentStatus } from '../types/billing';
 
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
+function fallbackPaymentId(): string {
+  return `PAY-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export class PaymentService {
   private static instance: PaymentService;
 
@@ -16,36 +20,16 @@ export class PaymentService {
     return PaymentService.instance;
   }
 
-  async generatePaymentNumber(clubId: string): Promise<string> {
-    const { data, error } = await supabase.rpc('generate_payment_number', {
-      p_club_id: clubId,
-    });
-
-    if (error) {
-      throw new Error(`Failed to generate payment number: ${error.message}`);
-    }
-
-    return data;
-  }
-
   async createPayment(data: CreatePayment): Promise<Payment> {
-    const paymentNumber = await this.generatePaymentNumber(data.club_id);
-
     const { data: payment, error } = await supabase
       .from('payments')
       .insert({
-        club_id: data.club_id,
-        member_id: data.member_id,
-        invoice_id: data.invoice_id,
-        payment_number: paymentNumber,
-        payment_date: data.payment_date || new Date().toISOString().split('T')[0],
+        invoice_id: data.invoice_id ?? null,
         amount: data.amount,
+        currency: 'EUR',
         payment_method: data.payment_method,
         status: 'pending',
-        transaction_id: data.transaction_id,
-        stripe_payment_intent_id: data.stripe_payment_intent_id,
-        sepa_mandate_id: data.sepa_mandate_id,
-        notes: data.notes,
+        external_id: data.external_id ?? fallbackPaymentId(),
       })
       .select()
       .single();
@@ -60,24 +44,12 @@ export class PaymentService {
   async updatePaymentStatus(
     paymentId: string,
     status: PaymentStatus,
-    metadata?: {
-      processed_at?: string;
-      failed_at?: string;
-      failure_reason?: string;
-      refunded_at?: string;
-      refund_amount?: number;
-      refund_reason?: string;
-    }
   ): Promise<Payment> {
-    const updateData: {
-      status: PaymentStatus;
-      processed_at?: string;
-      failed_at?: string;
-      failure_reason?: string;
-      refunded_at?: string;
-      refund_amount?: number;
-      refund_reason?: string;
-    } = { status, ...metadata };
+    const updateData: Record<string, unknown> = { status };
+
+    if (status === 'completed') {
+      updateData.paid_at = new Date().toISOString();
+    }
 
     const { data, error } = await supabase
       .from('payments')
@@ -110,43 +82,12 @@ export class PaymentService {
     return data;
   }
 
-  async getPaymentByStripeId(stripePaymentIntentId: string): Promise<Payment | null> {
-    const { data, error } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('stripe_payment_intent_id', stripePaymentIntentId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null;
-      }
-      throw new Error(`Failed to get payment by Stripe ID: ${error.message}`);
-    }
-
-    return data;
-  }
-
   async getPaymentsByInvoice(invoiceId: string): Promise<Payment[]> {
     const { data, error } = await supabase
       .from('payments')
       .select('*')
       .eq('invoice_id', invoiceId)
-      .order('payment_date', { ascending: false });
-
-    if (error) {
-      throw new Error(`Failed to get payments: ${error.message}`);
-    }
-
-    return data || [];
-  }
-
-  async getPaymentsByMember(memberId: string): Promise<Payment[]> {
-    const { data, error } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('member_id', memberId)
-      .order('payment_date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to get payments: ${error.message}`);

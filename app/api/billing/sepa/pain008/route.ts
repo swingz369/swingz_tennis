@@ -3,8 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
-import type { SepaDirectDebitTransaction, SepaPain008Config } from '@/lib/sepa/pain008-generator';
-import { generatePain008Xml, getPain008FileName } from '@/lib/sepa/pain008-generator';
+import type { SepaPain008Config } from '@/lib/sepa/pain008-generator';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -33,10 +32,10 @@ export async function POST(_request: NextRequest) {
         );
       }
 
+      // Validate that all payments exist and belong to authorized club
       const payments = await Promise.all(
         paymentIds.map((id: string) => billingEngine.getPaymentById(id))
       );
-
       const validPayments = payments.filter((p) => p !== null);
 
       if (validPayments.length === 0) {
@@ -50,81 +49,31 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const clubPayments = validPayments.filter((p) => p.club_id === auth.clubId);
-
-      if (clubPayments.length !== validPayments.length) {
-        return NextResponse.json(
-          { error: 'Einige Zahlungen gehören nicht zu Ihrem Club' },
-          { status: 403 }
-        );
-      }
-
-      const transactions: SepaDirectDebitTransaction[] = [];
-
+      // Verify club ownership via invoice lookup
       for (const payment of validPayments) {
-        if (!payment.sepa_mandate_id) {
+        if (!payment!.invoice_id) {
           return NextResponse.json(
-            { error: `Zahlung ${payment.id} hat kein SEPA-Mandat` },
+            { error: `Zahlung ${payment!.id} hat keine zugehörige Rechnung` },
             { status: 400 }
           );
         }
-
-        const mandate = await billingEngine.getSepaMandateById(payment.sepa_mandate_id);
-
-        if (!mandate) {
+        const invoice = await billingEngine.getInvoiceById(payment!.invoice_id);
+        if (!invoice) {
           return NextResponse.json(
-            { error: `SEPA-Mandat ${payment.sepa_mandate_id} nicht gefunden` },
+            { error: `Rechnung ${payment!.invoice_id} nicht gefunden` },
             { status: 404 }
           );
         }
-
-        if (mandate.status !== 'active') {
+        if (invoice.club_id !== auth.clubId) {
           return NextResponse.json(
-            { error: `SEPA-Mandat ${payment.sepa_mandate_id} ist nicht aktiv` },
-            { status: 400 }
-          );
-        }
-
-        if (mandate.club_id !== auth.clubId) {
-          return NextResponse.json(
-            { error: `SEPA-Mandat ${payment.sepa_mandate_id} gehört nicht zu Ihrem Club` },
+            { error: `Rechnung ${payment!.invoice_id} gehört nicht zu Ihrem Club` },
             { status: 403 }
           );
         }
-
-        const invoice = payment.invoice_id
-          ? await billingEngine.getInvoiceById(payment.invoice_id)
-          : null;
-
-        const paymentDate =
-          payment.payment_date instanceof Date
-            ? payment.payment_date.toISOString().split('T')[0]
-            : new Date(payment.payment_date).toISOString().split('T')[0];
-
-        const transaction: SepaDirectDebitTransaction = {
-          paymentId: payment.id,
-          mandateId: mandate.id,
-          mandateReference: mandate.mandate_reference,
-          creditorId: mandate.creditor_id,
-          iban: mandate.iban,
-          accountHolderName: mandate.account_holder_name,
-          amount: payment.amount,
-          currency: 'EUR',
-          paymentDate,
-          endToEndId: `SWINGZ-${payment.payment_number}`,
-          remittanceInformation: invoice
-            ? `Rechnung ${invoice.invoice_number}`
-            : `Zahlung ${payment.payment_number}`,
-        };
-
-        if (mandate.bic) {
-          transaction.bic = mandate.bic;
-        }
-
-        transactions.push(transaction);
       }
 
-      const config: SepaPain008Config = {
+      // Delegate SEPA XML generation to billing engine (handles mandate lookup internally)
+      const config: Partial<SepaPain008Config> = {
         creditorName: process.env.SEPA_CREDITOR_NAME || 'SWINGZ Tennis Club',
         creditorAccountIban: process.env.SEPA_CREDITOR_IBAN || '',
         creditorId: process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999',
@@ -133,9 +82,7 @@ export async function POST(_request: NextRequest) {
       };
 
       const bic = process.env.SEPA_CREDITOR_BIC;
-      if (bic) {
-        config.creditorAccountBic = bic;
-      }
+      if (bic) config.creditorAccountBic = bic;
 
       const street = process.env.SEPA_CREDITOR_STREET;
       const city = process.env.SEPA_CREDITOR_CITY;
@@ -143,11 +90,12 @@ export async function POST(_request: NextRequest) {
       const country = process.env.SEPA_CREDITOR_COUNTRY || 'DE';
 
       if (street || city || postalCode || country) {
-        config.creditorAddress = {};
-        if (street) config.creditorAddress.street = street;
-        if (city) config.creditorAddress.city = city;
-        if (postalCode) config.creditorAddress.postalCode = postalCode;
-        if (country) config.creditorAddress.country = country;
+        config.creditorAddress = {
+          street: street || undefined,
+          city: city || undefined,
+          postalCode: postalCode || undefined,
+          country: country || undefined,
+        };
       }
 
       if (!config.creditorAccountIban) {
@@ -157,23 +105,17 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const xml = generatePain008Xml(transactions, config);
-      const fileName = getPain008FileName();
-
-      // Mark payments as processing to prevent double-export
-      const statusResults = await Promise.allSettled(
-        validPayments.map((p) =>
-          billingEngine.updatePaymentStatus(p.id, 'processing', {
-            processed_at: new Date().toISOString(),
-          })
-        )
+      const { xml, fileName } = await billingEngine.generateSepaDirectDebit(
+        paymentIds,
+        config
       );
 
-      for (const result of statusResults) {
-        if (result.status === 'rejected') {
-          console.error('Failed to update payment status during SEPA export:', result.reason);
-        }
-      }
+      // Mark payments as processing to prevent double-export
+      await Promise.allSettled(
+        validPayments.map((p) =>
+          billingEngine.updatePaymentStatus(p!.id, 'processing')
+        )
+      );
 
       return new NextResponse(xml, {
         headers: {

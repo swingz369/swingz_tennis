@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, subDays, isSameDay, setHours, setMinutes } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,

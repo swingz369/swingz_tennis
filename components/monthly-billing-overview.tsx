@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format, parseISO, addMonths } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,54 +65,61 @@ export default function MonthlyBillingOverview() {
 
   useEffect(() => {
     loadBillingData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
 
   const loadBillingData = async () => {
     try {
       setIsLoading(true);
 
-      // In production, this would fetch from an API
-      // For now, we'll use mock data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const month = format(selectedPeriod, 'yyyy-MM');
+      const params = new URLSearchParams({ month });
+      const response = await fetch(`/api/billing/monthly-overview?${params.toString()}`);
 
-      const mockSummary: BillingSummary = {
-        billingPeriodId: 'current',
-        totalTrainers: 2,
-        totalHours: 60,
-        totalAmount: 3140,
-        pendingAmount: 3140,
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      const totalAmount = data.trainers.reduce(
+        (sum: number, t: { amount: number }) => sum + t.amount,
+        0
+      );
+
+      const summary: BillingSummary = {
+        billingPeriodId: month,
+        totalTrainers: data.trainers.length,
+        totalHours: data.trainers.reduce(
+          (sum: number, t: { hours: number }) => sum + t.hours,
+          0
+        ),
+        totalAmount,
+        pendingAmount: totalAmount - data.totalPaid,
         processedAmount: 0,
-        paidAmount: 0,
+        paidAmount: data.totalPaid,
         overdueAmount: 0,
       };
 
-      setBillingSummary(mockSummary);
-      setTrainerBillings([
-        {
-          id: 'billing-1',
-          billingPeriodId: 'current',
-          trainerId: 'trainer-1',
-          trainerName: 'Thomas Müller',
-          totalHours: 32,
-          hourlyRate: 50,
-          totalAmount: 1600,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: 'billing-2',
-          billingPeriodId: 'current',
-          trainerId: 'trainer-2',
-          trainerName: 'Julia Weber',
-          totalHours: 28,
-          hourlyRate: 55,
-          totalAmount: 1540,
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ]);
+      setBillingSummary(summary);
+
+      const now = new Date().toISOString();
+      setTrainerBillings(
+        data.trainers.map(
+          (t: { trainerId: string; name: string; hours: number; hourlyRate: number; amount: number }) => ({
+            id: `billing-${t.trainerId}-${month}`,
+            billingPeriodId: month,
+            trainerId: t.trainerId,
+            trainerName: t.name,
+            totalHours: t.hours,
+            hourlyRate: t.hourlyRate,
+            totalAmount: t.amount,
+            status: 'pending' as const,
+            createdAt: now,
+            updatedAt: now,
+          })
+        )
+      );
     } catch (error) {
       console.error('Failed to load billing data:', error);
       toast.error('Fehler beim Laden der Abrechnungsdaten');

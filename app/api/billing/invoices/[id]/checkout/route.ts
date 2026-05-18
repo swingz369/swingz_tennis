@@ -53,8 +53,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         customerEmail?: string;
       } = {
         invoiceId,
-        amount: invoice.total_amount - invoice.paid_amount,
-        currency: invoice.currency,
+        amount: invoice.amount,
+        currency: invoice.currency || 'EUR',
         description: `Rechnung ${invoice.invoice_number}`,
         successUrl,
         cancelUrl,

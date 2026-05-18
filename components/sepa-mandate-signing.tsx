@@ -151,13 +151,35 @@ export default function SEPAMandateSigning() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await fetch('/api/sepa-mandates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          accountHolder: formData.accountHolder,
+          iban: formData.iban.replace(/\s/g, '').toUpperCase(),
+          bic: formData.bic.toUpperCase(),
+          bankName: formData.bankName,
+          street: formData.street,
+          houseNumber: formData.houseNumber,
+          postalCode: formData.postalCode,
+          city: formData.city,
+          mandateReference: formData.mandateReference,
+          signatureDate: formData.signatureDate,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Fehler beim Speichern');
+      }
 
       setIsSigned(true);
       toast.success('SEPA-Mandat erfolgreich unterzeichnet!');
     } catch (error) {
-      toast.error('Fehler beim Speichern des SEPA-Mandats');
+      toast.error(
+        error instanceof Error ? error.message : 'Fehler beim Speichern des SEPA-Mandats'
+      );
       console.error('SEPA mandate error:', error);
     } finally {
       setIsSubmitting(false);
@@ -290,7 +312,7 @@ export default function SEPAMandateSigning() {
                     name="bic"
                     value={formData.bic}
                     onChange={handleChange}
-                    placeholder="COBADEFFXXX"
+                    placeholder="z.B. MARKDEF1100"
                     className={errors.bic ? 'border-red-500' : ''}
                   />
                   {errors.bic && <p className="text-sm text-red-600">{errors.bic}</p>}

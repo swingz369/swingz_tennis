@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,18 @@ import { useSessions } from '@/hooks/use-sessions';
 export default function TrialTrainingRegistration() {
   const { data: clubData } = useUserClub();
   const clubId = clubData?.clubId ?? null;
+  const [clubInfo, setClubInfo] = useState<{
+    address: string;
+    phone: string;
+    email: string;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/club/contact', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setClubInfo(data); })
+      .catch(() => {});
+  }, []);
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
@@ -62,9 +74,9 @@ export default function TrialTrainingRegistration() {
             startDate: formData.preferredDate
               ? new Date(formData.preferredDate)
               : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-            clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-            clubPhone: '+49 123 456 7890',
-            clubEmail: 'info@swingz.app',
+            clubAddress: clubInfo?.address ?? '',
+            clubPhone: clubInfo?.phone ?? '',
+            clubEmail: clubInfo?.email ?? '',
           }),
         });
       } catch (emailError) {

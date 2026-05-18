@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin } from 'lucide-react';
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';

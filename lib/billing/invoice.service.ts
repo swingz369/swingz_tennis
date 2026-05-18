@@ -4,6 +4,25 @@ import type { Invoice, CreateInvoice, InvoiceWithItems, InvoiceStatus } from '..
 
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
+async function generateUniqueInvoiceNumber(clubId: string): Promise<string> {
+  const prefix = clubId.slice(0, 8).toUpperCase();
+  const year = new Date().getFullYear();
+  try {
+    const { data, error } = await supabase.rpc('next_invoice_sequence', { p_club_id: clubId });
+    if (!error && data) {
+      return `INV-${prefix}-${year}-${String(data).padStart(5, '0')}`;
+    }
+  } catch {
+    // RPC not available — fall through
+  }
+  // Fallback: base-36 timestamp + random suffix eliminates the Date.now()%100000 collision window
+  const ts = Date.now().toString(36).toUpperCase();
+  const rnd = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, '0');
+  return `INV-${prefix}-${year}-${ts}${rnd}`;
+}
+
 export class InvoiceService {
   private static instance: InvoiceService;
 
@@ -17,29 +36,17 @@ export class InvoiceService {
   }
 
   async generateInvoiceNumber(clubId: string): Promise<string> {
-    const { data, error } = await supabase.rpc('generate_invoice_number', {
-      p_club_id: clubId,
-    });
-
-    if (error) {
-      throw new Error(`Failed to generate invoice number: ${error.message}`);
-    }
-
-    return data;
+    return generateUniqueInvoiceNumber(clubId);
   }
 
-  async createInvoice(data: CreateInvoice): Promise<InvoiceWithItems> {
+  async createInvoice(data: CreateInvoice & { type?: string }): Promise<InvoiceWithItems> {
     const invoiceNumber = await this.generateInvoiceNumber(data.club_id);
 
-    const subtotal = data.items.reduce((sum, item) => {
-      return sum + item.quantity * item.unit_price;
-    }, 0);
-
+    const subtotal = data.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
     const taxAmount = data.items.reduce((sum, item) => {
       const itemTotal = item.quantity * item.unit_price;
       return sum + itemTotal * (item.tax_rate / 100);
     }, 0);
-
     const totalAmount = subtotal + taxAmount;
 
     const { data: invoice, error } = await supabase
@@ -48,15 +55,13 @@ export class InvoiceService {
         club_id: data.club_id,
         member_id: data.member_id,
         invoice_number: invoiceNumber,
-        invoice_date: data.invoice_date || new Date().toISOString().split('T')[0],
+        type: data.type ?? 'other',
+        amount: totalAmount,
+        tax_amount: taxAmount,
         due_date: data.due_date,
         status: 'draft',
-        subtotal,
-        tax_amount: taxAmount,
-        total_amount: totalAmount,
-        paid_amount: 0,
         currency: 'EUR',
-        notes: data.notes,
+        notes: data.notes ?? null,
       })
       .select()
       .single();
@@ -67,25 +72,19 @@ export class InvoiceService {
 
     const items = await Promise.all(
       data.items.map(async (item) => {
-        const total_price = item.quantity * item.unit_price;
-        const { data: invoiceItem, error } = await supabase
+        const { data: invoiceItem, error: itemError } = await supabase
           .from('invoice_items')
           .insert({
             invoice_id: invoice.id,
             description: item.description,
             quantity: item.quantity,
             unit_price: item.unit_price,
-            tax_rate: item.tax_rate,
-            total_price,
-            item_type: item.item_type,
-            reference_id: item.reference_id,
-            reference_type: item.reference_type,
           })
           .select()
           .single();
 
-        if (error) {
-          throw new Error(`Failed to create invoice item: ${error.message}`);
+        if (itemError) {
+          throw new Error(`Failed to create invoice item: ${itemError.message}`);
         }
 
         return invoiceItem;
@@ -141,7 +140,7 @@ export class InvoiceService {
       query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
     }
 
-    const { data, error } = await query.order('invoice_date', { ascending: false });
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to get invoices: ${error.message}`);
@@ -172,7 +171,7 @@ export class InvoiceService {
       query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
     }
 
-    const { data, error } = await query.order('invoice_date', { ascending: false });
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       throw new Error(`Failed to get invoices: ${error.message}`);
@@ -182,19 +181,10 @@ export class InvoiceService {
   }
 
   async updateInvoiceStatus(invoiceId: string, status: InvoiceStatus): Promise<Invoice> {
-    const updateData: {
-      status: InvoiceStatus;
-      sent_at?: string;
-      paid_at?: string;
-      cancelled_at?: string;
-    } = { status };
+    const updateData: Record<string, unknown> = { status };
 
-    if (status === 'sent') {
-      updateData.sent_at = new Date().toISOString();
-    } else if (status === 'paid') {
+    if (status === 'paid') {
       updateData.paid_at = new Date().toISOString();
-    } else if (status === 'cancelled') {
-      updateData.cancelled_at = new Date().toISOString();
     }
 
     const { data, error } = await supabase
@@ -216,7 +206,7 @@ export class InvoiceService {
       .from('invoices')
       .select('*')
       .eq('club_id', clubId)
-      .in('status', ['overdue', 'dunning'])
+      .in('status', ['overdue'])
       .order('due_date', { ascending: true });
 
     if (error) {

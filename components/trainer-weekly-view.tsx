@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format, addDays, startOfWeek, parseISO, isToday } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,114 +55,80 @@ export default function TrainerWeeklyView() {
 
   useEffect(() => {
     loadSessions();
-  }, []);
+    // Re-load when selected week changes
+  }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadSessions = async () => {
     try {
       setIsLoading(true);
-      // In production, this would fetch from an API
-      // For now, we'll use mock data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      const weekEnd = addDays(weekStart, 6);
+      const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+      const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
 
-      const now = new Date();
-      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+      // Use /api/sessions filtered by date range — the sessions API returns
+      // entries with timeslotStart/timeslotEnd which we map to TrainingSession.
+      // We need a clubId; read it from the URL if present, otherwise omit it
+      // and fall back to an empty list (admin can supply clubId as query param).
+      const url = new URL('/api/sessions', window.location.origin);
+      const clubIdFromUrl = new URLSearchParams(window.location.search).get('clubId');
+      if (clubIdFromUrl) url.searchParams.set('clubId', clubIdFromUrl);
+      // Date filter — we apply client-side after fetch since the sessions API
+      // returns up to 4 weeks; filter to the selected week below.
+      url.searchParams.set('weekStart', weekStartStr);
+      url.searchParams.set('weekEnd', weekEndStr);
 
-      const mockSessions: TrainingSession[] = [
-        {
-          id: 'session-1',
-          trainerId: 'trainer-1',
-          trainerName: 'Thomas Müller',
-          courtId: 'court-1',
-          courtName: 'Platz 1',
-          date: format(weekStart, 'yyyy-MM-dd'),
-          startTime: '09:00',
-          endTime: '10:00',
-          type: 'individual',
-          status: 'completed',
-          participants: [
-            { id: 'p1', name: 'Max Mustermann', email: 'max@example.com', phone: '+49 123 456' },
-          ],
-          notes: 'Gutes Training',
-          createdAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'session-2',
-          trainerId: 'trainer-1',
-          trainerName: 'Thomas Müller',
-          courtId: 'court-2',
-          courtName: 'Platz 2',
-          date: format(addDays(weekStart, 1), 'yyyy-MM-dd'),
-          startTime: '10:00',
-          endTime: '11:30',
-          type: 'group',
-          status: 'completed',
-          participants: [
-            { id: 'p2', name: 'Anna Schmidt', email: 'anna@example.com' },
-            { id: 'p3', name: 'Peter Klein', email: 'peter@example.com' },
-            { id: 'p4', name: 'Maria Gross', email: 'maria@example.com' },
-          ],
-          notes: 'Gruppe machte Fortschritte',
-          createdAt: new Date(now.getTime() - 23 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(now.getTime() - 23 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'session-3',
-          trainerId: 'trainer-2',
-          trainerName: 'Julia Weber',
-          courtId: 'court-3',
-          courtName: 'Platz 3',
-          date: format(addDays(weekStart, 2), 'yyyy-MM-dd'),
-          startTime: '14:00',
-          endTime: '15:00',
-          type: 'trial',
-          status: 'scheduled',
-          participants: [
-            { id: 'p5', name: 'Hans Müller', email: 'hans@example.com', phone: '+49 987 654' },
-          ],
-          notes: 'Probetraining',
-          createdAt: new Date(now.getTime() - 22 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(now.getTime() - 22 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'session-4',
-          trainerId: 'trainer-1',
-          trainerName: 'Thomas Müller',
-          courtId: 'court-1',
-          courtName: 'Platz 1',
-          date: format(addDays(weekStart, 3), 'yyyy-MM-dd'),
-          startTime: '11:00',
-          endTime: '12:00',
-          type: 'individual',
-          status: 'scheduled',
-          participants: [
-            { id: 'p6', name: 'Lisa Schmidt', email: 'lisa@example.com', phone: '+49 555 666' },
-          ],
-          createdAt: new Date(now.getTime() - 21 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(now.getTime() - 21 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'session-5',
-          trainerId: 'trainer-2',
-          trainerName: 'Julia Weber',
-          courtId: 'court-2',
-          courtName: 'Platz 2',
-          date: format(addDays(weekStart, 4), 'yyyy-MM-dd'),
-          startTime: '16:00',
-          endTime: '17:30',
-          type: 'competition',
-          status: 'scheduled',
-          participants: [
-            { id: 'p7', name: 'Klaus Weber', email: 'klaus@example.com' },
-            { id: 'p8', name: 'Greta Müller', email: 'greta@example.com' },
-          ],
-          notes: 'Wettkampfvorbereitung',
-          createdAt: new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(now.getTime() - 20 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
+      if (!clubIdFromUrl) {
+        // No clubId available — render empty but don't crash
+        setSessions([]);
+        return;
+      }
 
-      setSessions(mockSessions);
+      const res = await fetch(url.toString());
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const raw: Array<{
+        id: string;
+        trainerId?: string;
+        trainerName?: string;
+        courtName?: string;
+        timeslotStart: string;
+        timeslotEnd: string;
+        maxParticipants?: number;
+        bookedByUser?: boolean;
+        bookingId?: string | null;
+        bookingStatus?: string | null;
+      }> = await res.json();
+
+      // Map API shape → TrainingSession shape; keep only this week's sessions
+      const mapped: TrainingSession[] = raw
+        .filter((s) => {
+          const d = s.timeslotStart.substring(0, 10);
+          return d >= weekStartStr && d <= weekEndStr;
+        })
+        .map((s) => {
+          const start = new Date(s.timeslotStart);
+          const end = new Date(s.timeslotEnd);
+          return {
+            id: s.id,
+            trainerId: s.trainerId ?? '',
+            trainerName: s.trainerName ?? 'Trainer',
+            courtId: '',
+            courtName: s.courtName ?? 'Platz',
+            date: start.toISOString().substring(0, 10),
+            startTime: start.toTimeString().substring(0, 5),
+            endTime: end.toTimeString().substring(0, 5),
+            type: 'individual' as const,
+            status: 'scheduled' as const,
+            participants: [],
+            createdAt: s.timeslotStart,
+            updatedAt: s.timeslotStart,
+          };
+        });
+
+      setSessions(mapped);
     } catch (error) {
       console.error('Failed to load sessions:', error);
       toast.error('Fehler beim Laden der Trainingssessions');
@@ -177,7 +143,12 @@ export default function TrainerWeeklyView() {
     }
 
     try {
-      // In production, this would call an API
+      const res = await fetch(`/api/bookings/${sessionId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSessions(
         sessions.map((s) => (s.id === sessionId ? { ...s, status: 'cancelled' as const } : s))
       );
@@ -190,7 +161,12 @@ export default function TrainerWeeklyView() {
 
   const handleCompleteSession = async (sessionId: string) => {
     try {
-      // In production, this would call an API
+      const res = await fetch(`/api/bookings/${sessionId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'confirmed' }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setSessions(
         sessions.map((s) => (s.id === sessionId ? { ...s, status: 'completed' as const } : s))
       );

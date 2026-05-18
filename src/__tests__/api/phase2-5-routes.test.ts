@@ -47,7 +47,7 @@ function createMockSupabase(fromImpl: (table: string) => MockQueryBuilder) {
   };
 }
 
-// ── Mock module ──────────────────────────────────────────────
+// ── Mock modules ──────────────────────────────────────────────
 const mockCreateClient = vi.fn();
 const mockCreateAdminClient = vi.fn();
 
@@ -56,12 +56,25 @@ vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: () => mockCreateAdminClient(),
 }));
 
+// requireAuthApi is used by gamification (and shop/coupons) routes.
+// It creates its own Supabase client internally via cookies + @supabase/ssr,
+// so we mock it here to feed controlled auth state to those routes.
+const mockRequireAuthApi = vi.fn();
+vi.mock('@/lib/auth', async () => {
+  const actual = await vi.importActual('@/lib/auth');
+  return {
+    ...(actual as Record<string, unknown>),
+    requireAuthApi: () => mockRequireAuthApi(),
+  };
+});
+
 // Suppress console.error during tests
 const originalConsoleError = console.error;
 beforeEach(() => {
   console.error = vi.fn();
   mockCreateClient.mockReset();
   mockCreateAdminClient.mockReset();
+  mockRequireAuthApi.mockReset();
 });
 afterEach(() => {
   console.error = originalConsoleError;
@@ -640,9 +653,12 @@ describe('GET /api/gamification', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    const mockSupabase = createMockSupabase(() => createMockQueryBuilder());
-    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
-    mockCreateClient.mockResolvedValue(mockSupabase);
+    mockRequireAuthApi.mockResolvedValue({
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    });
 
     const res = await GET();
     expect(res.status).toBe(401);
@@ -672,7 +688,6 @@ describe('GET /api/gamification', () => {
       return Promise.resolve({ data: null, error: null });
     });
     // Override the chain to return leaderboard data for the 2nd query
-    const originalOrder = qbPoints.order;
     qbPoints.order = vi.fn(() => {
       qbPoints.limit = vi.fn().mockResolvedValue({ data: lbData, error: null });
       return qbPoints;
@@ -717,8 +732,8 @@ describe('GET /api/gamification', () => {
       if (table === 'attendance_records') return qbAttendance;
       return createMockQueryBuilder();
     });
-    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
-    mockCreateClient.mockResolvedValue(mockSupabase);
+
+    mockRequireAuthApi.mockResolvedValue({ supabase: mockSupabase, user: { id: 'u1' } });
 
     const res = await GET();
     expect(res.status).toBe(200);

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, Users, Star, Clock, AlertCircle, Download } from 'lucide-react';
 import { format, subDays, subMonths } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 
 export interface TrialTrainingAnalytics {
   total: number;

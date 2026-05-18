@@ -11,7 +11,7 @@ export function WebVitalsReporter() {
     // Dynamically import web-vitals only on client side
     const reportVitals = async () => {
       try {
-        const { onLCP, onFID, onCLS, onINP, onTTFB } = await import('web-vitals');
+        const { onLCP, onCLS, onINP, onTTFB } = await import('web-vitals');
 
         const sendToAnalytics = ({
           name,
@@ -44,7 +44,6 @@ export function WebVitalsReporter() {
         };
 
         onCLS(sendToAnalytics);
-        onFID(sendToAnalytics);
         onLCP(sendToAnalytics);
         onINP(sendToAnalytics);
         onTTFB(sendToAnalytics);

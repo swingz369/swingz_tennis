@@ -1,4 +1,18 @@
 /** @type {import('next').NextConfig} */
+
+const isDev = process.env.NODE_ENV === 'development';
+
+// script-src: unsafe-eval is only needed in development (HMR / eval-source-maps).
+// unsafe-inline is removed entirely — it defeats XSS protection.
+const scriptSrc = [
+  "'self'",
+  ...(isDev ? ["'unsafe-eval'"] : []),
+  'https://www.googletagmanager.com',
+  'https://cdn.fontshare.com',
+  'https://fonts.googleapis.com',
+  'https://www.gstatic.com',
+].join(' ');
+
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@supabase/ssr'],
@@ -83,7 +97,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://cdn.fontshare.com https://fonts.googleapis.com https://www.gstatic.com",
+              `script-src ${scriptSrc}`,
               "style-src 'self' 'unsafe-inline' https://cdn.fontshare.com https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com",

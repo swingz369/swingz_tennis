@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 import { env } from '@/lib/env';
 import type { DunningRecord, CreateDunningRecord } from '../types/billing';
 import { InvoiceService } from './invoice.service';
@@ -32,34 +33,17 @@ export class DunningService {
   }
 
   async createDunningRecord(data: CreateDunningRecord): Promise<DunningRecord> {
-    const { data: invoice, error: invoiceError } = await supabase
-      .from('invoices')
-      .select('total_amount')
-      .eq('id', data.invoice_id)
-      .single();
-
-    if (invoiceError) {
-      throw new Error(`Failed to get invoice: ${invoiceError.message}`);
-    }
-
-    const dunningFee = data.dunning_fee || this.calculateDunningFee(data.dunning_level);
-    const totalAmount = invoice.total_amount + dunningFee;
+    const dunningFee = data.fee_amount || this.calculateDunningFee(data.level);
 
     const { data: dunning, error } = await supabase
       .from('dunning_records')
       .insert({
-        club_id: data.club_id,
-        member_id: data.member_id,
         invoice_id: data.invoice_id,
-        dunning_level: data.dunning_level,
-        dunning_date: data.dunning_date || new Date().toISOString().split('T')[0],
+        level: data.level,
         due_date: data.due_date,
-        dunning_fee: dunningFee,
-        original_amount: invoice.total_amount,
-        total_amount: totalAmount,
-        status: 'sent',
+        fee_amount: dunningFee,
         sent_at: new Date().toISOString(),
-        notes: data.notes,
+        notes: data.notes ?? null,
       })
       .select()
       .single();
@@ -67,8 +51,6 @@ export class DunningService {
     if (error) {
       throw new Error(`Failed to create dunning record: ${error.message}`);
     }
-
-    await this.invoiceService.updateInvoiceStatus(data.invoice_id, 'dunning');
 
     return dunning;
   }
@@ -78,13 +60,48 @@ export class DunningService {
       .from('dunning_records')
       .select('*')
       .eq('invoice_id', invoiceId)
-      .order('dunning_level', { ascending: true });
+      .order('level', { ascending: true });
 
     if (error) {
       throw new Error(`Failed to get dunning records: ${error.message}`);
     }
 
     return data || [];
+  }
+
+  private async sendDunningEmail(
+    memberEmail: string,
+    invoiceNumber: string,
+    amount: number,
+    level: number,
+    dueDate: string
+  ): Promise<void> {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn(
+        `[dunning] No RESEND_API_KEY — skipping email to ${memberEmail} (invoice ${invoiceNumber}, level ${level})`
+      );
+      return;
+    }
+
+    const levelLabel = level === 1 ? '1. Mahnung' : level === 2 ? '2. Mahnung' : '3. Mahnung (Letzte)';
+    const fee = this.calculateDunningFee(level);
+
+    const resend = new Resend(apiKey);
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'SWINGZ <noreply@swingz.app>',
+      to: memberEmail,
+      subject: `${levelLabel}: Rechnung ${invoiceNumber} ist überfällig`,
+      html: `
+        <h2>${levelLabel}</h2>
+        <p>Sehr geehrtes Mitglied,</p>
+        <p>Ihre Rechnung <strong>${invoiceNumber}</strong> über <strong>€${amount.toFixed(2)}</strong> ist noch offen.</p>
+        <p>Bitte begleichen Sie den ausstehenden Betrag bis zum <strong>${dueDate}</strong>.</p>
+        ${fee > 0 ? `<p>Für diese Mahnung wird eine Mahngebühr von <strong>€${fee.toFixed(2)}</strong> erhoben.</p>` : ''}
+        <p>Bei Fragen wenden Sie sich bitte an Ihren Verein.</p>
+        <p>Mit freundlichen Grüßen,<br/>SWINGZ</p>
+      `,
+    });
   }
 
   async processAutomaticDunning(clubId: string): Promise<DunningRecord[]> {
@@ -96,28 +113,55 @@ export class DunningService {
         .from('dunning_records')
         .select('*')
         .eq('invoice_id', invoice.id)
-        .eq('status', 'sent')
-        .order('dunning_level', { ascending: false })
+        .order('level', { ascending: false })
         .limit(1);
 
-      const currentLevel = existingDunning?.[0]?.dunning_level || 0;
-      const { data: level } = await supabase.rpc('calculate_dunning_level', {
-        p_invoice_id: invoice.id,
-      });
+      const currentLevel = existingDunning?.[0]?.level || 0;
+      const nextLevel = currentLevel + 1;
 
-      if (level && level > currentLevel) {
+      if (nextLevel <= 3) {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 14);
+        const dueDateStr = dueDate.toISOString().split('T')[0];
 
         const dunning = await this.createDunningRecord({
-          club_id: invoice.club_id,
-          member_id: invoice.member_id,
           invoice_id: invoice.id,
-          dunning_level: level,
-          due_date: dueDate.toISOString().split('T')[0],
+          level: nextLevel,
+          due_date: dueDateStr,
         });
 
         newDunningRecords.push(dunning);
+
+        // Fetch member email to send notification
+        if (invoice.member_id) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('email')
+              .eq('id', invoice.member_id)
+              .single();
+
+            const memberEmail = profile?.email;
+            if (memberEmail) {
+              await this.sendDunningEmail(
+                memberEmail,
+                invoice.invoice_number,
+                invoice.amount,
+                nextLevel,
+                dueDateStr
+              );
+            } else {
+              console.warn(
+                `[dunning] No email found for member ${invoice.member_id}, invoice ${invoice.invoice_number}`
+              );
+            }
+          } catch (emailError) {
+            console.error(
+              `[dunning] Failed to send email for invoice ${invoice.invoice_number}:`,
+              emailError
+            );
+          }
+        }
       }
     }
 

@@ -750,7 +750,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
         title="Platz deaktivieren"
         description={`Möchtest du "${selectedCourt?.name}" deaktivieren? Der Platz bleibt erhalten, ist aber nicht mehr buchbar.`}
         confirmLabel={isSubmitting ? 'Wird deaktiviert…' : 'Deaktivieren'}
-        variant="destructive"
+        variant="danger"
         loading={isSubmitting}
         onConfirm={handleDeactivate}
       />

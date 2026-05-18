@@ -35,9 +35,10 @@ interface InvoiceItem {
 
 interface CreateInvoiceDialogProps {
   onSuccess?: () => void;
+  members: { id: string; name: string; email: string }[];
 }
 
-export default function CreateInvoiceDialog({ onSuccess }: CreateInvoiceDialogProps) {
+export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoiceDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [memberId, setMemberId] = useState('');
@@ -53,12 +54,7 @@ export default function CreateInvoiceDialog({ onSuccess }: CreateInvoiceDialogPr
     },
   ]);
 
-  const demoMembers = [
-    { id: '1', name: 'Max Mustermann', email: 'max@example.com' },
-    { id: '2', name: 'Anna Schmidt', email: 'anna@example.com' },
-    { id: '3', name: 'Tom Müller', email: 'tom@example.com' },
-    { id: '4', name: 'Lisa Weber', email: 'lisa@example.com' },
-  ];
+  const hasMembers = members.length > 0;
 
   const addItem = () => {
     setItems([
@@ -177,11 +173,17 @@ export default function CreateInvoiceDialog({ onSuccess }: CreateInvoiceDialogPr
                 <SelectValue placeholder="Mitglied wählen" />
               </SelectTrigger>
               <SelectContent>
-                {demoMembers.map((member) => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.name} ({member.email})
-                  </SelectItem>
-                ))}
+                {hasMembers ? (
+                  members.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name} ({member.email})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-4 text-sm text-gray-500">
+                    Keine Mitglieder gefunden
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>

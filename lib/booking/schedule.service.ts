@@ -131,11 +131,34 @@ export class ScheduleService {
       throw new Error('Court not found');
     }
 
-    const { data: courtType } = await supabase
-      .from('court_types')
-      .select('*')
-      .eq('id', court.court_type_id)
-      .single();
+    // Batch: fetch court type, availability rules, and all bookings for the
+    // full date range in parallel — 3 queries instead of 7+ sequential ones.
+    const [courtTypeResult, availabilityResult, bookingsResult] = await Promise.all([
+      supabase.from('court_types').select('*').eq('id', court.court_type_id).single(),
+      supabase
+        .from('court_availability')
+        .select('*')
+        .eq('court_id', courtId)
+        .eq('is_available', true)
+        .order('start_time', { ascending: true }),
+      supabase
+        .from('bookings')
+        .select('id, start_time, end_time, status')
+        .eq('court_id', courtId)
+        .in('status', ['confirmed', 'pending'])
+        .gte('start_time', `${startDate}T00:00:00`)
+        .lte('start_time', `${endDate}T23:59:59`),
+    ]);
+
+    const courtType = courtTypeResult.data;
+    const availabilityRules = availabilityResult.data ?? [];
+    // Group bookings by date string (YYYY-MM-DD) for O(1) lookup per day
+    const bookingsByDate = new Map<string, typeof bookingsResult.data>();
+    for (const b of bookingsResult.data ?? []) {
+      const d = b.start_time.substring(0, 10);
+      if (!bookingsByDate.has(d)) bookingsByDate.set(d, []);
+      bookingsByDate.get(d)!.push(b);
+    }
 
     const days: DayAvailability[] = [];
     const start = new Date(startDate);
@@ -143,8 +166,35 @@ export class ScheduleService {
 
     while (start <= end) {
       const dateStr = start.toISOString().split('T')[0];
-      const dayAvailability = await this.getDayAvailability(courtId, dateStr);
-      days.push(dayAvailability);
+      const dayOfWeek = start.getDay();
+      const dayBookings = bookingsByDate.get(dateStr) ?? [];
+
+      const timeSlots: TimeSlot[] = [];
+      for (const avail of availabilityRules.filter((a) => a.day_of_week === dayOfWeek)) {
+        const slotStart = new Date(`${dateStr}T${avail.start_time}`);
+        const slotEnd = new Date(`${dateStr}T${avail.end_time}`);
+        const slotDurationMinutes = 30;
+        let cur = new Date(slotStart);
+
+        while (cur < slotEnd) {
+          const next = new Date(cur.getTime() + slotDurationMinutes * 60_000);
+          if (next > slotEnd) break;
+
+          const isAvailable = !dayBookings.some(
+            (b) => new Date(b.start_time) < next && new Date(b.end_time) > cur
+          );
+
+          timeSlots.push({
+            start_time: cur.toTimeString().slice(0, 5),
+            end_time: next.toTimeString().slice(0, 5),
+            is_available: isAvailable,
+          });
+
+          cur = next;
+        }
+      }
+
+      days.push({ date: dateStr, day_of_week: dayOfWeek, time_slots: timeSlots });
       start.setDate(start.getDate() + 1);
     }
 

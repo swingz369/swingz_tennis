@@ -52,6 +52,19 @@ export const env = createEnv({
     MAILCHIMP_WEBHOOK_URL: z.string().url().optional(),
     TWILIO_SMS_ENABLED: z.enum(['true', 'false']).optional(),
     CUSTOM_DOMAINS: z.string().optional(), // JSON string
+
+    // SEPA creditor configuration
+    SEPA_CREDITOR_NAME: z.string().min(1).optional(),
+    SEPA_CREDITOR_IBAN: z.string().min(15).optional(),
+    SEPA_CREDITOR_ID: z.string().min(1).optional(),
+    SEPA_CREDITOR_BIC: z.string().min(8).optional(),
+    SEPA_CREDITOR_STREET: z.string().optional(),
+    SEPA_CREDITOR_CITY: z.string().optional(),
+    SEPA_CREDITOR_POSTAL_CODE: z.string().optional(),
+    SEPA_CREDITOR_COUNTRY: z.string().length(2).optional(),
+
+    // Cron job security
+    CRON_SECRET: z.string().min(16).optional(),
   },
 
   /**
@@ -61,9 +74,17 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().url('Invalid Supabase URL'),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required'),
-    NEXT_PUBLIC_APP_URL: z.string().url('Invalid app URL'),
+    NEXT_PUBLIC_APP_URL: z
+      .string()
+      .url('Invalid app URL')
+      .optional()
+      .default('http://localhost:3000'),
     NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
-    NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: z.string().optional(),
+    // Analytics — read by components/analytics-provider.tsx as NEXT_PUBLIC_GA_ID
+    NEXT_PUBLIC_GA_ID: z.string().optional(),
+    // A/B experiment overrides — comma-separated list of experiment:variant pairs
+    // e.g. "landing_hero_cta:pricing_layout" (see lib/experiments.ts)
+    NEXT_PUBLIC_EXPERIMENTS: z.string().optional(),
   },
 
   /**
@@ -91,13 +112,23 @@ export const env = createEnv({
     MAILCHIMP_WEBHOOK_URL: process.env.MAILCHIMP_WEBHOOK_URL,
     TWILIO_SMS_ENABLED: process.env.TWILIO_SMS_ENABLED,
     CUSTOM_DOMAINS: process.env.CUSTOM_DOMAINS,
+    SEPA_CREDITOR_NAME: process.env.SEPA_CREDITOR_NAME,
+    SEPA_CREDITOR_IBAN: process.env.SEPA_CREDITOR_IBAN,
+    SEPA_CREDITOR_ID: process.env.SEPA_CREDITOR_ID,
+    SEPA_CREDITOR_BIC: process.env.SEPA_CREDITOR_BIC,
+    SEPA_CREDITOR_STREET: process.env.SEPA_CREDITOR_STREET,
+    SEPA_CREDITOR_CITY: process.env.SEPA_CREDITOR_CITY,
+    SEPA_CREDITOR_POSTAL_CODE: process.env.SEPA_CREDITOR_POSTAL_CODE,
+    SEPA_CREDITOR_COUNTRY: process.env.SEPA_CREDITOR_COUNTRY,
+    CRON_SECRET: process.env.CRON_SECRET,
 
     // Client
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID,
+    NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
+    NEXT_PUBLIC_EXPERIMENTS: process.env.NEXT_PUBLIC_EXPERIMENTS,
   },
 
   /**

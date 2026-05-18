@@ -20,19 +20,16 @@ export async function POST(_request: NextRequest) {
     try {
       const body = await _request.json();
 
-      const { clubId, memberId, invoiceId, amount, paymentMethod, notes } = body;
+      const { invoiceId, amount, paymentMethod } = body;
 
-      if (!clubId || !memberId || !amount || !paymentMethod) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      if (!invoiceId || !amount || !paymentMethod) {
+        return NextResponse.json({ error: 'Missing required fields (invoiceId, amount, paymentMethod)' }, { status: 400 });
       }
 
       const createPaymentData: CreatePayment = {
-        club_id: clubId,
-        member_id: memberId,
         invoice_id: invoiceId,
         amount: parseFloat(amount),
         payment_method: paymentMethod,
-        notes,
       };
 
       const payment = await billingEngine.createPayment(createPaymentData);
@@ -69,8 +66,12 @@ export async function GET(_request: NextRequest) {
       }
 
       if (memberId) {
-        const payments = await billingEngine.getPaymentsByMember(memberId);
-        return NextResponse.json({ payments });
+        // memberId lookup not available directly via payments table (no member_id column).
+        // Caller should use invoiceId instead, or resolve member→invoices first.
+        return NextResponse.json(
+          { error: 'Use invoiceId to fetch payments. memberId lookup not available via payments route.' },
+          { status: 400 }
+        );
       }
 
       return NextResponse.json(

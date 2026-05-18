@@ -1,56 +1,44 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import crypto from 'crypto';
 
-export async function GET() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+/**
+ * Note: 'registration_requests' is not in the generated Database type.
+ * (supabase as any) is used only for that untyped table. auth.supabase is
+ * the user-scoped anon-key client so RLS is still enforced.
+ */
 
-    // Verify admin role
-    const { data: membership } = await supabase
-      .from('user_club_memberships')
-      .select('role')
-      .eq('user_id', user.id)
-      .in('role', ['admin', 'superadmin'])
-      .maybeSingle();
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    if (!(await verifyRole(auth, 'admin'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const sb = auth.supabase as any;
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await sb
       .from('registration_requests')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ requests: data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }
 
 export async function PATCH(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(request, async (auth) => {
+    if (!(await verifyRole(auth, 'admin'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    // Verify admin
-    const { data: membership } = await supabase
-      .from('user_club_memberships')
-      .select('role, club_id')
-      .eq('user_id', user.id)
-      .in('role', ['admin', 'superadmin'])
-      .maybeSingle();
-
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const sb = auth.supabase as any;
+    const user = auth.user;
 
     const { id, status, rejectionReason } = await request.json();
 
@@ -68,15 +56,17 @@ export async function PATCH(request: NextRequest) {
       updateData.rejection_reason = rejectionReason;
     }
 
-    const { error } = await (supabase as any)
+    const { error } = await sb
       .from('registration_requests')
       .update(updateData)
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     if (status === 'approved') {
-      const { data: registration } = await (supabase as any)
+      const { data: registration } = await sb
         .from('registration_requests')
         .select('*')
         .eq('id', id)
@@ -108,7 +98,7 @@ export async function PATCH(request: NextRequest) {
             );
           }
 
-          // 2. Insert into users table
+          // 2. Insert into users table (requires admin client — bypasses RLS for provisioning)
           const { error: userInsertError } = await (adminClient as any).from('users').insert({
             id: authUser.user.id,
             email: registration.email,
@@ -128,8 +118,8 @@ export async function PATCH(request: NextRequest) {
             );
           }
 
-          // 3. Insert into user_club_memberships
-          const clubId = registration.club_id || membership.club_id;
+          // 3. Insert into user_club_memberships (requires admin client — bypasses RLS for provisioning)
+          const clubId = registration.club_id || auth.clubId;
           if (clubId) {
             const { error: membershipError } = await (adminClient as any)
               .from('user_club_memberships')
@@ -161,7 +151,7 @@ export async function PATCH(request: NextRequest) {
             body: JSON.stringify({
               email: registration.email,
               firstName: registration.first_name,
-              clubId: registration.club_id || membership.club_id,
+              clubId: registration.club_id || auth.clubId,
             }),
           });
         } catch (e) {
@@ -174,7 +164,5 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }

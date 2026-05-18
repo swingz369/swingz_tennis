@@ -23,7 +23,7 @@ export class SepaService {
   }
 
   async createSepaMandate(data: CreateSepaMandate): Promise<SepaMandate> {
-    const mandateReference = `SWINGZ-${data.club_id}-${Date.now()}`;
+    const mandateReference = `SWINGZ-${data.club_id.slice(0, 8)}-${Date.now()}`;
     const creditorId = process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999';
 
     const { data: mandate, error } = await supabase
@@ -34,10 +34,12 @@ export class SepaService {
         mandate_reference: mandateReference,
         creditor_id: creditorId,
         iban: data.iban.replace(/\s/g, ''),
-        bic: data.bic,
-        account_holder_name: data.account_holder_name,
+        bic: data.bic ?? 'NOTPROVIDED',
+        account_holder: data.account_holder,
+        bank_name: data.bank_name || 'Unknown',
+        address: data.address || {},
         signature_date: data.signature_date || new Date().toISOString().split('T')[0],
-        status: 'active',
+        is_active: true,
       })
       .select()
       .single();
@@ -55,7 +57,7 @@ export class SepaService {
       .select('*')
       .eq('member_id', memberId)
       .eq('club_id', clubId)
-      .eq('status', 'active')
+      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
@@ -91,9 +93,9 @@ export class SepaService {
     const { data, error } = await supabase
       .from('sepa_mandates')
       .update({
-        status: 'revoked',
+        is_active: false,
         revoked_at: new Date().toISOString(),
-        revoked_reason: reason,
+        revoke_reason: reason ?? null,
       })
       .eq('id', mandateId)
       .select()
@@ -123,23 +125,29 @@ export class SepaService {
     const transactions: SepaDirectDebitTransaction[] = [];
 
     for (const payment of validPayments) {
-      if (!payment.sepa_mandate_id) {
-        throw new Error(`Payment ${payment.id} has no SEPA mandate`);
+      // SEPA payments must have an invoice to link to a mandate
+      if (!payment.invoice_id) {
+        throw new Error(`Payment ${payment.id} has no invoice_id`);
       }
 
-      const mandate = await this.getSepaMandateById(payment.sepa_mandate_id);
+      const invoice = await this.invoiceService.getInvoiceById(payment.invoice_id);
+      if (!invoice) {
+        throw new Error(`Invoice ${payment.invoice_id} not found for payment ${payment.id}`);
+      }
+
+      // Find active mandate for this member+club
+      if (!invoice.member_id) {
+        throw new Error(`Invoice ${invoice.id} has no member_id; cannot look up SEPA mandate`);
+      }
+      const mandate = await this.getActiveSepaMandate(invoice.member_id, invoice.club_id);
 
       if (!mandate) {
-        throw new Error(`SEPA mandate ${payment.sepa_mandate_id} not found`);
+        throw new Error(`No active SEPA mandate found for member ${invoice.member_id}`);
       }
 
-      if (mandate.status !== 'active') {
-        throw new Error(`SEPA mandate ${payment.sepa_mandate_id} is not active`);
+      if (!mandate.is_active) {
+        throw new Error(`SEPA mandate ${mandate.id} is not active`);
       }
-
-      const invoice = payment.invoice_id
-        ? await this.invoiceService.getInvoiceById(payment.invoice_id)
-        : null;
 
       transactions.push({
         paymentId: payment.id,
@@ -148,17 +156,12 @@ export class SepaService {
         creditorId: mandate.creditor_id,
         iban: mandate.iban,
         bic: mandate.bic || undefined,
-        accountHolderName: mandate.account_holder_name,
+        accountHolderName: mandate.account_holder,
         amount: payment.amount,
-        currency: 'EUR',
-        paymentDate:
-          typeof payment.payment_date === 'string'
-            ? payment.payment_date
-            : payment.payment_date.toISOString().split('T')[0],
-        endToEndId: `SWINGZ-${payment.payment_number}`,
-        remittanceInformation: invoice
-          ? `Rechnung ${invoice.invoice_number}`
-          : `Zahlung ${payment.payment_number}`,
+        currency: payment.currency || 'EUR',
+        paymentDate: new Date().toISOString().split('T')[0],
+        endToEndId: `SWINGZ-${payment.external_id || payment.id.slice(0, 8)}`,
+        remittanceInformation: `Rechnung ${invoice.invoice_number}`,
       });
     }
 
@@ -190,13 +193,14 @@ export class SepaService {
   }
 
   async getPendingSepaPayments(clubId: string): Promise<Payment[]> {
+    // payments table has no club_id — join via invoices
     const { data, error } = await supabase
       .from('payments')
-      .select('*')
-      .eq('club_id', clubId)
+      .select('*, invoice:invoice_id!inner(club_id)')
+      .eq('invoice.club_id', clubId)
       .eq('payment_method', 'sepa')
       .eq('status', 'pending')
-      .order('payment_date', { ascending: true });
+      .order('created_at', { ascending: true });
 
     if (error) {
       throw new Error(`Failed to get pending SEPA payments: ${error.message}`);

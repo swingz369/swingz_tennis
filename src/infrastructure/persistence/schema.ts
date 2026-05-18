@@ -274,6 +274,9 @@ export const users = pgTable(
     stripe_customer_id: varchar('stripe_customer_id', { length: 255 }),
     stripe_subscription_id: varchar('stripe_subscription_id', { length: 255 }),
     current_period_end: timestamp('current_period_end'),
+    // Season planning fields
+    experience_months: integer('experience_months').default(0),
+    skill_level: varchar('skill_level', { length: 20 }).default('beginner'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -542,6 +545,11 @@ export const userTrainingPreferences = pgTable(
 
     // Specific unavailable dates
     unavailable_dates: jsonb('unavailable_dates').$type<string[]>().default([]),
+
+    // Wish partners (member IDs they'd like to be grouped with)
+    wish_partner_ids: jsonb('wish_partner_ids').$type<string[]>().default([]),
+    // Member's self-assessed level (compared with trainer assessment)
+    self_assessed_level: varchar('self_assessed_level', { length: 20 }),
 
     // Trainer-specific fields
     max_sessions_per_week: integer('max_sessions_per_week'),

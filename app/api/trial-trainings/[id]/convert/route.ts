@@ -46,16 +46,27 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       }
 
       try {
+        // Fetch club contact details from system_settings
+        const { data: settingRows } = await auth.supabase
+          .from('system_settings')
+          .select('key, value')
+          .eq('club_id', auth.clubId ?? '')
+          .in('key', ['club_address', 'club_phone', 'club_email', 'club_name']);
+        const settings: Record<string, string> = {};
+        for (const row of settingRows ?? []) {
+          settings[row.key] = row.value;
+        }
+
         await EmailService.sendWelcomeEmail({
           recipientName: `${trialTraining.participant.firstName} ${trialTraining.participant.lastName}`,
           recipientEmail: trialTraining.participant.email,
-          clubName: 'SwingZ Tennis Club',
+          clubName: settings['club_name'] ?? 'SwingZ Tennis Club',
           memberType: memberType || 'member',
           startDate: startDate ? new Date(startDate) : undefined,
           assignedGroup,
-          clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-          clubPhone: '+49 123 456 7890',
-          clubEmail: 'info@swingz.app',
+          clubAddress: settings['club_address'] ?? '',
+          clubPhone: settings['club_phone'] ?? '',
+          clubEmail: settings['club_email'] ?? '',
         });
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);

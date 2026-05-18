@@ -36,6 +36,8 @@ let testClubId: string;
 describeIntegration('Phase 2 Service Migration Integration Tests', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let supabase: ReturnType<typeof createClient<any>>;
+  let testCourtId: string;
+  let testCourtName: string;
 
   beforeAll(async () => {
     supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -45,18 +47,29 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
       .from('clubs')
       .insert({
         name: 'Test Tennis Club - Integration',
-        slug: 'test-integration-club',
-        timezone: 'Europe/Berlin',
-        default_session_duration_minutes: 60,
-        hourly_rate: 50.0,
+        opening_hours: {},
       })
       .select()
       .single();
 
     if (!club || clubError) {
-      throw new Error(`Failed to create test club: ${clubError?.message ?? 'null returned'}`);
+      throw new Error(`Failed to create test club: ${clubError?.message ?? 'null returned'}. Run drizzle migrations first.`);
     }
     testClubId = club.id;
+
+    // Create a test court for trial training FK
+    const { data: court, error: courtError } = await supabase
+      .from('courts')
+      .insert({
+        club_id: testClubId,
+        name: 'Test Court 1',
+      })
+      .select()
+      .single();
+    if (court && !courtError) {
+      testCourtId = court.id;
+      testCourtName = court.name;
+    }
 
     // Setup test users with different roles
     // Note: In real tests, you'd use auth.admin.createUser
@@ -91,11 +104,13 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
       it('should enforce RLS for non-superadmin users', async () => {
         // This would require creating a non-superadmin user context
         // For now, we test that the table exists and has RLS enabled
-        const { data: tableInfo } = await supabase.rpc('pg_table_exists', {
-          table_name: 'billing_periods',
-        });
+        const { data, error } = await supabase
+          .from('billing_periods')
+          .select('id')
+          .limit(1);
 
-        expect(tableInfo).toBeTruthy();
+        expect(error).toBeNull();
+        expect(data).toBeDefined();
       });
     });
 
@@ -147,7 +162,7 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
   describe('2. Hours Log Service (2 tables)', () => {
     describe('hours_logs table', () => {
       it('should create hours log entry', async () => {
-        const { data: trainers } = await supabase.from('trainers').select('id').limit(1);
+        const { data: trainers } = await supabase.from('trainers').select('id, name').limit(1);
 
         if (trainers && trainers.length > 0) {
           const { data, error } = await supabase
@@ -155,17 +170,20 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
             .insert({
               club_id: testClubId,
               trainer_id: trainers[0].id,
+              trainer_name: trainers[0].name,
               date: '2026-05-06',
-              log_type: 'training',
-              hours: 2.5,
-              description: 'Integration test hours log',
+              start_time: '09:00',
+              end_time: '11:30',
+              type: 'training',
+              duration: 150,
+              notes: 'Integration test hours log',
               status: 'pending',
             })
             .select()
             .single();
 
           expect(error).toBeNull();
-          expect(data.hours).toBe(2.5);
+          expect(data.duration).toBe(150);
         }
       });
     });
@@ -186,18 +204,17 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         const { data, error } = await supabase
           .from('trainer_availabilities')
           .insert({
-            club_id: testClubId,
             trainer_id: trainers[0].id,
-            day_of_week: 1, // Monday
-            start_time: '09:00:00',
-            end_time: '17:00:00',
-            is_available: true,
+            date: '2026-05-06T09:00:00Z',
+            start_time: '09:00',
+            end_time: '17:00',
+            status: 'available',
           })
           .select()
           .single();
 
         expect(error).toBeNull();
-        expect(data.day_of_week).toBe(1);
+        expect(data.date).toContain('2026-05-06');
       }
     });
 
@@ -209,7 +226,7 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
 
   describe('4. Absence Service', () => {
     it('should create trainer absence', async () => {
-      const { data: trainers } = await supabase.from('trainers').select('id').limit(1);
+      const { data: trainers } = await supabase.from('trainers').select('id, name').limit(1);
 
       if (trainers && trainers.length > 0) {
         const { data, error } = await supabase
@@ -217,9 +234,10 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
           .insert({
             club_id: testClubId,
             trainer_id: trainers[0].id,
+            trainer_name: trainers[0].name,
             start_date: '2026-05-15T00:00:00Z',
             end_date: '2026-05-17T23:59:59Z',
-            absence_type: 'vacation',
+            type: 'vacation',
             reason: 'Integration test absence',
             status: 'pending',
           })
@@ -227,7 +245,7 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
           .single();
 
         expect(error).toBeNull();
-        expect(data.absence_type).toBe('vacation');
+        expect(data.type).toBe('vacation');
       }
     });
   });
@@ -239,8 +257,10 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         .insert({
           club_id: testClubId,
           name: 'Test Membership Fee',
-          fee_type: 'membership',
+          type: 'membership',
           amount: 99.99,
+          currency: 'EUR',
+          billing_cycle: 'monthly',
           valid_from: '2026-05-01T00:00:00Z',
           is_active: true,
         })
@@ -257,8 +277,10 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         .insert({
           club_id: testClubId,
           name: 'Student Discount',
-          fee_type: 'membership',
+          type: 'membership',
           amount: 49.99,
+          currency: 'EUR',
+          billing_cycle: 'monthly',
           valid_from: '2026-05-01T00:00:00Z',
           is_active: true,
           conditions: {
@@ -280,8 +302,11 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         .from('payment_settings')
         .insert({
           club_id: testClubId,
-          provider: 'stripe',
+          gateway: 'stripe',
+          gateway_name: 'Stripe Test',
           is_active: true,
+          supported_currencies: ['EUR'],
+          supported_methods: ['card'],
           config: {
             api_key: 'test_key',
             webhook_secret: 'test_webhook',
@@ -291,7 +316,7 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         .single();
 
       expect(error).toBeNull();
-      expect(data.provider).toBe('stripe');
+      expect(data.gateway).toBe('stripe');
     });
   });
 
@@ -300,9 +325,10 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
       const { data, error } = await supabase
         .from('system_settings')
         .insert({
-          key: 'test_global_setting',
+          key: `test_global_setting_${Date.now()}`,
           value: 'test_value',
-          value_type: 'string',
+          type: 'string',
+          category: 'general',
           is_required: false,
           description: 'Integration test global setting',
         })
@@ -318,9 +344,10 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         .from('system_settings')
         .insert({
           club_id: testClubId,
-          key: 'test_club_setting',
+          key: `test_club_setting_${Date.now()}`,
           value: 'club_value',
-          value_type: 'string',
+          type: 'string',
+          category: 'general',
           is_required: false,
           description: 'Integration test club setting',
         })
@@ -334,7 +361,7 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
 
   describe('8. Trial Training Service', () => {
     it('should create trial training', async () => {
-      const { data: trainers } = await supabase.from('trainers').select('id').limit(1);
+      const { data: trainers } = await supabase.from('trainers').select('id, name').limit(1);
 
       if (trainers && trainers.length > 0) {
         const { data, error } = await supabase
@@ -342,16 +369,24 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
           .insert({
             club_id: testClubId,
             trainer_id: trainers[0].id,
-            participant_name: 'Max Mustermann',
+            trainer_name: trainers[0].name,
+            participant_first_name: 'Max',
+            participant_last_name: 'Mustermann',
             participant_email: 'max@example.com',
+            participant_phone: '+49123456789',
+            participant_date_of_birth: '1995-06-15',
             scheduled_date: '2026-05-20T10:00:00Z',
-            status: 'pending',
+            scheduled_time: '10:00',
+            duration: 60,
+            court_id: testCourtId,
+            court_name: testCourtName,
+            status: 'scheduled',
           })
           .select()
           .single();
 
         expect(error).toBeNull();
-        expect(data.status).toBe('pending');
+        expect(data.status).toBe('scheduled');
       }
     });
 
@@ -363,24 +398,34 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
 
   describe('9. Trainer Profile Service', () => {
     it('should create trainer profile', async () => {
-      const { data: trainers } = await supabase.from('trainers').select('id').limit(1);
+      // Query a trainer that has a valid auth user_id (FK to auth.users)
+      const { data: trainers } = await supabase
+        .from('trainers')
+        .select('id, user_id')
+        .not('user_id', 'is', null)
+        .limit(1);
 
-      if (trainers && trainers.length > 0) {
+      if (trainers && trainers.length > 0 && trainers[0].user_id) {
         const { data, error } = await supabase
           .from('trainer_profiles')
           .insert({
             club_id: testClubId,
-            trainer_id: trainers[0].id,
+            user_id: trainers[0].user_id,
+            first_name: 'Test',
+            last_name: 'Trainer',
+            email: `trainer-profile-${Date.now()}@test.com`,
+            phone: '+49123456789',
+            date_of_birth: '1990-01-01',
             bio: 'Integration test trainer bio',
             qualifications: ['Level 1 Coach', 'First Aid Certified'],
             specializations: ['Singles Training', 'Youth Development'],
-            years_of_experience: 5,
+            experience: 5,
           })
           .select()
           .single();
 
         expect(error).toBeNull();
-        expect(data.years_of_experience).toBe(5);
+        expect(data.experience).toBe(5);
       }
     });
   });
@@ -391,8 +436,9 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         .from('hourly_rate_tiers')
         .insert({
           club_id: testClubId,
-          tier_name: 'Standard',
+          name: 'Standard',
           base_rate: 50.0,
+          experience_level: 'intermediate',
           description: 'Standard hourly rate',
         })
         .select()
@@ -419,18 +465,21 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
         .from('sepa_mandates')
         .insert({
           club_id: testClubId,
-          member_id: 'test-member-id',
-          mandate_reference: 'TEST-SEPA-001',
+          member_id: '00000000-0000-0000-0000-000000000001',
+          mandate_reference: `TEST-SEPA-${Date.now()}`,
           iban: 'DE89370400440532013000',
+          bic: 'MARKDEF1100',
+          bank_name: 'Test Bank',
+          address: 'Test Address',
           account_holder: 'Max Mustermann',
-          status: 'active',
-          signed_at: '2026-05-01T00:00:00Z',
+          is_active: true,
+          signature_date: '2026-05-01',
         })
         .select()
         .single();
 
       expect(error).toBeNull();
-      expect(data.status).toBe('active');
+      expect(data.is_active).toBe(true);
     });
 
     it('should enforce unique mandate reference per club', async () => {

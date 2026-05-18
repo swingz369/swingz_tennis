@@ -25,8 +25,6 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'Vereins Kontext erforderlich' }, { status: 400 });
       }
 
-      const clubId = auth.clubId!;
-
       const formData = await _request.formData();
       const file = formData.get('file') as File;
 
@@ -69,7 +67,10 @@ export async function POST(_request: NextRequest) {
       const results = {
         imported: 0,
         failed: 0,
+        matched: 0,
+        unmatched: 0,
         errors: [] as Array<{ record: CsvPaymentRecord; error: string }>,
+        unmatchedPayments: [] as Array<{ record: CsvPaymentRecord; paymentId: string }>,
       };
 
       for (const record of valid) {
@@ -97,15 +98,61 @@ export async function POST(_request: NextRequest) {
             continue;
           }
 
-          await billingEngine.createPayment({
-            club_id: clubId,
-            member_id: memberId,
+          // Attempt to match the payment to an invoice
+          let invoiceId: string | null = null;
+
+          // Strategy 1: match by invoice number from CSV
+          if (record.invoiceNumber) {
+            const { data: invoiceByNumber } = await supabase
+              .from('invoices')
+              .select('id')
+              .eq('invoice_number', record.invoiceNumber)
+              .eq('club_id', auth.clubId)
+              .single();
+            if (invoiceByNumber) {
+              invoiceId = invoiceByNumber.id;
+            }
+          }
+
+          // Strategy 2: match by member_id + amount + approximate date (±30 days)
+          if (!invoiceId && memberId) {
+            const paymentDate = new Date(record.paymentDate);
+            const dateFrom = new Date(paymentDate);
+            dateFrom.setDate(dateFrom.getDate() - 30);
+            const dateTo = new Date(paymentDate);
+            dateTo.setDate(dateTo.getDate() + 30);
+
+            const { data: invoiceByMember } = await supabase
+              .from('invoices')
+              .select('id')
+              .eq('member_id', memberId)
+              .eq('amount', record.amount)
+              .neq('status', 'paid')
+              .gte('due_date', dateFrom.toISOString().split('T')[0])
+              .lte('due_date', dateTo.toISOString().split('T')[0])
+              .limit(1)
+              .single();
+            if (invoiceByMember) {
+              invoiceId = invoiceByMember.id;
+            }
+          }
+
+          const payment = await billingEngine.createPayment({
             amount: Math.min(Math.max(record.amount, 0), 1000000),
             payment_method: record.paymentMethod,
-            payment_date: record.paymentDate,
-            transaction_id: record.transactionId,
-            notes: record.notes ? record.notes.substring(0, 1000) : undefined,
+            external_id: record.transactionId || null,
+            invoice_id: invoiceId ?? undefined,
           });
+
+          if (invoiceId) {
+            results.matched++;
+          } else {
+            console.warn(
+              `[payment-import] No invoice match for record: memberId=${memberId}, amount=${record.amount}, date=${record.paymentDate}, paymentId=${payment.id}`
+            );
+            results.unmatched++;
+            results.unmatchedPayments.push({ record, paymentId: payment.id });
+          }
 
           results.imported++;
         } catch (error) {
@@ -121,9 +168,12 @@ export async function POST(_request: NextRequest) {
         success: true,
         total: records.length,
         imported: results.imported,
+        matched: results.matched,
+        unmatched: results.unmatched,
         failed: results.failed,
         invalid: invalid.map((i) => ({ record: i.record, errors: i.errors })),
         errors: results.errors,
+        unmatchedPayments: results.unmatchedPayments,
       });
     } catch (error) {
       console.error('Error importing payments:', error);

@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 interface RecurringPattern {
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
@@ -19,18 +19,13 @@ interface CreateSeriesBookingRequest {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(request, async (auth) => {
+    if (!(await verifyRole(auth, 'member'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const supabase = auth.supabase;
+    const user = auth.user;
 
     const body: CreateSeriesBookingRequest = await request.json();
     const { club_id, court_id, start_time, end_time, recurring_pattern } = body;
@@ -164,8 +159,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
-    console.error('Series booking error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }

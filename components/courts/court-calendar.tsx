@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { addDays, startOfWeek, endOfWeek, format, isToday } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface Court {
   id: string;
@@ -105,6 +107,7 @@ export default function CourtCalendar() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: string; time: string } | null>(
     null
   );
+  const [isBooking, setIsBooking] = useState(false);
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeek, i));
 
@@ -173,6 +176,34 @@ export default function CourtCalendar() {
   const handleTimeSlotClick = (date: string, time: string, isAvailable: boolean) => {
     if (isAvailable) {
       setSelectedTimeSlot({ date, time });
+    }
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!selectedTimeSlot || !selectedCourt) return;
+    setIsBooking(true);
+    try {
+      const startTime = `${selectedTimeSlot.date}T${selectedTimeSlot.time}:00`;
+      // Default booking duration: 1 hour
+      const start = new Date(startTime);
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
+      const endTime = end.toISOString().replace('Z', '');
+
+      const res = await fetch('/api/bookings/court', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ courtId: selectedCourt, startTime, endTime, bookingType: 'court' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Buchung fehlgeschlagen');
+      toast.success('Platz erfolgreich gebucht!');
+      setSelectedTimeSlot(null);
+      fetchSchedules();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Buchung fehlgeschlagen');
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -380,12 +411,26 @@ export default function CourtCalendar() {
                   {format(new Date(selectedTimeSlot.date), 'EEEE, dd.MM.yyyy', { locale: de })}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <strong>Zeit:</strong> {selectedTimeSlot.time} - {selectedTimeSlot.time}
+                  <strong>Zeit:</strong> {selectedTimeSlot.time} –{' '}
+                  {(() => {
+                    const [h, m] = selectedTimeSlot.time.split(':').map(Number);
+                    const end = new Date(0, 0, 0, h + 1, m);
+                    return `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+                  })()}
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => setSelectedTimeSlot(null)}>Abbrechen</Button>
-                <Button>Buchung bestätigen</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTimeSlot(null)}
+                  disabled={isBooking}
+                >
+                  Abbrechen
+                </Button>
+                <Button onClick={handleConfirmBooking} disabled={isBooking}>
+                  {isBooking ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Buchung bestätigen
+                </Button>
               </div>
             </div>
           </CardContent>

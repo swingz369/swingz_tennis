@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 import type { AuditLog, AuditLogSummary } from '@/src/domain/entities/audit-log.entity';
 import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 
 interface AuditLogViewerProps {
   className?: string;

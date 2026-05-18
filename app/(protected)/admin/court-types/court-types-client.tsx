@@ -616,7 +616,7 @@ export function CourtTypesClient() {
         title="Platz-Typ deaktivieren"
         description={`Möchtest du den Platz-Typ "${selectedType?.name}" wirklich deaktivieren? Bestehende Plätze mit diesem Typ bleiben erhalten.`}
         confirmLabel={isSubmitting ? 'Wird deaktiviert…' : 'Deaktivieren'}
-        variant="destructive"
+        variant="danger"
         loading={isSubmitting}
         onConfirm={handleDelete}
       />

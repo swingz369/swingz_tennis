@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,13 @@ export interface RegistrationRequest {
 }
 
 export default function AdminApprovalWorkflow() {
+  const { data: currentUser } = useCurrentUser();
   const [registrations, setRegistrations] = useState<RegistrationRequest[]>([]);
+  const [clubInfo, setClubInfo] = useState<{
+    address: string;
+    phone: string;
+    email: string;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
     'all'
@@ -79,7 +86,7 @@ export default function AdminApprovalWorkflow() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Fetch registrations from API
+  // Fetch registrations and club info from API
   useEffect(() => {
     const abortController = new AbortController();
 
@@ -101,7 +108,24 @@ export default function AdminApprovalWorkflow() {
       }
     }
 
+    async function fetchClubInfo() {
+      try {
+        const res = await fetch('/api/club/contact', {
+          signal: abortController.signal,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setClubInfo(data);
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch club info:', err);
+        }
+      }
+    }
+
     fetchRegistrations();
+    fetchClubInfo();
     return () => abortController.abort();
   }, []);
 
@@ -196,9 +220,9 @@ export default function AdminApprovalWorkflow() {
           memberType: request.type === 'trial' ? 'trial' : 'member',
           startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           assignedGroup: request.tennisInfo.preferredDays[0] || 'Gruppe A',
-          clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-          clubPhone: '+49 123 456 7890',
-          clubEmail: 'info@swingz.app',
+          clubAddress: clubInfo?.address ?? '',
+          clubPhone: clubInfo?.phone ?? '',
+          clubEmail: clubInfo?.email ?? '',
         }),
       }).catch(() => {});
 
@@ -209,7 +233,7 @@ export default function AdminApprovalWorkflow() {
                 ...reg,
                 status: 'approved',
                 reviewedAt: new Date().toISOString(),
-                reviewedBy: 'Admin User',
+                reviewedBy: currentUser?.email ?? '',
               }
             : reg
         )
@@ -263,9 +287,9 @@ export default function AdminApprovalWorkflow() {
           recipientEmail: request.applicant.email,
           clubName: 'SwingZ Tennis Club',
           reason: rejectionReason,
-          clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-          clubPhone: '+49 123 456 7890',
-          clubEmail: 'info@swingz.app',
+          clubAddress: clubInfo?.address ?? '',
+          clubPhone: clubInfo?.phone ?? '',
+          clubEmail: clubInfo?.email ?? '',
         }),
       }).catch(() => {});
 
@@ -277,7 +301,7 @@ export default function AdminApprovalWorkflow() {
                 status: 'rejected',
                 rejectionReason,
                 reviewedAt: new Date().toISOString(),
-                reviewedBy: 'Admin User',
+                reviewedBy: currentUser?.email ?? '',
               }
             : reg
         )
@@ -313,7 +337,7 @@ export default function AdminApprovalWorkflow() {
                 ...reg,
                 status: 'on_hold',
                 reviewedAt: new Date().toISOString(),
-                reviewedBy: 'Admin User',
+                reviewedBy: currentUser?.email ?? '',
               }
             : reg
         )

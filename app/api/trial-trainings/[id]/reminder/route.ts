@@ -34,15 +34,26 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         );
       }
 
+      // Fetch club contact details from system_settings
+      const { data: settingRows } = await auth.supabase
+        .from('system_settings')
+        .select('key, value')
+        .eq('club_id', auth.clubId ?? '')
+        .in('key', ['club_address', 'club_phone', 'club_email', 'club_name']);
+      const settings: Record<string, string> = {};
+      for (const row of settingRows ?? []) {
+        settings[row.key] = row.value;
+      }
+
       const success = await EmailService.sendTrialTrainingEmail({
         recipientName: `${trialTraining.participant.firstName} ${trialTraining.participant.lastName}`,
         recipientEmail: trialTraining.participant.email,
-        clubName: 'SwingZ Tennis Club',
+        clubName: settings['club_name'] ?? 'SwingZ Tennis Club',
         memberType: 'trial',
         startDate: new Date(trialTraining.scheduledDate),
-        clubAddress: 'Tennisstraße 123, 12345 Tennisstadt',
-        clubPhone: '+49 123 456 7890',
-        clubEmail: 'info@swingz.app',
+        clubAddress: settings['club_address'] ?? '',
+        clubPhone: settings['club_phone'] ?? '',
+        clubEmail: settings['club_email'] ?? '',
       });
 
       if (!success) {

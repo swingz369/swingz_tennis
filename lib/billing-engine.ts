@@ -37,12 +37,10 @@ export class BillingEngine {
     return BillingEngine.instance;
   }
 
+  // === Invoice ===
+
   async generateInvoiceNumber(clubId: string): Promise<string> {
     return this.invoiceService.generateInvoiceNumber(clubId);
-  }
-
-  async generatePaymentNumber(clubId: string): Promise<string> {
-    return this.paymentService.generatePaymentNumber(clubId);
   }
 
   async createInvoice(data: CreateInvoice): Promise<InvoiceWithItems> {
@@ -83,6 +81,8 @@ export class BillingEngine {
     return this.invoiceService.getOverdueInvoices(clubId);
   }
 
+  // === Payment ===
+
   async createPayment(data: CreatePayment): Promise<Payment> {
     return this.paymentService.createPayment(data);
   }
@@ -90,33 +90,19 @@ export class BillingEngine {
   async updatePaymentStatus(
     paymentId: string,
     status: PaymentStatus,
-    metadata?: {
-      processed_at?: string;
-      failed_at?: string;
-      failure_reason?: string;
-      refunded_at?: string;
-      refund_amount?: number;
-      refund_reason?: string;
-    }
   ): Promise<Payment> {
-    return this.paymentService.updatePaymentStatus(paymentId, status, metadata);
+    return this.paymentService.updatePaymentStatus(paymentId, status);
   }
 
   async getPaymentById(paymentId: string): Promise<Payment | null> {
     return this.paymentService.getPaymentById(paymentId);
   }
 
-  async getPaymentByStripeId(stripePaymentIntentId: string): Promise<Payment | null> {
-    return this.paymentService.getPaymentByStripeId(stripePaymentIntentId);
-  }
-
   async getPaymentsByInvoice(invoiceId: string): Promise<Payment[]> {
     return this.paymentService.getPaymentsByInvoice(invoiceId);
   }
 
-  async getPaymentsByMember(memberId: string): Promise<Payment[]> {
-    return this.paymentService.getPaymentsByMember(memberId);
-  }
+  // === SEPA ===
 
   async createSepaMandate(data: CreateSepaMandate): Promise<SepaMandate> {
     return this.sepaService.createSepaMandate(data);
@@ -145,6 +131,8 @@ export class BillingEngine {
     return this.sepaService.getPendingSepaPayments(clubId);
   }
 
+  // === Dunning ===
+
   async createDunningRecord(data: CreateDunningRecord): Promise<DunningRecord> {
     return this.dunningService.createDunningRecord(data);
   }
@@ -156,6 +144,8 @@ export class BillingEngine {
   async processAutomaticDunning(clubId: string): Promise<DunningRecord[]> {
     return this.dunningService.processAutomaticDunning(clubId);
   }
+
+  // === Stats ===
 
   async getMemberBillingSummary(memberId: string): Promise<MemberBillingSummary> {
     return this.statsService.getMemberBillingSummary(memberId);

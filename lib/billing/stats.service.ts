@@ -19,7 +19,7 @@ export class StatsService {
   async getMemberBillingSummary(memberId: string): Promise<MemberBillingSummary> {
     const { data: invoices, error } = await supabase
       .from('invoices')
-      .select('total_amount, paid_amount, status')
+      .select('id, amount, status')
       .eq('member_id', memberId);
 
     if (error) {
@@ -27,17 +27,26 @@ export class StatsService {
     }
 
     const totalInvoices = invoices?.length || 0;
-    const totalAmount = invoices?.reduce((sum, inv) => sum + inv.total_amount, 0) || 0;
-    const paidAmount = invoices?.reduce((sum, inv) => sum + inv.paid_amount, 0) || 0;
+    const totalAmount = invoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
+
+    // paid_amount from payments via invoice join
+    const invoiceIds = invoices?.map((inv) => inv.id) || [];
+    const { data: payments } = await supabase
+      .from('payments')
+      .select('amount, invoice_id')
+      .in('invoice_id', invoiceIds.length > 0 ? invoiceIds : ['00000000-0000-0000-0000-000000000000'])
+      .eq('status', 'completed');
+
+    const paidAmount = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
     const outstandingAmount = totalAmount - paidAmount;
     const overdueInvoices =
-      invoices?.filter((inv) => inv.status === 'overdue' || inv.status === 'dunning').length || 0;
+      invoices?.filter((inv) => inv.status === 'overdue').length || 0;
 
     const { count: activeMandates } = await supabase
       .from('sepa_mandates')
       .select('*', { count: 'exact', head: true })
       .eq('member_id', memberId)
-      .eq('status', 'active');
+      .eq('is_active', true);
 
     return {
       member_id: memberId,
@@ -53,7 +62,7 @@ export class StatsService {
   async getClubBillingStats(clubId: string): Promise<ClubBillingStats> {
     const { data: invoices, error } = await supabase
       .from('invoices')
-      .select('total_amount, paid_amount, status')
+      .select('id, amount, status')
       .eq('club_id', clubId);
 
     if (error) {
@@ -61,34 +70,39 @@ export class StatsService {
     }
 
     const totalInvoices = invoices?.length || 0;
-    const totalRevenue = invoices?.reduce((sum, inv) => sum + inv.paid_amount, 0) || 0;
-    const totalAmount = invoices?.reduce((sum, inv) => sum + inv.total_amount, 0) || 0;
-    const outstandingAmount = totalAmount - totalRevenue;
+    const totalAmount = invoices?.reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
     const overdueAmount =
       invoices
-        ?.filter((inv) => inv.status === 'overdue' || inv.status === 'dunning')
-        .reduce((sum, inv) => sum + (inv.total_amount - inv.paid_amount), 0) || 0;
+        ?.filter((inv) => inv.status === 'overdue')
+        .reduce((sum, inv) => sum + (inv.amount || 0), 0) || 0;
 
+    // Payments: join via invoice_id
+    const invoiceIds = invoices?.map((inv) => inv.id) || [];
     const { data: payments } = await supabase
       .from('payments')
-      .select('payment_method')
-      .eq('club_id', clubId)
+      .select('amount, payment_method')
+      .in('invoice_id', invoiceIds)
       .eq('status', 'completed');
+
+    const totalRevenue = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+    const outstandingAmount = totalAmount - totalRevenue;
 
     const paymentMethods: Record<string, number> = {};
     payments?.forEach((p) => {
-      paymentMethods[p.payment_method] = (paymentMethods[p.payment_method] || 0) + 1;
+      if (p.payment_method) {
+        paymentMethods[p.payment_method] = (paymentMethods[p.payment_method] || 0) + 1;
+      }
     });
 
+    // Dunning records: join via invoice_id
     const { data: dunningRecords } = await supabase
       .from('dunning_records')
-      .select('dunning_level')
-      .eq('club_id', clubId)
-      .eq('status', 'sent');
+      .select('level')
+      .in('invoice_id', invoiceIds);
 
-    const dunningLevel1 = dunningRecords?.filter((d) => d.dunning_level === 1).length || 0;
-    const dunningLevel2 = dunningRecords?.filter((d) => d.dunning_level === 2).length || 0;
-    const dunningLevel3 = dunningRecords?.filter((d) => d.dunning_level === 3).length || 0;
+    const dunningLevel1 = dunningRecords?.filter((d) => d.level === 1).length || 0;
+    const dunningLevel2 = dunningRecords?.filter((d) => d.level === 2).length || 0;
+    const dunningLevel3 = dunningRecords?.filter((d) => d.level === 3).length || 0;
 
     return {
       club_id: clubId,

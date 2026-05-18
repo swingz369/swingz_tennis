@@ -14,8 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Clock, Check, X, Filter, Download, Search, Calendar } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { format, parseISO } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 
 interface HoursLog {
   id: string;
@@ -39,6 +41,8 @@ export default function HoursLogsOverviewPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');
+  const [rejectDialogLogId, setRejectDialogLogId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     fetchHoursLogs();
@@ -326,8 +330,8 @@ export default function HoursLogsOverviewPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                          const reason = prompt('Grund für Ablehnung:');
-                          if (reason) handleReject(log.id, reason);
+                          setRejectReason('');
+                          setRejectDialogLogId(log.id);
                         }}
                         className="text-red-600 hover:bg-red-50"
                       >
@@ -352,6 +356,31 @@ export default function HoursLogsOverviewPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={rejectDialogLogId !== null}
+        onOpenChange={(open) => {
+          if (!open) setRejectDialogLogId(null);
+        }}
+        title="Stundenlog ablehnen"
+        description="Bitte gib einen Grund für die Ablehnung an."
+        confirmLabel="Ablehnen"
+        variant="warning"
+        onConfirm={() => {
+          if (rejectDialogLogId && rejectReason.trim()) {
+            handleReject(rejectDialogLogId, rejectReason.trim());
+          }
+          setRejectDialogLogId(null);
+        }}
+      >
+        <Textarea
+          placeholder="Ablehnungsgrund..."
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+          className="mt-2"
+          rows={3}
+        />
+      </ConfirmDialog>
     </div>
   );
 }

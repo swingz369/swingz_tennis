@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
+import type { InvoiceStatus } from '@/lib/types/billing';
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -38,42 +39,67 @@ export async function GET(_request: NextRequest) {
 
       if (clubId) {
         invoices = await billingEngine.getInvoicesByClub(clubId, {
-          status: status as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'dunning',
+          status: status as InvoiceStatus,
           limit,
           offset,
         });
       } else if (memberId) {
         invoices = await billingEngine.getInvoicesByMember(memberId, {
-          status: status as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled' | 'dunning',
+          status: status as InvoiceStatus,
           limit,
           offset,
         });
       }
 
-      const openItems =
-        invoices
-          ?.filter((invoice) => invoice.status !== 'paid' && invoice.status !== 'cancelled')
-          .map((invoice) => ({
-            id: invoice.id,
-            invoice_number: invoice.invoice_number,
-            invoice_date: invoice.invoice_date,
-            due_date: invoice.due_date,
-            status: invoice.status,
-            total_amount: invoice.total_amount,
-            paid_amount: invoice.paid_amount,
-            outstanding_amount: invoice.total_amount - invoice.paid_amount,
-            currency: invoice.currency,
-            member_id: invoice.member_id,
-            club_id: invoice.club_id,
-            is_overdue: new Date(invoice.due_date) < new Date() && invoice.status !== 'paid',
-            days_overdue: Math.max(
-              0,
-              Math.floor(
-                (new Date().getTime() - new Date(invoice.due_date).getTime()) /
-                  (1000 * 60 * 60 * 24)
+      const openInvoices =
+        invoices?.filter(
+          (invoice) => invoice.status !== 'paid' && invoice.status !== 'cancelled'
+        ) || [];
+
+      // Fetch paid amounts per invoice to compute true outstanding balances
+      const invoiceIds = openInvoices.map((inv) => inv.id);
+      const paidByInvoice: Record<string, number> = {};
+      if (invoiceIds.length > 0) {
+        const { data: payments } = await auth.supabase
+          .from('payments')
+          .select('invoice_id, amount')
+          .in('invoice_id', invoiceIds)
+          .eq('status', 'paid');
+        for (const p of payments ?? []) {
+          if (p.invoice_id) {
+            paidByInvoice[p.invoice_id] = (paidByInvoice[p.invoice_id] ?? 0) + (p.amount ?? 0);
+          }
+        }
+      }
+
+      const openItems = openInvoices.map((invoice) => {
+        const paid = paidByInvoice[invoice.id] ?? 0;
+        return {
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          created_at: invoice.created_at,
+          due_date: invoice.due_date,
+          status: invoice.status,
+          amount: invoice.amount,
+          tax_amount: invoice.tax_amount,
+          outstanding_amount: invoice.amount - paid,
+          currency: invoice.currency,
+          member_id: invoice.member_id,
+          club_id: invoice.club_id,
+          is_overdue: invoice.due_date
+            ? new Date(invoice.due_date) < new Date() && invoice.status !== 'paid'
+            : false,
+          days_overdue: invoice.due_date
+            ? Math.max(
+                0,
+                Math.floor(
+                  (new Date().getTime() - new Date(invoice.due_date).getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )
               )
-            ),
-          })) || [];
+            : 0,
+        };
+      });
 
       return NextResponse.json({
         open_items: openItems,

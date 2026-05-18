@@ -23,29 +23,13 @@ export async function PATCH(
     try {
       const { id } = await params;
       const body = await _request.json();
-
-      const {
-        status,
-        processedAt,
-        failedAt,
-        failureReason,
-        refundedAt,
-        refundAmount,
-        refundReason,
-      } = body;
+      const { status } = body;
 
       if (!status) {
         return NextResponse.json({ error: 'Status is required' }, { status: 400 });
       }
 
-      const payment = await billingEngine.updatePaymentStatus(id, status as PaymentStatus, {
-        processed_at: processedAt,
-        failed_at: failedAt,
-        failure_reason: failureReason,
-        refunded_at: refundedAt,
-        refund_amount: refundAmount,
-        refund_reason: refundReason,
-      });
+      const payment = await billingEngine.updatePaymentStatus(id, status as PaymentStatus);
 
       return NextResponse.json({ payment });
     } catch (error) {

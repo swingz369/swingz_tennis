@@ -95,18 +95,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
   const { billingEngine } = await import('../billing-engine');
 
   const payment = await billingEngine.createPayment({
-    club_id: '', // Will be filled from invoice
-    member_id: '', // Will be filled from invoice
     invoice_id: invoiceId,
     amount: session.amount_total ? session.amount_total / 100 : 0,
     payment_method: 'stripe',
-    transaction_id: session.payment_intent as string,
-    stripe_payment_intent_id: session.payment_intent as string,
+    external_id: session.payment_intent as string,
   });
 
-  await billingEngine.updatePaymentStatus(payment.id, 'completed', {
-    processed_at: new Date().toISOString(),
-  });
+  await billingEngine.updatePaymentStatus(payment.id, 'completed');
 }
 
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
@@ -118,13 +113,19 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): P
 
   const { billingEngine } = await import('../billing-engine');
 
-  const payment = await billingEngine.getPaymentByStripeId(paymentIntent.id);
+  // Find payment by external_id (Stripe payment intent ID)
+  const { createClient } = await import('@supabase/supabase-js');
+  const { env } = await import('@/lib/env');
+  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+  const { data: payment } = await supabase
+    .from('payments')
+    .select('id')
+    .eq('external_id', paymentIntent.id)
+    .single();
 
   if (payment) {
-    await billingEngine.updatePaymentStatus(payment.id, 'failed', {
-      failed_at: new Date().toISOString(),
-      failure_reason: paymentIntent.last_payment_error?.message || 'Payment failed',
-    });
+    await billingEngine.updatePaymentStatus(payment.id, 'failed');
   }
 }
 

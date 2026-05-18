@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,18 +19,62 @@ import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice } from '@/lib/invoice-pdf';
-import { downloadInvoicePDF, generateInvoiceFromBookings } from '@/lib/invoice-pdf';
+import { downloadInvoicePDF } from '@/lib/invoice-pdf';
 
 export default function MemberBilling() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
 
   const { data: clubData } = useUserClub();
   const { data: memberData } = useUserMember();
 
   const clubId = clubData?.clubId ?? null;
+  const memberId = memberData?.memberId ?? null;
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
+
+  // Fetch persisted invoices from the API on mount and whenever memberId changes
+  useEffect(() => {
+    if (!memberId) return;
+    setInvoicesLoading(true);
+    fetch(`/api/billing/invoices/overview?memberId=${encodeURIComponent(memberId)}`, {
+      credentials: 'include',
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load invoices');
+        return res.json();
+      })
+      .then((json) => {
+        // The overview endpoint returns { invoices: [...], summary, pagination }
+        // Each invoice from billingEngine has snake_case fields; map to the local Invoice shape.
+        const fetched: Invoice[] = (json.invoices ?? []).map(
+          (inv: Record<string, unknown>) => {
+            const subtotal = Number(inv.amount ?? inv.subtotal ?? 0);
+            return {
+              id: inv.id as string,
+              invoiceNumber: (inv.invoice_number ?? inv.invoiceNumber ?? '') as string,
+              issueDate: new Date((inv.created_at ?? inv.issueDate) as string),
+              dueDate: new Date((inv.due_date ?? inv.dueDate) as string),
+              customerName: (inv.customer_name ?? inv.customerName ?? '') as string,
+              customerEmail: (inv.customer_email ?? inv.customerEmail ?? '') as string,
+              items: (inv.items as Invoice['items']) ?? [],
+              subtotal,
+              taxRate: 19,
+              taxAmount: subtotal * 0.19,
+              total: Number(inv.amount ?? inv.total ?? subtotal),
+              status: (inv.status as Invoice['status']) ?? 'pending',
+            };
+          }
+        );
+        setInvoices(fetched);
+      })
+      .catch((err) => {
+        console.error('Error loading invoices:', err);
+        toast.error('Rechnungen konnten nicht geladen werden');
+      })
+      .finally(() => setInvoicesLoading(false));
+  }, [memberId]);
 
   const memberSessions = sessions.filter((s: Session) => s.bookedByUser);
 
@@ -48,15 +92,69 @@ export default function MemberBilling() {
 
   const monthSessions = getMonthSessions();
 
-  const generateMonthlyInvoice = () => {
+  const generateMonthlyInvoice = async () => {
     if (monthSessions.length === 0) {
       toast.error('Keine Sessions für diesen Monat gefunden');
       return;
     }
 
-    const invoice = generateInvoiceFromBookings(monthSessions, memberData);
-    setInvoices((prev) => [...prev, invoice]);
-    toast.success('Rechnung generiert');
+    if (!clubId) {
+      toast.error('Vereins-Kontext fehlt');
+      return;
+    }
+
+    try {
+      const rate = clubData?.club?.defaultHourlyRate ?? 15.0;
+      const subtotal = monthSessions.length * rate;
+      const tax = subtotal * 0.19;
+
+      const body = {
+        clubId,
+        memberId,
+        amount: subtotal + tax,
+        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        items: monthSessions.map((s: Session) => ({
+          description: `Training ${s.week ?? ''}`.trim(),
+          quantity: 1,
+          unit_price: rate,
+          total: rate,
+        })),
+      };
+
+      const res = await fetch('/api/billing/invoices/create', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error ?? 'Fehler beim Erstellen der Rechnung');
+      }
+
+      const created = await res.json();
+      const inv = created.invoice ?? created;
+      const newInvoice: Invoice = {
+        id: inv.id as string,
+        invoiceNumber: (inv.invoice_number ?? inv.invoiceNumber ?? '') as string,
+        issueDate: new Date((inv.created_at ?? inv.issueDate ?? Date.now()) as string | number),
+        dueDate: new Date((inv.due_date ?? inv.dueDate ?? Date.now()) as string | number),
+        customerName: (inv.customer_name ?? inv.customerName ?? '') as string,
+        customerEmail: (inv.customer_email ?? inv.customerEmail ?? '') as string,
+        items: (inv.items as Invoice['items']) ?? [],
+        subtotal,
+        taxRate: 19,
+        taxAmount: tax,
+        total: subtotal + tax,
+        status: 'pending',
+      };
+      setInvoices((prev) => [newInvoice, ...prev]);
+      toast.success('Rechnung generiert');
+    } catch (err) {
+      console.error('Invoice creation error:', err);
+      toast.error(err instanceof Error ? err.message : 'Rechnung konnte nicht erstellt werden');
+    }
   };
 
   const handleDownloadInvoice = (invoice: Invoice) => {
@@ -91,7 +189,7 @@ export default function MemberBilling() {
 
   const monthlyTotal = calculateMonthlyTotal();
 
-  if (isLoading) {
+  if (isLoading || invoicesLoading) {
     return (
       <div className="p-6">
         <div className="text-center py-12 text-gray-500">Laden...</div>

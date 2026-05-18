@@ -1,38 +1,14 @@
-import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Font } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
 import type { InvoiceWithItems } from '../types/billing';
-
-Font.register({
-  family: 'Roboto',
-  fonts: [
-    {
-      src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
-      fontWeight: 400,
-    },
-    {
-      src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
-      fontWeight: 500,
-    },
-    {
-      src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Bold.ttf',
-      fontWeight: 700,
-    },
-  ],
-});
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Roboto',
     fontSize: 11,
     padding: 40,
     backgroundColor: '#ffffff',
   },
   header: {
     marginBottom: 30,
-  },
-  logo: {
-    width: 150,
-    height: 50,
-    marginBottom: 20,
   },
   title: {
     fontSize: 24,
@@ -154,11 +130,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   statusDraft: { backgroundColor: '#9ca3af' },
-  statusSent: { backgroundColor: '#3b82f6' },
+  statusOpen: { backgroundColor: '#3b82f6' },
   statusPaid: { backgroundColor: '#10b981' },
   statusOverdue: { backgroundColor: '#ef4444' },
   statusCancelled: { backgroundColor: '#6b7280' },
-  statusDunning: { backgroundColor: '#f59e0b' },
+  statusRefunded: { backgroundColor: '#f59e0b' },
 });
 
 interface InvoicePDFProps {
@@ -182,33 +158,37 @@ const InvoicePDF = ({
   memberAddress,
   memberEmail,
 }: InvoicePDFProps) => {
-  const getStatusStyle = (status: string) => {
+  const getStatusStyle = (status: string | null) => {
     switch (status) {
       case 'draft':
         return styles.statusDraft;
-      case 'sent':
-        return styles.statusSent;
+      case 'open':
+        return styles.statusOpen;
       case 'paid':
         return styles.statusPaid;
       case 'overdue':
         return styles.statusOverdue;
       case 'cancelled':
         return styles.statusCancelled;
-      case 'dunning':
-        return styles.statusDunning;
+      case 'refunded':
+        return styles.statusRefunded;
       default:
         return styles.statusDraft;
     }
   };
 
+  // Compute subtotal from items (not stored as a column)
+  const subtotal = invoice.items.reduce((sum, item) => sum + (item.quantity || 0) * item.unit_price, 0);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
-      currency: invoice.currency,
+      currency: invoice.currency || 'EUR',
     }).format(amount);
   };
 
-  const formatDate = (dateString: string | Date) => {
+  const formatDate = (dateString: string | Date | null) => {
+    if (!dateString) return '—';
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     return date.toLocaleDateString('de-DE');
   };
@@ -221,7 +201,7 @@ const InvoicePDF = ({
           <Text style={styles.subtitle}>SWINGZ Tennis Club Management</Text>
 
           <View style={[styles.statusBadge, getStatusStyle(invoice.status)]}>
-            <Text style={styles.statusText}>{invoice.status.toUpperCase()}</Text>
+            <Text style={styles.statusText}>{(invoice.status || 'draft').toUpperCase()}</Text>
           </View>
         </View>
 
@@ -233,7 +213,7 @@ const InvoicePDF = ({
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Rechnungsdatum:</Text>
-            <Text style={styles.value}>{formatDate(invoice.invoice_date)}</Text>
+            <Text style={styles.value}>{formatDate(invoice.created_at)}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Fälligkeitsdatum:</Text>
@@ -280,7 +260,6 @@ const InvoicePDF = ({
               <Text style={styles.tableHeaderCell}>Beschreibung</Text>
               <Text style={[styles.tableHeaderCell, { textAlign: 'right' }]}>Menge</Text>
               <Text style={[styles.tableHeaderCell, { textAlign: 'right' }]}>Einzelpreis</Text>
-              <Text style={[styles.tableHeaderCell, { textAlign: 'right' }]}>MwSt.</Text>
               <Text style={[styles.tableHeaderCell, { textAlign: 'right' }]}>Gesamt</Text>
             </View>
 
@@ -291,9 +270,8 @@ const InvoicePDF = ({
                 <Text style={[styles.tableCell, { textAlign: 'right' }]}>
                   {formatCurrency(item.unit_price)}
                 </Text>
-                <Text style={[styles.tableCell, { textAlign: 'right' }]}>{item.tax_rate}%</Text>
                 <Text style={[styles.tableCell, { textAlign: 'right' }]}>
-                  {formatCurrency(item.total_price)}
+                  {formatCurrency(item.total_price ?? 0)}
                 </Text>
               </View>
             ))}
@@ -303,32 +281,16 @@ const InvoicePDF = ({
         <View style={styles.totals}>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Zwischensumme:</Text>
-            <Text style={styles.totalValue}>{formatCurrency(invoice.subtotal)}</Text>
+            <Text style={styles.totalValue}>{formatCurrency(subtotal)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>MwSt. (19%):</Text>
-            <Text style={styles.totalValue}>{formatCurrency(invoice.tax_amount)}</Text>
+            <Text style={styles.totalLabel}>MwSt.:</Text>
+            <Text style={styles.totalValue}>{formatCurrency(invoice.tax_amount ?? 0)}</Text>
           </View>
           <View style={[styles.totalRow, styles.grandTotal]}>
             <Text style={styles.totalLabel}>Gesamtbetrag:</Text>
-            <Text style={styles.totalValue}>{formatCurrency(invoice.total_amount)}</Text>
+            <Text style={styles.totalValue}>{formatCurrency(invoice.amount)}</Text>
           </View>
-          {invoice.paid_amount > 0 && (
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Bereits bezahlt:</Text>
-              <Text style={[styles.totalValue, { color: '#10b981' }]}>
-                {formatCurrency(invoice.paid_amount)}
-              </Text>
-            </View>
-          )}
-          {invoice.paid_amount < invoice.total_amount && (
-            <View style={[styles.totalRow, { marginTop: 10 }]}>
-              <Text style={[styles.totalLabel, { fontWeight: 'bold' }]}>Restbetrag:</Text>
-              <Text style={[styles.totalValue, { fontWeight: 'bold', color: '#ef4444' }]}>
-                {formatCurrency(invoice.total_amount - invoice.paid_amount)}
-              </Text>
-            </View>
-          )}
         </View>
 
         {invoice.notes && (
@@ -382,6 +344,7 @@ export const InvoiceDownloadLink = ({
     }
     fileName={`Rechnung-${invoice.invoice_number}.pdf`}
   >
-    {() => children}
+    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+    {children as any}
   </PDFDownloadLink>
 );

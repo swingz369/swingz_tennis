@@ -1,26 +1,24 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
+
+/**
+ * Note: 'email_campaigns', 'email_queue', and 'groups' are not in the
+ * generated Database type. (supabase as any) is used only for those
+ * untyped tables. auth.supabase is the user-scoped anon-key client so
+ * RLS is still enforced.
+ */
 
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(request, async (auth) => {
+    if (!(await verifyRole(auth, 'admin'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    // Verify admin
-    const { data: membership } = await supabase
-      .from('user_club_memberships')
-      .select('role, club_id')
-      .eq('user_id', user.id)
-      .in('role', ['admin', 'superadmin'])
-      .maybeSingle();
+    const sb = auth.supabase as any;
+    const user = auth.user;
 
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-    if (!membership.club_id) {
+    if (!auth.clubId) {
       return NextResponse.json({ error: 'Kein Club zugewiesen' }, { status: 400 });
     }
 
@@ -31,19 +29,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch target members
-    let query = supabase
+    let query = auth.supabase
       .from('user_club_memberships')
       .select('user_id, users(email, full_name)')
-      .eq('club_id', membership.club_id)
+      .eq('club_id', auth.clubId)
       .eq('is_active', true);
 
     if (targetGroup && targetGroup !== 'all') {
-      // Filter by group if specified
-      const { data: groupMembers } = await (supabase as any)
+      const { data: groupMembers } = await sb
         .from('groups')
         .select('member_id')
         .eq('name', targetGroup)
-        .eq('club_id', membership.club_id);
+        .eq('club_id', auth.clubId);
 
       if (groupMembers) {
         const userIds = (groupMembers as any[]).map((g: any) => g.member_id);
@@ -53,14 +50,16 @@ export async function POST(request: NextRequest) {
 
     const { data: recipients, error: fetchError } = await query;
 
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    }
     if (!recipients || recipients.length === 0) {
       return NextResponse.json({ error: 'Keine Empfänger gefunden' }, { status: 400 });
     }
 
     // Create campaign record
-    const { error: campaignError } = await (supabase as any).from('email_campaigns').insert({
-      club_id: membership.club_id,
+    const { error: campaignError } = await sb.from('email_campaigns').insert({
+      club_id: auth.clubId,
       subject,
       body,
       target_group: targetGroup || 'all',
@@ -70,11 +69,13 @@ export async function POST(request: NextRequest) {
       created_by: user.id,
     });
 
-    if (campaignError) throw campaignError;
+    if (campaignError) {
+      return NextResponse.json({ error: campaignError.message }, { status: 500 });
+    }
 
     // Create individual email queue entries
     const emailEntries = recipients.map((r: any) => ({
-      club_id: membership.club_id,
+      club_id: auth.clubId,
       recipient_email: r.users?.email || r.email,
       recipient_name: r.users?.full_name || r.full_name || 'Mitglied',
       subject,
@@ -82,38 +83,37 @@ export async function POST(request: NextRequest) {
       status: 'pending',
     }));
 
-    const { error: queueError } = await (supabase as any).from('email_queue').insert(emailEntries);
-    if (queueError) throw queueError;
+    const { error: queueError } = await sb.from('email_queue').insert(emailEntries);
+    if (queueError) {
+      return NextResponse.json({ error: queueError.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
       recipientCount: recipients.length,
       message: `Kampagne an ${recipients.length} Empfänger in die Warteschlange gestellt`,
     });
-  } catch (error: any) {
-    console.error('Email campaign error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }
 
-export async function GET() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    if (!(await verifyRole(auth, 'admin'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    const { data, error } = await (supabase as any)
+    const sb = auth.supabase as any;
+
+    const { data, error } = await sb
       .from('email_campaigns')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(20);
 
-    if (error) throw error;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ campaigns: data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }

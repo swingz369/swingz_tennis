@@ -8,6 +8,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createBookingSafe } from '@/lib/booking/safe-booking';
 
 // POST /api/bookings
 export async function POST(req: NextRequest) {
@@ -38,30 +39,6 @@ export async function POST(req: NextRequest) {
 
     if (sessionError || !session) {
       return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
-    }
-
-    // Check if already booked
-    const { data: existing } = await supabase
-      .from('bookings')
-      .select('id, status')
-      .eq('session_id', sessionId)
-      .eq('member_id', userId)
-      .neq('status', 'cancelled')
-      .maybeSingle();
-
-    if (existing) {
-      return NextResponse.json({ error: 'Du hast diese Session bereits gebucht' }, { status: 409 });
-    }
-
-    // Check capacity
-    const { count: bookedCount } = await supabase
-      .from('bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('session_id', sessionId)
-      .in('status', ['confirmed', 'pending']);
-
-    if ((bookedCount ?? 0) >= (session.max_participants ?? 4)) {
-      return NextResponse.json({ error: 'Session ist ausgebucht' }, { status: 409 });
     }
 
     // Check booking_rules — how many bookings this week?
@@ -97,33 +74,62 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Create booking
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .insert({
-        club_id: clubId,
-        user_id: auth.user.id,
-        member_id: userId,
-        session_id: sessionId,
-        schedule_id: session.schedule_id,
-        court_id: session.court_id ?? '',
-        status: 'confirmed',
-        session_start_time: session.timeslot_start,
-        start_time: session.timeslot_start,
-        end_time: session.timeslot_end,
-        booking_type: 'session',
-        payment_status: 'pending',
-      })
-      .select()
-      .single();
+    // Atomic booking via DB RPC — prevents race conditions and double-bookings
+    const result = await createBookingSafe({
+      memberId: userId,
+      sessionId,
+      clubId,
+      scheduleId: session.schedule_id ?? '',
+    });
 
-    if (bookingError) {
-      console.error('[Bookings POST]', bookingError);
-      return NextResponse.json({ error: bookingError.message }, { status: 500 });
+    if (!result.success) {
+      const isConflict =
+        result.error?.includes('already booked') ||
+        result.error?.includes('fully booked') ||
+        result.error?.includes('already started');
+      return NextResponse.json({ error: result.error }, { status: isConflict ? 409 : 500 });
+    }
+
+    // Fire-and-forget: create hours_log entry when the session has a trainer.
+    // Failures here must NOT block the booking response.
+    if (result.bookingId) {
+      (async () => {
+        try {
+          const { data: sess } = await supabase
+            .from('sessions')
+            .select('trainer_id, timeslot_start, timeslot_end, users(full_name)')
+            .eq('id', sessionId)
+            .not('trainer_id', 'is', null)
+            .maybeSingle();
+
+          if (sess?.trainer_id) {
+            const start = new Date(sess.timeslot_start);
+            const end = new Date(sess.timeslot_end);
+            const durationMinutes = (end.getTime() - start.getTime()) / 60_000;
+            const trainerName =
+              (Array.isArray(sess.users) ? sess.users[0] : sess.users)?.full_name ??
+              'Trainer';
+            await supabase.from('hours_logs').insert({
+              trainer_id: sess.trainer_id,
+              trainer_name: trainerName,
+              session_id: sessionId,
+              date: start.toISOString().substring(0, 10),
+              start_time: start.toTimeString().substring(0, 8),
+              end_time: end.toTimeString().substring(0, 8),
+              duration: durationMinutes,
+              type: 'training',
+              status: 'pending',
+              club_id: clubId,
+            });
+          }
+        } catch (err) {
+          console.warn('[Bookings] hours_log auto-create failed (non-blocking):', err);
+        }
+      })();
     }
 
     return NextResponse.json(
-      { bookingId: booking.id, sessionId, memberId: userId, status: booking.status },
+      { bookingId: result.bookingId, sessionId, memberId: userId, status: 'confirmed' },
       { status: 201 }
     );
   });

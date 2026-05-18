@@ -2,6 +2,11 @@ import 'reflect-metadata';
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env.local for test environment (vitest only auto-loads .env)
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 afterEach(() => {
   cleanup();

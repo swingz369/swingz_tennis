@@ -26,7 +26,7 @@ import {
   isBefore,
   isAfter,
 } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { de } from '@/lib/locale';
 import { Clock, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub, useUserRoles } from '@/hooks/use-user-data';
