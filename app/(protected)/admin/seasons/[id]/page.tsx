@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -464,6 +465,16 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link href={`/admin/seasons/${id}/wizard`}>
+            <Button>
+              <Play className="mr-2 h-4 w-4" />
+              {['published', 'active', 'completed', 'archived'].includes(season.planning_status ?? '')
+                ? 'Saisonplanung ansehen'
+                : season.planning_status === 'draft'
+                ? 'Saisonplanung starten'
+                : 'Saisonplanung fortsetzen'}
+            </Button>
+          </Link>
           <Button variant="outline" onClick={() => router.push(`/admin/seasons/${id}/edit`)}>
             <Settings className="mr-2 h-4 w-4" />
             Bearbeiten
