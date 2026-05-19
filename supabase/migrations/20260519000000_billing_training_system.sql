@@ -60,6 +60,15 @@ CREATE INDEX IF NOT EXISTS idx_school_holidays_dates ON school_holidays(start_da
 
 ALTER TABLE school_holidays ENABLE ROW LEVEL SECURITY;
 CREATE POLICY school_holidays_select_all ON school_holidays FOR SELECT USING (true);
+CREATE POLICY school_holidays_admin_manage ON school_holidays
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM user_club_memberships ucm
+      WHERE ucm.user_id = auth.uid()
+        AND ucm.is_active = true
+        AND ucm.role = 'superadmin'
+    )
+  );
 
 -- ============================================
 -- 3. training_group_memberships table
@@ -80,6 +89,7 @@ CREATE TABLE IF NOT EXISTS training_group_memberships (
 CREATE INDEX IF NOT EXISTS idx_tgm_group ON training_group_memberships(training_group_id);
 CREATE INDEX IF NOT EXISTS idx_tgm_member ON training_group_memberships(member_id);
 CREATE INDEX IF NOT EXISTS idx_tgm_active ON training_group_memberships(member_id, club_id) WHERE left_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tgm_created_by ON training_group_memberships(created_by);
 
 ALTER TABLE training_group_memberships ENABLE ROW LEVEL SECURITY;
 
@@ -123,7 +133,9 @@ CREATE TABLE IF NOT EXISTS member_balance_entries (
 );
 
 CREATE INDEX IF NOT EXISTS idx_mbe_balance ON member_balance_entries(member_balance_id);
+CREATE INDEX IF NOT EXISTS idx_mbe_created_by ON member_balance_entries(created_by);
 CREATE INDEX IF NOT EXISTS idx_mb_club ON member_balances(club_id);
+CREATE INDEX IF NOT EXISTS idx_mb_member ON member_balances(member_id);
 
 ALTER TABLE member_balances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE member_balance_entries ENABLE ROW LEVEL SECURITY;
