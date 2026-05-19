@@ -14,6 +14,66 @@ interface RouteContext {
 }
 
 /**
+ * PATCH /api/seasons/[id]
+ * Update season fields. Only admins of the owning club can update.
+ */
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+  if (rateLimitError) return rateLimitError;
+
+  return withCSRFProtection(request, async () => {
+    return withApiAuth(request, async (auth) => {
+      try {
+        const { id } = await context.params;
+
+        const isAdmin = await verifyRole(auth, 'admin');
+        const isSuperadmin = await verifyRole(auth, 'superadmin');
+        if (!isAdmin && !isSuperadmin) {
+          return forbiddenResponse('Only admins can update seasons');
+        }
+
+        const [existingSeason] = await getDb().select().from(seasons).where(eq(seasons.id, id));
+        if (!existingSeason) {
+          return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+        }
+        if (!isSuperadmin && existingSeason.club_id !== auth.clubId) {
+          return forbiddenResponse('You do not have access to this season');
+        }
+
+        const body = await request.json();
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+        const allowed = [
+          'name', 'season_type', 'year', 'start_date', 'end_date',
+          'preferences_deadline', 'description', 'notes',
+          'planning_status', 'preferences_open', 'is_active',
+        ] as const;
+
+        for (const field of allowed) {
+          if (body[field] !== undefined) {
+            updates[field] = body[field] === '' ? null : body[field];
+          }
+        }
+
+        const [updated] = await getDb()
+          .update(seasons)
+          .set(updates)
+          .where(eq(seasons.id, id))
+          .returning();
+
+        return NextResponse.json({ season: updated });
+      } catch (error) {
+        console.error(`PATCH /api/seasons/[id] error:`, error);
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : 'Failed to update season' },
+          { status: 500 }
+        );
+      }
+    });
+  });
+}
+
+/**
  * DELETE /api/seasons/[id]
  * Delete a season (only draft seasons)
  */
