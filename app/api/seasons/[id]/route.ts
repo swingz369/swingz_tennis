@@ -14,6 +14,39 @@ interface RouteContext {
 }
 
 /**
+ * GET /api/seasons/[id]
+ */
+export async function GET(request: NextRequest, context: RouteContext) {
+  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+  if (rateLimitError) return rateLimitError;
+
+  return withApiAuth(request, async (auth) => {
+    try {
+      const { id } = await context.params;
+
+      const [season] = await getDb().select().from(seasons).where(eq(seasons.id, id));
+
+      if (!season) {
+        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
+      }
+
+      const isSuperadmin = await verifyRole(auth, 'superadmin');
+      if (!isSuperadmin && season.club_id !== auth.clubId) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
+
+      return NextResponse.json({ season });
+    } catch (error) {
+      console.error(`GET /api/seasons/[id] error:`, error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Failed to fetch season' },
+        { status: 500 }
+      );
+    }
+  });
+}
+
+/**
  * PATCH /api/seasons/[id]
  * Update season fields. Only admins of the owning club can update.
  */
@@ -44,9 +77,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
         const allowed = [
-          'name', 'season_type', 'year', 'start_date', 'end_date',
-          'preferences_deadline', 'description', 'notes',
-          'planning_status', 'preferences_open', 'is_active',
+          'name',
+          'season_type',
+          'year',
+          'start_date',
+          'end_date',
+          'preferences_deadline',
+          'description',
+          'notes',
+          'planning_status',
+          'preferences_open',
+          'is_active',
         ] as const;
 
         for (const field of allowed) {
