@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { csrfHeaders } from '@/lib/csrf-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -77,7 +78,7 @@ export function BillingPreviewTable({
     try {
       const res = await fetch(`/api/seasons/${seasonId}/wizard/billing-generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
