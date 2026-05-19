@@ -93,7 +93,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const allowed = [
           'name', 'season_type', 'year', 'start_date', 'end_date',
           'preferences_deadline', 'description', 'notes',
-          'planning_status', 'preferences_open', 'is_active',
+          'planning_status', 'preferences_open', 'is_active', 'auto_plan_config',
         ] as const;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
