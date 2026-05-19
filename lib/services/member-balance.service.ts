@@ -10,17 +10,23 @@ export async function getOrCreateMemberBalance(
   memberId: string,
   clubId: string
 ): Promise<MemberBalance> {
-  const existing = await getMemberBalance(supabase, memberId, clubId);
-  if (existing) return existing;
-
   const { data, error } = await supabase
     .from('member_balances')
-    .insert({ member_id: memberId, club_id: clubId, balance: 0 })
+    .upsert(
+      { member_id: memberId, club_id: clubId, balance: 0 },
+      { onConflict: 'member_id,club_id', ignoreDuplicates: true }
+    )
     .select()
-    .single();
+    .maybeSingle();
 
-  if (error) throw new Error(`Failed to create member balance: ${error.message}`);
-  return data as MemberBalance;
+  if (error) throw new Error(`Failed to get or create member balance: ${error.message}`);
+
+  if (data) return data as MemberBalance;
+
+  // Row already existed — fetch it
+  const existing = await getMemberBalance(supabase, memberId, clubId);
+  if (!existing) throw new Error(`Member balance not found after upsert for member ${memberId}`);
+  return existing;
 }
 
 export async function getMemberBalance(
@@ -28,13 +34,14 @@ export async function getMemberBalance(
   memberId: string,
   clubId: string
 ): Promise<MemberBalance | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('member_balances')
     .select('*')
     .eq('member_id', memberId)
     .eq('club_id', clubId)
     .maybeSingle();
 
+  if (error) throw new Error(`Failed to fetch member balance: ${error.message}`);
   return (data as MemberBalance) ?? null;
 }
 
@@ -75,11 +82,12 @@ export async function getMemberBalanceHistory(
   const balance = await getMemberBalance(supabase, memberId, clubId);
   if (!balance) return [];
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('member_balance_entries')
     .select('*')
     .eq('member_balance_id', balance.id)
     .order('created_at', { ascending: false });
 
+  if (error) throw new Error(`Failed to fetch balance history: ${error.message}`);
   return (data as MemberBalanceEntry[]) ?? [];
 }
