@@ -96,7 +96,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           'planning_status', 'preferences_open', 'is_active',
         ] as const;
 
-        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updates: any = { updated_at: new Date().toISOString() };
         for (const field of allowed) {
           if (body[field] !== undefined) {
             updates[field] = body[field] === '' ? null : body[field];
