@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { csrfHeaders } from '@/lib/csrf-client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ export function PublishButton({ seasonId }: { seasonId: string }) {
     try {
       const res = await fetch(`/api/seasons/${seasonId}/planning/confirm`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ acceptedWarnings: [] }),
       });
       const data = await res.json();

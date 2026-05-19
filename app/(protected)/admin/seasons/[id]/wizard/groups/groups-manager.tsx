@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { csrfHeaders } from '@/lib/csrf-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
@@ -92,7 +93,7 @@ export function GroupsManager({
       editing ? `/api/training-groups/${editing.id}` : '/api/training-groups',
       {
         method: editing ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify(payload),
       }
     );
@@ -110,7 +111,7 @@ export function GroupsManager({
   }
 
   async function deleteGroup(id: string) {
-    const res = await fetch(`/api/training-groups/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/training-groups/${id}`, { method: 'DELETE', headers: csrfHeaders() });
     if (!res.ok) {
       toast.error('Fehler beim Löschen');
       return;
@@ -126,7 +127,7 @@ export function GroupsManager({
     }
     await fetch(`/api/seasons/${seasonId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
       body: JSON.stringify({ planning_status: 'manual_review' }),
     });
     router.push(`/admin/seasons/${seasonId}/wizard/plan`);

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { csrfHeaders } from '@/lib/csrf-client';
 import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
@@ -46,7 +47,7 @@ export function KanbanBoard({
   async function patchGroup(groupId: string, newIds: string[]) {
     const res = await fetch(`/api/seasons/${seasonId}/groups/${groupId}/members`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
       body: JSON.stringify({ member_ids: newIds }),
     });
     if (!res.ok) toast.error('Fehler beim Speichern');
@@ -91,7 +92,7 @@ export function KanbanBoard({
 
   async function triggerAutoPlan() {
     setRunning(true);
-    const res = await fetch(`/api/seasons/${seasonId}/auto-plan`, { method: 'POST' });
+    const res = await fetch(`/api/seasons/${seasonId}/auto-plan`, { method: 'POST', headers: csrfHeaders() });
     setRunning(false);
     if (!res.ok) {
       toast.error('KI-Plan fehlgeschlagen');
@@ -104,7 +105,7 @@ export function KanbanBoard({
   async function advance() {
     await fetch(`/api/seasons/${seasonId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
       body: JSON.stringify({ planning_status: 'invoices_generated' }),
     });
     router.push(`/admin/seasons/${seasonId}/wizard/billing`);
