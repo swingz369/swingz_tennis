@@ -91,9 +91,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
         const body = await request.json();
         const allowed = [
-          'name', 'season_type', 'year', 'start_date', 'end_date',
-          'preferences_deadline', 'description', 'notes',
-          'planning_status', 'preferences_open', 'is_active', 'auto_plan_config',
+          'name',
+          'season_type',
+          'year',
+          'start_date',
+          'end_date',
+          'preferences_deadline',
+          'description',
+          'notes',
+          'planning_status',
+          'preferences_open',
+          'is_active',
+          'auto_plan_config',
         ] as const;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -158,10 +167,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           return forbiddenResponse('You do not have access to this season');
         }
         if (existing.planning_status !== 'draft') {
-          return NextResponse.json(
-            { error: 'Only draft seasons can be deleted' },
-            { status: 400 }
-          );
+          return NextResponse.json({ error: 'Only draft seasons can be deleted' }, { status: 400 });
         }
 
         const { error: deleteError } = await supabase.from('seasons').delete().eq('id', id);

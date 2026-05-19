@@ -35,7 +35,7 @@ export function PreferencesForm({ seasonId, season }: { seasonId: string; season
       body: JSON.stringify({
         preferences_deadline: deadline || null,
         preferences_open: open,
-        planning_status: 'collecting_preferences',
+        planning_status: 'preferences_open',
         auto_plan_config: {
           ...cfg,
           group_min_size: +minSize,
