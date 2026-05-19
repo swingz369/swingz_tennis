@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -106,7 +106,8 @@ function formatDateTime(dateStr: string | null | undefined): string {
 
 // ── Page Component ─────────────────────────────────────────────────────
 
-export default function TournamentDetailPage({ params }: { params: { id: string } }) {
+export default function TournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [data, setData] = useState<TournamentDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,7 +122,7 @@ export default function TournamentDetailPage({ params }: { params: { id: string 
   const fetchTournament = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/tournaments/${params.id}`);
+      const res = await fetch(`/api/tournaments/${id}`);
       if (!res.ok) {
         if (res.status === 404) throw new Error('Turnier nicht gefunden');
         throw new Error('Fehler beim Laden');
@@ -133,7 +134,7 @@ export default function TournamentDetailPage({ params }: { params: { id: string 
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     fetchTournament();
@@ -142,7 +143,7 @@ export default function TournamentDetailPage({ params }: { params: { id: string 
   const handleStatusChange = async (newStatus: string) => {
     setStatusUpdating(true);
     try {
-      const res = await fetch(`/api/tournaments/${params.id}`, {
+      const res = await fetch(`/api/tournaments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -159,7 +160,7 @@ export default function TournamentDetailPage({ params }: { params: { id: string 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/tournaments/${params.id}`, {
+      const res = await fetch(`/api/tournaments/${id}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Fehler beim Löschen');
@@ -475,7 +476,7 @@ export default function TournamentDetailPage({ params }: { params: { id: string 
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/admin/tournaments/${params.id}/register`)}
+                  onClick={() => router.push(`/admin/tournaments/${id}/register`)}
                 >
                   <Edit3 className="h-3.5 w-3.5 mr-1" />
                   Verwalten
