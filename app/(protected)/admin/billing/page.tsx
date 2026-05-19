@@ -140,6 +140,7 @@ export default async function BillingPage() {
         initialSubscriptions={subscriptions}
         initialInvoices={invoices}
         members={members}
+        clubId={clubId}
       />
     );
   } catch (error) {
@@ -149,6 +150,7 @@ export default async function BillingPage() {
         initialSubscriptions={[]}
         initialInvoices={[]}
         members={[]}
+        clubId={null}
       />
     );
   }

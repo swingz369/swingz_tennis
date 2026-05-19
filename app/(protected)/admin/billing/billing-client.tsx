@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { CreditCard, DollarSign, Plus, Eye, FileText, Loader2 } from 'lucide-react';
+import { CreditCard, DollarSign, Plus, Eye, FileText, Loader2, Trash2, Send } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
 
@@ -54,16 +55,51 @@ export type Invoice = {
   memberName: string;
   amount: number;
   currency: string;
-  status: 'draft' | 'open' | 'paid' | 'void' | 'uncollectible';
+  status: 'draft' | 'open' | 'paid' | 'void' | 'uncollectible' | 'sent' | 'reminder_sent' | 'partially_paid' | 'overdue' | 'dunning' | 'cancelled';
+  invoiceType?: 'season' | 'membership' | 'adhoc';
   dueDate: string;
   paidAt?: string;
   stripeInvoiceId?: string;
 };
 
+type InvoiceTypeFilter = 'all' | 'season' | 'membership' | 'adhoc';
+
+interface LineItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+function InvoiceStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { label: string; className: string }> = {
+    draft: { label: 'Entwurf', className: 'bg-gray-100 text-gray-600' },
+    sent: { label: 'Versendet', className: 'bg-blue-100 text-blue-700' },
+    reminder_sent: { label: 'Erinnerung', className: 'bg-yellow-100 text-yellow-700' },
+    partially_paid: { label: 'Teilbezahlt', className: 'bg-orange-100 text-orange-700' },
+    paid: { label: 'Bezahlt', className: 'bg-green-100 text-green-700' },
+    overdue: { label: 'Überfällig', className: 'bg-red-100 text-red-700' },
+    dunning: { label: 'Mahnung', className: 'bg-red-200 text-red-900 font-bold' },
+    cancelled: { label: 'Storniert', className: 'bg-gray-100 text-gray-400 line-through' },
+  };
+  const c = config[status] ?? config.draft;
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>;
+}
+
+function InvoiceTypeBadge({ type }: { type: string }) {
+  const config: Record<string, { label: string; className: string }> = {
+    season: { label: 'Saison', className: 'bg-purple-100 text-purple-700' },
+    membership: { label: 'Mitgliedsbeitrag', className: 'bg-blue-100 text-blue-700' },
+    adhoc: { label: 'Zusatz', className: 'bg-gray-100 text-gray-600' },
+  };
+  const c = config[type] ?? config.adhoc;
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>;
+}
+
 interface BillingClientProps {
   initialSubscriptions: Subscription[];
   initialInvoices: Invoice[];
   members: { id: string; name: string; email: string }[];
+  clubId?: string | null;
 }
 
 // Demo members for the subscription assignment dialog
@@ -100,18 +136,138 @@ export default function BillingClient({
   initialSubscriptions,
   initialInvoices,
   members,
+  clubId,
 }: BillingClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'subscriptions' | 'invoices'>('subscriptions');
-  // Derive directly from props — router.refresh() re-renders the server component
-  // which passes fresh data as new props. No local state needed.
   const subscriptions = initialSubscriptions;
-  const invoices = initialInvoices;
   const clubMembers = members;
   const [generatingInvoices, setGeneratingInvoices] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<{ id: string; name: string } | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Subscription['plan']>('pro');
+
+  // Invoice type filter
+  const [invoiceTypeFilter, setInvoiceTypeFilter] = useState<InvoiceTypeFilter>('all');
+  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+
+  // Adhoc invoice dialog
+  const [showAdhocDialog, setShowAdhocDialog] = useState(false);
+  const [adhocMemberId, setAdhocMemberId] = useState('');
+  const [adhocDueDate, setAdhocDueDate] = useState('');
+  const [adhocNotes, setAdhocNotes] = useState('');
+  const [adhocItems, setAdhocItems] = useState<LineItem[]>([
+    { description: '', quantity: 1, unit_price: 0 },
+  ]);
+  const [submittingAdhoc, setSubmittingAdhoc] = useState(false);
+
+  const addItem = () =>
+    setAdhocItems((prev) => [...prev, { description: '', quantity: 1, unit_price: 0 }]);
+
+  const removeItem = (idx: number) =>
+    setAdhocItems((prev) => prev.filter((_, i) => i !== idx));
+
+  const updateItem = (idx: number, field: keyof LineItem, value: string | number) =>
+    setAdhocItems((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
+    );
+
+  const adhocTotal = adhocItems
+    .reduce((s, i) => s + i.quantity * i.unit_price, 0)
+    .toFixed(2);
+
+  useEffect(() => {
+    if (!clubId || activeTab !== 'invoices') return;
+    setLoadingInvoices(true);
+    const params = new URLSearchParams({ clubId });
+    if (invoiceTypeFilter !== 'all') params.set('type', invoiceTypeFilter);
+    fetch(`/api/billing/invoices?${params.toString()}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.data) {
+          setInvoices(
+            (json.data as Record<string, unknown>[]).map((inv) => {
+              const users = inv.users as Record<string, unknown> | null;
+              return {
+                id: String(inv.id),
+                invoiceNumber: String(inv.invoice_number || ''),
+                memberId: String(inv.member_id || ''),
+                memberName: String(users?.full_name || inv.member_name || 'N/A'),
+                amount: Number(inv.amount ?? 0),
+                currency: String(inv.currency || 'EUR'),
+                status: (String(inv.status || 'draft')) as Invoice['status'],
+                invoiceType: inv.invoice_type as Invoice['invoiceType'],
+                dueDate: String(inv.due_date || ''),
+                paidAt: inv.paid_at ? String(inv.paid_at) : undefined,
+              } as Invoice;
+            })
+          );
+        }
+      })
+      .catch(() => toast.error('Fehler beim Laden der Rechnungen'))
+      .finally(() => setLoadingInvoices(false));
+  }, [clubId, activeTab, invoiceTypeFilter]);
+
+  const handleSendInvoice = async (invoiceId: string) => {
+    try {
+      const res = await fetch(`/api/billing/invoices/${invoiceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'sent' }),
+      });
+      if (res.ok) {
+        toast.success('Rechnung versendet');
+        setInvoices((prev) =>
+          prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: 'sent' } : inv))
+        );
+      } else {
+        const err = await res.json();
+        toast.error(`Fehler: ${err.error || 'Unbekannt'}`);
+      }
+    } catch {
+      toast.error('Netzwerkfehler');
+    }
+  };
+
+  const handleSubmitAdhoc = async () => {
+    if (!clubId || !adhocMemberId || !adhocDueDate || adhocItems.length === 0) {
+      toast.error('Bitte alle Pflichtfelder ausfüllen');
+      return;
+    }
+    setSubmittingAdhoc(true);
+    try {
+      const res = await fetch('/api/billing/invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          club_id: clubId,
+          member_id: adhocMemberId,
+          due_date: adhocDueDate,
+          notes: adhocNotes || undefined,
+          items: adhocItems,
+        }),
+      });
+      if (res.ok) {
+        toast.success('Zusatz-Rechnung erstellt');
+        setShowAdhocDialog(false);
+        setAdhocMemberId('');
+        setAdhocDueDate('');
+        setAdhocNotes('');
+        setAdhocItems([{ description: '', quantity: 1, unit_price: 0 }]);
+        // Re-trigger invoice fetch
+        setInvoiceTypeFilter((prev) => prev);
+        router.refresh();
+      } else {
+        const err = await res.json();
+        toast.error(`Fehler: ${err.error || 'Unbekannt'}`);
+      }
+    } catch {
+      toast.error('Netzwerkfehler');
+    } finally {
+      setSubmittingAdhoc(false);
+    }
+  };
 
   /** Re-fetch data after mutations by refreshing the server component */
   const refreshData = () => router.refresh();
@@ -358,11 +514,48 @@ export default function BillingClient({
       {activeTab === 'invoices' && (
         <Card>
           <CardHeader>
-            <CardTitle>Rechnungen</CardTitle>
-            <CardDescription>Alle generierten Rechnungen</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Rechnungen</CardTitle>
+                <CardDescription>Alle generierten Rechnungen</CardDescription>
+              </div>
+              <Button size="sm" onClick={() => setShowAdhocDialog(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Neue Zusatz-Rechnung
+              </Button>
+            </div>
+            {/* Invoice type filter tabs */}
+            <div className="flex gap-3 border-b mt-4">
+              {(['all', 'season', 'membership', 'adhoc'] as InvoiceTypeFilter[]).map((t) => {
+                const labels: Record<InvoiceTypeFilter, string> = {
+                  all: 'Alle',
+                  season: 'Saison',
+                  membership: 'Mitgliedsbeitrag',
+                  adhoc: 'Zusatz',
+                };
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setInvoiceTypeFilter(t)}
+                    className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
+                      invoiceTypeFilter === t
+                        ? 'border-brand-primary text-brand-primary'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {labels[t]}
+                  </button>
+                );
+              })}
+            </div>
           </CardHeader>
           <CardContent>
-            {invoices.length === 0 ? (
+            {loadingInvoices ? (
+              <div className="flex items-center justify-center py-8 text-gray-400">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                Laden…
+              </div>
+            ) : invoices.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p>Noch keine Rechnungen erstellt</p>
@@ -373,10 +566,11 @@ export default function BillingClient({
                   <TableRow>
                     <TableHead>Rechnungsnr.</TableHead>
                     <TableHead>Mitglied</TableHead>
+                    <TableHead>Typ</TableHead>
                     <TableHead>Betrag</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Fälligkeitsdatum</TableHead>
-                    <TableHead>Bezahlt am</TableHead>
+                    <TableHead>Fällig</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -385,24 +579,34 @@ export default function BillingClient({
                       <TableCell className="font-mono text-sm">{invoice.invoiceNumber}</TableCell>
                       <TableCell>{invoice.memberName}</TableCell>
                       <TableCell>
+                        {invoice.invoiceType ? (
+                          <InvoiceTypeBadge type={invoice.invoiceType} />
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {invoice.amount.toFixed(2)} {invoice.currency}
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${getStatusColor(invoice.status)} capitalize`}>
-                          {invoice.status === 'paid'
-                            ? 'Bezahlt'
-                            : invoice.status === 'open'
-                              ? 'Offen'
-                              : invoice.status === 'void'
-                                ? 'Storniert'
-                                : invoice.status}
-                        </Badge>
+                        <InvoiceStatusBadge status={invoice.status} />
                       </TableCell>
-                      <TableCell>{new Date(invoice.dueDate).toLocaleDateString('de-DE')}</TableCell>
                       <TableCell>
-                        {invoice.paidAt
-                          ? new Date(invoice.paidAt).toLocaleDateString('de-DE')
+                        {invoice.dueDate
+                          ? new Date(invoice.dueDate).toLocaleDateString('de-DE')
                           : '-'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {invoice.status === 'draft' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendInvoice(invoice.id)}
+                          >
+                            <Send className="h-3 w-3 mr-1" />
+                            Versenden
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -412,6 +616,109 @@ export default function BillingClient({
           </CardContent>
         </Card>
       )}
+
+      {/* Adhoc Invoice Dialog */}
+      <Dialog open={showAdhocDialog} onOpenChange={setShowAdhocDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Neue Zusatz-Rechnung</DialogTitle>
+            <DialogDescription>Erstelle eine manuelle Rechnung für ein Mitglied</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="adhoc-member">Mitglied *</Label>
+                <Select value={adhocMemberId} onValueChange={setAdhocMemberId}>
+                  <SelectTrigger id="adhoc-member">
+                    <SelectValue placeholder="Mitglied wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clubMembers.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name} ({m.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="adhoc-due">Fälligkeitsdatum *</Label>
+                <Input
+                  id="adhoc-due"
+                  type="date"
+                  value={adhocDueDate}
+                  onChange={(e) => setAdhocDueDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="adhoc-notes">Notizen</Label>
+              <Input
+                id="adhoc-notes"
+                value={adhocNotes}
+                onChange={(e) => setAdhocNotes(e.target.value)}
+                placeholder="Optionale Anmerkungen"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Positionen *</Label>
+                <Button type="button" size="sm" variant="outline" onClick={addItem}>
+                  <Plus className="h-3 w-3 mr-1" />
+                  Position hinzufügen
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {adhocItems.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-[1fr_80px_100px_36px] gap-2 items-center">
+                    <Input
+                      placeholder="Beschreibung"
+                      value={item.description}
+                      onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="Anz."
+                      value={item.quantity}
+                      onChange={(e) => updateItem(idx, 'quantity', parseInt(e.target.value, 10) || 1)}
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      placeholder="Preis €"
+                      value={item.unit_price}
+                      onChange={(e) => updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => removeItem(idx)}
+                      disabled={adhocItems.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-400" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 text-right text-sm font-medium text-gray-700">
+                Gesamt: {adhocTotal} €
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAdhocDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleSubmitAdhoc} disabled={submittingAdhoc}>
+              {submittingAdhoc && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Rechnung erstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
