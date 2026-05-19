@@ -149,6 +149,12 @@ export async function createSeasonInvoice(params: GenerateSeasonInvoiceParams): 
     .single();
   if (error) throw new Error(error.message);
 
+  if (params.installment_count > 1 && params.installment_due_dates.length !== params.installment_count) {
+    throw new Error(
+      `installment_due_dates length (${params.installment_due_dates.length}) must equal installment_count (${params.installment_count})`
+    );
+  }
+
   if (params.installment_count > 1) {
     const perInstallment = total_amount / params.installment_count;
     const installments = params.installment_due_dates.map((due_date, i) => ({
@@ -167,10 +173,12 @@ export async function createSeasonInvoice(params: GenerateSeasonInvoiceParams): 
 
 export async function sendInvoice(invoiceId: string): Promise<void> {
   const supabase = await createClient();
-  const { error } = await (supabase as any)
+  const { data, error } = await (supabase as any)
     .from('invoices')
     .update({ status: 'sent', sent_at: new Date().toISOString() })
     .eq('id', invoiceId)
-    .eq('status', 'draft');
+    .eq('status', 'draft')
+    .select('id');
   if (error) throw new Error(`Failed to send invoice: ${error.message}`);
+  if (!data || data.length === 0) throw new Error(`Invoice ${invoiceId} not found or not in draft status`);
 }

@@ -35,16 +35,6 @@ export async function processGroupChange(
     .maybeSingle();
   if (memberErr) throw new Error(`Failed to load membership: ${memberErr.message}`);
 
-  const { data: club, error: clubErr } = await (supabase as any)
-    .from('clubs')
-    .select('billing_unit_minutes')
-    .eq('id', params.club_id)
-    .single();
-  if (clubErr) throw new Error(`Failed to load club: ${clubErr.message}`);
-
-  // billing_unit_minutes is available for future duration-based calculations
-  const billingUnitMinutes: number = club?.billing_unit_minutes ?? 60; // eslint-disable-line @typescript-eslint/no-unused-vars
-  void billingUnitMinutes;
   const feeConfig = membership?.fee_configurations;
   const pricePerUnit: number = feeConfig?.amount ?? 0;
   const billingUnitsPerSession: number = feeConfig?.billing_unit_count ?? 1;
@@ -98,6 +88,9 @@ export async function processGroupChange(
     });
   }
 
-  const new_balance = balance.balance + net_delta;
+  // Re-fetch balance after entries to get the current value from DB
+  const { getMemberBalance } = await import('./member-balance.service');
+  const updatedBalance = await getMemberBalance(supabase as any, params.member_id, params.club_id);
+  const new_balance = updatedBalance?.balance ?? balance.balance + net_delta;
   return { credit_amount, charge_amount, net_delta, new_balance };
 }
