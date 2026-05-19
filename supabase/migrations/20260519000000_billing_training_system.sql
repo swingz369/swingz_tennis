@@ -32,11 +32,29 @@ ALTER TABLE invoice_items
   ADD COLUMN IF NOT EXISTS datev_account_number text;
 
 -- invoices: extend status enum to include billing workflow states
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM invoices
+    WHERE status NOT IN ('draft','sent','partially_paid','paid','overdue','dunning','reminder_sent','cancelled')
+  ) THEN
+    RAISE EXCEPTION 'invoices contains status values outside the new enum — cannot add constraint';
+  END IF;
+END $$;
+
 ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_status_check;
 ALTER TABLE invoices ADD CONSTRAINT invoices_status_check
   CHECK (status IN ('draft','sent','partially_paid','paid','overdue','dunning','reminder_sent','cancelled'));
 
 -- sessions: add holiday_cancelled status
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM sessions
+    WHERE status NOT IN ('scheduled','ongoing','completed','cancelled','holiday_cancelled')
+  ) THEN
+    RAISE EXCEPTION 'sessions contains status values outside the new enum — cannot add constraint';
+  END IF;
+END $$;
+
 ALTER TABLE sessions DROP CONSTRAINT IF EXISTS sessions_status_check;
 ALTER TABLE sessions ADD CONSTRAINT sessions_status_check
   CHECK (status IN ('scheduled','ongoing','completed','cancelled','holiday_cancelled'));
@@ -60,15 +78,9 @@ CREATE INDEX IF NOT EXISTS idx_school_holidays_dates ON school_holidays(start_da
 
 ALTER TABLE school_holidays ENABLE ROW LEVEL SECURITY;
 CREATE POLICY school_holidays_select_all ON school_holidays FOR SELECT USING (true);
+-- school_holidays are global reference data — only platform superadmins can write
 CREATE POLICY school_holidays_admin_manage ON school_holidays
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM user_club_memberships ucm
-      WHERE ucm.user_id = auth.uid()
-        AND ucm.is_active = true
-        AND ucm.role = 'superadmin'
-    )
-  );
+  FOR ALL USING (is_superadmin());
 
 -- ============================================
 -- 3. training_group_memberships table
@@ -226,9 +238,9 @@ CREATE OR REPLACE FUNCTION prevent_invoice_content_update()
 RETURNS TRIGGER AS $$
 BEGIN
   IF OLD.status IN ('sent','partially_paid','paid','overdue','dunning','reminder_sent') THEN
-    IF (NEW.subtotal <> OLD.subtotal OR
-        NEW.total_amount <> OLD.total_amount OR
-        NEW.invoice_date <> OLD.invoice_date OR
+    IF (NEW.subtotal IS DISTINCT FROM OLD.subtotal OR
+        NEW.total_amount IS DISTINCT FROM OLD.total_amount OR
+        NEW.invoice_date IS DISTINCT FROM OLD.invoice_date OR
         NEW.invoice_type IS DISTINCT FROM OLD.invoice_type) THEN
       RAISE EXCEPTION 'GoBD: Cannot modify content of sent invoice %', OLD.id;
     END IF;
