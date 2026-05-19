@@ -25,6 +25,25 @@ type OpeningHours = {
   sunday: { open: string; close: string };
 };
 
+const BUNDESLAENDER = [
+  'Baden-Württemberg',
+  'Bayern',
+  'Berlin',
+  'Brandenburg',
+  'Bremen',
+  'Hamburg',
+  'Hessen',
+  'Mecklenburg-Vorpommern',
+  'Niedersachsen',
+  'Nordrhein-Westfalen',
+  'Rheinland-Pfalz',
+  'Saarland',
+  'Sachsen',
+  'Sachsen-Anhalt',
+  'Schleswig-Holstein',
+  'Thüringen',
+] as const;
+
 type ClubSettings = {
   id: string;
   name: string;
@@ -32,6 +51,11 @@ type ClubSettings = {
   defaultHourlyRate?: number;
   status: 'active' | 'inactive' | 'suspended';
   openingHours: OpeningHours;
+  bundesland?: string;
+  billing_unit_minutes?: 45 | 60;
+  tax_rate?: number;
+  default_payment_method?: 'sepa' | 'transfer' | 'cash' | 'stripe';
+  invoice_number_prefix?: string;
 };
 
 type SystemSettings = {
@@ -61,6 +85,11 @@ export default function SettingsPage() {
       saturday: { open: '09:00', close: '22:00' },
       sunday: { open: '09:00', close: '22:00' },
     },
+    bundesland: undefined,
+    billing_unit_minutes: 60,
+    tax_rate: 0,
+    default_payment_method: 'transfer',
+    invoice_number_prefix: '',
   });
 
   // System settings state (superadmin only)
@@ -90,6 +119,15 @@ export default function SettingsPage() {
           maxMembers: clubData.club.maxMembers || 100,
           defaultHourlyRate: clubData.club.defaultHourlyRate || 15.0,
           status: clubData.club.status || 'active',
+          bundesland: clubData.club.bundesland ?? undefined,
+          billing_unit_minutes: clubData.club.billing_unit_minutes === 45 ? 45 : 60,
+          tax_rate: clubData.club.tax_rate ?? 0,
+          default_payment_method: (['sepa', 'transfer', 'cash', 'stripe'] as const).includes(
+            clubData.club.default_payment_method
+          )
+            ? clubData.club.default_payment_method
+            : 'transfer',
+          invoice_number_prefix: clubData.club.invoice_number_prefix ?? '',
         }));
       }
 
@@ -125,6 +163,11 @@ export default function SettingsPage() {
           defaultHourlyRate: clubSettings.defaultHourlyRate,
           openingHours: clubSettings.openingHours,
           status: clubSettings.status,
+          bundesland: clubSettings.bundesland,
+          billing_unit_minutes: clubSettings.billing_unit_minutes,
+          tax_rate: clubSettings.tax_rate,
+          default_payment_method: clubSettings.default_payment_method,
+          invoice_number_prefix: clubSettings.invoice_number_prefix,
         }),
       });
 
@@ -336,6 +379,111 @@ export default function SettingsPage() {
                     />
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Billing Configuration */}
+            <div>
+              <Label className="text-base font-semibold">Abrechnungskonfiguration</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <Label htmlFor="bundesland">Bundesland</Label>
+                  <Select
+                    value={clubSettings.bundesland ?? ''}
+                    onValueChange={(value) =>
+                      setClubSettings({ ...clubSettings, bundesland: value })
+                    }
+                  >
+                    <SelectTrigger id="bundesland">
+                      <SelectValue placeholder="Bundesland wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BUNDESLAENDER.map((bl) => (
+                        <SelectItem key={bl} value={bl}>
+                          {bl}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="billing_unit_minutes">Abrechnungseinheit</Label>
+                  <Select
+                    value={String(clubSettings.billing_unit_minutes ?? 60)}
+                    onValueChange={(value) =>
+                      setClubSettings({
+                        ...clubSettings,
+                        billing_unit_minutes: Number(value) as 45 | 60,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="billing_unit_minutes">
+                      <SelectValue placeholder="Einheit wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="45">45 Minuten</SelectItem>
+                      <SelectItem value="60">60 Minuten</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="tax_rate">Steuersatz (%)</Label>
+                  <Input
+                    id="tax_rate"
+                    type="number"
+                    min={0}
+                    max={19}
+                    value={clubSettings.tax_rate ?? 0}
+                    onChange={(e) =>
+                      setClubSettings({
+                        ...clubSettings,
+                        tax_rate: Math.min(19, Math.max(0, parseInt(e.target.value) || 0)),
+                      })
+                    }
+                    placeholder="0 für gemeinnützige e.V."
+                    className="w-48"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="default_payment_method">Zahlungsweg</Label>
+                  <Select
+                    value={clubSettings.default_payment_method ?? 'transfer'}
+                    onValueChange={(value: 'sepa' | 'transfer' | 'cash' | 'stripe') =>
+                      setClubSettings({ ...clubSettings, default_payment_method: value })
+                    }
+                  >
+                    <SelectTrigger id="default_payment_method">
+                      <SelectValue placeholder="Zahlungsweg wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sepa">SEPA-Lastschrift</SelectItem>
+                      <SelectItem value="transfer">Überweisung</SelectItem>
+                      <SelectItem value="cash">Barzahlung</SelectItem>
+                      <SelectItem value="stripe">Stripe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="invoice_number_prefix">Rechnungsnummer-Präfix</Label>
+                  <Input
+                    id="invoice_number_prefix"
+                    type="text"
+                    maxLength={10}
+                    value={clubSettings.invoice_number_prefix ?? ''}
+                    onChange={(e) =>
+                      setClubSettings({
+                        ...clubSettings,
+                        invoice_number_prefix: e.target.value.slice(0, 10),
+                      })
+                    }
+                    placeholder="z.B. RE-2025-"
+                    className="w-48"
+                  />
+                </div>
               </div>
             </div>
 

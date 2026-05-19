@@ -35,6 +35,11 @@ export const clubs = pgTable(
     default_hourly_rate: numeric('default_hourly_rate', { precision: 10, scale: 2 })
       .notNull()
       .default('15.00'),
+    bundesland: varchar('bundesland', { length: 50 }),
+    billing_unit_minutes: integer('billing_unit_minutes').default(60),
+    tax_rate: integer('tax_rate').default(0),
+    default_payment_method: varchar('default_payment_method', { length: 20 }).default('transfer'),
+    invoice_number_prefix: varchar('invoice_number_prefix', { length: 10 }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),

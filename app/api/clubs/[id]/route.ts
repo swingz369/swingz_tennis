@@ -33,12 +33,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       const { getDb } = await import('@/infrastructure/persistence/client');
       const db2 = getDb();
       const result = await db2
-        .select({ default_hourly_rate: clubs.default_hourly_rate })
+        .select({
+          default_hourly_rate: clubs.default_hourly_rate,
+          bundesland: clubs.bundesland,
+          billing_unit_minutes: clubs.billing_unit_minutes,
+          tax_rate: clubs.tax_rate,
+          default_payment_method: clubs.default_payment_method,
+          invoice_number_prefix: clubs.invoice_number_prefix,
+        })
         .from(clubs)
         .where(eq(clubs.id, id))
         .limit(1);
-      const rawRate = result[0]?.default_hourly_rate;
-      const defaultHourlyRate = rawRate ? Number(rawRate) : 15.0;
+      const row = result[0];
+      const defaultHourlyRate = row?.default_hourly_rate ? Number(row.default_hourly_rate) : 15.0;
 
       return NextResponse.json({
         id: club.getId().getValue(),
@@ -48,6 +55,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         status: club.getStatus(),
         memberCount: club.getMemberCount(),
         defaultHourlyRate,
+        bundesland: row?.bundesland ?? null,
+        billing_unit_minutes: row?.billing_unit_minutes ?? 60,
+        tax_rate: row?.tax_rate ?? 0,
+        default_payment_method: row?.default_payment_method ?? 'transfer',
+        invoice_number_prefix: row?.invoice_number_prefix ?? '',
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -96,12 +108,35 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         // Save domain changes
         await clubRepo.save(existing);
 
-        if (input.defaultHourlyRate !== undefined) {
+        const hasExtraUpdates =
+          input.defaultHourlyRate !== undefined ||
+          input.bundesland !== undefined ||
+          input.billing_unit_minutes !== undefined ||
+          input.tax_rate !== undefined ||
+          input.default_payment_method !== undefined ||
+          input.invoice_number_prefix !== undefined;
+
+        if (hasExtraUpdates) {
           const { getDb } = await import('@/infrastructure/persistence/client');
           const db = getDb();
           await db
             .update(clubs)
-            .set({ default_hourly_rate: input.defaultHourlyRate.toFixed(2) })
+            .set({
+              ...(input.defaultHourlyRate !== undefined && {
+                default_hourly_rate: input.defaultHourlyRate.toFixed(2),
+              }),
+              ...(input.bundesland !== undefined && { bundesland: input.bundesland }),
+              ...(input.billing_unit_minutes !== undefined && {
+                billing_unit_minutes: input.billing_unit_minutes,
+              }),
+              ...(input.tax_rate !== undefined && { tax_rate: input.tax_rate }),
+              ...(input.default_payment_method !== undefined && {
+                default_payment_method: input.default_payment_method,
+              }),
+              ...(input.invoice_number_prefix !== undefined && {
+                invoice_number_prefix: input.invoice_number_prefix,
+              }),
+            })
             .where(eq(clubs.id, clubId.getValue()));
         }
 

@@ -71,6 +71,13 @@ export const createClubSchema = z.object({
 
 export const updateClubSchema = createClubSchema.partial().extend({
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
+  bundesland: z.string().max(50).optional(),
+  billing_unit_minutes: z.coerce.number().int().refine((v) => v === 45 || v === 60, {
+    message: 'billing_unit_minutes must be 45 or 60',
+  }).optional(),
+  tax_rate: z.coerce.number().int().min(0).max(19).optional(),
+  default_payment_method: z.enum(['sepa', 'transfer', 'cash', 'stripe']).optional(),
+  invoice_number_prefix: z.string().max(10).optional(),
 });
 
 // ============================================

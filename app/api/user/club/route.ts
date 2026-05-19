@@ -17,7 +17,9 @@ export async function GET(_req: NextRequest) {
 
     const { data: memberships, error: membershipError } = await auth.supabase
       .from('user_club_memberships')
-      .select('club_id, clubs (id, name, max_members, default_hourly_rate, status)')
+      .select(
+        'club_id, clubs (id, name, max_members, default_hourly_rate, status, bundesland, billing_unit_minutes, tax_rate, default_payment_method, invoice_number_prefix)'
+      )
       .eq('user_id', auth.user.id)
       .eq('is_active', true)
       .limit(1);
@@ -27,12 +29,17 @@ export async function GET(_req: NextRequest) {
     }
 
     const membership = memberships[0];
-    const club = membership.clubs as {
+    const club = membership.clubs as unknown as {
       id: string;
       name: string;
       max_members: number;
       default_hourly_rate: number;
       status: string;
+      bundesland: string | null;
+      billing_unit_minutes: number | null;
+      tax_rate: number | null;
+      default_payment_method: string | null;
+      invoice_number_prefix: string | null;
     };
     return NextResponse.json({
       clubId: membership.club_id,
@@ -42,6 +49,11 @@ export async function GET(_req: NextRequest) {
         maxMembers: club.max_members,
         defaultHourlyRate: club.default_hourly_rate || 15.0,
         status: club.status,
+        bundesland: club.bundesland ?? null,
+        billing_unit_minutes: club.billing_unit_minutes ?? 60,
+        tax_rate: club.tax_rate ?? 0,
+        default_payment_method: club.default_payment_method ?? 'transfer',
+        invoice_number_prefix: club.invoice_number_prefix ?? '',
       },
     });
   });
