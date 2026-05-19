@@ -189,7 +189,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors z-10"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                   >
