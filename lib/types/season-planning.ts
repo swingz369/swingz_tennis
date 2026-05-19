@@ -43,6 +43,7 @@ export const PlanningStatus = {
   COLLECTING_PREFERENCES: 'collecting_preferences',
   AUTO_PLANNING: 'auto_planning',
   MANUAL_REVIEW: 'manual_review',
+  INVOICES_GENERATED: 'invoices_generated',
   PUBLISHED: 'published',
   ACTIVE: 'active',
   COMPLETED: 'completed',
