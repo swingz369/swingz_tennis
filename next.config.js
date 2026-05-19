@@ -3,9 +3,10 @@
 const isDev = process.env.NODE_ENV === 'development';
 
 // script-src: unsafe-eval is only needed in development (HMR / eval-source-maps).
-// unsafe-inline is removed entirely — it defeats XSS protection.
+// unsafe-inline is required for Next.js __NEXT_DATA__ and hydration scripts.
 const scriptSrc = [
   "'self'",
+  "'unsafe-inline'",
   ...(isDev ? ["'unsafe-eval'"] : []),
   'https://www.googletagmanager.com',
   'https://cdn.fontshare.com',

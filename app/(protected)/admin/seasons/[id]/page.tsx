@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,12 +20,11 @@ import {
 import type { SeasonWithStats } from '@/lib/types/season-planning';
 
 interface SeasonDetailPageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
+  const { id } = use(params);
   const router = useRouter();
   const [season, setSeason] = useState<SeasonWithStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +33,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const fetchSeason = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/seasons/${params.id}`);
+      const response = await fetch(`/api/seasons/${id}`);
 
       if (!response.ok) {
         throw new Error('Fehler beim Laden der Season');
@@ -47,15 +46,15 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     fetchSeason();
-  }, [params.id, fetchSeason]);
+  }, [id, fetchSeason]);
 
   const handleOpenPreferences = async () => {
     try {
-      const response = await fetch(`/api/seasons/${params.id}`, {
+      const response = await fetch(`/api/seasons/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -76,7 +75,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     if (!confirm('Möchten Sie die automatische Planung starten?')) return;
 
     try {
-      router.push(`/admin/seasons/${params.id}/auto-plan`);
+      router.push(`/admin/seasons/${id}/auto-plan`);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Fehler');
     }
@@ -86,7 +85,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     if (!confirm('Möchten Sie diese Season veröffentlichen?')) return;
 
     try {
-      const response = await fetch(`/api/seasons/${params.id}`, {
+      const response = await fetch(`/api/seasons/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ planning_status: 'published' }),
@@ -160,7 +159,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => router.push(`/admin/seasons/${params.id}/edit`)}>
+          <Button variant="outline" onClick={() => router.push(`/admin/seasons/${id}/edit`)}>
             <Settings className="mr-2 h-4 w-4" />
             Bearbeiten
           </Button>
@@ -315,7 +314,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => router.push(`/admin/seasons/${params.id}/preferences`)}>
+              <Button onClick={() => router.push(`/admin/seasons/${id}/preferences`)}>
                 Alle Präferenzen anzeigen
               </Button>
             </CardContent>
@@ -329,7 +328,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               <CardDescription>Geplante Training-Sessions für diese Season</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => router.push(`/admin/seasons/${params.id}/plan`)}>
+              <Button onClick={() => router.push(`/admin/seasons/${id}/plan`)}>
                 Plan anzeigen
               </Button>
             </CardContent>
@@ -350,7 +349,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
                   <p className="text-sm text-muted-foreground">Die Planung ist konfliktfrei</p>
                 </div>
               ) : (
-                <Button onClick={() => router.push(`/admin/seasons/${params.id}/conflicts`)}>
+                <Button onClick={() => router.push(`/admin/seasons/${id}/conflicts`)}>
                   Konflikte anzeigen ({season.open_conflicts})
                 </Button>
               )}
