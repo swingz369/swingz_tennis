@@ -49,27 +49,20 @@ export async function addBalanceEntry(
     created_by?: string;
   }
 ): Promise<MemberBalanceEntry> {
-  const { data: entry, error: entryError } = await supabase
-    .from('member_balance_entries')
-    .insert({
-      member_balance_id: params.member_balance_id,
-      amount: params.amount,
-      reason: params.reason,
-      reference_type: params.reference_type ?? null,
-      reference_id: params.reference_id ?? null,
-      created_by: params.created_by ?? null,
-    })
-    .select()
-    .single();
-
-  if (entryError) throw new Error(`Failed to create balance entry: ${entryError.message}`);
-
-  const { error: rpcError } = await supabase.rpc('increment_member_balance', {
+  const { data, error } = await supabase.rpc('add_balance_entry_atomic', {
     p_balance_id: params.member_balance_id,
     p_amount: params.amount,
+    p_reason: params.reason,
+    p_reference_type: params.reference_type ?? null,
+    p_reference_id: params.reference_id ?? null,
+    p_created_by: params.created_by ?? null,
   });
 
-  if (rpcError) throw new Error(`Failed to update balance: ${rpcError.message}`);
+  if (error) throw new Error(`Failed to create balance entry: ${error.message}`);
+
+  // rpc returns array for RETURNS TABLE functions
+  const entry = Array.isArray(data) ? data[0] : data;
+  if (!entry) throw new Error('Balance entry creation returned no data');
 
   return entry as MemberBalanceEntry;
 }
