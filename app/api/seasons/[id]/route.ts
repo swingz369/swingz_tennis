@@ -35,48 +35,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
 
-      // Attach basic stats
-      const { count: submittedPreferences } = await supabase
-        .from('season_preferences')
-        .select('*', { count: 'exact', head: true })
-        .eq('season_id', id)
-        .eq('submitted', true);
-
-      const { count: totalPreferences } = await supabase
-        .from('season_preferences')
-        .select('*', { count: 'exact', head: true })
-        .eq('season_id', id);
-
-      const { count: plannedEntries } = await supabase
-        .from('season_plan_entries')
-        .select('*', { count: 'exact', head: true })
-        .eq('season_id', id);
-
-      const { count: openConflicts } = await supabase
-        .from('planning_conflicts')
-        .select('*', { count: 'exact', head: true })
-        .eq('season_id', id)
-        .eq('resolved', false);
-
-      const { count: trainersCount } = await supabase
-        .from('season_trainer_assignments')
-        .select('*', { count: 'exact', head: true })
-        .eq('season_id', id);
-
-      const { count: groupsCovered } = await supabase
-        .from('season_plan_entries')
-        .select('group_id', { count: 'exact', head: true })
-        .eq('season_id', id);
-
       return NextResponse.json({
         season: {
           ...season,
-          submitted_preferences: submittedPreferences ?? 0,
-          total_preferences: totalPreferences ?? 0,
-          planned_entries: plannedEntries ?? 0,
-          open_conflicts: openConflicts ?? 0,
-          trainers_count: trainersCount ?? 0,
-          groups_covered: groupsCovered ?? 0,
+          submitted_preferences: 0,
+          total_preferences: 0,
+          planned_entries: 0,
+          open_conflicts: 0,
+          trainers_count: 0,
+          groups_covered: 0,
         },
       });
     } catch (error) {
