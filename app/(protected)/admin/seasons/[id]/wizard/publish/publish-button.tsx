@@ -1,32 +1,32 @@
-'use client'
-import { useState } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+'use client';
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export function PublishButton({ seasonId }: { seasonId: string }) {
-  const [publishing, setPublishing] = useState(false)
-  const [published, setPublished] = useState(false)
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(false);
 
   async function publish() {
-    setPublishing(true)
+    setPublishing(true);
     try {
       const res = await fetch(`/api/seasons/${seasonId}/planning/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ acceptedWarnings: [] }),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler beim Veröffentlichen')
-        setPublishing(false)
-        return
+        toast.error(data.error ?? 'Fehler beim Veröffentlichen');
+        setPublishing(false);
+        return;
       }
-      toast.success('Saison erfolgreich veröffentlicht')
-      setPublished(true)
+      toast.success('Saison erfolgreich veröffentlicht');
+      setPublished(true);
     } catch {
-      toast.error('Netzwerkfehler')
-      setPublishing(false)
+      toast.error('Netzwerkfehler');
+      setPublishing(false);
     }
   }
 
@@ -41,12 +41,12 @@ export function PublishButton({ seasonId }: { seasonId: string }) {
           Zur Saison-Übersicht →
         </Link>
       </div>
-    )
+    );
   }
 
   return (
     <Button onClick={publish} disabled={publishing} size="lg">
       {publishing ? 'Veröffentlichen...' : 'Saison veröffentlichen'}
     </Button>
-  )
+  );
 }

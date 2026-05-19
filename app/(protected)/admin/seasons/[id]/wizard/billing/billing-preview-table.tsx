@@ -1,9 +1,9 @@
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -11,57 +11,55 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { toast } from 'sonner'
+} from '@/components/ui/table';
+import { toast } from 'sonner';
 
 type PreviewItem = {
-  memberId: string
-  memberName: string
-  groupId: string
-  amount: number
-  feeConfigId: string | null
-  billingCycle: string
-  installments: number
-}
+  memberId: string;
+  memberName: string;
+  groupId: string;
+  amount: number;
+  feeConfigId: string | null;
+  billingCycle: string;
+  installments: number;
+};
 
 type EditableItem = PreviewItem & {
-  editAmount: string
-  editInstallments: string
-}
+  editAmount: string;
+  editInstallments: string;
+};
 
 export function BillingPreviewTable({
   seasonId,
   preview,
 }: {
-  seasonId: string
-  preview: PreviewItem[]
+  seasonId: string;
+  preview: PreviewItem[];
 }) {
-  const router = useRouter()
+  const router = useRouter();
   const [items, setItems] = useState<EditableItem[]>(
     preview.map((p) => ({
       ...p,
       editAmount: String(p.amount),
       editInstallments: String(p.installments),
     }))
-  )
-  const [generating, setGenerating] = useState(false)
+  );
+  const [generating, setGenerating] = useState(false);
 
   function updateAmount(memberId: string, value: string) {
     setItems((prev) =>
       prev.map((item) => (item.memberId === memberId ? { ...item, editAmount: value } : item))
-    )
+    );
   }
 
   function updateInstallments(memberId: string, value: string) {
     setItems((prev) =>
-      prev.map((item) =>
-        item.memberId === memberId ? { ...item, editInstallments: value } : item
-      )
-    )
+      prev.map((item) => (item.memberId === memberId ? { ...item, editInstallments: value } : item))
+    );
   }
 
   async function generateInvoices() {
-    setGenerating(true)
+    setGenerating(true);
     const payload = items.map((item) => ({
       memberId: item.memberId,
       memberName: item.memberName,
@@ -74,26 +72,26 @@ export function BillingPreviewTable({
         amount: parseFloat(item.editAmount) || item.amount,
         installments: parseInt(item.editInstallments, 10) || item.installments,
       },
-    }))
+    }));
 
     try {
       const res = await fetch(`/api/seasons/${seasonId}/wizard/billing-generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Fehler beim Generieren der Rechnungen')
-        setGenerating(false)
-        return
+        toast.error(data.error ?? 'Fehler beim Generieren der Rechnungen');
+        setGenerating(false);
+        return;
       }
-      toast.success(`${data.generated} Rechnung(en) erstellt`)
-      router.push(`/admin/seasons/${seasonId}/wizard/publish`)
-      router.refresh()
+      toast.success(`${data.generated} Rechnung(en) erstellt`);
+      router.push(`/admin/seasons/${seasonId}/wizard/publish`);
+      router.refresh();
     } catch {
-      toast.error('Netzwerkfehler')
-      setGenerating(false)
+      toast.error('Netzwerkfehler');
+      setGenerating(false);
     }
   }
 
@@ -119,9 +117,7 @@ export function BillingPreviewTable({
             ) : (
               items.map((item) => (
                 <TableRow key={item.memberId}>
-                  <TableCell className="font-medium">
-                    {item.memberName || item.memberId}
-                  </TableCell>
+                  <TableCell className="font-medium">{item.memberName || item.memberId}</TableCell>
                   <TableCell>
                     <Input
                       type="number"
@@ -165,5 +161,5 @@ export function BillingPreviewTable({
         </Button>
       </div>
     </div>
-  )
+  );
 }

@@ -1,10 +1,10 @@
 export const WIZARD_STEPS = [
   { label: 'Einstellungen', href: 'preferences' },
-  { label: 'Gruppen',       href: 'groups' },
-  { label: 'Plan',          href: 'plan' },
-  { label: 'Billing',       href: 'billing' },
+  { label: 'Gruppen', href: 'groups' },
+  { label: 'Plan', href: 'plan' },
+  { label: 'Billing', href: 'billing' },
   { label: 'Veröffentlichen', href: 'publish' },
-] as const
+] as const;
 
 const STATUS_TO_STEP: Record<string, number> = {
   draft: 0,
@@ -16,8 +16,8 @@ const STATUS_TO_STEP: Record<string, number> = {
   active: 4,
   completed: 4,
   archived: 4,
-}
+};
 
 export function getActiveStep(status: string): number {
-  return STATUS_TO_STEP[status] ?? 0
+  return STATUS_TO_STEP[status] ?? 0;
 }

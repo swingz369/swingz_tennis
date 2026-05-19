@@ -1,38 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth'
-import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit'
+import { NextRequest, NextResponse } from 'next/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD)
-  if (rateLimitError) return rateLimitError
-  const { id } = await params
+  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+  if (rateLimitError) return rateLimitError;
+  const { id } = await params;
   return withApiAuth(request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin')
-    if (!hasPermission) return forbiddenResponse('Admin access required')
-    const body = await request.json()
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) return forbiddenResponse('Admin access required');
+    const body = await request.json();
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .update(body)
       .eq('id', id)
       .eq('club_id', auth.clubId)
       .select()
-      .single()
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json(data)
-  })
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD)
-  if (rateLimitError) return rateLimitError
-  const { id } = await params
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+  if (rateLimitError) return rateLimitError;
+  const { id } = await params;
   return withApiAuth(request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'admin')
-    if (!hasPermission) return forbiddenResponse('Admin access required')
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) return forbiddenResponse('Admin access required');
     const { error } = await (auth.supabase.from('training_groups') as any)
       .delete()
       .eq('id', id)
-      .eq('club_id', auth.clubId)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return new NextResponse(null, { status: 204 })
-  })
+      .eq('club_id', auth.clubId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return new NextResponse(null, { status: 204 });
+  });
 }
