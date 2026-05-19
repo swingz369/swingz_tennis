@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/api-auth';
+
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(request: NextRequest, context: RouteContext) {
+  const auth = await requireAuth(request);
+  if (!auth.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { supabase } = auth;
+
+  const { id: seasonId } = await context.params;
+  const clubId = request.nextUrl.searchParams.get('clubId');
+  if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
+
+  // Fetch distinct groups used in plan entries for this season
+  const { data: entries, error } = await (supabase as any)
+    .from('season_plan_entries')
+    .select('group_id')
+    .eq('season_id', seasonId)
+    .eq('club_id', clubId)
+    .not('group_id', 'is', null);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const groupIds: string[] = [
+    ...new Set<string>((entries ?? []).map((e: any) => e.group_id as string)),
+  ];
+
+  if (groupIds.length === 0) return NextResponse.json({ groups: [] });
+
+  const { data: groups, error: gErr } = await (supabase as any)
+    .from('training_groups')
+    .select('id, name, age_group, level')
+    .in('id', groupIds)
+    .eq('is_active', true);
+
+  if (gErr) return NextResponse.json({ error: gErr.message }, { status: 500 });
+
+  return NextResponse.json({ groups: groups ?? [] });
+}

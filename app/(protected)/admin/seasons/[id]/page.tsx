@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   ArrowLeft,
   Users,
@@ -18,6 +20,309 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
+
+function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId: string }) {
+  const [installmentCount, setInstallmentCount] = useState(1);
+  const [dueDates, setDueDates] = useState<string[]>(['']);
+  const [generating, setGenerating] = useState(false);
+  const [result, setResult] = useState<{ created: number; errors: string[] } | null>(null);
+
+  useEffect(() => {
+    setDueDates((prev) => {
+      const arr = [...prev];
+      while (arr.length < installmentCount) arr.push('');
+      return arr.slice(0, installmentCount);
+    });
+  }, [installmentCount]);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setResult(null);
+    try {
+      const res = await fetch('/api/billing/generate-season-invoices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          club_id: clubId,
+          season_id: seasonId,
+          installment_count: installmentCount,
+          installment_due_dates: installmentCount > 1 ? dueDates : [],
+          due_date: dueDates[0] ?? '',
+        }),
+      });
+      const data = await res.json();
+      setResult(data);
+    } catch {
+      setResult({ created: 0, errors: ['Netzwerkfehler'] });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Saison-Rechnungen</CardTitle>
+        <CardDescription>Rechnungen für alle Mitglieder dieser Saison generieren</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <Label htmlFor="installment_count">Raten</Label>
+            <select
+              id="installment_count"
+              value={installmentCount}
+              onChange={(e) => setInstallmentCount(Number(e.target.value))}
+              className="mt-1 block rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-500"
+            >
+              <option value={1}>1 Rate</option>
+              <option value={2}>2 Raten</option>
+              <option value={3}>3 Raten</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {dueDates.map((date, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Label htmlFor={`due_date_${i}`} className="w-32 shrink-0">
+                {installmentCount === 1 ? 'Fälligkeitsdatum' : `Rate ${i + 1} fällig`}
+              </Label>
+              <Input
+                id={`due_date_${i}`}
+                type="date"
+                value={date}
+                onChange={(e) => {
+                  const updated = [...dueDates];
+                  updated[i] = e.target.value;
+                  setDueDates(updated);
+                }}
+                className="max-w-xs"
+              />
+            </div>
+          ))}
+        </div>
+
+        <Button onClick={handleGenerate} disabled={generating || !dueDates[0]}>
+          {generating ? 'Generiere…' : 'Rechnungen generieren'}
+        </Button>
+
+        {result && (
+          <div className="mt-2 space-y-1">
+            <p className="text-sm font-medium text-green-600">
+              {result.created} Rechnung{result.created !== 1 ? 'en' : ''} erstellt
+            </p>
+            {result.errors && result.errors.length > 0 && (
+              <ul className="text-sm text-red-600 space-y-0.5">
+                {result.errors.map((e, i) => (
+                  <li key={i}>{e}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface TrainingGroup {
+  id: string;
+  name: string;
+  age_group: string;
+  level: string;
+}
+
+function GroupChangeDialog({
+  memberId,
+  currentGroupId,
+  currentGroupName,
+  clubId,
+  groups,
+  onSuccess,
+}: {
+  memberId: string;
+  currentGroupId: string;
+  currentGroupName: string;
+  clubId: string;
+  groups: TrainingGroup[];
+  onSuccess: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [newGroupId, setNewGroupId] = useState('');
+  const [changeDate, setChangeDate] = useState(new Date().toISOString().split('T')[0]);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ net_delta: number } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const otherGroups = groups.filter((g) => g.id !== currentGroupId);
+
+  const handleSubmit = async () => {
+    if (!newGroupId) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch('/api/billing/group-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          club_id: clubId,
+          member_id: memberId,
+          old_group_id: currentGroupId,
+          new_group_id: newGroupId,
+          change_date: changeDate,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErr(data.error ?? 'Fehler beim Gruppenwechsel');
+      } else {
+        setResult(data.data);
+        onSuccess();
+      }
+    } catch {
+      setErr('Netzwerkfehler');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        Wechseln
+      </Button>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Gruppenwechsel</CardTitle>
+          <CardDescription>Mitglied in eine andere Gruppe wechseln lassen</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Aktuelle Gruppe</Label>
+            <p className="mt-1 text-sm font-medium">{currentGroupName}</p>
+          </div>
+          <div>
+            <Label htmlFor="new_group">Neue Gruppe</Label>
+            <select
+              id="new_group"
+              value={newGroupId}
+              onChange={(e) => setNewGroupId(e.target.value)}
+              className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-500"
+            >
+              <option value="">Gruppe wählen…</option>
+              {otherGroups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name} ({g.age_group} / {g.level})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor="change_date">Wechseldatum</Label>
+            <Input
+              id="change_date"
+              type="date"
+              value={changeDate}
+              onChange={(e) => setChangeDate(e.target.value)}
+              className="mt-1 max-w-xs"
+            />
+          </div>
+          {err && <p className="text-sm text-red-600">{err}</p>}
+          {result && (
+            <p className="text-sm font-medium text-green-600">
+              Wechsel durchgeführt. Netto: {result.net_delta >= 0 ? '+' : ''}
+              {result.net_delta.toFixed(2)} €
+            </p>
+          )}
+          <div className="flex gap-2 pt-2">
+            <Button onClick={handleSubmit} disabled={loading || !newGroupId}>
+              {loading ? 'Wird ausgeführt…' : 'Wechsel durchführen'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setOpen(false);
+                setResult(null);
+                setErr(null);
+                setNewGroupId('');
+              }}
+            >
+              Abbrechen
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function GroupMembersPanel({ seasonId, clubId }: { seasonId: string; clubId: string }) {
+  const [groups, setGroups] = useState<TrainingGroup[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/seasons/${seasonId}/groups?clubId=${clubId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setGroups(data.groups ?? []);
+        }
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+    load();
+  }, [seasonId, clubId]);
+
+  if (loadingGroups) {
+    return <p className="text-sm text-muted-foreground">Lade Gruppen…</p>;
+  }
+
+  if (groups.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Keine Gruppen für diese Saison gefunden. Bitte zuerst eine Planung veröffentlichen.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {groups.map((group) => (
+        <Card key={group.id}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">
+              {group.name}
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {group.age_group} / {group.level}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <GroupChangeDialog
+              memberId=""
+              currentGroupId={group.id}
+              currentGroupName={group.name}
+              clubId={clubId}
+              groups={groups}
+              onSuccess={() => {}}
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Wähle oben ein Mitglied aus, um einen Gruppenwechsel durchzuführen.
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 interface SeasonDetailPageProps {
   params: Promise<{ id: string }>;
@@ -255,6 +560,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           </TabsTrigger>
           <TabsTrigger value="plan">Plan ({season.planned_entries})</TabsTrigger>
           <TabsTrigger value="conflicts">Konflikte ({season.open_conflicts})</TabsTrigger>
+          <TabsTrigger value="group-change">Gruppenwechsel</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -303,6 +609,8 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               )}
             </CardContent>
           </Card>
+
+          <SeasonInvoiceGenerator seasonId={id} clubId={season.club_id ?? ''} />
         </TabsContent>
 
         <TabsContent value="preferences">
@@ -353,6 +661,21 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
                   Konflikte anzeigen ({season.open_conflicts})
                 </Button>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="group-change">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gruppenwechsel</CardTitle>
+              <CardDescription>
+                Mitglieder zwischen Trainingsgruppen dieser Saison verschieben und Abrechnung
+                automatisch anpassen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <GroupMembersPanel seasonId={id} clubId={season.club_id ?? ''} />
             </CardContent>
           </Card>
         </TabsContent>

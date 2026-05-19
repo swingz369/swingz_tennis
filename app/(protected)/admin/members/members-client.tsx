@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,19 @@ import { Eye, UserCheck, UserX, Search, Download, UserPlus } from 'lucide-react'
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
 import type { Member } from './member.types';
+
+function BalanceDisplay({ balance }: { balance: number }) {
+  const isCredit = balance > 0;
+  const isDebt = balance < 0;
+  return (
+    <span
+      className={`text-sm font-medium ${isCredit ? 'text-green-600' : isDebt ? 'text-red-600' : 'text-gray-400'}`}
+    >
+      {balance >= 0 ? '+' : ''}
+      {balance.toFixed(2)} €
+    </span>
+  );
+}
 
 interface MembersClientProps {
   initialMembers: Member[];
@@ -22,12 +35,34 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [balances, setBalances] = useState<Record<string, number>>({});
   const [inviteForm, setInviteForm] = useState({
     email: '',
     full_name: '',
     role: 'member' as 'member' | 'trainer' | 'admin',
   });
   const [inviteLoading, setInviteLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchBalances = async () => {
+      const results: Record<string, number> = {};
+      await Promise.all(
+        initialMembers.map(async (member) => {
+          try {
+            const res = await fetch(`/api/billing/balance?memberId=${member.id}&clubId=${clubId}`);
+            if (res.ok) {
+              const data = await res.json();
+              results[member.id] = typeof data.balance === 'number' ? data.balance : 0;
+            }
+          } catch {
+            // silently skip
+          }
+        })
+      );
+      setBalances(results);
+    };
+    fetchBalances();
+  }, [initialMembers, clubId]);
 
   // Filter members
   const filteredMembers = members.filter((member) => {
@@ -219,6 +254,9 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                 <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
                   Beigetreten
                 </th>
+                <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                  Guthaben
+                </th>
                 <th className="px-4 md:px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Aktionen
                 </th>
@@ -228,7 +266,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
               {filteredMembers.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-4 md:px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     Keine Mitglieder gefunden
@@ -278,6 +316,13 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                     </td>
                     <td className="px-4 md:px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400 hidden md:table-cell">
                       {formatDate(member.joined_at)}
+                    </td>
+                    <td className="px-4 md:px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      {member.id in balances ? (
+                        <BalanceDisplay balance={balances[member.id]} />
+                      ) : (
+                        <span className="text-xs text-gray-400">…</span>
+                      )}
                     </td>
                     <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2">
