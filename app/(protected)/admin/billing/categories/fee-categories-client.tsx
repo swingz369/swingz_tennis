@@ -1,0 +1,123 @@
+'use client';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface FeeConfig {
+  id: string; name: string; type: string; amount: number;
+  billing_cycle: string; billing_unit_count: number; is_active: boolean;
+}
+
+export default function FeeCategoriesClient({
+  clubId,
+  initialCategories,
+}: {
+  clubId: string;
+  initialCategories: FeeConfig[];
+}) {
+  const [categories, setCategories] = useState<FeeConfig[]>(initialCategories);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({
+    name: '', type: 'training', amount: 0, billing_unit_count: 1,
+  });
+
+  const handleCreate = async () => {
+    const res = await fetch('/api/admin/fee-categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, club_id: clubId }),
+    });
+    if (res.ok) {
+      const { data } = await res.json();
+      setCategories((prev) => [...prev, data]);
+      setCreating(false);
+      setForm({ name: '', type: 'training', amount: 0, billing_unit_count: 1 });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Preiskategorien</h1>
+        <Button onClick={() => setCreating(true)}>Neue Kategorie</Button>
+      </div>
+
+      {creating && (
+        <Card>
+          <CardContent className="pt-4 space-y-3">
+            <Input
+              placeholder="Name (z.B. Erwachsene)"
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+            />
+            <select
+              value={form.type}
+              onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            >
+              <option value="training">Training</option>
+              <option value="membership">Mitgliedschaft</option>
+            </select>
+            <Input
+              type="number"
+              placeholder="Preis (€)"
+              value={form.amount}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, amount: parseFloat(e.target.value) || 0 }))
+              }
+            />
+            <Input
+              type="number"
+              placeholder="Abrechnungseinheiten pro Session"
+              value={form.billing_unit_count}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, billing_unit_count: parseInt(e.target.value) || 1 }))
+              }
+            />
+            <div className="flex gap-2">
+              <Button onClick={handleCreate}>Speichern</Button>
+              <Button variant="outline" onClick={() => setCreating(false)}>
+                Abbrechen
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">Kategorien</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {categories.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Noch keine Kategorien angelegt.</p>
+          ) : (
+            <div className="divide-y">
+              {categories.map((cat) => (
+                <div key={cat.id} className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-sm font-medium">{cat.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {cat.type === 'training' ? 'Training' : 'Mitgliedschaft'} ·{' '}
+                      {cat.amount.toFixed(2)} € · {cat.billing_unit_count} Einheit(en)
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      cat.is_active
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {cat.is_active ? 'Aktiv' : 'Inaktiv'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
