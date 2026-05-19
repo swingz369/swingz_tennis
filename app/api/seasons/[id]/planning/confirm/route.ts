@@ -8,6 +8,7 @@ import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { getDb } from '@/src/infrastructure/persistence/client';
 import { seasons, seasonPlanEntries, sessions } from '@/src/infrastructure/persistence/schema';
+import { markHolidaySessions } from '@/lib/services/school-holidays.service';
 // seasonWaitlists not needed in confirm route — waitlist data is in plan entries
 import { eq } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
@@ -147,6 +148,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         // TODO: Log to season planning audit history when table is available
         // await db.insert(seasonPlanningHistory).values({...});
+
+        // Mark sessions that fall on school holidays as holiday_cancelled
+        const scheduleIds = [...new Set(
+          entries.map((e) => (e as any).schedule_id as string).filter(Boolean)
+        )];
+        for (const scheduleId of scheduleIds) {
+          const markedCount = await markHolidaySessions(auth.supabase, scheduleId, season.club_id);
+          if (markedCount > 0) {
+            console.log(`[Season] Marked ${markedCount} sessions as holiday_cancelled`);
+          }
+        }
 
         // Update season status
         await db
