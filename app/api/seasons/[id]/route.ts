@@ -120,13 +120,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           .select()
           .single();
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error(`PATCH /api/seasons/[id] supabase error:`, JSON.stringify(updateError));
+          return NextResponse.json(
+            { error: updateError.message || updateError.details || JSON.stringify(updateError) },
+            { status: 500 }
+          );
+        }
 
         return NextResponse.json({ season: updated });
       } catch (error) {
         console.error(`PATCH /api/seasons/[id] error:`, error);
         return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Failed to update season' },
+          { error: error instanceof Error ? error.message : (JSON.stringify(error) ?? 'Failed to update season') },
           { status: 500 }
         );
       }
