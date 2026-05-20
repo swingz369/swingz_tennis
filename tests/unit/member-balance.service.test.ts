@@ -13,10 +13,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue(mockSupabase),
 }));
 
-import {
-  getMemberBalance,
-  addBalanceEntry,
-} from '@/lib/services/member-balance.service';
+import { getMemberBalance, addBalanceEntry } from '@/lib/services/member-balance.service';
 
 describe('getMemberBalance', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -36,7 +33,13 @@ describe('getMemberBalance', () => {
   });
 
   it('returns balance when record exists', async () => {
-    const balance = { id: 'bal-1', member_id: 'member-1', club_id: 'club-1', balance: 50, updated_at: '2026-05-19T00:00:00Z' };
+    const balance = {
+      id: 'bal-1',
+      member_id: 'member-1',
+      club_id: 'club-1',
+      balance: 50,
+      updated_at: '2026-05-19T00:00:00Z',
+    };
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -56,7 +59,16 @@ describe('addBalanceEntry', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('inserts entry and calls rpc to increment balance for positive amount', async () => {
-    const entry = { id: 'entry-1', member_balance_id: 'bal-1', amount: 50, reason: 'Gutschrift', reference_type: 'manual', reference_id: null, created_by: 'user-1', created_at: '2026-05-19T00:00:00Z' };
+    const entry = {
+      id: 'entry-1',
+      member_balance_id: 'bal-1',
+      amount: 50,
+      reason: 'Gutschrift',
+      reference_type: 'manual',
+      reference_id: null,
+      created_by: 'user-1',
+      created_at: '2026-05-19T00:00:00Z',
+    };
     mockRpc.mockResolvedValue({ data: [entry], error: null });
 
     const result = await addBalanceEntry(mockSupabase, {
@@ -79,7 +91,16 @@ describe('addBalanceEntry', () => {
   });
 
   it('passes negative amount for debit entries', async () => {
-    const entry = { id: 'entry-2', member_balance_id: 'bal-1', amount: -30, reason: 'Belastung', reference_type: 'group_change', reference_id: null, created_by: 'user-1', created_at: '2026-05-19T00:00:00Z' };
+    const entry = {
+      id: 'entry-2',
+      member_balance_id: 'bal-1',
+      amount: -30,
+      reason: 'Belastung',
+      reference_type: 'group_change',
+      reference_id: null,
+      created_by: 'user-1',
+      created_at: '2026-05-19T00:00:00Z',
+    };
     mockRpc.mockResolvedValue({ data: [entry], error: null });
 
     const result = await addBalanceEntry(mockSupabase, {
@@ -104,10 +125,12 @@ describe('addBalanceEntry', () => {
   it('throws when insert fails', async () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } });
 
-    await expect(addBalanceEntry(mockSupabase, {
-      member_balance_id: 'bal-1',
-      amount: 10,
-      reason: 'test',
-    })).rejects.toThrow('Failed to create balance entry');
+    await expect(
+      addBalanceEntry(mockSupabase, {
+        member_balance_id: 'bal-1',
+        amount: 10,
+        reason: 'test',
+      })
+    ).rejects.toThrow('Failed to create balance entry');
   });
 });

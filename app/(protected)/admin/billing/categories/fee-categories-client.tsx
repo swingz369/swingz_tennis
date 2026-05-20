@@ -5,8 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface FeeConfig {
-  id: string; name: string; type: string; amount: number;
-  billing_cycle: string; billing_unit_count: number; is_active: boolean;
+  id: string;
+  name: string;
+  type: string;
+  amount: number;
+  billing_cycle: string;
+  billing_unit_count: number;
+  is_active: boolean;
 }
 
 export default function FeeCategoriesClient({
@@ -19,7 +24,10 @@ export default function FeeCategoriesClient({
   const [categories, setCategories] = useState<FeeConfig[]>(initialCategories);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({
-    name: '', type: 'training', amount: 0, billing_unit_count: 1,
+    name: '',
+    type: 'training',
+    amount: 0,
+    billing_unit_count: 1,
   });
 
   const handleCreate = async () => {
@@ -63,9 +71,7 @@ export default function FeeCategoriesClient({
               type="number"
               placeholder="Preis (€)"
               value={form.amount}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, amount: parseFloat(e.target.value) || 0 }))
-              }
+              onChange={(e) => setForm((p) => ({ ...p, amount: parseFloat(e.target.value) || 0 }))}
             />
             <Input
               type="number"
@@ -105,9 +111,7 @@ export default function FeeCategoriesClient({
                   </div>
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
-                      cat.is_active
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-500'
+                      cat.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}
                   >
                     {cat.is_active ? 'Aktiv' : 'Inaktiv'}

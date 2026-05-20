@@ -7,10 +7,7 @@ const UpdateSchema = z.object({
   cancellation_reason: z.string().optional(),
 });
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, user } = await requireAuth(request);
 
@@ -34,10 +31,7 @@ export async function GET(
   return NextResponse.json({ data });
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, user } = await requireAuth(request);
   const body = await request.json();

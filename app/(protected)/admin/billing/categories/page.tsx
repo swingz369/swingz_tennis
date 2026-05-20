@@ -17,7 +17,8 @@ export default async function FeeCategoriesPage({
     .select('*')
     .eq('club_id', clubId)
     .in('type', ['training', 'membership'])
-    .order('type').order('name');
+    .order('type')
+    .order('name');
 
   return <FeeCategoriesClient clubId={clubId} initialCategories={categories ?? []} />;
 }

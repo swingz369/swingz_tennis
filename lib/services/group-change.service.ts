@@ -55,15 +55,13 @@ export async function processGroupChange(
     .is('left_at', null);
   if (closeErr) throw new Error(`Failed to close group membership: ${closeErr.message}`);
 
-  const { error: openErr } = await (supabase as any)
-    .from('training_group_memberships')
-    .insert({
-      training_group_id: params.new_group_id,
-      member_id: params.member_id,
-      club_id: params.club_id,
-      joined_at: params.change_date,
-      created_by: params.created_by,
-    });
+  const { error: openErr } = await (supabase as any).from('training_group_memberships').insert({
+    training_group_id: params.new_group_id,
+    member_id: params.member_id,
+    club_id: params.club_id,
+    joined_at: params.change_date,
+    created_by: params.created_by,
+  });
   if (openErr) throw new Error(`Failed to open group membership: ${openErr.message}`);
 
   // Update balance

@@ -6,10 +6,7 @@ export interface SchoolHoliday {
   end_date: string;
 }
 
-export function isSessionInHoliday(
-  sessionDate: Date,
-  holidays: SchoolHoliday[]
-): boolean {
+export function isSessionInHoliday(sessionDate: Date, holidays: SchoolHoliday[]): boolean {
   const d = sessionDate.getTime();
   return holidays.some((h) => {
     const start = new Date(h.start_date).getTime();

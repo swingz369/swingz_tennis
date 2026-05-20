@@ -5,7 +5,9 @@ export async function generateInvoiceNumber(
   supabase: Awaited<ReturnType<typeof createClient>>,
   clubId: string
 ): Promise<string> {
-  const { data, error } = await (supabase as any).rpc('generate_invoice_number', { p_club_id: clubId });
+  const { data, error } = await (supabase as any).rpc('generate_invoice_number', {
+    p_club_id: clubId,
+  });
   if (error) throw new Error(`Failed to generate invoice number: ${error.message}`);
   return data as string;
 }
@@ -14,11 +16,7 @@ async function getClubTaxRate(
   supabase: Awaited<ReturnType<typeof createClient>>,
   clubId: string
 ): Promise<number> {
-  const { data, error } = await supabase
-    .from('clubs')
-    .select('tax_rate')
-    .eq('id', clubId)
-    .single();
+  const { data, error } = await supabase.from('clubs').select('tax_rate').eq('id', clubId).single();
   if (error) throw new Error(`Failed to fetch club tax rate: ${error.message}`);
   return (data as any)?.tax_rate ?? 0;
 }
@@ -149,7 +147,10 @@ export async function createSeasonInvoice(params: GenerateSeasonInvoiceParams): 
     .single();
   if (error) throw new Error(error.message);
 
-  if (params.installment_count > 1 && params.installment_due_dates.length !== params.installment_count) {
+  if (
+    params.installment_count > 1 &&
+    params.installment_due_dates.length !== params.installment_count
+  ) {
     throw new Error(
       `installment_due_dates length (${params.installment_due_dates.length}) must equal installment_count (${params.installment_count})`
     );
@@ -164,7 +165,9 @@ export async function createSeasonInvoice(params: GenerateSeasonInvoiceParams): 
       due_date,
       status: 'pending',
     }));
-    const { error: instError } = await (supabase as any).from('invoice_installments').insert(installments);
+    const { error: instError } = await (supabase as any)
+      .from('invoice_installments')
+      .insert(installments);
     if (instError) throw new Error(`Failed to create installments: ${instError.message}`);
   }
 
@@ -180,5 +183,6 @@ export async function sendInvoice(invoiceId: string): Promise<void> {
     .eq('status', 'draft')
     .select('id');
   if (error) throw new Error(`Failed to send invoice: ${error.message}`);
-  if (!data || data.length === 0) throw new Error(`Invoice ${invoiceId} not found or not in draft status`);
+  if (!data || data.length === 0)
+    throw new Error(`Invoice ${invoiceId} not found or not in draft status`);
 }

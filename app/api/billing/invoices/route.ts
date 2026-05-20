@@ -8,11 +8,15 @@ const CreateSchema = z.object({
   member_id: z.string().uuid(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   notes: z.string().optional(),
-  items: z.array(z.object({
-    description: z.string().min(1).max(255),
-    quantity: z.number().int().min(1),
-    unit_price: z.number().min(0),
-  })).min(1),
+  items: z
+    .array(
+      z.object({
+        description: z.string().min(1).max(255),
+        quantity: z.number().int().min(1),
+        unit_price: z.number().min(0),
+      })
+    )
+    .min(1),
 });
 
 export async function GET(request: NextRequest) {

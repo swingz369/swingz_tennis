@@ -27,9 +27,7 @@ export default async function BillingPage() {
       .eq('is_active', true);
 
     const isSuperadmin = memberships?.some((m: { role: string }) => m.role === 'superadmin');
-    const adminMembership = memberships?.find(
-      (m: { role: string }) => m.role === 'admin'
-    );
+    const adminMembership = memberships?.find((m: { role: string }) => m.role === 'admin');
 
     // Only superadmins and admins can access this page
     if (!isSuperadmin && !adminMembership) {
@@ -74,8 +72,8 @@ export default async function BillingPage() {
             memberId: String(user.id),
             memberName: String(user.full_name || 'N/A'),
             memberEmail: String(user.email || ''),
-            plan: (String(user.subscription_tier || 'free')) as Subscription['plan'],
-            status: (String(user.subscription_status || 'active')) as Subscription['status'],
+            plan: String(user.subscription_tier || 'free') as Subscription['plan'],
+            status: String(user.subscription_status || 'active') as Subscription['status'],
             currentPeriodEnd: String(user.current_period_end || new Date().toISOString()),
             stripeCustomerId: user.stripe_customer_id as string | undefined,
             stripeSubscriptionId: user.stripe_subscription_id as string | undefined,
@@ -128,7 +126,7 @@ export default async function BillingPage() {
           memberName: String(users?.full_name || 'N/A'),
           amount: Number(inv.amount ?? 0),
           currency: String(inv.currency || 'EUR'),
-          status: (String(inv.status || 'draft')) as Invoice['status'],
+          status: String(inv.status || 'draft') as Invoice['status'],
           dueDate: String(inv.due_date || ''),
           paidAt: inv.paid_at ? String(inv.paid_at) : undefined,
         } as Invoice;
@@ -146,12 +144,7 @@ export default async function BillingPage() {
   } catch (error) {
     console.error('[Billing Page] Error:', error);
     return (
-      <BillingClient
-        initialSubscriptions={[]}
-        initialInvoices={[]}
-        members={[]}
-        clubId={null}
-      />
+      <BillingClient initialSubscriptions={[]} initialInvoices={[]} members={[]} clubId={null} />
     );
   }
 }

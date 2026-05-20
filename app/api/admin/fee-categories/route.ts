@@ -9,8 +9,12 @@ export async function GET(request: NextRequest) {
   if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
 
   const { data: membership } = await (supabase as any)
-    .from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', clubId).eq('is_active', true).maybeSingle();
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', clubId)
+    .eq('is_active', true)
+    .maybeSingle();
   if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { data, error } = await (supabase as any)
@@ -18,7 +22,8 @@ export async function GET(request: NextRequest) {
     .select('*')
     .eq('club_id', clubId)
     .in('type', ['training', 'membership'])
-    .order('type').order('name');
+    .order('type')
+    .order('name');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
 }
@@ -33,15 +38,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
 
   const { data: membership } = await (supabase as any)
-    .from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', club_id).eq('is_active', true).maybeSingle();
-  if (!membership || !['admin','superadmin'].includes(membership.role))
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', club_id)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!membership || !['admin', 'superadmin'].includes(membership.role))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { data, error } = await (supabase as any)
     .from('fee_configurations')
     .insert({ club_id, name, type, amount, billing_cycle, billing_unit_count, currency: 'EUR' })
-    .select().single();
+    .select()
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data }, { status: 201 });
 }

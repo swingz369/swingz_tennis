@@ -27,8 +27,6 @@ export async function GET(request: NextRequest) {
   }
 
   const balance = await getMemberBalance(supabase as any, memberId, clubId);
-  const entries = balance
-    ? await getMemberBalanceHistory(supabase as any, memberId, clubId)
-    : [];
+  const entries = balance ? await getMemberBalanceHistory(supabase as any, memberId, clubId) : [];
   return NextResponse.json({ data: { balance, entries } });
 }

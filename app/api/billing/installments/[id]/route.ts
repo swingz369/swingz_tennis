@@ -7,10 +7,7 @@ const MarkPaidSchema = z.object({
   paid_at: z.string().optional(),
 });
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, user } = await requireAuth(request);
   const body = await request.json();

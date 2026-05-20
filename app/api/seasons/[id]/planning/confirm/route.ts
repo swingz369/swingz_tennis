@@ -12,9 +12,15 @@ import { markHolidaySessions } from '@/lib/services/school-holidays.service';
 // seasonWaitlists not needed in confirm route — waitlist data is in plan entries
 import { eq } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
-import type { ConfirmPlanRequest, ConfirmPlanResponse, GroupAssignment } from '@/lib/season-planning/types';
+import type {
+  ConfirmPlanRequest,
+  ConfirmPlanResponse,
+  GroupAssignment,
+} from '@/lib/season-planning/types';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 export async function POST(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
@@ -30,13 +36,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
         if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
-        if (!isSuperadmin && season.club_id !== auth.clubId) return forbiddenResponse('Kein Zugriff');
+        if (!isSuperadmin && season.club_id !== auth.clubId)
+          return forbiddenResponse('Kein Zugriff');
 
         const body: ConfirmPlanRequest = await request.json();
 
         // Re-run conflict detection
         const detector = new ConflictDetector(seasonId, season.club_id);
-        const entries = await getDb().select().from(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, seasonId));
+        const entries = await getDb()
+          .select()
+          .from(seasonPlanEntries)
+          .where(eq(seasonPlanEntries.season_id, seasonId));
 
         // Build GroupAssignments from plan entries
         const assignments: GroupAssignment[] = [];
@@ -46,17 +56,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
           if (groupMap.has(gid)) {
             const ga = groupMap.get(gid)!;
             ga.memberIds.push(...((entry.expected_participants as string[]) || []));
-            ga.memberDetails.push(...((entry.expected_participants as string[]) || []).map((mid) => ({
-              memberId: mid,
-              memberName: mid,
-              niveauMatch: 100,
-              experienceMonths: 0,
-              groupExperienceSpan: '0-0 Monate',
-              wishPartnerFulfilled: false,
-              wishPartnerNames: [],
-              isPromoted: false,
-              assignmentReason: '',
-            })));
+            ga.memberDetails.push(
+              ...((entry.expected_participants as string[]) || []).map((mid) => ({
+                memberId: mid,
+                memberName: mid,
+                niveauMatch: 100,
+                experienceMonths: 0,
+                groupExperienceSpan: '0-0 Monate',
+                wishPartnerFulfilled: false,
+                wishPartnerNames: [],
+                isPromoted: false,
+                assignmentReason: '',
+              }))
+            );
           } else {
             const ga: GroupAssignment = {
               groupId: gid,
@@ -92,7 +104,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         const conflicts = await detector.detectAll(assignments);
         const criticalConflicts = detector.getCriticalConflicts(conflicts);
-        const unresolvedCritical = criticalConflicts.filter((c) => !body.acceptedWarnings.includes(c.id));
+        const unresolvedCritical = criticalConflicts.filter(
+          (c) => !body.acceptedWarnings.includes(c.id)
+        );
 
         if (unresolvedCritical.length > 0) {
           return NextResponse.json(
@@ -150,9 +164,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // await db.insert(seasonPlanningHistory).values({...});
 
         // Mark sessions that fall on school holidays as holiday_cancelled
-        const scheduleIds = [...new Set(
-          entries.map((e) => (e as any).schedule_id as string).filter(Boolean)
-        )];
+        const scheduleIds = [
+          ...new Set(entries.map((e) => (e as any).schedule_id as string).filter(Boolean)),
+        ];
         for (const scheduleId of scheduleIds) {
           const markedCount = await markHolidaySessions(auth.supabase, scheduleId, season.club_id);
           if (markedCount > 0) {

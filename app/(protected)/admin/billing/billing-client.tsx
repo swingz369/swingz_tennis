@@ -55,7 +55,18 @@ export type Invoice = {
   memberName: string;
   amount: number;
   currency: string;
-  status: 'draft' | 'open' | 'paid' | 'void' | 'uncollectible' | 'sent' | 'reminder_sent' | 'partially_paid' | 'overdue' | 'dunning' | 'cancelled';
+  status:
+    | 'draft'
+    | 'open'
+    | 'paid'
+    | 'void'
+    | 'uncollectible'
+    | 'sent'
+    | 'reminder_sent'
+    | 'partially_paid'
+    | 'overdue'
+    | 'dunning'
+    | 'cancelled';
   invoiceType?: 'season' | 'membership' | 'adhoc';
   dueDate: string;
   paidAt?: string;
@@ -82,7 +93,9 @@ function InvoiceStatusBadge({ status }: { status: string }) {
     cancelled: { label: 'Storniert', className: 'bg-gray-100 text-gray-400 line-through' },
   };
   const c = config[status] ?? config.draft;
-  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>;
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>
+  );
 }
 
 function InvoiceTypeBadge({ type }: { type: string }) {
@@ -92,7 +105,9 @@ function InvoiceTypeBadge({ type }: { type: string }) {
     adhoc: { label: 'Zusatz', className: 'bg-gray-100 text-gray-600' },
   };
   const c = config[type] ?? config.adhoc;
-  return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>;
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.className}`}>{c.label}</span>
+  );
 }
 
 interface BillingClientProps {
@@ -165,17 +180,14 @@ export default function BillingClient({
   const addItem = () =>
     setAdhocItems((prev) => [...prev, { description: '', quantity: 1, unit_price: 0 }]);
 
-  const removeItem = (idx: number) =>
-    setAdhocItems((prev) => prev.filter((_, i) => i !== idx));
+  const removeItem = (idx: number) => setAdhocItems((prev) => prev.filter((_, i) => i !== idx));
 
   const updateItem = (idx: number, field: keyof LineItem, value: string | number) =>
     setAdhocItems((prev) =>
       prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
     );
 
-  const adhocTotal = adhocItems
-    .reduce((s, i) => s + i.quantity * i.unit_price, 0)
-    .toFixed(2);
+  const adhocTotal = adhocItems.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2);
 
   useEffect(() => {
     if (!clubId || activeTab !== 'invoices') return;
@@ -196,7 +208,7 @@ export default function BillingClient({
                 memberName: String(users?.full_name || inv.member_name || 'N/A'),
                 amount: Number(inv.amount ?? 0),
                 currency: String(inv.currency || 'EUR'),
-                status: (String(inv.status || 'draft')) as Invoice['status'],
+                status: String(inv.status || 'draft') as Invoice['status'],
                 invoiceType: inv.invoice_type as Invoice['invoiceType'],
                 dueDate: String(inv.due_date || ''),
                 paidAt: inv.paid_at ? String(inv.paid_at) : undefined,
@@ -670,7 +682,10 @@ export default function BillingClient({
               </div>
               <div className="space-y-2">
                 {adhocItems.map((item, idx) => (
-                  <div key={idx} className="grid grid-cols-[1fr_80px_100px_36px] gap-2 items-center">
+                  <div
+                    key={idx}
+                    className="grid grid-cols-[1fr_80px_100px_36px] gap-2 items-center"
+                  >
                     <Input
                       placeholder="Beschreibung"
                       value={item.description}
@@ -681,7 +696,9 @@ export default function BillingClient({
                       min={1}
                       placeholder="Anz."
                       value={item.quantity}
-                      onChange={(e) => updateItem(idx, 'quantity', parseInt(e.target.value, 10) || 1)}
+                      onChange={(e) =>
+                        updateItem(idx, 'quantity', parseInt(e.target.value, 10) || 1)
+                      }
                     />
                     <Input
                       type="number"
@@ -689,7 +706,9 @@ export default function BillingClient({
                       step={0.01}
                       placeholder="Preis €"
                       value={item.unit_price}
-                      onChange={(e) => updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)
+                      }
                     />
                     <Button
                       type="button"

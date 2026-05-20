@@ -205,9 +205,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
                   min="2024"
                   max="2030"
                   value={formData.year}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, year: parseInt(e.target.value) }))
-                  }
+                  onChange={(e) => setFormData((p) => ({ ...p, year: parseInt(e.target.value) }))}
                   required
                 />
               </div>
@@ -303,11 +301,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
                     {confirmDelete ? 'Ja, löschen' : 'Saison löschen'}
                   </Button>
                   {confirmDelete && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setConfirmDelete(false)}
-                    >
+                    <Button type="button" variant="outline" onClick={() => setConfirmDelete(false)}>
                       Abbrechen
                     </Button>
                   )}
@@ -346,8 +340,8 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
         <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
           <CardContent className="pt-4 pb-4 flex items-center gap-3 text-sm text-amber-800 dark:text-amber-300">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            Löschen ist nur bei Saisons im Status <strong className="mx-1">Entwurf</strong>{' '}
-            möglich. Aktive oder abgeschlossene Saisons können nicht gelöscht werden.
+            Löschen ist nur bei Saisons im Status <strong className="mx-1">Entwurf</strong> möglich.
+            Aktive oder abgeschlossene Saisons können nicht gelöscht werden.
           </CardContent>
         </Card>
       )}
