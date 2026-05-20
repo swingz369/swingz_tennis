@@ -1,13 +1,15 @@
 export type InvoiceType = 'season' | 'membership' | 'adhoc';
 export type InvoiceStatus =
   | 'draft'
+  | 'open'
   | 'sent'
   | 'reminder_sent'
   | 'partially_paid'
   | 'paid'
   | 'overdue'
   | 'dunning'
-  | 'cancelled';
+  | 'cancelled'
+  | 'refunded';
 export type InstallmentStatus = 'pending' | 'paid' | 'overdue';
 export type BalanceEntryReferenceType = 'group_change' | 'invoice' | 'payment' | 'manual';
 export type PaymentMethod = 'sepa' | 'transfer' | 'cash' | 'stripe';

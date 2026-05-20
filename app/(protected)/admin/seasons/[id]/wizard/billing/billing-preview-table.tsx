@@ -96,8 +96,27 @@ export function BillingPreviewTable({
     }
   }
 
+  const totalAmount = items.reduce((sum, i) => sum + (parseFloat(i.editAmount) || 0), 0);
+  const generatedCount = items.filter((i) => i.feeConfigId !== null).length;
+
   return (
     <div className="space-y-4">
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm text-muted-foreground">Gesamtumsatz</p>
+          <p className="text-2xl font-bold">{totalAmount.toFixed(2)} CHF</p>
+        </div>
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm text-muted-foreground">Rechnungen</p>
+          <p className="text-2xl font-bold">{items.length}</p>
+        </div>
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm text-muted-foreground">Mit Gebühr</p>
+          <p className="text-2xl font-bold">{generatedCount}</p>
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>

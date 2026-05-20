@@ -6,6 +6,8 @@ import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { MemberCard } from './member-card';
@@ -28,6 +30,7 @@ export function KanbanBoard({
     Object.fromEntries(groups.map((g) => [g.id, g.member_ids ?? []]))
   );
   const [running, setRunning] = useState(false);
+  const [dryRun, setDryRun] = useState(false);
 
   function getMemberGroupId(memberId: string): string | null {
     for (const [gid, ids] of Object.entries(groupMemberIds)) {
@@ -92,13 +95,17 @@ export function KanbanBoard({
 
   async function triggerAutoPlan() {
     setRunning(true);
-    const res = await fetch(`/api/seasons/${seasonId}/auto-plan`, { method: 'POST', headers: csrfHeaders() });
+    const res = await fetch(`/api/seasons/${seasonId}/auto-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+      body: JSON.stringify({ dry_run: dryRun }),
+    });
     setRunning(false);
     if (!res.ok) {
       toast.error('KI-Plan fehlgeschlagen');
       return;
     }
-    toast.success('KI-Plan generiert');
+    toast.success(dryRun ? 'KI-Plan als Vorschau generiert (nicht gespeichert)' : 'KI-Plan generiert & gespeichert');
     router.refresh();
   }
 
@@ -124,6 +131,12 @@ export function KanbanBoard({
           <Sparkles className="h-4 w-4 mr-2" />
           {running ? 'Analysiere...' : 'KI-Plan generieren'}
         </Button>
+        <div className="flex items-center gap-2">
+          <Switch id="dry-run" checked={dryRun} onCheckedChange={setDryRun} />
+          <Label htmlFor="dry-run" className="text-sm text-muted-foreground">
+            Nur Vorschau
+          </Label>
+        </div>
         <span className="text-sm text-muted-foreground ml-auto">
           {assignedCount}/{allMembers.length} eingeplant
         </span>

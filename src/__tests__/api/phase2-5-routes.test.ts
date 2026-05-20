@@ -68,6 +68,69 @@ vi.mock('@/lib/auth', async () => {
   };
 });
 
+// Mock @/lib/api-auth — used by admin/approvals and other routes.
+// withApiAuth ties into mockCreateClient so auth state is controlled
+// the same way as routes that call createClient() directly.
+// verifyRole checks auth.role (built from membership query) so existing
+// membership-based test setups (403 vs 200) work unchanged.
+vi.mock('@/lib/api-auth', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+
+  async function resolveAuth() {
+    const supabase = await mockCreateClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { supabase, user: null, auth: null };
+    }
+    const { data: membership } = await (supabase as any)
+      .from('user_club_memberships')
+      .select('club_id, role')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+    const role = membership?.role || 'member';
+    const auth = {
+      user,
+      session: null,
+      supabase: supabase as any,
+      clubId: (membership?.club_id as string) || null,
+      role: role as 'admin' | 'superadmin' | 'trainer' | 'member',
+      roles: [role],
+      memberships: membership ? [membership] : [],
+    };
+    return { supabase, user, auth };
+  }
+
+  function json(status: number, body: unknown) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return {
+    ...actual,
+    withApiAuth: async (_request: Request, handler: Function) => {
+      const { auth } = await resolveAuth();
+      if (!auth) return json(401, { error: 'Unauthorized' });
+      return handler(auth);
+    },
+    withAuth: async (_request: Request, handler: Function) => {
+      const { auth } = await resolveAuth();
+      if (!auth) return json(401, { error: 'Unauthorized' });
+      return handler(auth);
+    },
+    verifyRole: async (auth: { role: string }, requiredRole: string) => {
+      const roleHierarchy: Record<string, number> = { superadmin: 4, admin: 3, trainer: 2, member: 1 };
+      return (roleHierarchy[auth.role] ?? 0) >= (roleHierarchy[requiredRole] ?? 0);
+    },
+    requireAuth: vi.fn(),
+    requireApiAuth: vi.fn(),
+  };
+});
+
 // Suppress console.error during tests
 const originalConsoleError = console.error;
 beforeEach(() => {

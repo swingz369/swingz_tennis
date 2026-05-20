@@ -40,7 +40,6 @@ export const WizardStep = {
   CLUSTERING: 4,
   ADMIN_REVIEW: 5,
   CONFIRMATION: 6,
-  POST_PROCESSING: 7,
 } as const;
 export type WizardStep = (typeof WizardStep)[keyof typeof WizardStep];
 
@@ -359,6 +358,7 @@ export interface ConfirmPlanRequest {
 export interface ConfirmPlanResponse {
   success: boolean;
   publishedSessions: number;
+  publishedSessionIds: string[];
   notificationsSent: number;
   waitlistNotifications: number;
   unresolvedCriticalConflicts: string[];

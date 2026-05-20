@@ -29,6 +29,13 @@
       "when": 1779042858512,
       "tag": "0003_add_missing_indices",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779309163593,
+      "tag": "0004_tearful_roulette",
+      "breakpoints": true
     }
   ]
 }

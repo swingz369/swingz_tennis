@@ -88,7 +88,12 @@ export function GroupsManager({
 
   async function saveGroup() {
     setSaving(true);
-    const payload = { name: form.name, level: form.level, age_group: form.age_group || null };
+    const payload = {
+      name: form.name,
+      level: form.level,
+      age_group: form.age_group || null,
+      max_participants: parseInt(form.max_participants, 10) || 8,
+    };
     const res = await fetch(
       editing ? `/api/training-groups/${editing.id}` : '/api/training-groups',
       {

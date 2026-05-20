@@ -1,6 +1,17 @@
 import { z } from 'zod';
 
-export const InvoiceStatus = z.enum(['draft', 'open', 'paid', 'overdue', 'cancelled', 'refunded']);
+export const InvoiceStatus = z.enum([
+  'draft',
+  'open',
+  'sent',
+  'partially_paid',
+  'paid',
+  'overdue',
+  'dunning',
+  'reminder_sent',
+  'cancelled',
+  'refunded',
+]);
 export type InvoiceStatus = z.infer<typeof InvoiceStatus>;
 
 export const PaymentMethod = z.enum(['sepa', 'stripe', 'cash', 'bank_transfer', 'other']);

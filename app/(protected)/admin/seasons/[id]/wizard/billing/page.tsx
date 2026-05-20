@@ -24,13 +24,29 @@ export default async function BillingPage({ params }: { params: Promise<{ id: st
   if (!season) notFound();
 
   const [{ data: entries }, { data: feeConfigs }] = await Promise.all([
-    (supabase as any).from('season_plan_entries').select('member_id, group_id').eq('season_id', id),
+    (supabase as any)
+      .from('season_plan_entries')
+      .select('member_id, group_id, expected_participants')
+      .eq('season_id', id),
     (supabase as any)
       .from('fee_configurations')
       .select('*')
       .eq('club_id', season.club_id)
       .eq('is_active', true),
   ]);
+
+  // Fetch member names
+  const memberIds = [...new Set(((entries as any[]) ?? []).map((e: any) => e.member_id).filter(Boolean))];
+  const memberNames: Record<string, string> = {};
+  if (memberIds.length > 0) {
+    const { data: members } = await (supabase as any)
+      .from('users')
+      .select('id, full_name')
+      .in('id', memberIds);
+    for (const m of (members ?? [])) {
+      memberNames[m.id] = m.full_name ?? m.id;
+    }
+  }
 
   const preview: PreviewItem[] = ((entries as any[]) ?? []).map((entry: any) => {
     const fee =
@@ -42,7 +58,7 @@ export default async function BillingPage({ params }: { params: Promise<{ id: st
       }) ?? null;
     return {
       memberId: entry.member_id,
-      memberName: entry.member_id,
+      memberName: memberNames[entry.member_id] || entry.member_id,
       groupId: entry.group_id,
       amount: fee?.amount ?? 0,
       feeConfigId: fee?.id ?? null,

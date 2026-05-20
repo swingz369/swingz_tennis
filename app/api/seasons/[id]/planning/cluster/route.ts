@@ -50,7 +50,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             courtId: g.courtId,
             courtName: g.courtName,
             memberCount: g.memberIds.length,
-            memberDetails: g.memberDetails.slice(0, 5),
+            memberDetails: g.memberDetails,
             waitlistCount: g.waitlistIds.length,
             warnings: g.warnings,
           })),

@@ -135,12 +135,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return {
         ...state,
         isConfirmed: action.response.success,
-        publishedSessionIds: action.response.publishedSessions
-          ? Array.from(
-              { length: action.response.publishedSessions },
-              (_, i) => `session_${i}`
-            )
-          : [],
+        publishedSessionIds: action.response.publishedSessionIds ?? [],
         isProcessing: false,
       };
 
@@ -190,7 +185,7 @@ export function WizardProvider({
   }, []);
 
   const nextStep = useCallback(() => {
-    const next = Math.min(7, state.currentStep + 1) as WizardStep;
+    const next = Math.min(6, state.currentStep + 1) as WizardStep;
     dispatch({ type: 'SET_STEP', step: next });
   }, [state.currentStep]);
 

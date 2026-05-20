@@ -7,6 +7,7 @@ import {
   seasonPlanEntries,
   trainers,
   courts,
+  planningConflicts,
 } from '@/src/infrastructure/persistence/schema';
 import { seasonStatistics, seasonPlanningConfigs } from '@/src/infrastructure/persistence/season-planning-schema';
 import { and, eq } from 'drizzle-orm';
@@ -523,6 +524,56 @@ export class ConflictDetector {
       info: conflicts.filter((c) => c.severity === 'info').length,
       total: conflicts.length,
     };
+  }
+
+  /**
+   * Persist detected conflicts to the planning_conflicts table.
+   * Deletes existing unresolved conflicts for this season before inserting.
+   *
+   * @param conflicts - The conflicts to persist
+   * @param tx - Optional transaction scoped DB instance (from db.transaction()).
+   *   If provided, all queries run within that transaction; otherwise uses the global DB.
+   */
+  async persistConflicts(
+    conflicts: ConflictDetectionResult[],
+    // Drizzle's PgTransaction type differs from PostgresJsDatabase, but both
+    // satisfy the query-builder interface (select/insert/update/delete).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tx?: any
+  ): Promise<number> {
+    if (conflicts.length === 0) return 0;
+
+    const db = tx ?? getDb();
+
+    // Delete previously detected open conflicts for this season (re-detect on each run)
+    await db
+      .delete(planningConflicts)
+      .where(
+        and(
+          eq(planningConflicts.season_id, this.seasonId),
+          eq(planningConflicts.status, 'open')
+        )
+      );
+
+    const rows = conflicts.map((c) => ({
+      season_id: this.seasonId,
+      club_id: this.clubId,
+      conflict_type: c.type,
+      severity: c.severity,
+      affected_plan_entry_ids: c.affectedEntities?.planEntryIds || [],
+      affected_trainer_id: c.affectedEntities?.trainerIds?.[0] || null,
+      affected_court_id: c.affectedEntities?.courtIds?.[0] || null,
+      affected_user_ids: c.affectedEntities?.memberIds || [],
+      affected_group_ids: c.affectedEntities?.groupIds || [],
+      conflict_time_slot: c.timeSlot,
+      description: c.description,
+      suggested_resolution: c.suggestedResolution,
+      status: 'open',
+      detection_source: 'auto_planner',
+    }));
+
+    await db.insert(planningConflicts).values(rows as any);
+    return rows.length;
   }
 
   // ============================================

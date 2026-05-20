@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Season = {
@@ -26,6 +27,27 @@ export function PreferencesForm({ seasonId, season }: { seasonId: string; season
   const [maxSize, setMaxSize] = useState(String(cfg.group_max_size ?? 8));
   const [maxSessions, setMaxSessions] = useState(String(cfg.max_sessions_per_week ?? 3));
   const [saving, setSaving] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
+
+  async function sendReminder() {
+    setSendingReminder(true);
+    try {
+      const res = await fetch(`/api/seasons/${seasonId}/planning/remind`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Fehler beim Senden der Erinnerungen');
+        return;
+      }
+      toast.success(`${data.sentCount ?? 0} Erinnerungen versendet`);
+    } catch {
+      toast.error('Netzwerkfehler');
+    } finally {
+      setSendingReminder(false);
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -98,7 +120,16 @@ export function PreferencesForm({ seasonId, season }: { seasonId: string; season
           </div>
         </div>
       </CardContent>
-      <CardFooter className="justify-end">
+      <CardFooter className="justify-between">
+        <Button
+          variant="outline"
+          onClick={sendReminder}
+          disabled={sendingReminder || !open}
+          title={!open ? 'Erst Präferenzen öffnen' : 'Erinnerung an Mitglieder senden, die noch keine Präferenzen abgegeben haben'}
+        >
+          <Bell className="h-4 w-4 mr-2" />
+          {sendingReminder ? 'Senden...' : 'Erinnerung senden'}
+        </Button>
         <Button onClick={save} disabled={saving}>
           {saving ? 'Speichern...' : 'Speichern & Weiter'}
         </Button>

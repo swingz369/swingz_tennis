@@ -12,6 +12,7 @@ export default defineConfig({
       'src/**/__tests__/**/*.test.tsx',
       'tests/unit/**/*.test.ts',
       'tests/unit/**/*.test.tsx',
+      'e2e/**/*.test.ts',
     ],
     setupFiles: ['./src/__tests__/setup.ts'],
     coverage: {
@@ -25,6 +26,7 @@ export default defineConfig({
       '@/domain': path.resolve(__dirname, './src/domain'),
       '@/application': path.resolve(__dirname, './src/application'),
       '@/infrastructure': path.resolve(__dirname, './src/infrastructure'),
+      '@/src': path.resolve(__dirname, './src'),
       '@/presentation': path.resolve(__dirname, './src/presentation'),
       '@/lib': path.resolve(__dirname, './lib'),
       '@/app': path.resolve(__dirname, './app'),

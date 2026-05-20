@@ -1,3 +1,9 @@
+/**
+ * @deprecated Dieser Wizard-Client ist durch das neue Wizard-Routing unter
+ * `app/(protected)/admin/seasons/[id]/wizard/` abgelöst.
+ * Neue Requests sollten `wizard/layout.tsx` + `wizard/page.tsx` verwenden.
+ * Diese Datei bleibt als Fallback erhalten, bis alle Nutzer migriert sind.
+ */
 'use client';
 
 import { useRouter } from 'next/navigation';
