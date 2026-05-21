@@ -13,6 +13,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Search,
   Filter,
   Download,
@@ -299,60 +306,64 @@ export default function AuditLogManagement() {
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Aktionen</option>
-            <option value="create">Erstellen</option>
-            <option value="update">Aktualisieren</option>
-            <option value="delete">Löschen</option>
-            <option value="login">Anmelden</option>
-            <option value="logout">Abmelden</option>
-          </select>
+          <Select value={actionFilter} onValueChange={setActionFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Alle Aktionen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Aktionen</SelectItem>
+              <SelectItem value="create">Erstellen</SelectItem>
+              <SelectItem value="update">Aktualisieren</SelectItem>
+              <SelectItem value="delete">Löschen</SelectItem>
+              <SelectItem value="login">Anmelden</SelectItem>
+              <SelectItem value="logout">Abmelden</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={entityTypeFilter}
-            onChange={(e) => setEntityTypeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Entitäten</option>
-            <option value="member">Mitglieder</option>
-            <option value="trainer">Trainer</option>
-            <option value="trial_training">Probetrainings</option>
-            <option value="billing">Abrechnungen</option>
-            <option value="payment">Zahlungen</option>
-            <option value="settings">Einstellungen</option>
-          </select>
+          <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Alle Entitäten" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Entitäten</SelectItem>
+              <SelectItem value="member">Mitglieder</SelectItem>
+              <SelectItem value="trainer">Trainer</SelectItem>
+              <SelectItem value="trial_training">Probetrainings</SelectItem>
+              <SelectItem value="billing">Abrechnungen</SelectItem>
+              <SelectItem value="payment">Zahlungen</SelectItem>
+              <SelectItem value="settings">Einstellungen</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Status</option>
-            <option value="success">Erfolgreich</option>
-            <option value="failed">Fehlgeschlagen</option>
-            <option value="pending">Ausstehend</option>
-          </select>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Alle Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Status</SelectItem>
+              <SelectItem value="success">Erfolgreich</SelectItem>
+              <SelectItem value="failed">Fehlgeschlagen</SelectItem>
+              <SelectItem value="pending">Ausstehend</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as typeof dateRange)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="7d">Letzte 7 Tage</option>
-            <option value="30d">Letzte 30 Tage</option>
-            <option value="90d">Letzte 90 Tage</option>
-            <option value="all">Alle Zeit</option>
-          </select>
+          <Select value={dateRange} onValueChange={(v) => setDateRange(v as typeof dateRange)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Letzte 30 Tage" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">Letzte 7 Tage</SelectItem>
+              <SelectItem value="30d">Letzte 30 Tage</SelectItem>
+              <SelectItem value="90d">Letzte 90 Tage</SelectItem>
+              <SelectItem value="all">Alle Zeit</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

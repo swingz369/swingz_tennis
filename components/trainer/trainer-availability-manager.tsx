@@ -8,6 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -223,17 +230,21 @@ export default function TrainerAvailabilityManager({
                 <div className="space-y-4 pt-4">
                   <div>
                     <Label>Wochentag</Label>
-                    <select
-                      value={selectedDay}
-                      onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    <Select
+                      value={String(selectedDay)}
+                      onValueChange={(v) => setSelectedDay(parseInt(v))}
                     >
-                      {WEEK_DAYS.map((day) => (
-                        <option key={day.value} value={day.value}>
-                          {day.label}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WEEK_DAYS.map((day) => (
+                          <SelectItem key={day.value} value={String(day.value)}>
+                            {day.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -371,18 +382,18 @@ export default function TrainerAvailabilityManager({
                   </div>
                   <div>
                     <Label>Grund</Label>
-                    <select
-                      value={absenceReason}
-                      onChange={(e) => setAbsenceReason(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    >
-                      <option value="">Grund auswählen...</option>
-                      <option value="vacation">Urlaub</option>
-                      <option value="sick">Krankheit</option>
-                      <option value="training">Weiterbildung</option>
-                      <option value="personal">Persönlich</option>
-                      <option value="other">Sonstiges</option>
-                    </select>
+                    <Select value={absenceReason} onValueChange={setAbsenceReason}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Grund auswählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vacation">Urlaub</SelectItem>
+                        <SelectItem value="sick">Krankheit</SelectItem>
+                        <SelectItem value="training">Weiterbildung</SelectItem>
+                        <SelectItem value="personal">Persönlich</SelectItem>
+                        <SelectItem value="other">Sonstiges</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   {isAdmin && (
                     <div>

@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -268,24 +269,26 @@ export function CourtTypesClient() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="surface_type">Belag *</Label>
-                  <select
-                    id="surface_type"
+                  <Select
                     value={formData.surface_type}
-                    onChange={(e) =>
+                    onValueChange={(v) =>
                       setFormData({
                         ...formData,
-                        surface_type: e.target.value as CourtType['surface_type'],
+                        surface_type: v as CourtType['surface_type'],
                       })
                     }
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    required
                   >
-                    <option value="clay">Sand (Clay)</option>
-                    <option value="hard">Hartplatz (Hard)</option>
-                    <option value="grass">Rasen (Grass)</option>
-                    <option value="carpet">Teppich (Carpet)</option>
-                    <option value="artificial_grass">Kunstrasen</option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="clay">Sand (Clay)</SelectItem>
+                      <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
+                      <SelectItem value="grass">Rasen (Grass)</SelectItem>
+                      <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
+                      <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -502,24 +505,26 @@ export function CourtTypesClient() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-surface_type">Belag *</Label>
-                <select
-                  id="edit-surface_type"
+                <Select
                   value={formData.surface_type}
-                  onChange={(e) =>
+                  onValueChange={(v) =>
                     setFormData({
                       ...formData,
-                      surface_type: e.target.value as CourtType['surface_type'],
+                      surface_type: v as CourtType['surface_type'],
                     })
                   }
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                  required
                 >
-                  <option value="clay">Sand (Clay)</option>
-                  <option value="hard">Hartplatz (Hard)</option>
-                  <option value="grass">Rasen (Grass)</option>
-                  <option value="carpet">Teppich (Carpet)</option>
-                  <option value="artificial_grass">Kunstrasen</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="clay">Sand (Clay)</SelectItem>
+                    <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
+                    <SelectItem value="grass">Rasen (Grass)</SelectItem>
+                    <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
+                    <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">

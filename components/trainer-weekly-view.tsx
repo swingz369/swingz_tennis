@@ -24,6 +24,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface TrainingSession {
   id: string;
@@ -332,18 +339,19 @@ export default function TrainerWeeklyView() {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-gray-400" />
-          <select
-            value={selectedTrainerId}
-            onChange={(e) => setSelectedTrainerId(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Trainer</option>
-            {getTrainerIds().map((id) => (
-              <option key={id} value={id}>
-                {getTrainerName(id)}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedTrainerId} onValueChange={setSelectedTrainerId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Alle Trainer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Trainer</SelectItem>
+              {getTrainerIds().map((id) => (
+                <SelectItem key={id} value={id}>
+                  {getTrainerName(id)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">

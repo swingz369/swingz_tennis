@@ -29,6 +29,13 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface RegistrationRequest {
   id: string;
@@ -472,16 +479,17 @@ export default function AdminApprovalWorkflow() {
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as typeof filterType)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Typen</option>
-            <option value="registration">Registrierungen</option>
-            <option value="application">Bewerbungen</option>
-            <option value="trial">Probetrainings</option>
-          </select>
+          <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Alle Typen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Typen</SelectItem>
+              <SelectItem value="registration">Registrierungen</SelectItem>
+              <SelectItem value="application">Bewerbungen</SelectItem>
+              <SelectItem value="trial">Probetrainings</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -819,18 +827,17 @@ export default function AdminApprovalWorkflow() {
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="rejectionReason">Grund der Ablehnung *</Label>
-                      <select
-                        id="rejectionReason"
-                        value={rejectionReason}
-                        onChange={(e) => setRejectionReason(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                      >
-                        <option value="">Bitte auswählen...</option>
-                        <option value="capacity">Keine Kapazität</option>
-                        <option value="requirements">Anforderungen nicht erfüllt</option>
-                        <option value="incomplete">Unvollständige Bewerbung</option>
-                        <option value="other">Sonstiges</option>
-                      </select>
+                      <Select value={rejectionReason} onValueChange={setRejectionReason}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Bitte auswählen..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="capacity">Keine Kapazität</SelectItem>
+                          <SelectItem value="requirements">Anforderungen nicht erfüllt</SelectItem>
+                          <SelectItem value="incomplete">Unvollständige Bewerbung</SelectItem>
+                          <SelectItem value="other">Sonstiges</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <Button
                       variant="destructive"

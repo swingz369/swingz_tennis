@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,7 +69,7 @@ export default function OnlineApplicationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -325,38 +326,38 @@ export default function OnlineApplicationForm() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="experience">Tennis-Erfahrung *</Label>
-                    <select
-                      id="experience"
-                      name="experience"
+                    <Select
                       value={formData.experience}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                      required
+                      onValueChange={(v) => setFormData((prev) => ({ ...prev, experience: v }))}
                     >
-                      <option value="">Bitte auswählen...</option>
-                      <option value="beginner">Anfänger (0-1 Jahre)</option>
-                      <option value="intermediate">Fortgeschritten (1-3 Jahre)</option>
-                      <option value="advanced">Erfahren (3+ Jahre)</option>
-                      <option value="competitive">Wettkampferfahrung</option>
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Bitte auswählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="beginner">Anfänger (0-1 Jahre)</SelectItem>
+                        <SelectItem value="intermediate">Fortgeschritten (1-3 Jahre)</SelectItem>
+                        <SelectItem value="advanced">Erfahren (3+ Jahre)</SelectItem>
+                        <SelectItem value="competitive">Wettkampferfahrung</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="playingLevel">Spielstärke *</Label>
-                    <select
-                      id="playingLevel"
-                      name="playingLevel"
+                    <Select
                       value={formData.playingLevel}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                      required
+                      onValueChange={(v) => setFormData((prev) => ({ ...prev, playingLevel: v }))}
                     >
-                      <option value="">Bitte auswählen...</option>
-                      <option value="ntr">NTR 1-3 (Anfänger)</option>
-                      <option value="ntr4">NTR 4-5 (Fortgeschritten)</option>
-                      <option value="ntr6">NTR 6-7 (Erfahren)</option>
-                      <option value="ntr8">NTR 8+ (Turnierspieler)</option>
-                    </select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Bitte auswählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ntr">NTR 1-3 (Anfänger)</SelectItem>
+                        <SelectItem value="ntr4">NTR 4-5 (Fortgeschritten)</SelectItem>
+                        <SelectItem value="ntr6">NTR 6-7 (Erfahren)</SelectItem>
+                        <SelectItem value="ntr8">NTR 8+ (Turnierspieler)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2 md:col-span-2">

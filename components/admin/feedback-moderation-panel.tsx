@@ -9,6 +9,13 @@ import StarRating from '@/components/feedback/star-rating';
 import { Eye, EyeOff, Flag, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Feedback {
@@ -236,25 +243,27 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
             </div>
 
             <div className="flex gap-2">
-              <select
-                value={filterVisible}
-                onChange={(e) => setFilterVisible(e.target.value as any)}
-                className="px-3 py-2 border rounded-md text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="visible">Visible Only</option>
-                <option value="hidden">Hidden Only</option>
-              </select>
+              <Select value={filterVisible} onValueChange={(v) => setFilterVisible(v as typeof filterVisible)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="visible">Visible Only</SelectItem>
+                  <SelectItem value="hidden">Hidden Only</SelectItem>
+                </SelectContent>
+              </Select>
 
-              <select
-                value={filterFlagged}
-                onChange={(e) => setFilterFlagged(e.target.value as any)}
-                className="px-3 py-2 border rounded-md text-sm"
-              >
-                <option value="all">All Flags</option>
-                <option value="flagged">Flagged Only</option>
-                <option value="clean">Not Flagged</option>
-              </select>
+              <Select value={filterFlagged} onValueChange={(v) => setFilterFlagged(v as typeof filterFlagged)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All Flags" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Flags</SelectItem>
+                  <SelectItem value="flagged">Flagged Only</SelectItem>
+                  <SelectItem value="clean">Not Flagged</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

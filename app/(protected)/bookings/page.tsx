@@ -17,6 +17,7 @@ import {
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   ChevronLeft,
   ChevronRight,
@@ -348,26 +349,30 @@ export default function BookingsPage() {
                                     {(userRoles.includes('admin') ||
                                       userRoles.includes('superadmin') ||
                                       userRoles.includes('trainer')) && (
-                                      <select
+                                      <Select
                                         value={session.bookingStatus}
-                                        onChange={(e) =>
+                                        onValueChange={(v) =>
                                           session.bookingId &&
                                           handleStatusChange(
                                             session.bookingId,
-                                            e.target.value as
+                                            v as
                                               | 'pending'
                                               | 'confirmed'
                                               | 'cancelled'
                                               | 'no_show'
                                           )
                                         }
-                                        className="text-[11px] border rounded px-1 py-0.5 bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
                                       >
-                                        <option value="pending">Ausstehend</option>
-                                        <option value="confirmed">Bestätigt</option>
-                                        <option value="cancelled">Storniert</option>
-                                        <option value="no_show">Nicht erschienen</option>
-                                      </select>
+                                        <SelectTrigger className="h-6 text-[11px] px-1 py-0">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="pending">Ausstehend</SelectItem>
+                                          <SelectItem value="confirmed">Bestätigt</SelectItem>
+                                          <SelectItem value="cancelled">Storniert</SelectItem>
+                                          <SelectItem value="no_show">Nicht erschienen</SelectItem>
+                                        </SelectContent>
+                                      </Select>
                                     )}
                                   </div>
                                   {(() => {

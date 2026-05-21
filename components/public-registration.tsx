@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -68,46 +69,33 @@ const STEPS = [
   { id: 4, title: 'Bestätigen', subtitle: 'Zustimmung', icon: CheckCircle },
 ];
 
-/* ── Styled Select ── */
+/* ── Styled Select (shadcn) ── */
 function StyledSelect({
-  id,
-  name,
   value,
   onChange,
-  required,
   options,
+  id,
 }: {
-  id: string;
-  name: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  required?: boolean;
+  onChange: (value: string) => void;
   options: { value: string; label: string }[];
+  id?: string;
 }) {
   return (
-    <div className="relative">
-      <select
-        id={id}
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        className="w-full h-12 px-4 pr-10 rounded-xl border border-gray-200 bg-white text-gray-900 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-light/30 focus:border-brand-light transition-all text-sm"
-      >
-        <option value="">Bitte auswählen...</option>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger id={id} className="h-12 rounded-xl">
+        <SelectValue placeholder="Bitte auswählen..." />
+      </SelectTrigger>
+      <SelectContent>
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <SelectItem key={opt.value} value={opt.value}>
             {opt.label}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-    </div>
+      </SelectContent>
+    </Select>
   );
 }
-
-/* Need ChevronDown for select */
-import { ChevronDown } from 'lucide-react';
 
 export default function PublicRegistration() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -117,9 +105,13 @@ export default function PublicRegistration() {
   const progress = (currentStep / STEPS.length) * 100;
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -351,10 +343,8 @@ export default function PublicRegistration() {
               <Label htmlFor="experience">Tennis-Erfahrung *</Label>
               <StyledSelect
                 id="experience"
-                name="experience"
                 value={formData.experience}
-                onChange={handleChange}
-                required
+                onChange={(v) => handleSelectChange('experience', v)}
                 options={[
                   { value: 'beginner', label: 'Anfänger (0-1 Jahre)' },
                   { value: 'intermediate', label: 'Fortgeschritten (1-3 Jahre)' },
@@ -367,10 +357,8 @@ export default function PublicRegistration() {
               <Label htmlFor="playingLevel">Spielstärke *</Label>
               <StyledSelect
                 id="playingLevel"
-                name="playingLevel"
                 value={formData.playingLevel}
-                onChange={handleChange}
-                required
+                onChange={(v) => handleSelectChange('playingLevel', v)}
                 options={[
                   { value: 'ntr', label: 'NTR 1-3 (Anfänger)' },
                   { value: 'ntr4', label: 'NTR 4-5 (Fortgeschritten)' },

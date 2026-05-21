@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -178,17 +179,18 @@ export default function NewsAnnouncements() {
 
         <div className="w-px h-8 bg-gray-300 mx-2" />
 
-        <select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-        >
-          <option value="all">Alle Typen</option>
-          <option value="announcement">Ankündigungen</option>
-          <option value="update">Updates</option>
-          <option value="maintenance">Wartungen</option>
-          <option value="event">Veranstaltungen</option>
-        </select>
+        <Select value={selectedType} onValueChange={setSelectedType}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Typen</SelectItem>
+            <SelectItem value="announcement">Ankündigungen</SelectItem>
+            <SelectItem value="update">Updates</SelectItem>
+            <SelectItem value="maintenance">Wartungen</SelectItem>
+            <SelectItem value="event">Veranstaltungen</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* News List */}

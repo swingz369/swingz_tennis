@@ -25,6 +25,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface Absence {
   id: string;
@@ -267,34 +274,40 @@ export default function AbsenceReporting() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label>Trainer</Label>
-              <select
+              <Select
                 value={editForm.trainerId || ''}
-                onChange={(e) => setEditForm({ ...editForm, trainerId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                onValueChange={(v) => setEditForm({ ...editForm, trainerId: v })}
               >
-                <option value="">Trainer auswählen...</option>
-                <option value="trainer-1">Thomas Müller</option>
-                <option value="trainer-2">Julia Weber</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Trainer auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trainer-1">Thomas Müller</SelectItem>
+                  <SelectItem value="trainer-2">Julia Weber</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Typ</Label>
-              <select
+              <Select
                 value={editForm.type || ''}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setEditForm({
                     ...editForm,
-                    type: e.target.value as 'sick' | 'vacation' | 'personal' | 'other',
+                    type: v as 'sick' | 'vacation' | 'personal' | 'other',
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="">Typ auswählen...</option>
-                <option value="sick">Krankheit</option>
-                <option value="vacation">Urlaub</option>
-                <option value="personal">Persönlich</option>
-                <option value="other">Sonstiges</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Typ auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sick">Krankheit</SelectItem>
+                  <SelectItem value="vacation">Urlaub</SelectItem>
+                  <SelectItem value="personal">Persönlich</SelectItem>
+                  <SelectItem value="other">Sonstiges</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Startdatum</Label>

@@ -22,6 +22,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface HourlyRateTier {
   id: string;
@@ -260,22 +267,25 @@ export default function HourlyRateManagement() {
                   </div>
                   <div>
                     <Label>Erfahrungslevel</Label>
-                    <select
+                    <Select
                       value={(editForm as Partial<HourlyRateTier>).experienceLevel || ''}
-                      onChange={(e) =>
+                      onValueChange={(v) =>
                         setEditForm({
                           ...editForm,
-                          experienceLevel: e.target.value as HourlyRateTier['experienceLevel'],
+                          experienceLevel: v as HourlyRateTier['experienceLevel'],
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                     >
-                      <option value="">Bitte auswählen...</option>
-                      <option value="beginner">Anfänger</option>
-                      <option value="intermediate">Fortgeschritten</option>
-                      <option value="advanced">Erfahren</option>
-                      <option value="professional">Professionell</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Bitte auswählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="beginner">Anfänger</SelectItem>
+                        <SelectItem value="intermediate">Fortgeschritten</SelectItem>
+                        <SelectItem value="advanced">Erfahren</SelectItem>
+                        <SelectItem value="professional">Professionell</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label>Beschreibung</Label>

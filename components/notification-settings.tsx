@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import {
   Bell,
@@ -298,18 +299,22 @@ export default function NotificationSettings() {
               Erinnerungszeit
             </div>
             <div className="flex items-center gap-4">
-              <select
+              <Select
                 value={settings.reminderTime.toString()}
-                onChange={(e) => handleSettingChange('reminderTime', parseInt(e.target.value))}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                onValueChange={(v) => handleSettingChange('reminderTime', parseInt(v))}
               >
-                <option value="1">1 Stunde vorher</option>
-                <option value="2">2 Stunden vorher</option>
-                <option value="6">6 Stunden vorher</option>
-                <option value="12">12 Stunden vorher</option>
-                <option value="24">24 Stunden vorher</option>
-                <option value="48">48 Stunden vorher</option>
-              </select>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Stunde vorher</SelectItem>
+                  <SelectItem value="2">2 Stunden vorher</SelectItem>
+                  <SelectItem value="6">6 Stunden vorher</SelectItem>
+                  <SelectItem value="12">12 Stunden vorher</SelectItem>
+                  <SelectItem value="24">24 Stunden vorher</SelectItem>
+                  <SelectItem value="48">48 Stunden vorher</SelectItem>
+                </SelectContent>
+              </Select>
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 vor Trainingssessions
               </span>

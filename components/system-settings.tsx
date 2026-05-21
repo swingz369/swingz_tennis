@@ -26,6 +26,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface SystemSetting {
   id: string;
@@ -246,19 +253,20 @@ export default function SystemSettingsManagement() {
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value as typeof selectedCategory)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Kategorien</option>
-            <option value="general">Allgemein</option>
-            <option value="email">E-Mail</option>
-            <option value="notifications">Benachrichtigungen</option>
-            <option value="security">Sicherheit</option>
-            <option value="integrations">Integrationen</option>
-            <option value="other">Sonstiges</option>
-          </select>
+          <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as typeof selectedCategory)}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Alle Kategorien" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Kategorien</SelectItem>
+              <SelectItem value="general">Allgemein</SelectItem>
+              <SelectItem value="email">E-Mail</SelectItem>
+              <SelectItem value="notifications">Benachrichtigungen</SelectItem>
+              <SelectItem value="security">Sicherheit</SelectItem>
+              <SelectItem value="integrations">Integrationen</SelectItem>
+              <SelectItem value="other">Sonstiges</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -274,12 +282,12 @@ export default function SystemSettingsManagement() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label>Kategorie</Label>
-              <select
+              <Select
                 value={editForm.category || ''}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setEditForm({
                     ...editForm,
-                    category: e.target.value as
+                    category: v as
                       | 'general'
                       | 'email'
                       | 'notifications'
@@ -288,16 +296,19 @@ export default function SystemSettingsManagement() {
                       | 'other',
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="">Bitte auswählen...</option>
-                <option value="general">Allgemein</option>
-                <option value="email">E-Mail</option>
-                <option value="notifications">Benachrichtigungen</option>
-                <option value="security">Sicherheit</option>
-                <option value="integrations">Integrationen</option>
-                <option value="other">Sonstiges</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Bitte auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">Allgemein</SelectItem>
+                  <SelectItem value="email">E-Mail</SelectItem>
+                  <SelectItem value="notifications">Benachrichtigungen</SelectItem>
+                  <SelectItem value="security">Sicherheit</SelectItem>
+                  <SelectItem value="integrations">Integrationen</SelectItem>
+                  <SelectItem value="other">Sonstiges</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Schlüssel</Label>
@@ -309,23 +320,26 @@ export default function SystemSettingsManagement() {
             </div>
             <div>
               <Label>Typ</Label>
-              <select
+              <Select
                 value={editForm.type || ''}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setEditForm({
                     ...editForm,
-                    type: e.target.value as 'string' | 'number' | 'boolean' | 'json' | 'array',
+                    type: v as 'string' | 'number' | 'boolean' | 'json' | 'array',
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="">Bitte auswählen...</option>
-                <option value="string">Text</option>
-                <option value="number">Zahl</option>
-                <option value="boolean">Boolean</option>
-                <option value="json">JSON</option>
-                <option value="array">Array</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Bitte auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="string">Text</SelectItem>
+                  <SelectItem value="number">Zahl</SelectItem>
+                  <SelectItem value="boolean">Boolean</SelectItem>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="array">Array</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Wert</Label>

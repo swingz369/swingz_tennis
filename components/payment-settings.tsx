@@ -22,6 +22,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface PaymentSettings {
   id: string;
@@ -221,23 +228,26 @@ export default function PaymentSettingsManagement() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label>Zahlungsgateway</Label>
-              <select
+              <Select
                 value={editForm.gateway || ''}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setEditForm({
                     ...editForm,
-                    gateway: e.target.value as 'stripe' | 'paypal' | 'sepa' | 'cash' | 'other',
+                    gateway: v as 'stripe' | 'paypal' | 'sepa' | 'cash' | 'other',
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="">Bitte auswählen...</option>
-                <option value="stripe">Stripe</option>
-                <option value="paypal">PayPal</option>
-                <option value="sepa">SEPA Lastschrift</option>
-                <option value="cash">Barzahlung</option>
-                <option value="other">Sonstiges</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Bitte auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stripe">Stripe</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                  <SelectItem value="sepa">SEPA Lastschrift</SelectItem>
+                  <SelectItem value="cash">Barzahlung</SelectItem>
+                  <SelectItem value="other">Sonstiges</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Name</Label>

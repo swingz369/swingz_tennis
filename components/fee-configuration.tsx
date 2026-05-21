@@ -11,6 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Calendar, Clock, Plus, Edit, XCircle, Download, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface FeeConfiguration {
   id: string;
@@ -206,22 +213,25 @@ export default function FeeConfigurationManagement() {
             </div>
             <div>
               <Label>Typ</Label>
-              <select
+              <Select
                 value={editForm.type || ''}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setEditForm({
                     ...editForm,
-                    type: e.target.value as 'membership' | 'training' | 'court' | 'other',
+                    type: v as 'membership' | 'training' | 'court' | 'other',
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="">Bitte auswählen...</option>
-                <option value="membership">Mitgliedschaft</option>
-                <option value="training">Training</option>
-                <option value="court">Platz</option>
-                <option value="other">Sonstiges</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Bitte auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="membership">Mitgliedschaft</SelectItem>
+                  <SelectItem value="training">Training</SelectItem>
+                  <SelectItem value="court">Platz</SelectItem>
+                  <SelectItem value="other">Sonstiges</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Betrag (€)</Label>
@@ -242,22 +252,25 @@ export default function FeeConfigurationManagement() {
             </div>
             <div>
               <Label>Abrechnungszyklus</Label>
-              <select
+              <Select
                 value={editForm.billingCycle || ''}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setEditForm({
                     ...editForm,
-                    billingCycle: e.target.value as 'monthly' | 'quarterly' | 'yearly' | 'one_time',
+                    billingCycle: v as 'monthly' | 'quarterly' | 'yearly' | 'one_time',
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="">Bitte auswählen...</option>
-                <option value="monthly">Monatlich</option>
-                <option value="quarterly">Vierteljährlich</option>
-                <option value="yearly">Jährlich</option>
-                <option value="one_time">Einmalig</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Bitte auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monatlich</SelectItem>
+                  <SelectItem value="quarterly">Vierteljährlich</SelectItem>
+                  <SelectItem value="yearly">Jährlich</SelectItem>
+                  <SelectItem value="one_time">Einmalig</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Gültig ab</Label>

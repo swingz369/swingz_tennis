@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2, Calendar, Clock, Plus, Trash2, Save } from 'lucide-react';
 
 interface AvailabilitySlot {
@@ -137,44 +144,56 @@ export default function TrainerAvailabilityManager() {
               <CardContent className="p-4 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <select
-                    value={slot.weekday}
-                    onChange={(e) => updateSlot(index, 'weekday', parseInt(e.target.value))}
-                    className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary bg-background"
+                  <Select
+                    value={String(slot.weekday)}
+                    onValueChange={(v) => updateSlot(index, 'weekday', parseInt(v))}
                   >
-                    {WEEKDAYS.map((d, i) => (
-                      <option key={i} value={i}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WEEKDAYS.map((d, i) => (
+                        <SelectItem key={i} value={String(i)}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">von</span>
-                  <select
+                  <Select
                     value={slot.fromTime}
-                    onChange={(e) => updateSlot(index, 'fromTime', e.target.value)}
-                    className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary bg-background"
+                    onValueChange={(v) => updateSlot(index, 'fromTime', v)}
                   >
-                    {HOURS.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HOURS.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <span className="text-sm text-muted-foreground">bis</span>
-                  <select
+                  <Select
                     value={slot.untilTime}
-                    onChange={(e) => updateSlot(index, 'untilTime', e.target.value)}
-                    className="px-2 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary bg-background"
+                    onValueChange={(v) => updateSlot(index, 'untilTime', v)}
                   >
-                    {HOURS.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HOURS.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex-1" />

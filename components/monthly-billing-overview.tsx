@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO, addMonths } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -336,17 +337,21 @@ export default function MonthlyBillingOverview() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <select
+          <Select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as typeof selectedStatus)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+            onValueChange={(v) => setSelectedStatus(v as typeof selectedStatus)}
           >
-            <option value="all">Alle Status</option>
-            <option value="pending">Ausstehend</option>
-            <option value="processed">Verarbeitet</option>
-            <option value="paid">Bezahlt</option>
-            <option value="overdue">Überfällig</option>
-          </select>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Status</SelectItem>
+              <SelectItem value="pending">Ausstehend</SelectItem>
+              <SelectItem value="processed">Verarbeitet</SelectItem>
+              <SelectItem value="paid">Bezahlt</SelectItem>
+              <SelectItem value="overdue">Überfällig</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

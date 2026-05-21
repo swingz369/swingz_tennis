@@ -30,6 +30,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface Member {
   id: string;
@@ -303,30 +310,32 @@ export default function MemberListManagement() {
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Status</option>
-            <option value="active">Aktiv</option>
-            <option value="inactive">Inaktiv</option>
-            <option value="suspended">Gesperrt</option>
-            <option value="terminated">Beendet</option>
-          </select>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Alle Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Status</SelectItem>
+              <SelectItem value="active">Aktiv</SelectItem>
+              <SelectItem value="inactive">Inaktiv</SelectItem>
+              <SelectItem value="suspended">Gesperrt</SelectItem>
+              <SelectItem value="terminated">Beendet</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Typen</option>
-            <option value="member">Mitglieder</option>
-            <option value="trial">Probetrainings</option>
-            <option value="inactive">Inaktiv</option>
-          </select>
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Alle Typen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Typen</SelectItem>
+              <SelectItem value="member">Mitglieder</SelectItem>
+              <SelectItem value="trial">Probetrainings</SelectItem>
+              <SelectItem value="inactive">Inaktiv</SelectItem>
+            </SelectContent>
+          </Select>
       </div>
 
       <ConfirmDialog
@@ -616,20 +625,24 @@ export default function MemberListManagement() {
                       <div>
                         <Label>Mitgliedschaftstyp</Label>
                         {isEditing ? (
-                          <select
+                          <Select
                             value={editForm.memberType || ''}
-                            onChange={(e) =>
+                            onValueChange={(v) =>
                               setEditForm({
                                 ...editForm,
-                                memberType: e.target.value as Member['memberType'],
+                                memberType: v as Member['memberType'],
                               })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                           >
-                            <option value="member">Mitglied</option>
-                            <option value="trial">Probetraining</option>
-                            <option value="inactive">Inaktiv</option>
-                          </select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Typ auswählen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="member">Mitglied</SelectItem>
+                              <SelectItem value="trial">Probetraining</SelectItem>
+                              <SelectItem value="inactive">Inaktiv</SelectItem>
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <div className="mt-1">{getTypeLabel(selectedMember.memberType)}</div>
                         )}
@@ -637,21 +650,25 @@ export default function MemberListManagement() {
                       <div>
                         <Label>Status</Label>
                         {isEditing ? (
-                          <select
+                          <Select
                             value={editForm.membershipStatus || ''}
-                            onChange={(e) =>
+                            onValueChange={(v) =>
                               setEditForm({
                                 ...editForm,
-                                membershipStatus: e.target.value as Member['membershipStatus'],
+                                membershipStatus: v as Member['membershipStatus'],
                               })
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                           >
-                            <option value="active">Aktiv</option>
-                            <option value="inactive">Inaktiv</option>
-                            <option value="suspended">Gesperrt</option>
-                            <option value="terminated">Beendet</option>
-                          </select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Status auswählen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Aktiv</SelectItem>
+                              <SelectItem value="inactive">Inaktiv</SelectItem>
+                              <SelectItem value="suspended">Gesperrt</SelectItem>
+                              <SelectItem value="terminated">Beendet</SelectItem>
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <div className="mt-1">
                             {getStatusLabel(selectedMember.membershipStatus)}

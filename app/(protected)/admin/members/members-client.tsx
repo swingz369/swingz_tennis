@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Eye, UserCheck, UserX, Search, Download, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
@@ -190,25 +191,27 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
             className="pl-10"
           />
         </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-500"
-        >
-          <option value="all">Alle Rollen</option>
-          <option value="member">Mitglied</option>
-          <option value="trainer">Trainer</option>
-          <option value="admin">Admin</option>
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-500"
-        >
-          <option value="all">Alle Status</option>
-          <option value="active">Aktiv</option>
-          <option value="inactive">Inaktiv</option>
-        </select>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Rollen</SelectItem>
+            <SelectItem value="member">Mitglied</SelectItem>
+            <SelectItem value="trainer">Trainer</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Status</SelectItem>
+            <SelectItem value="active">Aktiv</SelectItem>
+            <SelectItem value="inactive">Inaktiv</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Export Button */}
@@ -390,21 +393,24 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                 </div>
                 <div>
                   <Label htmlFor="invite_role">Rolle</Label>
-                  <select
-                    id="invite_role"
+                  <Select
                     value={inviteForm.role}
-                    onChange={(e) =>
+                    onValueChange={(v) =>
                       setInviteForm({
                         ...inviteForm,
-                        role: e.target.value as 'member' | 'trainer' | 'admin',
+                        role: v as 'member' | 'trainer' | 'admin',
                       })
                     }
-                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-500"
                   >
-                    <option value="member">Mitglied</option>
-                    <option value="trainer">Trainer</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">Mitglied</SelectItem>
+                      <SelectItem value="trainer">Trainer</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button type="submit" disabled={inviteLoading}>

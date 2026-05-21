@@ -11,6 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, User, Plus, ChevronLeft, ChevronRight, Download, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface TrainerAvailability {
   id: string;
@@ -199,30 +206,32 @@ export default function TrainerAvailabilityCalendar() {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-gray-400" />
-          <select
-            value={selectedTrainerId}
-            onChange={(e) => setSelectedTrainerId(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="all">Alle Trainer</option>
-            {getTrainerIds().map((id) => (
-              <option key={id} value={id}>
-                Trainer {id}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedTrainerId} onValueChange={setSelectedTrainerId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Alle Trainer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Trainer</SelectItem>
+              {getTrainerIds().map((id) => (
+                <SelectItem key={id} value={id}>
+                  Trainer {id}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-400" />
-          <select
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value as typeof viewMode)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          >
-            <option value="week">Wochenansicht</option>
-            <option value="month">Monatsansicht</option>
-          </select>
+          <Select value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Wochenansicht" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">Wochenansicht</SelectItem>
+              <SelectItem value="month">Monatsansicht</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
@@ -329,18 +338,21 @@ export default function TrainerAvailabilityCalendar() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <Label>Trainer</Label>
-              <select
+              <Select
                 value={editForm.trainerId || ''}
-                onChange={(e) => setEditForm({ ...editForm, trainerId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                onValueChange={(v) => setEditForm({ ...editForm, trainerId: v })}
               >
-                <option value="">Trainer auswählen...</option>
-                {getTrainerIds().map((id) => (
-                  <option key={id} value={id}>
-                    Trainer {id}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Trainer auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {getTrainerIds().map((id) => (
+                    <SelectItem key={id} value={id}>
+                      Trainer {id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Datum</Label>
@@ -368,41 +380,49 @@ export default function TrainerAvailabilityCalendar() {
             </div>
             <div>
               <Label>Status</Label>
-              <select
+              <Select
                 value={editForm.status || 'available'}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   setEditForm({
                     ...editForm,
-                    status: e.target.value as 'available' | 'unavailable' | 'booked' | 'blocked',
+                    status: v as 'available' | 'unavailable' | 'booked' | 'blocked',
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="available">Verfügbar</option>
-                <option value="unavailable">Nicht verfügbar</option>
-                <option value="booked">Gebucht</option>
-                <option value="blocked">Blockiert</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Status auswählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">Verfügbar</SelectItem>
+                  <SelectItem value="unavailable">Nicht verfügbar</SelectItem>
+                  <SelectItem value="booked">Gebucht</SelectItem>
+                  <SelectItem value="blocked">Blockiert</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Wiederholung</Label>
-              <select
+              <Select
                 value={editForm.recurringPattern?.type || ''}
-                onChange={(e) => {
-                  const type = e.target.value as 'daily' | 'weekly' | 'monthly' | 'yearly' | '';
+                onValueChange={(v) => {
+                  const type = v as 'daily' | 'weekly' | 'monthly' | 'yearly' | '';
                   setEditForm({
                     ...editForm,
                     recurringPattern: type ? { type, interval: 1 } : undefined,
                   });
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
-                <option value="">Keine Wiederholung</option>
-                <option value="daily">Täglich</option>
-                <option value="weekly">Wöchentlich</option>
-                <option value="monthly">Monatlich</option>
-                <option value="yearly">Jährlich</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Keine Wiederholung" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Keine Wiederholung</SelectItem>
+                  <SelectItem value="daily">Täglich</SelectItem>
+                  <SelectItem value="weekly">Wöchentlich</SelectItem>
+                  <SelectItem value="monthly">Monatlich</SelectItem>
+                  <SelectItem value="yearly">Jährlich</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="md:col-span-2 lg:col-span-3">
               <Label>Notizen</Label>

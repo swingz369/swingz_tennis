@@ -27,6 +27,13 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export interface TrialTraining {
   id: string;
@@ -337,18 +344,19 @@ export default function TrialTrainingManagement() {
 
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-              >
-                <option value="all">Alle Status</option>
-                <option value="scheduled">Geplant</option>
-                <option value="completed">Abgeschlossen</option>
-                <option value="cancelled">Abgesagt</option>
-                <option value="no_show">Nicht erschienen</option>
-                <option value="converted">Konvertiert</option>
-              </select>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Alle Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Status</SelectItem>
+                  <SelectItem value="scheduled">Geplant</SelectItem>
+                  <SelectItem value="completed">Abgeschlossen</SelectItem>
+                  <SelectItem value="cancelled">Abgesagt</SelectItem>
+                  <SelectItem value="no_show">Nicht erschienen</SelectItem>
+                  <SelectItem value="converted">Konvertiert</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

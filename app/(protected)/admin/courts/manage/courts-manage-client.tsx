@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 import type { Court } from '@/lib/types/court-booking';
 
@@ -292,23 +293,24 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       </div>
       <div className="space-y-2">
         <Label htmlFor="form-courtTypeId">Platztyp *</Label>
-        <select
-          id="form-courtTypeId"
+        <Select
           value={formData.courtTypeId}
-          onChange={(e) => {
-            const type = courtTypes.find((t) => t.id === e.target.value);
-            setFormData({ ...formData, courtTypeId: e.target.value, surface: type?.surface || '' });
+          onValueChange={(v) => {
+            const type = courtTypes.find((t) => t.id === v);
+            setFormData({ ...formData, courtTypeId: v, surface: type?.surface || '' });
           }}
-          className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
-          required
         >
-          <option value="">Typ wählen...</option>
-          {courtTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name} ({getSurfaceLabel(type.surface)})
-            </option>
-          ))}
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Typ wählen..." />
+          </SelectTrigger>
+          <SelectContent>
+            {courtTypes.map((type) => (
+              <SelectItem key={type.id} value={type.id}>
+                {type.name} ({getSurfaceLabel(type.surface)})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

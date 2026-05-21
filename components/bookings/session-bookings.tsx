@@ -15,6 +15,7 @@ import {
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
@@ -237,27 +238,30 @@ export function SessionBookings() {
                               {(userRoles.includes('admin') ||
                                 userRoles.includes('superadmin') ||
                                 userRoles.includes('trainer')) && (
-                                <select
+                                <Select
                                   value={session.bookingStatus}
-                                  onChange={(e) =>
+                                  onValueChange={(v) =>
                                     session.bookingId &&
                                     handleStatusChange(
                                       session.bookingId,
-                                      e.target.value as
+                                      v as
                                         | 'pending'
                                         | 'confirmed'
                                         | 'cancelled'
                                         | 'no_show'
                                     )
                                   }
-                                  className="text-[11px] border rounded px-1 py-0.5 bg-white dark:bg-gray-950"
-                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <option value="pending">Ausstehend</option>
-                                  <option value="confirmed">Bestätigt</option>
-                                  <option value="cancelled">Storniert</option>
-                                  <option value="no_show">Nicht erschienen</option>
-                                </select>
+                                  <SelectTrigger className="h-6 text-[11px] px-1 py-0" onClick={(e) => e.stopPropagation()}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Ausstehend</SelectItem>
+                                    <SelectItem value="confirmed">Bestätigt</SelectItem>
+                                    <SelectItem value="cancelled">Storniert</SelectItem>
+                                    <SelectItem value="no_show">Nicht erschienen</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               )}
                             </div>
                           )}

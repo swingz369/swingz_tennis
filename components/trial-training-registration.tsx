@@ -6,6 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Calendar, Clock, User, Mail, Send, CheckCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub } from '@/hooks/use-user-data';
@@ -47,7 +54,7 @@ export default function TrialTrainingRegistration() {
   const availableSessions = sessions.filter((s: Session) => !s.bookedByUser);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -291,19 +298,21 @@ export default function TrialTrainingRegistration() {
 
               <div className="space-y-2">
                 <Label htmlFor="experience">Tennis-Erfahrung</Label>
-                <select
-                  id="experience"
+                <Select
                   name="experience"
                   value={formData.experience}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  onValueChange={(v) => setFormData((prev) => ({ ...prev, experience: v }))}
                 >
-                  <option value="">Bitte auswählen...</option>
-                  <option value="beginner">Anfänger (0-1 Jahre)</option>
-                  <option value="intermediate">Fortgeschritten (1-3 Jahre)</option>
-                  <option value="advanced">Erfahren (3+ Jahre)</option>
-                  <option value="competitive">Wettkampferfahrung</option>
-                </select>
+                  <SelectTrigger id="experience" className="w-full">
+                    <SelectValue placeholder="Bitte auswählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="beginner">Anfänger (0-1 Jahre)</SelectItem>
+                    <SelectItem value="intermediate">Fortgeschritten (1-3 Jahre)</SelectItem>
+                    <SelectItem value="advanced">Erfahren (3+ Jahre)</SelectItem>
+                    <SelectItem value="competitive">Wettkampferfahrung</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
