@@ -53,7 +53,7 @@ export interface SystemSetting {
   updatedBy?: string;
 }
 
-export default function SystemSettingsManagement() {
+export default function SystemSettingsManagement({ clubId, embedded }: { clubId?: string; embedded?: boolean }) {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [editForm, setEditForm] = useState<Partial<SystemSetting>>({});
   const [selectedCategory, setSelectedCategory] = useState<
@@ -64,12 +64,13 @@ export default function SystemSettingsManagement() {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [clubId]);
 
   const loadSettings = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/system-settings');
+      const url = clubId ? `/api/system-settings?clubId=${encodeURIComponent(clubId)}` : '/api/system-settings';
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to load system settings');
       }
@@ -88,7 +89,7 @@ export default function SystemSettingsManagement() {
       const response = await fetch('/api/system-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({ ...editForm, clubId: clubId || null }),
       });
 
       if (!response.ok) {
@@ -213,7 +214,7 @@ export default function SystemSettingsManagement() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-6 space-y-6">
+      <div className={embedded ? 'space-y-4' : 'p-4 md:p-6 space-y-6'}>
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
           <p className="text-gray-500">Laden...</p>
@@ -223,20 +224,22 @@ export default function SystemSettingsManagement() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">System-Einstellungen</h1>
-          <p className="text-gray-500">Verwaltung aller Systemkonfigurationen</p>
+    <div className={embedded ? 'space-y-4' : 'p-4 md:p-6 space-y-6'}>
+      {/* Header — hidden when embedded in a tab */}
+      {!embedded && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-brand-primary">System-Einstellungen</h1>
+            <p className="text-gray-500">Verwaltung aller Systemkonfigurationen</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
@@ -393,7 +396,7 @@ export default function SystemSettingsManagement() {
 
       {/* Settings List */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Systemeinstellungen</h2>
+        {!embedded && <h2 className="text-lg font-semibold">Systemeinstellungen</h2>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredSettings.map((setting) => (
             <Card key={setting.id}>

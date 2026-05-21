@@ -87,27 +87,31 @@ export default function SchedulesPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      // Fetch trainers (for future use)
-      const trainersRes = await fetch('/api/trainer/me');
-      if (trainersRes.ok) {
-        // trainersData could be used to populate trainer dropdown in session form
-      }
-
-      // Fetch clubs (for superadmin filter)
+      // Fetch clubs (for club filter)
       const clubsRes = await fetch('/api/clubs');
       if (clubsRes.ok) {
         const clubsData = await clubsRes.json();
-        setClubs(Array.isArray(clubsData) ? clubsData : []);
-      }
+        const clubsList = Array.isArray(clubsData) ? clubsData : [];
+        setClubs(clubsList);
 
-      // Fetch sessions
-      await fetchSessions();
+        // Auto-select first club so sessions load immediately
+        if (clubsList.length > 0) {
+          setFilterClubId(clubsList[0].id);
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch data:', err);
     } finally {
       setLoading(false);
     }
-  }, [fetchSessions]);
+  }, []);
+
+  // Fetch sessions whenever filterClubId or filterDate changes
+  useEffect(() => {
+    if (filterClubId !== 'all') {
+      fetchSessions();
+    }
+  }, [filterClubId, filterDate, fetchSessions]);
 
   useEffect(() => {
     fetchData();

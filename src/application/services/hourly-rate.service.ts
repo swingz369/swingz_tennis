@@ -12,28 +12,15 @@ import {
   TrainerHourlyRateRepository,
   RateHistoryRepository,
 } from '../../infrastructure/persistence/repositories/hourly-rate.repository';
-import { isFeatureEnabled } from '../../../lib/features/feature-flags';
 
 /**
- * HourlyRateService - Feature-flag-based adapter
- * Switches between in-memory implementation and Drizzle repositories
- * Feature Flag: USE_HOURLY_RATE_REPOSITORY
+ * HourlyRateService — Drizzle-backed service.
+ * All data operations go through Drizzle repositories directly.
  */
 export class HourlyRateService {
-  private static rateTiers: HourlyRateTier[] = [];
-  private static trainerRates: TrainerHourlyRate[] = [];
-  private static rateHistory: RateHistoryEntry[] = [];
-
   private static tierRepo = new HourlyRateTierRepository();
   private static trainerRateRepo = new TrainerHourlyRateRepository();
   private static historyRepo = new RateHistoryRepository();
-
-  /**
-   * Generate a unique ID (legacy)
-   */
-  private static generateId(): string {
-    return `rate-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 
   /**
    * Validate hourly rate tier input
@@ -113,112 +100,41 @@ export class HourlyRateService {
     return !isNaN(date.getTime());
   }
 
-  /**
-   * Create a new hourly rate tier
-   */
+  // ═══ Hourly Rate Tier Operations ═══
+
   static async createHourlyRateTier(input: CreateHourlyRateTierInput): Promise<HourlyRateTier> {
     const validation = this.validateHourlyRateTierInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
-
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.tierRepo.create(input);
-    }
-
-    // Legacy in-memory implementation
-    const now = new Date().toISOString();
-    const rateTier: HourlyRateTier = {
-      id: this.generateId(),
-      name: input.name,
-      description: input.description,
-      baseRate: input.baseRate,
-      trainingTypes: input.trainingTypes,
-      experienceLevel: input.experienceLevel,
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.rateTiers.push(rateTier);
-    return rateTier;
+    return await this.tierRepo.create(input);
   }
 
-  /**
-   * Get hourly rate tier by ID
-   */
   static async getHourlyRateTierById(id: string): Promise<HourlyRateTier | null> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.tierRepo.findById(id);
-    }
-    return this.rateTiers.find((t) => t.id === id) || null;
+    return await this.tierRepo.findById(id);
   }
 
-  /**
-   * Get all hourly rate tiers
-   */
   static async getAllHourlyRateTiers(): Promise<HourlyRateTier[]> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.tierRepo.findAll();
-    }
-    return [...this.rateTiers];
+    return await this.tierRepo.findAll();
   }
 
-  /**
-   * Get active hourly rate tiers
-   */
   static async getActiveHourlyRateTiers(): Promise<HourlyRateTier[]> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.tierRepo.findActive();
-    }
-    return this.rateTiers.filter((t) => t.isActive);
+    return await this.tierRepo.findActive();
   }
 
-  /**
-   * Update hourly rate tier
-   */
   static async updateHourlyRateTier(
     id: string,
     input: UpdateHourlyRateTierInput
   ): Promise<HourlyRateTier | null> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.tierRepo.update(id, input);
-    }
-
-    // Legacy in-memory implementation
-    const index = this.rateTiers.findIndex((t) => t.id === id);
-    if (index === -1) return null;
-
-    const existing = this.rateTiers[index];
-    const updated: HourlyRateTier = {
-      ...existing,
-      ...input,
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.rateTiers[index] = updated;
-    return updated;
+    return await this.tierRepo.update(id, input);
   }
 
-  /**
-   * Delete hourly rate tier
-   */
   static async deleteHourlyRateTier(id: string): Promise<boolean> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.tierRepo.delete(id);
-    }
-
-    // Legacy in-memory implementation
-    const index = this.rateTiers.findIndex((t) => t.id === id);
-    if (index === -1) return false;
-
-    this.rateTiers.splice(index, 1);
-    return true;
+    return await this.tierRepo.delete(id);
   }
 
-  /**
-   * Create a new trainer hourly rate
-   */
+  // ═══ Trainer Hourly Rate Operations ═══
+
   static async createTrainerHourlyRate(
     input: CreateTrainerHourlyRateInput
   ): Promise<TrainerHourlyRate> {
@@ -226,262 +142,45 @@ export class HourlyRateService {
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
-
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.trainerRateRepo.create(input);
-    }
-
-    // Legacy in-memory implementation
-    const now = new Date().toISOString();
-    const effectiveRate = input.overrideRate || input.baseRate;
-
-    const trainerRate: TrainerHourlyRate = {
-      id: this.generateId(),
-      trainerId: input.trainerId,
-      trainerName: input.trainerName,
-      baseRate: input.baseRate,
-      overrideRate: input.overrideRate,
-      effectiveRate,
-      validFrom: input.validFrom,
-      validUntil: input.validUntil,
-      reason: input.reason,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.trainerRates.push(trainerRate);
-    return trainerRate;
+    return await this.trainerRateRepo.create(input);
   }
 
-  /**
-   * Get trainer hourly rate by ID
-   */
   static async getTrainerHourlyRateById(id: string): Promise<TrainerHourlyRate | null> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.trainerRateRepo.findById(id);
-    }
-    return this.trainerRates.find((r) => r.id === id) || null;
+    return await this.trainerRateRepo.findById(id);
   }
 
-  /**
-   * Get trainer hourly rate by trainer ID
-   */
   static async getTrainerHourlyRateByTrainerId(
     trainerId: string
   ): Promise<TrainerHourlyRate | null> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.trainerRateRepo.findByTrainerId(trainerId);
-    }
-
-    // Legacy in-memory implementation
-    const now = new Date();
-    return (
-      this.trainerRates.find(
-        (r) =>
-          r.trainerId === trainerId &&
-          new Date(r.validFrom) <= now &&
-          (!r.validUntil || new Date(r.validUntil) >= now)
-      ) || null
-    );
+    return await this.trainerRateRepo.findByTrainerId(trainerId);
   }
 
-  /**
-   * Get all trainer hourly rates
-   */
   static async getAllTrainerHourlyRates(): Promise<TrainerHourlyRate[]> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.trainerRateRepo.findAll();
-    }
-    return [...this.trainerRates];
+    return await this.trainerRateRepo.findAll();
   }
 
-  /**
-   * Update trainer hourly rate
-   */
   static async updateTrainerHourlyRate(
     id: string,
     input: UpdateTrainerHourlyRateInput
   ): Promise<TrainerHourlyRate | null> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.trainerRateRepo.update(id, input);
-    }
-
-    // Legacy in-memory implementation
-    const index = this.trainerRates.findIndex((r) => r.id === id);
-    if (index === -1) return null;
-
-    const existing = this.trainerRates[index];
-    const oldRate = existing.effectiveRate;
-
-    const updated: TrainerHourlyRate = {
-      ...existing,
-      ...input,
-      effectiveRate: input.overrideRate || existing.baseRate,
-      updatedAt: new Date().toISOString(),
-    };
-
-    this.trainerRates[index] = updated;
-
-    // Add to history if rate changed
-    if (updated.effectiveRate !== oldRate) {
-      this.rateHistory.push({
-        id: this.generateId(),
-        trainerId: existing.trainerId,
-        trainerName: existing.trainerName,
-        oldRate,
-        newRate: updated.effectiveRate,
-        changedAt: new Date().toISOString(),
-        changedBy: 'Admin',
-        reason: input.reason,
-      });
-    }
-
-    return updated;
+    return await this.trainerRateRepo.update(id, input);
   }
 
-  /**
-   * Delete trainer hourly rate
-   */
   static async deleteTrainerHourlyRate(id: string): Promise<boolean> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.trainerRateRepo.delete(id);
-    }
-
-    // Legacy in-memory implementation
-    const index = this.trainerRates.findIndex((r) => r.id === id);
-    if (index === -1) return false;
-
-    this.trainerRates.splice(index, 1);
-    return true;
+    return await this.trainerRateRepo.delete(id);
   }
 
-  /**
-   * Get rate history for a trainer
-   */
-  static async getRateHistoryForTrainer(trainerId: string): Promise<RateHistoryEntry[]> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.historyRepo.findByTrainerId(trainerId);
-    }
-    return this.rateHistory.filter((h) => h.trainerId === trainerId);
-  }
-
-  /**
-   * Get all rate history
-   */
-  static async getAllRateHistory(): Promise<RateHistoryEntry[]> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.historyRepo.findAll();
-    }
-    return [...this.rateHistory];
-  }
-
-  /**
-   * Calculate effective rate for a trainer
-   */
   static async calculateEffectiveRate(trainerId: string): Promise<number | null> {
-    if (isFeatureEnabled('USE_HOURLY_RATE_REPOSITORY')) {
-      return await this.trainerRateRepo.calculateEffectiveRate(trainerId);
-    }
-
-    const trainerRate = await this.getTrainerHourlyRateByTrainerId(trainerId);
-    return trainerRate ? trainerRate.effectiveRate : null;
+    return await this.trainerRateRepo.calculateEffectiveRate(trainerId);
   }
 
-  /**
-   * Initialize with mock data (for development)
-   */
-  static initializeMockData(): void {
-    const now = new Date();
+  // ═══ Rate History Operations ═══
 
-    this.rateTiers = [
-      {
-        id: 'tier-1',
-        name: 'Anfänger-Training',
-        description: 'Stundensatz für Anfänger-Training',
-        baseRate: 35,
-        trainingTypes: ['Einzeltraining', 'Gruppentraining'],
-        experienceLevel: 'beginner',
-        isActive: true,
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'tier-2',
-        name: 'Fortgeschrittenen-Training',
-        description: 'Stundensatz für Fortgeschrittenen-Training',
-        baseRate: 45,
-        trainingTypes: ['Einzeltraining', 'Gruppentraining'],
-        experienceLevel: 'intermediate',
-        isActive: true,
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'tier-3',
-        name: 'Wettkampf-Training',
-        description: 'Stundensatz für Wettkampf-Training',
-        baseRate: 55,
-        trainingTypes: ['Einzeltraining', 'Mentaltraining'],
-        experienceLevel: 'advanced',
-        isActive: true,
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'tier-4',
-        name: 'Professionelles Training',
-        description: 'Stundensatz für professionelles Training',
-        baseRate: 75,
-        trainingTypes: ['Einzeltraining', 'Wettkampfvorbereitung'],
-        experienceLevel: 'professional',
-        isActive: true,
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
-
-    this.trainerRates = [
-      {
-        id: 'trainer-rate-1',
-        trainerId: 'trainer-1',
-        trainerName: 'Thomas Müller',
-        baseRate: 45,
-        overrideRate: 50,
-        effectiveRate: 50,
-        validFrom: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-        reason: 'Erfahrung und Spezialisierung',
-        createdAt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'trainer-rate-2',
-        trainerId: 'trainer-2',
-        trainerName: 'Julia Weber',
-        baseRate: 55,
-        effectiveRate: 55,
-        validFrom: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-        reason: 'Professionelle Erfahrung',
-        createdAt: new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
-
-    this.rateHistory = [
-      {
-        id: 'history-1',
-        trainerId: 'trainer-1',
-        trainerName: 'Thomas Müller',
-        oldRate: 45,
-        newRate: 50,
-        changedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        changedBy: 'Admin',
-        reason: 'Erfahrung und Spezialisierung',
-      },
-    ];
+  static async getRateHistoryForTrainer(trainerId: string): Promise<RateHistoryEntry[]> {
+    return await this.historyRepo.findByTrainerId(trainerId);
   }
-}
 
-// Initialize mock data
-if (process.env.NODE_ENV !== 'production') {
-  HourlyRateService.initializeMockData();
+  static async getAllRateHistory(): Promise<RateHistoryEntry[]> {
+    return await this.historyRepo.findAll();
+  }
 }

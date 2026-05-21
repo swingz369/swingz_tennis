@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
+import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -28,7 +28,7 @@ export async function POST(
         return NextResponse.json({ error: 'Verified by is required' }, { status: 400 });
       }
 
-      const updated = await TrainerProfileService.verifyQualification(
+      const updated = await trainerProfileService.verifyQualification(
         id,
         qualificationId,
         verifiedBy

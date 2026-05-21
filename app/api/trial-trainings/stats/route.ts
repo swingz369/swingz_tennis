@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrialTrainingService } from '@/src/application/services/trial-training.service';
+import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest) {
     }
 
     try {
-      const stats = await TrialTrainingService.getTrialTrainingStats();
+      const stats = await trialTrainingService.getTrialTrainingStats();
       return NextResponse.json({ stats });
     } catch (error) {
       console.error('Trial training stats error:', error);

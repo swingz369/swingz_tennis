@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { AbsenceService } from '@/src/application/services/absence.service';
+import { absenceService } from '@/src/application/services/absence-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -34,7 +34,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      const updated = await AbsenceService.approveAbsence(id, validation.data.approvedBy);
+      const updated = await absenceService.approveAbsence(id, validation.data.approvedBy);
 
       if (!updated) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });

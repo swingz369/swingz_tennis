@@ -54,7 +54,7 @@ export async function createBookingAction(
         end_time: endTime,
         notes: notes ?? null,
         status: 'confirmed',
-      })
+      } as any)
       .select('id')
       .single();
 
@@ -91,7 +91,7 @@ export async function cancelBookingAction(bookingId: string): Promise<ActionResu
       .from('bookings')
       .select('id, user_id, start_time, status')
       .eq('id', bookingId)
-      .single();
+      .single() as any;
 
     if (fetchError || !booking) {
       return { success: false, error: 'Buchung nicht gefunden.' };

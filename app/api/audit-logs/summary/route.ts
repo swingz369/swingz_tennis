@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { AuditLogService } from '@/src/application/services/audit-log.service';
+import { auditLogService } from '@/src/application/services/audit-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -23,7 +23,6 @@ export async function GET(_request: NextRequest) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
 
-      const auditLogService = new AuditLogService();
       const summary = await auditLogService.getAuditLogSummary(
         startDate ? new Date(startDate) : undefined,
         endDate ? new Date(endDate) : undefined

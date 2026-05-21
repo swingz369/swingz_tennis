@@ -67,7 +67,7 @@ export interface Member {
   updatedAt: string;
 }
 
-export default function MemberListManagement() {
+export default function MemberListManagement({ clubId, embedded }: { clubId?: string; embedded?: boolean }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -81,12 +81,13 @@ export default function MemberListManagement() {
 
   useEffect(() => {
     loadMembers();
-  }, []);
+  }, [clubId]);
 
   const loadMembers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/members');
+      const url = clubId ? `/api/members?clubId=${encodeURIComponent(clubId)}` : '/api/members';
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to load members');
       }
@@ -246,7 +247,7 @@ export default function MemberListManagement() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-6 space-y-6">
+      <div className={embedded ? 'space-y-4' : 'p-4 md:p-6 space-y-6'}>
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
           <p className="text-gray-500">Laden...</p>
@@ -266,34 +267,26 @@ export default function MemberListManagement() {
     }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Mitgliederliste verwalten</h1>
-          <p className="text-gray-500">Übersicht und Management aller Mitglieder</p>
+    <div className={embedded ? 'space-y-4' : 'p-4 md:p-6 space-y-6'}>
+      {/* Header — hidden when embedded in a tab */}
+      {!embedded && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-brand-primary">Mitgliederliste verwalten</h1>
+            <p className="text-gray-500">Übersicht und Management aller Mitglieder</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Neues Mitglied
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Neues Mitglied
-          </Button>
-        </div>
-
-        <ConfirmDialog
-          open={deleteConfirmId !== null}
-          onOpenChange={(open) => !open && setDeleteConfirmId(null)}
-          title="Mitglied löschen"
-          description="Möchten Sie dieses Mitglied wirklich löschen?"
-          confirmLabel="Löschen"
-          variant="danger"
-          onConfirm={confirmDeleteMember}
-        />
-      </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">

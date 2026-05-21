@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { MemberService } from '@/src/application/services/member.service';
+import { memberService } from '@/src/application/services/member-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
@@ -35,7 +35,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         return forbiddenResponse('Access denied');
       }
 
-      const member = await MemberService.getMemberById(id);
+      const member = await memberService.getMemberById(id);
 
       if (!member) {
         return NextResponse.json({ error: 'Member not found' }, { status: 404 });
@@ -92,7 +92,7 @@ export async function PATCH(
       } = body;
 
       // Update in-memory service (backward compatibility)
-      const updated = await MemberService.updateMember(id, {
+      const updated = await memberService.updateMember(id, {
         firstName,
         lastName,
         email,
@@ -234,7 +234,7 @@ export async function DELETE(
           },
           ip_address: _request.headers.get('x-forwarded-for') || _request.headers.get('x-real-ip'),
           user_agent: _request.headers.get('user-agent'),
-        });
+        } as any);
       } catch (auditError) {
         console.error('Audit logging failed:', auditError);
       }

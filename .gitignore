@@ -111,4 +111,7 @@ tramp
 # Vim
 .fuse*
 
+# Supabase type backups (auto-generated, use scripts/backup-supabase-types.sh)
+.supabase-types-backup/
+
 

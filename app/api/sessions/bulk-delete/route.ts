@@ -86,7 +86,7 @@ export async function DELETE(request: NextRequest) {
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
           user_agent: request.headers.get('user-agent'),
           created_at: new Date().toISOString(),
-        });
+        } as any);
       }
 
       return NextResponse.json({

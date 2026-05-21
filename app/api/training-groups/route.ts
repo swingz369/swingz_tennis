@@ -36,10 +36,9 @@ export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) return forbiddenResponse('Admin access required');
-    // TODO: Scope by club — training_groups lacks club_id column.
-    // Joining through schedules (schedules.club_id → training_groups.schedule_id) would enable scoping.
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .select('*')
+      .eq('club_id', auth.clubId)
       .order('created_at', { ascending: true });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
@@ -75,6 +74,7 @@ export async function POST(request: NextRequest) {
 
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .insert({
+        club_id: auth.clubId,
         schedule_id: scheduleId,
         name,
         level,

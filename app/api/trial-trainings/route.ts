@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrialTrainingService } from '@/src/application/services/trial-training.service';
+import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -47,7 +47,7 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const trialTraining = await TrialTrainingService.createTrialTraining({
+      const trialTraining = await trialTrainingService.createTrialTraining({
         ...validation.data,
         participant: {
           ...validation.data.participant,
@@ -95,19 +95,19 @@ export async function GET(_request: NextRequest) {
 
       if (email) {
         const trialTrainings =
-          await TrialTrainingService.getTrialTrainingsByParticipantEmail(email);
+          await trialTrainingService.getTrialTrainingsByParticipantEmail(email);
         return NextResponse.json({ trialTrainings });
       }
 
       if (status) {
-        const trialTrainings = await TrialTrainingService.getTrialTrainingsByStatus(
+        const trialTrainings = await trialTrainingService.getTrialTrainingsByStatus(
           status as 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted'
         );
         return NextResponse.json({ trialTrainings });
       }
 
       // Date range filtering removed - not yet implemented in service
-      const allTrainings = await TrialTrainingService.getAllTrialTrainings();
+      const allTrainings = await trialTrainingService.getAllTrialTrainings();
 
       // Filter by date range client-side if provided
       let filteredTrainings = allTrainings;

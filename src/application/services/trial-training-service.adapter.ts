@@ -1,14 +1,13 @@
 /**
  * Trial Training Service Adapter
  *
- * Provides a unified interface for trial training operations,
- * switching between in-memory (legacy) and repository pattern (new) based on feature flags.
+ * Drizzle-based trial training operations.
  *
  * Usage:
  * ```typescript
  * import { trialTrainingService } from '@/application/services/trial-training-service.adapter';
  *
- * const sessions = await trialTrainingService.getAllTrialTrainings('club-id-123');
+ * const sessions = await trialTrainingService.getAllTrialTrainings();
  * ```
  */
 
@@ -20,7 +19,7 @@ import type {
 } from '@/domain/entities/trial-training.entity';
 import { TrialTrainingService } from './trial-training.service';
 import { DrizzleTrialTrainingRepository } from '@/infrastructure/persistence/repositories/trial-training.repository';
-import { FeatureFlags } from '@/lib/features/feature-flags';
+
 
 class TrialTrainingServiceAdapter {
   private trialTrainingRepo = new DrizzleTrialTrainingRepository();
@@ -41,38 +40,28 @@ class TrialTrainingServiceAdapter {
    */
   async createTrialTraining(
     input: CreateTrialTrainingInput,
-    clubId: string
+    clubId: string = ''
   ): Promise<TrialTraining> {
-    // Always validate
     const validation = this.validateTrialTrainingInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.create(input, clubId);
-    }
-    return TrialTrainingService.createTrialTraining(input);
+    return this.trialTrainingRepo.create(input, clubId);
   }
 
   /**
    * Get trial training by ID
    */
-  async getTrialTrainingById(id: string, clubId: string): Promise<TrialTraining | null> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.findById(id, clubId);
-    }
-    return TrialTrainingService.getTrialTrainingById(id);
+  async getTrialTrainingById(id: string, clubId: string = ''): Promise<TrialTraining | null> {
+    return this.trialTrainingRepo.findById(id, clubId);
   }
 
   /**
    * Get all trial trainings
    */
-  async getAllTrialTrainings(clubId: string): Promise<TrialTraining[]> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.findAll(clubId);
-    }
-    return TrialTrainingService.getAllTrialTrainings();
+  async getAllTrialTrainings(clubId: string = ''): Promise<TrialTraining[]> {
+    return this.trialTrainingRepo.findAll(clubId);
   }
 
   /**
@@ -80,12 +69,9 @@ class TrialTrainingServiceAdapter {
    */
   async getTrialTrainingsByStatus(
     status: TrialTraining['status'],
-    clubId: string
+    clubId: string = ''
   ): Promise<TrialTraining[]> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.findByStatus(status, clubId);
-    }
-    return TrialTrainingService.getTrialTrainingsByStatus(status);
+    return this.trialTrainingRepo.findByStatus(status, clubId);
   }
 
   /**
@@ -93,56 +79,41 @@ class TrialTrainingServiceAdapter {
    */
   async getTrialTrainingsByParticipantEmail(
     email: string,
-    clubId: string
+    clubId: string = ''
   ): Promise<TrialTraining[]> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.findByParticipantEmail(email, clubId);
-    }
-    return TrialTrainingService.getTrialTrainingsByParticipantEmail(email);
+    return this.trialTrainingRepo.findByParticipantEmail(email, clubId);
   }
 
   /**
    * Get upcoming trial trainings
    */
-  async getUpcomingTrialTrainings(clubId: string, days: number = 7): Promise<TrialTraining[]> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.findUpcoming(clubId, days);
-    }
-    return TrialTrainingService.getUpcomingTrialTrainings(days);
+  async getUpcomingTrialTrainings(clubId: string = '', days: number = 7): Promise<TrialTraining[]> {
+    return this.trialTrainingRepo.findUpcoming(clubId, days);
   }
 
   /**
    * Get trial trainings needing reminder
    */
-  async getTrialTrainingsNeedingReminder(clubId: string): Promise<TrialTraining[]> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.findUpcoming(clubId, 1); // Next 24 hours
-    }
-    return TrialTrainingService.getTrialTrainingsNeedingReminder();
+  async getTrialTrainingsNeedingReminder(clubId: string = ''): Promise<TrialTraining[]> {
+    return this.trialTrainingRepo.findUpcoming(clubId, 1);
   }
 
   /**
    * Search trial trainings
    */
-  async searchTrialTrainings(query: string, clubId: string): Promise<TrialTraining[]> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.search(query, clubId);
-    }
-    return TrialTrainingService.searchTrialTrainings(query);
+  async searchTrialTrainings(query: string, clubId: string = ''): Promise<TrialTraining[]> {
+    return this.trialTrainingRepo.search(query, clubId);
   }
 
   /**
    * Get trial training statistics
    */
   async getTrialTrainingStats(
-    clubId: string,
+    clubId: string = '',
     startDate?: string,
     endDate?: string
   ): Promise<TrialTrainingStats> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.getStats(clubId, startDate, endDate);
-    }
-    return TrialTrainingService.getTrialTrainingStats();
+    return this.trialTrainingRepo.getStats(clubId, startDate, endDate);
   }
 
   /**
@@ -151,12 +122,9 @@ class TrialTrainingServiceAdapter {
   async updateTrialTraining(
     id: string,
     input: UpdateTrialTrainingInput,
-    clubId: string
+    clubId: string = ''
   ): Promise<TrialTraining | null> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.update(id, input, clubId);
-    }
-    return TrialTrainingService.updateTrialTraining(id, input);
+    return this.trialTrainingRepo.update(id, input, clubId);
   }
 
   /**
@@ -165,12 +133,9 @@ class TrialTrainingServiceAdapter {
   async updateTrialTrainingStatus(
     id: string,
     status: TrialTraining['status'],
-    clubId: string
+    clubId: string = ''
   ): Promise<TrialTraining | null> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.updateStatus(id, status, clubId);
-    }
-    return TrialTrainingService.updateTrialTrainingStatus(id, status);
+    return this.trialTrainingRepo.updateStatus(id, status, clubId);
   }
 
   /**
@@ -179,12 +144,9 @@ class TrialTrainingServiceAdapter {
   async addTrialTrainingFeedback(
     id: string,
     feedback: TrialTraining['feedback'],
-    clubId: string
+    clubId: string = ''
   ): Promise<TrialTraining | null> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.update(id, { feedback }, clubId);
-    }
-    return TrialTrainingService.addTrialTrainingFeedback(id, feedback);
+    return this.trialTrainingRepo.update(id, { feedback }, clubId);
   }
 
   /**
@@ -193,22 +155,16 @@ class TrialTrainingServiceAdapter {
   async convertTrialToMember(
     id: string,
     memberId: string,
-    clubId: string
+    clubId: string = ''
   ): Promise<TrialTraining | null> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.convertToMember(id, memberId, clubId);
-    }
-    return TrialTrainingService.convertTrialToMember(id, memberId);
+    return this.trialTrainingRepo.convertToMember(id, memberId, clubId);
   }
 
   /**
    * Delete trial training
    */
-  async deleteTrialTraining(id: string, clubId: string): Promise<boolean> {
-    if (FeatureFlags.USE_TRIAL_TRAINING_REPOSITORY) {
-      return this.trialTrainingRepo.delete(id, clubId);
-    }
-    return TrialTrainingService.deleteTrialTraining(id);
+  async deleteTrialTraining(id: string, clubId: string = ''): Promise<boolean> {
+    return this.trialTrainingRepo.delete(id, clubId);
   }
 }
 

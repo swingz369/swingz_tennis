@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { HoursLogService } from '@/src/application/services/hours-log.service';
+import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -46,7 +46,7 @@ export async function POST(_request: NextRequest) {
       }
 
       // Create attendance record
-      const attendanceRecord = await HoursLogService.createAttendanceRecord({
+      const attendanceRecord = await hoursLogService.createAttendanceRecord({
         sessionId,
         trainerId,
         trainerName,
@@ -92,23 +92,23 @@ export async function GET(_request: NextRequest) {
       const endDate = searchParams.get('endDate');
 
       if (sessionId) {
-        const attendanceRecords = await HoursLogService.getAttendanceRecordsBySessionId(sessionId);
+        const attendanceRecords = await hoursLogService.getAttendanceRecordsBySessionId(sessionId);
         return NextResponse.json({ attendanceRecords });
       }
 
       if (trainerId) {
-        const attendanceRecords = await HoursLogService.getAttendanceRecordsByTrainerId(trainerId);
+        const attendanceRecords = await hoursLogService.getAttendanceRecordsByTrainerId(trainerId);
         return NextResponse.json({ attendanceRecords });
       }
 
       if (participantId) {
         const attendanceRecords =
-          await HoursLogService.getAttendanceRecordsByParticipantId(participantId);
+          await hoursLogService.getAttendanceRecordsByParticipantId(participantId);
         return NextResponse.json({ attendanceRecords });
       }
 
       if (startDate && endDate) {
-        const attendanceRecords = await HoursLogService.getAttendanceRecordsByDateRange(
+        const attendanceRecords = await hoursLogService.getAttendanceRecordsByDateRange(
           startDate,
           endDate
         );
@@ -116,7 +116,7 @@ export async function GET(_request: NextRequest) {
       }
 
       // Get all attendance records
-      const attendanceRecords = await HoursLogService.getAllAttendanceRecords();
+      const attendanceRecords = await hoursLogService.getAllAttendanceRecords();
       return NextResponse.json({ attendanceRecords });
     } catch (error) {
       console.error('Attendance record fetch error:', error);

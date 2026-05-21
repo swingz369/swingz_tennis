@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { PaymentSettingsService } from '@/src/application/services/payment-settings.service';
+import { paymentSettingsService } from '@/src/application/services/payment-settings-service.adapter';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const paymentSettings = await PaymentSettingsService.getPaymentSettingsById(id);
+      const paymentSettings = await paymentSettingsService.getPaymentSettingsById(id);
 
       if (!paymentSettings) {
         return NextResponse.json({ error: 'Payment settings not found' }, { status: 404 });
@@ -63,7 +63,7 @@ export async function PATCH(
         fees,
       } = body;
 
-      const updated = await PaymentSettingsService.updatePaymentSettings(id, {
+      const updated = await paymentSettingsService.updatePaymentSettings(id, {
         gatewayName,
         isActive,
         isDefault,
@@ -107,7 +107,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await PaymentSettingsService.deletePaymentSettings(id);
+      const success = await paymentSettingsService.deletePaymentSettings(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Payment settings not found' }, { status: 404 });

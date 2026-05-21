@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
+import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const profile = await TrainerProfileService.getTrainerProfileById(id);
+      const profile = await trainerProfileService.getTrainerProfileById(id);
 
       if (!profile) {
         return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
@@ -50,7 +50,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const { id } = await params;
 
       if (!isAdmin) {
-        const profile = await TrainerProfileService.getTrainerProfileById(id);
+        const profile = await trainerProfileService.getTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
           return forbiddenResponse('You can only add qualifications to your own profile');
         }
@@ -64,7 +64,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const updated = await TrainerProfileService.addQualification(id, {
+      const updated = await trainerProfileService.addQualification(id, {
         name,
         issuer,
         issuedDate,

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { HoursLogService } from '@/src/application/services/hours-log.service';
+import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { billingEngine } from '@/lib/billing-engine';
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -23,7 +23,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     try {
       const { id } = await params;
-      const hoursLog = await HoursLogService.approveHoursLog(id, auth.user.id);
+      const hoursLog = await hoursLogService.approveHoursLog(id, auth.user.id);
 
       // Fire-and-forget: create an invoice line for the approved hours.
       // Failures here must NOT fail the approval response.

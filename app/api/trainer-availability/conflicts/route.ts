@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrainerAvailabilityService } from '@/src/application/services/trainer-availability.service';
+import { trainerAvailabilityService } from '@/src/application/services/trainer-availability-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -28,7 +28,7 @@ export async function GET(_request: NextRequest) {
         );
       }
 
-      const conflicts = await TrainerAvailabilityService.getAvailabilityConflicts(
+      const conflicts = await trainerAvailabilityService.getAvailabilityConflicts(
         startDate,
         endDate
       );

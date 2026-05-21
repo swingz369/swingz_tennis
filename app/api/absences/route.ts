@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { AbsenceService } from '@/src/application/services/absence.service';
+import { absenceService } from '@/src/application/services/absence-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const absence = await AbsenceService.createAbsence(validation.data as any);
+      const absence = await absenceService.createAbsence(validation.data as any);
 
       return NextResponse.json({ success: true, absence });
     } catch (error) {
@@ -74,36 +74,36 @@ export async function GET(request: NextRequest) {
 
       if (active) {
         const today = new Date().toISOString().split('T')[0];
-        const absences = await AbsenceService.getActiveAbsencesForDate(today);
+        const absences = await absenceService.getActiveAbsencesForDate(today);
         return NextResponse.json({ absences });
       }
 
       if (trainerId) {
-        const absences = await AbsenceService.getAbsencesByTrainerId(trainerId);
+        const absences = await absenceService.getAbsencesByTrainerId(trainerId);
         return NextResponse.json({ absences });
       }
 
       if (status) {
-        const absences = await AbsenceService.getAbsencesByStatus(
+        const absences = await absenceService.getAbsencesByStatus(
           status as 'pending' | 'approved' | 'rejected'
         );
         return NextResponse.json({ absences });
       }
 
       if (type) {
-        const absences = await AbsenceService.getAbsencesByType(
+        const absences = await absenceService.getAbsencesByType(
           type as 'sick' | 'vacation' | 'personal' | 'other'
         );
         return NextResponse.json({ absences });
       }
 
       if (startDate && endDate) {
-        const absences = await AbsenceService.getAbsencesByDateRange(startDate, endDate);
+        const absences = await absenceService.getAbsencesByDateRange(startDate, endDate);
         return NextResponse.json({ absences });
       }
 
       // Get all absences (filtered by club via auth.clubId)
-      const absences = await AbsenceService.getAllAbsences();
+      const absences = await absenceService.getAllAbsences();
       return NextResponse.json({ absences });
     } catch (error) {
       console.error('Absence fetch error:', error);

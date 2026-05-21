@@ -62,7 +62,12 @@ export type EntityType =
   | 'report'
   | 'user'
   | 'role'
-  | 'permission';
+  | 'permission'
+  | 'membership'
+  | 'trainer_availability'
+  | 'trainer_profile'
+  | 'training_group'
+  | 'session';
 
 export interface AuditChange {
   field: string;

@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
             end_time: booking.end_time.toISOString(),
             status: 'confirmed',
             booking_type: 'recurring',
-          })
+          } as any)
           .select('id')
           .single();
 

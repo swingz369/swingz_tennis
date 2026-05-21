@@ -6,10 +6,10 @@ import type {
   TrainerStatistics,
   DashboardMetric,
 } from '../../domain/entities/statistics.entity';
-import { MemberService } from './member.service';
-import { BillingService } from './billing.service';
-import { HoursLogService } from './hours-log.service';
-import { TrialTrainingService } from './trial-training.service';
+import { memberService } from './member-service.adapter';
+import { billingService } from './billing-service.adapter';
+import { hoursLogService } from './hours-log-service.adapter';
+import { trialTrainingService } from './trial-training-service.adapter';
 
 export class StatisticsService {
   async generateStatistics(
@@ -37,8 +37,8 @@ export class StatisticsService {
   }
 
   async calculateMemberStatistics(startDate: Date, endDate: Date): Promise<MemberStatistics> {
-    const members = await MemberService.getAllMembers();
-    const trialTrainings = await TrialTrainingService.getAllTrialTrainings();
+    const members = await memberService.getAllMembers();
+    const trialTrainings = await trialTrainingService.getAllTrialTrainings();
 
     const activeMembers = members.filter((m) => m.membershipStatus === 'active').length;
     const inactiveMembers = members.filter((m) => m.membershipStatus === 'inactive').length;
@@ -88,8 +88,8 @@ export class StatisticsService {
   }
 
   async calculateRevenueStatistics(startDate: Date, endDate: Date): Promise<RevenueStatistics> {
-    const billing = await BillingService.getAllTrainerBillings();
-    const members = await MemberService.getAllMembers();
+    const billing = await billingService.getAllTrainerBillings();
+    const members = await memberService.getAllMembers();
 
     // Filter billing records created within the date range
     const filteredBilling = billing.filter(
@@ -187,7 +187,7 @@ export class StatisticsService {
   }
 
   async calculateTrainerStatistics(startDate: Date, endDate: Date): Promise<TrainerStatistics> {
-    const hoursLogs = await HoursLogService.getAllHoursLogs();
+    const hoursLogs = await hoursLogService.getAllHoursLogs();
     const filteredLogs = hoursLogs.filter(
       (log) =>
         new Date(log.date) >= startDate &&

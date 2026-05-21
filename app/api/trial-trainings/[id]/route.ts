@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrialTrainingService } from '@/src/application/services/trial-training.service';
+import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const trialTraining = await TrialTrainingService.getTrialTrainingById(id);
+      const trialTraining = await trialTrainingService.getTrialTrainingById(id);
 
       if (!trialTraining) {
         return NextResponse.json({ error: 'Trial training not found' }, { status: 404 });
@@ -53,7 +53,7 @@ export async function PATCH(
 
       const { status, notes, feedback, convertedToMemberId } = body;
 
-      const updated = await TrialTrainingService.updateTrialTraining(id, {
+      const updated = await trialTrainingService.updateTrialTraining(id, {
         status,
         notes,
         feedback,
@@ -92,7 +92,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await TrialTrainingService.deleteTrialTraining(id);
+      const success = await trialTrainingService.deleteTrialTraining(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Trial training not found' }, { status: 404 });

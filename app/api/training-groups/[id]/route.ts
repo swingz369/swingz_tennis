@@ -13,9 +13,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .update(body)
       .eq('id', id)
+      .eq('club_id', auth.clubId)
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(data);
   });
 }
@@ -32,7 +34,8 @@ export async function DELETE(
     if (!hasPermission) return forbiddenResponse('Admin access required');
     const { error } = await (auth.supabase.from('training_groups') as any)
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('club_id', auth.clubId);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return new NextResponse(null, { status: 204 });
   });

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
           deactivated_at: new Date().toISOString(),
           deactivated_by: auth.user.id,
           deactivation_reason: reason ?? null,
-        })
+        } as any)
         .in('user_id', memberIds)
         .eq('club_id', clubId)
         .select('id, user_id');
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
           created_at: new Date().toISOString(),
         }));
 
-        await supabase.from('audit_logs').insert(auditEntries);
+        await supabase.from('audit_logs').insert(auditEntries as any);
       }
 
       return NextResponse.json({

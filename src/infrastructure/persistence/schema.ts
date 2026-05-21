@@ -151,6 +151,9 @@ export const schedules = pgTable(
 
 export const trainingGroups = pgTable('training_groups', {
   id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id')
+    .notNull()
+    .references(() => clubs.id, { onDelete: 'cascade' }),
   schedule_id: uuid('schedule_id')
     .notNull()
     .references(() => schedules.id, { onDelete: 'cascade' }),
@@ -158,7 +161,13 @@ export const trainingGroups = pgTable('training_groups', {
   level: varchar('level', { length: 20 }).notNull().default('intermediate'),
   age_group: varchar('age_group', { length: 20 }).notNull().default('senior'),
   is_active: boolean('is_active').notNull().default(true),
-});
+},
+  (table) => ({
+    club_idx: index('training_groups_club_idx').on(table.club_id),
+    schedule_idx: index('training_groups_schedule_idx').on(table.schedule_id),
+    club_active_idx: index('training_groups_club_active_idx').on(table.club_id, table.is_active),
+  })
+);
 
 export const groups = pgTable(
   'groups',
@@ -393,6 +402,17 @@ export const invoiceItems = pgTable(
     item_type_idx: index('invoice_items_item_type_idx').on(table.item_type),
   })
 );
+
+export const trainingGroupsRelations = relations(trainingGroups, ({ one }) => ({
+  club: one(clubs, {
+    fields: [trainingGroups.club_id],
+    references: [clubs.id],
+  }),
+  schedule: one(schedules, {
+    fields: [trainingGroups.schedule_id],
+    references: [schedules.id],
+  }),
+}));
 
 export const courtsRelations = relations(courts, ({ one }) => ({
   club: one(clubs, {

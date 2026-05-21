@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { FeeConfigurationService } from '@/src/application/services/fee-configuration.service';
+import { feeConfigurationService } from '@/src/application/services/fee-configuration-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const feeConfiguration = await FeeConfigurationService.getFeeConfigurationById(id);
+      const feeConfiguration = await feeConfigurationService.getFeeConfigurationById(id);
 
       if (!feeConfiguration) {
         return NextResponse.json({ error: 'Fee configuration not found' }, { status: 404 });
@@ -64,7 +64,7 @@ export async function PATCH(
         conditions,
       } = body;
 
-      const updated = await FeeConfigurationService.updateFeeConfiguration(id, {
+      const updated = await feeConfigurationService.updateFeeConfiguration(id, {
         name,
         description,
         type,
@@ -109,7 +109,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await FeeConfigurationService.deleteFeeConfiguration(id);
+      const success = await feeConfigurationService.deleteFeeConfiguration(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Fee configuration not found' }, { status: 404 });

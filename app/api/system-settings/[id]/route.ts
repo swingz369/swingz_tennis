@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { SystemSettingsService } from '@/src/application/services/system-settings.service';
+import { systemSettingsService } from '@/src/application/services/system-settings-service.adapter';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const systemSetting = await SystemSettingsService.getSystemSettingById(id);
+      const systemSetting = await systemSettingsService.getSystemSettingById(id);
 
       if (!systemSetting) {
         return NextResponse.json({ error: 'System setting not found' }, { status: 404 });
@@ -53,7 +53,7 @@ export async function PATCH(
 
       const { value, description, isPublic, isRequired, validation } = body;
 
-      const updated = await SystemSettingsService.updateSystemSetting(id, {
+      const updated = await systemSettingsService.updateSystemSetting(id, {
         value,
         description,
         isPublic,
@@ -93,7 +93,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await SystemSettingsService.deleteSystemSetting(id);
+      const success = await systemSettingsService.deleteSystemSetting(id);
 
       if (!success) {
         return NextResponse.json({ error: 'System setting not found' }, { status: 404 });

@@ -292,7 +292,7 @@ export async function getUserBookingsCount(
   weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
 
   // Get daily count
-  const { count: dailyCount } = await supabase
+  const { count: dailyCount } = await (supabase as any)
     .from('bookings')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
@@ -302,7 +302,7 @@ export async function getUserBookingsCount(
     .in('status', ['confirmed', 'pending']);
 
   // Get weekly count
-  const { count: weeklyCount } = await supabase
+  const { count: weeklyCount } = await (supabase as any)
     .from('bookings')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)

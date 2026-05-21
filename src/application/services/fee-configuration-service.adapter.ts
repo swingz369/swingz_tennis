@@ -1,14 +1,13 @@
 /**
  * Fee Configuration Service Adapter
  *
- * Provides a unified interface for fee configuration operations,
- * switching between in-memory (legacy) and repository pattern (new) based on feature flags.
+ * Drizzle-based fee configuration operations.
  *
  * Usage:
  * ```typescript
  * import { feeConfigurationService } from '@/application/services/fee-configuration-service.adapter';
  *
- * const fees = await feeConfigurationService.getAllFeeConfigurations('club-id-123');
+ * const fees = await feeConfigurationService.getAllFeeConfigurations();
  * ```
  */
 
@@ -19,7 +18,7 @@ import type {
 } from '@/domain/entities/fee-configuration.entity';
 import { FeeConfigurationService } from './fee-configuration.service';
 import { DrizzleFeeConfigurationRepository } from '@/infrastructure/persistence/repositories/fee-configuration.repository';
-import { FeatureFlags } from '@/lib/features/feature-flags';
+
 
 class FeeConfigurationServiceAdapter {
   private feeConfigRepo = new DrizzleFeeConfigurationRepository();
@@ -40,48 +39,35 @@ class FeeConfigurationServiceAdapter {
    */
   async createFeeConfiguration(
     input: CreateFeeConfigurationInput,
-    clubId: string
+    clubId: string = ''
   ): Promise<FeeConfiguration> {
-    // Always validate
     const validation = this.validateFeeConfigurationInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.create(input, clubId);
-    }
-    return FeeConfigurationService.createFeeConfiguration(input);
+    return this.feeConfigRepo.create(input, clubId);
   }
 
   /**
    * Get fee configuration by ID
    */
-  async getFeeConfigurationById(id: string, clubId: string): Promise<FeeConfiguration | null> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.findById(id, clubId);
-    }
-    return FeeConfigurationService.getFeeConfigurationById(id);
+  async getFeeConfigurationById(id: string, clubId: string = ''): Promise<FeeConfiguration | null> {
+    return this.feeConfigRepo.findById(id, clubId);
   }
 
   /**
    * Get all fee configurations
    */
-  async getAllFeeConfigurations(clubId: string): Promise<FeeConfiguration[]> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.findAll(clubId);
-    }
-    return FeeConfigurationService.getAllFeeConfigurations();
+  async getAllFeeConfigurations(clubId: string = ''): Promise<FeeConfiguration[]> {
+    return this.feeConfigRepo.findAll(clubId);
   }
 
   /**
    * Get active fee configurations
    */
-  async getActiveFeeConfigurations(clubId: string, date?: string): Promise<FeeConfiguration[]> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.findActive(clubId, date);
-    }
-    return FeeConfigurationService.getActiveFeeConfigurations();
+  async getActiveFeeConfigurations(clubId: string = '', date?: string): Promise<FeeConfiguration[]> {
+    return this.feeConfigRepo.findActive(clubId, date);
   }
 
   /**
@@ -89,12 +75,9 @@ class FeeConfigurationServiceAdapter {
    */
   async getFeeConfigurationsByType(
     type: FeeConfiguration['type'],
-    clubId: string
+    clubId: string = ''
   ): Promise<FeeConfiguration[]> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.findByType(type, clubId);
-    }
-    return FeeConfigurationService.getFeeConfigurationsByType(type);
+    return this.feeConfigRepo.findByType(type, clubId);
   }
 
   /**
@@ -102,12 +85,9 @@ class FeeConfigurationServiceAdapter {
    */
   async getFeeConfigurationsByBillingCycle(
     billingCycle: FeeConfiguration['billingCycle'],
-    clubId: string
+    clubId: string = ''
   ): Promise<FeeConfiguration[]> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.findByBillingCycle(billingCycle, clubId);
-    }
-    return FeeConfigurationService.getFeeConfigurationsByBillingCycle(billingCycle);
+    return this.feeConfigRepo.findByBillingCycle(billingCycle, clubId);
   }
 
   /**
@@ -116,13 +96,10 @@ class FeeConfigurationServiceAdapter {
   async calculateFeeForMember(
     memberType: string,
     memberAge: number,
-    clubId: string,
+    clubId: string = '',
     trainingGroup?: string
   ): Promise<FeeConfiguration[]> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.calculateForMember(memberAge, memberType, clubId, trainingGroup);
-    }
-    return FeeConfigurationService.calculateFeeForMember(memberType, memberAge, trainingGroup);
+    return this.feeConfigRepo.calculateForMember(memberAge, memberType, clubId, trainingGroup);
   }
 
   /**
@@ -131,42 +108,30 @@ class FeeConfigurationServiceAdapter {
   async updateFeeConfiguration(
     id: string,
     input: UpdateFeeConfigurationInput,
-    clubId: string
+    clubId: string = ''
   ): Promise<FeeConfiguration | null> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.update(id, input, clubId);
-    }
-    return FeeConfigurationService.updateFeeConfiguration(id, input);
+    return this.feeConfigRepo.update(id, input, clubId);
   }
 
   /**
    * Delete fee configuration
    */
-  async deleteFeeConfiguration(id: string, clubId: string): Promise<boolean> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.delete(id, clubId);
-    }
-    return FeeConfigurationService.deleteFeeConfiguration(id);
+  async deleteFeeConfiguration(id: string, clubId: string = ''): Promise<boolean> {
+    return this.feeConfigRepo.delete(id, clubId);
   }
 
   /**
    * Deactivate fee configuration (soft delete)
    */
-  async deactivateFeeConfiguration(id: string, clubId: string): Promise<FeeConfiguration | null> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.deactivate(id, clubId);
-    }
-    return FeeConfigurationService.updateFeeConfiguration(id, { isActive: false });
+  async deactivateFeeConfiguration(id: string, clubId: string = ''): Promise<FeeConfiguration | null> {
+    return this.feeConfigRepo.deactivate(id, clubId);
   }
 
   /**
    * Activate fee configuration
    */
-  async activateFeeConfiguration(id: string, clubId: string): Promise<FeeConfiguration | null> {
-    if (FeatureFlags.USE_FEE_CONFIGURATION_REPOSITORY) {
-      return this.feeConfigRepo.activate(id, clubId);
-    }
-    return FeeConfigurationService.updateFeeConfiguration(id, { isActive: true });
+  async activateFeeConfiguration(id: string, clubId: string = ''): Promise<FeeConfiguration | null> {
+    return this.feeConfigRepo.activate(id, clubId);
   }
 }
 

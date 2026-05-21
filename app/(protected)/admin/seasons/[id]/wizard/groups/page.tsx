@@ -7,14 +7,15 @@ export default async function GroupsPage({ params }: { params: Promise<{ id: str
   const supabase = await createClient();
   const { data: season } = await supabase
     .from('seasons')
-    .select('id')
+    .select('id, club_id')
     .eq('id', id)
     .single();
   if (!season) notFound();
 
   const { data: groups } = await supabase
     .from('training_groups')
-    .select('id, name, level, age_group');
+    .select('id, name, level, age_group')
+    .eq('club_id', season.club_id);
 
   return (
     <div className="space-y-6">

@@ -1,14 +1,12 @@
 /**
  * Billing Service Adapter
  *
- * Provides a unified interface for billing operations, switching between
- * in-memory implementation (legacy) and repository pattern (new) based on feature flags.
+ * Drizzle-based billing operations.
  *
  * Usage:
  * ```typescript
  * import { billingService } from '@/application/services/billing-service.adapter';
  *
- * // Works regardless of feature flag state
  * const periods = await billingService.getAllBillingPeriods();
  * ```
  */
@@ -21,11 +19,11 @@ import type {
   UpdateTrainerBillingInput,
   BillingSummary,
 } from '@/domain/entities/billing.entity';
-import { BillingService } from './billing.service';
+
 import { DrizzleBillingPeriodRepository } from '@/infrastructure/persistence/repositories/billing-period.repository';
 import { DrizzleTrainerBillingRepository } from '@/infrastructure/persistence/repositories/trainer-billing.repository';
 import { DrizzleBillingLineItemRepository } from '@/infrastructure/persistence/repositories/billing-line-item.repository';
-import { FeatureFlags } from '@/lib/features/feature-flags';
+
 
 class BillingServiceAdapter {
   private periodRepo = new DrizzleBillingPeriodRepository();
@@ -36,100 +34,70 @@ class BillingServiceAdapter {
    * Create a new billing period
    */
   async createBillingPeriod(startDate: string, endDate: string): Promise<BillingPeriod> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.periodRepo.create(new Date(startDate), new Date(endDate));
-    }
-    return BillingService.createBillingPeriod(startDate, endDate);
+    return this.periodRepo.create(new Date(startDate), new Date(endDate));
   }
 
   /**
    * Get billing period by ID
    */
   async getBillingPeriodById(id: string): Promise<BillingPeriod | null> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.periodRepo.findById(id);
-    }
-    return BillingService.getBillingPeriodById(id);
+    return this.periodRepo.findById(id);
   }
 
   /**
    * Get all billing periods
    */
   async getAllBillingPeriods(): Promise<BillingPeriod[]> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.periodRepo.findAll();
-    }
-    return BillingService.getAllBillingPeriods();
+    return this.periodRepo.findAll();
   }
 
   /**
    * Get current billing period
    */
   async getCurrentBillingPeriod(): Promise<BillingPeriod | null> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.periodRepo.findCurrent();
-    }
-    return BillingService.getCurrentBillingPeriod();
+    return this.periodRepo.findCurrent();
   }
 
   /**
    * Close billing period
    */
   async closeBillingPeriod(id: string): Promise<BillingPeriod | null> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.periodRepo.close(id);
-    }
-    return BillingService.closeBillingPeriod(id);
+    return this.periodRepo.close(id);
   }
 
   /**
    * Create trainer billing
    */
   async createTrainerBilling(input: CreateTrainerBillingInput): Promise<TrainerBilling> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.create(input);
-    }
-    return BillingService.createTrainerBilling(input);
+    return this.billingRepo.create(input);
   }
 
   /**
    * Get trainer billing by ID
    */
   async getTrainerBillingById(id: string): Promise<TrainerBilling | null> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.findById(id);
-    }
-    return BillingService.getTrainerBillingById(id);
+    return this.billingRepo.findById(id);
   }
 
   /**
    * Get trainer billings by billing period
    */
   async getTrainerBillingsByBillingPeriod(billingPeriodId: string): Promise<TrainerBilling[]> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.findByBillingPeriod(billingPeriodId);
-    }
-    return BillingService.getTrainerBillingsByBillingPeriod(billingPeriodId);
+    return this.billingRepo.findByBillingPeriod(billingPeriodId);
   }
 
   /**
    * Get trainer billings by trainer ID
    */
   async getTrainerBillingsByTrainerId(trainerId: string): Promise<TrainerBilling[]> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.findByTrainerId(trainerId);
-    }
-    return BillingService.getTrainerBillingsByTrainerId(trainerId);
+    return this.billingRepo.findByTrainerId(trainerId);
   }
 
   /**
    * Get all trainer billings
    */
   async getAllTrainerBillings(status?: string): Promise<TrainerBilling[]> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.findAll(status);
-    }
-    return BillingService.getAllTrainerBillings(status);
+    return this.billingRepo.findAll(status);
   }
 
   /**
@@ -139,30 +107,21 @@ class BillingServiceAdapter {
     id: string,
     input: UpdateTrainerBillingInput
   ): Promise<TrainerBilling | null> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.update(id, input);
-    }
-    return BillingService.updateTrainerBilling(id, input);
+    return this.billingRepo.update(id, input);
   }
 
   /**
    * Mark trainer billing as paid
    */
   async markTrainerBillingAsPaid(id: string): Promise<TrainerBilling | null> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.markAsPaid(id);
-    }
-    return BillingService.markTrainerBillingAsPaid(id);
+    return this.billingRepo.markAsPaid(id);
   }
 
   /**
    * Mark trainer billing as overdue
    */
   async markTrainerBillingAsOverdue(id: string): Promise<TrainerBilling | null> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.markAsOverdue(id);
-    }
-    return BillingService.markTrainerBillingAsOverdue(id);
+    return this.billingRepo.markAsOverdue(id);
   }
 
   /**
@@ -177,20 +136,9 @@ class BillingServiceAdapter {
     type: 'training' | 'preparation' | 'meeting' | 'other',
     sessionId?: string
   ): Promise<BillingLineItem> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.lineItemRepo.create(
-        trainerBillingId,
-        new Date(date),
-        description,
-        hours,
-        rate,
-        type,
-        sessionId
-      );
-    }
-    return BillingService.createBillingLineItem(
+    return this.lineItemRepo.create(
       trainerBillingId,
-      date,
+      new Date(date),
       description,
       hours,
       rate,
@@ -203,48 +151,31 @@ class BillingServiceAdapter {
    * Get billing line items by trainer billing ID
    */
   async getBillingLineItemsByTrainerBilling(trainerBillingId: string): Promise<BillingLineItem[]> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.lineItemRepo.findByTrainerBilling(trainerBillingId);
-    }
-    return BillingService.getBillingLineItemsByTrainerBilling(trainerBillingId);
+    return this.lineItemRepo.findByTrainerBilling(trainerBillingId);
   }
 
   /**
    * Get all billing line items
    */
   async getAllBillingLineItems(): Promise<BillingLineItem[]> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.lineItemRepo.findAll();
-    }
-    return BillingService.getAllBillingLineItems();
+    return this.lineItemRepo.findAll();
   }
 
   /**
    * Calculate billing summary for a billing period
    */
   async calculateBillingSummary(billingPeriodId: string): Promise<BillingSummary> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.calculateSummary(billingPeriodId);
-    }
-    return BillingService.calculateBillingSummary(billingPeriodId);
+    return this.billingRepo.calculateSummary(billingPeriodId);
   }
 
   /**
    * Generate invoice number
    */
   async generateInvoiceNumber(): Promise<string> {
-    if (FeatureFlags.USE_BILLING_REPOSITORY) {
-      return this.billingRepo.generateInvoiceNumber();
-    }
-    return BillingService.generateInvoiceNumber();
+    return this.billingRepo.generateInvoiceNumber();
   }
 
-  /**
-   * Get feature flag status
-   */
-  isUsingRepository(): boolean {
-    return FeatureFlags.USE_BILLING_REPOSITORY;
-  }
+
 }
 
 // Export singleton instance

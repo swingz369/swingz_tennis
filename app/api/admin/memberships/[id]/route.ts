@@ -181,7 +181,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           details: auditDetails,
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
           user_agent: request.headers.get('user-agent'),
-        });
+        } as any);
       } catch (auditError) {
         // Don't fail the request if audit logging fails
         console.error('Audit logging failed:', auditError);
@@ -278,7 +278,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
           },
           ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
           user_agent: request.headers.get('user-agent'),
-        });
+        } as any);
       } catch (auditError) {
         console.error('Audit logging failed:', auditError);
       }

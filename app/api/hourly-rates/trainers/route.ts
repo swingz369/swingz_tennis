@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
+import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -26,7 +26,7 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const trainerRate = await HourlyRateService.createTrainerHourlyRate({
+      const trainerRate = await hourlyRateService.createTrainerHourlyRate({
         trainerId,
         trainerName,
         baseRate,
@@ -64,14 +64,14 @@ export async function GET(_request: NextRequest) {
       const trainerId = searchParams.get('trainerId');
 
       if (trainerId) {
-        const trainerRate = await HourlyRateService.getTrainerHourlyRateByTrainerId(trainerId);
+        const trainerRate = await hourlyRateService.getTrainerHourlyRateByTrainerId(trainerId);
         if (!trainerRate) {
           return NextResponse.json({ error: 'Trainer hourly rate not found' }, { status: 404 });
         }
         return NextResponse.json({ trainerRate });
       }
 
-      const trainerRates = await HourlyRateService.getAllTrainerHourlyRates();
+      const trainerRates = await hourlyRateService.getAllTrainerHourlyRates();
       return NextResponse.json({ trainerRates });
     } catch (error) {
       console.error('Trainer hourly rate fetch error:', error);

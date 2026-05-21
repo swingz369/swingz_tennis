@@ -147,7 +147,7 @@ export async function createRecurringBookings(
           notes: input.notes
             ? `${input.notes} (Serie ${occurrence.occurrence_number}/${occurrences.length})`
             : `Serienbuchung ${occurrence.occurrence_number}/${occurrences.length}`,
-        })
+        } as any)
         .select('id')
         .single();
 
@@ -188,7 +188,7 @@ export async function cancelRecurringBookings(
   const supabase = await createClient();
 
   // Find all future bookings matching the pattern
-  const { data: bookings, error: fetchError } = await supabase
+  const { data: bookings, error: fetchError } = await (supabase as any)
     .from('bookings')
     .select('id')
     .eq('user_id', userId)
@@ -215,7 +215,7 @@ export async function cancelRecurringBookings(
   }
 
   // Cancel each booking
-  const bookingIds = bookings.map((b) => b.id);
+  const bookingIds = bookings.map((b: { id: string }) => b.id);
   const { error: cancelError } = await supabase
     .from('bookings')
     .update({
@@ -251,7 +251,7 @@ export async function getRecurringBookingSeries(
 ): Promise<any[]> {
   const supabase = await createClient();
 
-  const { data: bookings, error } = await supabase
+  const { data: bookings, error } = await (supabase as any)
     .from('bookings')
     .select('*')
     .eq('user_id', userId)

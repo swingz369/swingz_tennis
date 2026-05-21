@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { PaymentSettingsService } from '@/src/application/services/payment-settings.service';
+import { paymentSettingsService } from '@/src/application/services/payment-settings-service.adapter';
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -18,7 +18,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     try {
       const { id } = await params;
-      const result = await PaymentSettingsService.testPaymentSettings(id);
+      const result = await paymentSettingsService.testPaymentSettings(id);
 
       if (!result.success) {
         return NextResponse.json({ error: result.message }, { status: 400 });

@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
+import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -21,11 +21,11 @@ export async function GET(_request: NextRequest) {
       const trainerId = searchParams.get('trainerId');
 
       if (trainerId) {
-        const history = await HourlyRateService.getRateHistoryForTrainer(trainerId);
+        const history = await hourlyRateService.getRateHistoryForTrainer(trainerId);
         return NextResponse.json({ history });
       }
 
-      const history = await HourlyRateService.getAllRateHistory();
+      const history = await hourlyRateService.getAllRateHistory();
       return NextResponse.json({ history });
     } catch (error) {
       console.error('Rate history fetch error:', error);

@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { AbsenceService } from '@/src/application/services/absence.service';
+import { absenceService } from '@/src/application/services/absence-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const absence = await AbsenceService.getAbsenceById(id);
+      const absence = await absenceService.getAbsenceById(id);
 
       if (!absence) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
@@ -54,7 +54,7 @@ export async function PATCH(
 
       const { type, startDate, endDate, status, reason, notes } = body;
 
-      const updated = await AbsenceService.updateAbsence(id, {
+      const updated = await absenceService.updateAbsence(id, {
         type,
         startDate,
         endDate,
@@ -96,7 +96,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await AbsenceService.deleteAbsence(id);
+      const success = await absenceService.deleteAbsence(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });

@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { FeeConfigurationService } from '@/src/application/services/fee-configuration.service';
+import { feeConfigurationService } from '@/src/application/services/fee-configuration-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -42,7 +42,7 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const feeConfiguration = await FeeConfigurationService.createFeeConfiguration(
+      const feeConfiguration = await feeConfigurationService.createFeeConfiguration(
         validation.data as CreateFeeConfigurationInput
       );
 
@@ -84,7 +84,7 @@ export async function GET(_request: NextRequest) {
         if (isNaN(memberAgeNum)) {
           return NextResponse.json({ error: 'Invalid memberAge parameter' }, { status: 400 });
         }
-        const configs = await FeeConfigurationService.calculateFeeForMember(
+        const configs = await feeConfigurationService.calculateFeeForMember(
           memberType,
           memberAgeNum
         );
@@ -92,20 +92,20 @@ export async function GET(_request: NextRequest) {
       }
 
       if (type) {
-        const configs = await FeeConfigurationService.getFeeConfigurationsByType(
+        const configs = await feeConfigurationService.getFeeConfigurationsByType(
           type as 'membership' | 'training' | 'court' | 'other'
         );
         return NextResponse.json({ feeConfigurations: configs });
       }
 
       if (billingCycle) {
-        const configs = await FeeConfigurationService.getFeeConfigurationsByBillingCycle(
+        const configs = await feeConfigurationService.getFeeConfigurationsByBillingCycle(
           billingCycle as 'monthly' | 'quarterly' | 'yearly' | 'one_time'
         );
         return NextResponse.json({ feeConfigurations: configs });
       }
 
-      const allConfigs = await FeeConfigurationService.getAllFeeConfigurations();
+      const allConfigs = await feeConfigurationService.getAllFeeConfigurations();
       return NextResponse.json({ feeConfigurations: allConfigs });
     } catch (error) {
       console.error('Fee configurations fetch error:', error);

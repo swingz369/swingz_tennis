@@ -2,7 +2,7 @@ export interface Absence {
   id: string;
   trainerId: string;
   trainerName: string;
-  type: 'sick' | 'vacation' | 'personal' | 'other';
+  type: 'sick' | 'vacation' | 'personal' | 'other' | 'training';
   startDate: string;
   endDate: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -17,7 +17,7 @@ export interface Absence {
 export interface CreateAbsenceInput {
   trainerId: string;
   trainerName: string;
-  type: 'sick' | 'vacation' | 'personal' | 'other';
+  type: 'sick' | 'vacation' | 'personal' | 'other' | 'training';
   startDate: string;
   endDate: string;
   reason?: string;
@@ -25,7 +25,7 @@ export interface CreateAbsenceInput {
 }
 
 export interface UpdateAbsenceInput {
-  type?: 'sick' | 'vacation' | 'personal' | 'other';
+  type?: 'sick' | 'vacation' | 'personal' | 'other' | 'training';
   startDate?: string;
   endDate?: string;
   status?: 'pending' | 'approved' | 'rejected';

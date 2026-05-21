@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { PaymentSettingsService } from '@/src/application/services/payment-settings.service';
+import { paymentSettingsService } from '@/src/application/services/payment-settings-service.adapter';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -34,7 +34,7 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const paymentSettings = await PaymentSettingsService.createPaymentSettings({
+      const paymentSettings = await paymentSettingsService.createPaymentSettings({
         gateway,
         gatewayName,
         config,
@@ -75,12 +75,12 @@ export async function GET(_request: NextRequest) {
       const isDefault = searchParams.get('default');
 
       if (isDefault) {
-        const paymentSettings = await PaymentSettingsService.getDefaultPaymentSettings();
+        const paymentSettings = await paymentSettingsService.getDefaultPaymentSettings();
         return NextResponse.json({ paymentSettings });
       }
 
       if (active) {
-        const paymentSettings = await PaymentSettingsService.getActivePaymentSettings();
+        const paymentSettings = await paymentSettingsService.getActivePaymentSettings();
         return NextResponse.json({ paymentSettings });
       }
 
@@ -92,11 +92,11 @@ export async function GET(_request: NextRequest) {
           gateway === 'paypal' ||
           gateway === 'other')
       ) {
-        const paymentSettings = await PaymentSettingsService.getPaymentSettingsByGateway(gateway);
+        const paymentSettings = await paymentSettingsService.getPaymentSettingsByGateway(gateway);
         return NextResponse.json({ paymentSettings });
       }
 
-      const paymentSettings = await PaymentSettingsService.getAllPaymentSettings();
+      const paymentSettings = await paymentSettingsService.getAllPaymentSettings();
       return NextResponse.json({ paymentSettings });
     } catch (error) {
       console.error('Payment settings fetch error:', error);

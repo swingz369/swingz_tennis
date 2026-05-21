@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { TrialTrainingService } from '@/src/application/services/trial-training.service';
+import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { EmailService } from '@/src/application/services/email.service';
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +21,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       const { id } = await params;
       const trialTrainingId = id;
 
-      const trialTraining = await TrialTrainingService.getTrialTrainingById(trialTrainingId);
+      const trialTraining = await trialTrainingService.getTrialTrainingById(trialTrainingId);
 
       if (!trialTraining) {
         return NextResponse.json({ error: 'Trial training not found' }, { status: 404 });

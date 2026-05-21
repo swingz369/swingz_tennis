@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { HoursLogService } from '@/src/application/services/hours-log.service';
+import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const attendanceRecord = await HoursLogService.getAttendanceRecordById(id);
+      const attendanceRecord = await hoursLogService.getAttendanceRecordById(id);
 
       if (!attendanceRecord) {
         return NextResponse.json({ error: 'Attendance record not found' }, { status: 404 });
@@ -54,7 +54,7 @@ export async function PATCH(
 
       const { status, checkInTime, checkOutTime, notes } = body;
 
-      const updated = await HoursLogService.updateAttendanceRecord(id, {
+      const updated = await hoursLogService.updateAttendanceRecord(id, {
         status,
         checkInTime,
         checkOutTime,
@@ -94,7 +94,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await HoursLogService.deleteAttendanceRecord(id);
+      const success = await hoursLogService.deleteAttendanceRecord(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Attendance record not found' }, { status: 404 });

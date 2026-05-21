@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrainerProfileService } from '@/src/application/services/trainer-profile.service';
+import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const trainerProfile = await TrainerProfileService.getTrainerProfileById(id);
+      const trainerProfile = await trainerProfileService.getTrainerProfileById(id);
 
       if (!trainerProfile) {
         return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });
@@ -53,7 +53,7 @@ export async function PATCH(
       const { id } = await params;
 
       if (!isAdmin) {
-        const profile = await TrainerProfileService.getTrainerProfileById(id);
+        const profile = await trainerProfileService.getTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
           return forbiddenResponse('You can only edit your own profile');
         }
@@ -80,7 +80,7 @@ export async function PATCH(
         emergencyContact,
       } = body;
 
-      const updated = await TrainerProfileService.updateTrainerProfile(id, {
+      const updated = await trainerProfileService.updateTrainerProfile(id, {
         firstName,
         lastName,
         email,
@@ -135,13 +135,13 @@ export async function DELETE(
       const { id } = await params;
 
       if (!isAdmin) {
-        const profile = await TrainerProfileService.getTrainerProfileById(id);
+        const profile = await trainerProfileService.getTrainerProfileById(id);
         if (!profile || profile.userId !== auth.user.id) {
           return forbiddenResponse('You can only delete your own profile');
         }
       }
 
-      const success = await TrainerProfileService.deleteTrainerProfile(id);
+      const success = await trainerProfileService.deleteTrainerProfile(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Trainer profile not found' }, { status: 404 });

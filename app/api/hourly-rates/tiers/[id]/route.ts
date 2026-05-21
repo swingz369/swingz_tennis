@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
+import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const rateTier = await HourlyRateService.getHourlyRateTierById(id);
+      const rateTier = await hourlyRateService.getHourlyRateTierById(id);
 
       if (!rateTier) {
         return NextResponse.json({ error: 'Hourly rate tier not found' }, { status: 404 });
@@ -53,7 +53,7 @@ export async function PATCH(
 
       const { name, description, baseRate, trainingTypes, experienceLevel, isActive } = body;
 
-      const updated = await HourlyRateService.updateHourlyRateTier(id, {
+      const updated = await hourlyRateService.updateHourlyRateTier(id, {
         name,
         description,
         baseRate,
@@ -94,7 +94,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await HourlyRateService.deleteHourlyRateTier(id);
+      const success = await hourlyRateService.deleteHourlyRateTier(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Hourly rate tier not found' }, { status: 404 });

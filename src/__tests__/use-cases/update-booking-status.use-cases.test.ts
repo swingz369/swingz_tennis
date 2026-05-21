@@ -22,12 +22,14 @@ vi.mock('@/infrastructure/external/supabase/server', () => ({
 function createMockBooking(
   id: string = 'booking-1',
   sessionId: string = 'session-1',
-  status: 'pending' | 'confirmed' | 'cancelled' | 'no_show' = 'pending'
+  status: 'pending' | 'confirmed' | 'cancelled' | 'no_show' = 'pending',
+  memberId: string = 'member-1'
 ) {
   return {
     id,
     getSessionId: () => ({ toString: () => sessionId }) as any,
     getStatus: () => status,
+    getMemberId: () => ({ getValue: () => memberId }) as any,
   } as any;
 }
 

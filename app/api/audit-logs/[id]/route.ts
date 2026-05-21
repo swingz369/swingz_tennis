@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { AuditLogService } from '@/src/application/services/audit-log.service';
+import { auditLogService } from '@/src/application/services/audit-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -20,7 +20,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const auditLogService = new AuditLogService();
       const auditLog = await auditLogService.getAuditLogById(id);
 
       if (!auditLog) {

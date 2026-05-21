@@ -1,7 +1,7 @@
 /**
  * Trainer Availability Service Adapter
  *
- * Switches between in-memory and repository pattern based on USE_TRAINER_REPOSITORY flag.
+ * Drizzle-based trainer availability operations.
  */
 
 import type {
@@ -13,7 +13,7 @@ import type {
 } from '@/domain/entities/trainer-availability.entity';
 import { TrainerAvailabilityService } from './trainer-availability.service';
 import { DrizzleTrainerAvailabilityRepository } from '@/infrastructure/persistence/repositories/trainer-availability.repository';
-import { FeatureFlags } from '@/lib/features/feature-flags';
+
 
 class TrainerAvailabilityServiceAdapter {
   private repo = new DrizzleTrainerAvailabilityRepository();
@@ -21,48 +21,30 @@ class TrainerAvailabilityServiceAdapter {
   async createTrainerAvailability(
     input: CreateTrainerAvailabilityInput
   ): Promise<TrainerAvailability> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.create(input);
-    }
-    return TrainerAvailabilityService.createTrainerAvailability(input);
+    return this.repo.create(input);
   }
 
   async getTrainerAvailabilityById(id: string): Promise<TrainerAvailability | null> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.findById(id);
-    }
-    return TrainerAvailabilityService.getTrainerAvailabilityById(id);
+    return this.repo.findById(id);
   }
 
   async getTrainerAvailabilitiesByTrainerId(trainerId: string): Promise<TrainerAvailability[]> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.findByTrainerId(trainerId);
-    }
-    return TrainerAvailabilityService.getTrainerAvailabilitiesByTrainerId(trainerId);
+    return this.repo.findByTrainerId(trainerId);
   }
 
   async getAllTrainerAvailabilities(): Promise<TrainerAvailability[]> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.findAll();
-    }
-    return TrainerAvailabilityService.getAllTrainerAvailabilities();
+    return this.repo.findAll();
   }
 
   async queryTrainerAvailabilities(query: AvailabilityQuery): Promise<TrainerAvailability[]> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.findByQuery(query);
-    }
-    return TrainerAvailabilityService.queryTrainerAvailabilities(query);
+    return this.repo.findByQuery(query);
   }
 
   async updateTrainerAvailability(
     id: string,
     input: UpdateTrainerAvailabilityInput
   ): Promise<TrainerAvailability | null> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.update(id, input);
-    }
-    return TrainerAvailabilityService.updateTrainerAvailability(id, input);
+    return this.repo.update(id, input);
   }
 
   async markTrainerAvailabilityAsBooked(id: string): Promise<TrainerAvailability | null> {
@@ -71,11 +53,8 @@ class TrainerAvailabilityServiceAdapter {
   }
 
   async deleteTrainerAvailability(id: string): Promise<boolean> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      await this.repo.delete(id);
-      return true;
-    }
-    return TrainerAvailabilityService.deleteTrainerAvailability(id);
+    await this.repo.delete(id);
+    return true;
   }
 
   async checkForConflicts(
@@ -85,16 +64,15 @@ class TrainerAvailabilityServiceAdapter {
     endTime: string,
     excludeId?: string
   ): Promise<AvailabilityConflict[]> {
-    if (FeatureFlags.USE_TRAINER_REPOSITORY) {
-      return this.repo.checkForConflicts(trainerId, date, startTime, endTime, excludeId);
-    }
-    return TrainerAvailabilityService.checkForConflicts(
-      trainerId,
-      date,
-      startTime,
-      endTime,
-      excludeId
-    );
+    return this.repo.checkForConflicts(trainerId, date, startTime, endTime, excludeId);
+  }
+
+  async getAvailabilityConflicts(
+    startDate: string,
+    endDate: string
+  ): Promise<AvailabilityConflict[]> {
+    // Delegates to in-memory service which has this method
+    return TrainerAvailabilityService.getAvailabilityConflicts(startDate, endDate);
   }
 
   async getAvailableSlots(trainerId: string, date: string): Promise<TrainerAvailability[]> {
@@ -102,9 +80,7 @@ class TrainerAvailabilityServiceAdapter {
     return this.repo.getAvailableSlots(trainerId, date);
   }
 
-  isUsingRepository(): boolean {
-    return FeatureFlags.USE_TRAINER_REPOSITORY;
-  }
+
 }
 
 export const trainerAvailabilityService = new TrainerAvailabilityServiceAdapter();

@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { TrainerAvailabilityService } from '@/src/application/services/trainer-availability.service';
+import { trainerAvailabilityService } from '@/src/application/services/trainer-availability-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const availability = await TrainerAvailabilityService.getTrainerAvailabilityById(id);
+      const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
 
       if (!availability) {
         return NextResponse.json({ error: 'Trainer availability not found' }, { status: 404 });
@@ -53,7 +53,7 @@ export async function PATCH(
       const { id } = await params;
 
       if (!isAdmin) {
-        const availability = await TrainerAvailabilityService.getTrainerAvailabilityById(id);
+        const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
         if (!availability || availability.trainerId !== auth.user.id) {
           return forbiddenResponse('You can only edit your own availability');
         }
@@ -63,7 +63,7 @@ export async function PATCH(
 
       const { date, startTime, endTime, status, notes } = body;
 
-      const updated = await TrainerAvailabilityService.updateTrainerAvailability(id, {
+      const updated = await trainerAvailabilityService.updateTrainerAvailability(id, {
         date,
         startTime,
         endTime,
@@ -107,13 +107,13 @@ export async function DELETE(
       const { id } = await params;
 
       if (!isAdmin) {
-        const availability = await TrainerAvailabilityService.getTrainerAvailabilityById(id);
+        const availability = await trainerAvailabilityService.getTrainerAvailabilityById(id);
         if (!availability || availability.trainerId !== auth.user.id) {
           return forbiddenResponse('You can only delete your own availability');
         }
       }
 
-      const success = await TrainerAvailabilityService.deleteTrainerAvailability(id);
+      const success = await trainerAvailabilityService.deleteTrainerAvailability(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Trainer availability not found' }, { status: 404 });

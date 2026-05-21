@@ -1,8 +1,7 @@
 /**
  * Hours Log Service Adapter
  *
- * Provides a unified interface for hours log and attendance operations,
- * switching between in-memory (legacy) and repository pattern (new) based on feature flags.
+ * Drizzle-based hours log and attendance operations.
  *
  * Usage:
  * ```typescript
@@ -21,10 +20,9 @@ import type {
   UpdateAttendanceRecordInput,
   HoursSummary,
 } from '@/domain/entities/hours-log.entity';
-import { HoursLogService } from './hours-log.service';
 import { DrizzleHoursLogRepository } from '@/infrastructure/persistence/repositories/hours-log.repository';
 import { DrizzleAttendanceRecordRepository } from '@/infrastructure/persistence/repositories/attendance-record.repository';
-import { FeatureFlags } from '@/lib/features/feature-flags';
+
 
 class HoursLogServiceAdapter {
   private hoursLogRepo = new DrizzleHoursLogRepository();
@@ -35,88 +33,52 @@ class HoursLogServiceAdapter {
   // ==============================================================================
 
   async createHoursLog(input: CreateHoursLogInput): Promise<HoursLog> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.create(input);
-    }
-    return HoursLogService.createHoursLog(input);
+    return this.hoursLogRepo.create(input);
   }
 
   async getHoursLogById(id: string): Promise<HoursLog | null> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.findById(id);
-    }
-    return HoursLogService.getHoursLogById(id);
+    return this.hoursLogRepo.findById(id);
   }
 
   async getHoursLogsByTrainerId(trainerId: string): Promise<HoursLog[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.findByTrainerId(trainerId);
-    }
-    return HoursLogService.getHoursLogsByTrainerId(trainerId);
+    return this.hoursLogRepo.findByTrainerId(trainerId);
   }
 
   async getAllHoursLogs(): Promise<HoursLog[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.findAll();
-    }
-    return HoursLogService.getAllHoursLogs();
+    return this.hoursLogRepo.findAll();
   }
 
   async getHoursLogsByDateRange(startDate: string, endDate: string): Promise<HoursLog[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.findByDateRange(startDate, endDate);
-    }
-    return HoursLogService.getHoursLogsByDateRange(startDate, endDate);
+    return this.hoursLogRepo.findByDateRange(startDate, endDate);
   }
 
   async getHoursLogsByStatus(status: HoursLog['status']): Promise<HoursLog[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.findByStatus(status);
-    }
-    return HoursLogService.getHoursLogsByStatus(status);
+    return this.hoursLogRepo.findByStatus(status);
   }
 
   async updateHoursLog(id: string, input: UpdateHoursLogInput): Promise<HoursLog | null> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.update(id, input);
-    }
-    return HoursLogService.updateHoursLog(id, input);
+    return this.hoursLogRepo.update(id, input);
   }
 
   async approveHoursLog(id: string, approvedBy: string): Promise<HoursLog | null> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.approve(id, approvedBy);
-    }
-    return HoursLogService.approveHoursLog(id, approvedBy);
+    return this.hoursLogRepo.approve(id, approvedBy);
   }
 
   async rejectHoursLog(id: string, approvedBy: string): Promise<HoursLog | null> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.reject(id, approvedBy);
-    }
-    return HoursLogService.rejectHoursLog(id, approvedBy);
+    return this.hoursLogRepo.reject(id, approvedBy);
   }
 
   async deleteHoursLog(id: string): Promise<boolean> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      await this.hoursLogRepo.delete(id);
-      return true;
-    }
-    return HoursLogService.deleteHoursLog(id);
+    await this.hoursLogRepo.delete(id);
+    return true;
   }
 
   async getHoursSummaryForTrainer(trainerId: string): Promise<HoursSummary> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.getSummaryForTrainer(trainerId);
-    }
-    return HoursLogService.getHoursSummaryForTrainer(trainerId);
+    return this.hoursLogRepo.getSummaryForTrainer(trainerId);
   }
 
   async getAllHoursSummaries(): Promise<HoursSummary[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.hoursLogRepo.getAllSummaries();
-    }
-    return HoursLogService.getAllHoursSummaries();
+    return this.hoursLogRepo.getAllSummaries();
   }
 
   // ==============================================================================
@@ -124,82 +86,49 @@ class HoursLogServiceAdapter {
   // ==============================================================================
 
   async createAttendanceRecord(input: CreateAttendanceRecordInput): Promise<AttendanceRecord> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.create(input);
-    }
-    return HoursLogService.createAttendanceRecord(input);
+    return this.attendanceRepo.create(input);
   }
 
   async getAttendanceRecordById(id: string): Promise<AttendanceRecord | null> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.findById(id);
-    }
-    return HoursLogService.getAttendanceRecordById(id);
+    return this.attendanceRepo.findById(id);
   }
 
   async getAttendanceRecordsBySessionId(sessionId: string): Promise<AttendanceRecord[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.findBySessionId(sessionId);
-    }
-    return HoursLogService.getAttendanceRecordsBySessionId(sessionId);
+    return this.attendanceRepo.findBySessionId(sessionId);
   }
 
   async getAttendanceRecordsByTrainerId(trainerId: string): Promise<AttendanceRecord[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.findByTrainerId(trainerId);
-    }
-    return HoursLogService.getAttendanceRecordsByTrainerId(trainerId);
+    return this.attendanceRepo.findByTrainerId(trainerId);
   }
 
   async getAttendanceRecordsByParticipantId(participantId: string): Promise<AttendanceRecord[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.findByParticipantId(participantId);
-    }
-    return HoursLogService.getAttendanceRecordsByParticipantId(participantId);
+    return this.attendanceRepo.findByParticipantId(participantId);
   }
 
   async getAllAttendanceRecords(): Promise<AttendanceRecord[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.findAll();
-    }
-    return HoursLogService.getAllAttendanceRecords();
+    return this.attendanceRepo.findAll();
   }
 
   async getAttendanceRecordsByDateRange(
     startDate: string,
     endDate: string
   ): Promise<AttendanceRecord[]> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.findByDateRange(startDate, endDate);
-    }
-    return HoursLogService.getAttendanceRecordsByDateRange(startDate, endDate);
+    return this.attendanceRepo.findByDateRange(startDate, endDate);
   }
 
   async updateAttendanceRecord(
     id: string,
     input: UpdateAttendanceRecordInput
   ): Promise<AttendanceRecord | null> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      return this.attendanceRepo.update(id, input);
-    }
-    return HoursLogService.updateAttendanceRecord(id, input);
+    return this.attendanceRepo.update(id, input);
   }
 
   async deleteAttendanceRecord(id: string): Promise<boolean> {
-    if (FeatureFlags.USE_ATTENDANCE_REPOSITORY) {
-      await this.attendanceRepo.delete(id);
-      return true;
-    }
-    return HoursLogService.deleteAttendanceRecord(id);
+    await this.attendanceRepo.delete(id);
+    return true;
   }
 
-  // ==============================================================================
-  // Feature Flag Status
-  // ==============================================================================
 
-  isUsingRepository(): boolean {
-    return FeatureFlags.USE_ATTENDANCE_REPOSITORY;
-  }
 }
 
 // Export singleton instance

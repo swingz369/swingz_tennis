@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { HoursLogService } from '@/src/application/services/hours-log.service';
+import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     try {
       const { id } = await params;
-      const hoursLog = await HoursLogService.getHoursLogById(id);
+      const hoursLog = await hoursLogService.getHoursLogById(id);
 
       if (!hoursLog) {
         return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });
@@ -58,7 +58,7 @@ export async function PATCH(
 
       const { startTime, endTime, type, status, notes } = body;
 
-      const updated = await HoursLogService.updateHoursLog(id, {
+      const updated = await hoursLogService.updateHoursLog(id, {
         startTime,
         endTime,
         type,
@@ -98,7 +98,7 @@ export async function DELETE(
 
     try {
       const { id } = await params;
-      const success = await HoursLogService.deleteHoursLog(id);
+      const success = await hoursLogService.deleteHoursLog(id);
 
       if (!success) {
         return NextResponse.json({ error: 'Hours log not found' }, { status: 404 });

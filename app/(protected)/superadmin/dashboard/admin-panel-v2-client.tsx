@@ -5,6 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnalyticsDashboard } from '@/components/admin/analytics-dashboard';
 import { FeedbackModerationPanel } from '@/components/admin/feedback-moderation-panel';
 import { AuditLogViewer } from '@/components/admin/audit-log-viewer';
+import MemberListManagement from '@/components/member-list-management';
+import { SessionBookings } from '@/components/bookings/session-bookings';
+import SystemSettingsManagement from '@/components/system-settings';
 import { BarChart3, MessageSquare, FileText, Settings, Users, Calendar } from 'lucide-react';
 import type { AnalyticsMetrics } from '@/lib/services/analytics-service';
 
@@ -80,15 +83,15 @@ export function AdminPanelV2Client({
         </TabsContent>
 
         <TabsContent value="members" className="mt-6">
-          <div className="text-center py-12 text-gray-500">Member management coming soon</div>
+          <MemberListManagement clubId={clubId} embedded />
         </TabsContent>
 
         <TabsContent value="sessions" className="mt-6">
-          <div className="text-center py-12 text-gray-500">Session management coming soon</div>
+          <SessionBookings clubId={clubId} />
         </TabsContent>
 
         <TabsContent value="settings" className="mt-6">
-          <div className="text-center py-12 text-gray-500">Settings coming soon</div>
+          <SystemSettingsManagement clubId={clubId} embedded />
         </TabsContent>
       </Tabs>
     </div>

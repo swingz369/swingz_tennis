@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { HourlyRateService } from '@/src/application/services/hourly-rate.service';
+import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -25,7 +25,7 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
-      const rateTier = await HourlyRateService.createHourlyRateTier({
+      const rateTier = await hourlyRateService.createHourlyRateTier({
         name,
         description,
         baseRate,
@@ -61,11 +61,11 @@ export async function GET(_request: NextRequest) {
       const active = searchParams.get('active');
 
       if (active) {
-        const rateTiers = await HourlyRateService.getActiveHourlyRateTiers();
+        const rateTiers = await hourlyRateService.getActiveHourlyRateTiers();
         return NextResponse.json({ rateTiers });
       }
 
-      const rateTiers = await HourlyRateService.getAllHourlyRateTiers();
+      const rateTiers = await hourlyRateService.getAllHourlyRateTiers();
       return NextResponse.json({ rateTiers });
     } catch (error) {
       console.error('Hourly rate tier fetch error:', error);

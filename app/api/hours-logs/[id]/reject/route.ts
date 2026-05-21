@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { HoursLogService } from '@/src/application/services/hours-log.service';
+import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -32,7 +32,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      const hoursLog = await HoursLogService.rejectHoursLog(id, auth.user.id);
+      const hoursLog = await hoursLogService.rejectHoursLog(id, auth.user.id);
 
       return NextResponse.json({
         success: true,

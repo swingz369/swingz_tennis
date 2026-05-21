@@ -34,6 +34,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     .from('training_groups')
     .select('id, name, age_group, level')
     .in('id', groupIds)
+    .eq('club_id', clubId)
     .eq('is_active', true);
 
   if (gErr) return NextResponse.json({ error: gErr.message }, { status: 500 });

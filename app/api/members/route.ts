@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { MemberService } from '@/src/application/services/member.service';
+import { memberService } from '@/src/application/services/member-service.adapter';
 import type { CreateMemberInput } from '@/src/domain/entities/member.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create member (associated with the authenticated user's club)
-        const member = await MemberService.createMember(validation.data as CreateMemberInput);
+        const member = await memberService.createMember(validation.data as CreateMemberInput);
 
         return NextResponse.json({ success: true, member });
       } catch (error) {
@@ -84,25 +84,25 @@ export async function GET(request: NextRequest) {
 
       if (statistics) {
         // Note: Statistics are already filtered by RLS policies at database level
-        const stats = await MemberService.getMemberStatistics();
+        const stats = await memberService.getMemberStatistics();
         return NextResponse.json({ statistics: stats });
       }
 
       if (active) {
         // Note: Active members are filtered by RLS policies at database level
-        const members = await MemberService.getActiveMembers();
+        const members = await memberService.getActiveMembers();
         return NextResponse.json({ members });
       }
 
       if (search) {
         // Note: Search results are filtered by RLS policies at database level
-        const members = await MemberService.searchMembers(search);
+        const members = await memberService.searchMembers(search);
         return NextResponse.json({ members });
       }
 
       if (trainingGroup) {
         // Note: Training groups are filtered by RLS policies at database level
-        const members = await MemberService.getMembersByTrainingGroup(trainingGroup);
+        const members = await memberService.getMembersByTrainingGroup(trainingGroup);
         return NextResponse.json({ members });
       }
 
@@ -111,12 +111,15 @@ export async function GET(request: NextRequest) {
       if (status) query.status = status;
       if (type) query.type = type;
 
-      // Add club filter for non-superadmin users
-      if (auth.role !== 'superadmin') {
+      // Allow superadmins to filter by a specific club via query param
+      const requestedClubId = searchParams.get('clubId');
+      if (requestedClubId && auth.role === 'superadmin') {
+        query.clubId = requestedClubId;
+      } else if (auth.role !== 'superadmin') {
         query.clubId = auth.clubId;
       }
 
-      const members = await MemberService.queryMembers(query);
+      const members = await memberService.queryMembers(query);
 
       // Apply pagination
       const paginatedMembers = members.slice(offset, offset + limit);

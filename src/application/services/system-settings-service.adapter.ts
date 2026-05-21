@@ -1,8 +1,7 @@
 /**
  * System Settings Service Adapter
  *
- * Provides a unified interface for system settings operations,
- * switching between in-memory (legacy) and repository pattern (new) based on feature flags.
+ * Drizzle-based system settings operations.
  *
  * Usage:
  * ```typescript
@@ -19,7 +18,7 @@ import type {
 } from '@/domain/entities/system-settings.entity';
 import { SystemSettingsService } from './system-settings.service';
 import { DrizzleSystemSettingsRepository } from '@/infrastructure/persistence/repositories/system-settings.repository';
-import { FeatureFlags } from '@/lib/features/feature-flags';
+
 
 class SystemSettingsServiceAdapter {
   private systemSettingsRepo = new DrizzleSystemSettingsRepository();
@@ -42,26 +41,19 @@ class SystemSettingsServiceAdapter {
     input: CreateSystemSettingsInput,
     clubId: string | null = null
   ): Promise<SystemSettings> {
-    // Always validate
     const validation = this.validateSystemSettingsInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.create(input, clubId);
-    }
-    return SystemSettingsService.createSystemSetting(input);
+    return this.systemSettingsRepo.create(input, clubId);
   }
 
   /**
    * Get system setting by ID
    */
   async getSystemSettingById(id: string): Promise<SystemSettings | null> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.findById(id);
-    }
-    return SystemSettingsService.getSystemSettingById(id);
+    return this.systemSettingsRepo.findById(id);
   }
 
   /**
@@ -71,30 +63,21 @@ class SystemSettingsServiceAdapter {
     key: string,
     clubId: string | null = null
   ): Promise<SystemSettings | null> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.findByKey(key, clubId);
-    }
-    return SystemSettingsService.getSystemSettingByKey(key);
+    return this.systemSettingsRepo.findByKey(key, clubId);
   }
 
   /**
    * Get system setting value by key
    */
   async getSystemSettingValue(key: string, clubId: string | null = null): Promise<string | null> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.getValue(key, clubId);
-    }
-    return SystemSettingsService.getSystemSettingValue(key);
+    return this.systemSettingsRepo.getValue(key, clubId);
   }
 
   /**
    * Get all system settings
    */
   async getAllSystemSettings(clubId: string | null = null): Promise<SystemSettings[]> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.findAll(clubId);
-    }
-    return SystemSettingsService.getAllSystemSettings();
+    return this.systemSettingsRepo.findAll(clubId);
   }
 
   /**
@@ -104,20 +87,14 @@ class SystemSettingsServiceAdapter {
     category: SystemSettings['category'],
     clubId: string | null = null
   ): Promise<SystemSettings[]> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.findByCategory(category, clubId);
-    }
-    return SystemSettingsService.getSystemSettingsByCategory(category);
+    return this.systemSettingsRepo.findByCategory(category, clubId);
   }
 
   /**
    * Get public system settings
    */
   async getPublicSystemSettings(clubId: string | null = null): Promise<SystemSettings[]> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.findPublic(clubId);
-    }
-    return SystemSettingsService.getPublicSystemSettings();
+    return this.systemSettingsRepo.findPublic(clubId);
   }
 
   /**
@@ -128,10 +105,7 @@ class SystemSettingsServiceAdapter {
     clubId: string | null = null,
     publicOnly: boolean = false
   ): Promise<Record<string, any>> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.getAsObject(category, clubId, publicOnly);
-    }
-    return SystemSettingsService.getSystemSettingsAsObject(category ?? undefined);
+    return this.systemSettingsRepo.getAsObject(category, clubId, publicOnly);
   }
 
   /**
@@ -142,20 +116,14 @@ class SystemSettingsServiceAdapter {
     input: UpdateSystemSettingsInput,
     updatedBy: string = 'Admin'
   ): Promise<SystemSettings | null> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.update(id, input, updatedBy);
-    }
-    return SystemSettingsService.updateSystemSetting(id, input);
+    return this.systemSettingsRepo.update(id, input, updatedBy);
   }
 
   /**
    * Delete system setting
    */
   async deleteSystemSetting(id: string): Promise<boolean> {
-    if (FeatureFlags.USE_SYSTEM_SETTINGS_REPOSITORY) {
-      return this.systemSettingsRepo.delete(id);
-    }
-    return SystemSettingsService.deleteSystemSetting(id);
+    return this.systemSettingsRepo.delete(id);
   }
 }
 

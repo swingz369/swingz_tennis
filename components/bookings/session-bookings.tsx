@@ -28,14 +28,14 @@ import {
   useUpdateBookingStatus,
 } from '@/hooks/use-sessions';
 
-export function SessionBookings() {
+export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const { data: clubData } = useUserClub();
   const { data: memberData } = useUserMember();
   const { data: userRoles = [] } = useUserRoles();
 
-  const clubId = clubData?.clubId ?? null;
+  const clubId = propClubId ?? clubData?.clubId ?? null;
   const memberId = memberData?.memberId ?? null;
 
   const { data: sessions = [], isLoading } = useSessions(clubId);

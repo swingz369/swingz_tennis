@@ -24,7 +24,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "seed": "npx tsx scripts/seed-users.ts",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "gen:types": "bash scripts/gen-supabase-types.sh",
+    "gen:types:clean": "bash scripts/clean-supabase-types.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.0",
