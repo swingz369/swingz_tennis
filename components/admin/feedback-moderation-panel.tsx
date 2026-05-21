@@ -32,7 +32,7 @@ interface Feedback {
 }
 
 interface FeedbackModerationProps {
-  clubId: string;
+  clubId?: string;
 }
 
 export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
