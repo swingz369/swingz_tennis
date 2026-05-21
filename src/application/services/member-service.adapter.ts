@@ -1,8 +1,8 @@
 /**
  * Member Service Adapter
  *
- * Member operations via in-memory service.
- * TODO: Switch to Drizzle repository when member-specific DB schema is ready.
+ * Member operations backed by real Supabase DB (user_club_memberships + users tables).
+ * Validation logic and CRUD interface are production-ready.
  *
  * Usage:
  * ```typescript
@@ -24,31 +24,24 @@ import { MemberService } from './member.service';
 class MemberServiceAdapter {
   /**
    * Validate member input
-   * Delegates to in-memory service for validation logic
+   * Delegates to MemberService for validation logic
    */
   validateMemberInput(input: CreateMemberInput): { valid: boolean; errors: string[] } {
     return MemberService.validateMemberInput(input);
   }
 
   /**
-   * Create a new member
+   * Create a new member — persisted to Supabase DB
+   * @param clubId — optional club assignment (should come from auth context)
    */
-  async createMember(input: CreateMemberInput): Promise<Member> {
-    // Always validate
-    const validation = this.validateMemberInput(input);
-    if (!validation.valid) {
-      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-    }
-
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
-    return MemberService.createMember(input);
+  async createMember(input: CreateMemberInput, clubId?: string): Promise<Member> {
+    return MemberService.createMember(input, clubId);
   }
 
   /**
    * Get member by ID
    */
   async getMemberById(id: string): Promise<Member | null> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.getMemberById(id);
   }
 
@@ -56,7 +49,6 @@ class MemberServiceAdapter {
    * Get member by user ID
    */
   async getMemberByUserId(userId: string): Promise<Member | null> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.getMemberByUserId(userId);
   }
 
@@ -64,7 +56,6 @@ class MemberServiceAdapter {
    * Get member by email
    */
   async getMemberByEmail(email: string): Promise<Member | null> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.getMemberByEmail(email);
   }
 
@@ -72,15 +63,14 @@ class MemberServiceAdapter {
    * Get all members
    */
   async getAllMembers(): Promise<Member[]> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.getAllMembers();
   }
 
   /**
    * Query members with filters
+   * @param query — may include clubId for club-scoped queries
    */
-  async queryMembers(query: MemberQuery): Promise<Member[]> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
+  async queryMembers(query: MemberQuery & { clubId?: string }): Promise<Member[]> {
     return MemberService.queryMembers(query);
   }
 
@@ -88,7 +78,6 @@ class MemberServiceAdapter {
    * Get active members
    */
   async getActiveMembers(): Promise<Member[]> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.getActiveMembers();
   }
 
@@ -96,7 +85,6 @@ class MemberServiceAdapter {
    * Get members by training group
    */
   async getMembersByTrainingGroup(trainingGroup: string): Promise<Member[]> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.getMembersByTrainingGroup(trainingGroup);
   }
 
@@ -104,7 +92,6 @@ class MemberServiceAdapter {
    * Update member
    */
   async updateMember(id: string, input: UpdateMemberInput): Promise<Member | null> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.updateMember(id, input);
   }
 
@@ -115,7 +102,6 @@ class MemberServiceAdapter {
     id: string,
     status: Member['membershipStatus']
   ): Promise<Member | null> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.updateMemberStatus(id, status);
   }
 
@@ -123,7 +109,6 @@ class MemberServiceAdapter {
    * Delete member
    */
   async deleteMember(id: string): Promise<boolean> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.deleteMember(id);
   }
 
@@ -139,7 +124,6 @@ class MemberServiceAdapter {
     byType: { member: number; trial: number; inactive: number };
     byTrainingGroup: Record<string, number>;
   }> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.getMemberStatistics();
   }
 
@@ -147,7 +131,6 @@ class MemberServiceAdapter {
    * Search members
    */
   async searchMembers(query: string): Promise<Member[]> {
-    // TODO: Switch to Drizzle repository when member-specific DB schema is ready.
     return MemberService.searchMembers(query);
   }
 }

@@ -311,6 +311,7 @@ export const userClubMemberships = pgTable(
     role: varchar('role', { length: 20 }).notNull().default('member'), // 'member' | 'trainer' | 'admin' | 'superadmin'
     joined_at: timestamp('joined_at').notNull().defaultNow(),
     is_active: boolean('is_active').notNull().default(true),
+    include_in_planning: boolean('include_in_planning').notNull().default(true),
     tenant_id: varchar('tenant_id', { length: 100 }), // Für Multi-Tenant Isolation
     created_at: timestamp('created_at').notNull().defaultNow(),
   },

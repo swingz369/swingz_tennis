@@ -15,6 +15,7 @@ export default defineConfig({
       'e2e/**/*.test.ts',
     ],
     setupFiles: ['./src/__tests__/setup.ts'],
+    globalSetup: ['./src/__tests__/global-setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

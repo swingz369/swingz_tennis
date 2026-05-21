@@ -508,7 +508,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href={`/admin/seasons/${id}/wizard`}>
+          <Link href={`/admin/seasons/${id}/planning`}>
             <Button>
               <Play className="mr-2 h-4 w-4" />
               {['published', 'active', 'completed', 'archived'].includes(season.planning_status ?? '')

@@ -34,12 +34,9 @@ export type NewSeasonPlanningConfig = typeof seasonPlanningConfigs.$inferInsert;
 // ============================================
 
 export const WizardStep = {
-  MEMBER_SELECTION: 1,
-  PREFERENCES_SUMMARY: 2,
-  TRAINER_AVAILABILITY: 3,
-  CLUSTERING: 4,
-  ADMIN_REVIEW: 5,
-  CONFIRMATION: 6,
+  CONFIGURE: 1,
+  PLAN_EDIT: 2,
+  FINALIZE: 3,
 } as const;
 export type WizardStep = (typeof WizardStep)[keyof typeof WizardStep];
 
@@ -48,14 +45,13 @@ export interface WizardState {
   clubId: string;
   currentStep: WizardStep;
   maxReachedStep: WizardStep;
+  isReady: boolean;
   isProcessing: boolean;
   error: string | null;
 
-  // Schritt 1: Selected members
+  // Schritt 1: Konfigurieren
   selectedMemberIds: string[];
-  promotedMemberIds: string[]; // "bereit für nächstes Level"
-
-  // Schritt 2: Preference summary
+  promotedMemberIds: string[];
   preferencesResponseRate: number;
   slotFailureRates: Record<string, number>;
   incompatibleWishPartnerPairs: Array<{
@@ -63,17 +59,25 @@ export interface WizardState {
     memberB: string;
     reason: string;
   }>;
-
-  // Schritt 3: Trainer load
   trainerUtilization: Record<string, { current: number; max: number; pct: number }>;
+  planningConfig: {
+    groupMaxSize: number;
+    groupMinSize: number;
+    maxNiveauSpanBeginner: number;
+    maxNiveauSpanAdvanced: number;
+    trainerUtilizationMaxPct: number;
+    preferHistoricGroups: boolean;
+    avoidHighFailureSlots: boolean;
+    slotFailureThreshold: number;
+  };
 
-  // Schritt 4: Clustering result
+  // Schritt 2: Plan bearbeiten
   clusteringResult: ClusteringResult | null;
+  scheduleSlots: ScheduleSlot[];
+  aiAnalysisText: string | null;
 
-  // Schritt 5: Conflicts
+  // Schritt 3: Abschließen
   conflicts: ConflictDetectionResult[];
-
-  // Schritt 6: Confirmed
   isConfirmed: boolean;
   publishedSessionIds: string[];
 }
@@ -362,6 +366,30 @@ export interface ConfirmPlanResponse {
   notificationsSent: number;
   waitlistNotifications: number;
   unresolvedCriticalConflicts: string[];
+}
+
+// ============================================
+// WIZARD CONTEXT TYPE
+// ============================================
+
+// ============================================
+// SCHEDULE SLOT (for drag & drop grid)
+// ============================================
+
+export interface ScheduleSlot {
+  id: string;
+  groupName: string;
+  groupColor: string;
+  trainerId: string;
+  trainerName: string;
+  dayOfWeek: number; // 1=Mo .. 7=So
+  startTime: string;
+  endTime: string;
+  durationMin: number;
+  courtId: string | null;
+  courtName: string | null;
+  memberIds: string[];
+  memberNames: string[];
 }
 
 // ============================================

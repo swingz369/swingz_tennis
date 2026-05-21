@@ -16,6 +16,7 @@ import type {
   SelectMembersResponse,
   PreferencesSummary,
   TrainerAvailabilitySummary,
+  ScheduleSlot,
 } from '@/lib/season-planning/types';
 
 // ============================================
@@ -28,6 +29,7 @@ function createInitialState(seasonId: string, clubId: string): WizardState {
     clubId,
     currentStep: 1 as WizardStep,
     maxReachedStep: 1 as WizardStep,
+    isReady: false,
     isProcessing: false,
     error: null,
     selectedMemberIds: [],
@@ -36,7 +38,19 @@ function createInitialState(seasonId: string, clubId: string): WizardState {
     slotFailureRates: {},
     incompatibleWishPartnerPairs: [],
     trainerUtilization: {},
+    planningConfig: {
+      groupMaxSize: 6,
+      groupMinSize: 3,
+      maxNiveauSpanBeginner: 2,
+      maxNiveauSpanAdvanced: 2,
+      trainerUtilizationMaxPct: 80,
+      preferHistoricGroups: true,
+      avoidHighFailureSlots: true,
+      slotFailureThreshold: 30,
+    },
     clusteringResult: null,
+    scheduleSlots: [],
+    aiAnalysisText: null,
     conflicts: [],
     isConfirmed: false,
     publishedSessionIds: [],
@@ -51,6 +65,9 @@ type WizardAction =
   | { type: 'SET_STEP'; step: WizardStep }
   | { type: 'SET_PROCESSING'; isProcessing: boolean }
   | { type: 'SET_ERROR'; error: string | null }
+  | { type: 'SET_READY'; isReady: boolean }
+  | { type: 'SET_PLANNING_CONFIG'; config: WizardState['planningConfig'] }
+  | { type: 'SET_SCHEDULE_SLOTS'; slots: ScheduleSlot[] }
   | { type: 'SELECT_MEMBERS'; memberIds: string[]; promotedIds: string[]; response: SelectMembersResponse }
   | { type: 'SET_PREFERENCES_SUMMARY'; summary: PreferencesSummary }
   | { type: 'SET_TRAINER_AVAILABILITY'; summary: TrainerAvailabilitySummary }
@@ -74,6 +91,15 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 
     case 'SET_ERROR':
       return { ...state, error: action.error, isProcessing: false };
+
+    case 'SET_READY':
+      return { ...state, isReady: action.isReady };
+
+    case 'SET_PLANNING_CONFIG':
+      return { ...state, planningConfig: { ...state.planningConfig, ...action.config } };
+
+    case 'SET_SCHEDULE_SLOTS':
+      return { ...state, scheduleSlots: action.slots };
 
     case 'SELECT_MEMBERS':
       return {
@@ -121,6 +147,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return {
         ...state,
         clusteringResult: action.result,
+        scheduleSlots: [],
         isProcessing: false,
       };
 
@@ -185,7 +212,7 @@ export function WizardProvider({
   }, []);
 
   const nextStep = useCallback(() => {
-    const next = Math.min(6, state.currentStep + 1) as WizardStep;
+    const next = Math.min(3, state.currentStep + 1) as WizardStep;
     dispatch({ type: 'SET_STEP', step: next });
   }, [state.currentStep]);
 
@@ -212,7 +239,11 @@ export function WizardProvider({
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ seasonId: state.seasonId, dryRun }),
+            body: JSON.stringify({
+              seasonId: state.seasonId,
+              config: state.planningConfig,
+              dryRun,
+            }),
           }
         );
         if (!res.ok) {
@@ -228,7 +259,7 @@ export function WizardProvider({
         });
       }
     },
-    [state.seasonId]
+    [state.seasonId, state.planningConfig]
   );
 
   const detectConflicts = useCallback(async () => {

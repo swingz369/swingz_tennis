@@ -4,8 +4,9 @@ import type { Invoice, CreateInvoice, InvoiceWithItems, InvoiceStatus } from '..
 
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-async function generateUniqueInvoiceNumber(clubId: string): Promise<string> {
-  const prefix = clubId.slice(0, 8).toUpperCase();
+async function generateUniqueInvoiceNumber(clubId: string | undefined): Promise<string> {
+  const safeId = (clubId || 'UNKNOWN').slice(0, 8);
+  const prefix = safeId.toUpperCase();
   const year = new Date().getFullYear();
   try {
     const { data, error } = await supabase.rpc('next_invoice_sequence', { p_club_id: clubId });

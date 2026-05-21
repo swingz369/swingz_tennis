@@ -15,6 +15,7 @@ import type { SelectMembersResponse } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
 import {
   Badge,
+  Button,
   Card,
   CardHeader,
   CardTitle,
@@ -36,6 +37,7 @@ interface MemberRow {
   recommendedLevel: SkillLevel | null;
   trainerName: string | null;
   wasWaitlisted: boolean;
+  includeInPlanning: boolean;
 }
 
 export function MemberSelector() {
@@ -45,6 +47,7 @@ export function MemberSelector() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLevel, setFilterLevel] = useState<SkillLevel | 'all'>('all');
+  const [showExcluded, setShowExcluded] = useState(false);
   const [promotedMembers, setPromotedMembers] = useState<
     SelectMembersResponse['promotedMembers']
   >([]);
@@ -136,7 +139,8 @@ export function MemberSelector() {
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesLevel = filterLevel === 'all' || m.skillLevel === filterLevel;
-    return matchesSearch && matchesLevel;
+    const matchesPlanning = showExcluded || m.includeInPlanning !== false;
+    return matchesSearch && matchesLevel && matchesPlanning;
   });
 
   const selectedCount = state.selectedMemberIds.length;
@@ -263,6 +267,14 @@ export function MemberSelector() {
             )
           )}
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowExcluded(!showExcluded)}
+          className={`text-xs ${showExcluded ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+        >
+          {showExcluded ? 'Zeige alle' : 'Nur eingeplante'}
+        </Button>
       </div>
 
       {/* Select All */}
@@ -371,6 +383,12 @@ export function MemberSelector() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
+                        {member.includeInPlanning === false && (
+                          <Badge className="text-xs bg-gray-50 text-gray-500 border-gray-200 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Ausgeschlossen
+                          </Badge>
+                        )}
                         {isPromoted && (
                           <Badge className="text-xs bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1">
                             <Star className="h-3 w-3" />
@@ -383,7 +401,7 @@ export function MemberSelector() {
                             Warteliste Vorsaison
                           </Badge>
                         )}
-                        {!isPromoted && !isWaitlisted && (
+                        {member.includeInPlanning !== false && !isPromoted && !isWaitlisted && (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </div>

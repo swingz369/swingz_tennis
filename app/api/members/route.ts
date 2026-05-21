@@ -44,7 +44,10 @@ export async function POST(request: NextRequest) {
         }
 
         // Create member (associated with the authenticated user's club)
-        const member = await memberService.createMember(validation.data as CreateMemberInput);
+        const member = await memberService.createMember(
+          validation.data as CreateMemberInput,
+          auth.clubId ?? undefined,
+        );
 
         return NextResponse.json({ success: true, member });
       } catch (error) {

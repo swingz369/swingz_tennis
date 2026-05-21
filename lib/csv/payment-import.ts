@@ -33,7 +33,7 @@ export function parsePaymentCsv(csvContent: string): CsvPaymentRecord[] {
       trim: true,
     });
 
-    return records.map((record: any) => ({
+    return (records as Record<string, string>[]).map((record) => ({
       paymentNumber: sanitizeCsvField(record['Zahlungsnummer'] || record['payment_number'] || ''),
       paymentDate: sanitizeCsvField(
         record['Zahlungsdatum'] || record['payment_date'] || new Date().toISOString().split('T')[0]

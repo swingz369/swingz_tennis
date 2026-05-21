@@ -1,47 +1,83 @@
 /**
- * @deprecated Dieser Wizard-Client ist durch das neue Wizard-Routing unter
- * `app/(protected)/admin/seasons/[id]/wizard/` abgelöst.
- * Neue Requests sollten `wizard/layout.tsx` + `wizard/page.tsx` verwenden.
- * Diese Datei bleibt als Fallback erhalten, bis alle Nutzer migriert sind.
+ * 3-Schritt Saisonplanung Wizard
+ *
+ * Schritt 1: Konfigurieren — ReadinessCheck + Saison-Einstellungen + Mitgliederauswahl
+ * Schritt 2: Planen & Bearbeiten — Algorithmus starten → Stundenplan mit Drag & Drop editieren
+ * Schritt 3: Abschließen — Konfliktprüfung + Bestätigung + Veröffentlichung
  */
 'use client';
 
+import { Component } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
   ArrowLeft,
-  Users,
-  FileCheck,
-  UserCheck,
-  Sparkles,
-  AlertTriangle,
-  CheckCircle,
+  Settings,
+  LayoutGrid,
   ClipboardCheck,
+  CheckCircle,
+  AlertTriangle,
   Loader2,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
 import { WizardProvider, useWizard } from '@/lib/season-planning/wizard-context';
-import { MemberSelector } from './steps/member-selector';
-import { PreferenceSummary } from './steps/preference-summary';
-import { TrainerAvailability } from './steps/trainer-availability';
-import { ClusteringResult } from './steps/clustering-result';
-import { ConflictReview } from './steps/conflict-review';
-import { ConfirmationStep } from './steps/confirmation-step';
+import { ConfigStep } from './steps/config-step';
+import { PlanEditStep } from './steps/plan-edit-step';
+import { FinalizeStep } from './steps/finalize-step';
 
 // ============================================
 // STEP DEFINITIONS
 // ============================================
 
+// ============================================
+// ERROR BOUNDARY
+// ============================================
+
+class StepErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-6">
+          <div className="flex flex-col items-center text-center gap-3">
+            <AlertTriangle className="h-8 w-8 text-red-500" />
+            <h3 className="text-lg font-semibold text-red-700">Ein unerwarteter Fehler ist aufgetreten</h3>
+            <p className="text-sm text-red-600 max-w-md">
+              {this.state.error?.message || 'Unbekannter Fehler'}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => this.setState({ hasError: false, error: null })}
+            >
+              Erneut versuchen
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const STEPS = [
-  { number: 1, label: 'Mitglieder', icon: Users },
-  { number: 2, label: 'Präferenzen', icon: FileCheck },
-  { number: 3, label: 'Trainer', icon: UserCheck },
-  { number: 4, label: 'Clustering', icon: Sparkles },
-  { number: 5, label: 'Review', icon: AlertTriangle },
-  { number: 6, label: 'Bestätigung', icon: CheckCircle },
+  { number: 1, label: 'Konfigurieren', icon: Settings, hint: 'Daten prüfen & einstellen' },
+  { number: 2, label: 'Planen', icon: LayoutGrid, hint: 'Generieren & bearbeiten' },
+  { number: 3, label: 'Abschließen', icon: ClipboardCheck, hint: 'Prüfen & veröffentlichen' },
 ];
 
 // ============================================
@@ -77,25 +113,19 @@ function WizardContent({
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <MemberSelector />;
+        return <ConfigStep />;
       case 2:
-        return <PreferenceSummary />;
+        return <PlanEditStep />;
       case 3:
-        return <TrainerAvailability />;
-      case 4:
-        return <ClusteringResult />;
-      case 5:
-        return <ConflictReview />;
-      case 6:
-        return <ConfirmationStep />;
+        return <FinalizeStep />;
       default:
-        return <MemberSelector />;
+        return <ConfigStep />;
     }
   };
 
-  const canGoNext = currentStep < 6;
+  const canGoNext = currentStep < 3 && !(currentStep === 1 && !state.isReady);
   const canGoPrev = currentStep > 1;
-  const isLast = currentStep === 6;
+  const isLast = currentStep === 3;
 
   return (
     <div className="space-y-6">
@@ -173,7 +203,7 @@ function WizardContent({
       <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
         <div
           className="h-full rounded-full bg-brand-primary transition-all duration-500"
-          style={{ width: `${(currentStep / 6) * 100}%` }}
+          style={{ width: `${(currentStep / 3) * 100}%` }}
         />
       </div>
 
@@ -204,7 +234,9 @@ function WizardContent({
             </p>
           </div>
         ) : (
-          renderStep()
+          <StepErrorBoundary key={currentStep}>
+            {renderStep()}
+          </StepErrorBoundary>
         )}
       </div>
 
@@ -221,10 +253,15 @@ function WizardContent({
 
         <div className="flex items-center gap-2">
           {!isLast ? (
-            <Button onClick={nextStep} disabled={!canGoNext || isProcessing}>
-              Weiter
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
+            <>
+              {currentStep === 1 && !state.isReady ? (
+                <p className="text-xs text-amber-600 mr-2">Bereitschaftsprüfung nicht bestanden</p>
+              ) : null}
+              <Button onClick={nextStep} disabled={!canGoNext || isProcessing}>
+                Weiter
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </>
           ) : (
             <Button
               onClick={() => router.push('/admin/seasons')}

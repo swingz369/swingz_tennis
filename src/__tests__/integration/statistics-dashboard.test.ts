@@ -89,6 +89,55 @@ vi.mock('@/src/application/services/trial-training-service.adapter', () => {
   };
 });
 
+// ── Mock member-service adapter (now uses real DB; mock 20 members for stats tests) ──
+vi.mock('@/src/application/services/member-service.adapter', () => {
+  const now = Date.now();
+  const d = (days: number) => new Date(now - days * 86400000).toISOString();
+
+  const members = Array.from({ length: 20 }, (_, i) => ({
+    id: `member-${i + 1}`,
+    userId: `user-${i + 1}`,
+    firstName: `Vorname${i + 1}`,
+    lastName: `Nachname${i + 1}`,
+    email: `member${i + 1}@example.com`,
+    phone: `+49 100${i}`,
+    dateOfBirth: '1990-01-15',
+    address: i % 3 === 0 ? { street: 'Teststr', houseNumber: `${i + 1}`, postalCode: '12345', city: 'Berlin' } : undefined,
+    memberType: i < 16 ? 'member' as const : i < 18 ? 'trial' as const : 'inactive' as const,
+    membershipStatus: i < 15 ? 'active' as const : i < 18 ? 'active' as const : i === 18 ? 'inactive' as const : 'terminated' as const,
+    membershipStart: d(365),
+    membershipEnd: i >= 18 ? d(30) : undefined,
+    trainingGroup: i < 5 ? 'Anfänger' : i < 10 ? 'Fortgeschrittene' : i < 15 ? 'Turnier' : undefined,
+    emergencyContact: i % 5 === 0 ? { name: `Notfall ${i}`, phone: `+49 200${i}`, relationship: 'Partner' } : undefined,
+    notes: i % 7 === 0 ? 'Notiz' : undefined,
+    createdAt: d(365 + i),
+    updatedAt: d(i),
+  }));
+
+  return {
+    memberService: {
+      getAllMembers: vi.fn().mockResolvedValue(members),
+      getMemberById: vi.fn().mockResolvedValue(members[0]),
+      getMemberByUserId: vi.fn().mockResolvedValue(members[0]),
+      getMemberByEmail: vi.fn().mockResolvedValue(members[0]),
+      queryMembers: vi.fn().mockResolvedValue(members),
+      getActiveMembers: vi.fn().mockResolvedValue(members.filter(m => m.membershipStatus === 'active')),
+      getMembersByTrainingGroup: vi.fn().mockResolvedValue(members.filter(m => m.trainingGroup)),
+      createMember: vi.fn(),
+      updateMember: vi.fn(),
+      updateMemberStatus: vi.fn(),
+      deleteMember: vi.fn(),
+      getMemberStatistics: vi.fn().mockResolvedValue({
+        total: 20, active: 15, inactive: 1, suspended: 0, terminated: 1,
+        byType: { member: 16, trial: 2, inactive: 2 },
+        byTrainingGroup: { Anfänger: 5, Fortgeschrittene: 5, Turnier: 5 },
+      }),
+      searchMembers: vi.fn().mockResolvedValue(members),
+      validateMemberInput: vi.fn().mockReturnValue({ valid: true, errors: [] }),
+    },
+  };
+});
+
 // ── Mock billing adapter (BillingService uses direct Supabase, not in-memory) ──
 //    Data inline in factory to avoid hoisting issues with vi.mock
 vi.mock('@/src/application/services/billing-service.adapter', () => {

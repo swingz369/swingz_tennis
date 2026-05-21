@@ -15,6 +15,7 @@ import {
   Zap,
   GraduationCap,
   Sparkles,
+  ClipboardCheck,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -402,6 +403,12 @@ export default async function MemberPage() {
               href: '/attendance-history',
               icon: Clock,
               color: 'bg-rose-50 text-rose-600 border-rose-100',
+            },
+            {
+              label: 'Präferenzen',
+              href: '/member/preferences',
+              icon: ClipboardCheck,
+              color: 'bg-green-50 text-green-600 border-green-100',
             },
             {
               label: 'News',

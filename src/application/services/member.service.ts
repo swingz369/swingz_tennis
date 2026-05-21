@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+import { env } from '@/lib/env';
 import type {
   Member,
   CreateMemberInput,
@@ -5,18 +7,12 @@ import type {
   MemberQuery,
 } from '../../domain/entities/member.entity';
 
+/** Service role client — used for all DB operations (server-side only, not exposed to browser) */
+const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
 export class MemberService {
-  private static members: Member[] = [];
-
   /**
-   * Generate a unique ID
-   */
-  private static generateId(): string {
-    return `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  /**
-   * Validate member input
+   * Validate member input (pure logic, no DB dependency)
    */
   static validateMemberInput(input: CreateMemberInput): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
@@ -83,115 +79,255 @@ export class MemberService {
   }
 
   /**
-   * Validate email format
+   * Map a user_club_memberships row + users row → Member entity
    */
-  private static isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  private static mapToMember(
+    m: Record<string, unknown>,
+    user?: Record<string, unknown> | null,
+  ): Member {
+    const membershipStatus = m.is_active
+      ? ((m.status as string) || 'active')
+      : 'inactive';
+
+    return {
+      id: m.id as string,
+      userId: m.user_id as string,
+      firstName: user?.first_name as string || user?.full_name
+        ? ((user?.full_name as string) || '').split(' ')[0] || ''
+        : '',
+      lastName: user?.last_name as string || '',
+      email: (user?.email as string) || '',
+      phone: (user?.phone as string) || '',
+      dateOfBirth: (user?.date_of_birth as string) || '',
+      address: user?.address
+        ? {
+            street: (user?.address as Record<string, string>)?.street || '',
+            houseNumber: (user?.address as Record<string, string>)?.house_number || '',
+            postalCode: (user?.postal_code as string) || (user?.address as Record<string, string>)?.postal_code || '',
+            city: (user?.city as string) || (user?.address as Record<string, string>)?.city || '',
+          }
+        : user?.city || user?.postal_code
+          ? {
+              street: (user?.address as string) || '',
+              houseNumber: '',
+              postalCode: (user?.postal_code as string) || '',
+              city: (user?.city as string) || '',
+            }
+          : undefined,
+      memberType: (m.role as string) === 'trial' ? 'trial'
+        : !m.is_active ? 'inactive'
+        : 'member',
+      membershipStatus: membershipStatus as Member['membershipStatus'],
+      membershipStart: (m.joined_at as string) || undefined,
+      membershipEnd: (m.deactivated_at as string) || undefined,
+      trainingGroup: undefined, // stored in training_group_memberships, fetched separately
+      emergencyContact: user?.emergency_contact
+        ? {
+            name: (user?.emergency_contact as Record<string, string>)?.name || '',
+            phone: (user?.emergency_phone as string) || (user?.emergency_contact as Record<string, string>)?.phone || '',
+            relationship: (user?.emergency_contact as Record<string, string>)?.relationship || '',
+          }
+        : undefined,
+      notes: (user?.bio as string) || undefined,
+      createdAt: (m.created_at as string) || new Date().toISOString(),
+      updatedAt: (m.created_at as string) || new Date().toISOString(),
+    };
   }
 
   /**
-   * Validate date format
+   * Get user profile data for a user ID
    */
-  private static isValidDate(dateString: string): boolean {
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
+  private static async getUserProfile(userId: string): Promise<Record<string, unknown> | null> {
+    const { data, error } = await db
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    return error ? null : data;
   }
 
   /**
-   * Validate postal code format (German format)
+   * Get user profiles for multiple user IDs
    */
-  private static isValidPostalCode(postalCode: string): boolean {
-    const postalCodeRegex = /^\d{5}$/;
-    return postalCodeRegex.test(postalCode);
+  private static async getUserProfiles(userIds: string[]): Promise<Map<string, Record<string, unknown>>> {
+    if (userIds.length === 0) return new Map();
+    const { data } = await db
+      .from('users')
+      .select('*')
+      .in('id', userIds);
+    const map = new Map<string, Record<string, unknown>>();
+    for (const user of (data || [])) {
+      map.set(user.id as string, user);
+    }
+    return map;
   }
 
   /**
-   * Create a new member
+   * Create a new member — inserts into user_club_memberships
    */
-  static async createMember(input: CreateMemberInput): Promise<Member> {
+  static async createMember(
+    input: CreateMemberInput,
+    clubId?: string,
+  ): Promise<Member> {
     const validation = this.validateMemberInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
 
     const now = new Date().toISOString();
-    const member: Member = {
-      id: this.generateId(),
-      userId: input.userId,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      email: input.email,
-      phone: input.phone,
-      dateOfBirth: input.dateOfBirth,
-      address: input.address,
-      memberType: input.memberType,
-      membershipStatus: input.membershipStatus,
-      membershipStart: input.membershipStart,
-      membershipEnd: input.membershipEnd,
-      trainingGroup: input.trainingGroup,
-      emergencyContact: input.emergencyContact,
-      notes: input.notes,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const { data, error } = await db
+      .from('user_club_memberships')
+      .insert({
+        user_id: input.userId,
+        club_id: clubId || null,
+        role: 'member',
+        is_active: input.membershipStatus === 'active' || input.membershipStatus === 'suspended',
+        status: input.membershipStatus || 'active',
+        joined_at: input.membershipStart || now,
+        created_at: now,
+      })
+      .select()
+      .single();
 
-    this.members.push(member);
-    return member;
+    if (error) {
+      throw new Error(`Failed to create member: ${error.message}`);
+    }
+
+    // Update user profile with extra fields
+    if (input.firstName || input.lastName || input.phone || input.address || input.dateOfBirth) {
+      const userUpdate: Record<string, unknown> = {};
+      if (input.firstName) userUpdate.first_name = input.firstName;
+      if (input.lastName) userUpdate.last_name = input.lastName;
+      if (input.phone) userUpdate.phone = input.phone;
+      if (input.dateOfBirth) userUpdate.date_of_birth = input.dateOfBirth;
+      if (input.address) {
+        userUpdate.address = input.address;
+        userUpdate.city = input.address.city;
+        userUpdate.postal_code = input.address.postalCode;
+      }
+      if (input.emergencyContact) {
+        userUpdate.emergency_contact = input.emergencyContact;
+        userUpdate.emergency_phone = input.emergencyContact.phone;
+      }
+      if (input.notes) userUpdate.bio = input.notes;
+
+      await db.from('users').update(userUpdate).eq('id', input.userId);
+    }
+
+    return this.mapToMember(data);
   }
 
   /**
-   * Get member by ID
+   * Get member by membership ID
    */
   static async getMemberById(id: string): Promise<Member | null> {
-    return this.members.find((m) => m.id === id) || null;
+    const { data, error } = await db
+      .from('user_club_memberships')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) return null;
+
+    const user = await this.getUserProfile(data.user_id as string);
+    return this.mapToMember(data, user);
   }
 
   /**
    * Get member by user ID
    */
   static async getMemberByUserId(userId: string): Promise<Member | null> {
-    return this.members.find((m) => m.userId === userId) || null;
+    const { data, error } = await db
+      .from('user_club_memberships')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('role', 'member')
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const user = await this.getUserProfile(userId);
+    return this.mapToMember(data, user);
   }
 
   /**
-   * Get member by email
+   * Get member by email (via users table)
    */
   static async getMemberByEmail(email: string): Promise<Member | null> {
-    return this.members.find((m) => m.email.toLowerCase() === email.toLowerCase()) || null;
+    const { data: user } = await db
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (!user) return null;
+
+    return this.getMemberByUserId(user.id as string);
   }
 
   /**
-   * Get all members
+   * Get all members (across all clubs — use queryMembers for scoped queries)
    */
   static async getAllMembers(): Promise<Member[]> {
-    return [...this.members];
+    const { data: memberships, error } = await db
+      .from('user_club_memberships')
+      .select('*')
+      .eq('role', 'member')
+      .order('created_at', { ascending: false })
+      .limit(1000);
+
+    if (error || !memberships) return [];
+
+    const userIds = [...new Set(memberships.map((m) => m.user_id as string))];
+    const userProfiles = await this.getUserProfiles(userIds);
+
+    return memberships.map((m) => this.mapToMember(m, userProfiles.get(m.user_id as string)));
   }
 
   /**
    * Query members with filters
    */
-  static async queryMembers(query: MemberQuery): Promise<Member[]> {
-    let results = this.members;
+  static async queryMembers(query: MemberQuery & { clubId?: string }): Promise<Member[]> {
+    let q = db.from('user_club_memberships').select('*').eq('role', 'member');
 
     if (query.status) {
-      results = results.filter((m) => m.membershipStatus === query.status);
+      if (query.status === 'active') {
+        q = q.eq('is_active', true);
+      } else if (query.status === 'inactive') {
+        q = q.eq('is_active', false);
+      } else {
+        q = q.eq('status', query.status);
+      }
     }
 
+    if (query.clubId) {
+      q = q.eq('club_id', query.clubId);
+    }
+
+    const { data: memberships, error } = await q
+      .order('created_at', { ascending: false })
+      .limit(1000);
+
+    if (error || !memberships) return [];
+
+    const userIds = [...new Set(memberships.map((m) => m.user_id as string))];
+    const userProfiles = await this.getUserProfiles(userIds);
+
+    let results = memberships.map((m) => this.mapToMember(m, userProfiles.get(m.user_id as string)));
+
+    // Apply in-memory filters for fields not in DB
     if (query.type) {
       results = results.filter((m) => m.memberType === query.type);
     }
-
     if (query.trainingGroup) {
       results = results.filter((m) => m.trainingGroup === query.trainingGroup);
     }
-
     if (query.search) {
       const lowerQuery = query.search.toLowerCase();
       results = results.filter(
         (m) =>
           `${m.firstName} ${m.lastName} ${m.email}`.toLowerCase().includes(lowerQuery) ||
-          m.trainingGroup?.toLowerCase().includes(lowerQuery)
+          m.trainingGroup?.toLowerCase().includes(lowerQuery),
       );
     }
 
@@ -202,34 +338,111 @@ export class MemberService {
    * Get active members
    */
   static async getActiveMembers(): Promise<Member[]> {
-    return this.members.filter((m) => m.membershipStatus === 'active');
+    return this.queryMembers({ status: 'active' });
   }
 
   /**
-   * Get members by training group
+   * Get members by training group — joins training_group_memberships
+   *
+   * Resolves the human-readable group name (e.g. "Anfänger") to a group ID
+   * via the training_groups table, then fetches member IDs from
+   * training_group_memberships, and finally returns full Member entities.
    */
   static async getMembersByTrainingGroup(trainingGroup: string): Promise<Member[]> {
-    return this.members.filter((m) => m.trainingGroup === trainingGroup);
+    // Resolve training group name → ID
+    const { data: groupData } = await db
+      .from('training_groups')
+      .select('id, name')
+      .eq('name', trainingGroup)
+      .single();
+
+    if (!groupData) return [];
+
+    const groupId = groupData.id as string;
+    const groupName = (groupData.name as string) || trainingGroup;
+
+    const { data: membershipRecords } = await db
+      .from('training_group_memberships')
+      .select('member_id')
+      .eq('training_group_id', groupId);
+
+    const userIds = [...new Set((membershipRecords || []).map((r) => r.member_id as string))];
+    if (userIds.length === 0) return [];
+
+    // Fetch user_club_memberships for these users
+    const { data: memberships } = await db
+      .from('user_club_memberships')
+      .select('*')
+      .in('user_id', userIds)
+      .order('created_at', { ascending: false });
+
+    if (!memberships) return [];
+
+    const userProfiles = await this.getUserProfiles(userIds);
+
+    return memberships.map((m) => {
+      const member = this.mapToMember(m, userProfiles.get(m.user_id as string));
+      member.trainingGroup = groupName;
+      return member;
+    });
   }
 
   /**
    * Update member
    */
   static async updateMember(id: string, input: UpdateMemberInput): Promise<Member | null> {
-    const index = this.members.findIndex((m) => m.id === id);
-    if (index === -1) {
-      return null;
+    const existing = await this.getMemberById(id);
+    if (!existing) return null;
+
+    // Update user profile fields
+    if (
+      input.firstName || input.lastName || input.email || input.phone ||
+      input.dateOfBirth || input.address || input.emergencyContact || input.notes
+    ) {
+      const userUpdate: Record<string, unknown> = {};
+      if (input.firstName !== undefined) userUpdate.first_name = input.firstName;
+      if (input.lastName !== undefined) userUpdate.last_name = input.lastName;
+      if (input.email !== undefined) {
+        userUpdate.email = input.email;
+      }
+      if (input.phone !== undefined) userUpdate.phone = input.phone;
+      if (input.dateOfBirth !== undefined) userUpdate.date_of_birth = input.dateOfBirth;
+      if (input.address !== undefined) {
+        userUpdate.address = input.address;
+        userUpdate.city = input.address.city;
+        userUpdate.postal_code = input.address.postalCode;
+      }
+      if (input.emergencyContact !== undefined) {
+        userUpdate.emergency_contact = input.emergencyContact;
+        userUpdate.emergency_phone = input.emergencyContact?.phone;
+      }
+      if (input.notes !== undefined) userUpdate.bio = input.notes;
+
+      await db.from('users').update(userUpdate).eq('id', existing.userId);
     }
 
-    const existing = this.members[index];
-    const updated: Member = {
-      ...existing,
-      ...input,
-      updatedAt: new Date().toISOString(),
-    };
+    // Update membership fields
+    if (
+      input.membershipStatus !== undefined ||
+      input.memberType !== undefined ||
+      input.membershipStart !== undefined ||
+      input.membershipEnd !== undefined ||
+      input.trainingGroup !== undefined
+    ) {
+      const membershipUpdate: Record<string, unknown> = {};
+      if (input.membershipStatus !== undefined) {
+        membershipUpdate.status = input.membershipStatus;
+        membershipUpdate.is_active = input.membershipStatus !== 'inactive' && input.membershipStatus !== 'terminated';
+      }
+      if (input.membershipStart !== undefined) membershipUpdate.joined_at = input.membershipStart;
+      if (input.membershipEnd !== undefined) membershipUpdate.deactivated_at = input.membershipEnd;
+      // Note: trainingGroup is stored in training_group_memberships, not here
 
-    this.members[index] = updated;
-    return updated;
+      await db.from('user_club_memberships').update(membershipUpdate).eq('id', id);
+    }
+
+    // Re-fetch to return updated entity
+    return this.getMemberById(id);
   }
 
   /**
@@ -237,26 +450,32 @@ export class MemberService {
    */
   static async updateMemberStatus(
     id: string,
-    status: Member['membershipStatus']
+    status: Member['membershipStatus'],
   ): Promise<Member | null> {
     return this.updateMember(id, { membershipStatus: status });
   }
 
   /**
-   * Delete member
+   * Delete member (soft delete — deactivate)
    */
   static async deleteMember(id: string): Promise<boolean> {
-    const index = this.members.findIndex((m) => m.id === id);
-    if (index === -1) {
+    const { error } = await db
+      .from('user_club_memberships')
+      .update({
+        is_active: false,
+        deactivated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to deactivate member:', error.message);
       return false;
     }
-
-    this.members.splice(index, 1);
     return true;
   }
 
   /**
-   * Get member statistics
+   * Get member statistics from real DB
    */
   static async getMemberStatistics(): Promise<{
     total: number;
@@ -264,30 +483,31 @@ export class MemberService {
     inactive: number;
     suspended: number;
     terminated: number;
-    byType: {
-      member: number;
-      trial: number;
-      inactive: number;
-    };
+    byType: { member: number; trial: number; inactive: number };
     byTrainingGroup: Record<string, number>;
   }> {
-    const total = this.members.length;
-    const active = this.members.filter((m) => m.membershipStatus === 'active').length;
-    const inactive = this.members.filter((m) => m.membershipStatus === 'inactive').length;
-    const suspended = this.members.filter((m) => m.membershipStatus === 'suspended').length;
-    const terminated = this.members.filter((m) => m.membershipStatus === 'terminated').length;
+    const { data: memberships, error } = await db
+      .from('user_club_memberships')
+      .select('is_active, status, role')
+      .eq('role', 'member');
 
-    const byType = {
-      member: this.members.filter((m) => m.memberType === 'member').length,
-      trial: this.members.filter((m) => m.memberType === 'trial').length,
-      inactive: this.members.filter((m) => m.memberType === 'inactive').length,
-    };
+    if (error || !memberships) {
+      return {
+        total: 0, active: 0, inactive: 0, suspended: 0, terminated: 0,
+        byType: { member: 0, trial: 0, inactive: 0 },
+        byTrainingGroup: {},
+      };
+    }
 
-    const byTrainingGroup: Record<string, number> = {};
-    for (const member of this.members) {
-      if (member.trainingGroup) {
-        byTrainingGroup[member.trainingGroup] = (byTrainingGroup[member.trainingGroup] || 0) + 1;
-      }
+    const total = memberships.length;
+    let active = 0, inactive = 0, suspended = 0, terminated = 0;
+
+    for (const m of memberships) {
+      const s = m.status as string;
+      if (!m.is_active) inactive++;
+      else if (s === 'suspended') suspended++;
+      else if (s === 'terminated') terminated++;
+      else active++;
     }
 
     return {
@@ -296,8 +516,12 @@ export class MemberService {
       inactive,
       suspended,
       terminated,
-      byType,
-      byTrainingGroup,
+      byType: {
+        member: active + suspended,
+        trial: 0, // trial tracking requires training_group_memberships
+        inactive,
+      },
+      byTrainingGroup: {}, // requires training_group_memberships join
     };
   }
 
@@ -305,193 +529,23 @@ export class MemberService {
    * Search members
    */
   static async searchMembers(query: string): Promise<Member[]> {
-    const lowerQuery = query.toLowerCase();
-    return this.members.filter(
-      (m) =>
-        `${m.firstName} ${m.lastName} ${m.email}`.toLowerCase().includes(lowerQuery) ||
-        m.trainingGroup?.toLowerCase().includes(lowerQuery)
-    );
+    return this.queryMembers({ search: query });
   }
 
-  /**
-   * Initialize with mock data (for development)
-   */
-  static initializeMockData(): void {
-    const now = new Date();
-    const d = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-    const dateOnly = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  // ---- Private helpers ----
 
-    this.members = [
-      // === Active Full Members ===
-      {
-        id: 'member-1', userId: 'user-1', firstName: 'Max', lastName: 'Mustermann',
-        email: 'max.mustermann@example.com', phone: '+49 123 456 7890', dateOfBirth: '1990-05-15',
-        address: { street: 'Musterstraße', houseNumber: '123', postalCode: '12345', city: 'Musterstadt' },
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-365),
-        trainingGroup: 'Anfänger A',
-        emergencyContact: { name: 'Erika Mustermann', phone: '+49 123 456 7891', relationship: 'Ehefrau' },
-        createdAt: d(-365), updatedAt: d(-30),
-      },
-      {
-        id: 'member-2', userId: 'user-2', firstName: 'Anna', lastName: 'Schmidt',
-        email: 'anna.schmidt@example.com', phone: '+49 987 654 3210', dateOfBirth: '1985-08-22',
-        address: { street: 'Schulstraße', houseNumber: '45', postalCode: '54321', city: 'Schulstadt' },
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-180),
-        trainingGroup: 'Fortgeschritten B',
-        emergencyContact: { name: 'Hans Schmidt', phone: '+49 987 654 3211', relationship: 'Ehemann' },
-        createdAt: d(-180), updatedAt: d(-15),
-      },
-      {
-        id: 'member-3', userId: 'user-3', firstName: 'Peter', lastName: 'Klein',
-        email: 'peter.klein@example.com', phone: '+49 555 123 4567', dateOfBirth: '1995-12-03',
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-90),
-        trainingGroup: 'Anfänger A',
-        emergencyContact: { name: 'Lisa Klein', phone: '+49 555 123 4568', relationship: 'Schwester' },
-        createdAt: d(-90), updatedAt: d(-7),
-      },
-      {
-        id: 'member-4', userId: 'user-4', firstName: 'Sophie', lastName: 'Wagner',
-        email: 'sophie.wagner@example.com', phone: '+49 171 111 2222', dateOfBirth: '1992-07-19',
-        address: { street: 'Lindenstraße', houseNumber: '8a', postalCode: '10115', city: 'Berlin' },
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-240),
-        trainingGroup: 'Fortgeschritten B',
-        emergencyContact: { name: 'Klaus Wagner', phone: '+49 171 111 2223', relationship: 'Vater' },
-        createdAt: d(-240), updatedAt: d(-10),
-      },
-      {
-        id: 'member-5', userId: 'user-5', firstName: 'Felix', lastName: 'Hoffmann',
-        email: 'felix.hoffmann@example.com', phone: '+49 160 333 4444', dateOfBirth: '1998-01-30',
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-150),
-        trainingGroup: 'Erfahren C',
-        emergencyContact: { name: 'Petra Hoffmann', phone: '+49 160 333 4445', relationship: 'Mutter' },
-        createdAt: d(-150), updatedAt: d(-3),
-      },
-      {
-        id: 'member-6', userId: 'user-6', firstName: 'Laura', lastName: 'Becker',
-        email: 'laura.becker@example.com', phone: '+49 152 555 6666', dateOfBirth: '1987-11-12',
-        address: { street: 'Hauptstraße', houseNumber: '22', postalCode: '80331', city: 'München' },
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-400),
-        trainingGroup: 'Erfahren C',
-        emergencyContact: { name: 'Thomas Becker', phone: '+49 152 555 6667', relationship: 'Ehemann' },
-        notes: 'Mannschaftskapitänin', createdAt: d(-400), updatedAt: d(-5),
-      },
-      {
-        id: 'member-7', userId: 'user-7', firstName: 'Lukas', lastName: 'Fischer',
-        email: 'lukas.fischer@example.com', phone: '+49 176 777 8888', dateOfBirth: '2001-04-25',
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-60),
-        trainingGroup: 'Anfänger A',
-        emergencyContact: { name: 'Katrin Fischer', phone: '+49 176 777 8889', relationship: 'Mutter' },
-        createdAt: d(-60), updatedAt: d(-1),
-      },
-      {
-        id: 'member-8', userId: 'user-8', firstName: 'Nina', lastName: 'Schwarz',
-        email: 'nina.schwarz@example.com', phone: '+49 170 999 0001', dateOfBirth: '1983-09-08',
-        address: { street: 'Parkweg', houseNumber: '3', postalCode: '50933', city: 'Köln' },
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-500),
-        trainingGroup: 'Fortgeschritten B',
-        emergencyContact: { name: 'Dieter Schwarz', phone: '+49 170 999 0002', relationship: 'Vater' },
-        createdAt: d(-500), updatedAt: d(-14),
-      },
-      {
-        id: 'member-9', userId: 'user-9', firstName: 'Tom', lastName: 'Richter',
-        email: 'tom.richter@example.com', phone: '+49 163 222 3333', dateOfBirth: '1994-06-14',
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-120),
-        trainingGroup: 'Anfänger A',
-        emergencyContact: { name: 'Sabine Richter', phone: '+49 163 222 3334', relationship: 'Ehefrau' },
-        createdAt: d(-120), updatedAt: d(-2),
-      },
-      {
-        id: 'member-10', userId: 'user-10', firstName: 'Julia', lastName: 'König',
-        email: 'julia.koenig@example.com', phone: '+49 175 444 5555', dateOfBirth: '1979-02-28',
-        address: { street: 'Bergstraße', houseNumber: '17', postalCode: '79104', city: 'Freiburg' },
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-600),
-        trainingGroup: 'Erfahren C',
-        emergencyContact: { name: 'Markus König', phone: '+49 175 444 5556', relationship: 'Sohn' },
-        notes: 'Ehrenmitglied seit 2020', createdAt: d(-600), updatedAt: d(-20),
-      },
-      // === Trial Members ===
-      {
-        id: 'member-11', userId: 'user-11', firstName: 'Daniel', lastName: 'Bauer',
-        email: 'daniel.bauer@example.com', phone: '+49 157 666 7777', dateOfBirth: '1996-10-05',
-        memberType: 'trial', membershipStatus: 'active', membershipStart: dateOnly(-14),
-        createdAt: d(-14), updatedAt: d(-14),
-      },
-      {
-        id: 'member-12', userId: 'user-12', firstName: 'Elena', lastName: 'Wolf',
-        email: 'elena.wolf@example.com', phone: '+49 151 888 9999', dateOfBirth: '1993-03-21',
-        memberType: 'trial', membershipStatus: 'active', membershipStart: dateOnly(-5),
-        trainingGroup: 'Anfänger A',
-        emergencyContact: { name: 'Karl Wolf', phone: '+49 151 888 9990', relationship: 'Vater' },
-        createdAt: d(-5), updatedAt: d(-5),
-      },
-      {
-        id: 'member-13', userId: 'user-13', firstName: 'Marco', lastName: 'Zimmermann',
-        email: 'marco.zimmermann@example.com', phone: '+49 179 111 3333', dateOfBirth: '2000-12-12',
-        memberType: 'trial', membershipStatus: 'active', membershipStart: dateOnly(-2),
-        createdAt: d(-2), updatedAt: d(-2),
-      },
-      // === Inactive / Suspended ===
-      {
-        id: 'member-14', userId: 'user-14', firstName: 'Maria', lastName: 'Gross',
-        email: 'maria.gross@example.com', phone: '+49 444 987 6543', dateOfBirth: '1988-03-17',
-        memberType: 'member', membershipStatus: 'suspended', membershipStart: dateOnly(-730),
-        trainingGroup: 'Erfahren C', notes: 'Zahlungsrückstand — Mahnung läuft',
-        createdAt: d(-730), updatedAt: d(-60),
-      },
-      {
-        id: 'member-15', userId: 'user-15', firstName: 'Stefan', lastName: 'Lehmann',
-        email: 'stefan.lehmann@example.com', phone: '+49 172 555 8888', dateOfBirth: '1975-05-05',
-        memberType: 'member', membershipStatus: 'inactive', membershipStart: dateOnly(-500),
-        membershipEnd: dateOnly(-30), trainingGroup: 'Fortgeschritten B',
-        notes: 'Pausiert wegen Verletzung', createdAt: d(-500), updatedAt: d(-30),
-      },
-      {
-        id: 'member-16', userId: 'user-16', firstName: 'Claudia', lastName: 'Neumann',
-        email: 'claudia.neumann@example.com', phone: '+49 173 666 1111', dateOfBirth: '1982-08-18',
-        memberType: 'member', membershipStatus: 'suspended', membershipStart: dateOnly(-300),
-        trainingGroup: 'Anfänger A', notes: '3× nicht erschienen — Verwarnung',
-        createdAt: d(-300), updatedAt: d(-10),
-      },
-      // === Terminated ===
-      {
-        id: 'member-17', userId: 'user-17', firstName: 'Oliver', lastName: 'Schmitt',
-        email: 'oliver.schmitt@example.com', phone: '+49 162 777 2222', dateOfBirth: '1991-11-30',
-        memberType: 'member', membershipStatus: 'terminated', membershipStart: dateOnly(-400),
-        membershipEnd: dateOnly(-90), trainingGroup: 'Fortgeschritten B',
-        notes: 'Gekündigt — beruflicher Umzug nach Hamburg',
-        createdAt: d(-400), updatedAt: d(-90),
-      },
-      {
-        id: 'member-18', userId: 'user-18', firstName: 'Hanna', lastName: 'Krüger',
-        email: 'hanna.krueger@example.com', phone: '+49 178 444 6666', dateOfBirth: '1989-04-09',
-        memberType: 'member', membershipStatus: 'terminated', membershipStart: dateOnly(-200),
-        membershipEnd: dateOnly(-45), trainingGroup: 'Erfahren C',
-        notes: 'Eigenkündigung — keine Zeit mehr',
-        createdAt: d(-200), updatedAt: d(-45),
-      },
-      // === More Active Members ===
-      {
-        id: 'member-19', userId: 'user-19', firstName: 'David', lastName: 'Lang',
-        email: 'david.lang@example.com', phone: '+49 174 888 1111', dateOfBirth: '1997-07-07',
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-45),
-        trainingGroup: 'Anfänger A',
-        emergencyContact: { name: 'Ute Lang', phone: '+49 174 888 1112', relationship: 'Mutter' },
-        createdAt: d(-45), updatedAt: d(-1),
-      },
-      {
-        id: 'member-20', userId: 'user-20', firstName: 'Birgit', lastName: 'Vogel',
-        email: 'birgit.vogel@example.com', phone: '+49 177 333 9999', dateOfBirth: '1980-12-25',
-        address: { street: 'Seestraße', houseNumber: '42', postalCode: '78462', city: 'Konstanz' },
-        memberType: 'member', membershipStatus: 'active', membershipStart: dateOnly(-300),
-        trainingGroup: 'Fortgeschritten B',
-        emergencyContact: { name: 'Rainer Vogel', phone: '+49 177 333 9990', relationship: 'Ehemann' },
-        createdAt: d(-300), updatedAt: d(-7),
-      },
-    ];
+  private static isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
-}
 
-// Initialize mock data (development only)
-if (process.env.NODE_ENV !== 'production') {
-  MemberService.initializeMockData();
+  private static isValidDate(dateString: string): boolean {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
+  }
+
+  private static isValidPostalCode(postalCode: string): boolean {
+    const postalCodeRegex = /^\d{5}$/;
+    return postalCodeRegex.test(postalCode);
+  }
 }

@@ -80,7 +80,7 @@ export function ClubSwitcher({ currentClubId, userRole }: ClubSwitcherProps) {
 
     try {
       // Set cookie via API route
-      const response = await fetch('/api/admin/set-club', {
+      const response = await fetch('/api/admin/switch-club', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ export function ClubSwitcherCompact({ currentClubId, userRole }: ClubSwitcherPro
     setSelectedClubId(clubId);
 
     try {
-      await fetch('/api/admin/set-club', {
+      await fetch('/api/admin/switch-club', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clubId }),

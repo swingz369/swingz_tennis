@@ -138,10 +138,21 @@ export function openGoogleCalendar(event: CalendarEvent): void {
   window.open(url, '_blank');
 }
 
+/** Input shape for calendar export — subset of session fields we need */
+export interface SessionExportInput {
+  id: string;
+  week: string;
+  startTime: string;
+  endTime: string;
+  trainerName?: string;
+  notes?: string;
+  courtId?: string;
+}
+
 /**
  * Convert session data to calendar event
  */
-export function sessionToCalendarEvent(session: any, courtName?: string): CalendarEvent {
+export function sessionToCalendarEvent(session: SessionExportInput, courtName?: string): CalendarEvent {
   const sessionDate = parseISO(session.week);
   const [startHour, startMinute] = session.startTime.split(':').map(Number);
   const [endHour, endMinute] = session.endTime.split(':').map(Number);
@@ -171,7 +182,10 @@ export function sessionToCalendarEvent(session: any, courtName?: string): Calend
 /**
  * Export multiple sessions to ICS
  */
-export function exportSessionsToICS(sessions: any[], courts: any[]): void {
+export function exportSessionsToICS(
+  sessions: SessionExportInput[],
+  courts: Array<{ id: string; name: string }>
+): void {
   const events = sessions.map((session) => {
     const court = courts.find((c) => c.id === session.courtId);
     return sessionToCalendarEvent(session, court?.name);
@@ -184,7 +198,7 @@ export function exportSessionsToICS(sessions: any[], courts: any[]): void {
 /**
  * Export single session to Google Calendar
  */
-export function exportSessionToGoogleCalendar(session: any, courtName?: string): void {
+export function exportSessionToGoogleCalendar(session: SessionExportInput, courtName?: string): void {
   const event = sessionToCalendarEvent(session, courtName);
   openGoogleCalendar(event);
 }

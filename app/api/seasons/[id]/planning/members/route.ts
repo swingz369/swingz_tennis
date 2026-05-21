@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { getDb } from '@/src/infrastructure/persistence/client';
-import { seasons, users, userTrainingPreferences } from '@/src/infrastructure/persistence/schema';
+import { seasons, users, userTrainingPreferences, userClubMemberships } from '@/src/infrastructure/persistence/schema';
 import { trainerFeedback, seasonWaitlists } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, and, desc } from 'drizzle-orm';
 
@@ -26,24 +26,35 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
-      // Get all members from user_club_memberships for this club
+      // Get all members from user_club_memberships with LEFT JOIN to preferences
       const db = getDb();
-      const allPrefs = await db
+
+      const membershipRows = await db
         .select({
-          id: userTrainingPreferences.id,
-          user_id: userTrainingPreferences.user_id,
-          is_submitted: userTrainingPreferences.is_submitted,
+          user_id: userClubMemberships.user_id,
+          include_in_planning: userClubMemberships.include_in_planning,
+          role: userClubMemberships.role,
+          pref_id: userTrainingPreferences.id,
+          pref_is_submitted: userTrainingPreferences.is_submitted,
           user_name: users.full_name,
           user_email: users.email,
           skill_level: users.skill_level,
           experience_months: users.experience_months,
         })
-        .from(userTrainingPreferences)
-        .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
+        .from(userClubMemberships)
+        .innerJoin(users, eq(userClubMemberships.user_id, users.id))
+        .leftJoin(
+          userTrainingPreferences,
+          and(
+            eq(userClubMemberships.user_id, userTrainingPreferences.user_id),
+            eq(userTrainingPreferences.season_id, seasonId)
+          )
+        )
         .where(
           and(
-            eq(userTrainingPreferences.season_id, seasonId),
-            eq(userTrainingPreferences.user_role, 'member')
+            eq(userClubMemberships.club_id, season.club_id),
+            eq(userClubMemberships.role, 'member'),
+            eq(userClubMemberships.is_active, true)
           )
         );
 
@@ -73,10 +84,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         promotedMembers = feedback
           .filter((f) => f.ready_for_next_level === 'yes')
           .map((f) => {
-            const pref = allPrefs.find((p) => p.user_id === f.member_id);
+            const row = membershipRows.find((r) => r.user_id === f.member_id);
             return {
               memberId: f.member_id,
-              memberName: pref?.user_name || pref?.user_email || 'Unbekannt',
+              memberName: row?.user_name || row?.user_email || 'Unbekannt',
               recommendedLevel: f.recommended_level,
               trainerName: f.trainer_name,
             };
@@ -91,24 +102,25 @@ export async function GET(request: NextRequest, context: RouteContext) {
         waitlistCarryovers = prevWaitlist
           .filter((w) => !promotedMembers.some((p) => p.memberId === w.member_id))
           .map((w) => {
-            const pref = allPrefs.find((p) => p.user_id === w.member_id);
+            const row = membershipRows.find((r) => r.user_id === w.member_id);
             return {
               memberId: w.member_id,
-              memberName: pref?.user_name || pref?.user_email || 'Unbekannt',
+              memberName: row?.user_name || row?.user_email || 'Unbekannt',
               previousSeason: prevSeason.name,
             };
           });
       }
 
-      const members = allPrefs.map((p) => ({
-        id: p.user_id,
-        name: p.user_name || p.user_email || 'Unbekannt',
-        email: p.user_email || '',
-        skillLevel: p.skill_level || 'beginner',
-        experienceMonths: p.experience_months || 0,
-        isSubmitted: p.is_submitted,
-        isPromoted: promotedMembers.some((pm) => pm.memberId === p.user_id),
-        isWaitlistCarryover: waitlistCarryovers.some((wc) => wc.memberId === p.user_id),
+      const members = membershipRows.map((r) => ({
+        id: r.user_id,
+        name: r.user_name || r.user_email || 'Unbekannt',
+        email: r.user_email || '',
+        skillLevel: r.skill_level || 'beginner',
+        experienceMonths: r.experience_months || 0,
+        isSubmitted: !!r.pref_is_submitted,
+        includeInPlanning: r.include_in_planning,
+        isPromoted: promotedMembers.some((pm) => pm.memberId === r.user_id),
+        isWaitlistCarryover: waitlistCarryovers.some((wc) => wc.memberId === r.user_id),
       }));
 
       return NextResponse.json({

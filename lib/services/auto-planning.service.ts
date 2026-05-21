@@ -13,6 +13,7 @@ import {
   groups,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql } from 'drizzle-orm';
+import type { InferSelectModel } from 'drizzle-orm';
 import type {
   AutoPlanConfig,
   AlgorithmMetrics,
@@ -21,6 +22,9 @@ import type {
 } from '@/lib/types/season-planning';
 import { aiScheduleServiceV2 } from '@/lib/ai/schedule-generator-v2';
 import type { ScheduleGenerationInput } from '@/lib/ai/schedule-generator-v2';
+
+type CourtRow = InferSelectModel<typeof courts>;
+type GroupRow = InferSelectModel<typeof groups>;
 
 interface TrainerPreference {
   trainer_id: string;
@@ -249,10 +253,12 @@ export class AutoPlanningService {
       constraints: {
         maxParticipantsPerSession: config.maxParticipantsPerSession || 12,
         preferredDays: config.preferredDays,
-        preferredTimeSlots: config.preferredTimeSlots?.map((s: any) => ({
-          start: s.start || s.start_time,
-          end: s.end || s.end_time,
-        })),
+        preferredTimeSlots: config.preferredTimeSlots
+          ?.map((s) => ({
+            start: s.start || s.start_time || '',
+            end: s.end || s.end_time || '',
+          }))
+          .filter((s) => s.start && s.end),
         skillLevels: config.skillLevels,
         avoidTrainerOverload: config.avoidTrainerOverload !== false,
         balanceGroupSizes: config.balanceGroupSizes !== false,
@@ -366,8 +372,8 @@ export class AutoPlanningService {
   private static async runOptimization(params: {
     trainerPrefs: TrainerPreference[];
     memberPrefs: MemberPreference[];
-    courts: any[];
-    groups: any[];
+    courts: CourtRow[];
+    groups: GroupRow[];
     config: AutoPlanConfig;
   }): Promise<{
     entries: PlanningSlot[];
@@ -470,7 +476,7 @@ export class AutoPlanningService {
           if (!bestTrainer) continue;
 
           // Find available court
-          let selectedCourt: any = null;
+          let selectedCourt: CourtRow | null = null;
           const preferredCourts = courts.filter(
             (c) =>
               bestTrainer!.preferred_court_ids.length === 0 ||
@@ -682,7 +688,7 @@ export class AutoPlanningService {
     return totalUtilization / trainers.length;
   }
 
-  private static calculateCourtUtilization(slots: PlanningSlot[], courts: any[]): number {
+  private static calculateCourtUtilization(slots: PlanningSlot[], courts: CourtRow[]): number {
     if (courts.length === 0) return 0;
     const totalSlotsPerWeek = 7 * 10; // 7 days * ~10 slots per day
     const usedSlots = slots.length;

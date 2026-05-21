@@ -1,5 +1,6 @@
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface AnalyticsMetrics {
   // Member metrics
@@ -25,9 +26,11 @@ export interface AnalyticsMetrics {
   avgBookingsPerMember: number;
   noShowRate: number;
 
-  // Revenue metrics (placeholder for now)
+  // Revenue metrics
   monthlyRevenue: number;
   revenueGrowthRate: number;
+  paidRevenueThisMonth: number;
+  outstandingRevenue: number;
 
   // Feedback metrics
   totalFeedback: number;
@@ -58,7 +61,7 @@ export class AnalyticsService {
     const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
     // Fetch all data in parallel
-    const [membersData, trainersData, sessionsData, bookingsData, feedbackData, monthlyTrendData] =
+    const [membersData, trainersData, sessionsData, bookingsData, feedbackData, revenueData, monthlyTrendData] =
       await Promise.all([
         this.getMemberMetrics(
           supabase,
@@ -72,6 +75,7 @@ export class AnalyticsService {
         this.getSessionMetrics(supabase, clubId, thisMonthStart, thisMonthEnd),
         this.getBookingMetrics(supabase, clubId, thisMonthStart, thisMonthEnd),
         this.getFeedbackMetrics(supabase, clubId),
+        this.getRevenueMetrics(supabase, clubId, thisMonthStart, thisMonthEnd, lastMonthStart, lastMonthEnd),
         this.getMonthlyTrends(supabase, clubId),
       ]);
 
@@ -81,14 +85,13 @@ export class AnalyticsService {
       ...sessionsData,
       ...bookingsData,
       ...feedbackData,
-      monthlyRevenue: 0, // Placeholder
-      revenueGrowthRate: 0, // Placeholder
+      ...revenueData,
       monthlyData: monthlyTrendData,
     };
   }
 
   private async getMemberMetrics(
-    supabase: any,
+    supabase: SupabaseClient,
     clubId: string,
     thisMonthStart: Date,
     thisMonthEnd: Date,
@@ -143,7 +146,7 @@ export class AnalyticsService {
   }
 
   private async getTrainerMetrics(
-    supabase: any,
+    supabase: SupabaseClient,
     clubId: string,
     thisMonthStart: Date,
     thisMonthEnd: Date
@@ -172,7 +175,7 @@ export class AnalyticsService {
       .eq('is_visible', true);
 
     const avgRating = ratings?.length
-      ? ratings.reduce((sum: number, r: any) => sum + r.rating, 0) / ratings.length
+      ? ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratings.length
       : 0;
 
     return {
@@ -183,7 +186,7 @@ export class AnalyticsService {
   }
 
   private async getSessionMetrics(
-    supabase: any,
+    supabase: SupabaseClient,
     clubId: string,
     thisMonthStart: Date,
     thisMonthEnd: Date
@@ -212,7 +215,7 @@ export class AnalyticsService {
       .lte('created_at', thisMonthEnd.toISOString());
 
     const confirmedBookings =
-      sessionBookings?.filter((b: any) => b.status === 'confirmed').length || 0;
+      sessionBookings?.filter((b: { status: string }) => b.status === 'confirmed').length || 0;
     const completedSessions = sessionBookings?.length || 1;
 
     return {
@@ -224,7 +227,7 @@ export class AnalyticsService {
   }
 
   private async getBookingMetrics(
-    supabase: any,
+    supabase: SupabaseClient,
     clubId: string,
     thisMonthStart: Date,
     thisMonthEnd: Date
@@ -272,7 +275,67 @@ export class AnalyticsService {
     };
   }
 
-  private async getFeedbackMetrics(supabase: any, clubId: string) {
+  private async getRevenueMetrics(
+    supabase: SupabaseClient,
+    clubId: string,
+    thisMonthStart: Date,
+    thisMonthEnd: Date,
+    lastMonthStart: Date,
+    lastMonthEnd: Date
+  ) {
+    // Revenue this month: sum of paid invoices created this month
+    const { data: thisMonthPaid } = await supabase
+      .from('invoices')
+      .select('paid_amount')
+      .eq('club_id', clubId)
+      .eq('status', 'paid')
+      .gte('paid_at', thisMonthStart.toISOString())
+      .lte('paid_at', thisMonthEnd.toISOString());
+
+    const monthlyRevenue = (thisMonthPaid || []).reduce(
+      (sum: number, inv: Record<string, unknown>) => sum + (Number(inv.paid_amount) || 0),
+      0
+    );
+
+    // Revenue last month for growth rate
+    const { data: lastMonthPaid } = await supabase
+      .from('invoices')
+      .select('paid_amount')
+      .eq('club_id', clubId)
+      .eq('status', 'paid')
+      .gte('paid_at', lastMonthStart.toISOString())
+      .lte('paid_at', lastMonthEnd.toISOString());
+
+    const lastMonthRevenue = (lastMonthPaid || []).reduce(
+      (sum: number, inv: Record<string, unknown>) => sum + (Number(inv.paid_amount) || 0),
+      0
+    );
+
+    const revenueGrowthRate = lastMonthRevenue > 0
+      ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+      : 0;
+
+    // Outstanding revenue: unpaid/overdue invoices
+    const { data: outstanding } = await supabase
+      .from('invoices')
+      .select('total_amount')
+      .eq('club_id', clubId)
+      .in('status', ['sent', 'overdue']);
+
+    const outstandingRevenue = (outstanding || []).reduce(
+      (sum: number, inv: Record<string, unknown>) => sum + (Number(inv.total_amount) || 0),
+      0
+    );
+
+    return {
+      monthlyRevenue: Math.round(monthlyRevenue * 100) / 100,
+      revenueGrowthRate: Math.round(revenueGrowthRate * 10) / 10,
+      paidRevenueThisMonth: Math.round(monthlyRevenue * 100) / 100,
+      outstandingRevenue: Math.round(outstandingRevenue * 100) / 100,
+    };
+  }
+
+  private async getFeedbackMetrics(supabase: SupabaseClient, clubId: string) {
     const { count: totalFeedback } = await supabase
       .from('trainer_feedback')
       .select('*', { count: 'exact', head: true })
@@ -285,7 +348,7 @@ export class AnalyticsService {
       .eq('is_visible', true);
 
     const avgRating = visibleFeedback?.length
-      ? visibleFeedback.reduce((sum: number, f: any) => sum + f.rating, 0) / visibleFeedback.length
+      ? visibleFeedback.reduce((sum: number, f: { rating: number }) => sum + f.rating, 0) / visibleFeedback.length
       : 0;
 
     // Response rate would require session tracking
@@ -298,7 +361,7 @@ export class AnalyticsService {
     };
   }
 
-  private async getMonthlyTrends(supabase: any, clubId: string) {
+  private async getMonthlyTrends(supabase: SupabaseClient, clubId: string) {
     const months = [];
     const now = new Date();
 
@@ -308,7 +371,7 @@ export class AnalyticsService {
       const monthStart = startOfMonth(monthDate);
       const monthEnd = endOfMonth(monthDate);
 
-      const [{ count: members }, { count: sessions }, { count: bookings }] = await Promise.all([
+      const [{ count: members }, { count: sessions }, { count: bookings }, { data: invoices }] = await Promise.all([
         supabase
           .from('user_club_memberships')
           .select('*', { count: 'exact', head: true })
@@ -327,14 +390,26 @@ export class AnalyticsService {
           .eq('club_id', clubId)
           .gte('created_at', monthStart.toISOString())
           .lte('created_at', monthEnd.toISOString()),
+        supabase
+          .from('invoices')
+          .select('paid_amount')
+          .eq('club_id', clubId)
+          .eq('status', 'paid')
+          .gte('paid_at', monthStart.toISOString())
+          .lte('paid_at', monthEnd.toISOString()),
       ]);
+
+      const monthRevenue = (invoices || []).reduce(
+        (sum: number, inv: Record<string, unknown>) => sum + (Number(inv.paid_amount) || 0),
+        0
+      );
 
       months.push({
         month: format(monthDate, 'MMM yyyy'),
         members: members || 0,
         sessions: sessions || 0,
         bookings: bookings || 0,
-        revenue: 0, // Placeholder
+        revenue: Math.round(monthRevenue * 100) / 100,
       });
     }
 

@@ -27,21 +27,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'clubId is required' }, { status: 400 });
     }
 
-    // 3. Verify user is superadmin and has access to this club
-    const { data: membership, error } = await supabase
+    // 3. Verify user is superadmin
+    const { data: memberships } = await supabase
       .from('user_club_memberships')
-      .select('role, club_id')
+      .select('role')
       .eq('user_id', user.id)
-      .eq('club_id', clubId)
-      .eq('is_active', true)
-      .single();
+      .eq('is_active', true);
 
-    if (error || !membership) {
-      return NextResponse.json({ error: 'Club not found or access denied' }, { status: 404 });
+    const isSuperadmin = (memberships ?? []).some((m: any) => m.role === 'superadmin');
+    if (!isSuperadmin) {
+      return NextResponse.json({ error: 'Only superadmins can switch clubs' }, { status: 403 });
     }
 
-    if (membership.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Only superadmins can switch clubs' }, { status: 403 });
+    // 4. Verify club exists (superadmin can manage any club)
+    const { data: club, error: clubError } = await supabase
+      .from('clubs')
+      .select('id, name')
+      .eq('id', clubId)
+      .single();
+
+    if (clubError || !club) {
+      return NextResponse.json({ error: 'Club not found' }, { status: 404 });
     }
 
     // 4. Set cookie with club selection
@@ -57,6 +63,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[Switch Club] Error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/admin/switch-club
+ * Clears the admin club cookie (reset to no club selected)
+ */
+export async function DELETE() {
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(ADMIN_CLUB_COOKIE);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Club selection cleared',
+    });
+  } catch (error) {
+    console.error('[Switch Club] Error clearing club:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
