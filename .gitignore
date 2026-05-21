@@ -37,6 +37,9 @@ Thumbs.db
 .kilocode/
 .opencode/
 
+# Codebuff working directory
+.claude/
+
 # Vercel build artifacts
 .vercel/
 
