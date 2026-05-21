@@ -23,6 +23,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface TrainingSession {
   id: string;
@@ -137,11 +138,15 @@ export default function TrainerWeeklyView() {
     }
   };
 
-  const handleCancelSession = async (sessionId: string) => {
-    if (!confirm('Möchten Sie diese Trainingssession wirklich absagen?')) {
-      return;
-    }
+  const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
 
+  const handleCancelSession = async (sessionId: string) => {
+    setCancelConfirmId(sessionId);
+  };
+
+  const confirmCancelSession = async () => {
+    const sessionId = cancelConfirmId;
+    if (!sessionId) return;
     try {
       const res = await fetch(`/api/bookings/${sessionId}/status`, {
         method: 'PATCH',
@@ -156,6 +161,8 @@ export default function TrainerWeeklyView() {
     } catch (error) {
       toast.error('Fehler beim Absagen der Trainingssession');
       console.error('Cancel error:', error);
+    } finally {
+      setCancelConfirmId(null);
     }
   };
 
@@ -277,9 +284,19 @@ export default function TrainerWeeklyView() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
           <p className="text-gray-500">Laden...</p>
         </div>
+
+        <ConfirmDialog
+          open={cancelConfirmId !== null}
+          onOpenChange={(open) => !open && setCancelConfirmId(null)}
+          title="Trainingssession absagen"
+          description="Möchten Sie diese Trainingssession wirklich absagen?"
+          confirmLabel="Absagen"
+          variant="danger"
+          onConfirm={confirmCancelSession}
+        />
       </div>
-    );
-  }
+      );
+    }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -299,6 +316,16 @@ export default function TrainerWeeklyView() {
             Neue Session
           </Button>
         </div>
+
+        <ConfirmDialog
+          open={cancelConfirmId !== null}
+          onOpenChange={(open) => !open && setCancelConfirmId(null)}
+          title="Trainingssession absagen"
+          description="Möchten Sie diese Trainingssession wirklich absagen?"
+          confirmLabel="Absagen"
+          variant="danger"
+          onConfirm={confirmCancelSession}
+        />
       </div>
 
       {/* Filters */}

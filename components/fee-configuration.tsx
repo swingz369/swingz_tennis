@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, Clock, Plus, Edit, XCircle, Download, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface FeeConfiguration {
   id: string;
@@ -83,11 +84,15 @@ export default function FeeConfigurationManagement() {
     }
   };
 
-  const handleDeleteFee = async (id: string) => {
-    if (!confirm('Möchten Sie diese Gebührenkonfiguration wirklich löschen?')) {
-      return;
-    }
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const handleDeleteFee = async (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteFee = async () => {
+    const id = deleteConfirmId;
+    if (!id) return;
     try {
       const response = await fetch(`/api/fee-configurations/${id}`, {
         method: 'DELETE',
@@ -102,6 +107,8 @@ export default function FeeConfigurationManagement() {
     } catch (error) {
       toast.error('Fehler beim Löschen der Gebührenkonfiguration');
       console.error('Delete error:', error);
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -375,6 +382,16 @@ export default function FeeConfigurationManagement() {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Gebührenkonfiguration löschen"
+        description="Möchten Sie diese Gebührenkonfiguration wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDeleteFee}
+      />
     </div>
   );
 }

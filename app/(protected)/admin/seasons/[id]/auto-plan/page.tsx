@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import {
   Calendar,
   Zap,
   Clock,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AutoPlanResponse } from '@/lib/types/season-planning';
@@ -38,7 +39,32 @@ export default function AutoPlanPage({ params }: AutoPlanPageProps) {
     optimization_goals: ['minimize_conflicts', 'balance_trainer_load', 'maximize_preferences'],
     allow_overbooking: false,
     prefer_consistent_timeslots: true,
+    use_ai: false,
   });
+  // Load saved season config on mount
+  useEffect(() => {
+    async function loadSeasonConfig() {
+      try {
+        const seasonRes = await fetch(`/api/seasons/${params.id}`);
+        if (seasonRes.ok) {
+          const seasonData = await seasonRes.json();
+          const savedConfig = seasonData.season?.auto_plan_config;
+          if (savedConfig && typeof savedConfig === 'object') {
+            setConfig((prev) => ({
+              ...prev,
+              max_iterations: savedConfig.max_iterations ?? prev.max_iterations,
+              allow_overbooking: savedConfig.allow_overbooking ?? prev.allow_overbooking,
+              prefer_consistent_timeslots: savedConfig.prefer_consistent_timeslots ?? prev.prefer_consistent_timeslots,
+              use_ai: savedConfig.use_ai ?? prev.use_ai,
+            }));
+          }
+        }
+      } catch {
+        // Use defaults if loading fails
+      }
+    }
+    loadSeasonConfig();
+  }, [params.id]);
 
   const handleRunPlanning = async (preview: boolean) => {
     setLoading(true);
@@ -51,6 +77,7 @@ export default function AutoPlanPage({ params }: AutoPlanPageProps) {
         body: JSON.stringify({
           config,
           dry_run: preview,
+          use_ai: config.use_ai,
         }),
       });
 
@@ -184,6 +211,27 @@ export default function AutoPlanPage({ params }: AutoPlanPageProps) {
                     </label>
                   </div>
                 </div>
+              </div>
+
+              {/* KI-Optimierung */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="use_ai"
+                    checked={config.use_ai}
+                    onCheckedChange={(checked) =>
+                      setConfig((prev) => ({ ...prev, use_ai: !!checked }))
+                    }
+                  />
+                  <label htmlFor="use_ai" className="text-sm cursor-pointer flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                    KI-Optimierung (Claude/OpenAI)
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Nutzt KI für optimierte Gruppenzuweisung. Ohne KI wird ein deterministischer
+                  Algorithmus verwendet.
+                </p>
               </div>
 
               {/* Advanced Options */}

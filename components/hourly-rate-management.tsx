@@ -21,6 +21,7 @@ import {
   Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface HourlyRateTier {
   id: string;
@@ -124,11 +125,15 @@ export default function HourlyRateManagement() {
     }
   };
 
-  const handleDeleteTier = async (id: string) => {
-    if (!confirm('Möchten Sie diese Stundensatz-Stufe wirklich löschen?')) {
-      return;
-    }
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const handleDeleteTier = async (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteTier = async () => {
+    const id = deleteConfirmId;
+    if (!id) return;
     try {
       const response = await fetch(`/api/hourly-rates/tiers/${id}`, {
         method: 'DELETE',
@@ -143,6 +148,8 @@ export default function HourlyRateManagement() {
     } catch (error) {
       toast.error('Fehler beim Löschen der Stundensatz-Stufe');
       console.error('Delete error:', error);
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -476,6 +483,16 @@ export default function HourlyRateManagement() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Stundensatz-Stufe löschen"
+        description="Möchten Sie diese Stundensatz-Stufe wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDeleteTier}
+      />
     </div>
   );
 }

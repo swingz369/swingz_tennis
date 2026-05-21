@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Bell } from 'lucide-react';
+import { Bell, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Season = {
@@ -26,6 +26,7 @@ export function PreferencesForm({ seasonId, season }: { seasonId: string; season
   const [minSize, setMinSize] = useState(String(cfg.group_min_size ?? 4));
   const [maxSize, setMaxSize] = useState(String(cfg.group_max_size ?? 8));
   const [maxSessions, setMaxSessions] = useState(String(cfg.max_sessions_per_week ?? 3));
+  const [useAI, setUseAI] = useState(cfg.use_ai === true);
   const [saving, setSaving] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
 
@@ -63,6 +64,7 @@ export function PreferencesForm({ seasonId, season }: { seasonId: string; season
           group_min_size: +minSize,
           group_max_size: +maxSize,
           max_sessions_per_week: +maxSessions,
+          use_ai: useAI,
         },
       }),
     });
@@ -117,6 +119,19 @@ export function PreferencesForm({ seasonId, season }: { seasonId: string; season
               value={maxSessions}
               onChange={(e) => setMaxSessions(e.target.value)}
             />
+          </div>
+        </div>
+        <div className="flex items-center gap-3 pt-2 border-t">
+          <Switch id="use-ai" checked={useAI} onCheckedChange={setUseAI} />
+          <div>
+            <Label htmlFor="use-ai" className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              KI-Optimierung aktivieren
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Nutzt KI (Claude/OpenAI) für optimierte Gruppenzuweisung. Ohne KI wird ein
+              deterministischer Algorithmus verwendet.
+            </p>
           </div>
         </div>
       </CardContent>

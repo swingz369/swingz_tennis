@@ -34,6 +34,8 @@ import {
   REGISTRATION_STATUS_VARIANTS,
   PAYMENT_STATUS_LABELS,
 } from '@/src/constants/tournaments';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -113,8 +115,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const tournament = data?.tournament ?? null;
   const registrations = data?.registrations ?? [];
@@ -151,14 +152,13 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
       if (!res.ok) throw new Error('Fehler beim Aktualisieren');
       await fetchTournament();
     } catch (e: any) {
-      alert(e.message);
+      toast.error(e.message);
     } finally {
       setStatusUpdating(false);
     }
   };
 
   const handleDelete = async () => {
-    setDeleting(true);
     try {
       const res = await fetch(`/api/tournaments/${id}`, {
         method: 'DELETE',
@@ -166,8 +166,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
       if (!res.ok) throw new Error('Fehler beim Löschen');
       router.push('/admin/tournaments');
     } catch (e: any) {
-      alert(e.message);
-      setDeleting(false);
+      toast.error(e.message);
     }
   };
 
@@ -264,28 +263,27 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
             {statusUpdating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </div>
 
-          {showDeleteConfirm ? (
-            <div className="flex items-center gap-2">
-              <Button variant="destructive" size="sm" onClick={handleDelete} disabled={deleting}>
-                {deleting ? 'Löschen...' : 'Wirklich löschen?'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowDeleteConfirm(false)}>
-                Abbrechen
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="text-destructive border-destructive/30 hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Löschen
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setDeleteConfirmOpen(true)}
+            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Löschen
+          </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Turnier löschen"
+        description="Möchten Sie dieses Turnier wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={handleDelete}
+      />
 
       {/* ── Stats Cards ── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

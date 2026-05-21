@@ -29,6 +29,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface Member {
   id: string;
@@ -148,11 +149,15 @@ export default function MemberListManagement() {
     }
   };
 
-  const handleDeleteMember = async (memberId: string) => {
-    if (!confirm('Möchten Sie dieses Mitglied wirklich löschen?')) {
-      return;
-    }
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const handleDeleteMember = async (memberId: string) => {
+    setDeleteConfirmId(memberId);
+  };
+
+  const confirmDeleteMember = async () => {
+    const memberId = deleteConfirmId;
+    if (!memberId) return;
     try {
       const response = await fetch(`/api/members/${memberId}`, {
         method: 'DELETE',
@@ -167,6 +172,8 @@ export default function MemberListManagement() {
     } catch (error) {
       toast.error('Fehler beim Löschen des Mitglieds');
       console.error('Delete error:', error);
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -237,9 +244,19 @@ export default function MemberListManagement() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
           <p className="text-gray-500">Laden...</p>
         </div>
+
+        <ConfirmDialog
+          open={deleteConfirmId !== null}
+          onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+          title="Mitglied löschen"
+          description="Möchten Sie dieses Mitglied wirklich löschen?"
+          confirmLabel="Löschen"
+          variant="danger"
+          onConfirm={confirmDeleteMember}
+        />
       </div>
-    );
-  }
+      );
+    }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -259,6 +276,16 @@ export default function MemberListManagement() {
             Neues Mitglied
           </Button>
         </div>
+
+        <ConfirmDialog
+          open={deleteConfirmId !== null}
+          onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+          title="Mitglied löschen"
+          description="Möchten Sie dieses Mitglied wirklich löschen?"
+          confirmLabel="Löschen"
+          variant="danger"
+          onConfirm={confirmDeleteMember}
+        />
       </div>
 
       {/* Filters */}
@@ -300,8 +327,18 @@ export default function MemberListManagement() {
             <option value="trial">Probetrainings</option>
             <option value="inactive">Inaktiv</option>
           </select>
-        </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Mitglied löschen"
+        description="Möchten Sie dieses Mitglied wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDeleteMember}
+      />
+    </div>
 
       {/* Member List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -7,23 +7,14 @@ export default async function GroupsPage({ params }: { params: Promise<{ id: str
   const supabase = await createClient();
   const { data: season } = await supabase
     .from('seasons')
-    .select('id, club_id')
+    .select('id')
     .eq('id', id)
     .single();
   if (!season) notFound();
 
-  const [{ data: groups }, { data: trainers }] = await Promise.all([
-    supabase.from('training_groups').select('id, name, level, age_group'),
-    supabase
-      .from('trainer_profiles')
-      .select('id, first_name, last_name')
-      .eq('club_id', season.club_id),
-  ]);
-
-  const trainersMapped = (trainers ?? []).map((t) => ({
-    id: t.id,
-    full_name: `${t.first_name} ${t.last_name}`,
-  }));
+  const { data: groups } = await supabase
+    .from('training_groups')
+    .select('id, name, level, age_group');
 
   return (
     <div className="space-y-6">
@@ -31,7 +22,7 @@ export default async function GroupsPage({ params }: { params: Promise<{ id: str
         <h1 className="text-2xl font-bold">Gruppen konfigurieren</h1>
         <p className="text-muted-foreground">Lege die Trainingsgruppen für diese Saison an.</p>
       </div>
-      <GroupsManager seasonId={id} initialGroups={groups ?? []} trainers={trainersMapped} />
+      <GroupsManager seasonId={id} initialGroups={groups ?? []} />
     </div>
   );
 }

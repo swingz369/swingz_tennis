@@ -21,6 +21,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface PaymentSettings {
   id: string;
@@ -138,11 +139,15 @@ export default function PaymentSettingsManagement() {
     }
   };
 
-  const handleDeletePayment = async (id: string) => {
-    if (!confirm('Möchten Sie diese Zahlungseinstellungen wirklich löschen?')) {
-      return;
-    }
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const handleDeletePayment = async (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeletePayment = async () => {
+    const id = deleteConfirmId;
+    if (!id) return;
     try {
       const response = await fetch(`/api/payment-settings/${id}`, {
         method: 'DELETE',
@@ -157,6 +162,8 @@ export default function PaymentSettingsManagement() {
     } catch (error) {
       toast.error('Fehler beim Löschen der Zahlungseinstellungen');
       console.error('Delete error:', error);
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -474,6 +481,16 @@ export default function PaymentSettingsManagement() {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Zahlungseinstellungen löschen"
+        description="Möchten Sie diese Zahlungseinstellungen wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDeletePayment}
+      />
     </div>
   );
 }

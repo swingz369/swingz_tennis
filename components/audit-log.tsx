@@ -7,7 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  FileText,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Search,
   Filter,
   Download,
@@ -27,8 +32,10 @@ import {
   Settings,
   Globe,
   GitBranch,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface AuditLog {
   id: string;
@@ -98,11 +105,13 @@ export default function AuditLogManagement() {
     }
   };
 
-  const handleDeleteOldLogs = async () => {
-    if (!confirm('Möchten Sie alte Audit-Logs wirklich löschen?')) {
-      return;
-    }
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
+  const handleDeleteOldLogs = async () => {
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteOldLogs = async () => {
     try {
       const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
       const response = await fetch('/api/audit-logs/cleanup', {
@@ -121,6 +130,8 @@ export default function AuditLogManagement() {
     } catch (error) {
       toast.error('Fehler beim Löschen der Audit-Logs');
       console.error('Delete error:', error);
+    } finally {
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -209,6 +220,16 @@ export default function AuditLogManagement() {
           </Button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Alte Audit-Logs löschen"
+        description="Möchten Sie alte Audit-Logs wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDeleteOldLogs}
+      />
 
       {/* Statistics */}
       {statistics && (
@@ -409,18 +430,14 @@ export default function AuditLogManagement() {
       </div>
 
       {/* Log Details Modal */}
-      {selectedLog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Audit-Log Details</CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedLog(null)}>
-                  <XCircle className="h-5 w-5" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
+      <Dialog open={selectedLog !== null} onOpenChange={(open) => { if (!open) setSelectedLog(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedLog && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Audit-Log Details</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6">
               {/* Status */}
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={getStatusColor(selectedLog.status)}>
@@ -542,10 +559,11 @@ export default function AuditLogManagement() {
                   </pre>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

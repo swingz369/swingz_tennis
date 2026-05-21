@@ -25,37 +25,25 @@ import { Pencil, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Group = { id: string; name: string; level: string; age_group: string | null };
-type Trainer = { id: string; full_name: string };
 type Form = {
   name: string;
   level: string;
   age_group: string;
-  max_participants: string;
-  trainer_id: string;
-  day: string;
-  time: string;
 };
 
 const LEVELS = ['Anfänger', 'Fortgeschritten', 'Leistung', 'Profi'];
-const DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 const empty = (): Form => ({
   name: '',
   level: '',
   age_group: '',
-  max_participants: '8',
-  trainer_id: '',
-  day: 'Montag',
-  time: '18:00',
 });
 
 export function GroupsManager({
   seasonId,
   initialGroups,
-  trainers,
 }: {
   seasonId: string;
   initialGroups: Group[];
-  trainers: Trainer[];
 }) {
   const router = useRouter();
   const [groups, setGroups] = useState(initialGroups);
@@ -78,10 +66,6 @@ export function GroupsManager({
       name: g.name,
       level: g.level,
       age_group: g.age_group ?? '',
-      max_participants: '8',
-      trainer_id: '',
-      day: 'Montag',
-      time: '18:00',
     });
     setDialogOpen(true);
   }
@@ -92,7 +76,7 @@ export function GroupsManager({
       name: form.name,
       level: form.level,
       age_group: form.age_group || null,
-      max_participants: parseInt(form.max_participants, 10) || 8,
+      season_id: seasonId,
     };
     const res = await fetch(
       editing ? `/api/training-groups/${editing.id}` : '/api/training-groups',
@@ -206,42 +190,9 @@ export function GroupsManager({
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Trainer</Label>
-                <Select value={form.trainer_id} onValueChange={(v) => set('trainer_id', v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Trainer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {trainers.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Wochentag</Label>
-                <Select value={form.day} onValueChange={(v) => set('day', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Uhrzeit</Label>
-              <Input type="time" value={form.time} onChange={(e) => set('time', e.target.value)} />
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Trainer, Wochentag und Uhrzeit werden im nächsten Schritt (KI-Plan) zugewiesen.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

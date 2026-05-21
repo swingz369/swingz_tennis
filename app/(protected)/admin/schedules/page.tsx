@@ -22,6 +22,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Calendar, Clock, User, Plus, Pencil, Trash2 } from 'lucide-react';
 
 type Session = {
@@ -49,6 +57,7 @@ export default function SchedulesPage() {
   const [filterClubId, setFilterClubId] = useState('all');
   const [filterDate, setFilterDate] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -137,8 +146,13 @@ export default function SchedulesPage() {
     }
   };
 
-  const handleDelete = async (sessionId: string) => {
-    if (!confirm('Session wirklich löschen?')) return;
+  const handleDelete = (sessionId: string) => {
+    setDeleteConfirmId(sessionId);
+  };
+
+  const confirmDelete = async () => {
+    const sessionId = deleteConfirmId;
+    if (!sessionId) return;
     try {
       const res = await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
       if (res.ok) {
@@ -150,6 +164,8 @@ export default function SchedulesPage() {
     } catch (err) {
       console.error('Failed to delete session:', err);
       toast.error('Fehler beim Löschen');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -320,113 +336,119 @@ export default function SchedulesPage() {
         </CardContent>
       </Card>
 
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Session löschen"
+        description="Möchten Sie diese Session wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDelete}
+      />
+
       {/* Create/Edit Dialog */}
-      {showDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-lg">
-            <CardHeader>
-              <CardTitle>{editingSession ? 'Session bearbeiten' : 'Neue Session'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="dayOfWeek">Tag</Label>
-                    <Select
-                      value={formData.dayOfWeek.toString()}
-                      onValueChange={(v) => setFormData({ ...formData, dayOfWeek: parseInt(v) })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Montag</SelectItem>
-                        <SelectItem value="2">Dienstag</SelectItem>
-                        <SelectItem value="3">Mittwoch</SelectItem>
-                        <SelectItem value="4">Donnerstag</SelectItem>
-                        <SelectItem value="5">Freitag</SelectItem>
-                        <SelectItem value="6">Samstag</SelectItem>
-                        <SelectItem value="7">Sonntag</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="trainerId">Trainer</Label>
-                    <Select
-                      value={formData.trainerId}
-                      onValueChange={(v) => setFormData({ ...formData, trainerId: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Trainer wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="demo-trainer">Max Mustermann</SelectItem>
-                        <SelectItem value="demo-trainer-2">Anna Schmidt</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="startTime">Beginn</Label>
-                    <Input
-                      id="startTime"
-                      type="time"
-                      value={formData.startTime}
-                      onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="endTime">Ende</Label>
-                    <Input
-                      id="endTime"
-                      type="time"
-                      value={formData.endTime}
-                      onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="maxParticipants">Max. Teilnehmer</Label>
-                  <Input
-                    id="maxParticipants"
-                    type="number"
-                    min="1"
-                    value={formData.maxParticipants}
-                    onChange={(e) =>
-                      setFormData({ ...formData, maxParticipants: parseInt(e.target.value) || 1 })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="notes">Notizen</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="z.B. Anfänger, Intensiv, etc."
-                  />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowDialog(false);
-                      setEditingSession(null);
-                    }}
-                  >
-                    Abbrechen
-                  </Button>
-                  <Button type="submit" disabled={saving}>
-                    {saving ? 'Speichern...' : 'Speichern'}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={showDialog} onOpenChange={(open) => { if (!open) { setShowDialog(false); setEditingSession(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingSession ? 'Session bearbeiten' : 'Neue Session'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="dayOfWeek">Tag</Label>
+                <Select
+                  value={formData.dayOfWeek.toString()}
+                  onValueChange={(v) => setFormData({ ...formData, dayOfWeek: parseInt(v) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Montag</SelectItem>
+                    <SelectItem value="2">Dienstag</SelectItem>
+                    <SelectItem value="3">Mittwoch</SelectItem>
+                    <SelectItem value="4">Donnerstag</SelectItem>
+                    <SelectItem value="5">Freitag</SelectItem>
+                    <SelectItem value="6">Samstag</SelectItem>
+                    <SelectItem value="7">Sonntag</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="trainerId">Trainer</Label>
+                <Select
+                  value={formData.trainerId}
+                  onValueChange={(v) => setFormData({ ...formData, trainerId: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Trainer wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="demo-trainer">Max Mustermann</SelectItem>
+                    <SelectItem value="demo-trainer-2">Anna Schmidt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="startTime">Beginn</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="endTime">Ende</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="maxParticipants">Max. Teilnehmer</Label>
+              <Input
+                id="maxParticipants"
+                type="number"
+                min="1"
+                value={formData.maxParticipants}
+                onChange={(e) =>
+                  setFormData({ ...formData, maxParticipants: parseInt(e.target.value) || 1 })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="notes">Notizen</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="z.B. Anfänger, Intensiv, etc."
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowDialog(false);
+                  setEditingSession(null);
+                }}
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Speichern...' : 'Speichern'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

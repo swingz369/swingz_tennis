@@ -24,6 +24,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface Absence {
   id: string;
@@ -132,11 +133,15 @@ export default function AbsenceReporting() {
     }
   };
 
-  const handleDeleteAbsence = async (id: string) => {
-    if (!confirm('Möchten Sie diese Abwesenheit wirklich löschen?')) {
-      return;
-    }
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const handleDeleteAbsence = async (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteAbsence = async () => {
+    const id = deleteConfirmId;
+    if (!id) return;
     try {
       const response = await fetch(`/api/absences/${id}`, {
         method: 'DELETE',
@@ -151,6 +156,8 @@ export default function AbsenceReporting() {
     } catch (error) {
       toast.error('Fehler beim Löschen der Abwesenheit');
       console.error('Delete error:', error);
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -427,6 +434,16 @@ export default function AbsenceReporting() {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Abwesenheit löschen"
+        description="Möchten Sie diese Abwesenheit wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDeleteAbsence}
+      />
     </div>
   );
 }

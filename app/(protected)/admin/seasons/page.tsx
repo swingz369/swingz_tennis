@@ -168,7 +168,7 @@ export default function SeasonsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {seasons.reduce((sum, s) => sum + (s.submitted_preferences ?? 0), 0)}
+                {seasons.reduce((sum, s) => sum + (Number(s.submitted_preferences) || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">Eingereicht</p>
             </CardContent>
@@ -181,7 +181,7 @@ export default function SeasonsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {seasons.reduce((sum, s) => sum + (s.planned_entries ?? 0), 0)}
+                {seasons.reduce((sum, s) => sum + (Number(s.planned_entries) || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">Training-Sessions</p>
             </CardContent>
@@ -194,7 +194,7 @@ export default function SeasonsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {seasons.reduce((sum, s) => sum + (s.open_conflicts ?? 0), 0)}
+                {seasons.reduce((sum, s) => sum + (Number(s.open_conflicts) || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">Zu lösen</p>
             </CardContent>

@@ -25,6 +25,7 @@ import {
   Key,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface SystemSetting {
   id: string;
@@ -100,11 +101,15 @@ export default function SystemSettingsManagement() {
     }
   };
 
-  const handleDeleteSetting = async (id: string) => {
-    if (!confirm('Möchten Sie diese Systemeinstellung wirklich löschen?')) {
-      return;
-    }
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const handleDeleteSetting = async (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteSetting = async () => {
+    const id = deleteConfirmId;
+    if (!id) return;
     try {
       const response = await fetch(`/api/system-settings/${id}`, {
         method: 'DELETE',
@@ -119,6 +124,8 @@ export default function SystemSettingsManagement() {
     } catch (error) {
       toast.error('Fehler beim Löschen der Systemeinstellung');
       console.error('Delete error:', error);
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -443,6 +450,16 @@ export default function SystemSettingsManagement() {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Systemeinstellung löschen"
+        description="Möchten Sie diese Systemeinstellung wirklich löschen?"
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDeleteSetting}
+      />
     </div>
   );
 }

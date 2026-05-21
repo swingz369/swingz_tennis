@@ -93,7 +93,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         };
 
         const dryRun = body.dry_run || false;
-        const useAI = body.use_ai || false;
+        const useAI = body.use_ai === true || finalConfig.use_ai === true;
 
         // Update season status
         if (!dryRun) {

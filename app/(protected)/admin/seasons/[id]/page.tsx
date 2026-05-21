@@ -20,6 +20,23 @@ import {
   Clock,
   CheckCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
 
 function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId: string }) {
@@ -70,16 +87,19 @@ function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId
         <div className="flex items-center gap-4">
           <div>
             <Label htmlFor="installment_count">Raten</Label>
-            <select
-              id="installment_count"
-              value={installmentCount}
-              onChange={(e) => setInstallmentCount(Number(e.target.value))}
-              className="mt-1 block rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-500"
+            <Select
+              value={String(installmentCount)}
+              onValueChange={(v) => setInstallmentCount(Number(v))}
             >
-              <option value={1}>1 Rate</option>
-              <option value={2}>2 Raten</option>
-              <option value={3}>3 Raten</option>
-            </select>
+              <SelectTrigger id="installment_count" className="mt-1 w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 Rate</SelectItem>
+                <SelectItem value="2">2 Raten</SelectItem>
+                <SelectItem value="3">3 Raten</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -188,63 +208,59 @@ function GroupChangeDialog({
     }
   };
 
-  if (!open) {
-    return (
+  return (
+    <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
         Wechseln
       </Button>
-    );
-  }
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Gruppenwechsel</CardTitle>
-          <CardDescription>Mitglied in eine andere Gruppe wechseln lassen</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>Aktuelle Gruppe</Label>
-            <p className="mt-1 text-sm font-medium">{currentGroupName}</p>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Gruppenwechsel</DialogTitle>
+            <DialogDescription>
+              Mitglied in eine andere Gruppe wechseln lassen
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Aktuelle Gruppe</Label>
+              <p className="mt-1 text-sm font-medium">{currentGroupName}</p>
+            </div>
+            <div>
+              <Label>Neue Gruppe</Label>
+              <Select value={newGroupId} onValueChange={setNewGroupId}>
+                <SelectTrigger className="mt-1 w-full">
+                  <SelectValue placeholder="Gruppe wählen…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {otherGroups.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name} ({g.age_group} / {g.level})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="change_date">Wechseldatum</Label>
+              <Input
+                id="change_date"
+                type="date"
+                value={changeDate}
+                onChange={(e) => setChangeDate(e.target.value)}
+                className="mt-1 max-w-xs"
+              />
+            </div>
+            {err && <p className="text-sm text-red-600">{err}</p>}
+            {result && (
+              <p className="text-sm font-medium text-green-600">
+                Wechsel durchgeführt. Netto: {result.net_delta >= 0 ? '+' : ''}
+                {result.net_delta.toFixed(2)} €
+              </p>
+            )}
           </div>
-          <div>
-            <Label htmlFor="new_group">Neue Gruppe</Label>
-            <select
-              id="new_group"
-              value={newGroupId}
-              onChange={(e) => setNewGroupId(e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary-500"
-            >
-              <option value="">Gruppe wählen…</option>
-              {otherGroups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name} ({g.age_group} / {g.level})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="change_date">Wechseldatum</Label>
-            <Input
-              id="change_date"
-              type="date"
-              value={changeDate}
-              onChange={(e) => setChangeDate(e.target.value)}
-              className="mt-1 max-w-xs"
-            />
-          </div>
-          {err && <p className="text-sm text-red-600">{err}</p>}
-          {result && (
-            <p className="text-sm font-medium text-green-600">
-              Wechsel durchgeführt. Netto: {result.net_delta >= 0 ? '+' : ''}
-              {result.net_delta.toFixed(2)} €
-            </p>
-          )}
-          <div className="flex gap-2 pt-2">
-            <Button onClick={handleSubmit} disabled={loading || !newGroupId}>
-              {loading ? 'Wird ausgeführt…' : 'Wechsel durchführen'}
-            </Button>
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
@@ -256,10 +272,13 @@ function GroupChangeDialog({
             >
               Abbrechen
             </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            <Button onClick={handleSubmit} disabled={loading || !newGroupId}>
+              {loading ? 'Wird ausgeführt…' : 'Wechsel durchführen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -335,6 +354,8 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const [season, setSeason] = useState<SeasonWithStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [autoPlanConfirmOpen, setAutoPlanConfirmOpen] = useState(false);
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
 
   const fetchSeason = useCallback(async () => {
     try {
@@ -373,23 +394,25 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
       await fetchSeason();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Fehler');
+      toast.error(err instanceof Error ? err.message : 'Fehler');
     }
   };
 
-  const handleStartAutoPlanning = async () => {
-    if (!confirm('Möchten Sie die automatische Planung starten?')) return;
-
-    try {
-      router.push(`/admin/seasons/${id}/auto-plan`);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Fehler');
-    }
+  const handleStartAutoPlanning = () => {
+    setAutoPlanConfirmOpen(true);
   };
 
-  const handlePublish = async () => {
-    if (!confirm('Möchten Sie diese Season veröffentlichen?')) return;
+  const confirmStartAutoPlanning = () => {
+    setAutoPlanConfirmOpen(false);
+    router.push(`/admin/seasons/${id}/auto-plan`);
+  };
 
+  const handlePublish = () => {
+    setPublishConfirmOpen(true);
+  };
+
+  const confirmPublish = async () => {
+    setPublishConfirmOpen(false);
     try {
       const response = await fetch(`/api/seasons/${id}`, {
         method: 'PATCH',
@@ -401,7 +424,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
       await fetchSeason();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Fehler');
+      toast.error(err instanceof Error ? err.message : 'Fehler');
     }
   };
 
@@ -440,6 +463,26 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog
+        open={autoPlanConfirmOpen}
+        onOpenChange={setAutoPlanConfirmOpen}
+        title="Automatische Planung starten"
+        description="Möchten Sie die automatische Planung für diese Saison starten?"
+        confirmLabel="Starten"
+        variant="brand"
+        onConfirm={confirmStartAutoPlanning}
+      />
+
+      <ConfirmDialog
+        open={publishConfirmOpen}
+        onOpenChange={setPublishConfirmOpen}
+        title="Saison veröffentlichen"
+        description="Möchten Sie diese Saison wirklich veröffentlichen?"
+        confirmLabel="Veröffentlichen"
+        variant="brand"
+        onConfirm={confirmPublish}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

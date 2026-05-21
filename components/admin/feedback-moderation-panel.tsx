@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import StarRating from '@/components/feedback/star-rating';
 import { Eye, EyeOff, Flag, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Feedback {
@@ -34,6 +35,8 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
   const [filterVisible, setFilterVisible] = useState<'all' | 'visible' | 'hidden'>('all');
   const [filterFlagged, setFilterFlagged] = useState<'all' | 'flagged' | 'clean'>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
     fetchFeedback();
@@ -99,18 +102,21 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this feedback? This action cannot be undone.')) {
-      return;
-    }
+    setDeleteConfirmId(id);
+  };
 
+  const confirmDelete = async () => {
+    const id = deleteConfirmId;
+    if (!id) return;
     try {
       const response = await fetch(`/api/feedback/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete feedback');
-
       setFeedback((prev) => prev.filter((f) => f.id !== id));
       toast.success('Feedback deleted');
     } catch (_error) {
       toast.error('Failed to delete feedback');
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -120,10 +126,15 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
       return;
     }
 
-    if (action === 'delete' && !confirm(`Delete ${selectedIds.size} feedback items?`)) {
+    if (action === 'delete') {
+      setBulkDeleteConfirmOpen(true);
       return;
     }
 
+    await executeBulkAction(action);
+  };
+
+  const executeBulkAction = async (action: 'show' | 'hide' | 'delete') => {
     try {
       const promises = Array.from(selectedIds).map((id) => {
         if (action === 'delete') {
@@ -152,6 +163,11 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
     } catch (_error) {
       toast.error('Failed to perform bulk action');
     }
+  };
+
+  const confirmBulkDelete = async () => {
+    await executeBulkAction('delete');
+    setBulkDeleteConfirmOpen(false);
   };
 
   const filteredFeedback = feedback.filter((f) => {
@@ -373,6 +389,26 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Feedback löschen"
+        description="Möchten Sie dieses Feedback wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmLabel="Löschen"
+        variant="danger"
+        onConfirm={confirmDelete}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteConfirmOpen}
+        onOpenChange={setBulkDeleteConfirmOpen}
+        title={`${selectedIds.size} Feedback-Einträge löschen`}
+        description={`Möchten Sie wirklich ${selectedIds.size} Feedback-Einträge löschen?`}
+        confirmLabel="Alle löschen"
+        variant="danger"
+        onConfirm={confirmBulkDelete}
+      />
     </div>
   );
 }

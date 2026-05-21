@@ -152,10 +152,10 @@ describe('GET /api/training-groups', () => {
     (mockAuthCtx.supabase.from as ReturnType<typeof vi.fn>).mockReset();
   });
 
-  it('returns training groups filtered by club_id', async () => {
+  it('returns all training groups', async () => {
     const groups = [
-      { id: 'g1', name: 'Anfänger A', club_id: CLUB_ID },
-      { id: 'g2', name: 'Fortgeschrittene', club_id: CLUB_ID },
+      { id: 'g1', name: 'Anfänger A', schedule_id: 'sched-001' },
+      { id: 'g2', name: 'Fortgeschrittene', schedule_id: 'sched-001' },
     ];
     givenSupabaseChain(supabaseSelectChain(groups));
 
@@ -168,7 +168,7 @@ describe('GET /api/training-groups', () => {
     expect(mockAuthCtx.supabase.from).toHaveBeenCalledWith('training_groups');
   });
 
-  it('filters by seasonId when query parameter is present', async () => {
+  it('returns 200 for GET with query params (ignored, no season_id column)', async () => {
     givenSupabaseChain(supabaseSelectChain([]));
 
     const req = new NextRequest(
@@ -224,12 +224,70 @@ describe('POST /api/training-groups', () => {
     name: 'Anfänger Gruppe A',
     level: 'beginner',
     age_group: 'adults',
-    max_participants: 12,
+    season_id: 'season-001',
   };
 
+  /** Sets up mock chains for season lookup + schedule find/create + group insert */
+  function setupPostMocks(
+    season: unknown,
+    schedule: { id: string; error: null } | { id: null; error: { message: string } },
+    groupInsert: { data: unknown; error: { message: string } | null }
+  ) {
+    const fromMock = (mockAuthCtx.supabase.from as ReturnType<typeof vi.fn>);
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'seasons') {
+        const c: Record<string, any> = {};
+        c.select = vi.fn(() => c);
+        c.eq = vi.fn(() => c);
+        c.single = vi.fn(() => c);
+        c.then = (resolve: (v: unknown) => unknown) => { resolve({ data: season, error: null }); return c; };
+        return c;
+      }
+      if (table === 'schedules') {
+        if (schedule.id !== null) {
+          // find existing
+          const c: Record<string, any> = {};
+          c.select = vi.fn(() => c);
+          c.eq = vi.fn(() => c);
+          c.limit = vi.fn(() => c);
+          c.then = (resolve: (v: unknown) => unknown) => { resolve({ data: [{ id: schedule.id }], error: null }); return c; };
+          return c;
+        }
+        // upsert error case
+        const c: Record<string, any> = {};
+        c.select = vi.fn(() => c);
+        c.eq = vi.fn(() => c);
+        c.limit = vi.fn(() => c);
+        c.upsert = vi.fn(() => c);
+        c.single = vi.fn(() => c);
+        let firstCall = true;
+        c.then = (resolve: (v: unknown) => unknown) => {
+          if (firstCall) {
+            firstCall = false;
+            resolve({ data: [], error: null });
+          } else {
+            resolve({ data: null, error: schedule.error });
+          }
+          return c;
+        };
+        return c;
+      }
+      if (table === 'training_groups') {
+        const c: Record<string, any> = {};
+        c.insert = vi.fn(() => c);
+        c.select = vi.fn(() => c);
+        c.single = vi.fn(() => c);
+        c.then = (resolve: (v: unknown) => unknown) => { resolve(groupInsert); return c; };
+        return c;
+      }
+      return supabaseSelectChain([]);
+    });
+  }
+
   it('creates a training group and returns 201', async () => {
-    const created = { id: 'new-group-001', ...validGroup, club_id: CLUB_ID, is_active: true };
-    givenSupabaseChain(supabaseInsertChain(created));
+    const season = { id: 'season-001', club_id: CLUB_ID, season_type: 'summer', year: 2026, start_date: '2026-06-01', end_date: '2026-09-30' };
+    const created = { id: 'new-group-001', name: 'Anfänger Gruppe A', level: 'beginner', schedule_id: 'sched-001', is_active: true };
+    setupPostMocks(season, { id: 'sched-001', error: null }, { data: created, error: null });
 
     const req = new NextRequest('http://localhost/api/training-groups', {
       method: 'POST',
@@ -270,8 +328,22 @@ describe('POST /api/training-groups', () => {
     expect(body.error).toContain('level');
   });
 
+  it('returns 400 when season_id is missing', async () => {
+    const req = new NextRequest('http://localhost/api/training-groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Test', level: 'beginner' }),
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain('season_id');
+  });
+
   it('returns 500 on Supabase insert error', async () => {
-    givenSupabaseChain(supabaseInsertChain(null, { message: 'Unique constraint violation' }));
+    const season = { id: 'season-001', club_id: CLUB_ID, season_type: 'summer', year: 2026, start_date: '2026-06-01', end_date: '2026-09-30' };
+    setupPostMocks(season, { id: 'sched-001', error: null }, { data: null, error: { message: 'Unique constraint violation' } });
 
     const req = new NextRequest('http://localhost/api/training-groups', {
       method: 'POST',

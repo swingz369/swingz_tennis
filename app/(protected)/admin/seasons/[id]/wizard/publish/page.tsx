@@ -22,24 +22,15 @@ export default async function PublishPage({ params }: { params: Promise<{ id: st
   const [
     { count: groupsCount },
     { count: planEntriesCount },
-    { count: invoicesCount },
-    { count: waitlistCount },
     { count: noTrainerCount },
   ] = await Promise.all([
     (supabase as any)
-      .from('training_groups')
+      .from('groups')
       .select('id', { count: 'exact', head: true })
-      .eq('season_id', id),
+      .eq('club_id', season.club_id)
+      .eq('is_active', true),
     (supabase as any)
       .from('season_plan_entries')
-      .select('id', { count: 'exact', head: true })
-      .eq('season_id', id),
-    (supabase as any)
-      .from('invoices')
-      .select('id', { count: 'exact', head: true })
-      .eq('season_id', id),
-    (supabase as any)
-      .from('season_waitlist')
       .select('id', { count: 'exact', head: true })
       .eq('season_id', id),
     (supabase as any)
@@ -51,10 +42,7 @@ export default async function PublishPage({ params }: { params: Promise<{ id: st
 
   const warnings: string[] = [];
   if ((noTrainerCount ?? 0) > 0) {
-    warnings.push(`${noTrainerCount} Trainingsgruppe(n) ohne Trainer.`);
-  }
-  if ((invoicesCount ?? 0) === 0) {
-    warnings.push('Noch keine Rechnungen generiert.');
+    warnings.push(`${noTrainerCount} Planeinträg(e) ohne Trainer.`);
   }
 
   return (
@@ -73,10 +61,6 @@ export default async function PublishPage({ params }: { params: Promise<{ id: st
           <span className="font-medium">{groupsCount ?? 0}</span>
           <span className="text-muted-foreground">Planeinträge</span>
           <span className="font-medium">{planEntriesCount ?? 0}</span>
-          <span className="text-muted-foreground">Rechnungen</span>
-          <span className="font-medium">{invoicesCount ?? 0}</span>
-          <span className="text-muted-foreground">Warteliste</span>
-          <span className="font-medium">{waitlistCount ?? 0}</span>
         </div>
       </div>
 
