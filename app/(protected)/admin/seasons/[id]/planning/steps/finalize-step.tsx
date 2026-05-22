@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { csrfHeaders } from '@/lib/csrf-client';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import {
   CheckCircle,
@@ -31,6 +32,12 @@ export function FinalizeStep() {
   const { state, confirmPlan, detectConflicts } = useWizard();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [hasRunCheck, setHasRunCheck] = useState(false);
+
+  // Reset hasRunCheck when the plan changes (user went back to step 2)
+  useEffect(() => {
+    setHasRunCheck(false);
+  }, [state.clusteringResult]);
   const [confirmedWarnings, setConfirmedWarnings] = useState<Set<string>>(new Set());
   const [adminNotes, setAdminNotes] = useState('');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
@@ -46,6 +53,7 @@ export function FinalizeStep() {
 
   const handleRunConflicts = useCallback(async () => {
     setIsLoading(true);
+    setHasRunCheck(true);
     try {
       await detectConflicts();
     } finally {
@@ -60,7 +68,7 @@ export function FinalizeStep() {
         `/api/seasons/${state.seasonId}/planning/conflicts`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
           body: JSON.stringify({ conflictId, action: 'resolve', notes: 'Manuell gelöst' }),
         }
       );
@@ -81,7 +89,7 @@ export function FinalizeStep() {
         `/api/seasons/${state.seasonId}/planning/conflicts`,
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
           body: JSON.stringify({ conflictId, action: 'ignore', notes: 'Bewusst ignoriert' }),
         }
       );
@@ -225,8 +233,8 @@ export function FinalizeStep() {
     );
   }
 
-  // === NO CONFLICTS — TRIGGER CHECK ===
-  if (conflicts.length === 0 && !isLoading) {
+  // === NO CONFLICTS — TRIGGER CHECK (only before first run) ===
+  if (conflicts.length === 0 && !isLoading && !hasRunCheck) {
     return (
       <div className="space-y-6">
         {/* Pre-Confirmation Summary */}
@@ -400,13 +408,19 @@ export function FinalizeStep() {
         </Card>
       )}
 
-      {/* All clear message */}
-      {conflicts.length > 0 && criticalConflicts.length === 0 && warningConflicts.length === 0 && (
+      {/* All clear message (after check ran or all resolved) */}
+      {(criticalConflicts.length === 0 && warningConflicts.filter(c => c.status === 'open').length === 0) && (
         <Card className="border-green-200 bg-green-50/30">
           <CardContent className="py-8 text-center">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-            <h3 className="mt-4 text-lg font-semibold text-green-800">Keine offenen Konflikte</h3>
-            <p className="text-sm text-green-700 mt-1">Alle Konflikte wurden gelöst oder ignoriert.</p>
+            <h3 className="mt-4 text-lg font-semibold text-green-800">
+              {conflicts.length === 0 ? 'Keine Konflikte gefunden' : 'Alle Konflikte gelöst oder ignoriert'}
+            </h3>
+            <p className="text-sm text-green-700 mt-1">
+              {conflicts.length === 0
+                ? 'Die Planung ist konfliktfrei und kann bestätigt werden.'
+                : 'Alle Konflikte wurden gelöst oder ignoriert.'}
+            </p>
           </CardContent>
         </Card>
       )}

@@ -139,7 +139,7 @@ export class SeasonClusteringEngine {
     );
 
     // Step 4: Run greedy clustering with hard + soft constraints
-    const { assignments, unassigned } = this.greedyCluster(
+    const { assignments, unassigned } = await this.greedyCluster(
       members,
       trainers,
       courts,
@@ -309,7 +309,7 @@ export class SeasonClusteringEngine {
       );
 
     return prefs.map((p) => ({
-      id: p.pref.user_id,
+      id: p.trainer.id,
       name: p.trainer_name || p.trainer?.name || 'Unbekannt',
       specialties: (p.trainer?.specialties as string[]) || [],
       maxHoursPerWeek: p.trainer?.max_hours_per_week || 30,
@@ -496,16 +496,16 @@ export class SeasonClusteringEngine {
   // GREEDY CLUSTERING (Schritt 4a + 4b)
   // ============================================
 
-  private greedyCluster(
+  private async greedyCluster(
     members: (MemberWithDetails & { _unassignedReason?: string })[],
     trainers: TrainerWithDetails[],
     courts: CourtInfo[],
     candidateGroups: Map<string, GroupInfo>,
     slotFailureRates: Record<string, number>
-  ): {
+  ): Promise<{
     assignments: GroupAssignment[];
     unassigned: (MemberWithDetails & { _unassignedReason?: string })[];
-  } {
+  }> {
     const assignments: GroupAssignment[] = [];
     const assignedMemberIds = new Set<string>();
     const trainerSessionCount = new Map<string, number>();
@@ -581,15 +581,32 @@ export class SeasonClusteringEngine {
           continue;
         }
 
-        // Select matching group or create placeholder
-        const group =
-          matchingGroups[groupIndex % Math.max(1, matchingGroups.length)] ||
-          ({
-            id: `auto_group_${groupIndex}`,
-            name: `${skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1)} Gruppe ${groupIndex + 1}`,
-            level: skillLevel,
-            ageGroup: 'adult',
-          } as GroupInfo);
+        // Select matching group or create placeholder in DB
+        const existingGroup = matchingGroups[groupIndex % Math.max(1, matchingGroups.length)];
+        let group: GroupInfo;
+        if (existingGroup) {
+          group = existingGroup;
+        } else {
+          // Create a new group in the DB so we get a real UUID with FK support
+          const groupName = `${skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1)} Gruppe ${groupIndex + 1}`;
+          const [newGroup] = await getDb()
+            .insert(groups)
+            .values({
+              club_id: this.clubId,
+              name: groupName,
+              level: skillLevel,
+              age_group: 'adult',
+              is_active: true,
+              member_ids: [],
+            })
+            .returning({ id: groups.id, name: groups.name, level: groups.level, age_group: groups.age_group });
+          group = {
+            id: newGroup.id,
+            name: newGroup.name,
+            level: newGroup.level as SkillLevel,
+            ageGroup: newGroup.age_group,
+          };
+        }
 
         groupIndex++;
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ import {
   Shield,
   PhoneCall,
   FileText,
+  Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -363,7 +365,15 @@ export default function MemberListManagement({ clubId, embedded }: { clubId?: st
                     <p className="text-sm text-gray-600">{member.email}</p>
                   </div>
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col items-end gap-1">
+                  <Link
+                    href={`/admin/members/${member.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1 rounded hover:bg-gray-100 transition-colors"
+                    title="Details anzeigen"
+                  >
+                    <Eye className="h-4 w-4 text-gray-400 hover:text-brand-primary" />
+                  </Link>
                   <Badge variant="outline" className={getStatusColor(member.membershipStatus)}>
                     {getStatusLabel(member.membershipStatus)}
                   </Badge>

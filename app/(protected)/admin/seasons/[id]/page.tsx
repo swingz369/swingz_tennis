@@ -714,10 +714,18 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               <CardTitle>Trainingsplan</CardTitle>
               <CardDescription>Geplante Training-Sessions für diese Season</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               <Button onClick={() => router.push(`/admin/seasons/${id}/plan`)}>
                 Plan anzeigen
               </Button>
+              <div>
+                <Button variant="outline" onClick={() => router.push(`/admin/season-plan/${id}`)}>
+                  Stundenplan (Grid-Ansicht)
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Wochenraster mit farbcodierten Gruppen, Trainern und Plätzen
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

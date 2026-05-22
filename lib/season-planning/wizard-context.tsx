@@ -7,6 +7,7 @@ import React, {
   useCallback,
   type ReactNode,
 } from 'react';
+import { csrfHeaders } from '@/lib/csrf-client';
 import type {
   WizardState,
   WizardStep,
@@ -243,7 +244,7 @@ export function WizardProvider({
           `/api/seasons/${state.seasonId}/planning/cluster`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
             body: JSON.stringify({
               seasonId: state.seasonId,
               config: state.planningConfig,
@@ -272,7 +273,7 @@ export function WizardProvider({
     try {
       const res = await fetch(
         `/api/seasons/${state.seasonId}/planning/conflicts`,
-        { method: 'POST' }
+        { method: 'POST', headers: csrfHeaders() }
       );
       if (!res.ok) {
         const data = await res.json();
@@ -295,7 +296,7 @@ export function WizardProvider({
         `/api/seasons/${state.seasonId}/planning/confirm`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
           body: JSON.stringify({
             seasonId: state.seasonId,
             acceptedWarnings: state.conflicts

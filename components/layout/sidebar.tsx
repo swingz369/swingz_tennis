@@ -281,6 +281,7 @@ export function Sidebar({
           subItems: [
             { name: 'Platz-Kalender', href: '/admin/courts' },
             { name: 'Buchungsübersicht', href: '/bookings' },
+            { name: 'Saison-Stundenplan', href: '/admin/season-plan' },
             { name: 'Plätze verwalten', href: '/admin/courts/manage' },
           ],
         },
