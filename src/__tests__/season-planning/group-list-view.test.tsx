@@ -384,10 +384,18 @@ describe('GroupListView — move member UI', () => {
       />,
     );
 
-    // The select should contain the other group as an option
-    // "Gruppe B" appears both as group header and inside the <select> option
-    const gruppeBMatches = screen.getAllByText(/Gruppe B/);
-    expect(gruppeBMatches.length).toBe(2);
+    // "Gruppe B" appears as a group header
+    expect(screen.getByText(/Gruppe B/)).toBeInTheDocument();
+
+    // Open the shadcn Select to verify options appear in the portal
+    const triggers = screen.getAllByRole('combobox');
+    fireEvent.click(triggers[triggers.length - 1]);
+
+    // Options should now be visible in the portal
+    const options = screen.getAllByRole('option');
+    expect(options.length).toBeGreaterThanOrEqual(1);
+    const hasGruppeBOption = options.some((o) => o.textContent?.includes('Gruppe B'));
+    expect(hasGruppeBOption).toBe(true);
   });
 
   it('should NOT include the current slot in target options', () => {
@@ -408,9 +416,13 @@ describe('GroupListView — move member UI', () => {
       />,
     );
 
+    // Open the shadcn Select to see options
+    const triggers = screen.getAllByRole('combobox');
+    fireEvent.click(triggers[triggers.length - 1]);
+
     // "Gruppe A" (current slot) should not appear as a target
-    const optionElements = screen.getAllByRole('option');
-    const optionTexts = optionElements.map((o) => o.textContent);
+    const options = screen.getAllByRole('option');
+    const optionTexts = options.map((o) => o.textContent);
     const hasCurrentGroup = optionTexts.some((t) => t?.includes('Gruppe A'));
     expect(hasCurrentGroup).toBe(false);
   });
@@ -434,9 +446,17 @@ describe('GroupListView — move member UI', () => {
       />,
     );
 
-    // Select the other group for Alice
-    const select = screen.getByRole('combobox');
-    fireEvent.change(select, { target: { value: 's2' } });
+    // Open the shadcn Select to reveal options
+    const triggers = screen.getAllByRole('combobox');
+    fireEvent.click(triggers[triggers.length - 1]);
+
+    // Find and click the target option (Gruppe B / s2)
+    const options = screen.getAllByRole('option');
+    const targetOption = options.find(
+      (o) => o.textContent?.includes('Gruppe B') && o.getAttribute('data-value') !== 'placeholder',
+    );
+    expect(targetOption).toBeTruthy();
+    fireEvent.click(targetOption!);
 
     expect(onMoveMember).toHaveBeenCalledWith('s1', 'm1', 'Alice', 's2');
   });

@@ -39,6 +39,7 @@ import {
   FileText,
   Calendar,
   Copy,
+  Palette,
 } from 'lucide-react';
 
 type ClubData = {
@@ -231,6 +232,35 @@ export default function OnboardingPage() {
         const err = await res.json();
         toast.error(err.error ?? 'Fehler beim Speichern der Vereinsdaten');
         return false;
+      }
+      // Sync logo_url to Admin Branding module
+      if (clubForm.logo_url.trim()) {
+        try {
+          await fetch('/api/branding', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-club-id': club.id,
+              ...csrfHeaders(),
+            },
+            body: JSON.stringify({
+              brand: {
+                primaryColor: '#1B4332',
+                secondaryColor: '#1e3a5f',
+                accentColor: '#FF6B35',
+              },
+              logos: {
+                light: clubForm.logo_url || null,
+                dark: clubForm.logo_url || null,
+                favicon: null,
+              },
+              customDomain: null,
+            }),
+          });
+        } catch {
+          // Non-blocking – branding sync is best-effort
+          console.warn('Branding sync failed during onboarding');
+        }
       }
       return true;
     } catch {
@@ -683,7 +713,7 @@ export default function OnboardingPage() {
                 />
               </div>
 
-              {/* NEW: Logo URL */}
+              {/* Logo URL — syncs with Admin Branding module */}
               <div className="sm:col-span-2">
                 <Label htmlFor="clubLogo" className="flex items-center gap-1.5">
                   <ImageIcon className="w-3.5 h-3.5" />
@@ -696,7 +726,13 @@ export default function OnboardingPage() {
                   placeholder="https://www.verein.de/logo.png"
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">URL zu deinem Vereinslogo (optional)</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  URL zu deinem Vereinslogo – wird automatisch in die{' '}
+                  <span className="inline-flex items-center gap-0.5">
+                    <Palette className="w-3 h-3" /> Branding-Einstellungen
+                  </span>{' '}
+                  übernommen
+                </p>
               </div>
 
               {/* NEW: Description */}

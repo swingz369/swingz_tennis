@@ -19,7 +19,6 @@ import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice } from '@/lib/invoice-pdf';
-import { downloadInvoicePDF } from '@/lib/invoice-pdf';
 
 export default function MemberBilling() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -157,9 +156,24 @@ export default function MemberBilling() {
     }
   };
 
-  const handleDownloadInvoice = (invoice: Invoice) => {
+  const handleDownloadInvoice = async (invoice: Invoice) => {
     try {
-      downloadInvoicePDF(invoice);
+      const res = await fetch(`/api/invoices/${invoice.id}/pdf`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'PDF-Generierung fehlgeschlagen' }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Rechnung-${invoice.invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       toast.success('PDF-Download gestartet');
     } catch (error) {
       toast.error('PDF-Download fehlgeschlagen');

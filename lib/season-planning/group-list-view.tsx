@@ -1,5 +1,6 @@
 'use client';
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DAYS, DAY_LABELS } from './schedule-constants';
 import type { ScheduleSlot } from './types';
 
@@ -121,31 +122,31 @@ export default function GroupListView({
                           <span className="text-xs text-gray-700 w-36 truncate">
                             {name}
                           </span>
-                          <select
-                            className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            defaultValue=""
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                onMoveMember(
-                                  slot.id,
-                                  slot.memberIds[i],
-                                  name,
-                                  e.target.value,
-                                );
-                                e.target.value = '';
-                              }
-                            }}
+                          <Select
+                            onValueChange={(value) =>
+                              onMoveMember(
+                                slot.id,
+                                slot.memberIds[i],
+                                name,
+                                value,
+                              )
+                            }
                           >
-                            <option value="">— bleibt hier —</option>
-                            {plan
-                              .filter((s) => s.id !== slot.id)
-                              .map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.groupName} · {DAYS[s.dayOfWeek - 1]}{' '}
-                                  {s.startTime} · {s.trainerName}
-                                </option>
-                              ))}
-                          </select>
+                            <SelectTrigger className="flex-1 h-7 text-xs">
+                              <SelectValue placeholder="— bleibt hier —" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="placeholder">— bleibt hier —</SelectItem>
+                              {plan
+                                .filter((s) => s.id !== slot.id)
+                                .map((s) => (
+                                  <SelectItem key={s.id} value={s.id}>
+                                    {s.groupName} · {DAYS[s.dayOfWeek - 1]}{' '}
+                                    {s.startTime} · {s.trainerName}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       ))}
                     </div>

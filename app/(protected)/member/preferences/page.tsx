@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Clock,
-
   Target,
   MessageSquare,
   Save,
@@ -20,6 +19,7 @@ import {
   Settings,
   Loader2,
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const DAYS = [
   { key: 'monday', label: 'Montag' },
@@ -238,17 +238,21 @@ export default function MemberPreferencesPage() {
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-3">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <select
+              <Select
                 value={selectedSeasonId}
-                onChange={(e) => setSelectedSeasonId(e.target.value)}
-                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                onValueChange={(value) => setSelectedSeasonId(value)}
               >
-                {seasons.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} {s.preferences_open ? '(Präferenzen offen)' : '(Geschlossen)'}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Saison auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {seasons.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name} {s.preferences_open ? '(Präferenzen offen)' : '(Geschlossen)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
