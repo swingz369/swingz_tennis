@@ -24,6 +24,7 @@ import {
   Trophy,
   ChevronDown,
   LogOut,
+  Shuffle,
 } from 'lucide-react';
 
 interface User {
@@ -99,6 +100,11 @@ export function AdminSidebar({
       title: 'Analytics',
       icon: TrendingUp,
       href: '/admin/analytics',
+    },
+    {
+      title: 'Matchmaking',
+      icon: Shuffle,
+      href: '/admin/ai/matchmaking',
     },
     ...(isSuperadmin
       ? [

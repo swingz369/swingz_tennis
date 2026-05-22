@@ -16,8 +16,9 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { TrendingUp, Users, DollarSign, Calendar } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Calendar, Brain } from 'lucide-react';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
+import { ChurnRiskPanel } from '@/components/ai/churn-risk-panel';
 
 export interface AnalyticsData {
   totalMembers: number;
@@ -264,6 +265,40 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
           </Card>
         </ScrollReveal>
       </div>
+
+      {/* AI Insights: Churn Prediction */}
+      <ScrollReveal delay={300}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ChurnRiskPanel />
+          </div>
+          <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-purple-50">
+                <Brain className="h-5 w-5 text-purple-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">KI Insights</h3>
+                <p className="text-xs text-gray-500">Automatische Analysen</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <p className="text-sm font-medium text-blue-800">Matchmaking</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Finde Trainingspartner mit passendem Level und freien Zeiten.
+                </p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                <p className="text-sm font-medium text-green-800">Empfehlungen</p>
+                <p className="text-xs text-green-600 mt-1">
+                  Basierend auf Buchungs- und Anwesenheitsdaten generiert.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </ScrollReveal>
     </div>
   );
 }
