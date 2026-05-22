@@ -22,6 +22,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { csrfHeaders } from '@/lib/csrf-client';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Dialog,
@@ -385,7 +386,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     try {
       const response = await fetch(`/api/seasons/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({
           planning_status: 'collecting_preferences',
           preferences_open: true,
@@ -409,7 +410,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     try {
       const response = await fetch(`/api/seasons/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ planning_status: 'published' }),
       });
 
@@ -427,7 +428,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     try {
       const response = await fetch(`/api/seasons/${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
       });
 
       if (!response.ok) {

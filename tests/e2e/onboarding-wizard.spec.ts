@@ -85,10 +85,10 @@ test.describe('Onboarding Wizard - 9-Step Structure', () => {
   });
 
   test('step navigation buttons are rendered', () => {
-    expect(wizardCode).toContain("'Zurück'");
-    expect(wizardCode).toContain("'Speichern & Weiter'");
-    expect(wizardCode).toContain("'Weiter'");
-    expect(wizardCode).toContain("'Überspringen'");
+    expect(wizardCode).toContain('Zurück');
+    expect(wizardCode).toContain('Speichern & Weiter');
+    expect(wizardCode).toContain('Weiter');
+    expect(wizardCode).toContain('Überspringen');
   });
 
   test('optional steps (4, 7, 8) have skip functionality', () => {
@@ -174,7 +174,7 @@ test.describe('Onboarding Wizard - 9-Step Structure', () => {
   });
 
   test('trainer and member badges rendered correctly', () => {
-    expect(wizardCode).toContain("'Trainer'");
-    expect(wizardCode).toContain("'Mitglied'");
+    expect(wizardCode).toContain('Trainer');
+    expect(wizardCode).toContain('Mitglied');
   });
 });
