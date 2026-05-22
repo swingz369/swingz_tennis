@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ScheduleGrid from '@/lib/season-planning/schedule-grid';
 import GroupListView from '@/lib/season-planning/group-list-view';
 import { useSchedulePlan } from '@/lib/season-planning/use-schedule-plan';
@@ -20,6 +20,8 @@ import {
   Target,
   Heart,
   Star,
+  Zap,
+  CheckCircle,
 } from 'lucide-react';
 
 import { COLORS } from '@/lib/season-planning/schedule-constants';
@@ -132,6 +134,23 @@ export function PlanEditStep() {
 
   const metrics = state.clusteringResult?.metrics;
 
+  // Compute auto-plan style score from clustering metrics
+  const scoreData = useMemo(() => {
+    if (!metrics) return null;
+    // Weighted score: Niveau-Match (35%), Wunschpartner (30%), Trainer-Auslastung (20%), Penalty-Free (15%)
+    const penaltyCount = metrics.niveauSpanViolations + metrics.highRiskSlotsUsed + metrics.trainerOverloadWarnings;
+    const penaltyScore = Math.max(0, 100 - penaltyCount * 10);
+    const score = Math.round(
+      metrics.avgNiveauMatch * 0.35 +
+        metrics.wishPartnerRate * 0.30 +
+        metrics.avgTrainerUtilization * 0.20 +
+        penaltyScore * 0.15
+    );
+    const totalWarnings = penaltyCount;
+    const isExcellent = totalWarnings === 0 && score >= 80;
+    return { score, totalWarnings, isExcellent };
+  }, [metrics]);
+
   if (!state.clusteringResult) {
     return (
       <div className="space-y-6">
@@ -182,55 +201,141 @@ export function PlanEditStep() {
   return (
     <div className="space-y-6">
       {/* Metrics Overview */}
-      {metrics && (
-        <div className="grid gap-3 md:grid-cols-5">
-          <Card>
-            <CardContent className="pt-4 pb-3">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-brand-primary" />
-                <p className="text-xs text-muted-foreground">Gruppen</p>
+      {metrics && scoreData && (
+        <div className="space-y-4">
+          {/* Score Card */}
+          <Card className={scoreData.isExcellent ? 'border-green-500/50 bg-green-50/50' : ''}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-500" />
+                  Planungs-Score
+                </CardTitle>
+                <Badge variant={scoreData.score >= 80 ? 'success' : scoreData.score >= 60 ? 'warning' : 'error'}>
+                  {scoreData.score >= 80 ? 'Sehr gut' : scoreData.score >= 60 ? 'Gut' : 'Verbesserungswürdig'}
+                </Badge>
               </div>
-              <p className="text-xl font-bold mt-1">{metrics.totalGroups}</p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className={`text-3xl font-bold ${scoreData.score >= 80 ? 'text-green-600' : scoreData.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  {scoreData.score}%
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {metrics.iterations} Iterationen in {metrics.runtimeMs}ms
+                </span>
+              </div>
+              <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${
+                    scoreData.score >= 80 ? 'bg-green-500' : scoreData.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.min(100, scoreData.score)}%` }}
+                />
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3">
-              <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-green-500" />
-                <p className="text-xs text-muted-foreground">Niveau-Match</p>
-              </div>
-              <p className="text-xl font-bold mt-1">{Math.round(metrics.avgNiveauMatch)}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3">
-              <div className="flex items-center gap-2">
-                <Heart className="h-4 w-4 text-red-400" />
-                <p className="text-xs text-muted-foreground">Wunschpartner</p>
-              </div>
-              <p className="text-xl font-bold mt-1">{Math.round(metrics.wishPartnerRate)}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3">
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500" />
-                <p className="text-xs text-muted-foreground">Trainer-Auslastung</p>
-              </div>
-              <p className="text-xl font-bold mt-1">{Math.round(metrics.avgTrainerUtilization)}%</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4 pb-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-red-400" />
-                <p className="text-xs text-muted-foreground">Hinweise</p>
-              </div>
-              <p className="text-xl font-bold mt-1">
-                {metrics.niveauSpanViolations + metrics.highRiskSlotsUsed + metrics.trainerOverloadWarnings}
-              </p>
-            </CardContent>
-          </Card>
+
+          {/* Detail Metric Cards */}
+          <div className="grid gap-3 md:grid-cols-4">
+            <Card>
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-brand-primary" />
+                  <p className="text-xs text-muted-foreground">Gruppen</p>
+                </div>
+                <p className="text-xl font-bold mt-1">{metrics.totalGroups}</p>
+                <p className="text-[11px] text-muted-foreground">{metrics.totalMembers} Mitglieder</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-green-500" />
+                  <p className="text-xs text-muted-foreground">Niveau-Match</p>
+                </div>
+                <p className="text-xl font-bold mt-1">{Math.round(metrics.avgNiveauMatch)}%</p>
+                <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-green-500" style={{ width: `${Math.round(metrics.avgNiveauMatch)}%` }} />
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-red-400" />
+                  <p className="text-xs text-muted-foreground">Wunschpartner</p>
+                </div>
+                <p className="text-xl font-bold mt-1">{Math.round(metrics.wishPartnerRate)}%</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {metrics.wishPartnerFulfilled}/{metrics.wishPartnerRequests} erfüllt
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  <p className="text-xs text-muted-foreground">Trainer-Auslastung</p>
+                </div>
+                <p className="text-xl font-bold mt-1">{Math.round(metrics.avgTrainerUtilization)}%</p>
+                <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.round(metrics.avgTrainerUtilization)}%` }} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Warnings Section */}
+          {scoreData.totalWarnings > 0 && (
+            <Card className="border-yellow-500/50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  <CardTitle className="text-base text-yellow-800">
+                    {scoreData.totalWarnings} Warnung{scoreData.totalWarnings !== 1 ? 'en' : ''}
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-1.5">
+                  {metrics.niveauSpanViolations > 0 && (
+                    <li className="text-sm text-yellow-700">
+                      • {metrics.niveauSpanViolations} Niveau-Spannen-Verletzung{metrics.niveauSpanViolations !== 1 ? 'en' : ''}
+                    </li>
+                  )}
+                  {metrics.highRiskSlotsUsed > 0 && (
+                    <li className="text-sm text-yellow-700">
+                      • {metrics.highRiskSlotsUsed} Hochrisiko-Slot{metrics.highRiskSlotsUsed !== 1 ? 's' : ''} verwendet
+                    </li>
+                  )}
+                  {metrics.trainerOverloadWarnings > 0 && (
+                    <li className="text-sm text-yellow-700">
+                      • {metrics.trainerOverloadWarnings} Trainer-Überlastung{metrics.trainerOverloadWarnings !== 1 ? 'en' : ''}
+                    </li>
+                  )}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Excellent Plan Card */}
+          {scoreData.isExcellent && (
+            <Card className="border-green-500/50 bg-green-50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CardTitle className="text-base text-green-900">Exzellente Planung!</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-green-800">
+                  Der Algorithmus hat eine optimale Planung ohne Warnungen erstellt. Sie können
+                  diesen Plan übernehmen oder weitere Anpassungen vornehmen.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

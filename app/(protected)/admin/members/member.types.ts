@@ -5,6 +5,7 @@ export interface Member {
   email: string;
   role: 'member' | 'trainer' | 'admin' | 'superadmin';
   is_active: boolean;
+  include_in_planning: boolean;
   joined_at: string;
   // Expanded fields
   phone?: string | null;

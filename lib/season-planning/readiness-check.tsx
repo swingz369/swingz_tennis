@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import {
   CheckCircle,
   XCircle,
@@ -32,7 +31,6 @@ export default function ScheduleReadinessCheck({
   seasonId,
   onReady,
 }: ReadinessCheckProps) {
-  const supabase = createClient();
   const [items, setItems] = useState<CheckItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -40,41 +38,22 @@ export default function ScheduleReadinessCheck({
   useEffect(() => {
     if (!clubId) return;
     async function check() {
-      const [
-        { count: memberCount },
-        { count: trainerCount },
-        { count: availCount },
-        { count: courtCount },
-        { count: prefCount },
-      ] = await Promise.all([
-        supabase
-          .from('user_club_memberships')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', clubId)
-          .eq('role', 'member')
-          .eq('is_active', true)
-          .eq('include_in_planning', true),
-        supabase
-          .from('user_club_memberships')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', clubId)
-          .eq('role', 'trainer')
-          .eq('is_active', true),
-        supabase
-          .from('trainer_availability')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', clubId)
-          .eq('is_active', true),
-        supabase
-          .from('courts')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', clubId)
-          .eq('is_active', true),
-        supabase
-          .from('user_training_preferences')
-          .select('id', { count: 'exact', head: true })
-          .eq('season_id', seasonId),
-      ]);
+      const res = await fetch(
+        `/api/clubs/${clubId}/planning-readiness?seasonId=${seasonId}`,
+        { headers: { 'x-csrf-token': '1' } }
+      );
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
+      const data = await res.json();
+      const {
+        planningMembers: memberCount = 0,
+        trainerCount: trainerCount = 0,
+        availabilityCount: availCount = 0,
+        courtCount: courtCount = 0,
+        preferenceCount: prefCount = 0,
+      } = data;
 
       const checks: CheckItem[] = [
         {

@@ -118,3 +118,4 @@ tramp
 .supabase-types-backup/
 
 
+\n# Build artifacts\n*.tsbuildinfo

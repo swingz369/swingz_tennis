@@ -37,10 +37,10 @@ export default async function MembersPage() {
     if (!clubId) redirect('/dashboard');
   }
 
-  // Fetch all memberships for this club
-  const { data: clubMemberships, error } = await supabase
-    .from('user_club_memberships')
-    .select('id, user_id, role, is_active, joined_at')
+  // Fetch all memberships for this club (include_in_planning not in generated types)
+  const { data: clubMemberships, error } = await (supabase
+    .from('user_club_memberships') as any)
+    .select('id, user_id, role, is_active, joined_at, include_in_planning')
     .eq('club_id', clubId)
     .order('joined_at', { ascending: false });
 
@@ -93,6 +93,7 @@ export default async function MembersPage() {
       city: userData?.city || null,
       role: m.role as Member['role'],
       is_active: m.is_active,
+      include_in_planning: m.include_in_planning ?? true,
       joined_at: m.joined_at,
     };
   });

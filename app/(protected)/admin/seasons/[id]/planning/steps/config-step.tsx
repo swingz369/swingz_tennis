@@ -13,6 +13,8 @@ import {
   Gauge,
   AlertTriangle,
   CheckCircle,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 
 export function ConfigStep() {
@@ -135,6 +137,126 @@ export function ConfigStep() {
               />
               <span className="text-sm text-gray-700">Hohe Ausfallraten-Slots vermeiden</span>
             </label>
+          </div>
+
+          {/* Auto-Plan Options (integrated from /auto-plan page) */}
+          <div className="mt-6 border-t pt-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="h-4 w-4 text-amber-500" />
+              <span className="text-sm font-medium text-gray-900">Auto-Plan Optimierung</span>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Max. Iterationen</Label>
+                <Input
+                  type="number"
+                  min={100}
+                  max={5000}
+                  step={100}
+                  value={config.maxIterations}
+                  onChange={(e) => handleConfigChange('maxIterations', Number(e.target.value))}
+                  className="h-9"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Höhere Werte = bessere Ergebnisse, längere Laufzeit
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 mt-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="goal-minimize-conflicts"
+                  checked={config.optimizationGoals.includes('minimize_conflicts')}
+                  onChange={() => {
+                    const goals = config.optimizationGoals.includes('minimize_conflicts')
+                      ? config.optimizationGoals.filter((g) => g !== 'minimize_conflicts')
+                      : [...config.optimizationGoals, 'minimize_conflicts'];
+                    handleConfigChange('optimizationGoals' as any, goals as any);
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="goal-minimize-conflicts" className="text-sm cursor-pointer">
+                  Konflikte minimieren
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="goal-balance-trainers"
+                  checked={config.optimizationGoals.includes('balance_trainer_load')}
+                  onChange={() => {
+                    const goals = config.optimizationGoals.includes('balance_trainer_load')
+                      ? config.optimizationGoals.filter((g) => g !== 'balance_trainer_load')
+                      : [...config.optimizationGoals, 'balance_trainer_load'];
+                    handleConfigChange('optimizationGoals' as any, goals as any);
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="goal-balance-trainers" className="text-sm cursor-pointer">
+                  Trainer-Last ausgleichen
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="goal-maximize-prefs"
+                  checked={config.optimizationGoals.includes('maximize_preferences')}
+                  onChange={() => {
+                    const goals = config.optimizationGoals.includes('maximize_preferences')
+                      ? config.optimizationGoals.filter((g) => g !== 'maximize_preferences')
+                      : [...config.optimizationGoals, 'maximize_preferences'];
+                    handleConfigChange('optimizationGoals' as any, goals as any);
+                  }}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="goal-maximize-prefs" className="text-sm cursor-pointer">
+                  Präferenzen maximieren
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2.5 mt-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="use-ai"
+                  checked={config.useAI}
+                  onChange={(e) => handleConfigChange('useAI', e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="use-ai" className="text-sm cursor-pointer flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  KI-Optimierung (OpenAI)
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="allow-overbooking"
+                  checked={config.allowOverbooking}
+                  onChange={(e) => handleConfigChange('allowOverbooking', e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="allow-overbooking" className="text-sm cursor-pointer">
+                  Überbuchung erlauben
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="prefer-consistent"
+                  checked={config.preferConsistentTimeslots}
+                  onChange={(e) => handleConfigChange('preferConsistentTimeslots', e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="prefer-consistent" className="text-sm cursor-pointer">
+                  Konsistente Zeitslots bevorzugen
+                </label>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

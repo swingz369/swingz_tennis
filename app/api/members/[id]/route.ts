@@ -89,6 +89,7 @@ export async function PATCH(
         notes,
         is_active,
         role,
+        include_in_planning,
       } = body;
 
       // Update in-memory service (backward compatibility)
@@ -144,10 +145,11 @@ export async function PATCH(
         }
       }
 
-      // Also update membership fields (is_active, role) on the membership table
+      // Also update membership fields (is_active, role, include_in_planning) on the membership table
       const membershipUpdate: any = {};
       if (is_active !== undefined) membershipUpdate.is_active = is_active;
       if (role !== undefined) membershipUpdate.role = role;
+      if (include_in_planning !== undefined) membershipUpdate.include_in_planning = include_in_planning;
 
       if (Object.keys(membershipUpdate).length > 0) {
         await auth.supabase.from('user_club_memberships').update(membershipUpdate).eq('id', id);

@@ -354,7 +354,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const [season, setSeason] = useState<SeasonWithStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [autoPlanConfirmOpen, setAutoPlanConfirmOpen] = useState(false);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
 
   const fetchSeason = useCallback(async () => {
@@ -396,15 +395,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
     }
-  };
-
-  const handleStartAutoPlanning = () => {
-    setAutoPlanConfirmOpen(true);
-  };
-
-  const confirmStartAutoPlanning = () => {
-    setAutoPlanConfirmOpen(false);
-    router.push(`/admin/seasons/${id}/auto-plan`);
   };
 
   const handlePublish = () => {
@@ -456,23 +446,10 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   }
 
   const canOpenPreferences = season.planning_status === 'draft';
-  const canStartAutoPlanning =
-    season.planning_status === 'collecting_preferences' ||
-    season.planning_status === 'manual_review';
   const canPublish = season.planning_status === 'manual_review';
 
   return (
     <div className="space-y-6">
-      <ConfirmDialog
-        open={autoPlanConfirmOpen}
-        onOpenChange={setAutoPlanConfirmOpen}
-        title="Automatische Planung starten"
-        description="Möchten Sie die automatische Planung für diese Saison starten?"
-        confirmLabel="Starten"
-        variant="brand"
-        onConfirm={confirmStartAutoPlanning}
-      />
-
       <ConfirmDialog
         open={publishConfirmOpen}
         onOpenChange={setPublishConfirmOpen}
@@ -530,12 +507,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
             </Button>
           )}
 
-          {canStartAutoPlanning && (
-            <Button onClick={handleStartAutoPlanning}>
-              <Play className="mr-2 h-4 w-4" />
-              Auto-Planung starten
-            </Button>
-          )}
 
           {canPublish && (
             <Button onClick={handlePublish}>

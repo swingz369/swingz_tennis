@@ -360,7 +360,7 @@ export default async function MemberPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 px-1">
           Schnellzugriff
         </p>
-        <div className="grid grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5">
           {[
             {
               label: 'Trainer',

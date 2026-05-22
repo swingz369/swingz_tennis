@@ -69,6 +69,12 @@ export interface WizardState {
     preferHistoricGroups: boolean;
     avoidHighFailureSlots: boolean;
     slotFailureThreshold: number;
+    // Auto-Plan options (merged from auto-plan page)
+    maxIterations: number;
+    optimizationGoals: string[];
+    allowOverbooking: boolean;
+    preferConsistentTimeslots: boolean;
+    useAI: boolean;
   };
 
   // Schritt 2: Plan bearbeiten

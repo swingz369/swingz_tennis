@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, UserCheck, UserX, Search, Download, UserPlus } from 'lucide-react';
+import { Eye, UserCheck, UserX, Search, Download, UserPlus, CheckSquare, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
 import type { Member } from './member.types';
@@ -75,6 +75,33 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
       statusFilter === 'all' || (statusFilter === 'active' ? member.is_active : !member.is_active);
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  const handleTogglePlanning = async (memberId: string, currentValue: boolean) => {
+    try {
+      const res = await fetch(`/api/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ include_in_planning: !currentValue }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to update membership');
+      }
+
+      setMembers((prev) =>
+        prev.map((m) => (m.id === memberId ? { ...m, include_in_planning: !currentValue } : m))
+      );
+      toast.success(
+        currentValue
+          ? 'Mitglied von Saisonplanung ausgeschlossen'
+          : 'Mitglied nimmt an Saisonplanung teil'
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Aktion fehlgeschlagen';
+      toast.error(message);
+    }
+  };
 
   const handleToggleActive = async (memberId: string, currentActive: boolean) => {
     try {
@@ -148,6 +175,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
         email: inviteForm.email,
         role: inviteForm.role as Member['role'],
         is_active: true,
+        include_in_planning: true,
         joined_at: new Date().toISOString(),
       };
       setMembers((prev) => [...prev, newMember]);
@@ -236,6 +264,9 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
+                <th className="px-2 md:px-3 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  Planung
+                </th>
                 <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Name
                 </th>
@@ -269,7 +300,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
               {filteredMembers.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     className="px-4 md:px-6 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     Keine Mitglieder gefunden
@@ -281,6 +312,23 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                     key={member.id}
                     className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                   >
+                    <td className="px-2 md:px-3 py-4 text-center">
+                      {member.role === 'member' ? (
+                        <button
+                          onClick={() => handleTogglePlanning(member.id, member.include_in_planning)}
+                          className="hover:scale-110 transition-transform"
+                          title={member.include_in_planning ? 'Von Planung ausschließen' : 'In Planung einbeziehen'}
+                        >
+                          {member.include_in_planning !== false ? (
+                            <CheckSquare className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Square className="h-4 w-4 text-gray-400" />
+                          )}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </td>
                     <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                       <span className="font-medium text-gray-900 dark:text-white">
                         {member.full_name}
@@ -359,6 +407,10 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
       {/* Stats */}
       <div className="text-sm text-gray-500 dark:text-gray-400">
         {filteredMembers.length} von {members.length} Mitgliedern angezeigt
+        {(() => {
+          const planned = members.filter((m) => m.include_in_planning !== false && m.role === 'member').length;
+          return planned > 0 ? ` · ${planned} für Saisonplanung` : '';
+        })()}
       </div>
 
       {/* Invite Dialog */}
