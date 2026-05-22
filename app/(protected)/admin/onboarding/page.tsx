@@ -257,9 +257,8 @@ export default function OnboardingPage() {
               customDomain: null,
             }),
           });
-        } catch {
-          // Non-blocking – branding sync is best-effort
-          console.warn('Branding sync failed during onboarding');
+        } catch (e) {
+          console.warn('Branding sync failed during onboarding', e);
         }
       }
       return true;
