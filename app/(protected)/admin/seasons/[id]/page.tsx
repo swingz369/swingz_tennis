@@ -19,6 +19,7 @@ import {
   FileText,
   Clock,
   CheckCircle,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -355,6 +356,8 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchSeason = useCallback(async () => {
     try {
@@ -418,6 +421,30 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     }
   };
 
+  const handleDelete = async () => {
+    setDeleteConfirmOpen(false);
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/seasons/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        toast.error(err.error ?? 'Fehler beim Löschen der Saison');
+        setDeleting(false);
+        return;
+      }
+
+      toast.success('Saison gelöscht');
+      router.push('/admin/seasons');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler');
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -447,6 +474,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
   const canOpenPreferences = season.planning_status === 'draft';
   const canPublish = season.planning_status === 'manual_review';
+  const canDelete = !['published', 'active', 'completed', 'archived'].includes(season.planning_status ?? '');
 
   return (
     <div className="space-y-6">
@@ -458,6 +486,16 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         confirmLabel="Veröffentlichen"
         variant="brand"
         onConfirm={confirmPublish}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Saison löschen"
+        description="Möchten Sie diese Saison wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden. Alle Präferenzen, Planungseinträge und Konflikte werden ebenfalls gelöscht."
+        confirmLabel="Löschen"
+        variant="destructive"
+        onConfirm={handleDelete}
       />
 
       {/* Header */}
@@ -512,6 +550,21 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
             <Button onClick={handlePublish}>
               <FileText className="mr-2 h-4 w-4" />
               Veröffentlichen
+            </Button>
+          )}
+
+          {canDelete && (
+            <Button
+              variant="destructive"
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Clock className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Löschen
             </Button>
           )}
         </div>

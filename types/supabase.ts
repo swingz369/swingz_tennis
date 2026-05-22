@@ -431,6 +431,7 @@ export type Database = {
           description: string | null
           email: string | null
           hourly_rate: number | null
+          founding_date: string | null
           id: string
           invoice_number_prefix: string
           logo_url: string | null
@@ -459,6 +460,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           hourly_rate?: number | null
+          founding_date?: string | null
           id?: string
           invoice_number_prefix?: string
           logo_url?: string | null
@@ -487,6 +489,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           hourly_rate?: number | null
+          founding_date?: string | null
           id?: string
           invoice_number_prefix?: string
           logo_url?: string | null
@@ -3844,6 +3847,7 @@ export type Database = {
           stripe_subscription_id: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          superadmin_setup_completed_at: string | null
           updated_at: string
         }
         Insert: {
@@ -3866,6 +3870,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          superadmin_setup_completed_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -3888,6 +3893,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          superadmin_setup_completed_at?: string | null
           updated_at?: string
         }
         Relationships: []

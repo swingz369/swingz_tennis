@@ -43,6 +43,27 @@
       "when": 1779400276762,
       "tag": "0005_green_ego",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1779435800000,
+      "tag": "0006_add_superadmin_setup_completed_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779450000000,
+      "tag": "0007_add_club_onboarding_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1779540000000,
+      "tag": "0008_superadmin_rls_update",
+      "breakpoints": true
     }
   ]
 }

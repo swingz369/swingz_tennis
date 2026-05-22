@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { csrfHeaders } from '@/lib/csrf-client';
 import {
   CheckCircle2,
   ChevronRight,
@@ -23,13 +25,20 @@ import {
   Loader2,
   Zap,
   Building2,
+  Clock,
   MapPin,
+  Euro,
   CalendarRange,
   Users,
+  Mail,
   PartyPopper,
   ArrowRight,
   Circle,
   Sparkles,
+  Image as ImageIcon,
+  FileText,
+  Calendar,
+  Copy,
 } from 'lucide-react';
 
 type ClubData = {
@@ -40,24 +49,53 @@ type ClubData = {
   phone?: string;
   email?: string;
   website?: string;
+  logo_url?: string | null;
+  description?: string | null;
+  founding_date?: string | null;
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 9;
 
 const STEPS = [
   { label: 'Start', icon: Sparkles },
   { label: 'Verein', icon: Building2 },
+  { label: 'Öffnungszeiten', icon: Clock },
   { label: 'Platz', icon: MapPin },
-  { label: 'Regeln', icon: CalendarRange },
-  { label: 'Trainer', icon: Users },
+  { label: 'Preise', icon: Euro },
+  { label: 'Buchung', icon: CalendarRange },
+  { label: 'Einladungen', icon: Users },
+  { label: 'E-Mail', icon: Mail },
   { label: 'Fertig', icon: PartyPopper },
 ];
+
+const DAYS = [
+  { key: 'monday', label: 'Montag' },
+  { key: 'tuesday', label: 'Dienstag' },
+  { key: 'wednesday', label: 'Mittwoch' },
+  { key: 'thursday', label: 'Donnerstag' },
+  { key: 'friday', label: 'Freitag' },
+  { key: 'saturday', label: 'Samstag' },
+  { key: 'sunday', label: 'Sonntag' },
+] as const;
+
+type OpeningHours = Record<string, { open: string; close: string }>;
+
+const DEFAULT_OPENING_HOURS: OpeningHours = {
+  monday: { open: '08:00', close: '22:00' },
+  tuesday: { open: '08:00', close: '22:00' },
+  wednesday: { open: '08:00', close: '22:00' },
+  thursday: { open: '08:00', close: '22:00' },
+  friday: { open: '08:00', close: '22:00' },
+  saturday: { open: '08:00', close: '22:00' },
+  sunday: { open: '08:00', close: '22:00' },
+};
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [club, setClub] = useState<ClubData | null>(null);
+
   // Step 2 – Club data
   const [clubForm, setClubForm] = useState({
     name: '',
@@ -66,24 +104,46 @@ export default function OnboardingPage() {
     phone: '',
     email: '',
     website: '',
+    logo_url: '',
+    description: '',
+    founding_date: '',
   });
 
-  // Step 3 – Court
+  // Step 3 – Opening hours
+  const [openingHours, setOpeningHours] = useState<OpeningHours>(DEFAULT_OPENING_HOURS);
+
+  // Step 4 – Court
   const [courtForm, setCourtForm] = useState({
     name: 'Platz 1',
     surface: 'sand',
     hasIndoor: false,
   });
 
-  // Step 4 – Booking rules
+  // Step 5 – Prices & Training duration
+  const [priceForm, setPriceForm] = useState({
+    default_hourly_rate: '15.00',
+    default_session_duration_minutes: '60',
+    billing_unit_minutes: '60',
+    tax_rate: '0',
+  });
+
+  // Step 6 – Booking rules
   const [rulesForm, setRulesForm] = useState({
     max_booking_duration_minutes: 90,
     advance_booking_days: 14,
     max_bookings_per_week: 3,
   });
 
-  // Step 5 – Trainer invite
+  // Step 7 – Invitations
   const [trainerForm, setTrainerForm] = useState({ name: '', email: '' });
+  const [memberForm, setMemberForm] = useState({ name: '', email: '' });
+
+  // Step 8 – E-Mail & Language
+  const [emailSettings, setEmailSettings] = useState({
+    language: 'de',
+    email_from_name: '',
+    email_from_address: '',
+  });
 
   // Load club data on mount
   useEffect(() => {
@@ -106,7 +166,39 @@ export default function OnboardingPage() {
           phone: data.phone ?? '',
           email: data.email ?? '',
           website: data.website ?? '',
+          logo_url: data.logo_url ?? '',
+          description: data.description ?? '',
+          founding_date: data.founding_date ?? '',
         });
+
+        // Pre-fill opening hours from existing data
+        if (data.opening_hours && typeof data.opening_hours === 'object') {
+          const oh: OpeningHours = { ...DEFAULT_OPENING_HOURS };
+          for (const day of DAYS) {
+            if (data.opening_hours[day.key]) {
+              oh[day.key] = {
+                open: data.opening_hours[day.key].open || '08:00',
+                close: data.opening_hours[day.key].close || '22:00',
+              };
+            }
+          }
+          setOpeningHours(oh);
+        }
+
+        // Pre-fill price data
+        setPriceForm({
+          default_hourly_rate: data.default_hourly_rate?.toString() ?? '15.00',
+          default_session_duration_minutes: data.default_session_duration_minutes?.toString() ?? '60',
+          billing_unit_minutes: data.billing_unit_minutes?.toString() ?? '60',
+          tax_rate: data.tax_rate?.toString() ?? '0',
+        });
+
+        // Pre-fill email
+        setEmailSettings((prev) => ({
+          ...prev,
+          email_from_name: data.name ?? '',
+          email_from_address: data.email ?? '',
+        }));
 
         const rulesRes = await fetch('/api/booking-rules');
         if (rulesRes.ok) {
@@ -124,13 +216,15 @@ export default function OnboardingPage() {
     init();
   }, []);
 
-  const saveClubData = useCallback(async () => {
+  // ── Save Functions ──────────────────────────────────────────────────────
+
+  const saveClubData = useCallback(async (): Promise<boolean> => {
     if (!club?.id) return false;
     setLoading(true);
     try {
       const res = await fetch(`/api/clubs/${club.id}/setup`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify(clubForm),
       });
       if (!res.ok) {
@@ -147,13 +241,37 @@ export default function OnboardingPage() {
     }
   }, [club?.id, clubForm]);
 
-  const saveCourtData = useCallback(async () => {
+  const saveOpeningHours = useCallback(async (): Promise<boolean> => {
+    if (!club?.id) return false;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/clubs/${club.id}/setup`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({ opening_hours: openingHours }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? 'Fehler beim Speichern der Öffnungszeiten');
+        return false;
+      }
+      return true;
+    } catch {
+      toast.error('Netzwerkfehler');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [club?.id, openingHours]);
+
+  const saveCourtData = useCallback(async (): Promise<boolean> => {
+    if (!club?.id) return false;
     if (!courtForm.name.trim()) return true;
     setLoading(true);
     try {
       const res = await fetch('/api/courts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({
           name: courtForm.name,
           surface: courtForm.surface,
@@ -174,12 +292,41 @@ export default function OnboardingPage() {
     }
   }, [courtForm]);
 
-  const saveBookingRules = useCallback(async () => {
+  const savePriceData = useCallback(async (): Promise<boolean> => {
+    if (!club?.id) return false;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/clubs/${club.id}/setup`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({
+          default_hourly_rate: parseFloat(priceForm.default_hourly_rate) || 15,
+          default_session_duration_minutes: parseInt(priceForm.default_session_duration_minutes) || 60,
+          billing_unit_minutes: parseInt(priceForm.billing_unit_minutes) || 60,
+          tax_rate: parseInt(priceForm.tax_rate) || 0,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? 'Fehler beim Speichern der Preisdaten');
+        return false;
+      }
+      return true;
+    } catch {
+      toast.error('Netzwerkfehler');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [club?.id, priceForm]);
+
+  const saveBookingRules = useCallback(async (): Promise<boolean> => {
+    if (!club?.id) return false;
     setLoading(true);
     try {
       const res = await fetch('/api/booking-rules', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify(rulesForm),
       });
       if (!res.ok) {
@@ -196,13 +343,13 @@ export default function OnboardingPage() {
     }
   }, [rulesForm]);
 
-  const saveTrainerInvite = useCallback(async () => {
+  const saveTrainerInvite = useCallback(async (): Promise<boolean> => {
     if (!trainerForm.email.trim()) return true;
     setLoading(true);
     try {
       const res = await fetch('/api/members/invite', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({
           email: trainerForm.email,
           full_name: trainerForm.name,
@@ -224,39 +371,131 @@ export default function OnboardingPage() {
     }
   }, [trainerForm]);
 
-  const markSetupComplete = useCallback(async () => {
-    if (!club?.id) return;
+  const saveMemberInvite = useCallback(async (): Promise<boolean> => {
+    if (!memberForm.email.trim()) return true;
     setLoading(true);
     try {
-      await fetch(`/api/clubs/${club.id}/setup`, {
+      const res = await fetch('/api/members/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({
+          email: memberForm.email,
+          full_name: memberForm.name,
+          role: 'member',
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        // 409 = already member, not a hard error for onboarding
+        if (res.status === 409) {
+          toast.error(err.error ?? 'Mitglied bereits im Verein');
+          return true; // don't block flow
+        }
+        toast.error(err.error ?? 'Fehler beim Einladen des Mitglieds');
+        return false;
+      }
+      toast.success('Mitglied eingeladen');
+      return true;
+    } catch {
+      toast.error('Netzwerkfehler');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [memberForm]);
+
+  const saveEmailSettings = useCallback(async (): Promise<boolean> => {
+    if (!club?.id) return false;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/clubs/${club.id}/onboarding-settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify(emailSettings),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? 'Fehler beim Speichern der E-Mail-Einstellungen');
+        return false;
+      }
+      return true;
+    } catch {
+      toast.error('Netzwerkfehler');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [club?.id, emailSettings]);
+
+  const markSetupComplete = useCallback(async (): Promise<boolean> => {
+    if (!club?.id) return false;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/clubs/${club.id}/setup`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ setup_completed_at: new Date().toISOString() }),
       });
+      if (!res.ok) {
+        toast.error('Setup konnte nicht abgeschlossen werden. Bitte versuche es erneut.');
+        return false;
+      }
+      return true;
     } catch {
-      // best-effort
+      toast.error('Netzwerkfehler beim Abschließen des Setups');
+      return false;
     } finally {
       setLoading(false);
     }
   }, [club?.id]);
 
+  // ── Navigation ───────────────────────────────────────────────────────────
+
   const goNext = async () => {
-    if (step === 2) {
-      const ok = await saveClubData();
-      if (!ok) return;
-    } else if (step === 3) {
-      const ok = await saveCourtData();
-      if (!ok) return;
-    } else if (step === 4) {
-      const ok = await saveBookingRules();
-      if (!ok) return;
-    } else if (step === 5) {
-      const ok = await saveTrainerInvite();
-      if (!ok) return;
-    } else if (step === 6) {
-      await markSetupComplete();
-      router.push('/admin');
-      return;
+    switch (step) {
+      case 2: {
+        const ok = await saveClubData();
+        if (!ok) return;
+        break;
+      }
+      case 3: {
+        const ok = await saveOpeningHours();
+        if (!ok) return;
+        break;
+      }
+      case 4: {
+        const ok = await saveCourtData();
+        if (!ok) return;
+        break;
+      }
+      case 5: {
+        const ok = await savePriceData();
+        if (!ok) return;
+        break;
+      }
+      case 6: {
+        const ok = await saveBookingRules();
+        if (!ok) return;
+        break;
+      }
+      case 7: {
+        const ok1 = await saveTrainerInvite();
+        if (!ok1) return;
+        const ok2 = await saveMemberInvite();
+        if (!ok2) return;
+        break;
+      }
+      case 8: {
+        const ok = await saveEmailSettings();
+        if (!ok) return;
+        break;
+      }
+      case 9: {
+        const ok = await markSetupComplete();
+        if (!ok) return;
+        router.push('/admin');
+        return;
+      }
     }
     setStep((s) => s + 1);
   };
@@ -267,6 +506,15 @@ export default function OnboardingPage() {
 
   const skipStep = () => {
     setStep((s) => s + 1);
+  };
+
+  const applyAllOpeningHours = () => {
+    const monday = openingHours.monday;
+    const updated: OpeningHours = { ...openingHours };
+    for (const day of DAYS) {
+      updated[day.key] = { ...monday };
+    }
+    setOpeningHours(updated);
   };
 
   // ── Stepper ────────────────────────────────────────────────────────────
@@ -283,7 +531,6 @@ export default function OnboardingPage() {
           return (
             <div key={stepNum} className="flex items-center flex-1 last:flex-none">
               <div className="flex flex-col items-center gap-2 relative">
-                {/* Connector line (except last) */}
                 {stepNum < TOTAL_STEPS && (
                   <div
                     className={`absolute top-5 left-full h-0.5 w-[calc(100%+0.5rem)] -translate-y-1/2 transition-colors duration-500 ${
@@ -291,8 +538,6 @@ export default function OnboardingPage() {
                     }`}
                   />
                 )}
-
-                {/* Circle */}
                 <div
                   className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted
@@ -310,8 +555,6 @@ export default function OnboardingPage() {
                     <Circle className="w-4 h-4" />
                   )}
                 </div>
-
-                {/* Label */}
                 <span
                   className={`text-xs font-medium whitespace-nowrap hidden sm:block transition-colors duration-300 ${
                     isCurrent
@@ -335,6 +578,7 @@ export default function OnboardingPage() {
 
   const renderStepContent = () => {
     switch (step) {
+      // Step 1 – Welcome
       case 1:
         return (
           <div className="text-center space-y-8 py-6">
@@ -366,6 +610,7 @@ export default function OnboardingPage() {
           </div>
         );
 
+      // Step 2 – Club data
       case 2:
         return (
           <div className="space-y-6">
@@ -437,11 +682,122 @@ export default function OnboardingPage() {
                   className="mt-1.5"
                 />
               </div>
+
+              {/* NEW: Logo URL */}
+              <div className="sm:col-span-2">
+                <Label htmlFor="clubLogo" className="flex items-center gap-1.5">
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  Logo-URL
+                </Label>
+                <Input
+                  id="clubLogo"
+                  value={clubForm.logo_url}
+                  onChange={(e) => setClubForm((f) => ({ ...f, logo_url: e.target.value }))}
+                  placeholder="https://www.verein.de/logo.png"
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-gray-400 mt-1">URL zu deinem Vereinslogo (optional)</p>
+              </div>
+
+              {/* NEW: Description */}
+              <div className="sm:col-span-2">
+                <Label htmlFor="clubDescription" className="flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  Beschreibung
+                </Label>
+                <Textarea
+                  id="clubDescription"
+                  value={clubForm.description}
+                  onChange={(e) => setClubForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Kurze Beschreibung deines Vereins..."
+                  className="mt-1.5"
+                  rows={3}
+                />
+              </div>
+
+              {/* NEW: Founding date */}
+              <div>
+                <Label htmlFor="clubFounding" className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Gründungsdatum
+                </Label>
+                <Input
+                  id="clubFounding"
+                  type="date"
+                  value={clubForm.founding_date}
+                  onChange={(e) => setClubForm((f) => ({ ...f, founding_date: e.target.value }))}
+                  className="mt-1.5"
+                />
+              </div>
             </div>
           </div>
         );
 
+      // Step 3 – Opening hours
       case 3:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Öffnungszeiten</h2>
+              <p className="text-gray-500 text-sm mt-1">
+                Lege die Öffnungszeiten für jeden Wochentag fest. Du kannst sie später jederzeit
+                ändern.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {DAYS.map((day) => (
+                <div
+                  key={day.key}
+                  className="grid grid-cols-[100px_1fr_auto_1fr] items-center gap-3 p-3 rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-sm font-medium text-gray-700">{day.label}</span>
+                  <div>
+                    <Label className="text-xs text-gray-400">Von</Label>
+                    <Input
+                      type="time"
+                      value={openingHours[day.key]?.open ?? '08:00'}
+                      onChange={(e) =>
+                        setOpeningHours((prev) => ({
+                          ...prev,
+                          [day.key]: { ...prev[day.key], open: e.target.value },
+                        }))
+                      }
+                      className="mt-0.5 h-9 text-sm"
+                    />
+                  </div>
+                  <span className="text-gray-400 text-sm pt-4">–</span>
+                  <div>
+                    <Label className="text-xs text-gray-400">Bis</Label>
+                    <Input
+                      type="time"
+                      value={openingHours[day.key]?.close ?? '22:00'}
+                      onChange={(e) =>
+                        setOpeningHours((prev) => ({
+                          ...prev,
+                          [day.key]: { ...prev[day.key], close: e.target.value },
+                        }))
+                      }
+                      className="mt-0.5 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={applyAllOpeningHours}
+              className="gap-1.5"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              Mo auf alle Tage übernehmen
+            </Button>
+          </div>
+        );
+
+      // Step 4 – Court
+      case 4:
         return (
           <div className="space-y-6">
             <div>
@@ -513,7 +869,94 @@ export default function OnboardingPage() {
           </div>
         );
 
-      case 4:
+      // Step 5 – Prices & Training duration
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Preise & Trainingsdauer</h2>
+              <p className="text-gray-500 text-sm mt-1">
+                Lege die Standardpreise und die Trainingsdauer für deinen Verein fest.
+              </p>
+            </div>
+            <Card className="bg-blue-50/50 border-blue-200">
+              <CardContent className="pt-4 text-sm text-blue-800">
+                Diese Werte kannst du später in den Einstellungen anpassen und für einzelne
+                Trainer oder Gruppen überschreiben.
+              </CardContent>
+            </Card>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="hourlyRate">Standard-Stundensatz (€)</Label>
+                <Input
+                  id="hourlyRate"
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={priceForm.default_hourly_rate}
+                  onChange={(e) =>
+                    setPriceForm((f) => ({ ...f, default_hourly_rate: e.target.value }))
+                  }
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-gray-400 mt-1">Empfohlen: 15,00 €</p>
+              </div>
+              <div>
+                <Label htmlFor="sessionDuration">Standard-Trainingsdauer (Minuten)</Label>
+                <Input
+                  id="sessionDuration"
+                  type="number"
+                  min={15}
+                  max={240}
+                  step={15}
+                  value={priceForm.default_session_duration_minutes}
+                  onChange={(e) =>
+                    setPriceForm((f) => ({
+                      ...f,
+                      default_session_duration_minutes: e.target.value,
+                    }))
+                  }
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-gray-400 mt-1">Empfohlen: 60 Minuten</p>
+              </div>
+              <div>
+                <Label htmlFor="billingUnit">Abrechnungseinheit (Minuten)</Label>
+                <Input
+                  id="billingUnit"
+                  type="number"
+                  min={15}
+                  max={120}
+                  step={15}
+                  value={priceForm.billing_unit_minutes}
+                  onChange={(e) =>
+                    setPriceForm((f) => ({ ...f, billing_unit_minutes: e.target.value }))
+                  }
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  In welchen Schritten wird abgerechnet? (z.B. 60 = stundenweise)
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="taxRate">Umsatzsteuer (%)</Label>
+                <Input
+                  id="taxRate"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={priceForm.tax_rate}
+                  onChange={(e) => setPriceForm((f) => ({ ...f, tax_rate: e.target.value }))}
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-gray-400 mt-1">0 = umsatzsteuerbefreit (Kleinunternehmer)</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      // Step 6 – Booking rules
+      case 6:
         return (
           <div className="space-y-6">
             <div>
@@ -546,7 +989,7 @@ export default function OnboardingPage() {
                   }
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1.5">Empfohlen: 90 Minuten</p>
+                <p className="text-xs text-gray-400 mt-1">Empfohlen: 90 Minuten</p>
               </div>
               <div>
                 <Label htmlFor="advanceDays">Vorausbuchung (Tage)</Label>
@@ -564,7 +1007,7 @@ export default function OnboardingPage() {
                   }
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1.5">
+                <p className="text-xs text-gray-400 mt-1">
                   Wie viele Tage im Voraus können Mitglieder buchen?
                 </p>
               </div>
@@ -589,45 +1032,152 @@ export default function OnboardingPage() {
           </div>
         );
 
-      case 5:
+      // Step 7 – Invitations
+      case 7:
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Ersten Trainer einladen</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Erste Mitglieder einladen</h2>
               <p className="text-gray-500 text-sm mt-1">
-                Lade deinen ersten Trainer per E-Mail ein.
+                Lade einen Trainer und ein Mitglied per E-Mail ein. Beides ist optional.
               </p>
             </div>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="trainerName">Name</Label>
-                <Input
-                  id="trainerName"
-                  value={trainerForm.name}
-                  onChange={(e) => setTrainerForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Max Mustermann"
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label htmlFor="trainerEmail">E-Mail</Label>
-                <Input
-                  id="trainerEmail"
-                  type="email"
-                  value={trainerForm.email}
-                  onChange={(e) => setTrainerForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="trainer@beispiel.de"
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
+
+            {/* Trainer invite */}
+            <Card className="border-brand-primary/20">
+              <CardHeader className="pb-2">
+                <Badge variant="secondary" className="w-fit bg-brand-primary/10 text-brand-primary border-brand-primary/20">
+                  Trainer
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="trainerName">Name</Label>
+                    <Input
+                      id="trainerName"
+                      value={trainerForm.name}
+                      onChange={(e) => setTrainerForm((f) => ({ ...f, name: e.target.value }))}
+                      placeholder="Max Mustermann"
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="trainerEmail">E-Mail</Label>
+                    <Input
+                      id="trainerEmail"
+                      type="email"
+                      value={trainerForm.email}
+                      onChange={(e) => setTrainerForm((f) => ({ ...f, email: e.target.value }))}
+                      placeholder="trainer@beispiel.de"
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Member invite */}
+            <Card className="border-gray-200">
+              <CardHeader className="pb-2">
+                <Badge variant="secondary" className="w-fit">
+                  Mitglied
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="memberName">Name</Label>
+                    <Input
+                      id="memberName"
+                      value={memberForm.name}
+                      onChange={(e) => setMemberForm((f) => ({ ...f, name: e.target.value }))}
+                      placeholder="Anna Schmidt"
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="memberEmail">E-Mail</Label>
+                    <Input
+                      id="memberEmail"
+                      type="email"
+                      value={memberForm.email}
+                      onChange={(e) => setMemberForm((f) => ({ ...f, email: e.target.value }))}
+                      placeholder="mitglied@beispiel.de"
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <p className="text-xs text-gray-400">
-              Du kannst diesen Schritt überspringen und Trainer später einladen.
+              Du kannst später im Dashboard weitere Mitglieder per CSV-Upload oder Einladungslink
+              hinzufügen.
             </p>
           </div>
         );
 
-      case 6:
+      // Step 8 – E-Mail & Language
+      case 8:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">E-Mail & Sprache</h2>
+              <p className="text-gray-500 text-sm mt-1">
+                Konfiguriere die Absender-Einstellungen für E-Mails und die bevorzugte Sprache.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="language">Sprache</Label>
+                <Select
+                  value={emailSettings.language}
+                  onValueChange={(v) => setEmailSettings((f) => ({ ...f, language: v }))}
+                >
+                  <SelectTrigger id="language" className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="emailFromName">Absender-Name</Label>
+                <Input
+                  id="emailFromName"
+                  value={emailSettings.email_from_name}
+                  onChange={(e) =>
+                    setEmailSettings((f) => ({ ...f, email_from_name: e.target.value }))
+                  }
+                  placeholder="TC Beispiel e.V."
+                  className="mt-1.5"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Dieser Name erscheint als Absender bei automatischen E-Mails.
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="emailFromAddress">Absender-E-Mail-Adresse</Label>
+                <Input
+                  id="emailFromAddress"
+                  type="email"
+                  value={emailSettings.email_from_address}
+                  onChange={(e) =>
+                    setEmailSettings((f) => ({ ...f, email_from_address: e.target.value }))
+                  }
+                  placeholder="noreply@verein.de"
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      // Step 9 – Complete
+      case 9:
         return (
           <div className="text-center space-y-8 py-6">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-brand-primary/10 rounded-full">
@@ -639,7 +1189,7 @@ export default function OnboardingPage() {
                 Dein Verein ist jetzt bereit. Entdecke jetzt dein Dashboard.
               </p>
             </div>
-            <div className="flex justify-center gap-3 text-sm text-gray-500">
+            <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-500">
               {STEPS.slice(1, -1).map((s) => (
                 <Badge
                   key={s.label}
@@ -672,7 +1222,10 @@ export default function OnboardingPage() {
     }
   };
 
-  const isOptionalStep = step === 3 || step === 5;
+  // Optional steps: Place, Opening hours, Invitations, Email settings
+  const isOptionalStep = step === 4 || step === 7 || step === 8;
+  // Steps where next triggers save
+  const savesOnNext = step >= 2 && step <= 8;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-brand-primary/5 flex items-center justify-center p-4">
@@ -683,8 +1236,7 @@ export default function OnboardingPage() {
           <Separator />
 
           <CardContent className="pt-6">
-            <div className="min-h-[340px] flex flex-col">
-              {' '}
+            <div className="min-h-[420px] flex flex-col">
               <div
                 className="flex-1 animate-in fade-in slide-in-from-right-4 duration-300"
                 key={step}
@@ -692,7 +1244,7 @@ export default function OnboardingPage() {
                 {renderStepContent()}
               </div>
               {/* Navigation */}
-              {step > 1 && step < 6 && (
+              {step > 1 && step < 9 && (
                 <div className="flex items-center justify-between pt-6 mt-6 border-t">
                   <Button
                     variant="ghost"
@@ -721,8 +1273,17 @@ export default function OnboardingPage() {
                       className="bg-brand-primary hover:bg-brand-primary/90 text-white shadow-md shadow-brand-primary/10"
                     >
                       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      Weiter
-                      <ChevronRight className="ml-1 h-4 w-4" />
+                      {savesOnNext ? (
+                        <>
+                          Speichern & Weiter
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </>
+                      ) : (
+                        <>
+                          Weiter
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

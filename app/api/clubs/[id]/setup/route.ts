@@ -1,7 +1,9 @@
 /**
  * PATCH /api/clubs/[id]/setup
  * Updates Supabase-only club fields used during the onboarding wizard.
- * Handles: name, city, address, phone, email, website, setup_completed_at
+ * Handles: name, city, address, phone, email, website, logo_url, description, founding_date,
+ *          opening_hours, default_hourly_rate, default_session_duration_minutes,
+ *          billing_unit_minutes, tax_rate, timezone, bundesland, setup_completed_at
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -21,8 +23,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    // Only allow safe fields to be updated
-    const allowed = ['name', 'city', 'address', 'phone', 'email', 'website', 'setup_completed_at'];
+    // Only allow safe fields to be updated (onboarding wizard fields)
+    const allowed = [
+      'name', 'city', 'address', 'phone', 'email', 'website',
+      'setup_completed_at', 'logo_url', 'description', 'founding_date',
+      'opening_hours', 'default_hourly_rate', 'default_session_duration_minutes',
+      'billing_unit_minutes', 'tax_rate', 'timezone', 'bundesland'
+    ];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {
       if (body[key] !== undefined) {

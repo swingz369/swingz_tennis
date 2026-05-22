@@ -35,6 +35,9 @@ export const clubs = pgTable(
     default_hourly_rate: numeric('default_hourly_rate', { precision: 10, scale: 2 })
       .notNull()
       .default('15.00'),
+    logo_url: text('logo_url'),
+    description: text('description'),
+    founding_date: timestamp('founding_date', { mode: 'date' }),
     bundesland: varchar('bundesland', { length: 50 }),
     billing_unit_minutes: integer('billing_unit_minutes').default(60),
     tax_rate: integer('tax_rate').default(0),
@@ -291,6 +294,8 @@ export const users = pgTable(
     // Season planning fields
     experience_months: integer('experience_months').default(0),
     skill_level: varchar('skill_level', { length: 20 }).default('beginner'),
+    // Superadmin onboarding completion flag (person-bound, not club-bound)
+    superadmin_setup_completed_at: timestamp('superadmin_setup_completed_at'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },

@@ -299,7 +299,6 @@ export function Sidebar({
           subItems: [
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
             { name: 'News & Kommunikation', href: '/news' },
-            { name: 'Onboarding', href: '/admin/onboarding' },
             { name: 'Shop', href: '/shop' },
           ],
         },

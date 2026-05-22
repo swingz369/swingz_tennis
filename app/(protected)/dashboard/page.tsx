@@ -5,7 +5,7 @@ import { requireAuth } from '@/lib/auth';
  * Dashboard Dispatch Page
  *
  * Redirects users to their role-specific area after login — exactly like TSOW:
- *   superadmin → /superadmin
+ *   superadmin → /superadmin (or /superadmin/onboarding if setup not complete)
  *   admin      → /admin (or /admin/onboarding if setup not complete)
  *   trainer    → /trainer
  *   member     → /member

@@ -123,7 +123,7 @@ test.describe('Sidebar Navigation Structure Verification', () => {
             <li>Training → Saisonplanung, Trainer & Stunden, Stundennachweise, Turniere</li>
             <li>Plätze & Buchungen → Platz-Kalender, Buchungsübersicht, Plätze verwalten</li>
             <li>Finanzen → Abrechnung, Analytics</li>
-            <li>Einstellungen → Vereinseinstellungen, News & Kommunikation, Onboarding</li>
+            <li>Einstellungen → Vereinseinstellungen, News & Kommunikation, Shop</li>
           </ul>
           <p>Sections: Übersicht, Mitglieder, Training, Plätze & Buchungen, Finanzen, Einstellungen</p>
         </div>
