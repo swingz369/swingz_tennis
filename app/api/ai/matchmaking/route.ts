@@ -125,10 +125,10 @@ export async function GET() {
       const levelDiff = Math.abs(myLevelIdx - memberLevelIdx);
 
       // ═══ Score Dimension 1: Level (0-40 points) ═══
-      let levelScore = Math.max(0, 40 - levelDiff * 10);
+      const levelScore = Math.max(0, 40 - levelDiff * 10);
 
       // ═══ Score Dimension 2: Group overlap (0-30 points) ═══
-      let groupOverlap: string[] = [];
+      const groupOverlap: string[] = [];
       let groupScore = 0;
 
       if (allGroups) {
