@@ -26,9 +26,30 @@ function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
 
 function makePlan(): ScheduleSlot[] {
   return [
-    makeSlot({ id: 'slot-1', groupName: 'Gruppe A', dayOfWeek: 1, startTime: '17:00', memberIds: ['m1', 'm2'], memberNames: ['Alice', 'Bob'] }),
-    makeSlot({ id: 'slot-2', groupName: 'Gruppe B', dayOfWeek: 1, startTime: '18:30', memberIds: ['m3', 'm4'], memberNames: ['Charlie', 'Diana'] }),
-    makeSlot({ id: 'slot-3', groupName: 'Gruppe C', dayOfWeek: 2, startTime: '17:00', memberIds: ['m5', 'm6'], memberNames: ['Eve', 'Frank'] }),
+    makeSlot({
+      id: 'slot-1',
+      groupName: 'Gruppe A',
+      dayOfWeek: 1,
+      startTime: '17:00',
+      memberIds: ['m1', 'm2'],
+      memberNames: ['Alice', 'Bob'],
+    }),
+    makeSlot({
+      id: 'slot-2',
+      groupName: 'Gruppe B',
+      dayOfWeek: 1,
+      startTime: '18:30',
+      memberIds: ['m3', 'm4'],
+      memberNames: ['Charlie', 'Diana'],
+    }),
+    makeSlot({
+      id: 'slot-3',
+      groupName: 'Gruppe C',
+      dayOfWeek: 2,
+      startTime: '17:00',
+      memberIds: ['m5', 'm6'],
+      memberNames: ['Eve', 'Frank'],
+    }),
   ];
 }
 
@@ -224,7 +245,12 @@ describe('useSchedulePlan — drop', () => {
   it('should calculate endTime correctly across hour boundaries', () => {
     const { result } = renderHook(() => useSchedulePlan());
 
-    const longSlot = makeSlot({ id: 'slot-long', durationMin: 120, startTime: '08:00', endTime: '10:00' });
+    const longSlot = makeSlot({
+      id: 'slot-long',
+      durationMin: 120,
+      startTime: '08:00',
+      endTime: '10:00',
+    });
 
     act(() => {
       result.current.setPlan([longSlot]);

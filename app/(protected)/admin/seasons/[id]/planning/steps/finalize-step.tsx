@@ -43,12 +43,15 @@ export function FinalizeStep() {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   const conflicts = state.conflicts;
-  const criticalConflicts = conflicts.filter((c) => c.severity === 'critical' && c.status === 'open');
-  const warningConflicts = conflicts.filter((c) => c.severity === 'warning' || c.severity === 'info');
+  const criticalConflicts = conflicts.filter(
+    (c) => c.severity === 'critical' && c.status === 'open'
+  );
+  const warningConflicts = conflicts.filter(
+    (c) => c.severity === 'warning' || c.severity === 'info'
+  );
   const hasBlockingConflicts = criticalConflicts.length > 0;
   const allWarningsAccepted =
-    warningConflicts.length === 0 ||
-    warningConflicts.every((c) => confirmedWarnings.has(c.id));
+    warningConflicts.length === 0 || warningConflicts.every((c) => confirmedWarnings.has(c.id));
   const resolvedCount = conflicts.filter((c) => c.status === 'resolved').length;
 
   const handleRunConflicts = useCallback(async () => {
@@ -64,14 +67,11 @@ export function FinalizeStep() {
   const handleResolve = async (conflictId: string) => {
     setResolvingId(conflictId);
     try {
-      const res = await fetch(
-        `/api/seasons/${state.seasonId}/planning/conflicts`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
-          body: JSON.stringify({ conflictId, action: 'resolve', notes: 'Manuell gelöst' }),
-        }
-      );
+      const res = await fetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({ conflictId, action: 'resolve', notes: 'Manuell gelöst' }),
+      });
       if (!res.ok) throw new Error('Fehler beim Lösen');
       // Optimistic update handled by re-fetch
       await detectConflicts();
@@ -85,14 +85,11 @@ export function FinalizeStep() {
   const handleIgnore = async (conflictId: string) => {
     setResolvingId(conflictId);
     try {
-      const res = await fetch(
-        `/api/seasons/${state.seasonId}/planning/conflicts`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
-          body: JSON.stringify({ conflictId, action: 'ignore', notes: 'Bewusst ignoriert' }),
-        }
-      );
+      const res = await fetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({ conflictId, action: 'ignore', notes: 'Bewusst ignoriert' }),
+      });
       if (!res.ok) throw new Error('Fehler beim Ignorieren');
       await detectConflicts();
     } catch {
@@ -132,12 +129,10 @@ export function FinalizeStep() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mx-auto mb-4">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-green-800">
-              Planung erfolgreich bestätigt!
-            </h2>
+            <h2 className="text-xl font-bold text-green-800">Planung erfolgreich bestätigt!</h2>
             <p className="text-sm text-green-700 mt-2 max-w-md mx-auto">
-              Trainingsgruppen und Sessions wurden erstellt und in die Profile der Trainer und Mitglieder übertragen.
-              Alle Beteiligten werden automatisch benachrichtigt.
+              Trainingsgruppen und Sessions wurden erstellt und in die Profile der Trainer und
+              Mitglieder übertragen. Alle Beteiligten werden automatisch benachrichtigt.
             </p>
           </CardContent>
         </Card>
@@ -160,9 +155,7 @@ export function FinalizeStep() {
                 <Calendar className="h-4 w-4 text-green-500" />
                 <p className="text-sm text-muted-foreground">Sessions</p>
               </div>
-              <p className="text-2xl font-bold mt-1">
-                {state.publishedSessionIds.length}
-              </p>
+              <p className="text-2xl font-bold mt-1">{state.publishedSessionIds.length}</p>
             </CardContent>
           </Card>
           <Card>
@@ -171,9 +164,7 @@ export function FinalizeStep() {
                 <Bell className="h-4 w-4 text-amber-500" />
                 <p className="text-sm text-muted-foreground">Benachrichtigungen</p>
               </div>
-              <p className="text-2xl font-bold mt-1">
-                {state.selectedMemberIds.length}
-              </p>
+              <p className="text-2xl font-bold mt-1">{state.selectedMemberIds.length}</p>
             </CardContent>
           </Card>
         </div>
@@ -193,7 +184,9 @@ export function FinalizeStep() {
                   <div key={idx} className="flex items-center gap-3 text-sm text-muted-foreground">
                     <CheckCircle className="h-4 w-4 text-green-500" />
                     <span className="font-medium">{w.memberName}</span>
-                    <span>Warteliste {w.groupName} (Pos. {w.position})</span>
+                    <span>
+                      Warteliste {w.groupName} (Pos. {w.position})
+                    </span>
                     {w.alternativeGroupName && (
                       <Badge variant="outline" className="text-xs">
                         Alternativ: {w.alternativeGroupName}
@@ -216,7 +209,8 @@ export function FinalizeStep() {
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-blue-900">Rechnungen generieren</h3>
                 <p className="text-xs text-blue-700 mt-1">
-                  Für die {state.selectedMemberIds.length} Mitglieder dieser Saison können nun Rechnungen erstellt werden.
+                  Für die {state.selectedMemberIds.length} Mitglieder dieser Saison können nun
+                  Rechnungen erstellt werden.
                 </p>
                 <Link
                   href={`/admin/seasons/${state.seasonId}`}
@@ -282,11 +276,10 @@ export function FinalizeStep() {
         <Card>
           <CardContent className="py-8 text-center">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              Konfliktprüfung starten
-            </h3>
+            <h3 className="mt-4 text-lg font-semibold text-gray-900">Konfliktprüfung starten</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              Führen Sie die automatische Konfliktprüfung durch, bevor Sie die Planung final bestätigen.
+              Führen Sie die automatische Konfliktprüfung durch, bevor Sie die Planung final
+              bestätigen.
             </p>
             <Button onClick={handleRunConflicts} className="mt-4 gap-2">
               <Sparkles className="h-4 w-4" />
@@ -318,7 +311,9 @@ export function FinalizeStep() {
               <AlertTriangle className="h-4 w-4 text-red-500" />
               <p className="text-xs text-muted-foreground">Kritisch</p>
             </div>
-            <p className={`text-xl font-bold mt-1 ${criticalConflicts.length > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <p
+              className={`text-xl font-bold mt-1 ${criticalConflicts.length > 0 ? 'text-red-600' : 'text-green-600'}`}
+            >
               {criticalConflicts.length}
             </p>
           </CardContent>
@@ -389,9 +384,7 @@ export function FinalizeStep() {
               <AlertTriangle className="h-5 w-5" />
               Warnungen & Hinweise
             </CardTitle>
-            <CardDescription>
-              Können bewusst akzeptiert oder gelöst werden
-            </CardDescription>
+            <CardDescription>Können bewusst akzeptiert oder gelöst werden</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {warningConflicts.map((conflict) => (
@@ -409,21 +402,24 @@ export function FinalizeStep() {
       )}
 
       {/* All clear message (after check ran or all resolved) */}
-      {(criticalConflicts.length === 0 && warningConflicts.filter(c => c.status === 'open').length === 0) && (
-        <Card className="border-green-200 bg-green-50/30">
-          <CardContent className="py-8 text-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-            <h3 className="mt-4 text-lg font-semibold text-green-800">
-              {conflicts.length === 0 ? 'Keine Konflikte gefunden' : 'Alle Konflikte gelöst oder ignoriert'}
-            </h3>
-            <p className="text-sm text-green-700 mt-1">
-              {conflicts.length === 0
-                ? 'Die Planung ist konfliktfrei und kann bestätigt werden.'
-                : 'Alle Konflikte wurden gelöst oder ignoriert.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {criticalConflicts.length === 0 &&
+        warningConflicts.filter((c) => c.status === 'open').length === 0 && (
+          <Card className="border-green-200 bg-green-50/30">
+            <CardContent className="py-8 text-center">
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
+              <h3 className="mt-4 text-lg font-semibold text-green-800">
+                {conflicts.length === 0
+                  ? 'Keine Konflikte gefunden'
+                  : 'Alle Konflikte gelöst oder ignoriert'}
+              </h3>
+              <p className="text-sm text-green-700 mt-1">
+                {conflicts.length === 0
+                  ? 'Die Planung ist konfliktfrei und kann bestätigt werden.'
+                  : 'Alle Konflikte wurden gelöst oder ignoriert.'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Warning Acceptance Checklist */}
       {warningConflicts.filter((c) => c.status === 'open').length > 0 && (
@@ -577,17 +573,21 @@ function ConflictCard({
         conflict.status === 'resolved'
           ? 'border-green-200 bg-green-50/30 opacity-70'
           : conflict.status === 'ignored'
-          ? 'border-gray-200 bg-gray-50/30 opacity-70'
-          : conflict.severity === 'critical'
-          ? 'border-red-200 bg-white'
-          : 'border-amber-200 bg-white'
+            ? 'border-gray-200 bg-gray-50/30 opacity-70'
+            : conflict.severity === 'critical'
+              ? 'border-red-200 bg-white'
+              : 'border-amber-200 bg-white'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Badge className={`text-xs ${config.badgeColor}`}>
-              {conflict.severity === 'critical' ? 'Kritisch' : conflict.severity === 'warning' ? 'Warnung' : 'Hinweis'}
+              {conflict.severity === 'critical'
+                ? 'Kritisch'
+                : conflict.severity === 'warning'
+                  ? 'Warnung'
+                  : 'Hinweis'}
             </Badge>
             {conflict.status === 'resolved' && (
               <Badge className="text-xs bg-green-100 text-green-700">

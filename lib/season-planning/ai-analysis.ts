@@ -19,9 +19,7 @@ export interface AIAnalysisInput {
  * Generates an AI-powered analysis of the schedule plan.
  * Falls back gracefully if the AI is unavailable.
  */
-export async function generateAIAnalysis(
-  input: AIAnalysisInput,
-): Promise<string> {
+export async function generateAIAnalysis(input: AIAnalysisInput): Promise<string> {
   if (!input.useAI) return '';
 
   const {
@@ -40,7 +38,7 @@ export async function generateAIAnalysis(
       .slice(0, 15)
       .map(
         (s) =>
-          `${s.groupName}: ${DNAMES[s.dayOfWeek]} ${s.startTime} · ${s.trainerName} · ${s.courtName} · ${s.memberNames.length} Teilnehmer (${s.memberNames.join(', ')})`,
+          `${s.groupName}: ${DNAMES[s.dayOfWeek]} ${s.startTime} · ${s.trainerName} · ${s.courtName} · ${s.memberNames.length} Teilnehmer (${s.memberNames.join(', ')})`
       )
       .join('\n');
 

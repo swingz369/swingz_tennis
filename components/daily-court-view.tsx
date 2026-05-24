@@ -260,6 +260,14 @@ export default function DailyCourtView({
                     className={`p-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${
                       isAvailable ? 'cursor-pointer' : ''
                     }`}
+                    role="button"
+                    tabIndex={isAvailable ? 0 : -1}
+                    onKeyDown={(e) => {
+                      if ((e.key === 'Enter' || e.key === ' ') && isAvailable) {
+                        e.preventDefault();
+                        handleBookSlot(court.id, selectedDate, timeSlot);
+                      }
+                    }}
                     onClick={() => isAvailable && handleBookSlot(court.id, selectedDate, timeSlot)}
                   >
                     <div className="flex items-center gap-4">

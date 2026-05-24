@@ -22,7 +22,11 @@ import type {
   EntityType,
   AuditChange,
 } from '@/domain/entities/audit-log.entity';
-import { AuditLog as DomainAuditLog, type AuditAction as DomainAuditAction, type AuditResourceType } from '@/domain/entities/audit-log';
+import {
+  AuditLog as DomainAuditLog,
+  type AuditAction as DomainAuditAction,
+  type AuditResourceType,
+} from '@/domain/entities/audit-log';
 import { DrizzleAuditLogRepository } from '@/infrastructure/persistence/repositories/audit-log.repository';
 import { Id } from '@/domain/value-objects/ids';
 
@@ -65,7 +69,7 @@ class AuditLogServiceAdapter {
       Id.fromString(params.entityId || 'unknown'),
       details,
       params.ipAddress,
-      params.userAgent,
+      params.userAgent
     );
 
     try {
@@ -134,7 +138,7 @@ class AuditLogServiceAdapter {
             l.userName.toLowerCase().includes(term) ||
             l.userEmail.toLowerCase().includes(term) ||
             l.entityId.toLowerCase().includes(term) ||
-            (l.errorMessage && l.errorMessage.toLowerCase().includes(term)),
+            (l.errorMessage && l.errorMessage.toLowerCase().includes(term))
         );
       }
     }
@@ -206,22 +210,35 @@ class AuditLogServiceAdapter {
     return toDelete.length;
   }
 
-  async exportAuditLogs(
-    filter?: AuditLogFilter,
-    format: 'json' | 'csv' = 'json',
-  ): Promise<string> {
+  async exportAuditLogs(filter?: AuditLogFilter, format: 'json' | 'csv' = 'json'): Promise<string> {
     const logs = await this.getAuditLogs(filter);
 
     if (format === 'csv') {
       const headers = [
-        'ID', 'Action', 'Entity Type', 'Entity ID', 'User', 'User Email',
-        'User Role', 'Timestamp', 'Status', 'IP Address', 'Error Message',
+        'ID',
+        'Action',
+        'Entity Type',
+        'Entity ID',
+        'User',
+        'User Email',
+        'User Role',
+        'Timestamp',
+        'Status',
+        'IP Address',
+        'Error Message',
       ];
       const rows = logs.map((log) => [
-        log.id, log.action, log.entityType, log.entityId,
-        log.userName, log.userEmail, log.userRole,
-        log.timestamp.toISOString(), log.status,
-        log.ipAddress || '', log.errorMessage || '',
+        log.id,
+        log.action,
+        log.entityType,
+        log.entityId,
+        log.userName,
+        log.userEmail,
+        log.userRole,
+        log.timestamp.toISOString(),
+        log.status,
+        log.ipAddress || '',
+        log.errorMessage || '',
       ]);
       return [headers, ...rows].map((row) => row.map((c) => `"${c}"`).join(',')).join('\n');
     }
@@ -235,8 +252,8 @@ class AuditLogServiceAdapter {
     const details = dl.getDetails();
     return {
       id: dl.getId().getValue(),
-      action: (dl.getAction() as string) as AuditAction,
-      entityType: (dl.getResourceType() as string) as EntityType,
+      action: dl.getAction() as string as AuditAction,
+      entityType: dl.getResourceType() as string as EntityType,
       entityId: dl.getResourceId().getValue(),
       userId: dl.getActorId().getValue(),
       userName: (details.userName as string) || 'Unknown',

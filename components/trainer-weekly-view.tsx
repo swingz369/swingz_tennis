@@ -302,8 +302,8 @@ export default function TrainerWeeklyView() {
           onConfirm={confirmCancelSession}
         />
       </div>
-      );
-    }
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -472,6 +472,14 @@ export default function TrainerWeeklyView() {
                     <div
                       key={session.id}
                       className="p-2 rounded border cursor-pointer hover:shadow-md transition-shadow"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedSession(session);
+                        }
+                      }}
                       onClick={() => setSelectedSession(session)}
                     >
                       <div className="flex items-center justify-between mb-1">

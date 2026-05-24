@@ -1,6 +1,6 @@
 /**
  * Seed-Skript: Squash Club Munich – 75 Mitglieder + 5 Trainer mit Präferenzen
- * 
+ *
  * Führt die Wizard-Schritte 1-3 aus (Mitglieder anlegen, Präferenzen setzen,
  * Trainer einrichten) als Vorbereitung für die Cluster-API (Schritte 4-7).
  */
@@ -11,53 +11,203 @@ const CLUB_ID = 'e7cb492c-8e16-4b89-b62d-12d46fba8bbf';
 const SEASON_ID = '6bd8f187-48b8-45eb-af39-e0813e8af088';
 
 const FIRST_NAMES_MALE = [
-  'Lukas', 'Felix', 'Maximilian', 'Leon', 'Paul', 'Jonas', 'Tim', 'Niklas',
-  'Finn', 'Julian', 'Luis', 'Mats', 'Elias', 'Simon', 'Oskar', 'David',
-  'Noah', 'Ben', 'Tom', 'Samuel', 'Philipp', 'Fabian', 'Jan', 'Moritz',
-  'Lennart', 'Rafael', 'Adrian', 'Vincent', 'Nico', 'Jannik', 'Marco',
-  'Daniel', 'Alexander', 'Stefan', 'Christian', 'Michael', 'Andreas',
-  'Thomas', 'Markus', 'Johannes', 'Matthias', 'Sebastian', 'Florian',
-  'Patrick', 'Dominik', 'Lars', 'Sven', 'Oliver', 'Tobias', 'Benjamin'
+  'Lukas',
+  'Felix',
+  'Maximilian',
+  'Leon',
+  'Paul',
+  'Jonas',
+  'Tim',
+  'Niklas',
+  'Finn',
+  'Julian',
+  'Luis',
+  'Mats',
+  'Elias',
+  'Simon',
+  'Oskar',
+  'David',
+  'Noah',
+  'Ben',
+  'Tom',
+  'Samuel',
+  'Philipp',
+  'Fabian',
+  'Jan',
+  'Moritz',
+  'Lennart',
+  'Rafael',
+  'Adrian',
+  'Vincent',
+  'Nico',
+  'Jannik',
+  'Marco',
+  'Daniel',
+  'Alexander',
+  'Stefan',
+  'Christian',
+  'Michael',
+  'Andreas',
+  'Thomas',
+  'Markus',
+  'Johannes',
+  'Matthias',
+  'Sebastian',
+  'Florian',
+  'Patrick',
+  'Dominik',
+  'Lars',
+  'Sven',
+  'Oliver',
+  'Tobias',
+  'Benjamin',
 ];
 
 const FIRST_NAMES_FEMALE = [
-  'Anna', 'Laura', 'Sarah', 'Lisa', 'Julia', 'Emma', 'Sophie', 'Marie',
-  'Lena', 'Hannah', 'Mia', 'Emily', 'Lina', 'Lea', 'Nele', 'Amelie',
-  'Lara', 'Leonie', 'Johanna', 'Maya', 'Paula', 'Marlene', 'Ida', 'Clara',
-  'Theresa', 'Alina', 'Katharina', 'Sabrina', 'Nadine', 'Vanessa'
+  'Anna',
+  'Laura',
+  'Sarah',
+  'Lisa',
+  'Julia',
+  'Emma',
+  'Sophie',
+  'Marie',
+  'Lena',
+  'Hannah',
+  'Mia',
+  'Emily',
+  'Lina',
+  'Lea',
+  'Nele',
+  'Amelie',
+  'Lara',
+  'Leonie',
+  'Johanna',
+  'Maya',
+  'Paula',
+  'Marlene',
+  'Ida',
+  'Clara',
+  'Theresa',
+  'Alina',
+  'Katharina',
+  'Sabrina',
+  'Nadine',
+  'Vanessa',
 ];
 
 const LAST_NAMES = [
-  'Müller', 'Schmidt', 'Schneider', 'Fischer', 'Weber', 'Wagner', 'Becker',
-  'Hoffmann', 'Schäfer', 'Koch', 'Bauer', 'Richter', 'Klein', 'Wolf',
-  'Schröder', 'Neumann', 'Schwarz', 'Zimmermann', 'Braun', 'Krüger',
-  'Hofmann', 'Hartmann', 'Lange', 'Schmitt', 'Werner', 'Schmitz', 'Krause',
-  'Meier', 'Lehmann', 'Schmid', 'Huber', 'Mayer', 'Herrmann', 'König',
-  'Walter', 'Lang', 'Jung', 'Hahn', 'Keller', 'Vogel', 'Schubert',
-  'Roth', 'Frank', 'Berger', 'Winkler', 'Peters', 'Scholz', 'Möller',
-  'Weiß', 'Graf', 'Friedrich', 'Pohl', 'Seidel', 'Engel', 'Haas'
+  'Müller',
+  'Schmidt',
+  'Schneider',
+  'Fischer',
+  'Weber',
+  'Wagner',
+  'Becker',
+  'Hoffmann',
+  'Schäfer',
+  'Koch',
+  'Bauer',
+  'Richter',
+  'Klein',
+  'Wolf',
+  'Schröder',
+  'Neumann',
+  'Schwarz',
+  'Zimmermann',
+  'Braun',
+  'Krüger',
+  'Hofmann',
+  'Hartmann',
+  'Lange',
+  'Schmitt',
+  'Werner',
+  'Schmitz',
+  'Krause',
+  'Meier',
+  'Lehmann',
+  'Schmid',
+  'Huber',
+  'Mayer',
+  'Herrmann',
+  'König',
+  'Walter',
+  'Lang',
+  'Jung',
+  'Hahn',
+  'Keller',
+  'Vogel',
+  'Schubert',
+  'Roth',
+  'Frank',
+  'Berger',
+  'Winkler',
+  'Peters',
+  'Scholz',
+  'Möller',
+  'Weiß',
+  'Graf',
+  'Friedrich',
+  'Pohl',
+  'Seidel',
+  'Engel',
+  'Haas',
 ];
 
 const TRAINERS = [
-  { firstName: 'Thomas', lastName: 'Steiner', specialties: ['Anfänger', 'Fortgeschrittene', 'Kindertraining'] },
-  { firstName: 'Sabine', lastName: 'Winkler', specialties: ['Fortgeschrittene', 'Leistungssport', 'Einzeltraining'] },
-  { firstName: 'Michael', lastName: 'Bergmann', specialties: ['Anfänger', 'Breitensport', 'Mannschaftstraining'] },
-  { firstName: 'Julia', lastName: 'Hartmann', specialties: ['Kindertraining', 'Jugendtraining', 'Anfänger'] },
-  { firstName: 'Christian', lastName: 'Lange', specialties: ['Fortgeschrittene', 'Leistungssport', 'Turniervorbereitung'] },
+  {
+    firstName: 'Thomas',
+    lastName: 'Steiner',
+    specialties: ['Anfänger', 'Fortgeschrittene', 'Kindertraining'],
+  },
+  {
+    firstName: 'Sabine',
+    lastName: 'Winkler',
+    specialties: ['Fortgeschrittene', 'Leistungssport', 'Einzeltraining'],
+  },
+  {
+    firstName: 'Michael',
+    lastName: 'Bergmann',
+    specialties: ['Anfänger', 'Breitensport', 'Mannschaftstraining'],
+  },
+  {
+    firstName: 'Julia',
+    lastName: 'Hartmann',
+    specialties: ['Kindertraining', 'Jugendtraining', 'Anfänger'],
+  },
+  {
+    firstName: 'Christian',
+    lastName: 'Lange',
+    specialties: ['Fortgeschrittene', 'Leistungssport', 'Turniervorbereitung'],
+  },
 ];
 
 function randomLevel(): string {
-  const levels = ['beginner', 'beginner', 'intermediate', 'intermediate', 'intermediate', 'advanced', 'advanced', 'pro'];
+  const levels = [
+    'beginner',
+    'beginner',
+    'intermediate',
+    'intermediate',
+    'intermediate',
+    'advanced',
+    'advanced',
+    'pro',
+  ];
   return levels[Math.floor(Math.random() * levels.length)];
 }
 
 function randomExperience(level: string): number {
   switch (level) {
-    case 'beginner': return Math.floor(Math.random() * 6) + 1; // 1-6 Monate
-    case 'intermediate': return Math.floor(Math.random() * 24) + 12; // 12-36 Monate
-    case 'advanced': return Math.floor(Math.random() * 36) + 36; // 36-72 Monate
-    case 'pro': return Math.floor(Math.random() * 60) + 60; // 60-120 Monate
-    default: return 12;
+    case 'beginner':
+      return Math.floor(Math.random() * 6) + 1; // 1-6 Monate
+    case 'intermediate':
+      return Math.floor(Math.random() * 24) + 12; // 12-36 Monate
+    case 'advanced':
+      return Math.floor(Math.random() * 36) + 36; // 36-72 Monate
+    case 'pro':
+      return Math.floor(Math.random() * 60) + 60; // 60-120 Monate
+    default:
+      return 12;
   }
 }
 
@@ -72,18 +222,26 @@ function getAvailabilityDays(): number[] {
   return selected;
 }
 
-function generateAvailability(days: number[]): Record<string, Array<{ start: string; end: string }>> {
+function generateAvailability(
+  days: number[]
+): Record<string, Array<{ start: string; end: string }>> {
   const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   const timeSlots = [
     { start: '15:00', end: '17:00' },
     { start: '17:00', end: '19:00' },
     { start: '19:00', end: '21:00' },
   ];
-  
+
   const availability: Record<string, Array<{ start: string; end: string }>> = {
-    monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+    sunday: [],
   };
-  
+
   for (const day of days) {
     const dayName = dayNames[day - 1];
     // Pick 1-2 time slots for this day
@@ -91,13 +249,13 @@ function generateAvailability(days: number[]): Record<string, Array<{ start: str
     const shuffledSlots = [...timeSlots].sort(() => Math.random() - 0.5);
     availability[dayName] = shuffledSlots.slice(0, slotCount);
   }
-  
+
   return availability;
 }
 
 async function seed() {
   console.log('🚀 Starte Seed für Squash Club Munich...\n');
-  
+
   const supabase = createServiceClient();
 
   // ─── Schritt 1: Bestehende Daten prüfen ─────────────────────────
@@ -105,17 +263,17 @@ async function seed() {
     .from('user_club_memberships')
     .select('user_id')
     .eq('club_id', CLUB_ID);
-  
-  const existingUserIds = (existingMembers || []).map(m => m.user_id);
+
+  const existingUserIds = (existingMembers || []).map((m) => m.user_id);
   console.log(`📊 Bestehende Mitglieder: ${existingUserIds.length}`);
-  
+
   // ─── Schritt 2: Trainer anlegen (in trainers + users) ───────────
   const trainerUserIds: string[] = [];
   const trainerIds: string[] = [];
 
   for (const trainer of TRAINERS) {
     const email = `trainer.${trainer.firstName.toLowerCase()}.${trainer.lastName.toLowerCase()}@swingz.com`;
-    
+
     // Create user
     const { data: newUser, error: userErr } = await supabase
       .from('users')
@@ -132,7 +290,11 @@ async function seed() {
 
     if (userErr && !userErr.message.includes('duplicate') && !userErr.message.includes('exists')) {
       // Check if already exists
-      const { data: existing } = await supabase.from('users').select('id').eq('email', email).maybeSingle();
+      const { data: existing } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
       if (existing) {
         trainerUserIds.push(existing.id);
         console.log(`  ⚠️ Trainer ${email} existiert bereits`);
@@ -150,7 +312,7 @@ async function seed() {
   for (let i = 0; i < TRAINERS.length; i++) {
     const trainer = TRAINERS[i];
     const email = `trainer.${trainer.firstName.toLowerCase()}.${trainer.lastName.toLowerCase()}@swingz.com`;
-    
+
     const { data: newTrainer, error: tErr } = await supabase
       .from('trainers')
       .insert({
@@ -165,7 +327,11 @@ async function seed() {
 
     if (tErr) {
       if (tErr.message.includes('duplicate')) {
-        const { data: existing } = await supabase.from('trainers').select('id').eq('email', email).single();
+        const { data: existing } = await supabase
+          .from('trainers')
+          .select('id')
+          .eq('email', email)
+          .single();
         if (existing) trainerIds.push(existing.id);
         continue;
       }
@@ -198,7 +364,7 @@ async function seed() {
       .select('id')
       .match({ user_id: uId, club_id: CLUB_ID })
       .maybeSingle();
-    
+
     if (!existingMembership) {
       await supabase.from('user_club_memberships').insert({
         user_id: uId,
@@ -216,8 +382,8 @@ async function seed() {
   // ─── Schritt 3: 75 Mitglieder anlegen ───────────────────────────
   const allNames: Array<{ first: string; last: string }> = [];
   const namePool = [
-    ...FIRST_NAMES_MALE.map(n => ({ first: n, gender: 'M' as const })),
-    ...FIRST_NAMES_FEMALE.map(n => ({ first: n, gender: 'F' as const })),
+    ...FIRST_NAMES_MALE.map((n) => ({ first: n, gender: 'M' as const })),
+    ...FIRST_NAMES_FEMALE.map((n) => ({ first: n, gender: 'F' as const })),
   ];
 
   for (let i = 0; i < 75; i++) {
@@ -227,8 +393,8 @@ async function seed() {
   }
 
   // Remove duplicates
-  const uniqueNames = allNames.filter((n, idx, self) => 
-    idx === self.findIndex(s => s.first === n.first && s.last === n.last)
+  const uniqueNames = allNames.filter(
+    (n, idx, self) => idx === self.findIndex((s) => s.first === n.first && s.last === n.last)
   );
 
   // Fill up to 75
@@ -236,7 +402,7 @@ async function seed() {
     const entry = namePool[Math.floor(Math.random() * namePool.length)];
     const lastName = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
     const candidate = { first: entry.first, last: lastName };
-    if (!uniqueNames.find(n => n.first === candidate.first && n.last === candidate.last)) {
+    if (!uniqueNames.find((n) => n.first === candidate.first && n.last === candidate.last)) {
       uniqueNames.push(candidate);
     }
   }
@@ -268,11 +434,15 @@ async function seed() {
 
     if (!newUser) {
       // Try to find existing
-      const { data: existing } = await supabase.from('users').select('id, full_name').eq('email', email).maybeSingle();
+      const { data: existing } = await supabase
+        .from('users')
+        .select('id, full_name')
+        .eq('email', email)
+        .maybeSingle();
       if (existing) {
         memberUserIds.push(existing.id);
-        memberNames.push({ 
-          id: existing.id, 
+        memberNames.push({
+          id: existing.id,
           name: existing.full_name || `${name.first} ${name.last}`,
           level,
           experience,
@@ -283,8 +453,8 @@ async function seed() {
 
     if (newUser) {
       memberUserIds.push(newUser.id);
-      memberNames.push({ 
-        id: newUser.id, 
+      memberNames.push({
+        id: newUser.id,
         name: `${name.first} ${name.last}`,
         level,
         experience,
@@ -296,10 +466,10 @@ async function seed() {
 
   console.log(`\n✅ ${memberUserIds.length} Mitglieder in users-Tabelle angelegt`);
   console.log(`   Level-Verteilung:`, {
-    beginner: memberNames.filter(m => m.level === 'beginner').length,
-    intermediate: memberNames.filter(m => m.level === 'intermediate').length,
-    advanced: memberNames.filter(m => m.level === 'advanced').length,
-    pro: memberNames.filter(m => m.level === 'pro').length,
+    beginner: memberNames.filter((m) => m.level === 'beginner').length,
+    intermediate: memberNames.filter((m) => m.level === 'intermediate').length,
+    advanced: memberNames.filter((m) => m.level === 'advanced').length,
+    pro: memberNames.filter((m) => m.level === 'pro').length,
   });
 
   // ─── Schritt 4: Mitglieder in user_club_memberships verknüpfen ──
@@ -342,7 +512,7 @@ async function seed() {
     const member = memberNames[i];
     const days = getAvailabilityDays();
     const availability = generateAvailability(days);
-    
+
     // Some members have wish partners
     const wishPartners: string[] = [];
     if (Math.random() > 0.6) {
@@ -355,17 +525,20 @@ async function seed() {
       }
     }
 
-    const { error: pErr } = await supabase.from('user_training_preferences').insert({
-      season_id: SEASON_ID,
-      user_id: member.id,
-      club_id: CLUB_ID,
-      user_role: 'member',
-      preferred_level: member.level,
-      weekly_availability: availability,
-      is_submitted: true,
-      submitted_at: new Date().toISOString(),
-      priority: Math.floor(Math.random() * 5) + 3, // 3-7
-    }).maybeSingle();
+    const { error: pErr } = await supabase
+      .from('user_training_preferences')
+      .insert({
+        season_id: SEASON_ID,
+        user_id: member.id,
+        club_id: CLUB_ID,
+        user_role: 'member',
+        preferred_level: member.level,
+        weekly_availability: availability,
+        is_submitted: true,
+        submitted_at: new Date().toISOString(),
+        priority: Math.floor(Math.random() * 5) + 3, // 3-7
+      })
+      .maybeSingle();
 
     if (pErr && !pErr.message.includes('duplicate')) {
       if (i % 20 === 0) console.error(`  ❌ Prefs error at ${i}:`, pErr.message.substring(0, 100));
@@ -389,19 +562,22 @@ async function seed() {
       sunday: [],
     };
 
-    const { error: pErr } = await supabase.from('user_training_preferences').insert({
-      season_id: SEASON_ID,
-      user_id: trainerId,
-      club_id: CLUB_ID,
-      user_role: 'trainer',
-      preferred_level: 'advanced',
-      weekly_availability: availability,
-      max_sessions_per_week: 15,
-      can_teach_groups: trainer.specialties,
-      is_submitted: true,
-      submitted_at: new Date().toISOString(),
-      priority: 10,
-    }).maybeSingle();
+    const { error: pErr } = await supabase
+      .from('user_training_preferences')
+      .insert({
+        season_id: SEASON_ID,
+        user_id: trainerId,
+        club_id: CLUB_ID,
+        user_role: 'trainer',
+        preferred_level: 'advanced',
+        weekly_availability: availability,
+        max_sessions_per_week: 15,
+        can_teach_groups: trainer.specialties,
+        is_submitted: true,
+        submitted_at: new Date().toISOString(),
+        priority: 10,
+      })
+      .maybeSingle();
 
     if (pErr && !pErr.message.includes('duplicate')) {
       console.error(`  ❌ Trainer Prefs error:`, pErr.message.substring(0, 100));
@@ -420,7 +596,7 @@ async function seed() {
 
   // ─── Schritt 9: Admin Member auswählen (alle aktiven Mitglieder) ─
   const allMemberIds = [...memberUserIds, ...trainerUserIds];
-  
+
   // Set include_in_planning for members
   for (const uid of allMemberIds) {
     await supabase

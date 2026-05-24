@@ -20,7 +20,10 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Invoice, InvoiceItem, GenerateSeasonInvoiceParams } from '@/lib/types/billing.types';
 
-export async function generateInvoiceNumber(supabase: Awaited<ReturnType<typeof createClient>>, clubId: string): Promise<string> {
+export async function generateInvoiceNumber(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  clubId: string
+): Promise<string> {
   const { data, error } = await supabase.rpc('generate_invoice_number', { p_club_id: clubId });
   if (error) throw new Error(`Failed to generate invoice number: ${error.message}`);
   return data as string;
@@ -38,7 +41,11 @@ export async function createAdhocInvoice(params: {
   const invoice_number = await generateInvoiceNumber(supabase, params.club_id);
   const subtotal = params.items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
 
-  const { data: club } = await supabase.from('clubs').select('tax_rate').eq('id', params.club_id).single();
+  const { data: club } = await supabase
+    .from('clubs')
+    .select('tax_rate')
+    .eq('id', params.club_id)
+    .single();
   const taxRate = (club as any)?.tax_rate ?? 0;
   const tax_amount = subtotal * (taxRate / 100);
   const total_amount = subtotal + tax_amount;
@@ -64,7 +71,7 @@ export async function createAdhocInvoice(params: {
     .single();
   if (invError) throw new Error(`Failed to create invoice: ${invError.message}`);
 
-  const items = params.items.map(i => ({
+  const items = params.items.map((i) => ({
     invoice_id: (invoice as any).id,
     description: i.description,
     quantity: i.quantity,
@@ -98,7 +105,11 @@ export async function createMembershipInvoice(params: {
 }): Promise<Invoice> {
   const supabase = await createClient();
   const invoice_number = await generateInvoiceNumber(supabase, params.club_id);
-  const { data: club } = await supabase.from('clubs').select('tax_rate').eq('id', params.club_id).single();
+  const { data: club } = await supabase
+    .from('clubs')
+    .select('tax_rate')
+    .eq('id', params.club_id)
+    .single();
   const taxRate = (club as any)?.tax_rate ?? 0;
   const tax_amount = params.amount * (taxRate / 100);
 
@@ -138,7 +149,9 @@ import { createClient } from '@/lib/supabase/server';
 import type { GroupChangeParams, GroupChangeCreditResult } from '@/lib/types/billing.types';
 import { getOrCreateMemberBalance, addBalanceEntry } from './member-balance.service';
 
-export async function processGroupChange(params: GroupChangeParams): Promise<GroupChangeCreditResult> {
+export async function processGroupChange(
+  params: GroupChangeParams
+): Promise<GroupChangeCreditResult> {
   const supabase = await createClient();
 
   const { data: oldSessions } = await supabase

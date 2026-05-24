@@ -80,6 +80,7 @@ export default function FeedbackForm({
       )}
 
       <div className="space-y-2">
+        {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
         <label className="block text-sm font-medium text-gray-700">Your Rating *</label>
         <StarRating rating={rating} onRatingChange={setRating} size="lg" />
       </div>

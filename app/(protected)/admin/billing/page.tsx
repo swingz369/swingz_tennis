@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { Subscription, Invoice } from './billing-client';
 
 const BillingClient = dynamicImport(() => import('./billing-client'), {
-  loading: () => <Skeleton className="h-96 w-full rounded-xl" />
+  loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
 });
 
 // Force dynamic rendering since we use cookies

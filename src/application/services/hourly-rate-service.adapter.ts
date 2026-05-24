@@ -27,7 +27,6 @@ import {
   RateHistoryRepository,
 } from '@/infrastructure/persistence/repositories/hourly-rate.repository';
 
-
 class HourlyRateServiceAdapter {
   private tierRepo = new HourlyRateTierRepository();
   private trainerRateRepo = new TrainerHourlyRateRepository();
@@ -108,9 +107,7 @@ class HourlyRateServiceAdapter {
     return this.trainerRateRepo.findById(id);
   }
 
-  async getTrainerHourlyRateByTrainerId(
-    trainerId: string
-  ): Promise<TrainerHourlyRate | null> {
+  async getTrainerHourlyRateByTrainerId(trainerId: string): Promise<TrainerHourlyRate | null> {
     return this.trainerRateRepo.findByTrainerId(trainerId);
   }
 

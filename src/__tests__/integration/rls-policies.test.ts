@@ -34,7 +34,9 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
       .select()
       .single();
     if (!club || clubError) {
-      throw new Error(`Failed to create test club: ${clubError?.message ?? 'null returned'}. Run drizzle migrations first.`);
+      throw new Error(
+        `Failed to create test club: ${clubError?.message ?? 'null returned'}. Run drizzle migrations first.`
+      );
     }
     testClubId = club.id;
 
@@ -314,8 +316,8 @@ describeIntegration('RLS Policy Tests for Phase 2 Services', () => {
           trainer_name: 'Test Trainer',
           start_date: '2026-07-01',
           end_date: '2026-07-03',
-        type: 'sick',
-        reason: 'Test sick leave',
+          type: 'sick',
+          reason: 'Test sick leave',
           status: 'pending',
         })
         .select()

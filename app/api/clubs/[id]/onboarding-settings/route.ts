@@ -22,10 +22,7 @@ const TYPE_MAP: Record<string, string> = {
   email_from_address: 'string',
 };
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const isAdmin = await verifyRole(auth, 'admin');
     if (!isAdmin) return forbiddenResponse('Admin access required');

@@ -65,7 +65,8 @@ describe('TrialTrainingService — Statistics with 25 Mock Entries', () => {
     it('total equals sum of all statuses', async () => {
       const stats = await TrialTrainingService.getTrialTrainingStats();
 
-      const sum = stats.scheduled + stats.completed + stats.noShow + stats.cancelled + stats.converted;
+      const sum =
+        stats.scheduled + stats.completed + stats.noShow + stats.cancelled + stats.converted;
       expect(sum).toBe(stats.total);
     });
   });
@@ -119,8 +120,8 @@ describe('TrialTrainingService — Statistics with 25 Mock Entries', () => {
       const results = await TrialTrainingService.searchTrialTrainings('Max');
 
       expect(results.length).toBeGreaterThan(0);
-      const names = results.map(r => `${r.participant.firstName} ${r.participant.lastName}`);
-      expect(names.some(n => n.includes('Max'))).toBe(true);
+      const names = results.map((r) => `${r.participant.firstName} ${r.participant.lastName}`);
+      expect(names.some((n) => n.includes('Max'))).toBe(true);
     });
 
     it('finds trial trainings by participant email', async () => {
@@ -153,21 +154,21 @@ describe('TrialTrainingService — Statistics with 25 Mock Entries', () => {
       const scheduled = await TrialTrainingService.getTrialTrainingsByStatus('scheduled');
 
       expect(scheduled.length).toBe(8);
-      scheduled.forEach(t => expect(t.status).toBe('scheduled'));
+      scheduled.forEach((t) => expect(t.status).toBe('scheduled'));
     });
 
     it('filters correctly for completed status', async () => {
       const completed = await TrialTrainingService.getTrialTrainingsByStatus('completed');
 
       expect(completed.length).toBe(9);
-      completed.forEach(t => expect(t.status).toBe('completed'));
+      completed.forEach((t) => expect(t.status).toBe('completed'));
     });
 
     it('filters correctly for converted status', async () => {
       const converted = await TrialTrainingService.getTrialTrainingsByStatus('converted');
 
       expect(converted.length).toBe(4);
-      converted.forEach(t => expect(t.status).toBe('converted'));
+      converted.forEach((t) => expect(t.status).toBe('converted'));
     });
   });
 
@@ -175,9 +176,8 @@ describe('TrialTrainingService — Statistics with 25 Mock Entries', () => {
 
   describe('getTrialTrainingsByParticipantEmail()', () => {
     it('finds trials by email case-insensitively', async () => {
-      const results = await TrialTrainingService.getTrialTrainingsByParticipantEmail(
-        'Sabine.Wolf@example.com'
-      );
+      const results =
+        await TrialTrainingService.getTrialTrainingsByParticipantEmail('Sabine.Wolf@example.com');
 
       expect(results.length).toBe(1);
       expect(results[0].participant.firstName).toBe('Sabine');

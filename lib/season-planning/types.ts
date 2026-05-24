@@ -7,11 +7,7 @@ import type {
   seasonStatistics,
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
-import type {
-  SkillLevel,
-  DayOfWeek,
-  WeeklyAvailability,
-} from '@/lib/types/season-planning';
+import type { SkillLevel, DayOfWeek, WeeklyAvailability } from '@/lib/types/season-planning';
 
 // ============================================
 // NEW DB TABLE TYPES

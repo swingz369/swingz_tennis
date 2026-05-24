@@ -13,6 +13,7 @@
 ## Task 10: Step 5 — Veröffentlichen
 
 **Files:**
+
 - Create: `app/(protected)/admin/seasons/[id]/wizard/publish/page.tsx`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/publish/publish-button.tsx`
 
@@ -167,27 +168,30 @@ git commit -m "feat: wizard step 5 — Veröffentlichen"
 ## Task 11: Unit Tests
 
 **Files:**
+
 - Create: `tests/unit/billing-calculation.test.ts`
 
 - [ ] **Step 1: Write test**
 
 ```typescript
 // tests/unit/billing-calculation.test.ts
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vitest';
 
 function calcPreview(entries: any[], feeConfigs: any[]) {
-  return entries.map(entry => {
-    const fee = feeConfigs.find(f => {
-      if (!f.conditions) return true
-      if (f.conditions.trainingGroup && f.conditions.trainingGroup !== entry.group_id) return false
-      return true
-    }) ?? null
+  return entries.map((entry) => {
+    const fee =
+      feeConfigs.find((f) => {
+        if (!f.conditions) return true;
+        if (f.conditions.trainingGroup && f.conditions.trainingGroup !== entry.group_id)
+          return false;
+        return true;
+      }) ?? null;
     return {
       memberId: entry.member_id,
       amount: fee?.amount ?? 0,
       installments: fee?.billing_cycle === 'installment' ? (fee.installment_count ?? 1) : 1,
-    }
-  })
+    };
+  });
 }
 
 describe('billing preview calculation', () => {
@@ -195,35 +199,35 @@ describe('billing preview calculation', () => {
     const result = calcPreview(
       [{ member_id: 'm1', group_id: 'g1' }],
       [{ amount: 120, billing_cycle: 'season', conditions: { trainingGroup: 'g1' } }]
-    )
-    expect(result[0].amount).toBe(120)
-    expect(result[0].installments).toBe(1)
-  })
+    );
+    expect(result[0].amount).toBe(120);
+    expect(result[0].installments).toBe(1);
+  });
 
   it('returns 0 when no config matches', () => {
     const result = calcPreview(
       [{ member_id: 'm1', group_id: 'g2' }],
       [{ amount: 120, billing_cycle: 'season', conditions: { trainingGroup: 'g1' } }]
-    )
-    expect(result[0].amount).toBe(0)
-  })
+    );
+    expect(result[0].amount).toBe(0);
+  });
 
   it('sets installments from installment_count', () => {
     const result = calcPreview(
       [{ member_id: 'm1', group_id: 'g1' }],
       [{ amount: 300, billing_cycle: 'installment', installment_count: 3, conditions: null }]
-    )
-    expect(result[0].installments).toBe(3)
-  })
+    );
+    expect(result[0].installments).toBe(3);
+  });
 
   it('uses global fee config when conditions null', () => {
     const result = calcPreview(
       [{ member_id: 'm1', group_id: 'any' }],
       [{ amount: 80, billing_cycle: 'season', conditions: null }]
-    )
-    expect(result[0].amount).toBe(80)
-  })
-})
+    );
+    expect(result[0].amount).toBe(80);
+  });
+});
 ```
 
 - [ ] **Step 2: Run all unit tests**
@@ -231,6 +235,7 @@ describe('billing preview calculation', () => {
 ```bash
 npx vitest run tests/unit/wizard-stepper.test.ts tests/unit/billing-calculation.test.ts
 ```
+
 Expected: all PASS
 
 - [ ] **Step 3: Type check**
@@ -238,6 +243,7 @@ Expected: all PASS
 ```bash
 npx tsc --noEmit
 ```
+
 Expected: no errors. Fix any type errors before proceeding.
 
 - [ ] **Step 4: Commit + PR**
@@ -248,6 +254,7 @@ git commit -m "test: billing preview calculation unit tests"
 ```
 
 Open PR from `worktree-season-planning-wizard-spec` → `main`:
+
 ```bash
 gh pr create --title "feat: season planning wizard (5-step)" --body "$(cat <<'EOF'
 ## Summary

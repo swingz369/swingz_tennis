@@ -2,7 +2,15 @@ import { requireAuth } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, ShieldAlert, UserCheck, Settings, LogIn, LogOut, AlertTriangle } from 'lucide-react';
+import {
+  Clock,
+  ShieldAlert,
+  UserCheck,
+  Settings,
+  LogIn,
+  LogOut,
+  AlertTriangle,
+} from 'lucide-react';
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 
@@ -123,7 +131,7 @@ export default async function AuditLogsPage() {
                           {String(log.action)}
                         </Badge>
                       </div>
-                      {(log.metadata != null && typeof log.metadata === 'object') && (
+                      {log.metadata != null && typeof log.metadata === 'object' && (
                         <p className="text-xs text-muted-foreground/70 mt-1 font-mono truncate">
                           {JSON.stringify(log.metadata)}
                         </p>

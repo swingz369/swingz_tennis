@@ -7,15 +7,7 @@ import { MemberSelector } from './member-selector';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Settings,
-  Users,
-  Gauge,
-  AlertTriangle,
-  CheckCircle,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+import { Settings, Users, Gauge, AlertTriangle, CheckCircle, Sparkles, Zap } from 'lucide-react';
 
 export function ConfigStep() {
   const { state, dispatch } = useWizard();
@@ -45,9 +37,7 @@ export function ConfigStep() {
             <Settings className="h-4 w-4 text-brand-primary" />
             Planungseinstellungen
           </CardTitle>
-          <CardDescription>
-            Diese Einstellungen steuern den Clustering-Algorithmus
-          </CardDescription>
+          <CardDescription>Diese Einstellungen steuern den Clustering-Algorithmus</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
@@ -80,7 +70,9 @@ export function ConfigStep() {
                 min={50}
                 max={100}
                 value={config.trainerUtilizationMaxPct}
-                onChange={(e) => handleConfigChange('trainerUtilizationMaxPct', Number(e.target.value))}
+                onChange={(e) =>
+                  handleConfigChange('trainerUtilizationMaxPct', Number(e.target.value))
+                }
                 className="h-9"
               />
             </div>
@@ -91,18 +83,24 @@ export function ConfigStep() {
                 min={1}
                 max={4}
                 value={config.maxNiveauSpanBeginner}
-                onChange={(e) => handleConfigChange('maxNiveauSpanBeginner', Number(e.target.value))}
+                onChange={(e) =>
+                  handleConfigChange('maxNiveauSpanBeginner', Number(e.target.value))
+                }
                 className="h-9"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Max. Niveau-Spanne (Fortgeschritten)</Label>
+              <Label className="text-xs text-muted-foreground">
+                Max. Niveau-Spanne (Fortgeschritten)
+              </Label>
               <Input
                 type="number"
                 min={1}
                 max={4}
                 value={config.maxNiveauSpanAdvanced}
-                onChange={(e) => handleConfigChange('maxNiveauSpanAdvanced', Number(e.target.value))}
+                onChange={(e) =>
+                  handleConfigChange('maxNiveauSpanAdvanced', Number(e.target.value))
+                }
                 className="h-9"
               />
             </div>
@@ -227,7 +225,10 @@ export function ConfigStep() {
                   onChange={(e) => handleConfigChange('useAI', e.target.checked)}
                   className="rounded border-gray-300"
                 />
-                <label htmlFor="use-ai" className="text-sm cursor-pointer flex items-center gap-1.5">
+                <label
+                  htmlFor="use-ai"
+                  className="text-sm cursor-pointer flex items-center gap-1.5"
+                >
                   <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                   KI-Optimierung (OpenAI)
                 </label>
@@ -249,7 +250,9 @@ export function ConfigStep() {
                   type="checkbox"
                   id="prefer-consistent"
                   checked={config.preferConsistentTimeslots}
-                  onChange={(e) => handleConfigChange('preferConsistentTimeslots', e.target.checked)}
+                  onChange={(e) =>
+                    handleConfigChange('preferConsistentTimeslots', e.target.checked)
+                  }
                   className="rounded border-gray-300"
                 />
                 <label htmlFor="prefer-consistent" className="text-sm cursor-pointer">
@@ -298,7 +301,9 @@ export function ConfigStep() {
               )}
               <p className="text-xs text-muted-foreground">Bereitschaft</p>
             </div>
-            <p className={`text-xl font-bold mt-1              ${state.isReady ? 'text-green-600' : 'text-amber-600'}`}>
+            <p
+              className={`text-xl font-bold mt-1              ${state.isReady ? 'text-green-600' : 'text-amber-600'}`}
+            >
               {state.isReady ? 'Bereit' : 'Prüfen'}
             </p>
           </CardContent>

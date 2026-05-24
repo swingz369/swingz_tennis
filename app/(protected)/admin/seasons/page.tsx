@@ -33,7 +33,7 @@ export default async function SeasonsPage() {
     if (!clubId) redirect('/select-admin-club');
   } else {
     const adminMembership = memberships.find((m: any) => m.role === 'admin');
-    clubId = adminMembership?.club_id!;
+    clubId = adminMembership?.club_id ?? '';
     if (!clubId) redirect('/member');
   }
 

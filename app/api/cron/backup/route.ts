@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createServiceClient();
 
-      const backupTables = getBackupTables();
+    const backupTables = getBackupTables();
     log.info(`Backing up ${backupTables.length} tables`);
 
     const backupData: Record<string, unknown[]> = {};
@@ -187,7 +187,7 @@ export async function GET(request: NextRequest) {
       log.error('Failed to upload backup to storage', { error: uploadError });
       return NextResponse.json(
         { error: 'Backup upload failed', details: uploadError.message },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -209,10 +209,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error('Backup cron failed', { error: message });
-    return NextResponse.json(
-      { error: 'Backup failed', details: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Backup failed', details: message }, { status: 500 });
   }
 }
 
@@ -220,16 +217,12 @@ export async function GET(request: NextRequest) {
  * Remove backups older than MAX_BACKUPS days.
  * Keeps the most recent backups and removes older ones.
  */
-async function cleanupOldBackups(
-  supabase: ReturnType<typeof createServiceClient>,
-): Promise<void> {
+async function cleanupOldBackups(supabase: ReturnType<typeof createServiceClient>): Promise<void> {
   try {
-    const { data, error } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .list(BACKUP_PREFIX, {
-        limit: 200,
-        sortBy: { column: 'created_at', order: 'desc' },
-      });
+    const { data, error } = await supabase.storage.from(STORAGE_BUCKET).list(BACKUP_PREFIX, {
+      limit: 200,
+      sortBy: { column: 'created_at', order: 'desc' },
+    });
 
     if (error || !data) {
       log.warn('Failed to list backups for cleanup', { error });
@@ -239,17 +232,13 @@ async function cleanupOldBackups(
     const backupFiles = data
       .filter((f) => f.name.endsWith('.json'))
       .sort(
-        (a, b) =>
-          new Date(b.created_at ?? 0).getTime() -
-          new Date(a.created_at ?? 0).getTime(),
+        (a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
       );
 
     const toDelete = backupFiles.slice(MAX_BACKUPS);
     if (toDelete.length > 0) {
       const paths = toDelete.map((f) => `${BACKUP_PREFIX}/${f.name}`);
-      const { error: deleteError } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .remove(paths);
+      const { error: deleteError } = await supabase.storage.from(STORAGE_BUCKET).remove(paths);
 
       if (deleteError) {
         log.warn('Failed to delete old backups', { error: deleteError });

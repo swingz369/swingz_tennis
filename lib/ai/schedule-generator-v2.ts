@@ -73,8 +73,9 @@ Your task is to generate optimal weekly training schedules that maximize court u
 7. Place no more than 12 participants per session unless a court has higher capacity
 8. Distribute sessions evenly across available days
 9. Leave 15-minute gaps between sessions on the same court
+10. Never overload a trainer: max 40 hours per week per trainer
 
-**Output Format:** You MUST respond with a valid JSON object with this structure:
+**Output Format:** You MUST respond with a valid JSON object starting with '{' on the very first line — no markdown, no explanation outside JSON:
 {
   "sessions": [
     {
@@ -87,11 +88,11 @@ Your task is to generate optimal weekly training schedules that maximize court u
       "confidence": 0.95
     }
   ],
-  "reasoning": "Detailed explanation of your scheduling strategy and tradeoffs made",
-  "warnings": ["Any potential issues or suggestions for improvement"]
+  "reasoning": "Detailed explanation of your scheduling strategy and tradeoffs made (IN GERMAN)",
+  "warnings": ["Any potential issues or suggestions for improvement (IN GERMAN)"]
 }
 
-**Important:** Only output valid JSON. Do not include markdown code blocks or any text outside the JSON object.`;
+**Wichtig:** Antworte mit einem JSON-Objekt das mit '{' beginnt. "reasoning" und "warnings" MÜSSEN auf Deutsch sein. Kein Markdown, kein Text außerhalb des JSON.`;
 
 // =============================================================================
 // Cache for generated schedules (avoids redundant API calls)
@@ -316,7 +317,6 @@ export class AIScheduleServiceV2 {
     const { startDate, endDate, constraints } = input;
 
     const memberSummary = planningData.members
-      .slice(0, 30)
       .map(
         (m) => `- ${m.name} (${m.skillLevel}) — Available: ${m.availability.join(', ') || 'Any'}`
       )
@@ -344,7 +344,6 @@ export class AIScheduleServiceV2 {
 
 **Members (${planningData.members.length} total):**
 ${memberSummary}
-${planningData.members.length > 30 ? `... and ${planningData.members.length - 30} more members\n` : ''}
 
 **Trainers (${planningData.trainers.length} total):**
 ${trainerSummary}

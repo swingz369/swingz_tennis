@@ -180,9 +180,7 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
                     </SelectItem>
                   ))
                 ) : (
-                  <div className="px-2 py-4 text-sm text-gray-500">
-                    Keine Mitglieder gefunden
-                  </div>
+                  <div className="px-2 py-4 text-sm text-gray-500">Keine Mitglieder gefunden</div>
                 )}
               </SelectContent>
             </Select>

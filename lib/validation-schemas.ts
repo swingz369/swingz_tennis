@@ -5,12 +5,14 @@
  */
 
 import { z } from 'zod';
+import { IBAN_REGEX } from '@/lib/iban';
+import { formatZodErrors } from '@/lib/validation-helpers';
 
 // Common patterns
 const uuidSchema = z.string().uuid('Invalid UUID format');
 const emailSchema = z.string().email('Invalid email address');
 const phoneSchema = z.string().regex(/^\+?[\d\s\-()]{10,20}$/, 'Invalid phone number format');
-const ibanSchema = z.string().regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}$/, 'Invalid IBAN format');
+const ibanSchema = z.string().regex(IBAN_REGEX, 'Invalid IBAN format').min(5).max(34);
 const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (expected YYYY-MM-DD)');
@@ -182,12 +184,5 @@ export function validateQueryParams<T extends z.ZodType>(
   }
 }
 
-// Helper to format Zod errors for API responses
-export function formatValidationErrors(
-  error: z.ZodError
-): Array<{ field: string; message: string }> {
-  return error.errors.map((err) => ({
-    field: err.path.join('.'),
-    message: err.message,
-  }));
-}
+// Re-export for backward compatibility
+export { formatZodErrors as formatValidationErrors };

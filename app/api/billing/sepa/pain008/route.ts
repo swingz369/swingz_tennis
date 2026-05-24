@@ -105,16 +105,11 @@ export async function POST(_request: NextRequest) {
         );
       }
 
-      const { xml, fileName } = await billingEngine.generateSepaDirectDebit(
-        paymentIds,
-        config
-      );
+      const { xml, fileName } = await billingEngine.generateSepaDirectDebit(paymentIds, config);
 
       // Mark payments as processing to prevent double-export
       await Promise.allSettled(
-        validPayments.map((p) =>
-          billingEngine.updatePaymentStatus(p!.id, 'processing')
-        )
+        validPayments.map((p) => billingEngine.updatePaymentStatus(p!.id, 'processing'))
       );
 
       return new NextResponse(xml, {

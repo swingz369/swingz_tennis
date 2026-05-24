@@ -83,8 +83,11 @@ export default function SeasonPlanGrid({
   // Filter slots
   const filteredSlots = useMemo(() => {
     return slots.filter((slot) => {
-      if (search && !slot.group_name.toLowerCase().includes(search.toLowerCase()) &&
-          !slot.trainer_name.toLowerCase().includes(search.toLowerCase())) {
+      if (
+        search &&
+        !slot.group_name.toLowerCase().includes(search.toLowerCase()) &&
+        !slot.trainer_name.toLowerCase().includes(search.toLowerCase())
+      ) {
         return false;
       }
       if (filterGroup !== 'all' && slot.group_id !== filterGroup) return false;
@@ -131,9 +134,7 @@ export default function SeasonPlanGrid({
           <h2 className="text-xl font-bold text-gray-900">
             {seasonName ? `Stundenplan: ${seasonName}` : 'Wochenstundenplan'}
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {slots.length} geplante Einheiten
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">{slots.length} geplante Einheiten</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -179,7 +180,10 @@ export default function SeasonPlanGrid({
                   {groups.map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: g.color }} />
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: g.color }}
+                        />
                         {g.name}
                       </div>
                     </SelectItem>
@@ -193,7 +197,9 @@ export default function SeasonPlanGrid({
                 <SelectContent>
                   <SelectItem value="all">Alle Plätze</SelectItem>
                   {courts.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -204,7 +210,9 @@ export default function SeasonPlanGrid({
                 <SelectContent>
                   <SelectItem value="all">Alle Tage</SelectItem>
                   {DAY_NAMES.map((name, i) => (
-                    <SelectItem key={i} value={String(i)}>{name}</SelectItem>
+                    <SelectItem key={i} value={String(i)}>
+                      {name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -247,8 +255,9 @@ export default function SeasonPlanGrid({
                 ) : (
                   courts.map((court) =>
                     [0, 1, 2, 3, 4, 5, 6].map((day) => {
-                      const courtSlots = (slotsByCourt.get(court.id) || [])
-                        .filter((s) => s.day_of_week === day);
+                      const courtSlots = (slotsByCourt.get(court.id) || []).filter(
+                        (s) => s.day_of_week === day
+                      );
                       return (
                         <div
                           key={`${court.id}-${day}`}
@@ -319,6 +328,14 @@ export default function SeasonPlanGrid({
                           <div
                             key={slot.id}
                             className="flex items-center gap-4 py-3 hover:bg-gray-50 px-2 rounded-lg transition-colors cursor-pointer"
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                onSlotClick?.(slot);
+                              }
+                            }}
                             onClick={() => onSlotClick?.(slot)}
                           >
                             <div
@@ -330,12 +347,12 @@ export default function SeasonPlanGrid({
                                 <span className="font-semibold text-sm truncate">
                                   {slot.group_name}
                                 </span>
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] px-1.5 py-0 h-5"
-                                >
-                                  {slot.status === 'published' ? 'Veröffentlicht' :
-                                   slot.status === 'planned' ? 'Geplant' : slot.status}
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+                                  {slot.status === 'published'
+                                    ? 'Veröffentlicht'
+                                    : slot.status === 'planned'
+                                      ? 'Geplant'
+                                      : slot.status}
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
@@ -353,9 +370,7 @@ export default function SeasonPlanGrid({
                                     {slot.court_name}
                                   </span>
                                 )}
-                                <span className="text-gray-400">
-                                  {slot.member_count} TN
-                                </span>
+                                <span className="text-gray-400">{slot.member_count} TN</span>
                               </div>
                             </div>
                           </div>
@@ -376,13 +391,16 @@ export default function SeasonPlanGrid({
             <div className="flex flex-wrap gap-4">
               {groups.map((group) => (
                 <div key={group.id} className="flex items-center gap-2 text-xs">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: group.color }}
-                  />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: group.color }} />
                   <span className="text-gray-600">{group.name}</span>
                   <span className="text-gray-400">
-                    ({group.level}, {group.age_group === 'youth' ? 'Jugend' : group.age_group === 'adult' ? 'Erwachsene' : 'Senioren'})
+                    ({group.level},{' '}
+                    {group.age_group === 'youth'
+                      ? 'Jugend'
+                      : group.age_group === 'adult'
+                        ? 'Erwachsene'
+                        : 'Senioren'}
+                    )
                   </span>
                 </div>
               ))}

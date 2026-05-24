@@ -131,12 +131,7 @@ export class SeasonClusteringEngine {
     this.applyNiveauPromotions(members);
 
     // Step 3: Build candidate groups from historic patterns (Schritt 4b)
-    const candidateGroups = this.buildCandidateGroups(
-      members,
-      trainers,
-      groups,
-      historicGroups
-    );
+    const candidateGroups = this.buildCandidateGroups(members, trainers, groups, historicGroups);
 
     // Step 4: Run greedy clustering with hard + soft constraints
     const { assignments, unassigned } = await this.greedyCluster(
@@ -148,11 +143,7 @@ export class SeasonClusteringEngine {
     );
 
     // Step 5: Apply waitlist logic (Schritt 4d)
-    const waitlistResult = this.applyWaitlistLogic(
-      assignments,
-      members,
-      groups
-    );
+    const waitlistResult = this.applyWaitlistLogic(assignments, members, groups);
 
     // Step 6: Compute metrics
     const metrics = this.computeMetrics(
@@ -164,11 +155,7 @@ export class SeasonClusteringEngine {
     );
 
     // Step 7: Generate explanations
-    const explanations = this.generateExplanations(
-      assignments,
-      members,
-      trainers
-    );
+    const explanations = this.generateExplanations(assignments, members, trainers);
 
     const result: ClusteringResult = {
       groups: assignments,
@@ -216,11 +203,9 @@ export class SeasonClusteringEngine {
         groupMaxSize: dbConfig.group_max_size ?? DEFAULT_CONFIG.groupMaxSize,
         groupMinSize: dbConfig.group_min_size ?? DEFAULT_CONFIG.groupMinSize,
         provenGroupThreshold:
-          dbConfig.proven_group_attendance_threshold_pct ??
-          DEFAULT_CONFIG.provenGroupThreshold,
+          dbConfig.proven_group_attendance_threshold_pct ?? DEFAULT_CONFIG.provenGroupThreshold,
         slotFailureThreshold:
-          dbConfig.slot_failure_rate_threshold_pct ??
-          DEFAULT_CONFIG.slotFailureThreshold,
+          dbConfig.slot_failure_rate_threshold_pct ?? DEFAULT_CONFIG.slotFailureThreshold,
         waitlistPriorityRule:
           dbConfig.waitlist_priority_rule ?? DEFAULT_CONFIG.waitlistPriorityRule,
         preferHistoricGroups:
@@ -252,7 +237,10 @@ export class SeasonClusteringEngine {
 
     // Load trainer feedback from previous season
     const previousSeasonId = await this.getPreviousSeasonId();
-    const feedbackMap = new Map<string, { ready: boolean; level: SkillLevel | null; attendance: number | null }>();
+    const feedbackMap = new Map<
+      string,
+      { ready: boolean; level: SkillLevel | null; attendance: number | null }
+    >();
 
     if (previousSeasonId) {
       const feedback = await getDb()
@@ -357,10 +345,7 @@ export class SeasonClusteringEngine {
 
     const rates: Record<string, number> = {};
     for (const stat of stats) {
-      const slotRates = stat.slot_failure_rates as Record<
-        string,
-        { failure_rate: number }
-      > | null;
+      const slotRates = stat.slot_failure_rates as Record<string, { failure_rate: number }> | null;
       if (slotRates) {
         for (const [key, val] of Object.entries(slotRates)) {
           if (!rates[key] || val.failure_rate > rates[key]) {
@@ -398,16 +383,12 @@ export class SeasonClusteringEngine {
       }
     }
 
-    const result = new Map<
-      string,
-      { groupId: string; attendance: number; members: string[] }
-    >();
+    const result = new Map<string, { groupId: string; attendance: number; members: string[] }>();
 
     for (const entry of entries) {
       if (!entry.group_id) continue;
       const atts = groupAttendance.get(entry.group_id) || [];
-      const avgAttendance =
-        atts.length > 0 ? atts.reduce((a, b) => a + b, 0) / atts.length : 0;
+      const avgAttendance = atts.length > 0 ? atts.reduce((a, b) => a + b, 0) / atts.length : 0;
 
       if (avgAttendance >= this.config.provenGroupThreshold) {
         const key = `${entry.day_of_week}_${entry.start_time}`;
@@ -434,10 +415,7 @@ export class SeasonClusteringEngine {
       .select()
       .from(seasons)
       .where(
-        and(
-          eq(seasons.club_id, this.clubId),
-          eq(seasons.season_type, currentSeason.season_type)
-        )
+        and(eq(seasons.club_id, this.clubId), eq(seasons.season_type, currentSeason.season_type))
       )
       .orderBy(asc(seasons.year));
 
@@ -599,7 +577,12 @@ export class SeasonClusteringEngine {
               is_active: true,
               member_ids: [],
             })
-            .returning({ id: groups.id, name: groups.name, level: groups.level, age_group: groups.age_group });
+            .returning({
+              id: groups.id,
+              name: groups.name,
+              level: groups.level,
+              age_group: groups.age_group,
+            });
           group = {
             id: newGroup.id,
             name: newGroup.name,
@@ -708,9 +691,23 @@ export class SeasonClusteringEngine {
     courtTimeSlotUsage: Map<string, Set<string>>,
     slotFailureRates: Record<string, number>,
     existingAssignments: GroupAssignment[]
-  ): (TimeSlotInfo & { trainerId: string; trainerName: string; courtId: string | null; courtName: string | null }) | null {
+  ):
+    | (TimeSlotInfo & {
+        trainerId: string;
+        trainerName: string;
+        courtId: string | null;
+        courtName: string | null;
+      })
+    | null {
     let bestScore = -Infinity;
-    let bestResult: (TimeSlotInfo & { trainerId: string; trainerName: string; courtId: string | null; courtName: string | null }) | null = null;
+    let bestResult:
+      | (TimeSlotInfo & {
+          trainerId: string;
+          trainerName: string;
+          courtId: string | null;
+          courtName: string | null;
+        })
+      | null = null;
 
     for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
       const dayName = DAY_NAMES[dayOfWeek];
@@ -719,9 +716,7 @@ export class SeasonClusteringEngine {
         // HARD CONSTRAINT: Check member availability
         const availableMembers = members.filter((m) => {
           const daySlots = m.availability[dayName] || [];
-          return daySlots.some(
-            (slot) => slot.start <= timeSlot.start && slot.end >= timeSlot.end
-          );
+          return daySlots.some((slot) => slot.start <= timeSlot.start && slot.end >= timeSlot.end);
         });
 
         if (availableMembers.length < Math.max(1, this.config.groupMinSize)) continue;
@@ -758,7 +753,9 @@ export class SeasonClusteringEngine {
 
           // Score trainer: specialization match + availability match
           let score = 0;
-          const memberLevels = new Set(availableMembers.map((m) => m.promotedLevel || m.skillLevel));
+          const memberLevels = new Set(
+            availableMembers.map((m) => m.promotedLevel || m.skillLevel)
+          );
           for (const level of memberLevels) {
             if (trainer.specialties.includes(level)) score += 20;
           }
@@ -828,12 +825,7 @@ export class SeasonClusteringEngine {
     return bestResult;
   }
 
-  private timeSlotsOverlap(
-    start1: string,
-    end1: string,
-    start2: string,
-    end2: string
-  ): boolean {
+  private timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
     return start1 < end2 && start2 < end1;
   }
 
@@ -865,14 +857,14 @@ export class SeasonClusteringEngine {
           if (groupMembers.has(wpid)) continue; // already together
 
           // Find which group the wish partner is in
-          const partnerAssignment = assignments.find((a) =>
-            a.memberIds.includes(wpid)
-          );
+          const partnerAssignment = assignments.find((a) => a.memberIds.includes(wpid));
           if (!partnerAssignment) continue;
 
           // Check if there's space in partner's group
-          if (partnerAssignment.memberIds.length + partnerAssignment.waitlistIds.length >=
-              this.config.groupMaxSize) {
+          if (
+            partnerAssignment.memberIds.length + partnerAssignment.waitlistIds.length >=
+            this.config.groupMaxSize
+          ) {
             const position = partnerAssignment.waitlistIds.length + 1;
             partnerAssignment.waitlistIds.push(member.id);
             partnerAssignment.waitlistDetails.push({
@@ -918,31 +910,21 @@ export class SeasonClusteringEngine {
     const totalTrainers = new Set(assignments.map((a) => a.trainerId)).size;
 
     // Niveau match
-    const allMatches = assignments.flatMap((a) =>
-      a.memberDetails.map((d) => d.niveauMatch)
-    );
+    const allMatches = assignments.flatMap((a) => a.memberDetails.map((d) => d.niveauMatch));
     const avgNiveauMatch =
-      allMatches.length > 0
-        ? allMatches.reduce((a, b) => a + b, 0) / allMatches.length
-        : 0;
+      allMatches.length > 0 ? allMatches.reduce((a, b) => a + b, 0) / allMatches.length : 0;
     const niveauSpanViolations = assignments.filter((a) =>
       a.warnings.some((w) => w.includes('Niveau-Spanne'))
     ).length;
 
     // Wish partners
-    const wishPartnerRequests = members.reduce(
-      (sum, m) => sum + m.wishPartnerIds.length,
-      0
-    );
+    const wishPartnerRequests = members.reduce((sum, m) => sum + m.wishPartnerIds.length, 0);
     const wishPartnerFulfilled = assignments.reduce(
-      (sum, a) =>
-        sum + a.memberDetails.filter((d) => d.wishPartnerFulfilled).length,
+      (sum, a) => sum + a.memberDetails.filter((d) => d.wishPartnerFulfilled).length,
       0
     );
     const wishPartnerRate =
-      wishPartnerRequests > 0
-        ? (wishPartnerFulfilled / wishPartnerRequests) * 100
-        : 0;
+      wishPartnerRequests > 0 ? (wishPartnerFulfilled / wishPartnerRequests) * 100 : 0;
 
     // Trainer load
     const trainerLoads = assignments.reduce(
@@ -958,9 +940,7 @@ export class SeasonClusteringEngine {
       return (sessions / maxSess) * 100;
     });
     const avgTrainerUtilization =
-      trainerUtils.length > 0
-        ? trainerUtils.reduce((a, b) => a + b, 0) / trainerUtils.length
-        : 0;
+      trainerUtils.length > 0 ? trainerUtils.reduce((a, b) => a + b, 0) / trainerUtils.length : 0;
     const trainerOverloadWarnings = trainerUtils.filter(
       (u) => u > this.config.trainerUtilizationMaxPct
     ).length;
@@ -1063,9 +1043,7 @@ export class SeasonClusteringEngine {
       if (trainer) {
         const hours = count * 1.5;
         const max = trainer.maxHoursPerWeek * (trainer.utilizationPct / 100);
-        explanations.push(
-          `Trainer ${trainer.name}: ${count} Sessions (${hours}h von max ${max}h)`
-        );
+        explanations.push(`Trainer ${trainer.name}: ${count} Sessions (${hours}h von max ${max}h)`);
       }
     }
 
@@ -1087,14 +1065,10 @@ export class SeasonClusteringEngine {
     const db = getDb();
 
     // Delete existing plan entries for this season (re-planning)
-    await db
-      .delete(seasonPlanEntries)
-      .where(eq(seasonPlanEntries.season_id, this.seasonId));
+    await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, this.seasonId));
 
     // Delete existing waitlists
-    await db
-      .delete(seasonWaitlists)
-      .where(eq(seasonWaitlists.season_id, this.seasonId));
+    await db.delete(seasonWaitlists).where(eq(seasonWaitlists.season_id, this.seasonId));
 
     // Insert new plan entries
     const entriesToInsert = result.groups.map((g) => ({

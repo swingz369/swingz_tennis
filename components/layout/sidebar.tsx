@@ -343,7 +343,8 @@ export function Sidebar({
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
           : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:relative md:translate-x-0 md:shadow-none'
-      )}        role="navigation"
+      )}
+      role="navigation"
       aria-label="Seitennavigation"
       aria-hidden={isMobile === true && !open ? true : undefined}
     >
@@ -440,9 +441,7 @@ export function Sidebar({
               <AdminSection
                 label="Übersicht"
                 icon={Home}
-                subItems={[
-                  { name: 'Dashboard', href: '/admin' }
-                ]}
+                subItems={[{ name: 'Dashboard', href: '/admin' }]}
                 pathname={pathname}
                 onClose={onClose}
                 colors={colors}
@@ -519,8 +518,6 @@ export function Sidebar({
                 className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
-
-
 
               {/* Section 7 – SERVICE & KOMMUNIKATION */}
               <AdminSection
@@ -723,8 +720,15 @@ function AdminSection({
     focusable[nextIndex]?.focus();
   }, []);
 
+  /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
   return (
-    <div ref={sectionRef} className="space-y-0.5" onKeyDown={handleSectionKeyDown} role="group" aria-label={`${label} Bereich`}>
+    <div
+      ref={sectionRef}
+      className="space-y-0.5"
+      onKeyDown={handleSectionKeyDown}
+      role="group"
+      aria-label={`${label} Bereich`}
+    >
       {/* Section header / toggle */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
@@ -760,7 +764,10 @@ function AdminSection({
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         )}
       >
-        <div className="ml-2 pl-2 border-l border-gray-200/50 dark:border-white/[0.06] space-y-0.5 pb-0.5" role="list">
+        <div
+          className="ml-2 pl-2 border-l border-gray-200/50 dark:border-white/[0.06] space-y-0.5 pb-0.5"
+          role="list"
+        >
           {subItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -808,4 +815,5 @@ function AdminSection({
       </div>
     </div>
   );
+  /* eslint-enable jsx-a11y/no-noninteractive-element-interactions */
 }

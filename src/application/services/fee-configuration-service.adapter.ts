@@ -19,7 +19,6 @@ import type {
 import { FeeConfigurationService } from './fee-configuration.service';
 import { DrizzleFeeConfigurationRepository } from '@/infrastructure/persistence/repositories/fee-configuration.repository';
 
-
 class FeeConfigurationServiceAdapter {
   private feeConfigRepo = new DrizzleFeeConfigurationRepository();
 
@@ -66,7 +65,10 @@ class FeeConfigurationServiceAdapter {
   /**
    * Get active fee configurations
    */
-  async getActiveFeeConfigurations(clubId: string = '', date?: string): Promise<FeeConfiguration[]> {
+  async getActiveFeeConfigurations(
+    clubId: string = '',
+    date?: string
+  ): Promise<FeeConfiguration[]> {
     return this.feeConfigRepo.findActive(clubId, date);
   }
 
@@ -123,14 +125,20 @@ class FeeConfigurationServiceAdapter {
   /**
    * Deactivate fee configuration (soft delete)
    */
-  async deactivateFeeConfiguration(id: string, clubId: string = ''): Promise<FeeConfiguration | null> {
+  async deactivateFeeConfiguration(
+    id: string,
+    clubId: string = ''
+  ): Promise<FeeConfiguration | null> {
     return this.feeConfigRepo.deactivate(id, clubId);
   }
 
   /**
    * Activate fee configuration
    */
-  async activateFeeConfiguration(id: string, clubId: string = ''): Promise<FeeConfiguration | null> {
+  async activateFeeConfiguration(
+    id: string,
+    clubId: string = ''
+  ): Promise<FeeConfiguration | null> {
     return this.feeConfigRepo.activate(id, clubId);
   }
 }

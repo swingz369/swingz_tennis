@@ -80,4 +80,3 @@ export async function createBookingAction(
     return { success: false, error: 'Ein unerwarteter Fehler ist aufgetreten.' };
   }
 }
-

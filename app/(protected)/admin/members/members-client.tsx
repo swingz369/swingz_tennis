@@ -6,8 +6,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, UserCheck, UserX, Search, Download, UserPlus, CheckSquare, Square, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Eye,
+  UserCheck,
+  UserX,
+  Search,
+  Download,
+  UserPlus,
+  CheckSquare,
+  Square,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
 import { csrfHeaders } from '@/lib/csrf-client';
@@ -287,9 +304,15 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                     <td className="px-2 md:px-3 py-4 text-center">
                       {member.role === 'member' ? (
                         <button
-                          onClick={() => handleTogglePlanning(member.id, member.include_in_planning)}
+                          onClick={() =>
+                            handleTogglePlanning(member.id, member.include_in_planning)
+                          }
                           className="hover:scale-110 transition-transform"
-                          title={member.include_in_planning ? 'Von Planung ausschließen' : 'In Planung einbeziehen'}
+                          title={
+                            member.include_in_planning
+                              ? 'Von Planung ausschließen'
+                              : 'In Planung einbeziehen'
+                          }
                         >
                           {member.include_in_planning !== false ? (
                             <CheckSquare className="h-4 w-4 text-green-600" />
@@ -368,62 +391,65 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
 
       {/* Pagination */}
       {filteredMembers.length > 0 && (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <span>Zeige</span>
-          <Select
-            value={String(pageSize)}
-            onValueChange={(v) => {
-              setPageSize(Number(v));
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[80px] h-8">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-          <span>von {filteredMembers.length}</span>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span>Zeige</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                setPageSize(Number(v));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[80px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>von {filteredMembers.length}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={safePage <= 1}
+              aria-label="Vorherige Seite"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="px-3 text-sm text-gray-600 dark:text-gray-400 min-w-[80px] text-center">
+              Seite {safePage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={safePage >= totalPages}
+              aria-label="Nächste Seite"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={safePage <= 1}
-            aria-label="Vorherige Seite"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="px-3 text-sm text-gray-600 dark:text-gray-400 min-w-[80px] text-center">
-            Seite {safePage} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={safePage >= totalPages}
-            aria-label="Nächste Seite"
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
       )}
 
       {/* Stats */}
       <div className="text-sm text-gray-500 dark:text-gray-400">
         {filteredMembers.length > 0
           ? `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, filteredMembers.length)} von ${filteredMembers.length}`
-          : `0 von ${members.length}`} Mitgliedern
+          : `0 von ${members.length}`}{' '}
+        Mitgliedern
         {(() => {
-          const planned = members.filter((m) => m.include_in_planning !== false && m.role === 'member').length;
+          const planned = members.filter(
+            (m) => m.include_in_planning !== false && m.role === 'member'
+          ).length;
           return planned > 0 ? ` · ${planned} für Saisonplanung` : '';
         })()}
       </div>

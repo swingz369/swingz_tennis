@@ -71,19 +71,23 @@ export function ChurnRiskPanel() {
     fetchData();
   }, [fetchData]);
 
-  const filteredMembers = data?.atRisk.filter((m) => {
-    if (riskFilter === 'all') return true;
-    return m.riskLevel === riskFilter;
-  }) ?? [];
+  const filteredMembers =
+    data?.atRisk.filter((m) => {
+      if (riskFilter === 'all') return true;
+      return m.riskLevel === riskFilter;
+    }) ?? [];
 
   const highCount = data?.atRisk.filter((m) => m.riskLevel === 'high').length ?? 0;
   const mediumCount = data?.atRisk.filter((m) => m.riskLevel === 'medium').length ?? 0;
 
   const riskColor = (level: string) => {
     switch (level) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-amber-600 bg-amber-50 border-amber-200';
-      default: return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'high':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'medium':
+        return 'text-amber-600 bg-amber-50 border-amber-200';
+      default:
+        return 'text-blue-600 bg-blue-50 border-blue-200';
     }
   };
 
@@ -91,9 +95,15 @@ export function ChurnRiskPanel() {
     if (!trends) return null;
     return (
       <>
-        {trends.attendanceDecline && <CalendarX className="h-3.5 w-3.5 text-red-500" aria-label="Keine Anwesenheit" />}
-        {trends.bookingDecline && <TrendingDown className="h-3.5 w-3.5 text-amber-500" aria-label="Buchungsrückgang" />}
-        {trends.hasOverdueInvoices && <DollarSign className="h-3.5 w-3.5 text-orange-500" aria-label="Offene Rechnungen" />}
+        {trends.attendanceDecline && (
+          <CalendarX className="h-3.5 w-3.5 text-red-500" aria-label="Keine Anwesenheit" />
+        )}
+        {trends.bookingDecline && (
+          <TrendingDown className="h-3.5 w-3.5 text-amber-500" aria-label="Buchungsrückgang" />
+        )}
+        {trends.hasOverdueInvoices && (
+          <DollarSign className="h-3.5 w-3.5 text-orange-500" aria-label="Offene Rechnungen" />
+        )}
       </>
     );
   };
@@ -107,9 +117,7 @@ export function ChurnRiskPanel() {
           </div>
           <div>
             <CardTitle className="text-lg font-semibold">Churn Prediction</CardTitle>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Mitglieder mit Kündigungsrisiko
-            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Mitglieder mit Kündigungsrisiko</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -167,7 +175,11 @@ export function ChurnRiskPanel() {
                       : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
                   }`}
                 >
-                  {filter === 'all' ? `Alle (${data.atRisk.length})` : filter === 'high' ? `High (${highCount})` : `Medium (${mediumCount})`}
+                  {filter === 'all'
+                    ? `Alle (${data.atRisk.length})`
+                    : filter === 'high'
+                      ? `High (${highCount})`
+                      : `Medium (${mediumCount})`}
                 </button>
               ))}
             </div>

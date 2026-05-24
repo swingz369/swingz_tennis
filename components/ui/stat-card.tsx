@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   value: string | number;
   label: string;
   sublabel?: string;
@@ -11,6 +11,10 @@ interface StatCardProps {
   containerClassName?: string;
   valueClassName?: string;
   children?: React.ReactNode;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
 }
 
 export function StatCard({
@@ -22,25 +26,39 @@ export function StatCard({
   containerClassName,
   valueClassName,
   children,
+  trend,
 }: StatCardProps) {
   return (
     <Card className={cn('border-0 shadow-sm p-0', containerClassName)}>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-1">
-          <div
-            className={cn(
-              'flex items-center justify-center h-10 w-10 rounded-xl shrink-0',
-              'bg-brand-primary/10',
-              iconClassName
-            )}
-          >
-            {Icon && <Icon className={cn('h-5 w-5 text-brand-primary', valueClassName)} />}
-          </div>
+          {Icon && (
+            <div
+              className={cn(
+                'flex items-center justify-center h-10 w-10 rounded-xl shrink-0',
+                'bg-brand-primary/10',
+                iconClassName
+              )}
+            >
+              <Icon className={cn('h-5 w-5 text-brand-primary', valueClassName)} />
+            </div>
+          )}
           <div>
             <p className={cn('text-2xl font-bold tabular-nums', valueClassName)}>{value}</p>
             <p className="text-xs text-muted-foreground">{label}</p>
           </div>
         </div>
+        {trend && (
+          <div className="flex items-center gap-1 text-xs mt-1">
+            <span
+              className={cn('font-semibold', trend.isPositive ? 'text-green-600' : 'text-red-600')}
+            >
+              {trend.isPositive ? '+' : ''}
+              {trend.value}%
+            </span>
+            <span className="text-muted-foreground">vs letzter Monat</span>
+          </div>
+        )}
         {sublabel && <p className="text-xs text-muted-foreground mt-1">{sublabel}</p>}
         {children && <div className="mt-2">{children}</div>}
       </CardContent>

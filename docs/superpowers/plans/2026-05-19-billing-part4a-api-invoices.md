@@ -27,11 +27,15 @@ const CreateSchema = z.object({
   member_id: z.string().uuid(),
   due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   notes: z.string().optional(),
-  items: z.array(z.object({
-    description: z.string().min(1).max(255),
-    quantity: z.number().int().min(1),
-    unit_price: z.number().min(0),
-  })).min(1),
+  items: z
+    .array(
+      z.object({
+        description: z.string().min(1).max(255),
+        quantity: z.number().int().min(1),
+        unit_price: z.number().min(0),
+      })
+    )
+    .min(1),
 });
 
 export async function GET(request: NextRequest) {
@@ -41,11 +45,16 @@ export async function GET(request: NextRequest) {
   if (!clubId) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
 
   const { data: membership } = await supabase
-    .from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', clubId).eq('is_active', true).maybeSingle();
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', clubId)
+    .eq('is_active', true)
+    .maybeSingle();
   if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  let query = supabase.from('invoices')
+  let query = supabase
+    .from('invoices')
     .select('*, invoice_items(*), invoice_installments(*)')
     .eq('club_id', clubId);
   const type = searchParams.get('type');
@@ -95,12 +104,19 @@ const UpdateSchema = z.object({
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const { supabase, user } = await requireAuth();
   const { data, error } = await supabase
-    .from('invoices').select('*, invoice_items(*), invoice_installments(*)')
-    .eq('id', params.id).single();
+    .from('invoices')
+    .select('*, invoice_items(*), invoice_installments(*)')
+    .eq('id', params.id)
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
 
-  const { data: membership } = await supabase.from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', data.club_id).eq('is_active', true).maybeSingle();
+  const { data: membership } = await supabase
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', data.club_id)
+    .eq('is_active', true)
+    .maybeSingle();
   const isMember = data.member_id === user.id;
   if (!membership && !isMember) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   return NextResponse.json({ data });
@@ -112,13 +128,21 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const parsed = UpdateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: invoice } = await supabase.from('invoices').select('club_id, status')
-    .eq('id', params.id).single();
+  const { data: invoice } = await supabase
+    .from('invoices')
+    .select('club_id, status')
+    .eq('id', params.id)
+    .single();
   if (!invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const { data: membership } = await supabase.from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', invoice.club_id).eq('is_active', true).maybeSingle();
-  if (!membership || !['admin','superadmin'].includes(membership.role))
+  const { data: membership } = await supabase
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', invoice.club_id)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!membership || !['admin', 'superadmin'].includes(membership.role))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const updates: Record<string, unknown> = { status: parsed.data.status };
@@ -128,8 +152,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     updates.cancellation_reason = parsed.data.cancellation_reason ?? null;
   }
 
-  const { data, error } = await supabase.from('invoices').update(updates)
-    .eq('id', params.id).select().single();
+  const { data, error } = await supabase
+    .from('invoices')
+    .update(updates)
+    .eq('id', params.id)
+    .select()
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
 }
@@ -158,26 +186,46 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const parsed = MarkPaidSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: installment } = await supabase.from('invoice_installments')
-    .select('*, invoices(club_id, member_id, total_amount)').eq('id', params.id).single();
+  const { data: installment } = await supabase
+    .from('invoice_installments')
+    .select('*, invoices(club_id, member_id, total_amount)')
+    .eq('id', params.id)
+    .single();
   if (!installment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const clubId = (installment as any).invoices?.club_id;
-  const { data: membership } = await supabase.from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', clubId).eq('is_active', true).maybeSingle();
-  if (!membership || !['admin','superadmin'].includes(membership.role))
+  const { data: membership } = await supabase
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', clubId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!membership || !['admin', 'superadmin'].includes(membership.role))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const paidAt = parsed.data.paid_at ?? new Date().toISOString();
 
   // Mark installment paid
-  await supabase.from('invoice_installments').update({ status: 'paid', paid_at: paidAt }).eq('id', params.id);
+  await supabase
+    .from('invoice_installments')
+    .update({ status: 'paid', paid_at: paidAt })
+    .eq('id', params.id);
 
   // Check if all installments paid → update invoice
-  const { data: remaining } = await supabase.from('invoice_installments')
-    .select('status').eq('invoice_id', installment.invoice_id).neq('status', 'paid');
+  const { data: remaining } = await supabase
+    .from('invoice_installments')
+    .select('status')
+    .eq('invoice_id', installment.invoice_id)
+    .neq('status', 'paid');
   if (!remaining?.length) {
-    await supabase.from('invoices').update({ status: 'paid', paid_at: paidAt, paid_amount: (installment as any).invoices?.total_amount })
+    await supabase
+      .from('invoices')
+      .update({
+        status: 'paid',
+        paid_at: paidAt,
+        paid_amount: (installment as any).invoices?.total_amount,
+      })
       .eq('id', installment.invoice_id);
   }
 

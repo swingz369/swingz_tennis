@@ -4,19 +4,18 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Subscription, Invoice } from '@/app/(protected)/admin/billing/billing-client';
 
-const BillingClient = dynamicImport(() => import('@/app/(protected)/admin/billing/billing-client'), {
-  loading: () => <Skeleton className="h-96 w-full rounded-xl" />
-});
+const BillingClient = dynamicImport(
+  () => import('@/app/(protected)/admin/billing/billing-client'),
+  {
+    loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
+  }
+);
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ClubBillingPage({
-  params,
-}: {
-  params: Promise<{ clubId: string }>;
-}) {
+export default async function ClubBillingPage({ params }: { params: Promise<{ clubId: string }> }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,8 +32,7 @@ export default async function ClubBillingPage({
     .eq('is_active', true);
 
   const hasAccess = memberships?.some(
-    (m) =>
-      (m.role === 'superadmin' || m.role === 'admin') && m.club_id === clubId
+    (m) => (m.role === 'superadmin' || m.role === 'admin') && m.club_id === clubId
   );
 
   if (!hasAccess) {
@@ -42,11 +40,7 @@ export default async function ClubBillingPage({
   }
 
   // Verify club exists
-  const { data: club } = await supabase
-    .from('clubs')
-    .select('id, name')
-    .eq('id', clubId)
-    .single();
+  const { data: club } = await supabase.from('clubs').select('id, name').eq('id', clubId).single();
 
   if (!club) {
     return (
@@ -91,8 +85,8 @@ export default async function ClubBillingPage({
         memberId: String(user.id),
         memberName: String(user.full_name || 'N/A'),
         memberEmail: String(user.email || ''),
-        plan: (String(user.subscription_tier || 'free')) as Subscription['plan'],
-        status: (String(user.subscription_status || 'active')) as Subscription['status'],
+        plan: String(user.subscription_tier || 'free') as Subscription['plan'],
+        status: String(user.subscription_status || 'active') as Subscription['status'],
         currentPeriodEnd: String(user.current_period_end || new Date().toISOString()),
         stripeCustomerId: user.stripe_customer_id as string | undefined,
         stripeSubscriptionId: user.stripe_subscription_id as string | undefined,
@@ -142,7 +136,7 @@ export default async function ClubBillingPage({
       memberName: String(users?.full_name || 'N/A'),
       amount: Number(inv.amount ?? 0),
       currency: String(inv.currency || 'EUR'),
-      status: (String(inv.status || 'draft')) as Invoice['status'],
+      status: String(inv.status || 'draft') as Invoice['status'],
       dueDate: String(inv.due_date || ''),
       paidAt: inv.paid_at ? String(inv.paid_at) : undefined,
     } as Invoice;
@@ -155,7 +149,12 @@ export default async function ClubBillingPage({
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-white/10 backdrop-blur-sm">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
             </svg>
           </div>
           <div>

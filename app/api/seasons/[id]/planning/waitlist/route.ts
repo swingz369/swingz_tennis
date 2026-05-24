@@ -11,7 +11,9 @@ import { seasons, users } from '@/src/infrastructure/persistence/schema';
 import { seasonWaitlists } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, asc } from 'drizzle-orm';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, { max: 30, windowMs: 60000 });
@@ -77,7 +79,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
           .from(seasonWaitlists)
           .where(eq(seasonWaitlists.id, waitlistId));
 
-        if (!entry) return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
+        if (!entry)
+          return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
 
         // Update waitlist entry
         await getDb()

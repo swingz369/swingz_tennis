@@ -102,4 +102,3 @@ export const queryKeys = {
     list: () => [...queryKeys.tenants.all, 'list'] as const,
   },
 } as const;
-

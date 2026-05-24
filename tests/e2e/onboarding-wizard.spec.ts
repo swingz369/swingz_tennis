@@ -169,8 +169,8 @@ test.describe('Onboarding Wizard - 9-Step Structure', () => {
   });
 
   test('member invite handles 409 conflict gracefully', () => {
-    expect(wizardCode).toContain("res.status === 409");
-    expect(wizardCode).toContain("toast.error");
+    expect(wizardCode).toContain('res.status === 409');
+    expect(wizardCode).toContain('toast.error');
   });
 
   test('trainer and member badges rendered correctly', () => {

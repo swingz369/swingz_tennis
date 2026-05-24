@@ -29,12 +29,12 @@
 
 ### Marken-Persönlichkeit
 
-| Dimension | Ausprägung |
-|-----------|------------|
-| **Ton** | Professionell, warm, einladend |
-| **Stil** | Refined Elegance – clean, reduziert, aber nicht kalt |
-| **Assoziationen** | Tennisplatz (Grün), Abendhimmel (Navy), Sonnenuntergang (Orange) |
-| **Premium-Faktor** | Subtile Texturen (Noise), sanfte Glows, Glass-Morphism |
+| Dimension          | Ausprägung                                                       |
+| ------------------ | ---------------------------------------------------------------- |
+| **Ton**            | Professionell, warm, einladend                                   |
+| **Stil**           | Refined Elegance – clean, reduziert, aber nicht kalt             |
+| **Assoziationen**  | Tennisplatz (Grün), Abendhimmel (Navy), Sonnenuntergang (Orange) |
+| **Premium-Faktor** | Subtile Texturen (Noise), sanfte Glows, Glass-Morphism           |
 
 ### Drei-Säulen-Palette
 
@@ -55,35 +55,35 @@ Alle Brand-Farben sind als HSL-Variablen definiert, was dunkle/hlle Varianten du
 ```css
 :root {
   /* Brand Core */
-  --brand-primary:        150 48% 18%;   /* Deep Forest #1B4332 */
-  --brand-primary-light:  150 45% 35%;   /* Forest Mid #2D6A4F */
-  --brand-secondary:      217 33% 24%;   /* Midnight Navy #1e3a5f */
-  --brand-accent:         26 100% 60%;   /* Sunrise Orange #FF6B35 */
+  --brand-primary: 150 48% 18%; /* Deep Forest #1B4332 */
+  --brand-primary-light: 150 45% 35%; /* Forest Mid #2D6A4F */
+  --brand-secondary: 217 33% 24%; /* Midnight Navy #1e3a5f */
+  --brand-accent: 26 100% 60%; /* Sunrise Orange #FF6B35 */
 
   /* Surfaces */
-  --surface:              0 0% 100%;     /* White */
-  --surface-elevated:     0 0% 99%;      /* Off-white für Karten */
+  --surface: 0 0% 100%; /* White */
+  --surface-elevated: 0 0% 99%; /* Off-white für Karten */
 
   /* Borders */
-  --border-subtle:        150 10% 92%;   /* Sehr helles Grün-Grau */
+  --border-subtle: 150 10% 92%; /* Sehr helles Grün-Grau */
 
   /* Text */
-  --text-primary:         150 20% 10%;   /* Fast Schwarz mit Grünstich */
-  --text-secondary:       150 10% 40%;   /* Gedämpftes Grün-Grau */
+  --text-primary: 150 20% 10%; /* Fast Schwarz mit Grünstich */
+  --text-secondary: 150 10% 40%; /* Gedämpftes Grün-Grau */
 }
 ```
 
 ```css
 .dark {
-  --brand-primary:        150 70% 28%;   /* Helleres Grün für Sichtbarkeit */
-  --brand-primary-light:  150 60% 40%;
-  --brand-secondary:      217 40% 35%;
-  --brand-accent:         26 100% 65%;
-  --surface:              150 20% 8%;    /* Tiefdunkel */
-  --surface-elevated:     150 15% 12%;   /* Leicht erhht */
-  --border-subtle:        150 15% 18%;
-  --text-primary:         0 0% 98%;      /* Fast Weiß */
-  --text-secondary:       150 5% 60%;
+  --brand-primary: 150 70% 28%; /* Helleres Grün für Sichtbarkeit */
+  --brand-primary-light: 150 60% 40%;
+  --brand-secondary: 217 40% 35%;
+  --brand-accent: 26 100% 65%;
+  --surface: 150 20% 8%; /* Tiefdunkel */
+  --surface-elevated: 150 15% 12%; /* Leicht erhht */
+  --border-subtle: 150 15% 18%;
+  --text-primary: 0 0% 98%; /* Fast Weiß */
+  --text-secondary: 150 5% 60%;
 }
 ```
 
@@ -92,19 +92,12 @@ Alle Brand-Farben sind als HSL-Variablen definiert, was dunkle/hlle Varianten du
 Mittels `tailwindcss-animate`-Plugin generiert:
 
 ```css
---background:        0 0% 100%        → dark: 150 20% 8%
---foreground:        150 20% 10%      → dark: 0 0% 98%
---card:              0 0% 100%        → dark: 150 15% 12%
---card-foreground:   150 20% 10%      → dark: 0 0% 98%
---popover:           0 0% 100%        → dark: 150 15% 12%
---primary:           150 48% 18%      → dark: 150 70% 28%
---secondary:         217 33% 24%      → dark: 217 40% 35%
---muted:             150 10% 92%      → dark: 150 15% 18%
---accent:            26 100% 60%      → dark: 26 100% 65%
---destructive:       0 84% 60%        → dark: 0 84% 60%
---border:            150 10% 92%      → dark: 150 15% 18%
---input:             150 10% 92%      → dark: 150 15% 18%
---ring:              150 48% 18%      → dark: 150 70% 28%
+--background: 0 0% 100% → dark: 150 20% 8% --foreground: 150 20% 10% → dark: 0 0% 98% --card: 0 0%
+  100% → dark: 150 15% 12% --card-foreground: 150 20% 10% → dark: 0 0% 98% --popover: 0 0% 100% →
+  dark: 150 15% 12% --primary: 150 48% 18% → dark: 150 70% 28% --secondary: 217 33% 24% → dark: 217
+  40% 35% --muted: 150 10% 92% → dark: 150 15% 18% --accent: 26 100% 60% → dark: 26 100% 65%
+  --destructive: 0 84% 60% → dark: 0 84% 60% --border: 150 10% 92% → dark: 150 15% 18% --input: 150
+  10% 92% → dark: 150 15% 18% --ring: 150 48% 18% → dark: 150 70% 28%;
 ```
 
 ### 2.3 Semantic Colors
@@ -230,13 +223,13 @@ xl:   1.25rem   (20px)  → Sub-headline
 ### 3.3 Font Weights
 
 ```typescript
-light:     300
-normal:    400
-medium:    500
-semibold:  600
-bold:      700
-extrabold: 800
-black:     900
+light: 300;
+normal: 400;
+medium: 500;
+semibold: 600;
+bold: 700;
+extrabold: 800;
+black: 900;
 ```
 
 ### 3.4 Line Heights
@@ -265,7 +258,10 @@ widest:  0.1em      → Uppercase Labels, Badges
 
 ```css
 body {
-  font-feature-settings: 'rlig' 1, 'calt' 1, 'kern' 1;
+  font-feature-settings:
+    'rlig' 1,
+    'calt' 1,
+    'kern' 1;
   text-rendering: optimizeLegibility;
 }
 ```
@@ -514,40 +510,39 @@ Vier Helligkeitsstufen, deklariert als Tailwind-Utilities:
 ### 9.2 Transition Durations
 
 ```css
---transition-fast: 150ms  → Hover, Active, Tap
---transition-base: 250ms  → Standard-Übergänge
---transition-slow: 400ms  → Page-Transitions, Reveals
-
-tailwind: duration-400, duration-500
+--transition-fast:
+  150ms → Hover, Active,
+  Tap --transition-base: 250ms → Standard-Übergänge --transition-slow: 400ms → Page-Transitions,
+  Reveals tailwind: duration-400, duration-500;
 ```
 
 ### 9.3 Transition Timing Functions (Tailwind)
 
 ```typescript
-spring: cubic-bezier(0.34, 1.56, 0.64, 1)   // Federnd
-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94) // Sanft
+spring: cubic - bezier(0.34, 1.56, 0.64, 1); // Federnd
+gentle: cubic - bezier(0.25, 0.46, 0.45, 0.94); // Sanft
 ```
 
 ### 9.4 Keyframe-Animationen (16 Stück)
 
-| Name | Dauer | Verwendung |
-|------|-------|------------|
-| `float` | 6s | Schwebende Elemente (Deko) |
-| `float-slow` | 8s | Langsam schwebend |
-| `pulse-glow` | 3s | Pulsierender Glow (CTA, Premium) |
-| `shimmer` | 2.5s | Skeleton Loading |
-| `fade-in-up` | 0.6s | Standard Entry (mit Scale .98) |
-| `fade-in` | 0.5s | Einfaches Einblenden |
-| `scale-in` | 0.4s | Cards, Modale (mit Bounce) |
-| `slide-in-right` | 0.5s | Seitenpanel, Drawer |
-| `slide-in-left` | 0.5s | Sidebar-Entry |
-| `slide-down` | 0.25s | Akkordeon, Dropdown (mit max-height) |
-| `gradient-shift` | 8s | Hintergrund-Gradient-Animation |
-| `aurora` | 15s | Aurora-Borealis-Effekt (Hero) |
-| `marquee` | 30s | Lauftext-Banner |
-| `border-glow` | 3s | Pulsierender Rahmen |
-| `ripple` | 0.6s | Ripple-Effekt auf Klick |
-| `count-up` | 0.5s | Zahl-Animation |
+| Name             | Dauer | Verwendung                           |
+| ---------------- | ----- | ------------------------------------ |
+| `float`          | 6s    | Schwebende Elemente (Deko)           |
+| `float-slow`     | 8s    | Langsam schwebend                    |
+| `pulse-glow`     | 3s    | Pulsierender Glow (CTA, Premium)     |
+| `shimmer`        | 2.5s  | Skeleton Loading                     |
+| `fade-in-up`     | 0.6s  | Standard Entry (mit Scale .98)       |
+| `fade-in`        | 0.5s  | Einfaches Einblenden                 |
+| `scale-in`       | 0.4s  | Cards, Modale (mit Bounce)           |
+| `slide-in-right` | 0.5s  | Seitenpanel, Drawer                  |
+| `slide-in-left`  | 0.5s  | Sidebar-Entry                        |
+| `slide-down`     | 0.25s | Akkordeon, Dropdown (mit max-height) |
+| `gradient-shift` | 8s    | Hintergrund-Gradient-Animation       |
+| `aurora`         | 15s   | Aurora-Borealis-Effekt (Hero)        |
+| `marquee`        | 30s   | Lauftext-Banner                      |
+| `border-glow`    | 3s    | Pulsierender Rahmen                  |
+| `ripple`         | 0.6s  | Ripple-Effekt auf Klick              |
+| `count-up`       | 0.5s  | Zahl-Animation                       |
 
 ### 9.5 Entry-Animation-Utilities
 
@@ -586,7 +581,9 @@ gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94) // Sanft
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -693,10 +690,10 @@ xl:  1280px  → Desktop Wide
 
 ### Layout-Strategie
 
-| Gerät | Sidebar | Bottom Nav | Content |
-|-------|---------|------------|---------|
-| **Mobile (< 768px)** | Overlay (Slide-in) | Persistent (Admin: + Menu Button) | Full width |
-| **Desktop (≥ 768px)** | Permanent (w-64) | Versteckt (`md:hidden`) | `ml-64` offset |
+| Gerät                 | Sidebar            | Bottom Nav                        | Content        |
+| --------------------- | ------------------ | --------------------------------- | -------------- |
+| **Mobile (< 768px)**  | Overlay (Slide-in) | Persistent (Admin: + Menu Button) | Full width     |
+| **Desktop (≥ 768px)** | Permanent (w-64)   | Versteckt (`md:hidden`)           | `ml-64` offset |
 
 - Member & Trainer: Bottom Nav **immer sichtbar** (`persistent`), da sie kein Hamburger-Menü haben
 - Admin & Superadmin: Bottom Nav nur mobil + Hamburger-Button für Sidebar
@@ -706,14 +703,14 @@ xl:  1280px  → Desktop Wide
 ## 12. Z-Index-Skala
 
 ```typescript
-dropdown:       1000
-sticky:         1020
-fixed:          1030
-modalBackdrop:  1040
-modal:          1050
-popover:        1060
-tooltip:        1070
-toast:          1080
+dropdown: 1000;
+sticky: 1020;
+fixed: 1030;
+modalBackdrop: 1040;
+modal: 1050;
+popover: 1060;
+tooltip: 1070;
+toast: 1080;
 ```
 
 Sidebar-Overlay auf Mobile nutzt `z-50` (Tailwind) + `shadow-2xl shadow-black/10`.
@@ -724,18 +721,18 @@ Sidebar-Overlay auf Mobile nutzt `z-50` (Tailwind) + `shadow-2xl shadow-black/10
 
 Bewertung nach 10 Design-Dimensionen (0–10):
 
-| # | Dimension | Score | Kritik |
-|---|-----------|:-----:|--------|
-| 1 | **Farbkonsistenz** | **8/10** | HSL-Palette exzellent. `brand.primary` als Hex in tailwind.config inkonsistent zu HSL-Nutzung. |
-| 2 | **Typografie-Hierarchie** | **7/10** | Clash+DM Sans durchdacht. Sidebar nutzt keine Display-Font, obwohl definiert. |
-| 3 | **Spacing-Rhythmus** | **6/10** | Custom Spacing vorhanden (18/22/28/32). Sidebar wildes Mix aus `px-3`, `px-4`, `py-2.5`, `py-6` – kein konsistenter Raster. |
-| 4 | **Component-Konsistenz** | **5/10** | Zwei verschiedene Sidebar-Komponenten (sidebar.tsx + admin-sidebar.tsx dead code). Zwei Card-Konzepte. NavigationCategory vs. AdminSection unterschiedlich. |
-| 5 | **Responsives Verhalten** | **7/10** | Saubere Desktop/Mobile-Trennung. Admin-Overlay auf Mobile zeigt volle Desktop-Sidebar – zu dicht. |
-| 6 | **Dark Mode** | **8/10** | Vollständiges Dark-Theme, `prefers-color-scheme` + `.dark`-Klasse. Alle CSS-Variablen zweisprachig. |
-| 7 | **Animation** | **7/10** | 16 Keyframes, Easing-Variablen, Hover-Lift/Glow/Tap. Ungenutzt: aurora, marquee, ripple, count-up. |
-| 8 | **Accessibility** | **6/10** | SkipToContent, aria-labels, sr-only. Keine Tastaturnavigation-Prüfung. |
-| 9 | **Information Density** | **5/10** | Admin-Sidebar: 6 Sektionen, 16 Links + Club-Switcher + Logo + Badge = überladen. |
-| 10 | **Polish** | **7/10** | Micro-Interactions (hover-lift, glass, active indicator). Dead-Code-Komponenten mit anderem Design. |
+| #   | Dimension                 |  Score   | Kritik                                                                                                                                                      |
+| --- | ------------------------- | :------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Farbkonsistenz**        | **8/10** | HSL-Palette exzellent. `brand.primary` als Hex in tailwind.config inkonsistent zu HSL-Nutzung.                                                              |
+| 2   | **Typografie-Hierarchie** | **7/10** | Clash+DM Sans durchdacht. Sidebar nutzt keine Display-Font, obwohl definiert.                                                                               |
+| 3   | **Spacing-Rhythmus**      | **6/10** | Custom Spacing vorhanden (18/22/28/32). Sidebar wildes Mix aus `px-3`, `px-4`, `py-2.5`, `py-6` – kein konsistenter Raster.                                 |
+| 4   | **Component-Konsistenz**  | **5/10** | Zwei verschiedene Sidebar-Komponenten (sidebar.tsx + admin-sidebar.tsx dead code). Zwei Card-Konzepte. NavigationCategory vs. AdminSection unterschiedlich. |
+| 5   | **Responsives Verhalten** | **7/10** | Saubere Desktop/Mobile-Trennung. Admin-Overlay auf Mobile zeigt volle Desktop-Sidebar – zu dicht.                                                           |
+| 6   | **Dark Mode**             | **8/10** | Vollständiges Dark-Theme, `prefers-color-scheme` + `.dark`-Klasse. Alle CSS-Variablen zweisprachig.                                                         |
+| 7   | **Animation**             | **7/10** | 16 Keyframes, Easing-Variablen, Hover-Lift/Glow/Tap. Ungenutzt: aurora, marquee, ripple, count-up.                                                          |
+| 8   | **Accessibility**         | **6/10** | SkipToContent, aria-labels, sr-only. Keine Tastaturnavigation-Prüfung.                                                                                      |
+| 9   | **Information Density**   | **5/10** | Admin-Sidebar: 6 Sektionen, 16 Links + Club-Switcher + Logo + Badge = überladen.                                                                            |
+| 10  | **Polish**                | **7/10** | Micro-Interactions (hover-lift, glass, active indicator). Dead-Code-Komponenten mit anderem Design.                                                         |
 
 **Gesamtscore: 66 / 100**
 
@@ -765,18 +762,18 @@ Bewertung nach 10 Design-Dimensionen (0–10):
 
 ## Anhang: Datei-Referenzen
 
-| Token-Typ | Datei | Zeilen |
-|-----------|------|--------|
-| CSS Custom Properties | `app/globals.css` | 12–33 (Light), 35–44 (Dark) |
-| Tailwind Config | `tailwind.config.ts` | Gesamte Datei |
-| TypeScript Tokens | `styles/theme.ts` | Gesamte Datei (9 Exporte) |
-| Glass Utilities | `app/globals.css` | 140–168 |
-| Keyframes | `app/globals.css` | 168–270 (16 Keyframes) |
-| Animation Classes | `app/globals.css` | 272–295 |
-| Utility Classes | `app/globals.css` | 48–168 |
-| Role Colors (Sidebar) | `components/layout/sidebar.tsx` | 31–52 |
-| Mobile Nav | `components/layout/mobile-bottom-nav.tsx` | Gesamte Datei |
-| Navigation Category | `components/layout/navigation-category.tsx` | Gesamte Datei |
+| Token-Typ             | Datei                                       | Zeilen                      |
+| --------------------- | ------------------------------------------- | --------------------------- |
+| CSS Custom Properties | `app/globals.css`                           | 12–33 (Light), 35–44 (Dark) |
+| Tailwind Config       | `tailwind.config.ts`                        | Gesamte Datei               |
+| TypeScript Tokens     | `styles/theme.ts`                           | Gesamte Datei (9 Exporte)   |
+| Glass Utilities       | `app/globals.css`                           | 140–168                     |
+| Keyframes             | `app/globals.css`                           | 168–270 (16 Keyframes)      |
+| Animation Classes     | `app/globals.css`                           | 272–295                     |
+| Utility Classes       | `app/globals.css`                           | 48–168                      |
+| Role Colors (Sidebar) | `components/layout/sidebar.tsx`             | 31–52                       |
+| Mobile Nav            | `components/layout/mobile-bottom-nav.tsx`   | Gesamte Datei               |
+| Navigation Category   | `components/layout/navigation-category.tsx` | Gesamte Datei               |
 
 ---
 

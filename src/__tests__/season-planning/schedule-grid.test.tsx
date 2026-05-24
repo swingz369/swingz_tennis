@@ -44,7 +44,7 @@ describe('ScheduleGrid — rendering', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     expect(screen.getByText('Mo')).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe('ScheduleGrid — rendering', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     expect(screen.getByText('Wochenstundenplan')).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('ScheduleGrid — rendering', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     // Spot-check a few time labels
@@ -110,7 +110,7 @@ describe('ScheduleGrid — slot rendering', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     // Group name
@@ -134,7 +134,7 @@ describe('ScheduleGrid — slot rendering', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     expect(screen.getByText('Gruppe A')).toBeInTheDocument();
@@ -152,7 +152,7 @@ describe('ScheduleGrid — slot rendering', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     const slotEl = screen.getByText('Gruppe A').closest('[draggable]');
@@ -170,7 +170,7 @@ describe('ScheduleGrid — slot rendering', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     const timeEls = screen.getAllByText(/17:00/);
@@ -201,7 +201,7 @@ describe('ScheduleGrid — drag behaviour', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     const slotA = screen.getByText('Gruppe A').closest('[draggable]');
@@ -221,7 +221,7 @@ describe('ScheduleGrid — drag behaviour', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     // Find the cell with bg-blue-50
@@ -242,7 +242,7 @@ describe('ScheduleGrid — drag behaviour', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     const slotEl = screen.getByText('Gruppe A').closest('[draggable]')!;
@@ -263,7 +263,7 @@ describe('ScheduleGrid — drag behaviour', () => {
         onDragEnd={onDragEnd}
         onDragOver={noop}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     const slotEl = screen.getByText('Gruppe A').closest('[draggable]')!;
@@ -284,7 +284,7 @@ describe('ScheduleGrid — drag behaviour', () => {
         onDragEnd={noop}
         onDragOver={onDragOver}
         onDrop={noopDrop}
-      />,
+      />
     );
 
     // Use getByText to find rendered time labels — proves grid is rendered
@@ -305,7 +305,7 @@ describe('ScheduleGrid — drag behaviour', () => {
         onDragEnd={noop}
         onDragOver={noop}
         onDrop={onDrop}
-      />,
+      />
     );
 
     // Verify grid rendered with day headers and time labels

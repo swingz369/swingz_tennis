@@ -63,7 +63,7 @@ export function PlanEditStep() {
         durationMin: (() => {
           const [sh, sm] = g.startTime.split(':').map(Number);
           const [eh, em] = g.endTime.split(':').map(Number);
-          return (eh * 60 + em) - (sh * 60 + sm);
+          return eh * 60 + em - (sh * 60 + sm);
         })(),
         courtId: g.courtId,
         courtName: g.courtName,
@@ -138,12 +138,13 @@ export function PlanEditStep() {
   const scoreData = useMemo(() => {
     if (!metrics) return null;
     // Weighted score: Niveau-Match (35%), Wunschpartner (30%), Trainer-Auslastung (20%), Penalty-Free (15%)
-    const penaltyCount = metrics.niveauSpanViolations + metrics.highRiskSlotsUsed + metrics.trainerOverloadWarnings;
+    const penaltyCount =
+      metrics.niveauSpanViolations + metrics.highRiskSlotsUsed + metrics.trainerOverloadWarnings;
     const penaltyScore = Math.max(0, 100 - penaltyCount * 10);
     const score = Math.round(
       metrics.avgNiveauMatch * 0.35 +
-        metrics.wishPartnerRate * 0.30 +
-        metrics.avgTrainerUtilization * 0.20 +
+        metrics.wishPartnerRate * 0.3 +
+        metrics.avgTrainerUtilization * 0.2 +
         penaltyScore * 0.15
     );
     const totalWarnings = penaltyCount;
@@ -159,13 +160,10 @@ export function PlanEditStep() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-light/10 mx-auto mb-4">
               <Sparkles className="h-8 w-8 text-brand-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Planung generieren
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">Planung generieren</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-              Der Algorithmus erstellt basierend auf Mitglieder-Präferenzen,
-              Trainer-Verfügbarkeiten und Niveau-Einstufungen einen optimierten
-              Wochenstundenplan.
+              Der Algorithmus erstellt basierend auf Mitglieder-Präferenzen, Trainer-Verfügbarkeiten
+              und Niveau-Einstufungen einen optimierten Wochenstundenplan.
             </p>
             <Button
               onClick={handleGenerate}
@@ -211,14 +209,24 @@ export function PlanEditStep() {
                   <Zap className="h-4 w-4 text-amber-500" />
                   Planungs-Score
                 </CardTitle>
-                <Badge variant={scoreData.score >= 80 ? 'success' : scoreData.score >= 60 ? 'warning' : 'error'}>
-                  {scoreData.score >= 80 ? 'Sehr gut' : scoreData.score >= 60 ? 'Gut' : 'Verbesserungswürdig'}
+                <Badge
+                  variant={
+                    scoreData.score >= 80 ? 'success' : scoreData.score >= 60 ? 'warning' : 'error'
+                  }
+                >
+                  {scoreData.score >= 80
+                    ? 'Sehr gut'
+                    : scoreData.score >= 60
+                      ? 'Gut'
+                      : 'Verbesserungswürdig'}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className={`text-3xl font-bold ${scoreData.score >= 80 ? 'text-green-600' : scoreData.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
+                <span
+                  className={`text-3xl font-bold ${scoreData.score >= 80 ? 'text-green-600' : scoreData.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}
+                >
                   {scoreData.score}%
                 </span>
                 <span className="text-xs text-muted-foreground">
@@ -228,7 +236,11 @@ export function PlanEditStep() {
               <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${
-                    scoreData.score >= 80 ? 'bg-green-500' : scoreData.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                    scoreData.score >= 80
+                      ? 'bg-green-500'
+                      : scoreData.score >= 60
+                        ? 'bg-yellow-500'
+                        : 'bg-red-500'
                   }`}
                   style={{ width: `${Math.min(100, scoreData.score)}%` }}
                 />
@@ -245,7 +257,9 @@ export function PlanEditStep() {
                   <p className="text-xs text-muted-foreground">Gruppen</p>
                 </div>
                 <p className="text-xl font-bold mt-1">{metrics.totalGroups}</p>
-                <p className="text-[11px] text-muted-foreground">{metrics.totalMembers} Mitglieder</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {metrics.totalMembers} Mitglieder
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -256,7 +270,10 @@ export function PlanEditStep() {
                 </div>
                 <p className="text-xl font-bold mt-1">{Math.round(metrics.avgNiveauMatch)}%</p>
                 <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-green-500" style={{ width: `${Math.round(metrics.avgNiveauMatch)}%` }} />
+                  <div
+                    className="h-full rounded-full bg-green-500"
+                    style={{ width: `${Math.round(metrics.avgNiveauMatch)}%` }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -278,9 +295,14 @@ export function PlanEditStep() {
                   <Star className="h-4 w-4 text-amber-500" />
                   <p className="text-xs text-muted-foreground">Trainer-Auslastung</p>
                 </div>
-                <p className="text-xl font-bold mt-1">{Math.round(metrics.avgTrainerUtilization)}%</p>
+                <p className="text-xl font-bold mt-1">
+                  {Math.round(metrics.avgTrainerUtilization)}%
+                </p>
                 <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.round(metrics.avgTrainerUtilization)}%` }} />
+                  <div
+                    className="h-full rounded-full bg-amber-500"
+                    style={{ width: `${Math.round(metrics.avgTrainerUtilization)}%` }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -301,17 +323,20 @@ export function PlanEditStep() {
                 <ul className="space-y-1.5">
                   {metrics.niveauSpanViolations > 0 && (
                     <li className="text-sm text-yellow-700">
-                      • {metrics.niveauSpanViolations} Niveau-Spannen-Verletzung{metrics.niveauSpanViolations !== 1 ? 'en' : ''}
+                      • {metrics.niveauSpanViolations} Niveau-Spannen-Verletzung
+                      {metrics.niveauSpanViolations !== 1 ? 'en' : ''}
                     </li>
                   )}
                   {metrics.highRiskSlotsUsed > 0 && (
                     <li className="text-sm text-yellow-700">
-                      • {metrics.highRiskSlotsUsed} Hochrisiko-Slot{metrics.highRiskSlotsUsed !== 1 ? 's' : ''} verwendet
+                      • {metrics.highRiskSlotsUsed} Hochrisiko-Slot
+                      {metrics.highRiskSlotsUsed !== 1 ? 's' : ''} verwendet
                     </li>
                   )}
                   {metrics.trainerOverloadWarnings > 0 && (
                     <li className="text-sm text-yellow-700">
-                      • {metrics.trainerOverloadWarnings} Trainer-Überlastung{metrics.trainerOverloadWarnings !== 1 ? 'en' : ''}
+                      • {metrics.trainerOverloadWarnings} Trainer-Überlastung
+                      {metrics.trainerOverloadWarnings !== 1 ? 'en' : ''}
                     </li>
                   )}
                 </ul>
@@ -341,7 +366,13 @@ export function PlanEditStep() {
 
       {/* Regenerate Button */}
       <div className="flex items-center gap-3">
-        <Button onClick={handleGenerate} disabled={isGenerating} variant="outline" size="sm" className="gap-2">
+        <Button
+          onClick={handleGenerate}
+          disabled={isGenerating}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
           {isGenerating ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -388,16 +419,12 @@ export function PlanEditStep() {
             <Brain className="h-4 w-4 text-brand-primary" />
             KI-Analyse
           </CardTitle>
-          <CardDescription>
-            Automatische Bewertung des generierten Plans
-          </CardDescription>
+          <CardDescription>Automatische Bewertung des generierten Plans</CardDescription>
         </CardHeader>
         <CardContent>
           {aiText ? (
             <div className="rounded-lg bg-brand-light/5 border border-brand-light/20 p-4">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                {aiText}
-              </p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{aiText}</p>
             </div>
           ) : (
             <div className="text-center py-6">

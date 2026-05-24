@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { EmailService as InfraEmailService } from '@/src/infrastructure/email/email.service';
 
 export interface EmailTemplate {
   subject: string;
@@ -924,19 +925,12 @@ Dein ${clubName}-Team
   }
 
   /**
-   * Send email (mock implementation)
+   * Send email via Resend infrastructure service
    */
   static async sendEmail(to: string, email: EmailTemplate): Promise<boolean> {
     try {
-      // In production, this would use an email service like Resend, SendGrid, or AWS SES
-      console.log('Sending email to:', to);
-      console.log('Subject:', email.subject);
-      console.log('HTML length:', email.html.length);
-      console.log('Text length:', email.text.length);
-
-      // Simulate email sending
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      const infraEmail = new InfraEmailService();
+      await infraEmail.sendEmail({ to, ...email });
       return true;
     } catch (error) {
       console.error('Email send error:', error);

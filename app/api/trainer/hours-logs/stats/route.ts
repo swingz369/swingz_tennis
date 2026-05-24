@@ -58,8 +58,7 @@ export async function GET(_request: NextRequest) {
 
       // Admins können Stats für jeden Trainer abrufen; Trainer nur ihre eigenen
       const isAdmin = await verifyRole(auth, 'admin');
-      const targetTrainerId =
-        requestedTrainerId && isAdmin ? requestedTrainerId : auth.user.id;
+      const targetTrainerId = requestedTrainerId && isAdmin ? requestedTrainerId : auth.user.id;
 
       const now = new Date();
 
@@ -97,10 +96,7 @@ export async function GET(_request: NextRequest) {
 
       // --- Hilfsfunktionen ---
 
-      async function fetchPeriodStats(
-        startDate: string,
-        endDate: string
-      ): Promise<PeriodStats> {
+      async function fetchPeriodStats(startDate: string, endDate: string): Promise<PeriodStats> {
         // endDate exklusiv behandeln: +1 Tag
         const end = new Date(endDate);
         end.setDate(end.getDate() + 1);
@@ -178,10 +174,7 @@ export async function GET(_request: NextRequest) {
 
         if (error) return [];
 
-        const dayMap = new Map<
-          string,
-          { hours: number; entries: number; lastStatus: string }
-        >();
+        const dayMap = new Map<string, { hours: number; entries: number; lastStatus: string }>();
 
         for (const row of data) {
           const dateKey =
@@ -258,10 +251,7 @@ export async function GET(_request: NextRequest) {
       });
     } catch (error) {
       console.error('Hours stats fetch error:', error);
-      return NextResponse.json(
-        { error: 'Interner Serverfehler' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
     }
   });
 }

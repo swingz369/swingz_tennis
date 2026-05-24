@@ -40,10 +40,7 @@ export class PaymentService {
     return payment;
   }
 
-  async updatePaymentStatus(
-    paymentId: string,
-    status: PaymentStatus,
-  ): Promise<Payment> {
+  async updatePaymentStatus(paymentId: string, status: PaymentStatus): Promise<Payment> {
     const updateData: Record<string, unknown> = { status };
 
     if (status === 'completed') {

@@ -19,7 +19,13 @@ import {
   Settings,
   Loader2,
 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const DAYS = [
   { key: 'monday', label: 'Montag' },
@@ -48,7 +54,9 @@ export default function MemberPreferencesPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Current season
-  const [seasons, setSeasons] = useState<Array<{ id: string; name: string; preferences_open: boolean }>>([]);
+  const [seasons, setSeasons] = useState<
+    Array<{ id: string; name: string; preferences_open: boolean }>
+  >([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
 
   // Preferences state
@@ -71,7 +79,10 @@ export default function MemberPreferencesPage() {
         .eq('is_active', true)
         .limit(1);
 
-      if (!memberships?.length) { setLoading(false); return; }
+      if (!memberships?.length) {
+        setLoading(false);
+        return;
+      }
 
       const clubId = memberships[0].club_id;
       const { data: seasonList } = await supabase
@@ -164,7 +175,11 @@ export default function MemberPreferencesPage() {
       if (prefId) {
         await supabase.from('user_training_preferences').update(payload).eq('id', prefId);
       } else {
-        const { data } = await supabase.from('user_training_preferences').insert(payload).select('id').single();
+        const { data } = await supabase
+          .from('user_training_preferences')
+          .insert(payload)
+          .select('id')
+          .single();
         if (data) setPrefId(data.id);
       }
       setSuccess(true);
@@ -183,7 +198,11 @@ export default function MemberPreferencesPage() {
     try {
       await supabase
         .from('user_training_preferences')
-        .update({ is_submitted: true, submitted_at: new Date().toISOString(), last_modified_at: new Date().toISOString() })
+        .update({
+          is_submitted: true,
+          submitted_at: new Date().toISOString(),
+          last_modified_at: new Date().toISOString(),
+        })
         .eq('id', prefId);
       setIsSubmitted(true);
     } catch (err) {
@@ -207,7 +226,9 @@ export default function MemberPreferencesPage() {
     return (
       <div className="max-w-3xl mx-auto py-8 px-4 text-center">
         <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto" />
-        <p className="mt-2 text-sm text-muted-foreground">Bitte melde dich an, um deine Präferenzen einzustellen.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Bitte melde dich an, um deine Präferenzen einzustellen.
+        </p>
       </div>
     );
   }
@@ -220,7 +241,9 @@ export default function MemberPreferencesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Meine Trainingspräferenzen</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+            Meine Trainingspräferenzen
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Teile dem Verein mit, wann und mit wem du trainieren möchtest
           </p>
@@ -265,7 +288,8 @@ export default function MemberPreferencesPage() {
             <div>
               <p className="text-sm font-medium text-amber-800">Präferenzabgabe geschlossen</p>
               <p className="text-xs text-amber-600">
-                Der Administrator hat die Präferenzabgabe für diese Saison geschlossen. Du kannst deine Einstellungen trotzdem speichern.
+                Der Administrator hat die Präferenzabgabe für diese Saison geschlossen. Du kannst
+                deine Einstellungen trotzdem speichern.
               </p>
             </div>
           </CardContent>
@@ -289,26 +313,30 @@ export default function MemberPreferencesPage() {
               const slots = weeklyAvailability[key] || [];
               return (
                 <div key={key} className="flex items-start gap-3">
-                  <span className="w-24 text-sm font-medium text-gray-700 pt-1 flex-shrink-0">{label}</span>
+                  <span className="w-24 text-sm font-medium text-gray-700 pt-1 flex-shrink-0">
+                    {label}
+                  </span>
                   <div className="flex flex-wrap gap-1.5 flex-1">
-                    {['08:00', '09:30', '11:00', '13:00', '14:30', '16:00', '17:30', '19:00'].map((start) => {
-                      const [h, m] = start.split(':').map(Number);
-                      const end = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                      const active = slots.some((s) => s.start === start && s.end === end);
-                      return (
-                        <button
-                          key={start}
-                          onClick={() => toggleTimeSlot(key, start, end)}
-                          className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
-                            active
-                              ? 'bg-brand-primary text-white shadow-sm'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {start}
-                        </button>
-                      );
-                    })}
+                    {['08:00', '09:30', '11:00', '13:00', '14:30', '16:00', '17:30', '19:00'].map(
+                      (start) => {
+                        const [h, m] = start.split(':').map(Number);
+                        const end = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                        const active = slots.some((s) => s.start === start && s.end === end);
+                        return (
+                          <button
+                            key={start}
+                            onClick={() => toggleTimeSlot(key, start, end)}
+                            className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
+                              active
+                                ? 'bg-brand-primary text-white shadow-sm'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {start}
+                          </button>
+                        );
+                      }
+                    )}
                   </div>
                 </div>
               );
@@ -380,7 +408,9 @@ export default function MemberPreferencesPage() {
             Besondere Wünsche / Anmerkungen
           </CardTitle>
           <CardDescription>
-            {"z.B. \"Ich möchte mit Person X in einer Gruppe sein\" oder \"Ich kann nur vormittags wegen Arbeit\""}
+            {
+              'z.B. "Ich möchte mit Person X in einer Gruppe sein" oder "Ich kann nur vormittags wegen Arbeit"'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -415,11 +445,21 @@ export default function MemberPreferencesPage() {
       )}
 
       <div className="flex items-center gap-3 justify-end">
-        <Button onClick={handleSave} disabled={saving || isSubmitted} variant="outline" className="gap-2">
+        <Button
+          onClick={handleSave}
+          disabled={saving || isSubmitted}
+          variant="outline"
+          className="gap-2"
+        >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Speichern
         </Button>
-        <Button onClick={handleSubmit} disabled={submitting || isSubmitted || !prefId} variant="brand" className="gap-2">
+        <Button
+          onClick={handleSubmit}
+          disabled={submitting || isSubmitted || !prefId}
+          variant="brand"
+          className="gap-2"
+        >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           Einreichen
         </Button>

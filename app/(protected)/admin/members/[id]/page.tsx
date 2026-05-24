@@ -29,8 +29,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   clubId = memberships[0].club_id;
 
   // Fetch membership data (include_in_planning not in generated types, use cast)
-  const { data: memberData } = await (supabase
-    .from('user_club_memberships') as any)
+  const { data: memberData } = await (supabase.from('user_club_memberships') as any)
     .select('id, user_id, role, joined_at, is_active, include_in_planning')
     .eq('id', id)
     .single();

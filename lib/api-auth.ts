@@ -38,6 +38,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { hasRole, getHighestRole } from '@/lib/auth-common';
 
 export interface AuthContext {
   user: User;
@@ -73,25 +74,9 @@ async function buildAuthContext(
     throw new Error('User has no active membership');
   }
 
-  const roleOrder: Record<string, number> = {
-    superadmin: 4,
-    admin: 3,
-    trainer: 2,
-    member: 1,
-  };
-
   // Highest role wins — track which membership granted it
-  let effectiveRole = memberships[0].role as 'superadmin' | 'admin' | 'trainer' | 'member';
-  let effectiveMembership = memberships[0];
-
-  for (let i = 1; i < memberships.length; i++) {
-    const m = memberships[i];
-    const role = m.role as keyof typeof roleOrder;
-    if ((roleOrder[role] ?? 0) > (roleOrder[effectiveRole] ?? 0)) {
-      effectiveRole = role as 'superadmin' | 'admin' | 'trainer' | 'member';
-      effectiveMembership = m;
-    }
-  }
+  const effectiveRole = getHighestRole(memberships.map((m) => m.role));
+  const effectiveMembership = memberships.find((m) => m.role === effectiveRole) || memberships[0];
 
   // Superadmin: no club by default — can select one via cookie for admin actions
   let selectedClubId: string | undefined;
@@ -168,13 +153,7 @@ export async function verifyRole(
   auth: AuthContext,
   requiredRole: 'superadmin' | 'admin' | 'trainer' | 'member'
 ): Promise<boolean> {
-  const roleHierarchy: Record<string, number> = {
-    superadmin: 4,
-    admin: 3,
-    trainer: 2,
-    member: 1,
-  };
-  return (roleHierarchy[auth.role] ?? 0) >= (roleHierarchy[requiredRole] ?? 0);
+  return hasRole(auth.role, requiredRole);
 }
 
 /**

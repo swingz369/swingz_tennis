@@ -18,7 +18,13 @@ import {
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   ChevronLeft,
   ChevronRight,
@@ -302,6 +308,14 @@ function BookingsContent() {
                                   ? 'bg-red-50 text-red-800 border border-red-200'
                                   : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
                               }`}
+                              role="button"
+                              tabIndex={session.bookedByUser ? -1 : 0}
+                              onKeyDown={(e) => {
+                                if ((e.key === 'Enter' || e.key === ' ') && !session.bookedByUser) {
+                                  e.preventDefault();
+                                  handleBooking(session.id);
+                                }
+                              }}
                               onClick={() => !session.bookedByUser && handleBooking(session.id)}
                             >
                               <div className="flex items-start justify-between gap-1">
@@ -364,11 +378,7 @@ function BookingsContent() {
                                           session.bookingId &&
                                           handleStatusChange(
                                             session.bookingId,
-                                            v as
-                                              | 'pending'
-                                              | 'confirmed'
-                                              | 'cancelled'
-                                              | 'no_show'
+                                            v as 'pending' | 'confirmed' | 'cancelled' | 'no_show'
                                           )
                                         }
                                       >

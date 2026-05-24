@@ -14,7 +14,6 @@ import type {
 import { TrainerAvailabilityService } from './trainer-availability.service';
 import { DrizzleTrainerAvailabilityRepository } from '@/infrastructure/persistence/repositories/trainer-availability.repository';
 
-
 class TrainerAvailabilityServiceAdapter {
   private repo = new DrizzleTrainerAvailabilityRepository();
 
@@ -79,8 +78,6 @@ class TrainerAvailabilityServiceAdapter {
     // getAvailableSlots only exists in the repository implementation
     return this.repo.getAvailableSlots(trainerId, date);
   }
-
-
 }
 
 export const trainerAvailabilityService = new TrainerAvailabilityServiceAdapter();

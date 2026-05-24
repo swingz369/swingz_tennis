@@ -15,7 +15,13 @@ import {
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
@@ -183,6 +189,14 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                               ? 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
                               : 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900'
                           }`}
+                          role="button"
+                          tabIndex={session.bookedByUser ? -1 : 0}
+                          onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ' ') && !session.bookedByUser) {
+                              e.preventDefault();
+                              handleBooking(session.id);
+                            }
+                          }}
                           onClick={() => !session.bookedByUser && handleBooking(session.id)}
                         >
                           <div className="flex items-start justify-between gap-1">
@@ -244,15 +258,14 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                                     session.bookingId &&
                                     handleStatusChange(
                                       session.bookingId,
-                                      v as
-                                        | 'pending'
-                                        | 'confirmed'
-                                        | 'cancelled'
-                                        | 'no_show'
+                                      v as 'pending' | 'confirmed' | 'cancelled' | 'no_show'
                                     )
                                   }
                                 >
-                                  <SelectTrigger className="h-6 text-[11px] px-1 py-0" onClick={(e) => e.stopPropagation()}>
+                                  <SelectTrigger
+                                    className="h-6 text-[11px] px-1 py-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>

@@ -14,7 +14,6 @@ import {
   Award,
   BarChart3,
   Bell,
-
 } from 'lucide-react';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

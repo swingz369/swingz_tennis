@@ -9,12 +9,7 @@ function timeStringToMinutes(time: string): number {
   return parseInt(parts[0]) * 60 + parseInt(parts[1]);
 }
 
-function timeSlotsOverlap(
-  start1: string,
-  end1: string,
-  start2: string,
-  end2: string
-): boolean {
+function timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
   const s1 = timeStringToMinutes(start1);
   const e1 = timeStringToMinutes(end1);
   const s2 = timeStringToMinutes(start2);
@@ -94,7 +89,12 @@ interface MockAssignment {
   courtId: string | null;
   courtName: string | null;
   memberIds: string[];
-  memberDetails: Array<{ memberId: string; memberName: string; niveauMatch: number; wishPartnerFulfilled: boolean }>;
+  memberDetails: Array<{
+    memberId: string;
+    memberName: string;
+    niveauMatch: number;
+    wishPartnerFulfilled: boolean;
+  }>;
   warnings: string[];
 }
 
@@ -164,7 +164,9 @@ describe('trainer double-booking detection', () => {
         courtId: 'c1',
         courtName: 'Court 1',
         memberIds: ['m1'],
-        memberDetails: [{ memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false }],
+        memberDetails: [
+          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
+        ],
         warnings: [],
       },
       {
@@ -178,7 +180,9 @@ describe('trainer double-booking detection', () => {
         courtId: 'c2',
         courtName: 'Court 2',
         memberIds: ['m2'],
-        memberDetails: [{ memberId: 'm2', memberName: 'Bob', niveauMatch: 80, wishPartnerFulfilled: false }],
+        memberDetails: [
+          { memberId: 'm2', memberName: 'Bob', niveauMatch: 80, wishPartnerFulfilled: false },
+        ],
         warnings: [],
       },
     ];
@@ -244,16 +248,21 @@ describe('member double-booking detection', () => {
       }
     }
 
-    const multiGroupMembers = [...memberGroups.entries()]
-      .filter(([, groups]) => groups.length > 1);
+    const multiGroupMembers = [...memberGroups.entries()].filter(([, groups]) => groups.length > 1);
 
     expect(multiGroupMembers.length).toBe(1);
     expect(multiGroupMembers[0][0]).toBe('m1');
 
     // Check time overlap
     const [mid, groups] = multiGroupMembers[0];
-    const overlaps = groups[0].dayOfWeek === groups[1].dayOfWeek &&
-      timeSlotsOverlap(groups[0].startTime, groups[0].endTime, groups[1].startTime, groups[1].endTime);
+    const overlaps =
+      groups[0].dayOfWeek === groups[1].dayOfWeek &&
+      timeSlotsOverlap(
+        groups[0].startTime,
+        groups[0].endTime,
+        groups[1].startTime,
+        groups[1].endTime
+      );
     expect(overlaps).toBe(true);
   });
 });
@@ -272,7 +281,9 @@ describe('no trainer assigned detection', () => {
         courtId: 'c1',
         courtName: 'Court 1',
         memberIds: ['m1'],
-        memberDetails: [{ memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false }],
+        memberDetails: [
+          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
+        ],
         warnings: [],
       },
     ];
@@ -295,7 +306,9 @@ describe('no trainer assigned detection', () => {
         courtId: 'c1',
         courtName: null,
         memberIds: ['m1'],
-        memberDetails: [{ memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false }],
+        memberDetails: [
+          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
+        ],
         warnings: [],
       },
     ];
@@ -317,13 +330,20 @@ describe('trainer over limit detection', () => {
         groupName: `Group ${i}`,
         trainerId: 't1',
         trainerName: 'Trainer A',
-        dayOfWeek: (i % 7),
+        dayOfWeek: i % 7,
         startTime: '17:00',
         endTime: '18:30',
         courtId: null,
         courtName: null,
         memberIds: [`m${i}`],
-        memberDetails: [{ memberId: `m${i}`, memberName: `Member ${i}`, niveauMatch: 80, wishPartnerFulfilled: false }],
+        memberDetails: [
+          {
+            memberId: `m${i}`,
+            memberName: `Member ${i}`,
+            niveauMatch: 80,
+            wishPartnerFulfilled: false,
+          },
+        ],
         warnings: [],
       });
     }
@@ -365,7 +385,9 @@ describe('court double-booking detection', () => {
         courtId: 'c1',
         courtName: 'Court 1',
         memberIds: ['m1'],
-        memberDetails: [{ memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false }],
+        memberDetails: [
+          { memberId: 'm1', memberName: 'Alice', niveauMatch: 80, wishPartnerFulfilled: false },
+        ],
         warnings: [],
       },
       {
@@ -379,7 +401,9 @@ describe('court double-booking detection', () => {
         courtId: 'c1', // Same court!
         courtName: 'Court 1',
         memberIds: ['m2'],
-        memberDetails: [{ memberId: 'm2', memberName: 'Bob', niveauMatch: 80, wishPartnerFulfilled: false }],
+        memberDetails: [
+          { memberId: 'm2', memberName: 'Bob', niveauMatch: 80, wishPartnerFulfilled: false },
+        ],
         warnings: [],
       },
     ];

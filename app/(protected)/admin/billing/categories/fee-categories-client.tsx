@@ -3,7 +3,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface FeeConfig {
   id: string;
@@ -60,10 +66,7 @@ export default function FeeCategoriesClient({
               value={form.name}
               onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
             />
-            <Select
-              value={form.type}
-              onValueChange={(v) => setForm((p) => ({ ...p, type: v }))}
-            >
+            <Select value={form.type} onValueChange={(v) => setForm((p) => ({ ...p, type: v }))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

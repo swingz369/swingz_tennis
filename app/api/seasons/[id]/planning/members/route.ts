@@ -6,11 +6,21 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { getDb } from '@/src/infrastructure/persistence/client';
-import { seasons, users, userTrainingPreferences, userClubMemberships } from '@/src/infrastructure/persistence/schema';
-import { trainerFeedback, seasonWaitlists } from '@/src/infrastructure/persistence/season-planning-schema';
+import {
+  seasons,
+  users,
+  userTrainingPreferences,
+  userClubMemberships,
+} from '@/src/infrastructure/persistence/schema';
+import {
+  trainerFeedback,
+  seasonWaitlists,
+} from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, and, desc } from 'drizzle-orm';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, { max: 30, windowMs: 60000 });
@@ -62,7 +72,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const previousSeasons = await db
         .select()
         .from(seasons)
-        .where(and(eq(seasons.club_id, season.club_id), eq(seasons.season_type, season.season_type)))
+        .where(
+          and(eq(seasons.club_id, season.club_id), eq(seasons.season_type, season.season_type))
+        )
         .orderBy(desc(seasons.year));
 
       const prevSeason = previousSeasons.find((s) => s.year < season.year);
@@ -97,7 +109,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
         const prevWaitlist = await db
           .select()
           .from(seasonWaitlists)
-          .where(and(eq(seasonWaitlists.season_id, prevSeason.id), eq(seasonWaitlists.status, 'waiting')));
+          .where(
+            and(eq(seasonWaitlists.season_id, prevSeason.id), eq(seasonWaitlists.status, 'waiting'))
+          );
 
         waitlistCarryovers = prevWaitlist
           .filter((w) => !promotedMembers.some((p) => p.memberId === w.member_id))

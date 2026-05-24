@@ -12,27 +12,18 @@ interface SeasonPlanGridClientProps {
   clubId: string;
 }
 
-export function SeasonPlanGridClient({
-  seasonId,
-  seasonName,
-}: SeasonPlanGridClientProps) {
+export function SeasonPlanGridClient({ seasonId, seasonName }: SeasonPlanGridClientProps) {
   const router = useRouter();
   const { data, isLoading, error } = useSeasonPlanGrid(seasonId);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/admin/seasons')}
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            Saison-Stundenplan
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Saison-Stundenplan</h1>
           <p className="text-sm text-muted-foreground">{seasonName}</p>
         </div>
       </div>

@@ -1,11 +1,18 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 async function findOrCreateSchedule(
   supabase: any,
-  season: { id: string; club_id: string; season_type: string; year: number; start_date: string; end_date: string }
+  season: {
+    id: string;
+    club_id: string;
+    season_type: string;
+    year: number;
+    start_date: string;
+    end_date: string;
+  }
 ): Promise<{ scheduleId: string; error: Error | null }> {
   const { data: existing } = await supabase
     .from('schedules')
@@ -27,7 +34,8 @@ async function findOrCreateSchedule(
     })
     .select('id')
     .single();
-  if (createErr) return { scheduleId: '', error: new Error(`Failed to create schedule: ${createErr.message}`) };
+  if (createErr)
+    return { scheduleId: '', error: new Error(`Failed to create schedule: ${createErr.message}`) };
   return { scheduleId: created.id, error: null };
 }
 
@@ -56,8 +64,7 @@ export async function POST(request: NextRequest) {
     const { name, level, age_group, season_id } = body;
     if (!name || !level)
       return NextResponse.json({ error: 'name and level required' }, { status: 400 });
-    if (!season_id)
-      return NextResponse.json({ error: 'season_id required' }, { status: 400 });
+    if (!season_id) return NextResponse.json({ error: 'season_id required' }, { status: 400 });
 
     const { data: season, error: seasonErr } = await (auth.supabase.from('seasons') as any)
       .select('id, club_id, season_type, year, start_date, end_date')
@@ -70,8 +77,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { scheduleId, error: scheduleErr } = await findOrCreateSchedule(auth.supabase, season);
-    if (scheduleErr)
-      return NextResponse.json({ error: scheduleErr.message }, { status: 500 });
+    if (scheduleErr) return NextResponse.json({ error: scheduleErr.message }, { status: 500 });
 
     const { data, error } = await (auth.supabase.from('training_groups') as any)
       .insert({

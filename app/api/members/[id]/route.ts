@@ -148,7 +148,8 @@ export async function PATCH(
       const membershipUpdate: any = {};
       if (is_active !== undefined) membershipUpdate.is_active = is_active;
       if (role !== undefined) membershipUpdate.role = role;
-      if (include_in_planning !== undefined) membershipUpdate.include_in_planning = include_in_planning;
+      if (include_in_planning !== undefined)
+        membershipUpdate.include_in_planning = include_in_planning;
 
       if (Object.keys(membershipUpdate).length > 0) {
         await auth.supabase.from('user_club_memberships').update(membershipUpdate).eq('id', id);

@@ -63,7 +63,7 @@ async function main() {
           err.message?.includes('already exists') ||
           err.message?.includes('duplicate column') ||
           err.code === '42701' || // duplicate_column
-          err.code === '42P07'    // duplicate_table
+          err.code === '42P07' // duplicate_table
         ) {
           console.log(`  [${i + 1}/${statements.length}] SKIP (already exists)`);
         } else {

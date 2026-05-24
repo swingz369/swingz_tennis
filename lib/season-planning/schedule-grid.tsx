@@ -58,10 +58,7 @@ export default function ScheduleGrid({
                 const key = `${day}-${hour}`;
                 const nextHour = HOURS[hi + 1] ?? '22:00';
                 const here = plan.filter(
-                  (s) =>
-                    s.dayOfWeek === day &&
-                    s.startTime >= hour &&
-                    s.startTime < nextHour,
+                  (s) => s.dayOfWeek === day && s.startTime >= hour && s.startTime < nextHour
                 );
                 return (
                   <div
@@ -89,9 +86,7 @@ export default function ScheduleGrid({
                           opacity: dragging?.id === slot.id ? 0.4 : 1,
                         }}
                       >
-                        <p className="font-semibold truncate leading-tight">
-                          {slot.groupName}
-                        </p>
+                        <p className="font-semibold truncate leading-tight">{slot.groupName}</p>
                         <p className="opacity-75 text-[10px]">
                           {slot.startTime} · {slot.memberNames.length}M ·{' '}
                           {slot.trainerName.split(' ').pop()}

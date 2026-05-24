@@ -33,13 +33,15 @@ export class StatsService {
     const { data: payments } = await supabase
       .from('payments')
       .select('amount, invoice_id')
-      .in('invoice_id', invoiceIds.length > 0 ? invoiceIds : ['00000000-0000-0000-0000-000000000000'])
+      .in(
+        'invoice_id',
+        invoiceIds.length > 0 ? invoiceIds : ['00000000-0000-0000-0000-000000000000']
+      )
       .eq('status', 'completed');
 
     const paidAmount = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
     const outstandingAmount = totalAmount - paidAmount;
-    const overdueInvoices =
-      invoices?.filter((inv) => inv.status === 'overdue').length || 0;
+    const overdueInvoices = invoices?.filter((inv) => inv.status === 'overdue').length || 0;
 
     const { count: activeMandates } = await supabase
       .from('sepa_mandates')

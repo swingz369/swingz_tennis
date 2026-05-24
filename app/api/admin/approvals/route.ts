@@ -56,10 +56,7 @@ export async function PATCH(request: NextRequest) {
       updateData.rejection_reason = rejectionReason;
     }
 
-    const { error } = await sb
-      .from('registration_requests')
-      .update(updateData)
-      .eq('id', id);
+    const { error } = await sb.from('registration_requests').update(updateData).eq('id', id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

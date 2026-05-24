@@ -14,7 +14,7 @@ export const DAY_LABELS = [
 
 export const HOURS = Array.from(
   { length: 14 },
-  (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`,
+  (_, i) => `${(i + 8).toString().padStart(2, '0')}:00`
 );
 
 export const MAX_ADULTS = 3;

@@ -15,6 +15,7 @@
 ## Task 1: Club settings — billing config fields
 
 Find the settings page first:
+
 - [ ] Run: `grep -r "opening_hours\|Vereinseinstellungen\|club.*setting" /home/aeugeln/SwingZ/app --include="*.tsx" -l 2>/dev/null | head -5`
 - [ ] Read the found settings file to understand current form fields
 - [ ] Add these fields to the existing settings form:

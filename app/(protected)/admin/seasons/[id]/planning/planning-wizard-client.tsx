@@ -55,7 +55,9 @@ class StepErrorBoundary extends Component<
         <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-6">
           <div className="flex flex-col items-center text-center gap-3">
             <AlertTriangle className="h-8 w-8 text-red-500" />
-            <h3 className="text-lg font-semibold text-red-700">Ein unerwarteter Fehler ist aufgetreten</h3>
+            <h3 className="text-lg font-semibold text-red-700">
+              Ein unerwarteter Fehler ist aufgetreten
+            </h3>
             <p className="text-sm text-red-600 max-w-md">
               {this.state.error?.message || 'Unbekannter Fehler'}
             </p>
@@ -132,18 +134,12 @@ function WizardContent({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push('/admin/seasons')}
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <span className="text-2xl">
-                {seasonType === 'summer' ? '☀️' : '❄️'}
-              </span>
+              <span className="text-2xl">{seasonType === 'summer' ? '☀️' : '❄️'}</span>
               <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                 {seasonName}
               </h1>
@@ -151,9 +147,7 @@ function WizardContent({
                 {seasonYear}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              KI-gestützte Saisonplanung
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">KI-gestützte Saisonplanung</p>
           </div>
         </div>
       </div>
@@ -177,21 +171,17 @@ function WizardContent({
                   isActive
                     ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/20'
                     : isCompleted
-                    ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                    : isClickable
-                    ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'
-                    : 'bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800/50'
+                      ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                      : isClickable
+                        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'
+                        : 'bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800/50'
                 }
               `}
             >
               {isCompleted ? (
                 <CheckCircle className="h-4 w-4" />
               ) : (
-                <StepIcon
-                  className={`h-4 w-4 ${
-                    isActive ? 'text-white' : ''
-                  }`}
-                />
+                <StepIcon className={`h-4 w-4 ${isActive ? 'text-white' : ''}`} />
               )}
               <span className="hidden sm:inline">{step.label}</span>
             </button>
@@ -213,12 +203,8 @@ function WizardContent({
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-red-700 dark:text-red-400">
-                Fehler
-              </p>
-              <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">
-                {error}
-              </p>
+              <p className="text-sm font-medium text-red-700 dark:text-red-400">Fehler</p>
+              <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">{error}</p>
             </div>
           </div>
         </Card>
@@ -229,24 +215,16 @@ function WizardContent({
         {isProcessing ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-brand-primary" />
-            <p className="text-sm text-muted-foreground">
-              Berechnung läuft...
-            </p>
+            <p className="text-sm text-muted-foreground">Berechnung läuft...</p>
           </div>
         ) : (
-          <StepErrorBoundary key={currentStep}>
-            {renderStep()}
-          </StepErrorBoundary>
+          <StepErrorBoundary key={currentStep}>{renderStep()}</StepErrorBoundary>
         )}
       </div>
 
       {/* Navigation Buttons */}
       <div className="flex items-center justify-between border-t pt-6">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={!canGoPrev || isProcessing}
-        >
+        <Button variant="outline" onClick={prevStep} disabled={!canGoPrev || isProcessing}>
           <ChevronLeft className="mr-2 h-4 w-4" />
           Zurück
         </Button>
@@ -263,10 +241,7 @@ function WizardContent({
               </Button>
             </>
           ) : (
-            <Button
-              onClick={() => router.push('/admin/seasons')}
-              variant="brand"
-            >
+            <Button onClick={() => router.push('/admin/seasons')} variant="brand">
               <ClipboardCheck className="mr-2 h-4 w-4" />
               Zur Saisonübersicht
             </Button>
@@ -290,11 +265,7 @@ export function PlanningWizardClient({
 }: PlanningWizardClientProps) {
   return (
     <WizardProvider seasonId={seasonId} clubId={clubId}>
-      <WizardContent
-        seasonName={seasonName}
-        seasonType={seasonType}
-        seasonYear={seasonYear}
-      />
+      <WizardContent seasonName={seasonName} seasonType={seasonType} seasonYear={seasonYear} />
     </WizardProvider>
   );
 }

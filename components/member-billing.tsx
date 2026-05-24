@@ -47,25 +47,23 @@ export default function MemberBilling() {
       .then((json) => {
         // The overview endpoint returns { invoices: [...], summary, pagination }
         // Each invoice from billingEngine has snake_case fields; map to the local Invoice shape.
-        const fetched: Invoice[] = (json.invoices ?? []).map(
-          (inv: Record<string, unknown>) => {
-            const subtotal = Number(inv.amount ?? inv.subtotal ?? 0);
-            return {
-              id: inv.id as string,
-              invoiceNumber: (inv.invoice_number ?? inv.invoiceNumber ?? '') as string,
-              issueDate: new Date((inv.created_at ?? inv.issueDate) as string),
-              dueDate: new Date((inv.due_date ?? inv.dueDate) as string),
-              customerName: (inv.customer_name ?? inv.customerName ?? '') as string,
-              customerEmail: (inv.customer_email ?? inv.customerEmail ?? '') as string,
-              items: (inv.items as Invoice['items']) ?? [],
-              subtotal,
-              taxRate: 19,
-              taxAmount: subtotal * 0.19,
-              total: Number(inv.amount ?? inv.total ?? subtotal),
-              status: (inv.status as Invoice['status']) ?? 'pending',
-            };
-          }
-        );
+        const fetched: Invoice[] = (json.invoices ?? []).map((inv: Record<string, unknown>) => {
+          const subtotal = Number(inv.amount ?? inv.subtotal ?? 0);
+          return {
+            id: inv.id as string,
+            invoiceNumber: (inv.invoice_number ?? inv.invoiceNumber ?? '') as string,
+            issueDate: new Date((inv.created_at ?? inv.issueDate) as string),
+            dueDate: new Date((inv.due_date ?? inv.dueDate) as string),
+            customerName: (inv.customer_name ?? inv.customerName ?? '') as string,
+            customerEmail: (inv.customer_email ?? inv.customerEmail ?? '') as string,
+            items: (inv.items as Invoice['items']) ?? [],
+            subtotal,
+            taxRate: 19,
+            taxAmount: subtotal * 0.19,
+            total: Number(inv.amount ?? inv.total ?? subtotal),
+            status: (inv.status as Invoice['status']) ?? 'pending',
+          };
+        });
         setInvoices(fetched);
       })
       .catch((err) => {

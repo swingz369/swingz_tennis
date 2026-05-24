@@ -13,6 +13,7 @@
 ## Task 1: Test-Mode-Cookie entfernen
 
 **Files:**
+
 - Modify: `middleware.ts:77-81`
 - Modify: `app/api/auth/login/route.ts:8-18`
 
@@ -22,11 +23,11 @@ In `middleware.ts` Zeilen 77-81 löschen (3 Kommentarzeile + 2 Code-Zeilen):
 
 ```typescript
 // ENTFERNEN — diese 5 Zeilen komplett löschen:
-  // Test-Mode für Playwright E2E-Tests: Auth-Check via Cookie überspringen
-  const testModeCookie = request.cookies.get('swingz_test_mode');
-  if (testModeCookie?.value === 'true') {
-    return response;
-  }
+// Test-Mode für Playwright E2E-Tests: Auth-Check via Cookie überspringen
+const testModeCookie = request.cookies.get('swingz_test_mode');
+if (testModeCookie?.value === 'true') {
+  return response;
+}
 ```
 
 Nach dem Edit muss Zeile 75 (`let response = ...`) direkt von Zeile 83 (`// Supabase Session refreshen`) gefolgt werden.
@@ -66,6 +67,7 @@ git commit -m "security: remove test-mode cookie bypass from middleware and logi
 ## Task 2: E2E-Tests anpassen
 
 **Files:**
+
 - Modify: `tests/helpers/auth.ts:43-51`
 - Modify: `tests/e2e/all-pages-render.spec.ts` (addCookies-Block)
 - Modify: `tests/e2e/navigation-flows.spec.ts` (addCookies-Block)
@@ -101,6 +103,7 @@ git commit -m "test: remove swingz_test_mode cookie from browser context in e2e 
 ## Task 3: Demo-Rolle entfernen
 
 **Files:**
+
 - Modify: `lib/auth/guards.ts:8,47`
 - Modify: `lib/actions/booking.actions.ts:21-23`
 - Modify: `scripts/seed-users.ts:24`
@@ -108,33 +111,37 @@ git commit -m "test: remove swingz_test_mode cookie from browser context in e2e 
 - [ ] **Step 1: UserRole-Typ in guards.ts — demo entfernen**
 
 Zeile 8:
+
 ```typescript
 export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
 ```
 
 Zeile 47 (`demo: 0,`) aus dem `roleHierarchy`-Objekt entfernen:
+
 ```typescript
-  const roleHierarchy: Record<string, number> = {
-    superadmin: 4,
-    admin: 3,
-    trainer: 2,
-    member: 1,
-  };
+const roleHierarchy: Record<string, number> = {
+  superadmin: 4,
+  admin: 3,
+  trainer: 2,
+  member: 1,
+};
 ```
 
 - [ ] **Step 2: Demo-Guard aus booking.actions.ts entfernen**
 
 Zeilen 21-23 entfernen:
+
 ```typescript
-    // Demo-User darf nicht buchen
-    if (user.role === 'demo') {
-      return { success: false, error: 'Demo-User können keine Buchungen erstellen.' };
-    }
+// Demo-User darf nicht buchen
+if (user.role === 'demo') {
+  return { success: false, error: 'Demo-User können keine Buchungen erstellen.' };
+}
 ```
 
 - [ ] **Step 3: Demo-User aus seed-users.ts entfernen**
 
 Zeile 24 entfernen:
+
 ```typescript
   { email: 'demo@swingz.local', role: 'demo' },
 ```
@@ -157,6 +164,7 @@ git commit -m "security: remove demo role — no production path uses it"
 ## Task 4: Stripe-Webhook Idempotenz
 
 **Files:**
+
 - Modify: `app/api/webhooks/stripe/route.ts`
 
 - [ ] **Step 1: handleInvoicePayment mit Idempotenz-Guard**
@@ -260,6 +268,7 @@ git commit -m "security: add idempotency guards to Stripe webhook handlers"
 ## Task 5: Role-Bleeding Fix
 
 **Files:**
+
 - Modify: `lib/api-auth.ts:59-89`
 
 - [ ] **Step 1: effectiveClubId an effectiveMembership binden**
@@ -267,46 +276,46 @@ git commit -m "security: add idempotency guards to Stripe webhook handlers"
 Zeilen 59-89 in `lib/api-auth.ts` ersetzen:
 
 ```typescript
-  const roleOrder: Record<string, number> = {
-    superadmin: 4,
-    admin: 3,
-    trainer: 2,
-    member: 1,
-  };
+const roleOrder: Record<string, number> = {
+  superadmin: 4,
+  admin: 3,
+  trainer: 2,
+  member: 1,
+};
 
-  // Highest role wins — track which membership granted it
-  let effectiveRole = memberships[0].role as 'superadmin' | 'admin' | 'trainer' | 'member';
-  let effectiveMembership = memberships[0];
+// Highest role wins — track which membership granted it
+let effectiveRole = memberships[0].role as 'superadmin' | 'admin' | 'trainer' | 'member';
+let effectiveMembership = memberships[0];
 
-  for (let i = 1; i < memberships.length; i++) {
-    const m = memberships[i];
-    const role = m.role as keyof typeof roleOrder;
-    if ((roleOrder[role] ?? 0) > (roleOrder[effectiveRole] ?? 0)) {
-      effectiveRole = role as 'superadmin' | 'admin' | 'trainer' | 'member';
-      effectiveMembership = m;
+for (let i = 1; i < memberships.length; i++) {
+  const m = memberships[i];
+  const role = m.role as keyof typeof roleOrder;
+  if ((roleOrder[role] ?? 0) > (roleOrder[effectiveRole] ?? 0)) {
+    effectiveRole = role as 'superadmin' | 'admin' | 'trainer' | 'member';
+    effectiveMembership = m;
+  }
+}
+
+let selectedClubId: string | undefined;
+let effectiveClubId: string | null = null;
+
+if (effectiveRole === 'superadmin') {
+  const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
+  if (cookieValue) {
+    const { data: clubCheck } = await supabase
+      .from('clubs')
+      .select('id')
+      .eq('id', cookieValue)
+      .maybeSingle();
+    if (clubCheck) {
+      selectedClubId = cookieValue;
+      effectiveClubId = cookieValue;
     }
   }
-
-  let selectedClubId: string | undefined;
-  let effectiveClubId: string | null = null;
-
-  if (effectiveRole === 'superadmin') {
-    const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
-    if (cookieValue) {
-      const { data: clubCheck } = await supabase
-        .from('clubs')
-        .select('id')
-        .eq('id', cookieValue)
-        .maybeSingle();
-      if (clubCheck) {
-        selectedClubId = cookieValue;
-        effectiveClubId = cookieValue;
-      }
-    }
-  } else {
-    // effectiveClubId comes from the membership that granted the effective role
-    effectiveClubId = effectiveMembership.club_id ?? null;
-  }
+} else {
+  // effectiveClubId comes from the membership that granted the effective role
+  effectiveClubId = effectiveMembership.club_id ?? null;
+}
 ```
 
 - [ ] **Step 2: TypeScript-Check**

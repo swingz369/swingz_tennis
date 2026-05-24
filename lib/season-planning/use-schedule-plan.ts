@@ -26,10 +26,10 @@ export function useSchedulePlan() {
               memberNames: [...slot.memberNames, personName],
             };
           return slot;
-        }),
+        })
       );
     },
-    [],
+    []
   );
 
   const drop = useCallback(
@@ -43,15 +43,13 @@ export function useSchedulePlan() {
         .padStart(2, '0')}:${(tot % 60).toString().padStart(2, '0')}`;
       setPlan((p) =>
         p.map((s) =>
-          s.id === dragging.id
-            ? { ...s, dayOfWeek: day, startTime: hour, endTime: newEnd }
-            : s,
-        ),
+          s.id === dragging.id ? { ...s, dayOfWeek: day, startTime: hour, endTime: newEnd } : s
+        )
       );
       setDragging(null);
       setDragOver(null);
     },
-    [dragging],
+    [dragging]
   );
 
   // Group plan by day of week

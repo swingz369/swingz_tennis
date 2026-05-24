@@ -20,16 +20,7 @@ export async function POST(_request: NextRequest) {
     try {
       const body = await _request.json();
 
-      const { category, key, value, type, description, isPublic, isRequired, validation, clubId: bodyClubId } = body;
-
-      if (!category || !key || !value || !type) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-      }
-
-      // Only superadmins can override club context via body
-      const effectiveClubId = auth.role === 'superadmin' ? (bodyClubId || null) : auth.clubId;
-
-      const systemSetting = await systemSettingsService.createSystemSetting({
+      const {
         category,
         key,
         value,
@@ -38,7 +29,29 @@ export async function POST(_request: NextRequest) {
         isPublic,
         isRequired,
         validation,
-      }, effectiveClubId);
+        clubId: bodyClubId,
+      } = body;
+
+      if (!category || !key || !value || !type) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      }
+
+      // Only superadmins can override club context via body
+      const effectiveClubId = auth.role === 'superadmin' ? bodyClubId || null : auth.clubId;
+
+      const systemSetting = await systemSettingsService.createSystemSetting(
+        {
+          category,
+          key,
+          value,
+          type,
+          description,
+          isPublic,
+          isRequired,
+          validation,
+        },
+        effectiveClubId
+      );
 
       return NextResponse.json({ success: true, systemSetting });
     } catch (error) {
@@ -72,7 +85,7 @@ export async function GET(_request: NextRequest) {
       const object = searchParams.get('object');
 
       // Only superadmins can override club context via query param
-      const effectiveClubId = auth.role === 'superadmin' ? (requestedClubId || null) : auth.clubId;
+      const effectiveClubId = auth.role === 'superadmin' ? requestedClubId || null : auth.clubId;
 
       if (object) {
         const settings = await systemSettingsService.getSystemSettingsAsObject(
@@ -83,7 +96,10 @@ export async function GET(_request: NextRequest) {
       }
 
       if (key) {
-        const systemSetting = await systemSettingsService.getSystemSettingByKey(key, effectiveClubId);
+        const systemSetting = await systemSettingsService.getSystemSettingByKey(
+          key,
+          effectiveClubId
+        );
         if (!systemSetting) {
           return NextResponse.json({ error: 'System setting not found' }, { status: 404 });
         }
@@ -104,7 +120,10 @@ export async function GET(_request: NextRequest) {
           category === 'integrations' ||
           category === 'other')
       ) {
-        const systemSettings = await systemSettingsService.getSystemSettingsByCategory(category, effectiveClubId);
+        const systemSettings = await systemSettingsService.getSystemSettingsByCategory(
+          category,
+          effectiveClubId
+        );
         return NextResponse.json({ systemSettings });
       }
 

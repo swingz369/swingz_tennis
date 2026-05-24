@@ -6,16 +6,25 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { getDb } from '@/src/infrastructure/persistence/client';
-import { seasons, seasonPlanEntries, planningConflicts } from '@/src/infrastructure/persistence/schema';
+import {
+  seasons,
+  seasonPlanEntries,
+  planningConflicts,
+} from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
 import type { GroupAssignment } from '@/lib/season-planning/types';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 async function detectConflictsForSeason(seasonId: string, clubId: string) {
   const detector = new ConflictDetector(seasonId, clubId);
-  const entries = await getDb().select().from(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, seasonId));
+  const entries = await getDb()
+    .select()
+    .from(seasonPlanEntries)
+    .where(eq(seasonPlanEntries.season_id, seasonId));
 
   // Build assignments from plan entries
   const assignments: GroupAssignment[] = [];
@@ -101,7 +110,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
       if (!isSuperadmin && season.club_id !== auth.clubId) return forbiddenResponse('Kein Zugriff');
 
-      const body = await request.json() as { conflictId: string; action: 'resolve' | 'ignore'; notes?: string };
+      const body = (await request.json()) as {
+        conflictId: string;
+        action: 'resolve' | 'ignore';
+        notes?: string;
+      };
       if (!body.conflictId || !body.action) {
         return NextResponse.json({ error: 'conflictId and action required' }, { status: 400 });
       }

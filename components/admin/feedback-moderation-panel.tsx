@@ -243,7 +243,10 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
             </div>
 
             <div className="flex gap-2">
-              <Select value={filterVisible} onValueChange={(v) => setFilterVisible(v as typeof filterVisible)}>
+              <Select
+                value={filterVisible}
+                onValueChange={(v) => setFilterVisible(v as typeof filterVisible)}
+              >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -254,7 +257,10 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
                 </SelectContent>
               </Select>
 
-              <Select value={filterFlagged} onValueChange={(v) => setFilterFlagged(v as typeof filterFlagged)}>
+              <Select
+                value={filterFlagged}
+                onValueChange={(v) => setFilterFlagged(v as typeof filterFlagged)}
+              >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="All Flags" />
                 </SelectTrigger>

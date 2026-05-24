@@ -224,7 +224,6 @@ export class AutoPlanningService {
     const planningData = {
       members: allPreferences
         .filter(({ pref }) => pref.user_role !== 'trainer')
-        .slice(0, 30)
         .map(({ pref, user_name }) => ({
           id: pref.user_id,
           name: user_name || 'Unknown',

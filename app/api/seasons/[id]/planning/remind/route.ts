@@ -10,7 +10,7 @@ import { getDb } from '@/src/infrastructure/persistence/client';
 import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/persistence/schema';
 import { eq, and } from 'drizzle-orm';
 import { env } from '@/lib/env';
-import { ResendEmailService } from '@/src/infrastructure/email/resend-email.service';
+import { EmailService } from '@/src/infrastructure/email/email.service';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -68,32 +68,29 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         if (env.RESEND_API_KEY) {
           try {
-            const emailService = new ResendEmailService();
+            const emailService = new EmailService();
             const seasonName = season.name || `Saison ${season.year}`;
             const deadline = season.preferences_deadline
               ? new Date(season.preferences_deadline).toLocaleDateString('de-DE')
               : 'bald';
 
-            const recipients = unsubmitted.map((m) => ({
-              email: m.email,
-              name: m.full_name || 'Mitglied',
-            }));
-
-            const template = {
+            const templates = unsubmitted.map((m) => ({
+              to: m.email,
               subject: `Erinnerung: Präferenzen für ${seasonName} - SwingZ`,
               html: `
                 <h1>Präferenz-Erinnerung</h1>
-                <p>Hallo {{name}},</p>
+                <p>Hallo ${m.full_name || 'Mitglied'},</p>
                 <p>Du hast deine Trainings-Präferenzen für die <strong>${seasonName}</strong> noch nicht abgegeben.</p>
                 <p>Bitte melde dich in deinem SwingZ-Konto an und gib deine Verfügbarkeiten und Wünsche bis zum <strong>${deadline}</strong> an.</p>
                 <p>So können wir sicherstellen, dass du in einer passenden Trainingsgruppe eingeteilt wirst.</p>
                 <br/>
                 <p>Sportliche Grüße,<br/>Dein SwingZ-Team</p>
               `,
-            };
+              text: `Hallo ${m.full_name || 'Mitglied'},\n\nDu hast deine Trainings-Präferenzen für die ${seasonName} noch nicht abgegeben.\nBitte melde dich in deinem SwingZ-Konto an und gib deine Verfügbarkeiten und Wünsche bis zum ${deadline} an.\n\nSportliche Grüße,\nDein SwingZ-Team`,
+            }));
 
-            await emailService.sendBulkEmail(recipients, template);
-            sentCount = recipients.length;
+            await emailService.sendBatchEmails(templates);
+            sentCount = templates.length;
           } catch (emailError) {
             console.error('[Remind] Email batch failed:', emailError);
           }

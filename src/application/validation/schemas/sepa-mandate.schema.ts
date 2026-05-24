@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { IBAN_REGEX } from '@/lib/iban';
 
 export const sepaMandateSchema = z.object({
   // Account holder information
@@ -13,7 +14,7 @@ export const sepaMandateSchema = z.object({
     .string()
     .min(15, 'IBAN muss mindestens 15 Zeichen haben')
     .max(34, 'IBAN darf maximal 34 Zeichen haben')
-    .regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/, 'Ungültige IBAN')
+    .regex(IBAN_REGEX, 'Ungültige IBAN')
     .transform((val) => val.replace(/\s/g, '').toUpperCase()),
 
   // BIC validation
@@ -78,42 +79,8 @@ export const sepaMandateSchema = z.object({
 
 export type SEPAMandateFormData = z.infer<typeof sepaMandateSchema>;
 
-// Helper function to validate IBAN
-export function validateIBAN(iban: string): boolean {
-  const cleaned = iban.replace(/\s/g, '').toUpperCase();
-
-  // Check basic format
-  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(cleaned)) {
-    return false;
-  }
-
-  // Move first 4 characters to end
-  const rearranged = cleaned.substring(4) + cleaned.substring(0, 4);
-
-  // Replace letters with numbers
-  const numeric = rearranged
-    .split('')
-    .map((char) => {
-      const code = char.charCodeAt(0);
-      return code >= 65 && code <= 90 ? (code - 55).toString() : char;
-    })
-    .join('');
-
-  // Calculate mod 97
-  let remainder = 0;
-  for (let i = 0; i < numeric.length; i += 9) {
-    const chunk = remainder.toString() + numeric.substring(i, i + 9);
-    remainder = parseInt(chunk, 10) % 97;
-  }
-
-  return remainder === 1;
-}
-
-// Helper function to format IBAN
-export function formatIBAN(iban: string): string {
-  const cleaned = iban.replace(/\s/g, '').toUpperCase();
-  return cleaned.replace(/(.{4})/g, '$1 ').trim();
-}
+// Re-export for backward compatibility
+export { validateIBAN, formatIBAN } from '@/lib/iban';
 
 // Helper function to generate mandate reference
 export function generateMandateReference(memberId: string): string {

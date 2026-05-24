@@ -53,7 +53,9 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
       .single();
 
     if (!club || clubError) {
-      throw new Error(`Failed to create test club: ${clubError?.message ?? 'null returned'}. Run drizzle migrations first.`);
+      throw new Error(
+        `Failed to create test club: ${clubError?.message ?? 'null returned'}. Run drizzle migrations first.`
+      );
     }
     testClubId = club.id;
 
@@ -104,10 +106,7 @@ describeIntegration('Phase 2 Service Migration Integration Tests', () => {
       it('should enforce RLS for non-superadmin users', async () => {
         // This would require creating a non-superadmin user context
         // For now, we test that the table exists and has RLS enabled
-        const { data, error } = await supabase
-          .from('billing_periods')
-          .select('id')
-          .limit(1);
+        const { data, error } = await supabase.from('billing_periods').select('id').limit(1);
 
         expect(error).toBeNull();
         expect(data).toBeDefined();

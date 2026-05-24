@@ -167,7 +167,9 @@ export function MatchmakingPanel() {
         <div className="flex flex-col items-center justify-center py-16 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
           <Users className="h-12 w-12 mb-3 text-gray-300" />
           <p className="text-sm font-medium">Keine passenden Partner gefunden</p>
-          <p className="text-xs mt-1">Es wurden {data.totalMembers} Mitglieder im Verein analysiert.</p>
+          <p className="text-xs mt-1">
+            Es wurden {data.totalMembers} Mitglieder im Verein analysiert.
+          </p>
           <p className="text-xs">Versuche es später erneut, wenn mehr Mitglieder aktiv sind.</p>
         </div>
       )}
@@ -225,9 +227,7 @@ export function MatchmakingPanel() {
                     className={`transition-all duration-200 cursor-pointer hover:shadow-md ${
                       isSelected ? 'ring-2 ring-blue-400 shadow-md' : ''
                     }`}
-                    onClick={() =>
-                      setSelectedMatch(isSelected ? null : match.userId)
-                    }
+                    onClick={() => setSelectedMatch(isSelected ? null : match.userId)}
                   >
                     <CardContent className="p-4">
                       {/* Top row: Name + Score */}
@@ -244,10 +244,14 @@ export function MatchmakingPanel() {
                           </div>
                         </div>
                         <div className="flex flex-col items-center ml-2">
-                          <span className={`text-xl font-bold tabular-nums ${getScoreColor(match.compatibilityScore)}`}>
+                          <span
+                            className={`text-xl font-bold tabular-nums ${getScoreColor(match.compatibilityScore)}`}
+                          >
                             {match.compatibilityScore}
                           </span>
-                          <span className="text-[9px] text-gray-400 uppercase tracking-wider">Score</span>
+                          <span className="text-[9px] text-gray-400 uppercase tracking-wider">
+                            Score
+                          </span>
                         </div>
                       </div>
 
@@ -261,24 +265,36 @@ export function MatchmakingPanel() {
 
                       {/* Badges row */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
-                        <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 border ${getLevelColor(match.playingLevel)} bg-white`}>
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] px-1.5 py-0 border ${getLevelColor(match.playingLevel)} bg-white`}
+                        >
                           <Target className="h-2.5 w-2.5 mr-1" />
                           {getLevelLabel(match.playingLevel)}
                         </Badge>
                         {match.groupOverlap.length > 0 && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-indigo-50 text-indigo-700 border-indigo-200">
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 bg-indigo-50 text-indigo-700 border-indigo-200"
+                          >
                             <Users className="h-2.5 w-2.5 mr-1" />
                             {match.groupOverlap.length} Gruppen
                           </Badge>
                         )}
                         {match.commonSessions > 0 && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-cyan-50 text-cyan-700 border-cyan-200">
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 bg-cyan-50 text-cyan-700 border-cyan-200"
+                          >
                             <Calendar className="h-2.5 w-2.5 mr-1" />
                             {match.commonSessions} Sessions
                           </Badge>
                         )}
                         {match.levelDiff === 0 && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200"
+                          >
                             <Star className="h-2.5 w-2.5 mr-1" />
                             Gleiches Level
                           </Badge>
@@ -300,20 +316,34 @@ export function MatchmakingPanel() {
                         <div className="border-t pt-3 mt-2 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
                             <div className="p-2 bg-gray-50 rounded-lg text-center">
-                              <p className="text-lg font-semibold text-gray-900 tabular-nums">{match.compatibilityScore}</p>
+                              <p className="text-lg font-semibold text-gray-900 tabular-nums">
+                                {match.compatibilityScore}
+                              </p>
                               <p className="text-[10px] text-gray-500">Gesamt-Score</p>
                             </div>
                             <div className="p-2 bg-gray-50 rounded-lg text-center">
-                              <p className="text-lg font-semibold text-gray-900 tabular-nums">{match.commonSessions}</p>
+                              <p className="text-lg font-semibold text-gray-900 tabular-nums">
+                                {match.commonSessions}
+                              </p>
                               <p className="text-[10px] text-gray-500">Sessions</p>
                             </div>
                             <div className="p-2 bg-gray-50 rounded-lg text-center">
-                              <p className="text-lg font-semibold text-gray-900 tabular-nums">{match.groupOverlap.length}</p>
+                              <p className="text-lg font-semibold text-gray-900 tabular-nums">
+                                {match.groupOverlap.length}
+                              </p>
                               <p className="text-[10px] text-gray-500">Gruppen</p>
                             </div>
                             <div className="p-2 bg-gray-50 rounded-lg text-center">
                               <p className="text-lg font-semibold text-gray-900">
-                                <span className={match.levelDiff === 0 ? 'text-green-600' : match.levelDiff <= 1 ? 'text-amber-600' : 'text-gray-600'}>
+                                <span
+                                  className={
+                                    match.levelDiff === 0
+                                      ? 'text-green-600'
+                                      : match.levelDiff <= 1
+                                        ? 'text-amber-600'
+                                        : 'text-gray-600'
+                                  }
+                                >
                                   {match.levelDiff}
                                 </span>
                               </p>
@@ -327,7 +357,11 @@ export function MatchmakingPanel() {
                               <MessageSquare className="h-3.5 w-3.5" />
                               Nachricht
                             </Button>
-                            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 flex-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs gap-1.5 flex-1"
+                            >
                               <UserPlus className="h-3.5 w-3.5" />
                               Herausfordern
                             </Button>

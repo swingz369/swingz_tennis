@@ -53,7 +53,13 @@ export interface SystemSetting {
   updatedBy?: string;
 }
 
-export default function SystemSettingsManagement({ clubId, embedded }: { clubId?: string; embedded?: boolean }) {
+export default function SystemSettingsManagement({
+  clubId,
+  embedded,
+}: {
+  clubId?: string;
+  embedded?: boolean;
+}) {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [editForm, setEditForm] = useState<Partial<SystemSetting>>({});
   const [selectedCategory, setSelectedCategory] = useState<
@@ -66,7 +72,9 @@ export default function SystemSettingsManagement({ clubId, embedded }: { clubId?
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
-        const url = clubId ? `/api/system-settings?clubId=${encodeURIComponent(clubId)}` : '/api/system-settings';
+        const url = clubId
+          ? `/api/system-settings?clubId=${encodeURIComponent(clubId)}`
+          : '/api/system-settings';
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to load system settings');
@@ -255,7 +263,10 @@ export default function SystemSettingsManagement({ clubId, embedded }: { clubId?
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <Select value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as typeof selectedCategory)}>
+          <Select
+            value={selectedCategory}
+            onValueChange={(v) => setSelectedCategory(v as typeof selectedCategory)}
+          >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Alle Kategorien" />
             </SelectTrigger>

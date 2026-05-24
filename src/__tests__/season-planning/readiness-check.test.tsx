@@ -5,13 +5,15 @@ import ScheduleReadinessCheck from '@/lib/season-planning/readiness-check';
 // ---- Mock fetch ----
 vi.stubGlobal('fetch', vi.fn());
 
-function mockFetchResponse(overrides: {
-  planningMembers?: number;
-  trainerCount?: number;
-  availabilityCount?: number;
-  courtCount?: number;
-  preferenceCount?: number;
-} = {}) {
+function mockFetchResponse(
+  overrides: {
+    planningMembers?: number;
+    trainerCount?: number;
+    availabilityCount?: number;
+    courtCount?: number;
+    preferenceCount?: number;
+  } = {}
+) {
   const data = {
     planningMembers: overrides.planningMembers ?? 0,
     trainerCount: overrides.trainerCount ?? 0,
@@ -33,7 +35,7 @@ describe('ScheduleReadinessCheck — loading', () => {
 
   it('should render nothing while fetch is pending', () => {
     const { container } = render(
-      <ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />,
+      <ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />
     );
     expect(container.textContent).toBe('');
   });
@@ -73,7 +75,13 @@ describe('ScheduleReadinessCheck — errors', () => {
 describe('ScheduleReadinessCheck — all OK', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchResponse({ planningMembers: 5, trainerCount: 2, availabilityCount: 3, courtCount: 2, preferenceCount: 10 });
+    mockFetchResponse({
+      planningMembers: 5,
+      trainerCount: 2,
+      availabilityCount: 3,
+      courtCount: 2,
+      preferenceCount: 10,
+    });
   });
 
   it('should show "Bereit für Planung" when all required pass', async () => {
@@ -96,7 +104,13 @@ describe('ScheduleReadinessCheck — all OK', () => {
 describe('ScheduleReadinessCheck — warnings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchResponse({ planningMembers: 5, trainerCount: 2, availabilityCount: 3, courtCount: 2, preferenceCount: 0 });
+    mockFetchResponse({
+      planningMembers: 5,
+      trainerCount: 2,
+      availabilityCount: 3,
+      courtCount: 2,
+      preferenceCount: 0,
+    });
   });
 
   it('should show warning chip for missing preferences', async () => {
@@ -121,7 +135,13 @@ describe('ScheduleReadinessCheck — details panel', () => {
   });
 
   it('should show "Details" button', async () => {
-    mockFetchResponse({ planningMembers: 5, trainerCount: 2, availabilityCount: 3, courtCount: 2, preferenceCount: 10 });
+    mockFetchResponse({
+      planningMembers: 5,
+      trainerCount: 2,
+      availabilityCount: 3,
+      courtCount: 2,
+      preferenceCount: 10,
+    });
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
     await waitFor(() => expect(screen.getByText('Details')).toBeInTheDocument());
   });
@@ -134,14 +154,26 @@ describe('ScheduleReadinessCheck — details panel', () => {
   });
 
   it('should toggle to "Schließen" when expanded', async () => {
-    mockFetchResponse({ planningMembers: 5, trainerCount: 2, availabilityCount: 3, courtCount: 2, preferenceCount: 0 });
+    mockFetchResponse({
+      planningMembers: 5,
+      trainerCount: 2,
+      availabilityCount: 3,
+      courtCount: 2,
+      preferenceCount: 0,
+    });
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
     await waitFor(() => fireEvent.click(screen.getByText('Details')));
     expect(screen.getByText('Schließen')).toBeInTheDocument();
   });
 
   it('should collapse on "Schließen" click', async () => {
-    mockFetchResponse({ planningMembers: 5, trainerCount: 2, availabilityCount: 3, courtCount: 2, preferenceCount: 0 });
+    mockFetchResponse({
+      planningMembers: 5,
+      trainerCount: 2,
+      availabilityCount: 3,
+      courtCount: 2,
+      preferenceCount: 0,
+    });
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
     await waitFor(() => fireEvent.click(screen.getByText('Details')));
     fireEvent.click(screen.getByText('Schließen'));
@@ -157,7 +189,13 @@ describe('ScheduleReadinessCheck — details panel', () => {
   });
 
   it('should show "Alle Voraussetzungen erfüllt" when expanded and all OK', async () => {
-    mockFetchResponse({ planningMembers: 5, trainerCount: 2, availabilityCount: 3, courtCount: 2, preferenceCount: 10 });
+    mockFetchResponse({
+      planningMembers: 5,
+      trainerCount: 2,
+      availabilityCount: 3,
+      courtCount: 2,
+      preferenceCount: 10,
+    });
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
     await waitFor(() => fireEvent.click(screen.getByText('Details')));
     expect(screen.getByText(/Alle Voraussetzungen erfüllt/)).toBeInTheDocument();
@@ -167,7 +205,13 @@ describe('ScheduleReadinessCheck — details panel', () => {
 describe('ScheduleReadinessCheck — chips', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchResponse({ planningMembers: 8, trainerCount: 3, availabilityCount: 4, courtCount: 3, preferenceCount: 12 });
+    mockFetchResponse({
+      planningMembers: 8,
+      trainerCount: 3,
+      availabilityCount: 4,
+      courtCount: 3,
+      preferenceCount: 12,
+    });
   });
 
   it('should render all 4 check chips', async () => {
@@ -182,7 +226,9 @@ describe('ScheduleReadinessCheck — chips', () => {
 
   it('should show green chips for OK items', async () => {
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
-    await waitFor(() => expect(document.querySelectorAll('.bg-green-100').length).toBeGreaterThanOrEqual(3));
+    await waitFor(() =>
+      expect(document.querySelectorAll('.bg-green-100').length).toBeGreaterThanOrEqual(3)
+    );
   });
 
   it('should show red chips for error items', async () => {

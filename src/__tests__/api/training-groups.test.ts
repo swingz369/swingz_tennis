@@ -29,19 +29,18 @@ const mockAuthCtx = {
   } as any,
 };
 
-const mockForbiddenResponse = vi.fn((msg?: string) =>
-  new Response(
-    JSON.stringify({ error: msg || 'Forbidden' }),
-    { status: 403, headers: { 'Content-Type': 'application/json' } }
-  )
+const mockForbiddenResponse = vi.fn(
+  (msg?: string) =>
+    new Response(JSON.stringify({ error: msg || 'Forbidden' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    })
 );
 
 // ── Module mocks ────────────────────────────────────────────
 
 vi.mock('@/lib/api-auth', () => ({
-  withApiAuth: vi.fn((_req: unknown, fn: (auth: unknown) => Promise<Response>) =>
-    fn(mockAuthCtx)
-  ),
+  withApiAuth: vi.fn((_req: unknown, fn: (auth: unknown) => Promise<Response>) => fn(mockAuthCtx)),
   verifyRole: (...args: unknown[]) => mockVerifyRole(...args),
   forbiddenResponse: (...args: unknown[]) => mockForbiddenResponse(...args),
 }));
@@ -56,19 +55,13 @@ vi.mock('@/lib/rate-limit', () => ({
 // ════════════════════════════════════════════════════════════
 
 /** Creates a Supabase chain mock (select → eq → order → then) */
-function supabaseSelectChain(
-  data: unknown | null,
-  error: { message: string } | null = null
-) {
+function supabaseSelectChain(data: unknown | null, error: { message: string } | null = null) {
   const chain: Record<string, any> = {};
   chain.select = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
   chain.single = vi.fn(() => chain);
-  chain.then = (
-    resolve: (v: unknown) => unknown,
-    _reject: (e: unknown) => unknown
-  ) => {
+  chain.then = (resolve: (v: unknown) => unknown, _reject: (e: unknown) => unknown) => {
     resolve({ data, error });
     return chain;
   };
@@ -76,18 +69,12 @@ function supabaseSelectChain(
 }
 
 /** Creates a Supabase insert chain (insert → select → single → then) */
-function supabaseInsertChain(
-  data: unknown,
-  error: { message: string } | null = null
-) {
+function supabaseInsertChain(data: unknown, error: { message: string } | null = null) {
   const chain: Record<string, any> = {};
   chain.insert = vi.fn(() => chain);
   chain.select = vi.fn(() => chain);
   chain.single = vi.fn(() => chain);
-  chain.then = (
-    resolve: (v: unknown) => unknown,
-    _reject: (e: unknown) => unknown
-  ) => {
+  chain.then = (resolve: (v: unknown) => unknown, _reject: (e: unknown) => unknown) => {
     resolve({ data, error });
     return chain;
   };
@@ -95,19 +82,13 @@ function supabaseInsertChain(
 }
 
 /** Creates a Supabase update chain (update → eq → eq → select → single → then) */
-function supabaseUpdateChain(
-  data: unknown,
-  error: { message: string } | null = null
-) {
+function supabaseUpdateChain(data: unknown, error: { message: string } | null = null) {
   const chain: Record<string, any> = {};
   chain.update = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
   chain.select = vi.fn(() => chain);
   chain.single = vi.fn(() => chain);
-  chain.then = (
-    resolve: (v: unknown) => unknown,
-    _reject: (e: unknown) => unknown
-  ) => {
+  chain.then = (resolve: (v: unknown) => unknown, _reject: (e: unknown) => unknown) => {
     resolve({ data, error });
     return chain;
   };
@@ -119,10 +100,7 @@ function supabaseDeleteChain(error: { message: string } | null = null) {
   const chain: Record<string, any> = {};
   chain.delete = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
-  chain.then = (
-    resolve: (v: unknown) => unknown,
-    _reject: (e: unknown) => unknown
-  ) => {
+  chain.then = (resolve: (v: unknown) => unknown, _reject: (e: unknown) => unknown) => {
     resolve({ error });
     return chain;
   };
@@ -171,9 +149,7 @@ describe('GET /api/training-groups', () => {
   it('returns 200 for GET with query params (ignored, no season_id column)', async () => {
     givenSupabaseChain(supabaseSelectChain([]));
 
-    const req = new NextRequest(
-      'http://localhost/api/training-groups?seasonId=season-001'
-    );
+    const req = new NextRequest('http://localhost/api/training-groups?seasonId=season-001');
     const res = await GET(req);
 
     expect(res.status).toBe(200);
@@ -233,14 +209,17 @@ describe('POST /api/training-groups', () => {
     schedule: { id: string; error: null } | { id: null; error: { message: string } },
     groupInsert: { data: unknown; error: { message: string } | null }
   ) {
-    const fromMock = (mockAuthCtx.supabase.from as ReturnType<typeof vi.fn>);
+    const fromMock = mockAuthCtx.supabase.from as ReturnType<typeof vi.fn>;
     fromMock.mockImplementation((table: string) => {
       if (table === 'seasons') {
         const c: Record<string, any> = {};
         c.select = vi.fn(() => c);
         c.eq = vi.fn(() => c);
         c.single = vi.fn(() => c);
-        c.then = (resolve: (v: unknown) => unknown) => { resolve({ data: season, error: null }); return c; };
+        c.then = (resolve: (v: unknown) => unknown) => {
+          resolve({ data: season, error: null });
+          return c;
+        };
         return c;
       }
       if (table === 'schedules') {
@@ -250,7 +229,10 @@ describe('POST /api/training-groups', () => {
           c.select = vi.fn(() => c);
           c.eq = vi.fn(() => c);
           c.limit = vi.fn(() => c);
-          c.then = (resolve: (v: unknown) => unknown) => { resolve({ data: [{ id: schedule.id }], error: null }); return c; };
+          c.then = (resolve: (v: unknown) => unknown) => {
+            resolve({ data: [{ id: schedule.id }], error: null });
+            return c;
+          };
           return c;
         }
         // upsert error case
@@ -277,7 +259,10 @@ describe('POST /api/training-groups', () => {
         c.insert = vi.fn(() => c);
         c.select = vi.fn(() => c);
         c.single = vi.fn(() => c);
-        c.then = (resolve: (v: unknown) => unknown) => { resolve(groupInsert); return c; };
+        c.then = (resolve: (v: unknown) => unknown) => {
+          resolve(groupInsert);
+          return c;
+        };
         return c;
       }
       return supabaseSelectChain([]);
@@ -285,8 +270,21 @@ describe('POST /api/training-groups', () => {
   }
 
   it('creates a training group and returns 201', async () => {
-    const season = { id: 'season-001', club_id: CLUB_ID, season_type: 'summer', year: 2026, start_date: '2026-06-01', end_date: '2026-09-30' };
-    const created = { id: 'new-group-001', name: 'Anfänger Gruppe A', level: 'beginner', schedule_id: 'sched-001', is_active: true };
+    const season = {
+      id: 'season-001',
+      club_id: CLUB_ID,
+      season_type: 'summer',
+      year: 2026,
+      start_date: '2026-06-01',
+      end_date: '2026-09-30',
+    };
+    const created = {
+      id: 'new-group-001',
+      name: 'Anfänger Gruppe A',
+      level: 'beginner',
+      schedule_id: 'sched-001',
+      is_active: true,
+    };
     setupPostMocks(season, { id: 'sched-001', error: null }, { data: created, error: null });
 
     const req = new NextRequest('http://localhost/api/training-groups', {
@@ -342,8 +340,19 @@ describe('POST /api/training-groups', () => {
   });
 
   it('returns 500 on Supabase insert error', async () => {
-    const season = { id: 'season-001', club_id: CLUB_ID, season_type: 'summer', year: 2026, start_date: '2026-06-01', end_date: '2026-09-30' };
-    setupPostMocks(season, { id: 'sched-001', error: null }, { data: null, error: { message: 'Unique constraint violation' } });
+    const season = {
+      id: 'season-001',
+      club_id: CLUB_ID,
+      season_type: 'summer',
+      year: 2026,
+      start_date: '2026-06-01',
+      end_date: '2026-09-30',
+    };
+    setupPostMocks(
+      season,
+      { id: 'sched-001', error: null },
+      { data: null, error: { message: 'Unique constraint violation' } }
+    );
 
     const req = new NextRequest('http://localhost/api/training-groups', {
       method: 'POST',
@@ -376,10 +385,7 @@ describe('POST /api/training-groups', () => {
 // ════════════════════════════════════════════════════════════
 
 describe('PATCH /api/training-groups/[id]', () => {
-  let PATCH: (
-    req: NextRequest,
-    ctx: { params: Promise<{ id: string }> }
-  ) => Promise<Response>;
+  let PATCH: (req: NextRequest, ctx: { params: Promise<{ id: string }> }) => Promise<Response>;
 
   beforeAll(async () => {
     const mod = await import('@/app/api/training-groups/[id]/route');
@@ -446,10 +452,7 @@ describe('PATCH /api/training-groups/[id]', () => {
 // ════════════════════════════════════════════════════════════
 
 describe('DELETE /api/training-groups/[id]', () => {
-  let DELETE_FN: (
-    req: NextRequest,
-    ctx: { params: Promise<{ id: string }> }
-  ) => Promise<Response>;
+  let DELETE_FN: (req: NextRequest, ctx: { params: Promise<{ id: string }> }) => Promise<Response>;
 
   beforeAll(async () => {
     const mod = await import('@/app/api/training-groups/[id]/route');

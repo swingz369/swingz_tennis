@@ -8,29 +8,30 @@
 
 Die App ist **nicht produktionsreif**. Kritische Sicherheitslücken, umfangreiche Mock-Implementierungen und ein Billing-System mit Datenverlust-Szenarien blockieren den Launch.
 
-| Bereich | Score | Status |
-|---------|-------|--------|
-| Auth & Security | 45/100 | Kritische Lücken |
-| Billing & Payments | 15/100 | Fundamentale Fehler |
+| Bereich              | Score  | Status                     |
+| -------------------- | ------ | -------------------------- |
+| Auth & Security      | 45/100 | Kritische Lücken           |
+| Billing & Payments   | 15/100 | Fundamentale Fehler        |
 | Buchungen & Training | 30/100 | 60% Mock-Implementierungen |
-| UI & Deployment | 50/100 | Solide Basis, grobe Fehler |
+| UI & Deployment      | 50/100 | Solide Basis, grobe Fehler |
 
 ---
 
 ## Rollen-Übersicht
 
-| Rolle | Beschreibung | club_id in DB |
-|-------|-------------|---------------|
-| `superadmin` | Plattform-weit, alle Clubs | NULL |
-| `admin` | Verwaltet einen Club | spezifische Club-ID |
-| `trainer` | Trainiert in einem Club | spezifische Club-ID |
-| `member` | Mitglied eines Clubs | spezifische Club-ID |
+| Rolle        | Beschreibung               | club_id in DB       |
+| ------------ | -------------------------- | ------------------- |
+| `superadmin` | Plattform-weit, alle Clubs | NULL                |
+| `admin`      | Verwaltet einen Club       | spezifische Club-ID |
+| `trainer`    | Trainiert in einem Club    | spezifische Club-ID |
+| `member`     | Mitglied eines Clubs       | spezifische Club-ID |
 
 Hierarchie: `superadmin (4) > admin (3) > trainer (2) > member (1)`
 
 Zusätzlich existiert eine undokumentierte `demo`-Rolle (Wert 0) in `lib/auth/guards.ts`, die in `lib/types/index.ts` fehlt.
 
 **Demo-Modus kann vollständig gelöscht werden:**
+
 - `lib/auth/guards.ts:8` — `'demo'` aus `UserRole`-Union entfernen
 - `lib/auth/guards.ts:47` — `demo: 0` aus Hierarchie-Objekt entfernen
 - `lib/actions/booking.actions.ts:21` — `if (user.role === 'demo')` Branch entfernen

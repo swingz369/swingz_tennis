@@ -7,7 +7,14 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { getDb } from '@/src/infrastructure/persistence/client';
-import { seasons, seasonPlanEntries, sessions, schedules, seasonPlanningHistory, users } from '@/src/infrastructure/persistence/schema';
+import {
+  seasons,
+  seasonPlanEntries,
+  sessions,
+  schedules,
+  seasonPlanningHistory,
+  users,
+} from '@/src/infrastructure/persistence/schema';
 import { markHolidaySessions } from '@/lib/services/school-holidays.service';
 import { eq, and, inArray } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
@@ -130,11 +137,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // status update), the entire publish rolls back automatically.
         // ──────────────────────────────────────────────────────────────────
         const db = getDb();
-        const {
-          publishedCount,
-          publishedIds,
-          scheduleId,
-        } = await db.transaction(async (tx) => {
+        const { publishedCount, publishedIds, scheduleId } = await db.transaction(async (tx) => {
           let publishedCount = 0;
           const publishedIds: string[] = [];
 
@@ -160,10 +163,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 .select()
                 .from(schedules)
                 .where(
-                  and(
-                    eq(schedules.club_id, season.club_id),
-                    eq(schedules.season_year, seasonYear)
-                  )
+                  and(eq(schedules.club_id, season.club_id), eq(schedules.season_year, seasonYear))
                 )
                 .limit(1);
 
@@ -193,8 +193,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
             const endHours = parseInt(endParts[0], 10);
             const endMinutes = parseInt(endParts[1], 10);
             const durationMs =
-              ((endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)) * 60 * 1000;
-            const actualDurationMs = durationMs > 0 ? durationMs : entry.duration_minutes * 60 * 1000;
+              (endHours * 60 + endMinutes - (startHours * 60 + startMinutes)) * 60 * 1000;
+            const actualDurationMs =
+              durationMs > 0 ? durationMs : entry.duration_minutes * 60 * 1000;
 
             // DayOfWeek convention: 0=Monday, 1=Tuesday, ..., 6=Sunday
             // JavaScript getDay(): 0=Sunday, 1=Monday, ..., 6=Saturday
@@ -298,7 +299,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // Mark sessions that fall on school holidays as holiday_cancelled
         if (scheduleId) {
           try {
-            const markedCount = await markHolidaySessions(auth.supabase, scheduleId, season.club_id);
+            const markedCount = await markHolidaySessions(
+              auth.supabase,
+              scheduleId,
+              season.club_id
+            );
             if (markedCount > 0) {
               console.log(`[Season] Marked ${markedCount} sessions as holiday_cancelled`);
             }
@@ -330,11 +335,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
               const seasonName = season.name || `Saison ${season.year}`;
 
               const emailPromises = memberRows.map((member) =>
-                resend.emails.send({
-                  from: fromEmail,
-                  to: member.email,
-                  subject: `Trainingsplan für ${seasonName} - SwingZ`,
-                  html: `
+                resend.emails
+                  .send({
+                    from: fromEmail,
+                    to: member.email,
+                    subject: `Trainingsplan für ${seasonName} - SwingZ`,
+                    html: `
                     <h1>Dein Trainingsplan für ${seasonName}</h1>
                     <p>Hallo ${member.full_name || 'Mitglied'},</p>
                     <p>Der Trainingsplan für die neue Saison wurde veröffentlicht!</p>
@@ -343,10 +349,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
                     <br/>
                     <p>Sportliche Grüße,<br/>Dein SwingZ-Team</p>
                   `,
-                }).catch((err) => {
-                  console.error(`[Confirm] Failed to send email to ${member.email}:`, err);
-                  return null;
-                })
+                  })
+                  .catch((err) => {
+                    console.error(`[Confirm] Failed to send email to ${member.email}:`, err);
+                    return null;
+                  })
               );
 
               const results = await Promise.all(emailPromises);

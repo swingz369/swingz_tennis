@@ -86,18 +86,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const trainers: TrainerSummary[] = Array.from(trainerMap.entries()).map(
-      ([trainerId, data]) => {
-        const hours = data.totalMinutes / 60;
-        return {
-          trainerId,
-          name: data.name,
-          hours: Math.round(hours * 100) / 100,
-          hourlyRate: data.hourlyRate,
-          amount: Math.round(hours * data.hourlyRate * 100) / 100,
-        };
-      }
-    );
+    const trainers: TrainerSummary[] = Array.from(trainerMap.entries()).map(([trainerId, data]) => {
+      const hours = data.totalMinutes / 60;
+      return {
+        trainerId,
+        name: data.name,
+        hours: Math.round(hours * 100) / 100,
+        hourlyRate: data.hourlyRate,
+        amount: Math.round(hours * data.hourlyRate * 100) / 100,
+      };
+    });
 
     // Query invoices for monthly revenue totals
     const { data: invoicesData, error: invoicesError } = await supabase

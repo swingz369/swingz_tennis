@@ -231,7 +231,9 @@ export default function MemberTrainingSchedule() {
                         </div>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}>
+                    <div
+                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}
+                    >
                       {status.label}
                     </div>
                   </div>
@@ -322,7 +324,9 @@ export default function MemberTrainingSchedule() {
                         </div>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}>
+                    <div
+                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}
+                    >
                       {status.label}
                     </div>
                   </div>

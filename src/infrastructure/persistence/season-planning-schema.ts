@@ -143,9 +143,7 @@ export const seasonStatistics = pgTable(
 
     // Attendance metrics
     overall_attendance_quote: numeric('overall_attendance_quote', { precision: 5, scale: 2 }),
-    attendance_by_group: jsonb('attendance_by_group')
-      .$type<Record<string, number>>()
-      .default({}),
+    attendance_by_group: jsonb('attendance_by_group').$type<Record<string, number>>().default({}),
     attendance_by_trainer: jsonb('attendance_by_trainer')
       .$type<Record<string, number>>()
       .default({}),
@@ -230,14 +228,20 @@ export const seasonPlanningConfigs = pgTable(
     season_id: uuid('season_id').references(() => seasons.id, { onDelete: 'cascade' }),
 
     // Niveau span limits
-    max_niveau_span_beginner_months: integer('max_niveau_span_beginner_months').notNull().default(4),
-    max_niveau_span_advanced_months: integer('max_niveau_span_advanced_months').notNull().default(8),
+    max_niveau_span_beginner_months: integer('max_niveau_span_beginner_months')
+      .notNull()
+      .default(4),
+    max_niveau_span_advanced_months: integer('max_niveau_span_advanced_months')
+      .notNull()
+      .default(8),
 
     // Trainer load
     trainer_utilization_max_pct: integer('trainer_utilization_max_pct').notNull().default(80),
 
     // Slot risk
-    slot_failure_rate_threshold_pct: integer('slot_failure_rate_threshold_pct').notNull().default(30),
+    slot_failure_rate_threshold_pct: integer('slot_failure_rate_threshold_pct')
+      .notNull()
+      .default(30),
 
     // Waitlist
     waitlist_priority_rule: varchar('waitlist_priority_rule', { length: 30 })
@@ -264,8 +268,10 @@ export const seasonPlanningConfigs = pgTable(
   (table) => ({
     club_idx: index('planning_config_club_idx').on(table.club_id),
     season_idx: index('planning_config_season_idx').on(table.season_id),
-    club_season_unique: index('planning_config_club_season_unique')
-      .on(table.club_id, table.season_id),
+    club_season_unique: index('planning_config_club_season_unique').on(
+      table.club_id,
+      table.season_id
+    ),
   })
 );
 

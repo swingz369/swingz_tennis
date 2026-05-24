@@ -56,7 +56,6 @@ const ADMIN_LEGEND_ITEMS = [
   { label: 'Gebucht', className: 'bg-red-50 border border-red-200' },
 ];
 
-
 interface DraggableSessionProps {
   session: Session;
   isDragging?: boolean;
@@ -90,7 +89,18 @@ function DraggableSession({ session, isDragging }: DraggableSessionProps) {
   );
 }
 
-function PlanEntryCard({ entry }: { entry: { id: string; group_name: string; group_color: string; trainer_name: string; start_time: string; end_time: string } }) {
+function PlanEntryCard({
+  entry,
+}: {
+  entry: {
+    id: string;
+    group_name: string;
+    group_color: string;
+    trainer_name: string;
+    start_time: string;
+    end_time: string;
+  };
+}) {
   return (
     <Link
       href="/admin/season-plan"
@@ -137,11 +147,15 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
         if (res.ok) {
           const data = await res.json();
           const seasons = data.seasons ?? [];
-          const active = seasons.find((s: any) => s.is_active && ['published', 'active'].includes(s.planning_status));
+          const active = seasons.find(
+            (s: any) => s.is_active && ['published', 'active'].includes(s.planning_status)
+          );
           if (active) {
             setActiveSeasonId(active.id);
           } else {
-            const published = seasons.find((s: any) => ['published', 'active', 'completed'].includes(s.planning_status));
+            const published = seasons.find((s: any) =>
+              ['published', 'active', 'completed'].includes(s.planning_status)
+            );
             if (published) setActiveSeasonId(published.id);
           }
         }

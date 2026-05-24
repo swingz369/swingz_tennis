@@ -184,7 +184,9 @@ export default function TrainerHoursLogsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary dark:text-white">Meine Stundennachweise</h1>
+          <h1 className="text-2xl font-bold text-brand-primary dark:text-white">
+            Meine Stundennachweise
+          </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Erfasse und verwalte deine geleisteten Stunden
           </p>
@@ -207,44 +209,47 @@ export default function TrainerHoursLogsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label htmlFor="trainer-hl-date" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
                   Datum *
                 </label>
                 <Input
+                  id="trainer-hl-date"
                   type="date"
                   value={newEntry.date}
                   onChange={(e) => setNewEntry({ ...newEntry, date: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label htmlFor="trainer-hl-start" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
                   Startzeit *
                 </label>
                 <Input
+                  id="trainer-hl-start"
                   type="time"
                   value={newEntry.startTime}
                   onChange={(e) => setNewEntry({ ...newEntry, startTime: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label htmlFor="trainer-hl-end" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
                   Endzeit *
                 </label>
                 <Input
+                  id="trainer-hl-end"
                   type="time"
                   value={newEntry.endTime}
                   onChange={(e) => setNewEntry({ ...newEntry, endTime: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label htmlFor="trainer-hl-type" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
                   Typ *
                 </label>
                 <Select
                   value={newEntry.type}
                   onValueChange={(v) => setNewEntry({ ...newEntry, type: v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="trainer-hl-type">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -258,10 +263,11 @@ export default function TrainerHoursLogsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+              <label htmlFor="trainer-hl-notes" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
                 Notizen
               </label>
               <Textarea
+                id="trainer-hl-notes"
                 placeholder="Optionale Notizen zur Tätigkeit..."
                 value={newEntry.notes}
                 onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })}
@@ -362,11 +368,11 @@ export default function TrainerHoursLogsPage() {
         <CardContent className="pt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400">
+              <label htmlFor="trainer-hl-filter-status" className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400">
                 Status
               </label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="trainer-hl-filter-status">
                   <SelectValue placeholder="Alle" />
                 </SelectTrigger>
                 <SelectContent>
@@ -378,10 +384,11 @@ export default function TrainerHoursLogsPage() {
               </Select>
             </div>
             <div>
-              <label className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400">
+              <label htmlFor="trainer-hl-filter-month" className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400">
                 Monat
               </label>
               <Input
+                id="trainer-hl-filter-month"
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}

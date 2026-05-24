@@ -19,7 +19,6 @@ import type {
 import { PaymentSettingsService } from './payment-settings.service';
 import { DrizzlePaymentSettingsRepository } from '@/infrastructure/persistence/repositories/payment-settings.repository';
 
-
 class PaymentSettingsServiceAdapter {
   private paymentSettingsRepo = new DrizzlePaymentSettingsRepository();
 

@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 
 // Guard: skip if Supabase service role key is not available
-const HAS_SERVICE_ROLE_KEY = !!(process.env.SUPABASE_SERVICE_ROLE_KEY);
+const HAS_SERVICE_ROLE_KEY = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 const describeIf = HAS_SERVICE_ROLE_KEY ? describe : describe.skip;
 
 describeIf('Stripe Webhook Handler Logic', () => {

@@ -111,7 +111,9 @@ describe('MemberListManagement', () => {
       await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
 
       expect(screen.queryByText('Mitgliederliste verwalten')).not.toBeInTheDocument();
-      expect(screen.queryByText('Übersicht und Management aller Mitglieder')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Übersicht und Management aller Mitglieder')
+      ).not.toBeInTheDocument();
       expect(screen.queryByText('Export')).not.toBeInTheDocument();
       expect(screen.queryByText('Neues Mitglied')).not.toBeInTheDocument();
     });
@@ -145,10 +147,7 @@ describe('MemberListManagement', () => {
   describe('loading state', () => {
     it('shows loading spinner while fetching', () => {
       // Don't resolve the fetch so loading state persists
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockReturnValue(new Promise(() => {}))
-      );
+      vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
 
       render(<MemberListManagement clubId="club-1" />);
 
@@ -282,9 +281,7 @@ describe('SystemSettingsManagement', () => {
       render(<SystemSettingsManagement clubId="settings-club-id" />);
 
       await waitFor(() => {
-        expect(fetchSpy).toHaveBeenCalledWith(
-          '/api/system-settings?clubId=settings-club-id'
-        );
+        expect(fetchSpy).toHaveBeenCalledWith('/api/system-settings?clubId=settings-club-id');
       });
     });
 
@@ -371,10 +368,7 @@ describe('SystemSettingsManagement', () => {
 
   describe('loading state', () => {
     it('shows loading spinner while fetching', () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockReturnValue(new Promise(() => {}))
-      );
+      vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise(() => {})));
 
       render(<SystemSettingsManagement clubId="club-1" />);
 

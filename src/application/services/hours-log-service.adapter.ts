@@ -23,7 +23,6 @@ import type {
 import { DrizzleHoursLogRepository } from '@/infrastructure/persistence/repositories/hours-log.repository';
 import { DrizzleAttendanceRecordRepository } from '@/infrastructure/persistence/repositories/attendance-record.repository';
 
-
 class HoursLogServiceAdapter {
   private hoursLogRepo = new DrizzleHoursLogRepository();
   private attendanceRepo = new DrizzleAttendanceRecordRepository();
@@ -127,8 +126,6 @@ class HoursLogServiceAdapter {
     await this.attendanceRepo.delete(id);
     return true;
   }
-
-
 }
 
 // Export singleton instance

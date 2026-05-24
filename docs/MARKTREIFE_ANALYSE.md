@@ -8,19 +8,19 @@
 
 ## Zusammenfassung (Executive Summary)
 
-| Metrik | Wert | Status |
-|--------|------|--------|
-| TypeScript-Fehler | 7 | 🟡 |
-| ESLint-Fehler | 0 | 🟢 |
-| Tests gesamt | 295 | – |
-| Tests bestanden | 196 (66%) | 🟡 |
-| Tests fehlgeschlagen | 2 | 🔴 |
-| Tests skipped | 97 (33%) | 🟡 |
-| Build | ❌ Fehlgeschlagen | 🔴 |
-| API-Routen | ~200 Handler | 🟢 |
-| Rate-Limiting-Abdeckung | ~170/200 (85%) | 🟡 |
-| CSRF-Schutz-Abdeckung | ~10/200 (5%) | 🔴 |
-| console.log in Prod | 206 Fundstellen | 🟡 |
+| Metrik                  | Wert              | Status |
+| ----------------------- | ----------------- | ------ |
+| TypeScript-Fehler       | 7                 | 🟡     |
+| ESLint-Fehler           | 0                 | 🟢     |
+| Tests gesamt            | 295               | –      |
+| Tests bestanden         | 196 (66%)         | 🟡     |
+| Tests fehlgeschlagen    | 2                 | 🔴     |
+| Tests skipped           | 97 (33%)          | 🟡     |
+| Build                   | ❌ Fehlgeschlagen | 🔴     |
+| API-Routen              | ~200 Handler      | 🟢     |
+| Rate-Limiting-Abdeckung | ~170/200 (85%)    | 🟡     |
+| CSRF-Schutz-Abdeckung   | ~10/200 (5%)      | 🔴     |
+| console.log in Prod     | 206 Fundstellen   | 🟡     |
 
 **Gesamtbewertung:** Das Projekt hat eine solide Basis, ist aber **nicht produktionsreif**. Die drei kritischen Blocker (P0) sind: Build-Failure, CSRF-Lücken und fehlschlagende Tests.
 
@@ -32,15 +32,15 @@
 
 **7 Fehler**, alle reproduzierbar:
 
-| # | Typ | Datei | Zeile | Problem |
-|---|-----|-------|-------|---------|
-| 1 | TS2322 | `court-types-client.tsx` | 619 | `"destructive"` nicht assignable zu `ConfirmVariant` |
-| 2 | TS2322 | `courts-manage-client.tsx` | ~580 | `"destructive"` nicht assignable zu `ConfirmVariant` |
-| 3 | TS2322 | `tournaments/page.tsx` | – | `"brand"` nicht assignable zu `ConfirmVariant` |
-| 4 | TS2322 | `tournaments/page.tsx` | – | `Element` nicht assignable zu `string` |
-| 5 | TS2322 | `trainer-booking/page.tsx` | – | `"brand"` nicht assignable zu `ConfirmVariant` |
-| 6 | TS2322 | `trainer-booking/page.tsx` | – | `Element` nicht assignable zu `string` |
-| 7 | TS2339 | `web-vitals-reporter.tsx` | – | `onFID` existiert nicht auf Modul |
+| #   | Typ    | Datei                      | Zeile | Problem                                              |
+| --- | ------ | -------------------------- | ----- | ---------------------------------------------------- |
+| 1   | TS2322 | `court-types-client.tsx`   | 619   | `"destructive"` nicht assignable zu `ConfirmVariant` |
+| 2   | TS2322 | `courts-manage-client.tsx` | ~580  | `"destructive"` nicht assignable zu `ConfirmVariant` |
+| 3   | TS2322 | `tournaments/page.tsx`     | –     | `"brand"` nicht assignable zu `ConfirmVariant`       |
+| 4   | TS2322 | `tournaments/page.tsx`     | –     | `Element` nicht assignable zu `string`               |
+| 5   | TS2322 | `trainer-booking/page.tsx` | –     | `"brand"` nicht assignable zu `ConfirmVariant`       |
+| 6   | TS2322 | `trainer-booking/page.tsx` | –     | `Element` nicht assignable zu `string`               |
+| 7   | TS2339 | `web-vitals-reporter.tsx`  | –     | `onFID` existiert nicht auf Modul                    |
 
 **Root Cause für Fehler 1–6:** `ConfirmDialog` akzeptiert nur `'danger' | 'warning' | 'default'`, aber 4 Dateien übergeben `"destructive"` oder `"brand"`.
 
@@ -83,6 +83,7 @@ Nicht ausführbare Suites:
 **Nur ~10 von ~200 API-Routen verwenden `withCSRFProtection`:**
 
 Geschützte Routen:
+
 - `members/route.ts` (POST)
 - `sepa-mandates/route.ts` (POST)
 - `seasons/[id]/preferences/route.ts` (POST)
@@ -93,6 +94,7 @@ Geschützte Routen:
 - `seasons/[id]/route.ts` (DELETE)
 
 **Ungeschützte mutations (Auswahl kritischer):**
+
 - `auth/login/route.ts` (POST) – Login ohne CSRF
 - `auth/logout/route.ts` (POST) – Logout ohne CSRF
 - `bookings/route.ts` (POST) – Buchung ohne CSRF
@@ -114,6 +116,7 @@ Geschützte Routen:
 **~170 von ~200 Routen haben Rate-Limiting.** Die folgenden Kategorien fehlen:
 
 **Fehlende Rate-Limits (Auswahl):**
+
 - `emails/onboarding/route.ts` (POST) – kein Rate-Limit
 - `email-campaigns/route.ts` (POST) – kein Rate-Limit
 - `coupons/route.ts` (GET/POST) – kein Rate-Limit
@@ -138,6 +141,7 @@ Geschützte Routen:
 ### 2.3 Debug-Endpoints
 
 **`app/api/debug/auth/route.ts`** – öffentlicher Debug-Endpoint, zeigt Auth-Status und Cookies.
+
 - Kein Rate-Limiting
 - Keine Authentifizierung
 - Sollte im Production-Build entfernt oder mit Admin-Auth + Rate-Limit geschützt werden
@@ -162,14 +166,14 @@ Geschützte Routen:
 
 ### 3.1 Doppelte Architektur: `lib/` vs `src/`
 
-| Aspekt | `lib/` | `src/` |
-|--------|--------|--------|
-| Auth | `auth.ts`, `api-auth.ts` | – |
-| Supabase Client | `supabase/server.ts` | `infrastructure/external/supabase/server.ts` |
-| Validation | `validation.ts`, `validation-schemas.ts`, `form-validation.ts` | `application/validation/schemas.ts` |
-| Booking | `booking/`, `booking-rules.service.ts` | `domain/booking/` |
-| Billing | `billing-engine.ts`, `billing/` | `application/services/billing.service.ts` |
-| Email | – | `application/services/email.service.ts`, `infrastructure/email/email.service.ts` |
+| Aspekt          | `lib/`                                                         | `src/`                                                                           |
+| --------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Auth            | `auth.ts`, `api-auth.ts`                                       | –                                                                                |
+| Supabase Client | `supabase/server.ts`                                           | `infrastructure/external/supabase/server.ts`                                     |
+| Validation      | `validation.ts`, `validation-schemas.ts`, `form-validation.ts` | `application/validation/schemas.ts`                                              |
+| Booking         | `booking/`, `booking-rules.service.ts`                         | `domain/booking/`                                                                |
+| Billing         | `billing-engine.ts`, `billing/`                                | `application/services/billing.service.ts`                                        |
+| Email           | –                                                              | `application/services/email.service.ts`, `infrastructure/email/email.service.ts` |
 
 **Beide Architekturen werden aktiv genutzt** – Feature-Flags steuern die Migration von `lib/` zu `src/`. Alle 13 Feature-Flags sind derzeit auf `false`.
 
@@ -186,15 +190,16 @@ Geschützte Routen:
 
 ### 3.3 Stripe-Duplikation
 
-| Datei | Verwendung | Status |
-|-------|------------|--------|
-| `lib/stripe/stripe-client.ts` | `billing/invoices/[id]/checkout/route.ts` | Aktiv |
-| `lib/stripe/client.ts` | `stripe/checkout/route.ts` | Aktiv |
-| `services/billing/src/index.ts` | Express-Service (separat?) | Unklar |
+| Datei                           | Verwendung                                | Status |
+| ------------------------------- | ----------------------------------------- | ------ |
+| `lib/stripe/stripe-client.ts`   | `billing/invoices/[id]/checkout/route.ts` | Aktiv  |
+| `lib/stripe/client.ts`          | `stripe/checkout/route.ts`                | Aktiv  |
+| `services/billing/src/index.ts` | Express-Service (separat?)                | Unklar |
 
 **Zwei Stripe-Clients mit unterschiedlicher API** – `getStripeClient()` vs `getStripe()`.
 
 **Zwei Webhook-Routen:**
+
 - `app/api/webhooks/stripe/route.ts`
 - `app/api/stripe/webhook/route.ts`
 
@@ -218,6 +223,7 @@ Stripe sendet Events an EINE URL – eine der beiden ist tot. Welche?
 - **Dokumentierter Konflikt:** `20260507000000_schema_consolidation.sql:14` – "Drizzle nutzt 'trainer_club' (singular), migrations nutzen..." – Plural/Singular-Namenskonflikt!
 
 **Tests fehlgeschlagen wegen Schema-Drift:**
+
 - `rls-policies.test.ts`: `'slug' column of 'clubs' not found`
 - `service-migration.test.ts`: `'default_session_duration_minutes' column not found`
 
@@ -241,12 +247,12 @@ Alle 13 Flags in `lib/features/feature-flags.ts` sind `false` (gesteuert via `pr
 
 ### 5.1 TODOs im Produktionscode
 
-| Datei | Zeile | Inhalt | Priorität |
-|-------|-------|--------|-----------|
-| `app/api/ai/matchmaking/route.ts` | 25 | `const myCity = null; // TODO: Add city field` | P2 |
-| `app/api/ai/matchmaking/route.ts` | 45 | `const memberLevel = 'intermediate'; // TODO: Extend users table` | P2 |
-| `app/api/ai/matchmaking/route.ts` | 60 | `city: null, // TODO: Add city field` | P2 |
-| `app/api/emails/onboarding/route.ts` | 18 | `// TODO: Integrate with Resend for actual email sending` | P1 |
+| Datei                                | Zeile | Inhalt                                                            | Priorität |
+| ------------------------------------ | ----- | ----------------------------------------------------------------- | --------- |
+| `app/api/ai/matchmaking/route.ts`    | 25    | `const myCity = null; // TODO: Add city field`                    | P2        |
+| `app/api/ai/matchmaking/route.ts`    | 45    | `const memberLevel = 'intermediate'; // TODO: Extend users table` | P2        |
+| `app/api/ai/matchmaking/route.ts`    | 60    | `city: null, // TODO: Add city field`                             | P2        |
+| `app/api/emails/onboarding/route.ts` | 18    | `// TODO: Integrate with Resend for actual email sending`         | P1        |
 
 ### 5.2 console.log statt Logger
 
@@ -266,52 +272,52 @@ Alle 13 Flags in `lib/features/feature-flags.ts` sind `false` (gesteuert via `pr
 
 ### 6.1 Buchungssystem
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Einzelbuchung | ✅ | `app/api/bookings/route.ts` POST/GET |
-| Serienbuchung | ✅ | `app/api/bookings/series/route.ts`, `validate-series/route.ts` |
-| Stornierung | ✅ | `app/api/bookings/[id]/cancel/route.ts` |
-| Status-Update | ✅ | `app/api/bookings/[id]/status/route.ts` |
-| Safe-Booking | ✅ | `lib/booking/safe-booking.ts` – Doppelbuchungs-Prävention |
-| Warteliste | ✅ | `lib/booking/waitlist.service.ts`, `waitlist_entries` Tabelle |
-| Platz-Typen | ✅ | `app/api/court-types/`, Sand/Hartplatz/Rasen/Teppich/Kunstrasen |
-| Flutlicht | ✅ | `has_lighting`, `lighting_hours_start/end` in DB |
-| Trainer-Zuweisung | ✅ | Sessions haben `trainerId` |
+| Feature           | Status | Details                                                         |
+| ----------------- | ------ | --------------------------------------------------------------- |
+| Einzelbuchung     | ✅     | `app/api/bookings/route.ts` POST/GET                            |
+| Serienbuchung     | ✅     | `app/api/bookings/series/route.ts`, `validate-series/route.ts`  |
+| Stornierung       | ✅     | `app/api/bookings/[id]/cancel/route.ts`                         |
+| Status-Update     | ✅     | `app/api/bookings/[id]/status/route.ts`                         |
+| Safe-Booking      | ✅     | `lib/booking/safe-booking.ts` – Doppelbuchungs-Prävention       |
+| Warteliste        | ✅     | `lib/booking/waitlist.service.ts`, `waitlist_entries` Tabelle   |
+| Platz-Typen       | ✅     | `app/api/court-types/`, Sand/Hartplatz/Rasen/Teppich/Kunstrasen |
+| Flutlicht         | ✅     | `has_lighting`, `lighting_hours_start/end` in DB                |
+| Trainer-Zuweisung | ✅     | Sessions haben `trainerId`                                      |
 
 **ABER:** Wartelisten-UI nicht gefunden. Automatische Nachrück-Logik? Benachrichtigung?
 
 ### 6.2 Saison-Planung
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Seasons CRUD | ✅ | `app/api/seasons/route.ts` |
-| Plan-Entries | ✅ | `app/api/seasons/[id]/plan-entries/` |
-| Auto-Planning | ✅ | `app/api/seasons/[id]/auto-plan/route.ts` |
-| Preferences | ✅ | `app/api/seasons/[id]/preferences/` |
-| Migration-Check | ✅ | Warnt wenn Tabelle fehlt |
+| Feature         | Status | Details                                   |
+| --------------- | ------ | ----------------------------------------- |
+| Seasons CRUD    | ✅     | `app/api/seasons/route.ts`                |
+| Plan-Entries    | ✅     | `app/api/seasons/[id]/plan-entries/`      |
+| Auto-Planning   | ✅     | `app/api/seasons/[id]/auto-plan/route.ts` |
+| Preferences     | ✅     | `app/api/seasons/[id]/preferences/`       |
+| Migration-Check | ✅     | Warnt wenn Tabelle fehlt                  |
 
 **ABER:** Auto-Planning benötigt DB-Migration (`20260506_season_planning_system.sql`). Ist sie in Production ausgeführt?
 
 ### 6.3 Trainer-Management
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Profile CRUD | ✅ | `app/api/trainer-profiles/` |
-| Verfügbarkeit | ✅ | `app/api/trainer-availability/` |
-| Abwesenheiten | ✅ | `app/api/absences/` mit Approve/Reject |
-| Qualifikationen | ✅ | `app/api/trainer-profiles/[id]/qualifications/` |
-| Trainer-Buchung | ✅ | `app/api/trainer/book/route.ts` |
-| Feedback | ✅ | `app/api/trainers/[trainerId]/feedback/` |
+| Feature         | Status | Details                                         |
+| --------------- | ------ | ----------------------------------------------- |
+| Profile CRUD    | ✅     | `app/api/trainer-profiles/`                     |
+| Verfügbarkeit   | ✅     | `app/api/trainer-availability/`                 |
+| Abwesenheiten   | ✅     | `app/api/absences/` mit Approve/Reject          |
+| Qualifikationen | ✅     | `app/api/trainer-profiles/[id]/qualifications/` |
+| Trainer-Buchung | ✅     | `app/api/trainer/book/route.ts`                 |
+| Feedback        | ✅     | `app/api/trainers/[trainerId]/feedback/`        |
 
 **Duplikation:** `trainer-availability` vs `trainer/availability` – zwei getrennte API-Pfade.
 
 ### 6.4 Turniere
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Turnier CRUD | ✅ | `app/api/tournaments/` |
-| Registrierung | ✅ | `app/api/tournaments/[id]/register/` |
-| Meine Turniere | ✅ | `app/api/tournaments/my-registrations/` |
+| Feature        | Status | Details                                 |
+| -------------- | ------ | --------------------------------------- |
+| Turnier CRUD   | ✅     | `app/api/tournaments/`                  |
+| Registrierung  | ✅     | `app/api/tournaments/[id]/register/`    |
+| Meine Turniere | ✅     | `app/api/tournaments/my-registrations/` |
 
 ---
 
@@ -320,6 +326,7 @@ Alle 13 Flags in `lib/features/feature-flags.ts` sind `false` (gesteuert via `pr
 ### 7.1 Mahnwesen (Dunning)
 
 **Umfassend implementiert:**
+
 - `lib/billing/dunning.service.ts` – Mahnstufen 1-3, Mahngebühren
 - `lib/state-machines/invoice-state-machine.ts` – Status: draft→sent→overdue→dunning→paid
 - `supabase/functions/scheduled-dunning-run/` – Automatischer Mahnlauf
@@ -328,6 +335,7 @@ Alle 13 Flags in `lib/features/feature-flags.ts` sind `false` (gesteuert via `pr
 - `app/api/billing/open-items/route.ts` – Offene Posten
 
 **Offene Fragen:**
+
 - Sind die Supabase Edge Functions deployed und per Cron scheduled?
 - `calculate_dunning_level` RPC-Funktion – existiert sie in der DB?
 - Mahngebühren-Staffel konfigurierbar?
@@ -335,25 +343,25 @@ Alle 13 Flags in `lib/features/feature-flags.ts` sind `false` (gesteuert via `pr
 
 ### 7.2 Rechnungswesen
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| Rechnung erstellen | ✅ | `app/api/billing/invoices/create/route.ts` |
-| Rechnungsübersicht | ✅ | `app/api/billing/invoices/overview/route.ts` |
-| Invoice PDF | ✅ | `lib/invoice-pdf.ts`, `lib/pdf/invoice-pdf.tsx` (duplicate!) |
-| Invoice PDF Route | ✅ | `app/api/invoices/[id]/pdf/route.ts` |
-| Stripe Checkout | ✅ | `app/api/billing/invoices/[id]/checkout/route.ts` |
-| Stripe Webhook | ⚠️ | ZWEI Routen (s.o.) |
-| Trainer-Abrechnung | ✅ | `app/api/billing/trainers/` |
-| Zahlungsimport (CSV) | ✅ | `app/api/billing/payments/import/route.ts` |
-| Zahlungs-Settings | ✅ | `app/api/payment-settings/` |
+| Feature              | Status | Details                                                      |
+| -------------------- | ------ | ------------------------------------------------------------ |
+| Rechnung erstellen   | ✅     | `app/api/billing/invoices/create/route.ts`                   |
+| Rechnungsübersicht   | ✅     | `app/api/billing/invoices/overview/route.ts`                 |
+| Invoice PDF          | ✅     | `lib/invoice-pdf.ts`, `lib/pdf/invoice-pdf.tsx` (duplicate!) |
+| Invoice PDF Route    | ✅     | `app/api/invoices/[id]/pdf/route.ts`                         |
+| Stripe Checkout      | ✅     | `app/api/billing/invoices/[id]/checkout/route.ts`            |
+| Stripe Webhook       | ⚠️     | ZWEI Routen (s.o.)                                           |
+| Trainer-Abrechnung   | ✅     | `app/api/billing/trainers/`                                  |
+| Zahlungsimport (CSV) | ✅     | `app/api/billing/payments/import/route.ts`                   |
+| Zahlungs-Settings    | ✅     | `app/api/payment-settings/`                                  |
 
 ### 7.3 SEPA
 
-| Feature | Status | Details |
-|---------|--------|---------|
-| SEPA-Mandate | ✅ | `app/api/sepa-mandates/route.ts` |
-| PAIN008 XML | ✅ | `lib/sepa/` – Generator |
-| PAIN008 Route | ⚠️ | `billing/sepa/pain008/route.ts` UND `billing/sepa-xml/route.ts` |
+| Feature       | Status | Details                                                         |
+| ------------- | ------ | --------------------------------------------------------------- |
+| SEPA-Mandate  | ✅     | `app/api/sepa-mandates/route.ts`                                |
+| PAIN008 XML   | ✅     | `lib/sepa/` – Generator                                         |
+| PAIN008 Route | ⚠️     | `billing/sepa/pain008/route.ts` UND `billing/sepa-xml/route.ts` |
 
 ---
 
@@ -388,6 +396,7 @@ Wenn ein englischer Nutzer die App verwendet, sieht er weiterhin deutsche Datums
 ### 9.2 Code-Splitting
 
 **Nur 12 Verwendungen von `Suspense`/`lazy()`/`dynamic()`:**
+
 - `lib/code-splitting.tsx` – `createLazyComponent` (wird das genutzt?)
 - `lib/performance.ts` – `createDynamicImport` (wird das genutzt?)
 - `app/(public)/api-docs/page.tsx` – `dynamic(() => import('swagger-ui-react'))`
@@ -448,13 +457,13 @@ Wenn ein englischer Nutzer die App verwendet, sieht er weiterhin deutsche Datums
 
 ### 11.1 DSGVO
 
-| Anforderung | Status | Details |
-|-------------|--------|---------|
-| Datenexport | ✅ | `app/api/analytics/members/export/route.ts` |
-| Datenlöschung | ✅ | `app/api/members/[id]/route.ts` DELETE |
-| Audit-Logging | ✅ | `app/api/audit-logs/`, `lib/audit/enhanced-audit.service.ts` |
-| Cookie-Consent | ❌ | Kein Cookie-Banner gefunden |
-| AVV (Supabase/Vercel) | ❓ | Nicht geprüft |
+| Anforderung           | Status | Details                                                      |
+| --------------------- | ------ | ------------------------------------------------------------ |
+| Datenexport           | ✅     | `app/api/analytics/members/export/route.ts`                  |
+| Datenlöschung         | ✅     | `app/api/members/[id]/route.ts` DELETE                       |
+| Audit-Logging         | ✅     | `app/api/audit-logs/`, `lib/audit/enhanced-audit.service.ts` |
+| Cookie-Consent        | ❌     | Kein Cookie-Banner gefunden                                  |
+| AVV (Supabase/Vercel) | ❓     | Nicht geprüft                                                |
 
 ### 11.2 SEPA-Compliance
 
@@ -469,48 +478,48 @@ Wenn ein englischer Nutzer die App verwendet, sieht er weiterhin deutsche Datums
 
 ### P0 – Blocker (Produktivbetrieb unmöglich)
 
-| # | Problem | Aufwand | Fix |
-|---|---------|---------|-----|
-| 1 | Build fehlgeschlagen (TS-Fehler) | S | `ConfirmVariant` erweitern oder Aufrufer fixen |
-| 2 | CSRF-Schutz auf ~190 Routen fehlt | L | `withCSRFProtection` in allen mutations-Routen einbauen |
-| 3 | 2 Tests fehlschlagen, 2 Suites nicht ausführbar | M | Schema-Drift beheben, Gamification-Endpoint fixen |
-| 4 | Auth-Login ohne Rate-Limiting (Brute-Force) | S | `checkRateLimitOrFail(req, 'auth')` in Login-Route |
+| #   | Problem                                         | Aufwand | Fix                                                     |
+| --- | ----------------------------------------------- | ------- | ------------------------------------------------------- |
+| 1   | Build fehlgeschlagen (TS-Fehler)                | S       | `ConfirmVariant` erweitern oder Aufrufer fixen          |
+| 2   | CSRF-Schutz auf ~190 Routen fehlt               | L       | `withCSRFProtection` in allen mutations-Routen einbauen |
+| 3   | 2 Tests fehlschlagen, 2 Suites nicht ausführbar | M       | Schema-Drift beheben, Gamification-Endpoint fixen       |
+| 4   | Auth-Login ohne Rate-Limiting (Brute-Force)     | S       | `checkRateLimitOrFail(req, 'auth')` in Login-Route      |
 
 ### P1 – Kritisch (sollte vor Launch behoben sein)
 
-| # | Problem | Aufwand | Fix |
-|---|---------|---------|-----|
-| 5 | 97 skipped Tests (33%) | L | Skipped Tests aktivieren oder entfernen |
-| 6 | Stripe-Webhook-Duplikation | S | Eine Route als kanonisch festlegen, andere entfernen |
-| 7 | SEPA-Routen-Duplikation | S | `billing/sepa/pain008` vs `billing/sepa-xml` konsolidieren |
-| 8 | Trainer-Availability-Duplikation | S | `trainer-availability` vs `trainer/availability` konsolidieren |
-| 9 | Hartcodierte `de`-Locale (135+ Stellen) | M | Dynamische Locale aus `NEXT_LOCALE` |
-| 10 | Debug-Endpoint in Production | S | Entfernen oder mit Admin-Auth schützen |
-| 11 | Email-Versand TODO (Resend) | M | Resend-Integration abschließen |
+| #   | Problem                                 | Aufwand | Fix                                                            |
+| --- | --------------------------------------- | ------- | -------------------------------------------------------------- |
+| 5   | 97 skipped Tests (33%)                  | L       | Skipped Tests aktivieren oder entfernen                        |
+| 6   | Stripe-Webhook-Duplikation              | S       | Eine Route als kanonisch festlegen, andere entfernen           |
+| 7   | SEPA-Routen-Duplikation                 | S       | `billing/sepa/pain008` vs `billing/sepa-xml` konsolidieren     |
+| 8   | Trainer-Availability-Duplikation        | S       | `trainer-availability` vs `trainer/availability` konsolidieren |
+| 9   | Hartcodierte `de`-Locale (135+ Stellen) | M       | Dynamische Locale aus `NEXT_LOCALE`                            |
+| 10  | Debug-Endpoint in Production            | S       | Entfernen oder mit Admin-Auth schützen                         |
+| 11  | Email-Versand TODO (Resend)             | M       | Resend-Integration abschließen                                 |
 
 ### P2 – Wichtig (Qualitätsverbesserung)
 
-| # | Problem | Aufwand | Fix |
-|---|---------|---------|-----|
-| 12 | 206 console.log → Logger | L | Alle console.* durch `lib/logger.ts` ersetzen |
-| 13 | Validierungs-Duplikation (6 Dateien) | L | Auf EIN System konsolidieren |
-| 14 | Auth-Duplikation (`lib/auth.ts` vs `lib/api-auth.ts`) | M | Konsolidieren |
-| 15 | API-Error-Duplikation (`api-errors.ts` vs `api-error.ts`) | S | Konsolidieren |
-| 16 | Feature-Flags – alle OFF | M | Flags schrittweise aktivieren, In-Memory-Fallbacks entfernen |
-| 17 | Schema-Drift Drizzle vs Supabase | L | Eine Schema-Quelle definieren, Namenskonflikte lösen |
-| 18 | `COBADEFFXXX` aus Produktionscode entfernen | S | Konstante oder Env-Variable |
+| #   | Problem                                                   | Aufwand | Fix                                                          |
+| --- | --------------------------------------------------------- | ------- | ------------------------------------------------------------ |
+| 12  | 206 console.log → Logger                                  | L       | Alle console.\* durch `lib/logger.ts` ersetzen               |
+| 13  | Validierungs-Duplikation (6 Dateien)                      | L       | Auf EIN System konsolidieren                                 |
+| 14  | Auth-Duplikation (`lib/auth.ts` vs `lib/api-auth.ts`)     | M       | Konsolidieren                                                |
+| 15  | API-Error-Duplikation (`api-errors.ts` vs `api-error.ts`) | S       | Konsolidieren                                                |
+| 16  | Feature-Flags – alle OFF                                  | M       | Flags schrittweise aktivieren, In-Memory-Fallbacks entfernen |
+| 17  | Schema-Drift Drizzle vs Supabase                          | L       | Eine Schema-Quelle definieren, Namenskonflikte lösen         |
+| 18  | `COBADEFFXXX` aus Produktionscode entfernen               | S       | Konstante oder Env-Variable                                  |
 
 ### P3 – Nice-to-have
 
-| # | Problem | Aufwand |
-|---|---------|---------|
-| 19 | Wartelisten-UI fehlt | M |
-| 20 | Cookie-Consent-Banner | M |
-| 21 | Error Boundaries auf allen Routen | M |
-| 22 | Code-Splitting für Admin-Komponenten | M |
-| 23 | CI/CD-Pipeline (GitHub Actions) | M |
-| 24 | `npx depcheck` – ungenutzte Dependencies | S |
-| 25 | 50+ docs/.md-Dateien aufräumen | M |
+| #   | Problem                                  | Aufwand |
+| --- | ---------------------------------------- | ------- |
+| 19  | Wartelisten-UI fehlt                     | M       |
+| 20  | Cookie-Consent-Banner                    | M       |
+| 21  | Error Boundaries auf allen Routen        | M       |
+| 22  | Code-Splitting für Admin-Komponenten     | M       |
+| 23  | CI/CD-Pipeline (GitHub Actions)          | M       |
+| 24  | `npx depcheck` – ungenutzte Dependencies | S       |
+| 25  | 50+ docs/.md-Dateien aufräumen           | M       |
 
 ---
 

@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api-auth';
 import { getMemberBalance, getMemberBalanceHistory } from '@/lib/services/member-balance.service';

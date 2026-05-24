@@ -19,7 +19,6 @@ import type {
 import { SystemSettingsService } from './system-settings.service';
 import { DrizzleSystemSettingsRepository } from '@/infrastructure/persistence/repositories/system-settings.repository';
 
-
 class SystemSettingsServiceAdapter {
   private systemSettingsRepo = new DrizzleSystemSettingsRepository();
 

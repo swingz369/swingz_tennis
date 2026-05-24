@@ -32,7 +32,9 @@ export default function TrialTrainingRegistration() {
   useEffect(() => {
     fetch('/api/club/contact', { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data) setClubInfo(data); })
+      .then((data) => {
+        if (data) setClubInfo(data);
+      })
       .catch(() => {});
   }, []);
 
@@ -54,9 +56,7 @@ export default function TrialTrainingRegistration() {
 
   const availableSessions = sessions.filter((s: Session) => !s.bookedByUser);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -192,6 +192,14 @@ export default function TrialTrainingRegistration() {
                           ? 'bg-brand-primary/10 border-brand-primary/30'
                           : 'bg-white border-gray-200 hover:bg-gray-50'
                       }`}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSessionSelect(session.id);
+                        }
+                      }}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">

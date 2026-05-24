@@ -13,6 +13,7 @@
 ## Task 3: wizard-steps helper + layout
 
 **Files:**
+
 - Create: `app/(protected)/admin/seasons/[id]/wizard/wizard-steps.ts`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/layout.tsx`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/page.tsx`
@@ -22,16 +23,17 @@
 
 ```typescript
 // tests/unit/wizard-stepper.test.ts
-import { describe, it, expect } from 'vitest'
-import { getActiveStep } from '@/app/(protected)/admin/seasons/[id]/wizard/wizard-steps'
+import { describe, it, expect } from 'vitest';
+import { getActiveStep } from '@/app/(protected)/admin/seasons/[id]/wizard/wizard-steps';
 
 describe('getActiveStep', () => {
-  it('returns 0 for draft', () => expect(getActiveStep('draft')).toBe(0))
-  it('returns 1 for collecting_preferences', () => expect(getActiveStep('collecting_preferences')).toBe(1))
-  it('returns 2 for manual_review', () => expect(getActiveStep('manual_review')).toBe(2))
-  it('returns 3 for invoices_generated', () => expect(getActiveStep('invoices_generated')).toBe(3))
-  it('returns 4 for published', () => expect(getActiveStep('published')).toBe(4))
-})
+  it('returns 0 for draft', () => expect(getActiveStep('draft')).toBe(0));
+  it('returns 1 for collecting_preferences', () =>
+    expect(getActiveStep('collecting_preferences')).toBe(1));
+  it('returns 2 for manual_review', () => expect(getActiveStep('manual_review')).toBe(2));
+  it('returns 3 for invoices_generated', () => expect(getActiveStep('invoices_generated')).toBe(3));
+  it('returns 4 for published', () => expect(getActiveStep('published')).toBe(4));
+});
 ```
 
 - [ ] **Step 2: Run — expect FAIL**
@@ -39,6 +41,7 @@ describe('getActiveStep', () => {
 ```bash
 npx vitest run tests/unit/wizard-stepper.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Create wizard-steps.ts**
@@ -47,11 +50,11 @@ Expected: FAIL — module not found.
 // app/(protected)/admin/seasons/[id]/wizard/wizard-steps.ts
 export const WIZARD_STEPS = [
   { label: 'Einstellungen', href: 'preferences' },
-  { label: 'Gruppen',       href: 'groups' },
-  { label: 'Plan',          href: 'plan' },
-  { label: 'Billing',       href: 'billing' },
+  { label: 'Gruppen', href: 'groups' },
+  { label: 'Plan', href: 'plan' },
+  { label: 'Billing', href: 'billing' },
   { label: 'Veröffentlichen', href: 'publish' },
-] as const
+] as const;
 
 const STATUS_TO_STEP: Record<string, number> = {
   draft: 0,
@@ -63,10 +66,10 @@ const STATUS_TO_STEP: Record<string, number> = {
   active: 4,
   completed: 4,
   archived: 4,
-}
+};
 
 export function getActiveStep(status: string): number {
-  return STATUS_TO_STEP[status] ?? 0
+  return STATUS_TO_STEP[status] ?? 0;
 }
 ```
 
@@ -75,6 +78,7 @@ export function getActiveStep(status: string): number {
 ```bash
 npx vitest run tests/unit/wizard-stepper.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Create layout.tsx**
@@ -154,17 +158,20 @@ export default async function WizardLayout({
 
 ```typescript
 // app/(protected)/admin/seasons/[id]/wizard/page.tsx
-import { redirect } from 'next/navigation'
-import { createServerClient } from '@/lib/supabase/server'
-import { getActiveStep, WIZARD_STEPS } from './wizard-steps'
+import { redirect } from 'next/navigation';
+import { createServerClient } from '@/lib/supabase/server';
+import { getActiveStep, WIZARD_STEPS } from './wizard-steps';
 
 export default async function WizardIndexPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const supabase = createServerClient()
+  const { id } = await params;
+  const supabase = createServerClient();
   const { data: season } = await supabase
-    .from('seasons').select('planning_status').eq('id', id).single()
-  const step = WIZARD_STEPS[getActiveStep(season?.planning_status ?? 'draft')]
-  redirect(`/admin/seasons/${id}/wizard/${step.href}`)
+    .from('seasons')
+    .select('planning_status')
+    .eq('id', id)
+    .single();
+  const step = WIZARD_STEPS[getActiveStep(season?.planning_status ?? 'draft')];
+  redirect(`/admin/seasons/${id}/wizard/${step.href}`);
 }
 ```
 
@@ -183,6 +190,7 @@ git commit -m "feat: wizard layout with stepper + redirect"
 ## Task 4: Step 1 — Einstellungen
 
 **Files:**
+
 - Create: `app/(protected)/admin/seasons/[id]/wizard/preferences/page.tsx`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/preferences/preferences-form.tsx`
 

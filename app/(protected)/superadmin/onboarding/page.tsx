@@ -209,7 +209,15 @@ export default function SuperadminOnboardingPage() {
                 Willkommen auf der SwingZ-Plattform!
               </h2>
               <p className="text-gray-500 text-lg max-w-md mx-auto">
-                Als <Badge variant="secondary" className="mx-1 bg-purple-100 text-purple-700 border-purple-200">Superadmin</Badge> verwaltest du die gesamte Plattform – alle Vereine, Admins und Einstellungen auf einen Blick.
+                Als{' '}
+                <Badge
+                  variant="secondary"
+                  className="mx-1 bg-purple-100 text-purple-700 border-purple-200"
+                >
+                  Superadmin
+                </Badge>{' '}
+                verwaltest du die gesamte Plattform – alle Vereine, Admins und Einstellungen auf
+                einen Blick.
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-500">
@@ -250,7 +258,8 @@ export default function SuperadminOnboardingPage() {
                     <h3 className="font-semibold text-sm">Dashboard</h3>
                   </div>
                   <p className="text-xs text-gray-500">
-                    Plattformweite Kennzahlen: Mitglieder, Buchungen, Umsatz aller Vereine auf einen Blick.
+                    Plattformweite Kennzahlen: Mitglieder, Buchungen, Umsatz aller Vereine auf einen
+                    Blick.
                   </p>
                 </CardContent>
               </Card>
@@ -296,7 +305,8 @@ export default function SuperadminOnboardingPage() {
             </div>
             <Card className="bg-purple-50/50 border-purple-200">
               <CardContent className="pt-4 text-sm text-purple-800">
-                <strong>Tipp:</strong> Du kannst jederzeit zwischen deiner Superadmin-Ansicht und der Admin-Ansicht einzelner Vereine wechseln.
+                <strong>Tipp:</strong> Du kannst jederzeit zwischen deiner Superadmin-Ansicht und
+                der Admin-Ansicht einzelner Vereine wechseln.
               </CardContent>
             </Card>
           </div>
@@ -338,11 +348,7 @@ export default function SuperadminOnboardingPage() {
                     )}
                     Als Admin einrichten
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={skipStep}
-                    className="text-gray-500"
-                  >
+                  <Button variant="outline" onClick={skipStep} className="text-gray-500">
                     Später
                   </Button>
                 </div>

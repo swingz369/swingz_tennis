@@ -13,6 +13,7 @@
 ## Task 6: Step 3 — Plan (Kanban)
 
 **Files:**
+
 - Create: `app/(protected)/admin/seasons/[id]/wizard/plan/page.tsx`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/plan/kanban-board.tsx`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/plan/member-card.tsx`

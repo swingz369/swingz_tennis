@@ -220,9 +220,7 @@ function GroupChangeDialog({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Gruppenwechsel</DialogTitle>
-            <DialogDescription>
-              Mitglied in eine andere Gruppe wechseln lassen
-            </DialogDescription>
+            <DialogDescription>Mitglied in eine andere Gruppe wechseln lassen</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -526,11 +524,13 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           <Link href={`/admin/seasons/${id}/planning`}>
             <Button>
               <Play className="mr-2 h-4 w-4" />
-              {['published', 'active', 'completed', 'archived'].includes(season.planning_status ?? '')
+              {['published', 'active', 'completed', 'archived'].includes(
+                season.planning_status ?? ''
+              )
                 ? 'Saisonplanung ansehen'
                 : season.planning_status === 'draft'
-                ? 'Saisonplanung starten'
-                : 'Saisonplanung fortsetzen'}
+                  ? 'Saisonplanung starten'
+                  : 'Saisonplanung fortsetzen'}
             </Button>
           </Link>
           <Button variant="outline" onClick={() => router.push(`/admin/seasons/${id}/edit`)}>
@@ -545,7 +545,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
             </Button>
           )}
 
-
           {canPublish && (
             <Button onClick={handlePublish}>
               <FileText className="mr-2 h-4 w-4" />
@@ -558,13 +557,13 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
             onClick={() => setDeleteConfirmOpen(true)}
             disabled={deleting}
           >
-              {deleting ? (
-                <Clock className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="mr-2 h-4 w-4" />
-              )}
-              Löschen
-            </Button>
+            {deleting ? (
+              <Clock className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-2 h-4 w-4" />
+            )}
+            Löschen
+          </Button>
         </div>
       </div>
 

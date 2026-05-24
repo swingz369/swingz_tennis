@@ -62,13 +62,13 @@ async function main() {
       `SELECT t.id, t.name FROM trainers t WHERE t.id IN (SELECT trainer_id FROM trainer_club WHERE club_id = $1)`,
       [clubId]
     );
-    
+
     // Get name for each user_id from clustering engine
     const userRes = await pool.query(
       `SELECT id, COALESCE(full_name, email) as name FROM users WHERE id = ANY($1::uuid[])`,
-      [result.groups.map(g => g.trainerId)]
+      [result.groups.map((g) => g.trainerId)]
     );
-    
+
     // Build name→trainer_id map (normalize names: lowercase, trim)
     function normalizeName(n: string): string {
       return n.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -77,13 +77,13 @@ async function main() {
     for (const tr of trainerRes.rows) {
       nameToTrainerId[normalizeName(tr.name)] = tr.id;
     }
-    
+
     // Build user_id→name map
     const userIdToName: Record<string, string> = {};
     for (const ur of userRes.rows) {
       userIdToName[ur.id] = normalizeName(ur.name);
     }
-    
+
     // Clean existing entries
     await pool.query('DELETE FROM season_plan_entries WHERE season_id = $1', [seasonId]);
     console.log('  ✅ Alte Einträge gelöscht');
@@ -96,18 +96,21 @@ async function main() {
         (parseInt(g.endTime.split(':')[1] || '0') - parseInt(g.startTime.split(':')[1] || '0'));
 
       const groupId = g.groupId.startsWith('auto_') ? null : g.groupId;
-      
+
       // Map user_id → trainer_id via normalized name
       const userName = userIdToName[g.trainerId];
       const actualTrainerId = userName ? nameToTrainerId[userName] : null;
       if (!actualTrainerId) {
-        console.log(`  ⚠️  Kein Trainer-Mapping für user_id ${g.trainerId.slice(0,8)}... (Name: ${userName}), überspringe Gruppe ${i+1}`);
+        console.log(
+          `  ⚠️  Kein Trainer-Mapping für user_id ${g.trainerId.slice(0, 8)}... (Name: ${userName}), überspringe Gruppe ${i + 1}`
+        );
         continue;
       }
 
-      const avgMatch = g.memberDetails.length > 0
-        ? String(g.memberDetails.reduce((s, d) => s + d.niveauMatch, 0) / g.memberDetails.length)
-        : '0';
+      const avgMatch =
+        g.memberDetails.length > 0
+          ? String(g.memberDetails.reduce((s, d) => s + d.niveauMatch, 0) / g.memberDetails.length)
+          : '0';
 
       const res = await pool.query(
         `INSERT INTO season_plan_entries (
@@ -120,16 +123,29 @@ async function main() {
         ) VALUES ($1,$2,$3,$4,$5,$6,$7::time,$8::time,$9,$10,$11,$12,$13,$14::jsonb,$15,$16,$17,$18)
         RETURNING id`,
         [
-          seasonId, clubId, actualTrainerId, g.courtId, groupId,
-          g.dayOfWeek, g.startTime + ':00', g.endTime + ':00', durationMin,
-          1, 'training', 'auto',
+          seasonId,
+          clubId,
+          actualTrainerId,
+          g.courtId,
+          groupId,
+          g.dayOfWeek,
+          g.startTime + ':00',
+          g.endTime + ':00',
+          durationMin,
+          1,
+          'training',
+          'auto',
           g.memberIds.length > 10 ? g.memberIds.length + 2 : 12,
           JSON.stringify(g.memberIds),
-          avgMatch, '0', String(g.warnings.length * 10),
+          avgMatch,
+          '0',
+          String(g.warnings.length * 10),
           'planned',
         ]
       );
-      console.log(`  ✅ Gruppe ${i + 1}: ${g.groupName} gespeichert (ID: ${res.rows[0].id.slice(0, 8)}...)`);
+      console.log(
+        `  ✅ Gruppe ${i + 1}: ${g.groupName} gespeichert (ID: ${res.rows[0].id.slice(0, 8)}...)`
+      );
     }
 
     console.log(`✅ ${result.groups.length} Plan-Einträge gespeichert`);
@@ -145,7 +161,6 @@ async function main() {
 
     console.log('\n🎉 CLUSTERING ERFOLGREICH ABGESCHLOSSEN UND IN DB GESPEICHERT!');
     console.log('   Nächster Schritt: Konfliktprüfung (POST /api/seasons/{id}/planning/conflicts)');
-
   } catch (err: any) {
     console.error('\n❌ DB-FEHLER:', err.message);
     if (err.position) {

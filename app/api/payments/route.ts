@@ -23,7 +23,10 @@ export async function POST(_request: NextRequest) {
       const { invoiceId, amount, paymentMethod } = body;
 
       if (!invoiceId || !amount || !paymentMethod) {
-        return NextResponse.json({ error: 'Missing required fields (invoiceId, amount, paymentMethod)' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Missing required fields (invoiceId, amount, paymentMethod)' },
+          { status: 400 }
+        );
       }
 
       const createPaymentData: CreatePayment = {
@@ -69,7 +72,10 @@ export async function GET(_request: NextRequest) {
         // memberId lookup not available directly via payments table (no member_id column).
         // Caller should use invoiceId instead, or resolve member→invoices first.
         return NextResponse.json(
-          { error: 'Use invoiceId to fetch payments. memberId lookup not available via payments route.' },
+          {
+            error:
+              'Use invoiceId to fetch payments. memberId lookup not available via payments route.',
+          },
           { status: 400 }
         );
       }

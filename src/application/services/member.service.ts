@@ -82,19 +82,18 @@ export class MemberService {
    */
   private static mapToMember(
     m: Record<string, unknown>,
-    user?: Record<string, unknown> | null,
+    user?: Record<string, unknown> | null
   ): Member {
-    const membershipStatus = m.is_active
-      ? ((m.status as string) || 'active')
-      : 'inactive';
+    const membershipStatus = m.is_active ? (m.status as string) || 'active' : 'inactive';
 
     return {
       id: m.id as string,
       userId: m.user_id as string,
-      firstName: user?.first_name as string || user?.full_name
-        ? ((user?.full_name as string) || '').split(' ')[0] || ''
-        : '',
-      lastName: user?.last_name as string || '',
+      firstName:
+        (user?.first_name as string) || user?.full_name
+          ? ((user?.full_name as string) || '').split(' ')[0] || ''
+          : '',
+      lastName: (user?.last_name as string) || '',
       email: (user?.email as string) || '',
       phone: (user?.phone as string) || '',
       dateOfBirth: (user?.date_of_birth as string) || '',
@@ -102,7 +101,10 @@ export class MemberService {
         ? {
             street: (user?.address as Record<string, string>)?.street || '',
             houseNumber: (user?.address as Record<string, string>)?.house_number || '',
-            postalCode: (user?.postal_code as string) || (user?.address as Record<string, string>)?.postal_code || '',
+            postalCode:
+              (user?.postal_code as string) ||
+              (user?.address as Record<string, string>)?.postal_code ||
+              '',
             city: (user?.city as string) || (user?.address as Record<string, string>)?.city || '',
           }
         : user?.city || user?.postal_code
@@ -113,9 +115,7 @@ export class MemberService {
               city: (user?.city as string) || '',
             }
           : undefined,
-      memberType: (m.role as string) === 'trial' ? 'trial'
-        : !m.is_active ? 'inactive'
-        : 'member',
+      memberType: (m.role as string) === 'trial' ? 'trial' : !m.is_active ? 'inactive' : 'member',
       membershipStatus: membershipStatus as Member['membershipStatus'],
       membershipStart: (m.joined_at as string) || undefined,
       membershipEnd: (m.deactivated_at as string) || undefined,
@@ -123,7 +123,10 @@ export class MemberService {
       emergencyContact: user?.emergency_contact
         ? {
             name: (user?.emergency_contact as Record<string, string>)?.name || '',
-            phone: (user?.emergency_phone as string) || (user?.emergency_contact as Record<string, string>)?.phone || '',
+            phone:
+              (user?.emergency_phone as string) ||
+              (user?.emergency_contact as Record<string, string>)?.phone ||
+              '',
             relationship: (user?.emergency_contact as Record<string, string>)?.relationship || '',
           }
         : undefined,
@@ -137,25 +140,20 @@ export class MemberService {
    * Get user profile data for a user ID
    */
   private static async getUserProfile(userId: string): Promise<Record<string, unknown> | null> {
-    const { data, error } = await db
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await db.from('users').select('*').eq('id', userId).single();
     return error ? null : data;
   }
 
   /**
    * Get user profiles for multiple user IDs
    */
-  private static async getUserProfiles(userIds: string[]): Promise<Map<string, Record<string, unknown>>> {
+  private static async getUserProfiles(
+    userIds: string[]
+  ): Promise<Map<string, Record<string, unknown>>> {
     if (userIds.length === 0) return new Map();
-    const { data } = await db
-      .from('users')
-      .select('*')
-      .in('id', userIds);
+    const { data } = await db.from('users').select('*').in('id', userIds);
     const map = new Map<string, Record<string, unknown>>();
-    for (const user of (data || [])) {
+    for (const user of data || []) {
       map.set(user.id as string, user);
     }
     return map;
@@ -164,10 +162,7 @@ export class MemberService {
   /**
    * Create a new member — inserts into user_club_memberships
    */
-  static async createMember(
-    input: CreateMemberInput,
-    clubId?: string,
-  ): Promise<Member> {
+  static async createMember(input: CreateMemberInput, clubId?: string): Promise<Member> {
     const validation = this.validateMemberInput(input);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
@@ -253,11 +248,7 @@ export class MemberService {
    * Get member by email (via users table)
    */
   static async getMemberByEmail(email: string): Promise<Member | null> {
-    const { data: user } = await db
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
+    const { data: user } = await db.from('users').select('id').eq('email', email).single();
 
     if (!user) return null;
 
@@ -312,7 +303,9 @@ export class MemberService {
     const userIds = [...new Set(memberships.map((m) => m.user_id as string))];
     const userProfiles = await this.getUserProfiles(userIds);
 
-    let results = memberships.map((m) => this.mapToMember(m, userProfiles.get(m.user_id as string)));
+    let results = memberships.map((m) =>
+      this.mapToMember(m, userProfiles.get(m.user_id as string))
+    );
 
     // Apply in-memory filters for fields not in DB
     if (query.type) {
@@ -326,7 +319,7 @@ export class MemberService {
       results = results.filter(
         (m) =>
           `${m.firstName} ${m.lastName} ${m.email}`.toLowerCase().includes(lowerQuery) ||
-          m.trainingGroup?.toLowerCase().includes(lowerQuery),
+          m.trainingGroup?.toLowerCase().includes(lowerQuery)
       );
     }
 
@@ -395,8 +388,14 @@ export class MemberService {
 
     // Update user profile fields
     if (
-      input.firstName || input.lastName || input.email || input.phone ||
-      input.dateOfBirth || input.address || input.emergencyContact || input.notes
+      input.firstName ||
+      input.lastName ||
+      input.email ||
+      input.phone ||
+      input.dateOfBirth ||
+      input.address ||
+      input.emergencyContact ||
+      input.notes
     ) {
       const userUpdate: Record<string, unknown> = {};
       if (input.firstName !== undefined) userUpdate.first_name = input.firstName;
@@ -431,7 +430,8 @@ export class MemberService {
       const membershipUpdate: Record<string, unknown> = {};
       if (input.membershipStatus !== undefined) {
         membershipUpdate.status = input.membershipStatus;
-        membershipUpdate.is_active = input.membershipStatus !== 'inactive' && input.membershipStatus !== 'terminated';
+        membershipUpdate.is_active =
+          input.membershipStatus !== 'inactive' && input.membershipStatus !== 'terminated';
       }
       if (input.membershipStart !== undefined) membershipUpdate.joined_at = input.membershipStart;
       if (input.membershipEnd !== undefined) membershipUpdate.deactivated_at = input.membershipEnd;
@@ -449,7 +449,7 @@ export class MemberService {
    */
   static async updateMemberStatus(
     id: string,
-    status: Member['membershipStatus'],
+    status: Member['membershipStatus']
   ): Promise<Member | null> {
     return this.updateMember(id, { membershipStatus: status });
   }
@@ -492,14 +492,21 @@ export class MemberService {
 
     if (error || !memberships) {
       return {
-        total: 0, active: 0, inactive: 0, suspended: 0, terminated: 0,
+        total: 0,
+        active: 0,
+        inactive: 0,
+        suspended: 0,
+        terminated: 0,
         byType: { member: 0, trial: 0, inactive: 0 },
         byTrainingGroup: {},
       };
     }
 
     const total = memberships.length;
-    let active = 0, inactive = 0, suspended = 0, terminated = 0;
+    let active = 0,
+      inactive = 0,
+      suspended = 0,
+      terminated = 0;
 
     for (const m of memberships) {
       const s = m.status as string;

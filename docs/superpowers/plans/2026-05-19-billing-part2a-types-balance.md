@@ -18,7 +18,15 @@
 
 ```typescript
 export type InvoiceType = 'season' | 'membership' | 'adhoc';
-export type InvoiceStatus = 'draft' | 'sent' | 'reminder_sent' | 'partially_paid' | 'paid' | 'overdue' | 'dunning' | 'cancelled';
+export type InvoiceStatus =
+  | 'draft'
+  | 'sent'
+  | 'reminder_sent'
+  | 'partially_paid'
+  | 'paid'
+  | 'overdue'
+  | 'dunning'
+  | 'cancelled';
 export type InstallmentStatus = 'pending' | 'paid' | 'overdue';
 export type BalanceEntryReferenceType = 'group_change' | 'invoice' | 'payment' | 'manual';
 export type PaymentMethod = 'sepa' | 'transfer' | 'cash' | 'stripe';
@@ -139,13 +147,22 @@ describe('addBalanceEntry', () => {
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
-            data: { id: 'entry-1', member_balance_id: 'bal-1', amount: 50, reason: 'test', reference_type: 'manual', reference_id: null, created_by: null, created_at: '2026-05-19T00:00:00Z' },
-            error: null
-          })
-        })
+            data: {
+              id: 'entry-1',
+              member_balance_id: 'bal-1',
+              amount: 50,
+              reason: 'test',
+              reference_type: 'manual',
+              reference_id: null,
+              created_by: null,
+              created_at: '2026-05-19T00:00:00Z',
+            },
+            error: null,
+          }),
+        }),
       }),
       update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null })
+        eq: vi.fn().mockResolvedValue({ error: null }),
       }),
     });
     const result = await addBalanceEntry(mockSupabase, {
@@ -164,13 +181,22 @@ describe('addBalanceEntry', () => {
       insert: vi.fn().mockReturnValue({
         select: vi.fn().mockReturnValue({
           single: vi.fn().mockResolvedValue({
-            data: { id: 'entry-2', member_balance_id: 'bal-1', amount: -30, reason: 'Belastung', reference_type: 'group_change', reference_id: null, created_by: 'user-1', created_at: '2026-05-19T00:00:00Z' },
-            error: null
-          })
-        })
+            data: {
+              id: 'entry-2',
+              member_balance_id: 'bal-1',
+              amount: -30,
+              reason: 'Belastung',
+              reference_type: 'group_change',
+              reference_id: null,
+              created_by: 'user-1',
+              created_at: '2026-05-19T00:00:00Z',
+            },
+            error: null,
+          }),
+        }),
       }),
       update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ error: null })
+        eq: vi.fn().mockResolvedValue({ error: null }),
       }),
     });
     const result = await addBalanceEntry(mockSupabase, {
@@ -193,7 +219,11 @@ describe('addBalanceEntry', () => {
 
 ```typescript
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { MemberBalance, MemberBalanceEntry, BalanceEntryReferenceType } from '@/lib/types/billing.types';
+import type {
+  MemberBalance,
+  MemberBalanceEntry,
+  BalanceEntryReferenceType,
+} from '@/lib/types/billing.types';
 
 export async function getOrCreateMemberBalance(
   supabase: SupabaseClient,
@@ -292,6 +322,7 @@ export async function getMemberBalanceHistory(
 ```
 
 Note: The `addBalanceEntry` function uses a DB RPC `increment_member_balance` to atomically update the balance. Add this function to the migration (Part 1 can be amended, or add a separate migration `20260519000001_billing_helpers.sql`):
+
 ```sql
 CREATE OR REPLACE FUNCTION increment_member_balance(p_balance_id uuid, p_amount numeric)
 RETURNS void AS $$

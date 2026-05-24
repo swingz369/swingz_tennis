@@ -54,10 +54,7 @@ function computeBillingPreview(
     const fee =
       feeConfigs.find((f) => {
         if (!f.conditions) return true;
-        if (
-          f.conditions.trainingGroup &&
-          f.conditions.trainingGroup !== entry.group_id
-        )
+        if (f.conditions.trainingGroup && f.conditions.trainingGroup !== entry.group_id)
           return false;
         return true;
       }) ?? null;
@@ -69,10 +66,7 @@ function computeBillingPreview(
       amount: fee?.amount ?? 0,
       feeConfigId: fee?.id ?? null,
       billingCycle: fee?.billing_cycle ?? 'season',
-      installments:
-        fee?.billing_cycle === 'installment'
-          ? (fee.installment_count ?? 1)
-          : 1,
+      installments: fee?.billing_cycle === 'installment' ? (fee.installment_count ?? 1) : 1,
     };
   });
 }
@@ -97,13 +91,9 @@ interface InvoiceTotals {
  * total = subtotal + taxAmount
  */
 function computeInvoiceTotals(items: InvoiceItem[]): InvoiceTotals {
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.quantity * item.unit_price,
-    0
-  );
+  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
   const taxAmount = items.reduce(
-    (sum, item) =>
-      sum + item.quantity * item.unit_price * (item.tax_rate / 100),
+    (sum, item) => sum + item.quantity * item.unit_price * (item.tax_rate / 100),
     0
   );
   return {
@@ -147,9 +137,7 @@ describe('computeBillingPreview', () => {
   ];
 
   it('matches entry to specific group-configured fee', () => {
-    const entries: PlanEntry[] = [
-      { member_id: 'm1', group_id: 'group-beginner' },
-    ];
+    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
 
     const result = computeBillingPreview(entries, feeConfigs);
 
@@ -160,9 +148,7 @@ describe('computeBillingPreview', () => {
   });
 
   it('falls back to unconditional fee when group does not match', () => {
-    const entries: PlanEntry[] = [
-      { member_id: 'm1', group_id: 'group-unknown' },
-    ];
+    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-unknown' }];
 
     const result = computeBillingPreview(entries, feeConfigs);
 
@@ -172,9 +158,7 @@ describe('computeBillingPreview', () => {
   });
 
   it('returns zero when no fee configs at all', () => {
-    const entries: PlanEntry[] = [
-      { member_id: 'm1', group_id: 'group-beginner' },
-    ];
+    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
 
     const result = computeBillingPreview(entries, []);
 
@@ -217,9 +201,7 @@ describe('computeBillingPreview', () => {
       { id: 'fee-default', amount: 15, billing_cycle: 'season', conditions: null },
     ];
 
-    const entries: PlanEntry[] = [
-      { member_id: 'm1', group_id: 'group-installment' },
-    ];
+    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-installment' }];
 
     const result = computeBillingPreview(entries, configs);
 
@@ -228,9 +210,7 @@ describe('computeBillingPreview', () => {
   });
 
   it('defaults to installments=1 for non-installment cycles', () => {
-    const entries: PlanEntry[] = [
-      { member_id: 'm1', group_id: 'group-beginner' },
-    ];
+    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'group-beginner' }];
 
     const result = computeBillingPreview(entries, feeConfigs);
 
@@ -248,9 +228,7 @@ describe('computeBillingPreview', () => {
       },
     ];
 
-    const entries: PlanEntry[] = [
-      { member_id: 'm1', group_id: 'any-group' },
-    ];
+    const entries: PlanEntry[] = [{ member_id: 'm1', group_id: 'any-group' }];
 
     const result = computeBillingPreview(entries, configs);
 
@@ -354,10 +332,7 @@ describe('billing calculation edge cases', () => {
       { id: 'fee-b', amount: 50, billing_cycle: 'season', conditions: null },
     ];
 
-    const result = computeBillingPreview(
-      [{ member_id: 'm1', group_id: 'g1' }],
-      configs
-    );
+    const result = computeBillingPreview([{ member_id: 'm1', group_id: 'g1' }], configs);
 
     // First unconditional match (fee-a) wins
     expect(result[0].feeConfigId).toBe('fee-a');
@@ -375,10 +350,7 @@ describe('billing calculation edge cases', () => {
       },
     ];
 
-    const result = computeBillingPreview(
-      [{ member_id: 'm1', group_id: 'group-a' }],
-      configs
-    );
+    const result = computeBillingPreview([{ member_id: 'm1', group_id: 'group-a' }], configs);
 
     // fee-specific matches before fee-default because Array.find stops at first match
     // But fee-default is FIRST (unconditional), so it matches first.

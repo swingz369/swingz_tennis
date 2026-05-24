@@ -19,7 +19,6 @@ import type {
 import { TrainerProfileService } from './trainer-profile.service';
 import { TrainerProfileRepository } from '@/infrastructure/persistence/repositories/trainer-profile.repository';
 
-
 class TrainerProfileServiceAdapter {
   private trainerProfileRepo = new TrainerProfileRepository();
 
@@ -76,9 +75,7 @@ class TrainerProfileServiceAdapter {
   /**
    * Get trainer profiles by status
    */
-  async getTrainerProfilesByStatus(
-    status: TrainerProfile['status']
-  ): Promise<TrainerProfile[]> {
+  async getTrainerProfilesByStatus(status: TrainerProfile['status']): Promise<TrainerProfile[]> {
     return this.trainerProfileRepo.findByStatus(status);
   }
 

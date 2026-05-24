@@ -132,7 +132,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       } catch (error) {
         console.error(`PATCH /api/seasons/[id] error:`, error);
         return NextResponse.json(
-          { error: error instanceof Error ? error.message : (JSON.stringify(error) ?? 'Failed to update season') },
+          {
+            error:
+              error instanceof Error
+                ? error.message
+                : (JSON.stringify(error) ?? 'Failed to update season'),
+          },
           { status: 500 }
         );
       }

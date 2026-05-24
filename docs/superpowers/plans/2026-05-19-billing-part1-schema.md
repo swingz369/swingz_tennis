@@ -13,6 +13,7 @@
 ## Implementation Tasks
 
 ### Task 1: Create migration file and add columns to invoices table
+
 - [ ] Create file: `supabase/migrations/20260519000000_billing_training_system.sql`
 - [ ] Add SQL to create migration with columns on `invoices`:
 
@@ -23,6 +24,7 @@ ALTER TABLE invoices
 ```
 
 ### Task 2: Add columns to clubs table
+
 - [ ] Add SQL to migration for clubs table columns:
 
 ```sql
@@ -36,6 +38,7 @@ ALTER TABLE clubs
 ```
 
 ### Task 3: Add columns to fee_configurations and user_club_memberships tables
+
 - [ ] Add SQL to migration:
 
 ```sql
@@ -47,6 +50,7 @@ ALTER TABLE user_club_memberships
 ```
 
 ### Task 4: Add columns to invoice_items and sessions tables
+
 - [ ] Add SQL for invoice_items and update sessions status enum:
 
 ```sql
@@ -61,6 +65,7 @@ ALTER TABLE sessions
 ```
 
 ### Task 5: Create school_holidays table with indexes
+
 - [ ] Add SQL to migration:
 
 ```sql
@@ -84,6 +89,7 @@ CREATE POLICY school_holidays_select_all ON school_holidays
 ```
 
 ### Task 6: Create training_group_memberships table with RLS
+
 - [ ] Add SQL to migration:
 
 ```sql
@@ -117,6 +123,7 @@ CREATE POLICY tgm_member_view_own ON training_group_memberships
 ```
 
 ### Task 7: Create member_balances and member_balance_entries tables
+
 - [ ] Add SQL to migration:
 
 ```sql
@@ -176,6 +183,7 @@ CREATE POLICY mbe_member_view_own ON member_balance_entries
 ```
 
 ### Task 8: Create invoice_installments table with RLS
+
 - [ ] Add SQL to migration:
 
 ```sql
@@ -208,6 +216,7 @@ CREATE POLICY installments_admin_all ON invoice_installments
 ```
 
 ### Task 9: Create GoBD immutability trigger
+
 - [ ] Add SQL to migration for trigger function:
 
 ```sql
@@ -230,6 +239,7 @@ CREATE TRIGGER gobd_invoice_immutability
 ```
 
 ### Task 10: Extend invoices status constraint and update invoice_number function
+
 - [ ] Add SQL to migration:
 
 ```sql
@@ -246,23 +256,24 @@ DECLARE
   v_next_seq int;
   v_club_id uuid;
 BEGIN
-  v_club_id := COALESCE(current_setting('app.current_club_id', true)::uuid, 
+  v_club_id := COALESCE(current_setting('app.current_club_id', true)::uuid,
                          (SELECT club_id FROM invoices WHERE id = NEW.id LIMIT 1));
-  
+
   SELECT COALESCE(invoice_number_prefix, 'INV') INTO v_prefix
   FROM clubs WHERE id = v_club_id;
-  
+
   SELECT COALESCE(MAX((string_to_array(invoice_number, '-'))[2])::int, 0) + 1 INTO v_next_seq
   FROM invoices
   WHERE club_id = v_club_id
   AND invoice_number LIKE v_prefix || '-%';
-  
+
   RETURN v_prefix || '-' || LPAD(v_next_seq::text, 6, '0');
 END;
 $$ LANGUAGE plpgsql;
 ```
 
 ### Task 11: Verify TypeScript compilation
+
 - [ ] Run type check:
 
 ```bash
@@ -270,6 +281,7 @@ cd /home/aeugeln/SwingZ && npx tsc --noEmit 2>&1 | head -20
 ```
 
 ### Task 12: Commit migration
+
 - [ ] Stage and commit:
 
 ```bash
@@ -279,6 +291,7 @@ cd /home/aeugeln/SwingZ && git add supabase/migrations/20260519000000_billing_tr
 ---
 
 ## Notes
+
 - All column additions use `IF NOT EXISTS` for idempotency
 - All new tables have appropriate indexes on foreign keys and query paths
 - RLS policies follow club-admin and member-self patterns

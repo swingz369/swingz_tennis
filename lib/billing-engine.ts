@@ -87,10 +87,7 @@ export class BillingEngine {
     return this.paymentService.createPayment(data);
   }
 
-  async updatePaymentStatus(
-    paymentId: string,
-    status: PaymentStatus,
-  ): Promise<Payment> {
+  async updatePaymentStatus(paymentId: string, status: PaymentStatus): Promise<Payment> {
     return this.paymentService.updatePaymentStatus(paymentId, status);
   }
 

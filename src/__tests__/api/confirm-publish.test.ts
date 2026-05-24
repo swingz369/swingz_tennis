@@ -164,7 +164,8 @@ function createTx(): any {
     c.values = vi.fn(() => c);
     c.returning = vi.fn(() => c);
     c.then = (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) => {
-      const tableStr: string = (typeof _table === 'object' && _table !== null) ? ((_table as any)._table ?? '') : '';
+      const tableStr: string =
+        typeof _table === 'object' && _table !== null ? ((_table as any)._table ?? '') : '';
 
       if (tableStr === 'season_planning_history') {
         if (config.failAuditTrail) {
@@ -183,7 +184,8 @@ function createTx(): any {
         if (config.failSessionAtWeek !== undefined && idx === config.failSessionAtWeek) {
           reject(new Error('Session insert failed (simulated)'));
         } else {
-          const sid = (config.sessions[idx] as { id: string } | undefined)?.id ?? `session-auto-${idx}`;
+          const sid =
+            (config.sessions[idx] as { id: string } | undefined)?.id ?? `session-auto-${idx}`;
           resolve([{ id: sid }]);
         }
       } else {
@@ -199,7 +201,8 @@ function createTx(): any {
     c.set = vi.fn(() => c);
     c.where = vi.fn(() => c);
     c.then = (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) => {
-      const tableStr: string = (typeof _table === 'object' && _table !== null) ? ((_table as any)._table ?? '') : '';
+      const tableStr: string =
+        typeof _table === 'object' && _table !== null ? ((_table as any)._table ?? '') : '';
       if (tableStr === 'seasons') {
         if (config.failSeasonUpdate) {
           reject(config.failSeasonUpdate);
@@ -229,7 +232,8 @@ let mockGetDb: ReturnType<typeof vi.fn>;
 // Mock drizzle-orm's SQL functions while preserving all other exports.
 // The real implementations introspect Column objects and fail on our plain
 // mock schema objects, so eq/and/inArray return harmless empty mocks.
-vi.mock('drizzle-orm', async (importOriginal) => {    const actual = await importOriginal();
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal();
   return {
     ...actual,
     eq: vi.fn(() => ({})),
@@ -243,13 +247,78 @@ vi.mock('@/src/infrastructure/persistence/client', () => ({
 }));
 
 vi.mock('@/src/infrastructure/persistence/schema', () => ({
-  seasons: { _table: 'seasons', id: 'seasons_table', name: 'seasons', club_id: 'club_id', start_date: 'start_date', end_date: 'end_date', planning_status: 'planning_status' },
-  seasonPlanEntries: { _table: 'season_plan_entries', id: 'season_plan_entries', season_id: 'season_id', trainer_id: 'trainer_id', group_id: 'group_id', court_id: 'court_id', day_of_week: 'day_of_week', start_time: 'start_time', end_time: 'end_time', duration_minutes: 'duration_minutes', max_participants: 'max_participants', expected_participants: 'expected_participants', status: 'status', starts_from_week: 'starts_from_week', ends_at_week: 'ends_at_week', published_session_id: 'published_session_id', published_at: 'published_at' },
-  sessions: { _table: 'sessions', id: 'sessions_table', schedule_id: 'schedule_id', trainer_id: 'trainer_id', group_ids: 'group_ids', week_number: 'week_number', timeslot_start: 'timeslot_start', timeslot_end: 'timeslot_end', court_id: 'court_id', max_participants: 'max_participants', notes: 'notes' },
-  schedules: { _table: 'schedules', id: 'schedules_table', club_id: 'club_id', season_year: 'season_year', season_type: 'season_type', season_start_date: 'season_start_date', season_end_date: 'season_end_date', is_active: 'is_active' },
-  seasonPlanningHistory: { _table: 'season_planning_history', id: 'season_planning_history', season_id: 'season_id', club_id: 'club_id', action_type: 'action_type', actor_id: 'actor_id', actor_role: 'actor_role', details: 'details', entries_affected: 'entries_affected', conflicts_created: 'conflicts_created', conflicts_resolved: 'conflicts_resolved', notes: 'notes' },
+  seasons: {
+    _table: 'seasons',
+    id: 'seasons_table',
+    name: 'seasons',
+    club_id: 'club_id',
+    start_date: 'start_date',
+    end_date: 'end_date',
+    planning_status: 'planning_status',
+  },
+  seasonPlanEntries: {
+    _table: 'season_plan_entries',
+    id: 'season_plan_entries',
+    season_id: 'season_id',
+    trainer_id: 'trainer_id',
+    group_id: 'group_id',
+    court_id: 'court_id',
+    day_of_week: 'day_of_week',
+    start_time: 'start_time',
+    end_time: 'end_time',
+    duration_minutes: 'duration_minutes',
+    max_participants: 'max_participants',
+    expected_participants: 'expected_participants',
+    status: 'status',
+    starts_from_week: 'starts_from_week',
+    ends_at_week: 'ends_at_week',
+    published_session_id: 'published_session_id',
+    published_at: 'published_at',
+  },
+  sessions: {
+    _table: 'sessions',
+    id: 'sessions_table',
+    schedule_id: 'schedule_id',
+    trainer_id: 'trainer_id',
+    group_ids: 'group_ids',
+    week_number: 'week_number',
+    timeslot_start: 'timeslot_start',
+    timeslot_end: 'timeslot_end',
+    court_id: 'court_id',
+    max_participants: 'max_participants',
+    notes: 'notes',
+  },
+  schedules: {
+    _table: 'schedules',
+    id: 'schedules_table',
+    club_id: 'club_id',
+    season_year: 'season_year',
+    season_type: 'season_type',
+    season_start_date: 'season_start_date',
+    season_end_date: 'season_end_date',
+    is_active: 'is_active',
+  },
+  seasonPlanningHistory: {
+    _table: 'season_planning_history',
+    id: 'season_planning_history',
+    season_id: 'season_id',
+    club_id: 'club_id',
+    action_type: 'action_type',
+    actor_id: 'actor_id',
+    actor_role: 'actor_role',
+    details: 'details',
+    entries_affected: 'entries_affected',
+    conflicts_created: 'conflicts_created',
+    conflicts_resolved: 'conflicts_resolved',
+    notes: 'notes',
+  },
   // Column-like objects needed for drizzle-orm functions (inArray, eq) to work
-  users: { _table: 'users', id: { name: 'id' }, email: { name: 'email' }, full_name: { name: 'full_name' } },
+  users: {
+    _table: 'users',
+    id: { name: 'id' },
+    email: { name: 'email' },
+    full_name: { name: 'full_name' },
+  },
 }));
 
 const mockMarkHolidaySessions = vi.fn().mockResolvedValue(0);
@@ -262,7 +331,7 @@ const mockDetectAll = vi.fn().mockResolvedValue([]);
 const mockGetCriticalConflicts = vi.fn().mockReturnValue([]);
 
 vi.mock('@/lib/season-planning/conflict-detector', () => ({
-  ConflictDetector: vi.fn(function(this: any) {
+  ConflictDetector: vi.fn(function (this: any) {
     this.detectAll = (...args: unknown[]) => mockDetectAll(...args);
     this.getCriticalConflicts = (...args: unknown[]) => mockGetCriticalConflicts(...args);
     this.persistConflicts = (...args: unknown[]) => mockPersistConflicts(...args);
@@ -272,7 +341,7 @@ vi.mock('@/lib/season-planning/conflict-detector', () => ({
 const mockResendSend = vi.fn().mockResolvedValue({ id: 'email-001' });
 vi.mock('resend', () => ({
   // Regular function (not arrow) to be constructable with `new Resend(key)`
-  Resend: vi.fn(function(this: any) {
+  Resend: vi.fn(function (this: any) {
     this.emails = { send: (...args: unknown[]) => mockResendSend(...args) };
   }),
 }));
@@ -315,8 +384,12 @@ vi.mock('@/lib/api-auth', () => ({
   withApiAuth: vi.fn((_req: unknown, fn: (auth: unknown) => Promise<Response>) => fn(mockAuthCtx)),
   withAuth: vi.fn((_req: unknown, fn: (auth: unknown) => Promise<Response>) => fn(mockAuthCtx)),
   verifyRole: vi.fn().mockResolvedValue(true),
-  forbiddenResponse: vi.fn((msg: string) =>
-    new Response(JSON.stringify({ error: msg }), { status: 403, headers: { 'Content-Type': 'application/json' } })
+  forbiddenResponse: vi.fn(
+    (msg: string) =>
+      new Response(JSON.stringify({ error: msg }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      })
   ),
 }));
 
@@ -325,14 +398,11 @@ vi.mock('@/lib/api-auth', () => ({
 // ════════════════════════════════════════════════════════════
 
 function buildRequest(body: { acceptedWarnings?: string[] } = {}): NextRequest {
-  return new NextRequest(
-    `http://localhost:3000/api/seasons/${SEASON_ID}/planning/confirm`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acceptedWarnings: body.acceptedWarnings ?? [] }),
-    }
-  );
+  return new NextRequest(`http://localhost:3000/api/seasons/${SEASON_ID}/planning/confirm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ acceptedWarnings: body.acceptedWarnings ?? [] }),
+  });
 }
 
 function buildDb(): any {
@@ -529,7 +599,9 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
         schedule: [DEFAULT_SCHEDULE],
       });
       mockGetDb = vi.fn(() => buildDb());
-      mockPersistConflicts.mockRejectedValueOnce(new Error('DB error: planning_conflicts insert failed'));
+      mockPersistConflicts.mockRejectedValueOnce(
+        new Error('DB error: planning_conflicts insert failed')
+      );
 
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(500);
@@ -606,9 +678,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
 
     it('sends email notifications when RESEND_API_KEY is set and members exist', async () => {
       resetConfig({
-        entries: [
-          { ...DEFAULT_ENTRY, expected_participants: ['member-001'] },
-        ],
+        entries: [{ ...DEFAULT_ENTRY, expected_participants: ['member-001'] }],
         schedule: [DEFAULT_SCHEDULE],
         users: [{ id: 'member-001', email: 'max@test.com', full_name: 'Max' }],
       });
@@ -704,10 +774,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
       mockDetectAll.mockResolvedValueOnce([criticalConflict]);
       mockGetCriticalConflicts.mockReturnValueOnce([criticalConflict]);
 
-      const res = await POST(
-        buildRequest({ acceptedWarnings: [criticalConflict.id] }),
-        ctx()
-      );
+      const res = await POST(buildRequest({ acceptedWarnings: [criticalConflict.id] }), ctx());
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.success).toBe(true);
@@ -735,9 +802,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
         CLUB_ID
       );
       // 3 sessions marked as holiday
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Marked 3 sessions')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Marked 3 sessions'));
     });
   });
 });

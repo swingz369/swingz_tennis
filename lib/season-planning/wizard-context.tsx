@@ -1,12 +1,6 @@
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import React, { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
 import { csrfHeaders } from '@/lib/csrf-client';
 import type {
   WizardState,
@@ -74,7 +68,12 @@ type WizardAction =
   | { type: 'SET_READY'; isReady: boolean }
   | { type: 'SET_PLANNING_CONFIG'; config: WizardState['planningConfig'] }
   | { type: 'SET_SCHEDULE_SLOTS'; slots: ScheduleSlot[] }
-  | { type: 'SELECT_MEMBERS'; memberIds: string[]; promotedIds: string[]; response: SelectMembersResponse }
+  | {
+      type: 'SELECT_MEMBERS';
+      memberIds: string[];
+      promotedIds: string[];
+      response: SelectMembersResponse;
+    }
   | { type: 'SET_PREFERENCES_SUMMARY'; summary: PreferencesSummary }
   | { type: 'SET_TRAINER_AVAILABILITY'; summary: TrainerAvailabilitySummary }
   | { type: 'SET_CLUSTERING_RESULT'; result: ClusteringResult }
@@ -121,7 +120,10 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         preferencesResponseRate: action.summary.responseRate,
         slotFailureRates: Object.fromEntries(
-          action.summary.slotFailureWarnings.map((w) => [`${w.dayOfWeek}_${w.startTime}`, w.failureRate])
+          action.summary.slotFailureWarnings.map((w) => [
+            `${w.dayOfWeek}_${w.startTime}`,
+            w.failureRate,
+          ])
         ),
         incompatibleWishPartnerPairs: action.summary.incompatibleWishPartners.map((p) => ({
           memberA: p.memberA.name,
@@ -140,9 +142,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
             {
               current: t.currentAssignedHours,
               max: t.effectiveMaxHours,
-              pct: Math.round(
-                (t.currentAssignedHours / Math.max(1, t.effectiveMaxHours)) * 100
-              ),
+              pct: Math.round((t.currentAssignedHours / Math.max(1, t.effectiveMaxHours)) * 100),
             },
           ])
         ),
@@ -208,10 +208,7 @@ export function WizardProvider({
   seasonId: string;
   clubId: string;
 }) {
-  const [state, dispatch] = useReducer(
-    wizardReducer,
-    createInitialState(seasonId, clubId)
-  );
+  const [state, dispatch] = useReducer(wizardReducer, createInitialState(seasonId, clubId));
 
   const goToStep = useCallback((step: WizardStep) => {
     dispatch({ type: 'SET_STEP', step });
@@ -232,7 +229,12 @@ export function WizardProvider({
       type: 'SELECT_MEMBERS',
       memberIds: ids,
       promotedIds: [],
-      response: { success: true, selectedCount: ids.length, promotedMembers: [], waitlistCarryovers: [] },
+      response: {
+        success: true,
+        selectedCount: ids.length,
+        promotedMembers: [],
+        waitlistCarryovers: [],
+      },
     });
   }, []);
 
@@ -240,18 +242,15 @@ export function WizardProvider({
     async (dryRun: boolean = false) => {
       dispatch({ type: 'SET_PROCESSING', isProcessing: true });
       try {
-        const res = await fetch(
-          `/api/seasons/${state.seasonId}/planning/cluster`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
-            body: JSON.stringify({
-              seasonId: state.seasonId,
-              config: state.planningConfig,
-              dryRun,
-            }),
-          }
-        );
+        const res = await fetch(`/api/seasons/${state.seasonId}/planning/cluster`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+          body: JSON.stringify({
+            seasonId: state.seasonId,
+            config: state.planningConfig,
+            dryRun,
+          }),
+        });
         if (!res.ok) {
           const data = await res.json();
           throw new Error(data.error || 'Clustering fehlgeschlagen');
@@ -271,10 +270,10 @@ export function WizardProvider({
   const detectConflicts = useCallback(async () => {
     dispatch({ type: 'SET_PROCESSING', isProcessing: true });
     try {
-      const res = await fetch(
-        `/api/seasons/${state.seasonId}/planning/conflicts`,
-        { method: 'POST', headers: csrfHeaders() }
-      );
+      const res = await fetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
+        method: 'POST',
+        headers: csrfHeaders(),
+      });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Konfliktprüfung fehlgeschlagen');
@@ -292,20 +291,17 @@ export function WizardProvider({
   const confirmPlan = useCallback(async (): Promise<ConfirmPlanResponse> => {
     dispatch({ type: 'SET_PROCESSING', isProcessing: true });
     try {
-      const res = await fetch(
-        `/api/seasons/${state.seasonId}/planning/confirm`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
-          body: JSON.stringify({
-            seasonId: state.seasonId,
-            acceptedWarnings: state.conflicts
-              .filter((c) => c.severity !== 'critical')
-              .map((c) => c.id),
-            adminNotes: 'Planung bestätigt via Wizard',
-          }),
-        }
-      );
+      const res = await fetch(`/api/seasons/${state.seasonId}/planning/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({
+          seasonId: state.seasonId,
+          acceptedWarnings: state.conflicts
+            .filter((c) => c.severity !== 'critical')
+            .map((c) => c.id),
+          adminNotes: 'Planung bestätigt via Wizard',
+        }),
+      });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Bestätigung fehlgeschlagen');
@@ -339,9 +335,7 @@ export function WizardProvider({
     resetWizard,
   };
 
-  return (
-    <WizardContext.Provider value={value}>{children}</WizardContext.Provider>
-  );
+  return <WizardContext.Provider value={value}>{children}</WizardContext.Provider>;
 }
 
 export function useWizard(): WizardContextValue {

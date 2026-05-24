@@ -51,9 +51,7 @@ export default async function SeasonPlanGridPage({
     .eq('is_active', true);
 
   const hasAccess = memberships?.some(
-    (m) =>
-      (m.role === 'superadmin' || m.role === 'admin') &&
-      m.club_id === season.club_id
+    (m) => (m.role === 'superadmin' || m.role === 'admin') && m.club_id === season.club_id
   );
 
   if (!hasAccess) {
@@ -61,10 +59,6 @@ export default async function SeasonPlanGridPage({
   }
 
   return (
-    <SeasonPlanGridClient
-      seasonId={seasonId}
-      seasonName={season.name}
-      clubId={season.club_id}
-    />
+    <SeasonPlanGridClient seasonId={seasonId} seasonName={season.name} clubId={season.club_id} />
   );
 }

@@ -152,19 +152,21 @@ export const schedules = pgTable(
   })
 );
 
-export const trainingGroups = pgTable('training_groups', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  club_id: uuid('club_id')
-    .notNull()
-    .references(() => clubs.id, { onDelete: 'cascade' }),
-  schedule_id: uuid('schedule_id')
-    .notNull()
-    .references(() => schedules.id, { onDelete: 'cascade' }),
-  name: varchar('name', { length: 100 }).notNull(),
-  level: varchar('level', { length: 20 }).notNull().default('intermediate'),
-  age_group: varchar('age_group', { length: 20 }).notNull().default('senior'),
-  is_active: boolean('is_active').notNull().default(true),
-},
+export const trainingGroups = pgTable(
+  'training_groups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    schedule_id: uuid('schedule_id')
+      .notNull()
+      .references(() => schedules.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    level: varchar('level', { length: 20 }).notNull().default('intermediate'),
+    age_group: varchar('age_group', { length: 20 }).notNull().default('senior'),
+    is_active: boolean('is_active').notNull().default(true),
+  },
   (table) => ({
     club_idx: index('training_groups_club_idx').on(table.club_id),
     schedule_idx: index('training_groups_schedule_idx').on(table.schedule_id),

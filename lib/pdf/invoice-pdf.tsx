@@ -178,7 +178,10 @@ const InvoicePDF = ({
   };
 
   // Compute subtotal from items (not stored as a column)
-  const subtotal = invoice.items.reduce((sum, item) => sum + (item.quantity || 0) * item.unit_price, 0);
+  const subtotal = invoice.items.reduce(
+    (sum, item) => sum + (item.quantity || 0) * item.unit_price,
+    0
+  );
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('de-DE', {

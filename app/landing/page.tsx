@@ -970,16 +970,28 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-sm text-gray-400">
-              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
+              <button
+                type="button"
+                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm"
+              >
                 Impressum
               </button>
-              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
+              <button
+                type="button"
+                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm"
+              >
                 Datenschutz
               </button>
-              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
+              <button
+                type="button"
+                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm"
+              >
                 AGB
               </button>
-              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
+              <button
+                type="button"
+                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm"
+              >
                 Kontakt
               </button>
             </div>

@@ -69,7 +69,13 @@ export interface Member {
   updatedAt: string;
 }
 
-export default function MemberListManagement({ clubId, embedded }: { clubId?: string; embedded?: boolean }) {
+export default function MemberListManagement({
+  clubId,
+  embedded,
+}: {
+  clubId?: string;
+  embedded?: boolean;
+}) {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -264,8 +270,8 @@ export default function MemberListManagement({ clubId, embedded }: { clubId?: st
           onConfirm={confirmDeleteMember}
         />
       </div>
-      );
-    }
+    );
+  }
 
   return (
     <div className={embedded ? 'space-y-4' : 'p-4 md:p-6 space-y-6'}>
@@ -304,7 +310,10 @@ export default function MemberListManagement({ clubId, embedded }: { clubId?: st
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+          >
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Alle Status" />
             </SelectTrigger>
@@ -330,18 +339,18 @@ export default function MemberListManagement({ clubId, embedded }: { clubId?: st
               <SelectItem value="inactive">Inaktiv</SelectItem>
             </SelectContent>
           </Select>
-      </div>
+        </div>
 
-      <ConfirmDialog
-        open={deleteConfirmId !== null}
-        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
-        title="Mitglied löschen"
-        description="Möchten Sie dieses Mitglied wirklich löschen?"
-        confirmLabel="Löschen"
-        variant="danger"
-        onConfirm={confirmDeleteMember}
-      />
-    </div>
+        <ConfirmDialog
+          open={deleteConfirmId !== null}
+          onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+          title="Mitglied löschen"
+          description="Möchten Sie dieses Mitglied wirklich löschen?"
+          confirmLabel="Löschen"
+          variant="danger"
+          onConfirm={confirmDeleteMember}
+        />
+      </div>
 
       {/* Member List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

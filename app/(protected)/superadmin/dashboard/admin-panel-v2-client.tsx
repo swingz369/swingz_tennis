@@ -254,8 +254,8 @@ export function AdminPanelV2Client({
                 Plattform-Statistiken
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                Als Superadmin siehst du hier eine Gesamtübersicht aller Vereine. Wähle einen
-                Verein oben aus, um ihn als Administrator zu verwalten.
+                Als Superadmin siehst du hier eine Gesamtübersicht aller Vereine. Wähle einen Verein
+                oben aus, um ihn als Administrator zu verwalten.
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
@@ -270,19 +270,18 @@ export function AdminPanelV2Client({
                   {
                     label: 'Ø Mitglieder / Verein',
                     value:
-                      clubs.length > 0
-                        ? Math.round(platformStats.totalMembers / clubs.length)
-                        : 0,
+                      clubs.length > 0 ? Math.round(platformStats.totalMembers / clubs.length) : 0,
                   },
                   {
                     label: 'Ø Trainer / Verein',
                     value:
-                      clubs.length > 0
-                        ? Math.round(platformStats.totalTrainers / clubs.length)
-                        : 0,
+                      clubs.length > 0 ? Math.round(platformStats.totalTrainers / clubs.length) : 0,
                   },
                 ].map((item) => (
-                  <div key={item.label} className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-lg">
+                  <div
+                    key={item.label}
+                    className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-lg"
+                  >
                     <p className="text-2xl font-bold text-purple-600">
                       {item.value.toLocaleString('de-DE')}
                     </p>
@@ -306,12 +305,10 @@ export function AdminPanelV2Client({
           <Card>
             <CardContent className="p-12 text-center">
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Wähle einen Verein aus
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Wähle einen Verein aus</h3>
               <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
-                Um Mitglieder zu verwalten, wähle zuerst einen Verein aus der Übersicht aus.
-                Du wirst dann in die Admin-Ansicht des Vereins weitergeleitet.
+                Um Mitglieder zu verwalten, wähle zuerst einen Verein aus der Übersicht aus. Du
+                wirst dann in die Admin-Ansicht des Vereins weitergeleitet.
               </p>
               <Link
                 href="#club-overview"
@@ -327,12 +324,10 @@ export function AdminPanelV2Client({
           <Card>
             <CardContent className="p-12 text-center">
               <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                Wähle einen Verein aus
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">Wähle einen Verein aus</h3>
               <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
-                Um Training-Sessions zu verwalten, wähle zuerst einen Verein aus der Übersicht
-                aus. Du wirst dann in die Admin-Ansicht des Vereins weitergeleitet.
+                Um Training-Sessions zu verwalten, wähle zuerst einen Verein aus der Übersicht aus.
+                Du wirst dann in die Admin-Ansicht des Vereins weitergeleitet.
               </p>
               <Link
                 href="#club-overview"

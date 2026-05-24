@@ -4,10 +4,7 @@ import { describe, it, expect } from 'vitest';
 // PURE FUNCTIONS (extracted from clustering-engine.ts)
 // ============================================
 
-function computeNiveauMatch(
-  memberExperienceMonths: number,
-  groupExperiences: number[]
-): number {
+function computeNiveauMatch(memberExperienceMonths: number, groupExperiences: number[]): number {
   const avg = groupExperiences.reduce((a, b) => a + b, 0) / groupExperiences.length;
   const maxSpan = Math.max(...groupExperiences) - Math.min(...groupExperiences);
 
@@ -19,12 +16,7 @@ function computeNiveauMatch(
   return Math.max(0, Math.min(100, Math.round((1 - normalizedDistance) * 100)));
 }
 
-function timeSlotsOverlap(
-  start1: string,
-  end1: string,
-  start2: string,
-  end2: string
-): boolean {
+function timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
   return start1 < end2 && start2 < end1;
 }
 

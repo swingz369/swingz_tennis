@@ -107,8 +107,7 @@ export async function POST(req: NextRequest) {
             const end = new Date(sess.timeslot_end);
             const durationMinutes = (end.getTime() - start.getTime()) / 60_000;
             const trainerName =
-              (Array.isArray(sess.users) ? sess.users[0] : sess.users)?.full_name ??
-              'Trainer';
+              (Array.isArray(sess.users) ? sess.users[0] : sess.users)?.full_name ?? 'Trainer';
             await supabase.from('hours_logs').insert({
               trainer_id: sess.trainer_id,
               trainer_name: trainerName,

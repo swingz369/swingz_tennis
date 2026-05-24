@@ -25,10 +25,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     // Only allow safe fields to be updated (onboarding wizard fields)
     const allowed = [
-      'name', 'city', 'address', 'phone', 'email', 'website',
-      'setup_completed_at', 'logo_url', 'description', 'founding_date',
-      'opening_hours', 'default_hourly_rate', 'default_session_duration_minutes',
-      'billing_unit_minutes', 'tax_rate', 'timezone', 'bundesland'
+      'name',
+      'city',
+      'address',
+      'phone',
+      'email',
+      'website',
+      'setup_completed_at',
+      'logo_url',
+      'description',
+      'founding_date',
+      'opening_hours',
+      'default_hourly_rate',
+      'default_session_duration_minutes',
+      'billing_unit_minutes',
+      'tax_rate',
+      'timezone',
+      'bundesland',
     ];
     const updates: Record<string, unknown> = {};
     for (const key of allowed) {

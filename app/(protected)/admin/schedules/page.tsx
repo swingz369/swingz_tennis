@@ -351,7 +351,15 @@ export default function SchedulesPage() {
       />
 
       {/* Create/Edit Dialog */}
-      <Dialog open={showDialog} onOpenChange={(open) => { if (!open) { setShowDialog(false); setEditingSession(null); } }}>
+      <Dialog
+        open={showDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowDialog(false);
+            setEditingSession(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingSession ? 'Session bearbeiten' : 'Neue Session'}</DialogTitle>

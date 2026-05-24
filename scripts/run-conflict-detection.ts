@@ -60,7 +60,9 @@ async function main() {
 
   console.log('📋 Gruppenzuordnungen für die Konfliktprüfung:');
   for (const a of assignments) {
-    console.log(`  ${a.groupName} | Trainer: ${a.trainerId.substring(0, 8)}... | Tag ${a.dayOfWeek} | ${a.startTime}-${a.endTime} | ${a.memberIds.length} Mitglieder`);
+    console.log(
+      `  ${a.groupName} | Trainer: ${a.trainerId.substring(0, 8)}... | Tag ${a.dayOfWeek} | ${a.startTime}-${a.endTime} | ${a.memberIds.length} Mitglieder`
+    );
   }
 
   // ─── Konfliktprüfung ───────────────────────────────
@@ -85,9 +87,9 @@ async function main() {
   }
 
   // Nach Schweregrad gruppiert ausgeben
-  const critical = conflicts.filter(c => c.severity === 'critical');
-  const warnings = conflicts.filter(c => c.severity === 'warning');
-  const infos = conflicts.filter(c => c.severity === 'info');
+  const critical = conflicts.filter((c) => c.severity === 'critical');
+  const warnings = conflicts.filter((c) => c.severity === 'warning');
+  const infos = conflicts.filter((c) => c.severity === 'info');
 
   if (critical.length > 0) {
     console.log('🔴 KRITISCHE KONFLIKTE:');
@@ -122,7 +124,9 @@ async function main() {
   if (canConfirm) {
     console.log('✅ Plan kann bestätigt werden (keine kritischen Konflikte)');
   } else {
-    console.log(`❌ Plan kann NICHT bestätigt werden (${critical.length} kritische Konflikte offen)`);
+    console.log(
+      `❌ Plan kann NICHT bestätigt werden (${critical.length} kritische Konflikte offen)`
+    );
   }
 
   // In DB persistieren

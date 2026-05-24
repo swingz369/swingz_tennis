@@ -4,11 +4,7 @@ import { PlanningWizardClient } from './planning-wizard-client';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PlanningWizardPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PlanningWizardPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -31,9 +27,7 @@ export default async function PlanningWizardPage({
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Saison nicht gefunden
           </h2>
-          <p className="text-sm text-gray-500 mt-2">
-            Die angeforderte Saison existiert nicht.
-          </p>
+          <p className="text-sm text-gray-500 mt-2">Die angeforderte Saison existiert nicht.</p>
         </div>
       </div>
     );
@@ -47,9 +41,7 @@ export default async function PlanningWizardPage({
     .eq('is_active', true);
 
   const hasAccess = memberships?.some(
-    (m) =>
-      (m.role === 'superadmin' || m.role === 'admin') &&
-      m.club_id === season.club_id
+    (m) => (m.role === 'superadmin' || m.role === 'admin') && m.club_id === season.club_id
   );
 
   if (!hasAccess) {

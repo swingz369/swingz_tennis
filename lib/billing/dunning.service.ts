@@ -83,7 +83,8 @@ export class DunningService {
       return;
     }
 
-    const levelLabel = level === 1 ? '1. Mahnung' : level === 2 ? '2. Mahnung' : '3. Mahnung (Letzte)';
+    const levelLabel =
+      level === 1 ? '1. Mahnung' : level === 2 ? '2. Mahnung' : '3. Mahnung (Letzte)';
     const fee = this.calculateDunningFee(level);
 
     const resend = new Resend(apiKey);

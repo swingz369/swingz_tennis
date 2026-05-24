@@ -110,10 +110,22 @@ Add a dropdown for Bundesland selection in club settings, wired to the club upda
 - [ ] Add constant at top:
   ```typescript
   const BUNDESLAENDER = [
-    'Baden-Württemberg','Bayern','Berlin','Brandenburg','Bremen',
-    'Hamburg','Hessen','Mecklenburg-Vorpommern','Niedersachsen',
-    'Nordrhein-Westfalen','Rheinland-Pfalz','Saarland','Sachsen',
-    'Sachsen-Anhalt','Schleswig-Holstein','Thüringen'
+    'Baden-Württemberg',
+    'Bayern',
+    'Berlin',
+    'Brandenburg',
+    'Bremen',
+    'Hamburg',
+    'Hessen',
+    'Mecklenburg-Vorpommern',
+    'Niedersachsen',
+    'Nordrhein-Westfalen',
+    'Rheinland-Pfalz',
+    'Saarland',
+    'Sachsen',
+    'Sachsen-Anhalt',
+    'Schleswig-Holstein',
+    'Thüringen',
   ] as const;
   ```
 - [ ] Add `<select>` or `<SelectField>` component (follow existing pattern in form)
@@ -131,6 +143,7 @@ Add a dropdown for Bundesland selection in club settings, wired to the club upda
 ## Summary
 
 Upon completion, the system will:
+
 1. Seed all German school holidays for 2026–2027
 2. Provide service functions to check sessions against holidays
 3. Auto-mark sessions in holiday periods as `holiday_cancelled` during season generation

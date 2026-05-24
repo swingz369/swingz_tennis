@@ -1,6 +1,12 @@
 'use client';
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { DAYS, DAY_LABELS } from './schedule-constants';
 import type { ScheduleSlot } from './types';
 
@@ -10,12 +16,7 @@ interface GroupListViewProps {
   byDay: Record<number, ScheduleSlot[]>;
   activeDays: number[];
   onToggleExpand: (slotId: string) => void;
-  onMoveMember: (
-    fromId: string,
-    personId: string,
-    personName: string,
-    toId: string,
-  ) => void;
+  onMoveMember: (fromId: string, personId: string, personName: string, toId: string) => void;
 }
 
 export default function GroupListView({
@@ -37,24 +38,18 @@ export default function GroupListView({
   return (
     <div className="space-y-4 mb-5">
       {activeDays.map((day) => (
-        <div
-          key={day}
-          className="bg-white rounded-xl border border-gray-200 overflow-hidden"
-        >
+        <div key={day} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {/* Day header */}
           <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 border-b border-gray-200">
             <div className="w-8 h-8 rounded-lg bg-[#1A2E44] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
               {DAYS[day - 1]}
             </div>
-            <h2 className="font-semibold text-gray-900 text-sm">
-              {DAY_LABELS[day - 1]}
-            </h2>
+            <h2 className="font-semibold text-gray-900 text-sm">{DAY_LABELS[day - 1]}</h2>
             <span className="text-xs text-gray-400">
               {byDay[day].length} Gruppe{byDay[day].length > 1 ? 'n' : ''}
             </span>
             <span className="text-xs text-gray-400 ml-auto">
-              {byDay[day].reduce((s, g) => s + g.memberNames.length, 0)}{' '}
-              Mitglieder gesamt
+              {byDay[day].reduce((s, g) => s + g.memberNames.length, 0)} Mitglieder gesamt
             </span>
           </div>
           {/* Groups for this day */}
@@ -68,24 +63,15 @@ export default function GroupListView({
                       className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ background: slot.groupColor }}
                     />
-                    <p className="font-medium text-gray-900 text-sm">
-                      {slot.groupName}
-                    </p>
+                    <p className="font-medium text-gray-900 text-sm">{slot.groupName}</p>
                     <span className="text-xs text-gray-400">
-                      {slot.startTime}–{slot.endTime} Uhr · {slot.trainerName}{' '}
-                      · {slot.courtName}
+                      {slot.startTime}–{slot.endTime} Uhr · {slot.trainerName} · {slot.courtName}
                     </span>
                     <button
-                      onClick={() =>
-                        onToggleExpand(
-                          slot.id === expandedSlot ? '' : slot.id,
-                        )
-                      }
+                      onClick={() => onToggleExpand(slot.id === expandedSlot ? '' : slot.id)}
                       className="ml-auto text-xs text-blue-600 hover:text-blue-800 flex-shrink-0"
                     >
-                      {expandedSlot === slot.id
-                        ? 'Schließen'
-                        : 'Mitglieder verschieben'}
+                      {expandedSlot === slot.id ? 'Schließen' : 'Mitglieder verschieben'}
                     </button>
                   </div>
                   {/* Member chips */}
@@ -103,9 +89,7 @@ export default function GroupListView({
                       </span>
                     ))}
                     {slot.memberNames.length === 0 && (
-                      <span className="text-xs text-gray-400 italic">
-                        Keine Mitglieder
-                      </span>
+                      <span className="text-xs text-gray-400 italic">Keine Mitglieder</span>
                     )}
                   </div>
                   {/* Member transfer UI */}
@@ -115,21 +99,11 @@ export default function GroupListView({
                         Mitglied in andere Gruppe verschieben:
                       </p>
                       {slot.memberNames.map((name, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 mb-1.5"
-                        >
-                          <span className="text-xs text-gray-700 w-36 truncate">
-                            {name}
-                          </span>
+                        <div key={i} className="flex items-center gap-2 mb-1.5">
+                          <span className="text-xs text-gray-700 w-36 truncate">{name}</span>
                           <Select
                             onValueChange={(value) =>
-                              onMoveMember(
-                                slot.id,
-                                slot.memberIds[i],
-                                name,
-                                value,
-                              )
+                              onMoveMember(slot.id, slot.memberIds[i], name, value)
                             }
                           >
                             <SelectTrigger className="flex-1 h-7 text-xs">
@@ -141,8 +115,8 @@ export default function GroupListView({
                                 .filter((s) => s.id !== slot.id)
                                 .map((s) => (
                                   <SelectItem key={s.id} value={s.id}>
-                                    {s.groupName} · {DAYS[s.dayOfWeek - 1]}{' '}
-                                    {s.startTime} · {s.trainerName}
+                                    {s.groupName} · {DAYS[s.dayOfWeek - 1]} {s.startTime} ·{' '}
+                                    {s.trainerName}
                                   </SelectItem>
                                 ))}
                             </SelectContent>

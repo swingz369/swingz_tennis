@@ -9,7 +9,10 @@ import {
   courts,
   planningConflicts,
 } from '@/src/infrastructure/persistence/schema';
-import { seasonStatistics, seasonPlanningConfigs } from '@/src/infrastructure/persistence/season-planning-schema';
+import {
+  seasonStatistics,
+  seasonPlanningConfigs,
+} from '@/src/infrastructure/persistence/season-planning-schema';
 import { and, eq } from 'drizzle-orm';
 import type {
   ConflictDetectionResult,
@@ -63,12 +66,7 @@ function timeStringToMinutes(time: string): number {
   return parseInt(parts[0]) * 60 + parseInt(parts[1]);
 }
 
-function timeSlotsOverlap(
-  start1: string,
-  end1: string,
-  start2: string,
-  end2: string
-): boolean {
+function timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
   const s1 = timeStringToMinutes(start1);
   const e1 = timeStringToMinutes(end1);
   const s2 = timeStringToMinutes(start2);
@@ -85,7 +83,8 @@ const CONFLICT_RULES: ConflictRule[] = [
   {
     type: 'trainer_double_booking',
     severity: 'critical',
-    description: 'Trainer-Doppelbelegung: Derselbe Trainer ist zur selben Zeit zwei Gruppen zugewiesen',
+    description:
+      'Trainer-Doppelbelegung: Derselbe Trainer ist zur selben Zeit zwei Gruppen zugewiesen',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
       const seen = new Map<string, GroupAssignment[]>();
@@ -154,7 +153,8 @@ const CONFLICT_RULES: ConflictRule[] = [
   {
     type: 'member_double_booking',
     severity: 'critical',
-    description: 'Mitglied in zwei Gruppen: Ein Mitglied ist in zwei zeitlich überschneidenden Gruppen eingeteilt',
+    description:
+      'Mitglied in zwei Gruppen: Ein Mitglied ist in zwei zeitlich überschneidenden Gruppen eingeteilt',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
       const memberGroups = new Map<string, GroupAssignment[]>();
@@ -180,8 +180,7 @@ const CONFLICT_RULES: ConflictRule[] = [
               timeSlotsOverlap(a.startTime, a.endTime, b.startTime, b.endTime)
             ) {
               const memberName =
-                a.memberDetails.find((d) => d.memberId === memberId)?.memberName ||
-                memberId;
+                a.memberDetails.find((d) => d.memberId === memberId)?.memberName || memberId;
               conflicts.push({
                 id: `conflict_mdb_${memberId}_${a.dayOfWeek}`,
                 type: 'member_double_booking',
@@ -228,8 +227,7 @@ const CONFLICT_RULES: ConflictRule[] = [
             type: 'no_trainer_assigned',
             severity: 'critical',
             description: `Gruppe ${assignment.groupName} hat keinen Trainer zugewiesen (Zeitslot: ${assignment.startTime}-${assignment.endTime})`,
-            suggestedResolution:
-              'Weisen Sie der Gruppe einen verfügbaren Trainer zu.',
+            suggestedResolution: 'Weisen Sie der Gruppe einen verfügbaren Trainer zu.',
             affectedEntities: {
               trainerIds: [],
               memberIds: assignment.memberIds,
@@ -257,7 +255,8 @@ const CONFLICT_RULES: ConflictRule[] = [
   {
     type: 'court_unavailable',
     severity: 'critical',
-    description: 'Anlage nicht verfügbar: Der gebuchte Court ist zum geplanten Zeitslot nicht verfügbar',
+    description:
+      'Anlage nicht verfügbar: Der gebuchte Court ist zum geplanten Zeitslot nicht verfügbar',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
       const courtDaySlots = new Map<string, GroupAssignment[]>();
@@ -329,7 +328,8 @@ const CONFLICT_RULES: ConflictRule[] = [
   {
     type: 'trainer_over_limit',
     severity: 'warning',
-    description: 'Trainer über Limit: Ein Trainer überschreitet sein konfiguriertes Wochenstunden-Limit',
+    description:
+      'Trainer über Limit: Ein Trainer überschreitet sein konfiguriertes Wochenstunden-Limit',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
       const trainerSessions = new Map<string, number>();
@@ -343,8 +343,7 @@ const CONFLICT_RULES: ConflictRule[] = [
         const sessions = trainerSessions.get(trainer.id) || 0;
         const hoursAssigned = sessions * 1.5; // 90-minute sessions
         const maxHours =
-          trainer.max_hours_per_week *
-          (params.config.trainerUtilizationMaxPct / 100);
+          trainer.max_hours_per_week * (params.config.trainerUtilizationMaxPct / 100);
 
         if (hoursAssigned > maxHours) {
           conflicts.push({
@@ -425,7 +424,8 @@ const CONFLICT_RULES: ConflictRule[] = [
   {
     type: 'large_niveau_span',
     severity: 'info',
-    description: 'Große Niveau-Spanne: Die Erfahrungs-Spanne innerhalb einer Gruppe überschreitet das konfigurierte Maximum',
+    description:
+      'Große Niveau-Spanne: Die Erfahrungs-Spanne innerhalb einer Gruppe überschreitet das konfigurierte Maximum',
     check: async (params) => {
       const conflicts: ConflictDetectionResult[] = [];
 
@@ -549,10 +549,7 @@ export class ConflictDetector {
     await db
       .delete(planningConflicts)
       .where(
-        and(
-          eq(planningConflicts.season_id, this.seasonId),
-          eq(planningConflicts.status, 'open')
-        )
+        and(eq(planningConflicts.season_id, this.seasonId), eq(planningConflicts.status, 'open'))
       );
 
     const rows = conflicts.map((c) => ({
@@ -580,9 +577,7 @@ export class ConflictDetector {
   // HELPERS
   // ============================================
 
-  private async buildCheckParams(
-    assignments: GroupAssignment[]
-  ): Promise<ConflictCheckParams> {
+  private async buildCheckParams(assignments: GroupAssignment[]): Promise<ConflictCheckParams> {
     // Load plan entries for this season (for checking against existing data)
     const entries = await getDb()
       .select()
@@ -590,15 +585,10 @@ export class ConflictDetector {
       .where(eq(seasonPlanEntries.season_id, this.seasonId));
 
     // Load trainers
-    const trainerRows = await getDb()
-      .select()
-      .from(trainers);
+    const trainerRows = await getDb().select().from(trainers);
 
     // Load courts
-    const courtRows = await getDb()
-      .select()
-      .from(courts)
-      .where(eq(courts.club_id, this.clubId));
+    const courtRows = await getDb().select().from(courts).where(eq(courts.club_id, this.clubId));
 
     // Load slot failure rates from statistics
     const stats = await getDb()
@@ -608,9 +598,12 @@ export class ConflictDetector {
 
     const slotFailureRates: Record<string, number> = {};
     for (const stat of stats) {
-      const rates = stat.slot_failure_rates as Record<string, {
-        failure_rate: number;
-      }> | null;
+      const rates = stat.slot_failure_rates as Record<
+        string,
+        {
+          failure_rate: number;
+        }
+      > | null;
       if (rates) {
         for (const [key, val] of Object.entries(rates)) {
           if (!slotFailureRates[key] || val.failure_rate > slotFailureRates[key]) {
@@ -652,14 +645,10 @@ export class ConflictDetector {
       courts: courtRows.map((c) => ({ id: c.id, name: c.name })),
       slotFailureRates,
       config: {
-        trainerUtilizationMaxPct:
-          dbConfig?.trainer_utilization_max_pct || 80,
-        slotFailureThreshold:
-          dbConfig?.slot_failure_rate_threshold_pct || 30,
-        maxNiveauSpanBeginner:
-          dbConfig?.max_niveau_span_beginner_months || 4,
-        maxNiveauSpanAdvanced:
-          dbConfig?.max_niveau_span_advanced_months || 8,
+        trainerUtilizationMaxPct: dbConfig?.trainer_utilization_max_pct || 80,
+        slotFailureThreshold: dbConfig?.slot_failure_rate_threshold_pct || 30,
+        maxNiveauSpanBeginner: dbConfig?.max_niveau_span_beginner_months || 4,
+        maxNiveauSpanAdvanced: dbConfig?.max_niveau_span_advanced_months || 8,
       },
     };
   }

@@ -14,16 +14,171 @@ vi.mock('@/src/application/services/hours-log-service.adapter', () => {
   const d = (days: number) => new Date(now + days * 86400000).toISOString();
 
   const hoursLogs = [
-    { id: 'hours-1', trainerId: 'trainer-1', trainerName: 'Thomas Müller', sessionId: 'session-1', date: new Date(now).toISOString().split('T')[0], startTime: '09:00', endTime: '10:00', duration: 60, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), notes: 'Anfänger-Grundlagentraining', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-2', trainerId: 'trainer-1', trainerName: 'Thomas Müller', sessionId: 'session-2', date: new Date(now).toISOString().split('T')[0], startTime: '10:00', endTime: '11:30', duration: 90, type: 'training' as const, status: 'pending' as const, notes: 'Gruppentraining Fortgeschrittene', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-3', trainerId: 'trainer-1', trainerName: 'Thomas Müller', sessionId: 'session-4', date: new Date(now).toISOString().split('T')[0], startTime: '14:00', endTime: '15:30', duration: 90, type: 'training' as const, status: 'pending' as const, notes: 'Technik-Einheit Vorhand', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-7', trainerId: 'trainer-2', trainerName: 'Julia Weber', sessionId: 'session-3', date: new Date(now).toISOString().split('T')[0], startTime: '14:00', endTime: '15:00', duration: 60, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), notes: 'Probetraining', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-8', trainerId: 'trainer-2', trainerName: 'Julia Weber', sessionId: 'session-7', date: new Date(now).toISOString().split('T')[0], startTime: '15:00', endTime: '16:00', duration: 60, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), notes: 'Wettkampfvorbereitung Einzel', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-12', trainerId: 'trainer-3', trainerName: 'David Kruse', sessionId: 'session-9', date: new Date(now).toISOString().split('T')[0], startTime: '08:00', endTime: '09:00', duration: 60, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), notes: 'Jugendtraining U12', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-13', trainerId: 'trainer-3', trainerName: 'David Kruse', sessionId: 'session-10', date: new Date(now).toISOString().split('T')[0], startTime: '09:00', endTime: '10:30', duration: 90, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), notes: 'Jugendtraining U16', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-15', trainerId: 'trainer-4', trainerName: 'Sabine Frost', sessionId: 'session-11', date: new Date(now).toISOString().split('T')[0], startTime: '11:00', endTime: '12:00', duration: 60, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), notes: 'Senioren-Fitness', createdAt: d(-2), updatedAt: d(-1) },
-    { id: 'hours-16', trainerId: 'trainer-4', trainerName: 'Sabine Frost', sessionId: 'session-12', date: new Date(Date.now() - 86400000).toISOString().split('T')[0], startTime: '08:00', endTime: '09:30', duration: 90, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), createdAt: d(-3), updatedAt: d(-1) },
-    { id: 'hours-5', trainerId: 'trainer-5', trainerName: 'Ahmed Al-Rashid', sessionId: 'session-13', date: new Date(now).toISOString().split('T')[0], startTime: '16:00', endTime: '17:00', duration: 60, type: 'training' as const, status: 'approved' as const, approvedBy: 'Admin', approvedAt: d(-1), notes: 'Einzeltraining', createdAt: d(-2), updatedAt: d(-1) },
+    {
+      id: 'hours-1',
+      trainerId: 'trainer-1',
+      trainerName: 'Thomas Müller',
+      sessionId: 'session-1',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '09:00',
+      endTime: '10:00',
+      duration: 60,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      notes: 'Anfänger-Grundlagentraining',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-2',
+      trainerId: 'trainer-1',
+      trainerName: 'Thomas Müller',
+      sessionId: 'session-2',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '10:00',
+      endTime: '11:30',
+      duration: 90,
+      type: 'training' as const,
+      status: 'pending' as const,
+      notes: 'Gruppentraining Fortgeschrittene',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-3',
+      trainerId: 'trainer-1',
+      trainerName: 'Thomas Müller',
+      sessionId: 'session-4',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '14:00',
+      endTime: '15:30',
+      duration: 90,
+      type: 'training' as const,
+      status: 'pending' as const,
+      notes: 'Technik-Einheit Vorhand',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-7',
+      trainerId: 'trainer-2',
+      trainerName: 'Julia Weber',
+      sessionId: 'session-3',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '14:00',
+      endTime: '15:00',
+      duration: 60,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      notes: 'Probetraining',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-8',
+      trainerId: 'trainer-2',
+      trainerName: 'Julia Weber',
+      sessionId: 'session-7',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '15:00',
+      endTime: '16:00',
+      duration: 60,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      notes: 'Wettkampfvorbereitung Einzel',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-12',
+      trainerId: 'trainer-3',
+      trainerName: 'David Kruse',
+      sessionId: 'session-9',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '08:00',
+      endTime: '09:00',
+      duration: 60,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      notes: 'Jugendtraining U12',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-13',
+      trainerId: 'trainer-3',
+      trainerName: 'David Kruse',
+      sessionId: 'session-10',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '09:00',
+      endTime: '10:30',
+      duration: 90,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      notes: 'Jugendtraining U16',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-15',
+      trainerId: 'trainer-4',
+      trainerName: 'Sabine Frost',
+      sessionId: 'session-11',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '11:00',
+      endTime: '12:00',
+      duration: 60,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      notes: 'Senioren-Fitness',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-16',
+      trainerId: 'trainer-4',
+      trainerName: 'Sabine Frost',
+      sessionId: 'session-12',
+      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+      startTime: '08:00',
+      endTime: '09:30',
+      duration: 90,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      createdAt: d(-3),
+      updatedAt: d(-1),
+    },
+    {
+      id: 'hours-5',
+      trainerId: 'trainer-5',
+      trainerName: 'Ahmed Al-Rashid',
+      sessionId: 'session-13',
+      date: new Date(now).toISOString().split('T')[0],
+      startTime: '16:00',
+      endTime: '17:00',
+      duration: 60,
+      type: 'training' as const,
+      status: 'approved' as const,
+      approvedBy: 'Admin',
+      approvedAt: d(-1),
+      notes: 'Einzeltraining',
+      createdAt: d(-2),
+      updatedAt: d(-1),
+    },
   ];
 
   return {
@@ -59,13 +214,145 @@ vi.mock('@/src/application/services/trial-training-service.adapter', () => {
   const dp = (days: number) => new Date(now - days * 86400000).toISOString();
 
   const trialTrainings = [
-    { id: '1', participant: { id: 'p1', firstName: 'Max', lastName: 'Mustermann', email: 'max@example.com', phone: '+49 123', dateOfBirth: '1990-05-15' }, scheduledDate: new Date(now + 2*86400000).toISOString().split('T')[0], scheduledTime: '10:00', duration: 60, trainer: { id: 'trainer-1', name: 'Thomas Müller' }, court: { id: 'c1', name: 'Platz 1' }, status: 'scheduled' as const, createdAt: dp(1), updatedAt: dp(1) },
-    { id: '2', participant: { id: 'p2', firstName: 'Anna', lastName: 'Schmidt', email: 'anna@example.com', phone: '+49 987', dateOfBirth: '1985-08-22' }, scheduledDate: new Date(now - 86400000).toISOString().split('T')[0], scheduledTime: '14:00', duration: 60, trainer: { id: 'trainer-2', name: 'Julia Weber' }, court: { id: 'c2', name: 'Platz 2' }, status: 'completed' as const, feedback: { rating: 5, comments: 'Gut!', wouldRecommend: true }, createdAt: dp(3), updatedAt: dp(1) },
-    { id: '3', participant: { id: 'p3', firstName: 'Peter', lastName: 'Klein', email: 'peter@example.com', phone: '+49 555', dateOfBirth: '1995-12-03' }, scheduledDate: new Date(now - 5*86400000).toISOString().split('T')[0], scheduledTime: '16:00', duration: 60, trainer: { id: 'trainer-1', name: 'Thomas Müller' }, court: { id: 'c3', name: 'Platz 3' }, status: 'no_show' as const, createdAt: dp(7), updatedAt: dp(5) },
-    { id: '4', participant: { id: 'p4', firstName: 'Maria', lastName: 'Gross', email: 'maria@example.com', phone: '+49 444', dateOfBirth: '1988-03-17' }, scheduledDate: new Date(now - 10*86400000).toISOString().split('T')[0], scheduledTime: '11:00', duration: 60, trainer: { id: 'trainer-2', name: 'Julia Weber' }, court: { id: 'c1', name: 'Platz 1' }, status: 'converted' as const, feedback: { rating: 4, comments: 'OK', wouldRecommend: true }, convertedToMemberId: 'member-123', createdAt: dp(12), updatedAt: dp(10) },
-    { id: '16', participant: { id: 'p16', firstName: 'Sabine', lastName: 'Wolf', email: 'sabine@example.com', phone: '+49 151', dateOfBirth: '1981-07-07' }, scheduledDate: new Date(now - 15*86400000).toISOString().split('T')[0], scheduledTime: '10:00', duration: 60, trainer: { id: 'trainer-1', name: 'Thomas Müller' }, court: { id: 'c2', name: 'Platz 2' }, status: 'converted' as const, convertedToMemberId: 'member-456', createdAt: dp(17), updatedAt: dp(15) },
-    { id: '17', participant: { id: 'p17', firstName: 'Christian', lastName: 'Braun', email: 'christian@example.com', phone: '+49 176', dateOfBirth: '1991-09-30' }, scheduledDate: new Date(now - 20*86400000).toISOString().split('T')[0], scheduledTime: '15:00', duration: 90, trainer: { id: 'trainer-2', name: 'Julia Weber' }, court: { id: 'c3', name: 'Platz 3' }, status: 'converted' as const, convertedToMemberId: 'member-789', createdAt: dp(22), updatedAt: dp(20) },
-    { id: '18', participant: { id: 'p18', firstName: 'Laura', lastName: 'Kaiser', email: 'laura@example.com', phone: '+49 163', dateOfBirth: '1994-02-18' }, scheduledDate: new Date(now - 25*86400000).toISOString().split('T')[0], scheduledTime: '12:00', duration: 60, trainer: { id: 'trainer-1', name: 'Thomas Müller' }, court: { id: 'c1', name: 'Platz 1' }, status: 'converted' as const, convertedToMemberId: 'member-101', createdAt: dp(27), updatedAt: dp(25) },
+    {
+      id: '1',
+      participant: {
+        id: 'p1',
+        firstName: 'Max',
+        lastName: 'Mustermann',
+        email: 'max@example.com',
+        phone: '+49 123',
+        dateOfBirth: '1990-05-15',
+      },
+      scheduledDate: new Date(now + 2 * 86400000).toISOString().split('T')[0],
+      scheduledTime: '10:00',
+      duration: 60,
+      trainer: { id: 'trainer-1', name: 'Thomas Müller' },
+      court: { id: 'c1', name: 'Platz 1' },
+      status: 'scheduled' as const,
+      createdAt: dp(1),
+      updatedAt: dp(1),
+    },
+    {
+      id: '2',
+      participant: {
+        id: 'p2',
+        firstName: 'Anna',
+        lastName: 'Schmidt',
+        email: 'anna@example.com',
+        phone: '+49 987',
+        dateOfBirth: '1985-08-22',
+      },
+      scheduledDate: new Date(now - 86400000).toISOString().split('T')[0],
+      scheduledTime: '14:00',
+      duration: 60,
+      trainer: { id: 'trainer-2', name: 'Julia Weber' },
+      court: { id: 'c2', name: 'Platz 2' },
+      status: 'completed' as const,
+      feedback: { rating: 5, comments: 'Gut!', wouldRecommend: true },
+      createdAt: dp(3),
+      updatedAt: dp(1),
+    },
+    {
+      id: '3',
+      participant: {
+        id: 'p3',
+        firstName: 'Peter',
+        lastName: 'Klein',
+        email: 'peter@example.com',
+        phone: '+49 555',
+        dateOfBirth: '1995-12-03',
+      },
+      scheduledDate: new Date(now - 5 * 86400000).toISOString().split('T')[0],
+      scheduledTime: '16:00',
+      duration: 60,
+      trainer: { id: 'trainer-1', name: 'Thomas Müller' },
+      court: { id: 'c3', name: 'Platz 3' },
+      status: 'no_show' as const,
+      createdAt: dp(7),
+      updatedAt: dp(5),
+    },
+    {
+      id: '4',
+      participant: {
+        id: 'p4',
+        firstName: 'Maria',
+        lastName: 'Gross',
+        email: 'maria@example.com',
+        phone: '+49 444',
+        dateOfBirth: '1988-03-17',
+      },
+      scheduledDate: new Date(now - 10 * 86400000).toISOString().split('T')[0],
+      scheduledTime: '11:00',
+      duration: 60,
+      trainer: { id: 'trainer-2', name: 'Julia Weber' },
+      court: { id: 'c1', name: 'Platz 1' },
+      status: 'converted' as const,
+      feedback: { rating: 4, comments: 'OK', wouldRecommend: true },
+      convertedToMemberId: 'member-123',
+      createdAt: dp(12),
+      updatedAt: dp(10),
+    },
+    {
+      id: '16',
+      participant: {
+        id: 'p16',
+        firstName: 'Sabine',
+        lastName: 'Wolf',
+        email: 'sabine@example.com',
+        phone: '+49 151',
+        dateOfBirth: '1981-07-07',
+      },
+      scheduledDate: new Date(now - 15 * 86400000).toISOString().split('T')[0],
+      scheduledTime: '10:00',
+      duration: 60,
+      trainer: { id: 'trainer-1', name: 'Thomas Müller' },
+      court: { id: 'c2', name: 'Platz 2' },
+      status: 'converted' as const,
+      convertedToMemberId: 'member-456',
+      createdAt: dp(17),
+      updatedAt: dp(15),
+    },
+    {
+      id: '17',
+      participant: {
+        id: 'p17',
+        firstName: 'Christian',
+        lastName: 'Braun',
+        email: 'christian@example.com',
+        phone: '+49 176',
+        dateOfBirth: '1991-09-30',
+      },
+      scheduledDate: new Date(now - 20 * 86400000).toISOString().split('T')[0],
+      scheduledTime: '15:00',
+      duration: 90,
+      trainer: { id: 'trainer-2', name: 'Julia Weber' },
+      court: { id: 'c3', name: 'Platz 3' },
+      status: 'converted' as const,
+      convertedToMemberId: 'member-789',
+      createdAt: dp(22),
+      updatedAt: dp(20),
+    },
+    {
+      id: '18',
+      participant: {
+        id: 'p18',
+        firstName: 'Laura',
+        lastName: 'Kaiser',
+        email: 'laura@example.com',
+        phone: '+49 163',
+        dateOfBirth: '1994-02-18',
+      },
+      scheduledDate: new Date(now - 25 * 86400000).toISOString().split('T')[0],
+      scheduledTime: '12:00',
+      duration: 60,
+      trainer: { id: 'trainer-1', name: 'Thomas Müller' },
+      court: { id: 'c1', name: 'Platz 1' },
+      status: 'converted' as const,
+      convertedToMemberId: 'member-101',
+      createdAt: dp(27),
+      updatedAt: dp(25),
+    },
   ];
 
   return {
@@ -102,13 +389,27 @@ vi.mock('@/src/application/services/member-service.adapter', () => {
     email: `member${i + 1}@example.com`,
     phone: `+49 100${i}`,
     dateOfBirth: '1990-01-15',
-    address: i % 3 === 0 ? { street: 'Teststr', houseNumber: `${i + 1}`, postalCode: '12345', city: 'Berlin' } : undefined,
-    memberType: i < 16 ? 'member' as const : i < 18 ? 'trial' as const : 'inactive' as const,
-    membershipStatus: i < 15 ? 'active' as const : i < 18 ? 'active' as const : i === 18 ? 'inactive' as const : 'terminated' as const,
+    address:
+      i % 3 === 0
+        ? { street: 'Teststr', houseNumber: `${i + 1}`, postalCode: '12345', city: 'Berlin' }
+        : undefined,
+    memberType: i < 16 ? ('member' as const) : i < 18 ? ('trial' as const) : ('inactive' as const),
+    membershipStatus:
+      i < 15
+        ? ('active' as const)
+        : i < 18
+          ? ('active' as const)
+          : i === 18
+            ? ('inactive' as const)
+            : ('terminated' as const),
     membershipStart: d(365),
     membershipEnd: i >= 18 ? d(30) : undefined,
-    trainingGroup: i < 5 ? 'Anfänger' : i < 10 ? 'Fortgeschrittene' : i < 15 ? 'Turnier' : undefined,
-    emergencyContact: i % 5 === 0 ? { name: `Notfall ${i}`, phone: `+49 200${i}`, relationship: 'Partner' } : undefined,
+    trainingGroup:
+      i < 5 ? 'Anfänger' : i < 10 ? 'Fortgeschrittene' : i < 15 ? 'Turnier' : undefined,
+    emergencyContact:
+      i % 5 === 0
+        ? { name: `Notfall ${i}`, phone: `+49 200${i}`, relationship: 'Partner' }
+        : undefined,
     notes: i % 7 === 0 ? 'Notiz' : undefined,
     createdAt: d(365 + i),
     updatedAt: d(i),
@@ -121,14 +422,20 @@ vi.mock('@/src/application/services/member-service.adapter', () => {
       getMemberByUserId: vi.fn().mockResolvedValue(members[0]),
       getMemberByEmail: vi.fn().mockResolvedValue(members[0]),
       queryMembers: vi.fn().mockResolvedValue(members),
-      getActiveMembers: vi.fn().mockResolvedValue(members.filter(m => m.membershipStatus === 'active')),
-      getMembersByTrainingGroup: vi.fn().mockResolvedValue(members.filter(m => m.trainingGroup)),
+      getActiveMembers: vi
+        .fn()
+        .mockResolvedValue(members.filter((m) => m.membershipStatus === 'active')),
+      getMembersByTrainingGroup: vi.fn().mockResolvedValue(members.filter((m) => m.trainingGroup)),
       createMember: vi.fn(),
       updateMember: vi.fn(),
       updateMemberStatus: vi.fn(),
       deleteMember: vi.fn(),
       getMemberStatistics: vi.fn().mockResolvedValue({
-        total: 20, active: 15, inactive: 1, suspended: 0, terminated: 1,
+        total: 20,
+        active: 15,
+        inactive: 1,
+        suspended: 0,
+        terminated: 1,
         byType: { member: 16, trial: 2, inactive: 2 },
         byTrainingGroup: { Anfänger: 5, Fortgeschrittene: 5, Turnier: 5 },
       }),
@@ -143,34 +450,81 @@ vi.mock('@/src/application/services/member-service.adapter', () => {
 vi.mock('@/src/application/services/billing-service.adapter', () => {
   const billingData = [
     {
-      id: 'bill-1', billingPeriodId: 'period-1', trainerId: 'trainer-1', trainerName: 'Thomas Müller',
-      totalHours: 40, hourlyRate: 45, totalAmount: 1800, status: 'paid' as const,
-      invoiceId: 'inv-1', invoiceNumber: 'INV-202601-0001', dueDate: '2026-02-15', paidAt: '2026-02-14',
-      createdAt: new Date(Date.now() - 20 * 86400000).toISOString(), updatedAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+      id: 'bill-1',
+      billingPeriodId: 'period-1',
+      trainerId: 'trainer-1',
+      trainerName: 'Thomas Müller',
+      totalHours: 40,
+      hourlyRate: 45,
+      totalAmount: 1800,
+      status: 'paid' as const,
+      invoiceId: 'inv-1',
+      invoiceNumber: 'INV-202601-0001',
+      dueDate: '2026-02-15',
+      paidAt: '2026-02-14',
+      createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 20 * 86400000).toISOString(),
     },
     {
-      id: 'bill-2', billingPeriodId: 'period-1', trainerId: 'trainer-2', trainerName: 'Julia Weber',
-      totalHours: 35, hourlyRate: 55, totalAmount: 1925, status: 'pending' as const,
-      invoiceId: 'inv-2', invoiceNumber: 'INV-202601-0002', dueDate: '2026-02-15',
-      createdAt: new Date(Date.now() - 18 * 86400000).toISOString(), updatedAt: new Date(Date.now() - 18 * 86400000).toISOString(),
+      id: 'bill-2',
+      billingPeriodId: 'period-1',
+      trainerId: 'trainer-2',
+      trainerName: 'Julia Weber',
+      totalHours: 35,
+      hourlyRate: 55,
+      totalAmount: 1925,
+      status: 'pending' as const,
+      invoiceId: 'inv-2',
+      invoiceNumber: 'INV-202601-0002',
+      dueDate: '2026-02-15',
+      createdAt: new Date(Date.now() - 18 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 18 * 86400000).toISOString(),
     },
     {
-      id: 'bill-3', billingPeriodId: 'period-1', trainerId: 'trainer-3', trainerName: 'Michael Bauer',
-      totalHours: 50, hourlyRate: 70, totalAmount: 3500, status: 'paid' as const,
-      invoiceId: 'inv-3', invoiceNumber: 'INV-202601-0003', dueDate: '2026-02-15', paidAt: '2026-02-10',
-      createdAt: new Date(Date.now() - 15 * 86400000).toISOString(), updatedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+      id: 'bill-3',
+      billingPeriodId: 'period-1',
+      trainerId: 'trainer-3',
+      trainerName: 'Michael Bauer',
+      totalHours: 50,
+      hourlyRate: 70,
+      totalAmount: 3500,
+      status: 'paid' as const,
+      invoiceId: 'inv-3',
+      invoiceNumber: 'INV-202601-0003',
+      dueDate: '2026-02-15',
+      paidAt: '2026-02-10',
+      createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
     },
     {
-      id: 'bill-4', billingPeriodId: 'period-1', trainerId: 'trainer-4', trainerName: 'Sarah Klein',
-      totalHours: 25, hourlyRate: 35, totalAmount: 875, status: 'overdue' as const,
-      invoiceId: 'inv-4', invoiceNumber: 'INV-202601-0004', dueDate: '2026-01-30',
-      createdAt: new Date(Date.now() - 30 * 86400000).toISOString(), updatedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+      id: 'bill-4',
+      billingPeriodId: 'period-1',
+      trainerId: 'trainer-4',
+      trainerName: 'Sarah Klein',
+      totalHours: 25,
+      hourlyRate: 35,
+      totalAmount: 875,
+      status: 'overdue' as const,
+      invoiceId: 'inv-4',
+      invoiceNumber: 'INV-202601-0004',
+      dueDate: '2026-01-30',
+      createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 30 * 86400000).toISOString(),
     },
     {
-      id: 'bill-5', billingPeriodId: 'period-1', trainerId: 'trainer-5', trainerName: 'Ahmed Al-Rashid',
-      totalHours: 30, hourlyRate: 50, totalAmount: 1500, status: 'processed' as const,
-      invoiceId: 'inv-5', invoiceNumber: 'INV-202601-0005', dueDate: '2026-02-15',
-      createdAt: new Date(Date.now() - 10 * 86400000).toISOString(), updatedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+      id: 'bill-5',
+      billingPeriodId: 'period-1',
+      trainerId: 'trainer-5',
+      trainerName: 'Ahmed Al-Rashid',
+      totalHours: 30,
+      hourlyRate: 50,
+      totalAmount: 1500,
+      status: 'processed' as const,
+      invoiceId: 'inv-5',
+      invoiceNumber: 'INV-202601-0005',
+      dueDate: '2026-02-15',
+      createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
+      updatedAt: new Date(Date.now() - 10 * 86400000).toISOString(),
     },
   ];
 
@@ -315,7 +669,7 @@ describe('StatisticsService — Integration with Mock Data', () => {
 
       expect(Object.keys(stats.hoursByTrainer).length).toBeGreaterThan(0);
       const trainerIds = Object.keys(stats.hoursByTrainer);
-      expect(trainerIds.some(id => id.startsWith('trainer-'))).toBe(true);
+      expect(trainerIds.some((id) => id.startsWith('trainer-'))).toBe(true);
     });
 
     it('top performers are sorted by hours descending', async () => {
@@ -350,12 +704,8 @@ describe('StatisticsService — Integration with Mock Data', () => {
         new Date('2030-12-31')
       );
 
-      expect(stats.averageHoursPerTrainer).toBe(
-        stats.totalHours / stats.totalTrainers
-      );
-      expect(stats.averageSessionsPerTrainer).toBe(
-        stats.totalSessions / stats.totalTrainers
-      );
+      expect(stats.averageHoursPerTrainer).toBe(stats.totalHours / stats.totalTrainers);
+      expect(stats.averageSessionsPerTrainer).toBe(stats.totalSessions / stats.totalTrainers);
     });
   });
 
@@ -379,7 +729,7 @@ describe('StatisticsService — Integration with Mock Data', () => {
       );
 
       expect(stats.pendingPayments).toBe(1925); // bill-2 is pending
-      expect(stats.overduePayments).toBe(875);   // bill-4 is overdue
+      expect(stats.overduePayments).toBe(875); // bill-4 is overdue
     });
 
     it('calculates average revenue per member', async () => {
@@ -402,10 +752,7 @@ describe('StatisticsService — Integration with Mock Data', () => {
     });
 
     it('calls billing adapter getAllTrainerBillings', async () => {
-      await statsService.calculateRevenueStatistics(
-        new Date('2020-01-01'),
-        new Date('2030-12-31')
-      );
+      await statsService.calculateRevenueStatistics(new Date('2020-01-01'), new Date('2030-12-31'));
 
       expect(billingService.getAllTrainerBillings).toHaveBeenCalled();
     });
@@ -524,7 +871,7 @@ describe('StatisticsService — Integration with Mock Data', () => {
       const metrics = await statsService.getDashboardMetrics();
 
       expect(metrics).toHaveLength(6);
-      const ids = metrics.map(m => m.id);
+      const ids = metrics.map((m) => m.id);
       expect(ids).toContain('total-members');
       expect(ids).toContain('active-members');
       expect(ids).toContain('total-revenue');
@@ -561,7 +908,7 @@ describe('StatisticsService — Integration with Mock Data', () => {
 
     it('total-members metric reflects 20 mock members', async () => {
       const metrics = await statsService.getDashboardMetrics();
-      const memberMetric = metrics.find(m => m.id === 'total-members')!;
+      const memberMetric = metrics.find((m) => m.id === 'total-members')!;
 
       expect(memberMetric.value).toBe(20);
       expect(memberMetric.unit).toBe('members');
@@ -569,7 +916,7 @@ describe('StatisticsService — Integration with Mock Data', () => {
 
     it('conversion-rate metric uses percentage unit', async () => {
       const metrics = await statsService.getDashboardMetrics();
-      const convMetric = metrics.find(m => m.id === 'conversion-rate')!;
+      const convMetric = metrics.find((m) => m.id === 'conversion-rate')!;
 
       expect(convMetric.unit).toBe('%');
       expect(convMetric.value).toBeGreaterThan(0);

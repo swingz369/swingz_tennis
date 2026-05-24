@@ -4,8 +4,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-
-export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
+import { getHighestRole, type UserRole } from '@/lib/auth-common';
 
 export interface AuthUser {
   id: string;
@@ -39,27 +38,11 @@ export async function getAuthenticatedUser(): Promise<AuthUser> {
   }
 
   // Determine highest role (similar to buildAuthContext in api-auth.ts)
-  const roleHierarchy: Record<string, number> = {
-    superadmin: 4,
-    admin: 3,
-    trainer: 2,
-    member: 1,
-  };
 
   // Find the membership with the highest role — clubId must match that membership
-  let effectiveRole = memberships[0].role as UserRole;
-  let effectiveClubId: string | null = memberships[0].club_id ?? null;
-
-  for (let i = 1; i < memberships.length; i++) {
-    const m = memberships[i];
-    const roleValue = roleHierarchy[m.role] ?? 0;
-    const currentValue = roleHierarchy[effectiveRole] ?? 0;
-
-    if (roleValue > currentValue) {
-      effectiveRole = m.role as UserRole;
-      effectiveClubId = m.club_id ?? null;
-    }
-  }
+  const effectiveRole = getHighestRole(memberships.map((m) => m.role));
+  const effectiveMembership = memberships.find((m) => m.role === effectiveRole) || memberships[0];
+  const effectiveClubId: string | null = effectiveMembership.club_id ?? null;
 
   // For superadmin, clubId remains null unless they have a club membership
   // (The admin UI handles club selection separately)

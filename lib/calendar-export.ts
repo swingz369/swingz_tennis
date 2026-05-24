@@ -152,7 +152,10 @@ export interface SessionExportInput {
 /**
  * Convert session data to calendar event
  */
-export function sessionToCalendarEvent(session: SessionExportInput, courtName?: string): CalendarEvent {
+export function sessionToCalendarEvent(
+  session: SessionExportInput,
+  courtName?: string
+): CalendarEvent {
   const sessionDate = parseISO(session.week);
   const [startHour, startMinute] = session.startTime.split(':').map(Number);
   const [endHour, endMinute] = session.endTime.split(':').map(Number);
@@ -198,7 +201,10 @@ export function exportSessionsToICS(
 /**
  * Export single session to Google Calendar
  */
-export function exportSessionToGoogleCalendar(session: SessionExportInput, courtName?: string): void {
+export function exportSessionToGoogleCalendar(
+  session: SessionExportInput,
+  courtName?: string
+): void {
   const event = sessionToCalendarEvent(session, courtName);
   openGoogleCalendar(event);
 }

@@ -57,7 +57,10 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
           trainerName: effectiveTrainerName,
           date: today,
           status: 'present',
-          checkInTime: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+          checkInTime: new Date().toLocaleTimeString('de-DE', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
         }),
       });
       if (!res.ok) throw new Error('Check-in failed');
@@ -156,14 +159,10 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                           <div
                             key={rsvp.id}
                             className={`flex items-center justify-between p-2.5 rounded-lg text-sm ${
-                              isCheckedIn
-                                ? 'bg-green-50 border border-green-200'
-                                : 'bg-gray-50'
+                              isCheckedIn ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
                             }`}
                           >
-                            <span className="font-medium">
-                              {rsvp.user?.fullName || 'Mitglied'}
-                            </span>
+                            <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
                             {isCheckedIn ? (
                               <Badge variant="default" className="bg-green-600 text-white">
                                 <UserCheck className="h-3 w-3 mr-1" /> Eingecheckt
@@ -172,7 +171,13 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleCheckIn(rsvp.id, memberId, rsvp.user?.fullName || 'Mitglied')}
+                                onClick={() =>
+                                  handleCheckIn(
+                                    rsvp.id,
+                                    memberId,
+                                    rsvp.user?.fullName || 'Mitglied'
+                                  )
+                                }
                                 disabled={checkingIn}
                                 className="h-7 text-xs"
                               >
@@ -190,10 +195,15 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                 {/* Maybe list */}
                 {maybe.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-amber-700 mb-2">Vielleicht ({maybe.length})</h4>
+                    <h4 className="text-sm font-medium text-amber-700 mb-2">
+                      Vielleicht ({maybe.length})
+                    </h4>
                     <div className="space-y-1">
                       {maybe.map((rsvp) => (
-                        <div key={rsvp.id} className="flex items-center justify-between p-2.5 rounded-lg bg-amber-50 text-sm">
+                        <div
+                          key={rsvp.id}
+                          className="flex items-center justify-between p-2.5 rounded-lg bg-amber-50 text-sm"
+                        >
                           <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
                         </div>
                       ))}
@@ -209,9 +219,14 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                     </h4>
                     <div className="space-y-1">
                       {declined.map((rsvp) => (
-                        <div key={rsvp.id} className="flex items-center justify-between p-2.5 rounded-lg bg-red-50 text-sm">
+                        <div
+                          key={rsvp.id}
+                          className="flex items-center justify-between p-2.5 rounded-lg bg-red-50 text-sm"
+                        >
                           <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
-                          <Badge variant="outline" className="text-red-600 border-red-200">Abwesend</Badge>
+                          <Badge variant="outline" className="text-red-600 border-red-200">
+                            Abwesend
+                          </Badge>
                         </div>
                       ))}
                     </div>

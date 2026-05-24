@@ -111,8 +111,11 @@ vi.mock('@/lib/api-auth', async (importOriginal) => {
       return handler(auth);
     },
     verifyRole: async (auth: { role: string }, requiredRole: string) => {
-      const roleHierarchy: Record<string, number> = { superadmin: 4, admin: 3, trainer: 2, member: 1 };
-      return (roleHierarchy[auth.role] ?? 0) >= (roleHierarchy[requiredRole] ?? 0);
+      const { hasRole } = await import('@/lib/auth-common');
+      return hasRole(
+        auth.role as 'superadmin' | 'admin' | 'trainer' | 'member',
+        requiredRole as 'superadmin' | 'admin' | 'trainer' | 'member'
+      );
     },
     requireAuth: vi.fn(),
     requireApiAuth: vi.fn(),
@@ -774,7 +777,9 @@ describe('GET /api/gamification', () => {
     });
 
     const qbMembership = createMockQueryBuilder({
-      maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'member', club_id: 'club-1' }, error: null }),
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValue({ data: { role: 'member', club_id: 'club-1' }, error: null }),
     });
 
     const mockSupabase = createMockSupabase((table: string) => {

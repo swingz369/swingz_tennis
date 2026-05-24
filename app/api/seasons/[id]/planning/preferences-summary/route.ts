@@ -12,7 +12,9 @@ import { eq, and } from 'drizzle-orm';
 import type { PreferencesSummary } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, { max: 30, windowMs: 60000 });
@@ -60,7 +62,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
       const slotFailureWarnings: PreferencesSummary['slotFailureWarnings'] = [];
       for (const stat of stats) {
-        const rates = stat.slot_failure_rates as Record<string, { day_of_week: number; start_time: string; failure_rate: number }> | null;
+        const rates = stat.slot_failure_rates as Record<
+          string,
+          { day_of_week: number; start_time: string; failure_rate: number }
+        > | null;
         if (rates) {
           for (const [, val] of Object.entries(rates)) {
             if (val.failure_rate >= 0.3) {
@@ -86,12 +91,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
           const partner = submittedPrefs.find((sp) => sp.pref.user_id === wid);
           if (!partner) continue;
 
-          const partnerLevel = (partner.skill_level || partner.pref.preferred_level || 'beginner') as SkillLevel;
+          const partnerLevel = (partner.skill_level ||
+            partner.pref.preferred_level ||
+            'beginner') as SkillLevel;
           const partnerExp = partner.experience_months || 0;
 
           // Check level gap
           const levelOrder = { beginner: 0, intermediate: 1, advanced: 2, professional: 3 };
-          const levelGap = Math.abs((levelOrder[memberLevel] || 0) - (levelOrder[partnerLevel] || 0));
+          const levelGap = Math.abs(
+            (levelOrder[memberLevel] || 0) - (levelOrder[partnerLevel] || 0)
+          );
 
           let reason = '';
           if (levelGap >= 2) {

@@ -37,9 +37,9 @@ test.describe('Billing Page', () => {
     await invoicesTab.click();
 
     // Either an empty state or a table should render
-    await expect(
-      page.locator('table, :text("Noch keine Rechnungen")').first()
-    ).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('table, :text("Noch keine Rechnungen")').first()).toBeVisible({
+      timeout: 8000,
+    });
   });
 
   test('Subscriptions tab shows subscription table or empty state', async ({ page }) => {
@@ -47,9 +47,9 @@ test.describe('Billing Page', () => {
     await expect(page.locator('h1')).toContainText(/abrechnung/i, { timeout: 8000 });
 
     // Subscriptions tab is default
-    await expect(
-      page.locator('table, :text("Noch keine Abonnements")').first()
-    ).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('table, :text("Noch keine Abonnements")').first()).toBeVisible({
+      timeout: 8000,
+    });
   });
 
   test('Generate invoices button is clickable', async ({ page }) => {
@@ -152,11 +152,7 @@ test.describe('Billing API Access Control', () => {
   });
 
   test('member is redirected away from admin billing', async ({ page }) => {
-    await loginAsRoleAware(
-      page,
-      process.env.TEST_MEMBER_EMAIL!,
-      process.env.TEST_MEMBER_PASSWORD!
-    );
+    await loginAsRoleAware(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
 
     await page.goto('/admin/billing', { waitUntil: 'networkidle', timeout: 20000 });
 

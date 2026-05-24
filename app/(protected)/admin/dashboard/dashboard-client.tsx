@@ -198,6 +198,14 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
                 <div
                   key={club.id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/80 dark:hover:bg-white/[0.03] transition-all duration-200 group cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      router.push(`/admin/clubs/${club.id}/dashboard`);
+                    }
+                  }}
                   onClick={() => router.push(`/admin/clubs/${club.id}/dashboard`)}
                 >
                   <div className="flex items-center gap-4">

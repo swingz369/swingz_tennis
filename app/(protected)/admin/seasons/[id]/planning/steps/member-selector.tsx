@@ -1,15 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Users,
-  TrendingUp,
-  Clock,
-  Star,
-  AlertCircle,
-  CheckCircle,
-  Search,
-} from 'lucide-react';
+import { Users, TrendingUp, Clock, Star, AlertCircle, CheckCircle, Search } from 'lucide-react';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import type { SelectMembersResponse } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
@@ -48,9 +40,9 @@ export function MemberSelector() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLevel, setFilterLevel] = useState<SkillLevel | 'all'>('all');
   const [showExcluded, setShowExcluded] = useState(false);
-  const [promotedMembers, setPromotedMembers] = useState<
-    SelectMembersResponse['promotedMembers']
-  >([]);
+  const [promotedMembers, setPromotedMembers] = useState<SelectMembersResponse['promotedMembers']>(
+    []
+  );
   const [waitlistCarryovers, setWaitlistCarryovers] = useState<
     SelectMembersResponse['waitlistCarryovers']
   >([]);
@@ -58,9 +50,7 @@ export function MemberSelector() {
   const fetchMembers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `/api/seasons/${state.seasonId}/planning/members`
-      );
+      const res = await fetch(`/api/seasons/${state.seasonId}/planning/members`);
       if (!res.ok) throw new Error('Fehler beim Laden der Mitglieder');
       const data = await res.json();
 
@@ -184,9 +174,7 @@ export function MemberSelector() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{members.length}</p>
-            <p className="text-xs text-muted-foreground">
-              {selectedCount} ausgewählt
-            </p>
+            <p className="text-xs text-muted-foreground">{selectedCount} ausgewählt</p>
           </CardContent>
         </Card>
 
@@ -199,9 +187,7 @@ export function MemberSelector() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{promotedMembers.length}</p>
-            <p className="text-xs text-muted-foreground">
-              Bereit für nächstes Level
-            </p>
+            <p className="text-xs text-muted-foreground">Bereit für nächstes Level</p>
           </CardContent>
         </Card>
 
@@ -214,9 +200,7 @@ export function MemberSelector() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{waitlistCarryovers.length}</p>
-            <p className="text-xs text-muted-foreground">
-              Noch kein Platz erhalten
-            </p>
+            <p className="text-xs text-muted-foreground">Noch kein Platz erhalten</p>
           </CardContent>
         </Card>
 
@@ -229,10 +213,7 @@ export function MemberSelector() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {members.length > 0
-                ? Math.round((selectedCount / members.length) * 100)
-                : 0}
-              %
+              {members.length > 0 ? Math.round((selectedCount / members.length) * 100) : 0}%
             </p>
             <p className="text-xs text-muted-foreground">Ausgewählt</p>
           </CardContent>
@@ -279,11 +260,7 @@ export function MemberSelector() {
 
       {/* Select All */}
       <div className="flex items-center gap-2">
-        <Checkbox
-          checked={allSelected}
-          onCheckedChange={toggleAll}
-          id="select-all"
-        />
+        <Checkbox checked={allSelected} onCheckedChange={toggleAll} id="select-all" />
         <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
           Alle auswählen ({selectedCount}/{members.length})
         </label>
@@ -316,12 +293,8 @@ export function MemberSelector() {
             <tbody className="divide-y">
               {filteredMembers.map((member) => {
                 const isSelected = state.selectedMemberIds.includes(member.id);
-                const isPromoted = promotedMembers.some(
-                  (p) => p.memberId === member.id
-                );
-                const isWaitlisted = waitlistCarryovers.some(
-                  (w) => w.memberId === member.id
-                );
+                const isPromoted = promotedMembers.some((p) => p.memberId === member.id);
+                const isWaitlisted = waitlistCarryovers.some((w) => w.memberId === member.id);
 
                 return (
                   <tr
@@ -341,9 +314,7 @@ export function MemberSelector() {
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                           {member.name}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.email}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{member.email}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -361,9 +332,7 @@ export function MemberSelector() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm">
-                      {member.experienceMonths} Mon.
-                    </td>
+                    <td className="px-4 py-3 text-sm">{member.experienceMonths} Mon.</td>
                     <td className="px-4 py-3 text-sm">
                       {member.attendanceQuote !== null ? (
                         <span
@@ -371,8 +340,8 @@ export function MemberSelector() {
                             member.attendanceQuote >= 80
                               ? 'text-green-600'
                               : member.attendanceQuote >= 50
-                              ? 'text-amber-600'
-                              : 'text-red-600'
+                                ? 'text-amber-600'
+                                : 'text-red-600'
                           }
                         >
                           {member.attendanceQuote}%
@@ -415,9 +384,7 @@ export function MemberSelector() {
         {filteredMembers.length === 0 && (
           <div className="py-12 text-center">
             <Users className="h-8 w-8 text-muted-foreground mx-auto" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              Keine Mitglieder gefunden
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Keine Mitglieder gefunden</p>
           </div>
         )}
       </div>
@@ -431,26 +398,20 @@ export function MemberSelector() {
               Automatische Höherstufungen
             </CardTitle>
             <CardDescription>
-              Diese Mitglieder werden beim Clustering eine Stufe höher
-              eingeordnet
+              Diese Mitglieder werden beim Clustering eine Stufe höher eingeordnet
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
               {promotedMembers.map((p) => (
-                <li
-                  key={p.memberId}
-                  className="flex items-center gap-3 text-sm"
-                >
+                <li key={p.memberId} className="flex items-center gap-3 text-sm">
                   <CheckCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
                   <span className="font-medium">{p.memberName}</span>
                   <span className="text-muted-foreground">→</span>
                   <Badge variant="outline" className="text-xs">
                     {p.recommendedLevel}
                   </Badge>
-                  <span className="text-muted-foreground text-xs">
-                    (Trainer: {p.trainerName})
-                  </span>
+                  <span className="text-muted-foreground text-xs">(Trainer: {p.trainerName})</span>
                 </li>
               ))}
             </ul>

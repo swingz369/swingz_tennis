@@ -54,7 +54,9 @@ test.describe('Stripe Checkout Flow', () => {
     // Log out first
     await page.evaluate(() => {
       document.cookie.split(';').forEach((c) => {
-        document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+        document.cookie = c
+          .replace(/^ +/, '')
+          .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
       });
     });
 

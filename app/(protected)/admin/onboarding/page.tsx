@@ -189,7 +189,8 @@ export default function OnboardingPage() {
         // Pre-fill price data
         setPriceForm({
           default_hourly_rate: data.default_hourly_rate?.toString() ?? '15.00',
-          default_session_duration_minutes: data.default_session_duration_minutes?.toString() ?? '60',
+          default_session_duration_minutes:
+            data.default_session_duration_minutes?.toString() ?? '60',
           billing_unit_minutes: data.billing_unit_minutes?.toString() ?? '60',
           tax_rate: data.tax_rate?.toString() ?? '0',
         });
@@ -330,7 +331,8 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({
           default_hourly_rate: parseFloat(priceForm.default_hourly_rate) || 15,
-          default_session_duration_minutes: parseInt(priceForm.default_session_duration_minutes) || 60,
+          default_session_duration_minutes:
+            parseInt(priceForm.default_session_duration_minutes) || 60,
           billing_unit_minutes: parseInt(priceForm.billing_unit_minutes) || 60,
           tax_rate: parseInt(priceForm.tax_rate) || 0,
         }),
@@ -916,8 +918,8 @@ export default function OnboardingPage() {
             </div>
             <Card className="bg-blue-50/50 border-blue-200">
               <CardContent className="pt-4 text-sm text-blue-800">
-                Diese Werte kannst du später in den Einstellungen anpassen und für einzelne
-                Trainer oder Gruppen überschreiben.
+                Diese Werte kannst du später in den Einstellungen anpassen und für einzelne Trainer
+                oder Gruppen überschreiben.
               </CardContent>
             </Card>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -984,7 +986,9 @@ export default function OnboardingPage() {
                   onChange={(e) => setPriceForm((f) => ({ ...f, tax_rate: e.target.value }))}
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">0 = umsatzsteuerbefreit (Kleinunternehmer)</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  0 = umsatzsteuerbefreit (Kleinunternehmer)
+                </p>
               </div>
             </div>
           </div>
@@ -1081,7 +1085,10 @@ export default function OnboardingPage() {
             {/* Trainer invite */}
             <Card className="border-brand-primary/20">
               <CardHeader className="pb-2">
-                <Badge variant="secondary" className="w-fit bg-brand-primary/10 text-brand-primary border-brand-primary/20">
+                <Badge
+                  variant="secondary"
+                  className="w-fit bg-brand-primary/10 text-brand-primary border-brand-primary/20"
+                >
                   Trainer
                 </Badge>
               </CardHeader>

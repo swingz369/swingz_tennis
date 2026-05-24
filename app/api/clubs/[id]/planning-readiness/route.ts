@@ -9,10 +9,7 @@ import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
  * Bundles 5 readiness checks into a single API call,
  * avoiding 5 round-trips to Supabase from the client.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
@@ -31,16 +28,13 @@ export async function GET(
 
       // Step 1: Get trainer user_ids for this club
       // (trainer_availability has no club_id — join via user_club_memberships)
-      const { data: trainerIds } = await (supabase
-        .from('user_club_memberships') as any)
+      const { data: trainerIds } = await (supabase.from('user_club_memberships') as any)
         .select('user_id')
         .eq('club_id', clubId)
         .eq('role', 'trainer')
         .eq('is_active', true);
 
-      const trainerUserIdList = (trainerIds ?? [])
-        .map((r: any) => r.user_id)
-        .filter(Boolean);
+      const trainerUserIdList = (trainerIds ?? []).map((r: any) => r.user_id).filter(Boolean);
 
       // Step 2: Build query array dynamically
       const queries: Promise<any>[] = [
@@ -101,10 +95,7 @@ export async function GET(
       });
     } catch (error) {
       console.error('Planning readiness check error:', error);
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
 }

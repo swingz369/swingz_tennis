@@ -109,14 +109,14 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* Type Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Typ</label>
+                <label htmlFor="search-type" className="text-sm font-medium">Typ</label>
                 <Select
                   value={filters.type}
                   onValueChange={(value) =>
                     setFilters({ ...filters, type: value as AdvancedSearchFilters['type'] })
                   }
                 >
-                  <SelectTrigger aria-label="Typ auswählen">
+                  <SelectTrigger id="search-type" aria-label="Typ auswählen">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -157,12 +157,12 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
 
               {/* Status Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
+                <label htmlFor="search-status" className="text-sm font-medium">Status</label>
                 <Select
                   value={filters.status}
                   onValueChange={(value) => setFilters({ ...filters, status: value })}
                 >
-                  <SelectTrigger aria-label="Status auswählen">
+                  <SelectTrigger id="search-status" aria-label="Status auswählen">
                     <SelectValue placeholder="Alle Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -178,14 +178,14 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
 
               {/* Sort By */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Sortieren nach</label>
+                <label htmlFor="search-sort" className="text-sm font-medium">Sortieren nach</label>
                 <Select
                   value={filters.sortBy}
                   onValueChange={(value) =>
                     setFilters({ ...filters, sortBy: value as AdvancedSearchFilters['sortBy'] })
                   }
                 >
-                  <SelectTrigger aria-label="Sortierung auswählen">
+                  <SelectTrigger id="search-sort" aria-label="Sortierung auswählen">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -198,8 +198,9 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
 
               {/* Date From */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Datum von</label>
+                <label htmlFor="search-date-from" className="text-sm font-medium">Datum von</label>
                 <Input
+                  id="search-date-from"
                   type="date"
                   value={filters.dateFrom || ''}
                   onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
@@ -209,8 +210,9 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
 
               {/* Date To */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Datum bis</label>
+                <label htmlFor="search-date-to" className="text-sm font-medium">Datum bis</label>
                 <Input
+                  id="search-date-to"
                   type="date"
                   value={filters.dateTo || ''}
                   onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
@@ -220,7 +222,7 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
 
               {/* Sort Order */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Reihenfolge</label>
+                <label htmlFor="search-order" className="text-sm font-medium">Reihenfolge</label>
                 <Select
                   value={filters.sortOrder}
                   onValueChange={(value) =>
@@ -230,7 +232,7 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
                     })
                   }
                 >
-                  <SelectTrigger aria-label="Sortierreihenfolge">
+                  <SelectTrigger id="search-order" aria-label="Sortierreihenfolge">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

@@ -4,14 +4,14 @@
 
 ## TEIL 3: BUCHUNGEN & TRAINING (Score: 30/100)
 
-| Komponente | Status | Datenquelle |
-|---|---|---|
-| `court-bookings.tsx` | DUMMY | `Math.random()` + Hartkodiert |
-| `my-bookings.tsx` | DUMMY | Hartkodierte Testdaten Mai 2026 |
-| `session-bookings.tsx` | PRODUKTIONSREIF | Echter API-Hook |
-| `series-booking-form.tsx` | TEILWEISE | Echte API-Calls |
-| `trainer-weekly-view.tsx` | MOCK | setTimeout + hartkodiert |
-| `trainer-availability-calendar.tsx` | PRODUKTIONSREIF | Echter API-Call |
+| Komponente                          | Status          | Datenquelle                     |
+| ----------------------------------- | --------------- | ------------------------------- |
+| `court-bookings.tsx`                | DUMMY           | `Math.random()` + Hartkodiert   |
+| `my-bookings.tsx`                   | DUMMY           | Hartkodierte Testdaten Mai 2026 |
+| `session-bookings.tsx`              | PRODUKTIONSREIF | Echter API-Hook                 |
+| `series-booking-form.tsx`           | TEILWEISE       | Echte API-Calls                 |
+| `trainer-weekly-view.tsx`           | MOCK            | setTimeout + hartkodiert        |
+| `trainer-availability-calendar.tsx` | PRODUKTIONSREIF | Echter API-Call                 |
 
 ### BU1 — KRITISCH: Court-Booking komplett Dummy
 
@@ -37,12 +37,12 @@
 
 Alle drei Systeme vollständig entkoppelt:
 
-| Verbindung | Status |
-|---|---|
-| Buchung → Stundenlog-Eintrag | FEHLT |
-| Stundenlog genehmigt → Invoice | FEHLT |
-| Sessions → Billing-Zeilen | FEHLT |
-| `hours_logs` in `billing/`-Code | FEHLT |
+| Verbindung                      | Status |
+| ------------------------------- | ------ |
+| Buchung → Stundenlog-Eintrag    | FEHLT  |
+| Stundenlog genehmigt → Invoice  | FEHLT  |
+| Sessions → Billing-Zeilen       | FEHLT  |
+| `hours_logs` in `billing/`-Code | FEHLT  |
 
 Trainer müssen Stunden manuell erfassen. Admin muss manuell Rechnungen erstellen.
 

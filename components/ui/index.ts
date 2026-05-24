@@ -105,7 +105,7 @@ export {
   FormSkeleton,
   FullPageLoading,
 } from './loading-skeletons';
-export { StatsCard } from './stats-card';
+
 export { IconBox } from './icon-box';
 export type { IconBoxVariant, IconBoxSize } from './icon-box';
 export { ConfirmDialog } from './confirm-dialog';

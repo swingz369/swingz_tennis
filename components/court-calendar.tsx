@@ -70,15 +70,21 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
         if (res.ok) {
           const data = await res.json();
           const seasons = data.seasons ?? [];
-          const active = seasons.find((s: any) => s.is_active && ['published', 'active'].includes(s.planning_status));
+          const active = seasons.find(
+            (s: any) => s.is_active && ['published', 'active'].includes(s.planning_status)
+          );
           if (active) {
             setActiveSeasonId(active.id);
           } else {
-            const latest = seasons.find((s: any) => ['published', 'active', 'completed'].includes(s.planning_status));
+            const latest = seasons.find((s: any) =>
+              ['published', 'active', 'completed'].includes(s.planning_status)
+            );
             if (latest) setActiveSeasonId(latest.id);
           }
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     };
     fetchActiveSeason();
   }, [clubId]);
@@ -216,24 +222,26 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
         onGoNext={goToNextWeek}
         onGoToday={goToToday}
         onGoDaily={() => router.push('/courts/daily')}
-      >          <Button variant="outline" size="sm" onClick={handleExportICS}>
-            <Download className="h-4 w-4 mr-2" />
-            ICS Export
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportGoogleCalendar}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Google Calendar
-          </Button>
-          <Button
-            variant={showSeasonPlan ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setShowSeasonPlan(!showSeasonPlan)}
-            className="gap-1.5"
-          >
-            <Users className="h-4 w-4" />
-            Gruppen
-          </Button>
-        </CourtCalendarHeader>
+      >
+        {' '}
+        <Button variant="outline" size="sm" onClick={handleExportICS}>
+          <Download className="h-4 w-4 mr-2" />
+          ICS Export
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleExportGoogleCalendar}>
+          <ExternalLink className="h-4 w-4 mr-2" />
+          Google Calendar
+        </Button>
+        <Button
+          variant={showSeasonPlan ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setShowSeasonPlan(!showSeasonPlan)}
+          className="gap-1.5"
+        >
+          <Users className="h-4 w-4" />
+          Gruppen
+        </Button>
+      </CourtCalendarHeader>
 
       <CourtCalendarGrid>
         <WeekDaysHeaderRow weekDays={weekDays} />
@@ -243,100 +251,108 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
             <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-gray-100">
               <CourtRowHeader court={court} />
               {weekDays.map((day) => {
-                  const planEntriesForDay = showSeasonPlan
-                    ? getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(day))
-                    : [];
+                const planEntriesForDay = showSeasonPlan
+                  ? getPlanEntriesForCourtAndDay(court.id, dateFnsGetDay(day))
+                  : [];
 
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className={`p-1 min-h-[300px] bg-white ${
-                        isSameDay(day, new Date()) ? 'bg-blue-50/30' : ''
-                      }`}
-                    >
-                      {/* Season plan entries as informational badges */}
-                      {showSeasonPlan && planEntriesForDay.length > 0 && (
-                        <div className="space-y-0.5 mb-1">
-                          {planEntriesForDay.map((entry: any) => (
-                            <div
-                              key={entry.id}
-                              className="p-0.5 rounded text-[10px] text-white text-center leading-tight truncate"
-                              style={{ backgroundColor: entry.group_color || '#7c3aed' }}
-                              title={`${entry.group_name} · ${entry.start_time}–${entry.end_time}`}
-                            >
-                              {entry.group_name}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="space-y-0.5">
-                        {TIME_SLOTS.map((timeSlot) => {
-                          const session = getSessionForCourtAndTime(court.id, day, timeSlot);
-                          const hasPlanEntry = showSeasonPlan && planEntriesForDay.some(
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={`p-1 min-h-[300px] bg-white ${
+                      isSameDay(day, new Date()) ? 'bg-blue-50/30' : ''
+                    }`}
+                  >
+                    {/* Season plan entries as informational badges */}
+                    {showSeasonPlan && planEntriesForDay.length > 0 && (
+                      <div className="space-y-0.5 mb-1">
+                        {planEntriesForDay.map((entry: any) => (
+                          <div
+                            key={entry.id}
+                            className="p-0.5 rounded text-[10px] text-white text-center leading-tight truncate"
+                            style={{ backgroundColor: entry.group_color || '#7c3aed' }}
+                            title={`${entry.group_name} · ${entry.start_time}–${entry.end_time}`}
+                          >
+                            {entry.group_name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="space-y-0.5">
+                      {TIME_SLOTS.map((timeSlot) => {
+                        const session = getSessionForCourtAndTime(court.id, day, timeSlot);
+                        const hasPlanEntry =
+                          showSeasonPlan &&
+                          planEntriesForDay.some(
                             (e: any) => e.start_time <= timeSlot && e.end_time > timeSlot
                           );
-                          const isAvailable = !session && !hasPlanEntry;
+                        const isAvailable = !session && !hasPlanEntry;
 
-                          return (
-                            <div
-                              key={timeSlot}
-                              className={`h-6 rounded text-[11px] flex items-center justify-center cursor-pointer transition-colors ${
-                                isAvailable
-                                  ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
-                                  : session?.bookedByUser
-                                    ? 'bg-red-50 text-red-800 border border-red-200'
-                                    : hasPlanEntry
-                                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                      : 'bg-gray-100 text-gray-600 border border-gray-200'
-                              }`}
-                              onClick={() => isAvailable && handleBookSlot(court.id, day, timeSlot)}
-                            >
-                              {session ? (
-                                <div className="flex items-center gap-1 w-full justify-between px-1">
-                                  <span className="truncate">
-                                    {session.trainerName?.substring(0, 8) || 'Trainer'}
-                                  </span>
-                                  {session.bookedByUser && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (session.bookingId) {
-                                          handleCancelBooking(session.id, session.bookingId);
-                                        }
-                                      }}
-                                      className="p-0.5 rounded hover:bg-red-100 text-red-600"
-                                      title="Buchung stornieren"
-                                    >
-                                      <svg
-                                        className="h-2.5 w-2.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M6 18L18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  )}
-                                </div>
-                              ) : hasPlanEntry ? (
-                                <span className="text-[10px] truncate px-0.5">
-                                  Gruppen
+                        return (
+                          <div
+                            key={timeSlot}
+                            className={`h-6 rounded text-[11px] flex items-center justify-center cursor-pointer transition-colors ${
+                              isAvailable
+                                ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+                                : session?.bookedByUser
+                                  ? 'bg-red-50 text-red-800 border border-red-200'
+                                  : hasPlanEntry
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                    : 'bg-gray-100 text-gray-600 border border-gray-200'
+                            }`}
+                            role="button"
+                            tabIndex={isAvailable ? 0 : -1}
+                            onKeyDown={(e) => {
+                              if ((e.key === 'Enter' || e.key === ' ') && isAvailable) {
+                                e.preventDefault();
+                                handleBookSlot(court.id, day, timeSlot);
+                              }
+                            }}
+                            onClick={() => isAvailable && handleBookSlot(court.id, day, timeSlot)}
+                          >
+                            {session ? (
+                              <div className="flex items-center gap-1 w-full justify-between px-1">
+                                <span className="truncate">
+                                  {session.trainerName?.substring(0, 8) || 'Trainer'}
                                 </span>
-                              ) : (
-                                <span className="text-[11px]">{timeSlot}</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                                {session.bookedByUser && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (session.bookingId) {
+                                        handleCancelBooking(session.id, session.bookingId);
+                                      }
+                                    }}
+                                    className="p-0.5 rounded hover:bg-red-100 text-red-600"
+                                    title="Buchung stornieren"
+                                  >
+                                    <svg
+                                      className="h-2.5 w-2.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            ) : hasPlanEntry ? (
+                              <span className="text-[10px] truncate px-0.5">Gruppen</span>
+                            ) : (
+                              <span className="text-[11px]">{timeSlot}</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}

@@ -20,7 +20,6 @@ import type {
 import { AbsenceService } from './absence.service';
 import { DrizzleAbsenceRepository } from '@/infrastructure/persistence/repositories/absence.repository';
 
-
 class AbsenceServiceAdapter {
   private absenceRepo = new DrizzleAbsenceRepository();
 
@@ -176,14 +175,22 @@ class AbsenceServiceAdapter {
   /**
    * Approve an absence request
    */
-  async approveAbsence(id: string, approvedBy: string, clubId: string = ''): Promise<Absence | null> {
+  async approveAbsence(
+    id: string,
+    approvedBy: string,
+    clubId: string = ''
+  ): Promise<Absence | null> {
     return this.absenceRepo.approve(id, approvedBy, clubId);
   }
 
   /**
    * Reject an absence request
    */
-  async rejectAbsence(id: string, approvedBy: string, clubId: string = ''): Promise<Absence | null> {
+  async rejectAbsence(
+    id: string,
+    approvedBy: string,
+    clubId: string = ''
+  ): Promise<Absence | null> {
     return this.absenceRepo.reject(id, approvedBy, clubId);
   }
 

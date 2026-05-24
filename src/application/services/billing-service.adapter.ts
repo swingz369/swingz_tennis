@@ -24,7 +24,6 @@ import { DrizzleBillingPeriodRepository } from '@/infrastructure/persistence/rep
 import { DrizzleTrainerBillingRepository } from '@/infrastructure/persistence/repositories/trainer-billing.repository';
 import { DrizzleBillingLineItemRepository } from '@/infrastructure/persistence/repositories/billing-line-item.repository';
 
-
 class BillingServiceAdapter {
   private periodRepo = new DrizzleBillingPeriodRepository();
   private billingRepo = new DrizzleTrainerBillingRepository();
@@ -174,8 +173,6 @@ class BillingServiceAdapter {
   async generateInvoiceNumber(): Promise<string> {
     return this.billingRepo.generateInvoiceNumber();
   }
-
-
 }
 
 // Export singleton instance

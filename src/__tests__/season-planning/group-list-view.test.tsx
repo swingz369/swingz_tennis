@@ -49,7 +49,7 @@ describe('GroupListView — empty state', () => {
         activeDays={[]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('Kein Plan generiert')).toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('GroupListView — groups by day', () => {
         activeDays={[1, 2]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     // Day labels (Montag, Dienstag)
@@ -89,9 +89,7 @@ describe('GroupListView — groups by day', () => {
   });
 
   it('should render group names', () => {
-    const plan = [
-      makeSlot({ id: 's1', dayOfWeek: 1, groupName: 'Gruppe A' }),
-    ];
+    const plan = [makeSlot({ id: 's1', dayOfWeek: 1, groupName: 'Gruppe A' })];
     const byDay = makeByDay(plan);
 
     render(
@@ -102,7 +100,7 @@ describe('GroupListView — groups by day', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('Gruppe A')).toBeInTheDocument();
@@ -123,7 +121,7 @@ describe('GroupListView — groups by day', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText(/2 Gruppen/)).toBeInTheDocument();
@@ -141,16 +139,14 @@ describe('GroupListView — groups by day', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText(/1 Gruppe/)).toBeInTheDocument();
   });
 
   it('should show total member count per day', () => {
-    const plan = [
-      makeSlot({ id: 's1', dayOfWeek: 1, memberNames: ['A', 'B'] }),
-    ];
+    const plan = [makeSlot({ id: 's1', dayOfWeek: 1, memberNames: ['A', 'B'] })];
     const byDay = makeByDay(plan);
 
     render(
@@ -161,7 +157,7 @@ describe('GroupListView — groups by day', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText(/2 Mitglieder gesamt/)).toBeInTheDocument();
@@ -185,7 +181,7 @@ describe('GroupListView — slot metadata', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText(/17:00–18:30 Uhr/)).toBeInTheDocument();
@@ -205,7 +201,7 @@ describe('GroupListView — slot metadata', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     const colorDot = document.querySelector('.rounded-full.flex-shrink-0');
@@ -231,7 +227,7 @@ describe('GroupListView — member chips', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -251,7 +247,7 @@ describe('GroupListView — member chips', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('Keine Mitglieder')).toBeInTheDocument();
@@ -275,7 +271,7 @@ describe('GroupListView — expand/collapse', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('Mitglieder verschieben')).toBeInTheDocument();
@@ -293,7 +289,7 @@ describe('GroupListView — expand/collapse', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('Schließen')).toBeInTheDocument();
@@ -312,7 +308,7 @@ describe('GroupListView — expand/collapse', () => {
         activeDays={[1]}
         onToggleExpand={onToggleExpand}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByText('Mitglieder verschieben'));
@@ -332,7 +328,7 @@ describe('GroupListView — expand/collapse', () => {
         activeDays={[1]}
         onToggleExpand={onToggleExpand}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByText('Schließen'));
@@ -348,7 +344,13 @@ describe('GroupListView — move member UI', () => {
   it('should show transfer UI when slot is expanded', () => {
     const plan = [
       makeSlot({ id: 's1', dayOfWeek: 1, memberNames: ['Alice'], memberIds: ['m1'] }),
-      makeSlot({ id: 's2', dayOfWeek: 1, groupName: 'Gruppe B', memberNames: ['Bob'], memberIds: ['m2'] }),
+      makeSlot({
+        id: 's2',
+        dayOfWeek: 1,
+        groupName: 'Gruppe B',
+        memberNames: ['Bob'],
+        memberIds: ['m2'],
+      }),
     ];
     const byDay = makeByDay(plan);
 
@@ -360,7 +362,7 @@ describe('GroupListView — move member UI', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText('Mitglied in andere Gruppe verschieben:')).toBeInTheDocument();
@@ -381,7 +383,7 @@ describe('GroupListView — move member UI', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     // "Gruppe B" appears as a group header
@@ -401,7 +403,13 @@ describe('GroupListView — move member UI', () => {
   it('should NOT include the current slot in target options', () => {
     const plan = [
       makeSlot({ id: 's1', dayOfWeek: 1, memberNames: ['Alice'], memberIds: ['m1'] }),
-      makeSlot({ id: 's2', dayOfWeek: 1, groupName: 'Gruppe B', memberNames: ['Bob'], memberIds: ['m2'] }),
+      makeSlot({
+        id: 's2',
+        dayOfWeek: 1,
+        groupName: 'Gruppe B',
+        memberNames: ['Bob'],
+        memberIds: ['m2'],
+      }),
     ];
     const byDay = makeByDay(plan);
 
@@ -413,7 +421,7 @@ describe('GroupListView — move member UI', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     // Open the shadcn Select to see options
@@ -443,7 +451,7 @@ describe('GroupListView — move member UI', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={onMoveMember}
-      />,
+      />
     );
 
     // Open the shadcn Select to reveal options
@@ -453,7 +461,7 @@ describe('GroupListView — move member UI', () => {
     // Find and click the target option (Gruppe B / s2)
     const options = screen.getAllByRole('option');
     const targetOption = options.find(
-      (o) => o.textContent?.includes('Gruppe B') && o.getAttribute('data-value') !== 'placeholder',
+      (o) => o.textContent?.includes('Gruppe B') && o.getAttribute('data-value') !== 'placeholder'
     );
     expect(targetOption).toBeTruthy();
     fireEvent.click(targetOption!);
@@ -475,11 +483,13 @@ describe('GroupListView — move member UI', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     // Both members should appear in the transfer UI
-    const transferSection = screen.getByText('Mitglied in andere Gruppe verschieben:').closest('div')!;
+    const transferSection = screen
+      .getByText('Mitglied in andere Gruppe verschieben:')
+      .closest('div')!;
     expect(transferSection.textContent).toContain('Alice');
     expect(transferSection.textContent).toContain('Bob');
   });
@@ -496,7 +506,7 @@ describe('GroupListView — move member UI', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.queryByText('Mitglied in andere Gruppe verschieben:')).not.toBeInTheDocument();
@@ -523,7 +533,7 @@ describe('GroupListView — slot sorting', () => {
         activeDays={[1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
-      />,
+      />
     );
 
     // The groups section: find the group name texts and check order

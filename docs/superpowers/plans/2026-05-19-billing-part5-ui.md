@@ -16,6 +16,7 @@
 
 The directory `app/(protected)/admin/billing/` already exists with `billing-client.tsx`, `page.tsx`.
 Extend the existing billing page to show:
+
 - Tabs: "Alle" | "Saison" | "Mitgliedsbeitrag" | "Zusatz"
 - Table columns: Rechnungsnr., Mitglied, Typ, Betrag, Status, Fälligkeit, Aktionen
 - Status badge with colors: draft=gray, sent=blue, reminder_sent=yellow, partially_paid=orange, paid=green, overdue=red, dunning=red+bold, cancelled=gray+strikethrough
@@ -54,6 +55,7 @@ function InvoiceStatusBadge({ status }: { status: string }) {
 ## Task 2: Create Adhoc Invoice Dialog
 
 Inside `billing-client.tsx`, add a Dialog component for creating Zusatz-Rechnungen:
+
 - Member select (fetch from club members)
 - Due date input
 - Line items: dynamic list with "+" add row and "×" remove row (description, quantity, unit_price)
@@ -67,12 +69,19 @@ interface LineItem {
   unit_price: number;
 }
 
-function CreateAdhocInvoiceDialog({ clubId, onSuccess }: { clubId: string; onSuccess: () => void }) {
+function CreateAdhocInvoiceDialog({
+  clubId,
+  onSuccess,
+}: {
+  clubId: string;
+  onSuccess: () => void;
+}) {
   const [items, setItems] = useState<LineItem[]>([{ description: '', quantity: 1, unit_price: 0 }]);
-  const addItem = () => setItems(prev => [...prev, { description: '', quantity: 1, unit_price: 0 }]);
-  const removeItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i));
+  const addItem = () =>
+    setItems((prev) => [...prev, { description: '', quantity: 1, unit_price: 0 }]);
+  const removeItem = (i: number) => setItems((prev) => prev.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: keyof LineItem, value: string | number) =>
-    setItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
+    setItems((prev) => prev.map((item, idx) => (idx === i ? { ...item, [field]: value } : item)));
   // ... form state for memberId, dueDate, notes
   // total = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0)
   // show running total
@@ -93,6 +102,7 @@ function CreateAdhocInvoiceDialog({ clubId, onSuccess }: { clubId: string; onSuc
 
 Add a click-through from the invoice list to a detail view (or expand row / side panel).
 Show:
+
 - Invoice header (number, member, dates, status)
 - Line items table
 - Installments section (if installment_count > 1): each installment with due date, amount, status, "Als bezahlt markieren" button
@@ -116,6 +126,7 @@ Add a "Guthaben" tab to the member detail page (if it exists) or add a balance s
 Run: `ls app/(protected)/admin/members/` to see current structure.
 
 Show:
+
 - Current balance amount (green if positive, red if negative, gray if zero)
 - Balance history table: date, reason, amount (+/-), type badge
 - If balance > 0: "Guthaben wird bei nächster Rechnung verrechnet" info text
@@ -151,6 +162,7 @@ function BalanceDisplay({ balance }: { balance: number }) {
 ## Task 5: `app/(protected)/admin/seasons/[id]/` — bulk invoice generation UI
 
 On the season detail page, add a "Saison-Rechnungen generieren" section:
+
 - Show how many active members have no invoice yet for this season
 - installment_count selector (1, 2, 3)
 - Dynamic due date inputs (show N date inputs based on installment_count)
@@ -174,6 +186,7 @@ Where a group change can be initiated. Find the training groups admin page:
 `grep -r "training_group\|Trainingsgruppe" /home/aeugeln/SwingZ/app --include="*.tsx" -l`
 
 Add a "Gruppenwechsel" button per member-in-group row that opens a dialog:
+
 - Current group shown (read-only)
 - "Neue Gruppe" select (other groups in same season)
 - Change date (default: today)

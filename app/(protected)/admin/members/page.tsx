@@ -38,8 +38,7 @@ export default async function MembersPage() {
   }
 
   // Fetch all memberships for this club (include_in_planning not in generated types)
-  const { data: clubMemberships, error } = await (supabase
-    .from('user_club_memberships') as any)
+  const { data: clubMemberships, error } = await (supabase.from('user_club_memberships') as any)
     .select('id, user_id, role, is_active, joined_at, include_in_planning')
     .eq('club_id', clubId)
     .order('joined_at', { ascending: false });

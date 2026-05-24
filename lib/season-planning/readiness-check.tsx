@@ -1,13 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import {
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Check,
-  ArrowRight,
-} from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Check, ArrowRight } from 'lucide-react';
 
 type CheckItem = {
   key: string;
@@ -26,11 +20,7 @@ interface ReadinessCheckProps {
   onReady: (ready: boolean) => void;
 }
 
-export default function ScheduleReadinessCheck({
-  clubId,
-  seasonId,
-  onReady,
-}: ReadinessCheckProps) {
+export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: ReadinessCheckProps) {
   const [items, setItems] = useState<CheckItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -40,10 +30,9 @@ export default function ScheduleReadinessCheck({
   useEffect(() => {
     if (!clubId) return;
     async function check() {
-      const res = await fetch(
-        `/api/clubs/${clubId}/planning-readiness?seasonId=${seasonId}`,
-        { headers: { 'x-csrf-token': '1' } }
-      );
+      const res = await fetch(`/api/clubs/${clubId}/planning-readiness?seasonId=${seasonId}`, {
+        headers: { 'x-csrf-token': '1' },
+      });
       if (!res.ok) {
         setLoading(false);
         return;
@@ -101,9 +90,7 @@ export default function ScheduleReadinessCheck({
       ];
 
       setItems(checks);
-      const allRequired = checks
-        .filter((c) => c.required > 0)
-        .every((c) => c.status === 'ok');
+      const allRequired = checks.filter((c) => c.required > 0).every((c) => c.status === 'ok');
       onReadyRef.current(allRequired);
       setLoading(false);
     }
@@ -119,9 +106,7 @@ export default function ScheduleReadinessCheck({
   return (
     <div
       className={`rounded-xl border p-4 ${
-        allOk
-          ? 'bg-green-50 border-green-200'
-          : 'bg-red-50 border-red-200'
+        allOk ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
       }`}
     >
       <div className="flex items-center justify-between">
@@ -132,11 +117,7 @@ export default function ScheduleReadinessCheck({
             <XCircle className="w-5 h-5 text-red-600" />
           )}
           <div>
-            <p
-              className={`text-sm font-semibold ${
-                allOk ? 'text-green-800' : 'text-red-800'
-              }`}
-            >
+            <p className={`text-sm font-semibold ${allOk ? 'text-green-800' : 'text-red-800'}`}>
               {allOk
                 ? 'Bereit für Planung'
                 : `${errors.length} Problem${errors.length > 1 ? 'e' : ''} muss${errors.length > 1 ? 'en' : ''} behoben werden`}
@@ -150,9 +131,7 @@ export default function ScheduleReadinessCheck({
         </div>
         <button
           onClick={() => setExpanded((v) => !v)}
-          className={`text-xs font-medium ${
-            allOk ? 'text-green-700' : 'text-red-700'
-          }`}
+          className={`text-xs font-medium ${allOk ? 'text-green-700' : 'text-red-700'}`}
         >
           {expanded ? 'Schließen' : 'Details'}
         </button>
@@ -191,17 +170,11 @@ export default function ScheduleReadinessCheck({
             .map((item) => (
               <div
                 key={item.key}
-                className={`rounded-lg p-3 ${
-                  item.status === 'warn'
-                    ? 'bg-amber-50'
-                    : 'bg-red-50'
-                }`}
+                className={`rounded-lg p-3 ${item.status === 'warn' ? 'bg-amber-50' : 'bg-red-50'}`}
               >
                 <p
                   className={`text-xs font-semibold mb-1 flex items-center gap-1.5 ${
-                    item.status === 'warn'
-                      ? 'text-amber-800'
-                      : 'text-red-800'
+                    item.status === 'warn' ? 'text-amber-800' : 'text-red-800'
                   }`}
                 >
                   {item.status === 'warn' ? (
@@ -211,9 +184,7 @@ export default function ScheduleReadinessCheck({
                   )}
                   {item.label}
                 </p>
-                <p className="text-xs leading-relaxed text-red-700">
-                  {item.hint}
-                </p>
+                <p className="text-xs leading-relaxed text-red-700">{item.hint}</p>
                 {item.link && (
                   <a
                     href={item.link}

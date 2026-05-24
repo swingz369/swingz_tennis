@@ -6,12 +6,20 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { getDb } from '@/src/infrastructure/persistence/client';
-import { seasons, users, trainers as trainersTable, userTrainingPreferences, seasonPlanEntries } from '@/src/infrastructure/persistence/schema';
+import {
+  seasons,
+  users,
+  trainers as trainersTable,
+  userTrainingPreferences,
+  seasonPlanEntries,
+} from '@/src/infrastructure/persistence/schema';
 import { seasonPlanningConfigs } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, and } from 'drizzle-orm';
 import type { TrainerAvailabilitySummary } from '@/lib/season-planning/types';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, { max: 30, windowMs: 60000 });
@@ -70,7 +78,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const trainerSummaries = trainerPrefs.map((tp) => {
         const maxHours = tp.trainer?.max_hours_per_week || 30;
         const effectiveMaxHours = maxHours * (maxUtilizationPct / 100);
-        const sessionsAssigned = existingEntries.filter((e) => e.trainer_id === tp.pref.user_id).length;
+        const sessionsAssigned = existingEntries.filter(
+          (e) => e.trainer_id === tp.pref.user_id
+        ).length;
         const hoursAssigned = sessionsAssigned * 1.5; // 90 min sessions
         const availableSlots = Math.max(0, Math.floor(effectiveMaxHours / 1.5) - sessionsAssigned);
 
@@ -102,7 +112,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const overallUtilization =
         trainerSummaries.length > 0
           ? trainerSummaries.reduce((sum, t) => {
-              const pct = t.effectiveMaxHours > 0 ? (t.currentAssignedHours / t.effectiveMaxHours) * 100 : 0;
+              const pct =
+                t.effectiveMaxHours > 0 ? (t.currentAssignedHours / t.effectiveMaxHours) * 100 : 0;
               return sum + pct;
             }, 0) / trainerSummaries.length
           : 0;

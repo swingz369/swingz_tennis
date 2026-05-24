@@ -21,15 +21,16 @@ A unified billing and training management system for tennis clubs on SwingZ. Han
 
 `invoices.invoice_type` — neue Spalte auf der bestehenden `invoices`-Tabelle:
 
-| Wert | Bedeutung |
-|---|---|
-| `season` | Saison-Rechnung (Training) |
-| `membership` | Mitgliedsbeitrag |
-| `adhoc` | Zusatz-Rechnung |
+| Wert         | Bedeutung                  |
+| ------------ | -------------------------- |
+| `season`     | Saison-Rechnung (Training) |
+| `membership` | Mitgliedsbeitrag           |
+| `adhoc`      | Zusatz-Rechnung            |
 
 Zusätzlich: `invoices.season_id uuid FK → schedules` — Verknüpfung zur Saison (nullable, für Zusatz-Rechnungen leer).
 
 ### 2.1 Saison-Rechnung
+
 - Generiert automatisch bei Saisonstart oder manuell vom Admin
 - Basis: alle nicht-schulferien-gesperrten Sessions der Saison
 - Preis pro Mitglied: per `fee_configurations` (type=`training`) inkl. JSONB-Bedingungen (Alter, Mitgliedstyp)
@@ -37,12 +38,14 @@ Zusätzlich: `invoices.season_id uuid FK → schedules` — Verknüpfung zur Sai
 - GoBD: nach `sent` → immutable (kein Edit, nur Storno + Neu)
 
 ### 2.2 Mitgliedsbeitrag
+
 - Einmalig pro Saison/Jahr pro Mitglied
 - Betrag aus `fee_configurations` (type=`membership`)
 - Keine Ratenzahlung
 - GoBD: gleiche Immutability-Regel
 
 ### 2.3 Zusatz-Rechnung
+
 - Manuell, Freitext-Positionen mit Menge und Einheitspreis
 - Referenz optional: Booking, Session oder ohne Referenz
 - Immer Einmalzahlung
@@ -60,9 +63,11 @@ Ergänzung: `fee_configurations.billing_unit_count int` — Anzahl Billing-Units
 ### 3.2 Member-Category Assignment
 
 Neue Spalte auf `user_club_memberships`:
+
 ```sql
 fee_configuration_id uuid REFERENCES fee_configurations(id) ON DELETE SET NULL
 ```
+
 Admin weist Mitglied eine Fee-Konfiguration zu. Null = Fallback auf die Standardkonfiguration des Clubs für diesen Typ.
 
 ### 3.3 Billing Unit
@@ -122,6 +127,7 @@ training_group_memberships (
 ```
 
 Beim Gruppenänderungsprozess:
+
 1. Alte Zeile: `left_at = today`, `left_reason = 'group_change'`
 2. Neue Zeile: `joined_at = today`
 3. Sessions remaining old group = Sessions in `training_groups.schedule_id` mit `timeslot_start > today` und `status != 'holiday_cancelled'`
@@ -181,6 +187,7 @@ Nettodelta → `member_balances.balance` update.
 In deutschen Vereinen ist SEPA-Lastschrift der Standard. Stripe/Online-Zahlung ist sekundär.
 
 **Reihenfolge im UI:**
+
 1. SEPA Lastschrift (Mandat bereits in `sepa_mandates` modelliert)
 2. Überweisung (manuell, Admin markiert als bezahlt)
 3. Bar (Admin markiert als bezahlt)
@@ -234,6 +241,7 @@ Neuer Status zwischen `overdue` und `dunning`: `reminder_sent`. Freundliche Erin
 ## 8. DATEV-Export Vorbereitung
 
 Kein UI jetzt, aber das Datenmodell muss es ermöglichen:
+
 - `invoice_items.datev_account_number text` — nullable, optional manuell pflegbar
 - `clubs.datev_creditor_number text` — nullable Konfigurationsfeld
 - Ziel: künftiger CSV-Export nach DATEV-Buchungsstapel-Format ohne Schema-Änderung
@@ -244,7 +252,7 @@ Kein UI jetzt, aber das Datenmodell muss es ermöglichen:
 
 ```
 Saison angelegt
-  └→ Admin konfiguriert: Bundesland, billing_unit_minutes, default_payment_method, 
+  └→ Admin konfiguriert: Bundesland, billing_unit_minutes, default_payment_method,
         installment_count, invoice_number_prefix, tax_rate
   └→ Sessions generiert → Schulferien-Check → holiday_cancelled Sessions markiert
   └→ Saison-Rechnung generiert pro Mitglied:

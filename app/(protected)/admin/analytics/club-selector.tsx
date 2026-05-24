@@ -31,9 +31,9 @@ export function ClubSelector({ clubs, selectedClubId }: ClubSelectorProps) {
 
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">Verein auswählen</label>
+      <label htmlFor="club-selector" className="block text-sm font-medium text-gray-700 mb-1">Verein auswählen</label>
       <Select value={selectedClubId} onValueChange={handleChange}>
-        <SelectTrigger className="w-64">
+        <SelectTrigger id="club-selector" className="w-64">
           <SelectValue placeholder="Verein auswählen" />
         </SelectTrigger>
         <SelectContent>

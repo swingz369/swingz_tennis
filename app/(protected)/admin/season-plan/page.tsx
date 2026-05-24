@@ -45,7 +45,8 @@ export default function SeasonPlanOverviewPage() {
         <LayoutGrid className="h-16 w-16 text-gray-300 mb-4" />
         <h2 className="text-xl font-semibold text-gray-900">Keine Saisons vorhanden</h2>
         <p className="text-sm text-gray-500 mt-2 max-w-md">
-          Erstelle zuerst eine Saison und führe die Saisonplanung durch, um den Stundenplan zu sehen.
+          Erstelle zuerst eine Saison und führe die Saisonplanung durch, um den Stundenplan zu
+          sehen.
         </p>
         <Button onClick={() => router.push('/admin/seasons/new')} className="mt-6">
           Neue Saison erstellen
@@ -73,9 +74,7 @@ export default function SeasonPlanOverviewPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">
-                    {season.season_type === 'summer' ? '☀️' : '❄️'}
-                  </span>
+                  <span className="text-2xl">{season.season_type === 'summer' ? '☀️' : '❄️'}</span>
                   <div>
                     <CardTitle className="text-lg">{season.name}</CardTitle>
                     <CardDescription>
@@ -94,11 +93,15 @@ export default function SeasonPlanOverviewPage() {
                     <span>{season.planned_entries} geplante Einheiten</span>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {season.planning_status === 'published' ? 'Veröffentlicht' :
-                     season.planning_status === 'draft' ? 'Entwurf' :
-                     season.planning_status === 'active' ? 'Aktiv' :
-                     season.planning_status === 'completed' ? 'Abgeschlossen' :
-                     season.planning_status}
+                    {season.planning_status === 'published'
+                      ? 'Veröffentlicht'
+                      : season.planning_status === 'draft'
+                        ? 'Entwurf'
+                        : season.planning_status === 'active'
+                          ? 'Aktiv'
+                          : season.planning_status === 'completed'
+                            ? 'Abgeschlossen'
+                            : season.planning_status}
                   </Badge>
                 </div>
                 <ArrowRight className="h-5 w-5 text-gray-400" />

@@ -119,5 +119,3 @@ export async function requireAuth() {
 
 // Export both names for compatibility
 export const getUserFromCookies = getAuthenticatedUser;
-
-

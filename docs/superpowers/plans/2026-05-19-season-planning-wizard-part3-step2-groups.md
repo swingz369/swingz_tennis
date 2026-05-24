@@ -13,6 +13,7 @@
 ## Task 5: Step 2 — Gruppen konfigurieren
 
 **Files:**
+
 - Create: `app/(protected)/admin/seasons/[id]/wizard/groups/page.tsx`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/groups/groups-manager.tsx`
 

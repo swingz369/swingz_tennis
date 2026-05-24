@@ -38,14 +38,22 @@ export async function POST(request: NextRequest) {
 
   const { club_id, season_id, installment_count, installment_due_dates, due_date } = parsed.data;
 
-  const { data: membership } = await supabase.from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', club_id).eq('is_active', true).maybeSingle();
-  if (!membership || !['admin','superadmin'].includes(membership.role))
+  const { data: membership } = await supabase
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', club_id)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!membership || !['admin', 'superadmin'].includes(membership.role))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const { data: members } = await supabase.from('user_club_memberships')
+  const { data: members } = await supabase
+    .from('user_club_memberships')
     .select('user_id, fee_configuration_id')
-    .eq('club_id', club_id).eq('is_active', true).eq('role', 'member');
+    .eq('club_id', club_id)
+    .eq('is_active', true)
+    .eq('role', 'member');
 
   let created = 0;
   const errors: string[] = [];
@@ -80,31 +88,51 @@ export async function createSeasonInvoice(params: GenerateSeasonInvoiceParams): 
   const invoice_number = await generateInvoiceNumber(supabase, params.club_id);
 
   // Count billable sessions for member's group in this season
-  const { data: feeConfig } = await supabase.from('fee_configurations')
-    .select('amount, billing_unit_count').eq('id', params.fee_configuration_id).single();
-  const { data: club } = await supabase.from('clubs')
-    .select('tax_rate').eq('id', params.club_id).single();
+  const { data: feeConfig } = await supabase
+    .from('fee_configurations')
+    .select('amount, billing_unit_count')
+    .eq('id', params.fee_configuration_id)
+    .single();
+  const { data: club } = await supabase
+    .from('clubs')
+    .select('tax_rate')
+    .eq('id', params.club_id)
+    .single();
 
   const pricePerUnit = (feeConfig as any)?.amount ?? 0;
   const taxRate = (club as any)?.tax_rate ?? 0;
   const subtotal = pricePerUnit; // simplified: actual billable session count × price is computed by caller
   const tax_amount = subtotal * (taxRate / 100);
 
-  const { data: invoice, error } = await supabase.from('invoices').insert({
-    club_id: params.club_id, member_id: params.member_id, invoice_number,
-    invoice_type: 'season', season_id: params.season_id,
-    invoice_date: new Date().toISOString().split('T')[0],
-    due_date: params.due_date, status: 'draft',
-    subtotal, tax_amount, total_amount: subtotal + tax_amount,
-    paid_amount: 0, currency: 'EUR',
-  }).select().single();
+  const { data: invoice, error } = await supabase
+    .from('invoices')
+    .insert({
+      club_id: params.club_id,
+      member_id: params.member_id,
+      invoice_number,
+      invoice_type: 'season',
+      season_id: params.season_id,
+      invoice_date: new Date().toISOString().split('T')[0],
+      due_date: params.due_date,
+      status: 'draft',
+      subtotal,
+      tax_amount,
+      total_amount: subtotal + tax_amount,
+      paid_amount: 0,
+      currency: 'EUR',
+    })
+    .select()
+    .single();
   if (error) throw new Error(error.message);
 
   if (params.installment_count > 1) {
     const perInstallment = (subtotal + tax_amount) / params.installment_count;
     const installments = params.installment_due_dates.map((due, i) => ({
-      invoice_id: (invoice as any).id, installment_number: i + 1,
-      amount: perInstallment, due_date: due, status: 'pending',
+      invoice_id: (invoice as any).id,
+      installment_number: i + 1,
+      amount: perInstallment,
+      due_date: due,
+      status: 'pending',
     }));
     await supabase.from('invoice_installments').insert(installments);
   }
@@ -142,9 +170,14 @@ export async function POST(request: NextRequest) {
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { data: membership } = await supabase.from('user_club_memberships').select('role')
-    .eq('user_id', user.id).eq('club_id', parsed.data.club_id).eq('is_active', true).maybeSingle();
-  if (!membership || !['admin','superadmin','trainer'].includes(membership.role))
+  const { data: membership } = await supabase
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', parsed.data.club_id)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!membership || !['admin', 'superadmin', 'trainer'].includes(membership.role))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   try {
@@ -173,14 +206,20 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const memberId = searchParams.get('memberId');
   const clubId = searchParams.get('clubId');
-  if (!memberId || !clubId) return NextResponse.json({ error: 'memberId and clubId required' }, { status: 400 });
+  if (!memberId || !clubId)
+    return NextResponse.json({ error: 'memberId and clubId required' }, { status: 400 });
 
   // Member can see own balance; admin can see all
   const isSelf = memberId === user.id;
   if (!isSelf) {
-    const { data: membership } = await supabase.from('user_club_memberships').select('role')
-      .eq('user_id', user.id).eq('club_id', clubId).eq('is_active', true).maybeSingle();
-    if (!membership || !['admin','superadmin'].includes(membership.role))
+    const { data: membership } = await supabase
+      .from('user_club_memberships')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('club_id', clubId)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (!membership || !['admin', 'superadmin'].includes(membership.role))
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

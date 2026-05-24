@@ -13,6 +13,7 @@
 ## Task 9: Step 4 — Billing Page
 
 **Files:**
+
 - Create: `app/(protected)/admin/seasons/[id]/wizard/billing/page.tsx`
 - Create: `app/(protected)/admin/seasons/[id]/wizard/billing/billing-preview-table.tsx`
 

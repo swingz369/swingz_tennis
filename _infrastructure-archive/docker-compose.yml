@@ -15,8 +15,6 @@ services:
     depends_on:
       - supabase
       - redis
-      - auth-service
-      - scheduling-service
 
   # Supabase (PostgreSQL + Auth)
   supabase:
@@ -41,51 +39,6 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
-
-  # Auth Microservice (V4)
-  auth-service:
-    build:
-      context: ../services/auth
-      dockerfile: Dockerfile
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - SUPABASE_URL=http://supabase:8000
-      - JWT_SECRET=tsow-jwt-secret-2026
-    ports:
-      - '3001:3001'
-    depends_on:
-      - redis
-      - supabase
-
-  # Scheduling Microservice (V4)
-  scheduling-service:
-    build:
-      context: ../services/scheduling
-      dockerfile: Dockerfile
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SUPABASE_URL=http://supabase:8000
-    ports:
-      - '3002:3002'
-    depends_on:
-      - redis
-      - supabase
-
-  # Billing Microservice (V4)
-  billing-service:
-    build:
-      context: ../services/billing
-      dockerfile: Dockerfile
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - SUPABASE_URL=http://supabase:8000
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-    ports:
-      - '3003:3003'
-    depends_on:
-      - redis
-      - supabase
 
 volumes:
   supabase_data:

@@ -110,8 +110,7 @@ export default async function SuperadminDashboardPage() {
     .eq('id', user.id)
     .maybeSingle();
 
-  const firstName =
-    profile?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'Superadmin';
+  const firstName = profile?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'Superadmin';
 
   return (
     <AdminPanelV2Client

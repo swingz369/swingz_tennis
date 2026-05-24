@@ -11,7 +11,9 @@ import { eq } from 'drizzle-orm';
 import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine';
 import type { RunClusteringRequest } from '@/lib/season-planning/types';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 export async function POST(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, { max: 5, windowMs: 3600000 });

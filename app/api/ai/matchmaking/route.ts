@@ -20,7 +20,10 @@ interface MatchCandidate {
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -38,21 +41,23 @@ export async function GET() {
     const clubId = membership.club_id!;
 
     // ── 1. Current user profile ──
-    const { data: myProfile } = await supabase
+    const { data: myProfile } = (await supabase
       .from('users')
       .select('skill_level')
       .eq('id', user.id)
-      .single() as { data: { skill_level?: string | null } | null };
+      .single()) as { data: { skill_level?: string | null } | null };
 
     const myLevel = myProfile?.skill_level || 'beginner';
 
     // ── 2. My group memberships ──
-    const { data: myGroups } = await supabase
+    const { data: myGroups } = (await supabase
       .from('groups')
       .select('id, name, level')
       .contains('member_ids', [user.id])
       .eq('club_id', clubId)
-      .eq('is_active', true) as { data: { id: string; name: string; level: string | null }[] | null };
+      .eq('is_active', true)) as {
+      data: { id: string; name: string; level: string | null }[] | null;
+    };
 
     const myGroupIds = new Set(myGroups?.map((g) => g.id) ?? []);
     const myGroupLevels = new Set(
@@ -61,26 +66,30 @@ export async function GET() {
 
     // ── 3. My recent session bookings (for common session overlap) ──
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: myBookings } = await supabase
+    const { data: myBookings } = (await supabase
       .from('bookings')
       .select('session_id')
       .eq('member_id', user.id)
-      .gte('booked_at', thirtyDaysAgo) as { data: { session_id?: string | null }[] | null };
+      .gte('booked_at', thirtyDaysAgo)) as { data: { session_id?: string | null }[] | null };
 
     const mySessionIds = new Set(
-      (myBookings ?? []).map((b) => b.session_id).filter((s): s is string => s !== null && s !== undefined)
+      (myBookings ?? [])
+        .map((b) => b.session_id)
+        .filter((s): s is string => s !== null && s !== undefined)
     );
 
     // ── 4. Find candidates: active club members (excluding self) ──
-    const { data: members } = await supabase
+    const { data: members } = (await supabase
       .from('user_club_memberships')
       .select('user_id, users!inner(full_name, email, skill_level)')
       .eq('club_id', clubId)
       .eq('is_active', true)
-      .neq('user_id', user.id) as { data: Array<{
+      .neq('user_id', user.id)) as {
+      data: Array<{
         user_id: string;
         users: { full_name?: string | null; email?: string | null; skill_level?: string | null };
-      }> | null };
+      }> | null;
+    };
 
     if (!members || members.length === 0) {
       return NextResponse.json({ matches: [] });
@@ -89,18 +98,22 @@ export async function GET() {
     const allMemberIds = members.map((m) => m.user_id);
 
     // ── 5. Batch: Load ALL groups for this club ──
-    const { data: allGroups } = await supabase
+    const { data: allGroups } = (await supabase
       .from('groups')
       .select('id, name, level, member_ids')
       .eq('club_id', clubId)
-      .eq('is_active', true) as { data: { id: string; name: string; level: string | null; member_ids: string[] }[] | null };
+      .eq('is_active', true)) as {
+      data: { id: string; name: string; level: string | null; member_ids: string[] }[] | null;
+    };
 
     // ── 6. Batch: Load common session attendance ──
-    const { data: candidateBookings } = await supabase
+    const { data: candidateBookings } = (await supabase
       .from('bookings')
       .select('member_id, session_id')
       .in('member_id', allMemberIds)
-      .gte('booked_at', thirtyDaysAgo) as { data: { member_id?: string | null; session_id?: string | null }[] | null };
+      .gte('booked_at', thirtyDaysAgo)) as {
+      data: { member_id?: string | null; session_id?: string | null }[] | null;
+    };
 
     // Build member -> session_ids map
     const memberSessionMap = new Map<string, Set<string>>();

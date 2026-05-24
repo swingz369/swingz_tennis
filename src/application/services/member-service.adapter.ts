@@ -20,7 +20,6 @@ import type {
 } from '@/domain/entities/member.entity';
 import { MemberService } from './member.service';
 
-
 class MemberServiceAdapter {
   /**
    * Validate member input
@@ -98,10 +97,7 @@ class MemberServiceAdapter {
   /**
    * Update member status
    */
-  async updateMemberStatus(
-    id: string,
-    status: Member['membershipStatus']
-  ): Promise<Member | null> {
+  async updateMemberStatus(id: string, status: Member['membershipStatus']): Promise<Member | null> {
     return MemberService.updateMemberStatus(id, status);
   }
 

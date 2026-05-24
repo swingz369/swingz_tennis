@@ -20,7 +20,6 @@ import type {
 import { TrialTrainingService } from './trial-training.service';
 import { DrizzleTrialTrainingRepository } from '@/infrastructure/persistence/repositories/trial-training.repository';
 
-
 class TrialTrainingServiceAdapter {
   private trialTrainingRepo = new DrizzleTrialTrainingRepository();
 
