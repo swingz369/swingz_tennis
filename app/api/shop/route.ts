@@ -1,13 +1,11 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requireAuthApi } from '@/lib/auth';
+import { withAuth } from '@/lib/api-auth';
 
 // POST: Create shop order
 export async function POST(request: NextRequest) {
-  try {
-    const auth = await requireAuthApi();
-    if ('error' in auth) return auth.error;
+  return withAuth(request, async (auth) => {
     const { supabase, user } = auth;
 
     const { items } = await request.json();
@@ -72,9 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, order }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }
 
 // GET: List products

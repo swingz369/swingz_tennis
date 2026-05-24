@@ -1,12 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { createServiceClient } from '@/lib/supabase/service';
 import type { SepaMandate, Payment, CreateSepaMandate } from '../types/billing';
 import type { SepaDirectDebitTransaction, SepaPain008Config } from '../sepa/pain008-generator';
 import { generatePain008Xml } from '../sepa/pain008-generator';
 import { InvoiceService } from './invoice.service';
 import { PaymentService } from './payment.service';
 
-const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createServiceClient();
 
 export class SepaService {
   private static instance: SepaService;

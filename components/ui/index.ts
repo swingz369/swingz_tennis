@@ -109,7 +109,6 @@ export { StatsCard } from './stats-card';
 export { IconBox } from './icon-box';
 export type { IconBoxVariant, IconBoxSize } from './icon-box';
 export { ConfirmDialog } from './confirm-dialog';
-export { PageLoading, PageError, PageEmpty } from './page-states';
 export { FeatureCard } from './feature-card';
 export {
   Form,

@@ -1,11 +1,35 @@
 /**
- * API Authentication Middleware for Supabase SSR
+ * lib/api-auth.ts — API Route Authentication & Authorization
+ *
+ * ⚠️  DOMAIN: Use ONLY in API routes (app/api/** /route.ts).
+ *
+ * For Server Components (pages, layouts), use lib/auth.ts instead.
+ *
+ * ┌─────────────────────────┬────────────────────┬──────────────────────┐
+ * │ Context                 │ lib/auth.ts        │ This file            │
+ * ├─────────────────────────┼────────────────────┼──────────────────────┤
+ * │ Cookie source           │ cookies()          │ request.cookies      │
+ * │ Auth failure behavior   │ redirect('/login') │ NextResponse 401     │
+ * │ Return value            │ { supabase, user } │ AuthContext (role,    │
+ * │                         │                    │  clubId, memberships) │
+ * │ Role resolution         │ ❌ Manual only     │ ✅ Built-in           │
+ * │ Club context            │ ❌ Manual only     │ ✅ Built-in           │
+ * └─────────────────────────┴────────────────────┴──────────────────────┘
  *
  * Role Architecture:
  *   superadmin → club_id = NULL in DB, platform-wide access
  *   admin      → club_id = specific club, manages that club
  *   trainer    → club_id = specific club
  *   member     → club_id = specific club
+ *
+ * Exports:
+ *   requireAuth(request)    — Resolves full AuthContext (throws on failure)
+ *   withAuth(request, fn)   — Wraps handler with auth + error handling
+ *   withApiAuth             — Alias for withAuth
+ *   verifyRole(auth, role)  — Role hierarchy check
+ *   verifyClubAccess(...)   — Club-scoped access check
+ *   unauthorizedResponse()  — 401 JSON helper
+ *   forbiddenResponse()     — 403 JSON helper
  */
 
 import type { NextRequest } from 'next/server';

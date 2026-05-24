@@ -1,10 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 import { Resend } from 'resend';
-import { env } from '@/lib/env';
 import type { DunningRecord, CreateDunningRecord } from '../types/billing';
 import { InvoiceService } from './invoice.service';
 
-const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createServiceClient();
 
 export class DunningService {
   private static instance: DunningService;

@@ -1,11 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { requireAuthApi } from '@/lib/auth';
+import { withAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
-  try {
-    const auth = await requireAuthApi();
-    if ('error' in auth) return auth.error;
+  return withAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'trainer');
+    if (!hasPermission) return forbiddenResponse('Insufficient permissions');
+
     const { supabase, user } = auth;
 
     const body = await request.json();
@@ -16,19 +17,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check permissions
-    const { data: profile } = await (supabase as any)
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || !['admin', 'trainer', 'superadmin'].includes(profile.role)) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
     // If trainer role, can only manage own absences
-    if (profile.role === 'trainer' && trainer_id !== user.id) {
+    if (auth.role === 'trainer' && trainer_id !== user.id) {
       return NextResponse.json({ error: 'Can only manage own absences' }, { status: 403 });
     }
 
@@ -68,16 +58,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ absence }, { status: 201 });
-  } catch (error) {
-    console.error('Trainer absence POST error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const auth = await requireAuthApi();
-    if ('error' in auth) return auth.error;
+  return withAuth(request, async (auth) => {
     const { supabase } = auth;
 
     const searchParams = request.nextUrl.searchParams;
@@ -106,8 +91,5 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ absences: absences || [] });
-  } catch (error) {
-    console.error('Trainer absence GET error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }

@@ -1,8 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { createServiceClient } from '@/lib/supabase/service';
 import type { Payment, CreatePayment, PaymentStatus } from '../types/billing';
 
-const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createServiceClient();
 
 function fallbackPaymentId(): string {
   return `PAY-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

@@ -1,5 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { createServiceClient } from '@/lib/supabase/service';
 import type {
   BookingRule,
   CreateBookingRule,
@@ -11,7 +10,7 @@ import type {
 import { BookingService } from './booking.service';
 import { CourtService } from './court.service';
 
-const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createServiceClient();
 
 export class ScheduleService {
   private static instance: ScheduleService;

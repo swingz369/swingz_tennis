@@ -1,5 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { createServiceClient } from '@/lib/supabase/service';
 import type {
   BillingPeriod,
   TrainerBilling,
@@ -9,7 +8,7 @@ import type {
   BillingSummary,
 } from '../../domain/entities/billing.entity';
 
-const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createServiceClient();
 
 // ── row-to-domain mappers ──────────────────────────────────────────────────
 

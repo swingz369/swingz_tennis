@@ -5,20 +5,19 @@
  * Konkrete Implementierung der StorageService Interface mit Supabase Storage
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 import type {
   StorageService,
   StorageFile,
   UploadOptions,
 } from '@/domain/services/storage-service.interface';
-import { env } from '@/lib/env';
 
 export class SupabaseStorageService implements StorageService {
-  private supabase: ReturnType<typeof createClient>;
+  private supabase: ReturnType<typeof createServiceClient>;
   private bucketName: string;
 
   constructor(bucketName: string = 'swingz-files') {
-    this.supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    this.supabase = createServiceClient();
     this.bucketName = bucketName;
   }
 

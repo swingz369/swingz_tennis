@@ -142,7 +142,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
 /**
  * DELETE /api/seasons/[id]
- * Delete a season (only draft seasons)
+ * Delete a season (any status)
  */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
@@ -172,10 +172,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         if (!isSuperadmin && existing.club_id !== auth.clubId) {
           return forbiddenResponse('You do not have access to this season');
         }
-        if (existing.planning_status !== 'draft') {
-          return NextResponse.json({ error: 'Only draft seasons can be deleted' }, { status: 400 });
-        }
-
         const { error: deleteError } = await supabase.from('seasons').delete().eq('id', id);
         if (deleteError) throw deleteError;
 

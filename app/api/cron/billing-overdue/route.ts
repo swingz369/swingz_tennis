@@ -1,7 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { createServiceClient } from '@/lib/supabase/service';
 import { dunningService } from '@/lib/billing/dunning.service';
 import { createLogger } from '@/lib/logger';
 
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createServiceClient();
 
     // Mark invoices past due_date as overdue
     const { data: updated, error } = await supabase

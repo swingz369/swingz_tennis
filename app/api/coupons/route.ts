@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requireAuthApi } from '@/lib/auth';
+import { withAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 
-// GET: Validate coupon
+// GET: Validate coupon (no auth required — public endpoint)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -49,19 +49,11 @@ export async function GET(request: NextRequest) {
 
 // POST: Create coupon (admin only)
 export async function POST(request: NextRequest) {
-  try {
-    const auth = await requireAuthApi();
-    if ('error' in auth) return auth.error;
+  return withAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) return forbiddenResponse('Admin access required');
+
     const { supabase, user } = auth;
-
-    const { data: membership } = await supabase
-      .from('user_club_memberships')
-      .select('role, club_id')
-      .eq('user_id', user.id)
-      .in('role', ['admin', 'superadmin'])
-      .maybeSingle();
-
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { code, discountType, discountValue, maxUses, expiresAt, minAmount } =
       await request.json();
@@ -74,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { error } = await (supabase as any).from('coupons').insert({
-      club_id: membership.club_id,
+      club_id: auth.clubId,
       code: code.toUpperCase().trim(),
       discount_type: discountType,
       discount_value: discountValue,
@@ -87,7 +79,5 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ success: true }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  });
 }

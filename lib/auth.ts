@@ -1,3 +1,29 @@
+/**
+ * lib/auth.ts — Server Component Authentication
+ *
+ * ⚠️  DOMAIN: Use ONLY in Server Components (pages, layouts).
+ *
+ * For API routes (app/api/** /route.ts), use lib/api-auth.ts instead.
+ *
+ * ┌─────────────────────────┬────────────────────┬──────────────────────┐
+ * │ Context                 │ This file          │ lib/api-auth.ts      │
+ * ├─────────────────────────┼────────────────────┼──────────────────────┤
+ * │ Cookie source           │ cookies()          │ request.cookies      │
+ * │ Auth failure behavior   │ redirect('/login') │ NextResponse 401     │
+ * │ Return value            │ { supabase, user } │ AuthContext (role,    │
+ * │                         │                    │  clubId, memberships) │
+ * │ Role resolution         │ ❌ Manual only     │ ✅ Built-in           │
+ * │ Club context            │ ❌ Manual only     │ ✅ Built-in           │
+ * └─────────────────────────┴────────────────────┴──────────────────────┘
+ *
+ * Exports:
+ *   requireAuth()           — Guard for pages/layouts (redirects on failure)
+ *   getAuthenticatedUser()  — Get user without supabase client
+ *   getUserFromCookies      — Alias for getAuthenticatedUser
+ *   clearAuthCookiesAndRedirect — Re-exported from @/app/actions/auth
+ *
+ */
+
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
@@ -5,7 +31,6 @@ import type { User } from '@supabase/supabase-js';
 
 /**
  * Creates a Supabase server client with cookie access.
- * Shared helper to avoid code duplication between requireAuth and requireAuthApi.
  */
 async function createSupabaseServerClient(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -95,52 +120,4 @@ export async function requireAuth() {
 // Export both names for compatibility
 export const getUserFromCookies = getAuthenticatedUser;
 
-/**
- * API Route Auth Guard — for use in app/api/** /route.ts handlers.
- * Uses createClient() from @/lib/supabase/server (consistent with all API routes).
- * Returns { supabase, user } on success, or NextResponse 401 on failure (NO redirect).
- *
- * Usage:
- *   const auth = await requireAuthApi();
- *   if (auth.error) return auth.error;
- *   const { supabase, user } = auth;
- */
-export async function requireAuthApi() {
-  const cookieStore = await cookies();
-  const supabase = await createSupabaseServerClient(cookieStore);
 
-  if (!supabase) {
-    return {
-      error: new Response(JSON.stringify({ error: 'Server configuration error' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    };
-  }
-
-  try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      return {
-        error: new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      };
-    }
-
-    return { supabase, user };
-  } catch (err) {
-    console.error('requireAuthApi failed:', err);
-    return {
-      error: new Response(JSON.stringify({ error: 'Authentication failed' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    };
-  }
-}

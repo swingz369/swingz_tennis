@@ -1,5 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '@/lib/env';
+import { createServiceClient } from '@/lib/supabase/service';
 import type {
   Member,
   CreateMemberInput,
@@ -8,7 +7,7 @@ import type {
 } from '../../domain/entities/member.entity';
 
 /** Service role client — used for all DB operations (server-side only, not exposed to browser) */
-const db = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+const db = createServiceClient();
 
 export class MemberService {
   /**

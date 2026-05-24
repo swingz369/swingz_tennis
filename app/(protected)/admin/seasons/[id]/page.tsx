@@ -475,7 +475,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
   const canOpenPreferences = season.planning_status === 'draft';
   const canPublish = season.planning_status === 'manual_review';
-  const canDelete = !['published', 'active', 'completed', 'archived'].includes(season.planning_status ?? '');
 
   return (
     <div className="space-y-6">
@@ -554,12 +553,11 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
             </Button>
           )}
 
-          {canDelete && (
-            <Button
-              variant="destructive"
-              onClick={() => setDeleteConfirmOpen(true)}
-              disabled={deleting}
-            >
+          <Button
+            variant="destructive"
+            onClick={() => setDeleteConfirmOpen(true)}
+            disabled={deleting}
+          >
               {deleting ? (
                 <Clock className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -567,7 +565,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               )}
               Löschen
             </Button>
-          )}
         </div>
       </div>
 

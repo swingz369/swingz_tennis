@@ -114,9 +114,8 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): P
   const { billingEngine } = await import('../billing-engine');
 
   // Find payment by external_id (Stripe payment intent ID)
-  const { createClient } = await import('@supabase/supabase-js');
-  const { env } = await import('@/lib/env');
-  const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  const { createServiceClient } = await import('@/lib/supabase/service');
+  const supabase = createServiceClient();
 
   const { data: payment } = await supabase
     .from('payments')

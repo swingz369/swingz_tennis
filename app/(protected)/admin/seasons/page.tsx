@@ -26,14 +26,15 @@ export default async function SeasonsPage() {
 
   // Determine effective clubId
   const isSuperadmin = memberships.some((m: { role: string }) => m.role === 'superadmin');
-  const firstClubId: string = memberships[0].club_id!;
-  let clubId = firstClubId;
+  let clubId: string;
   if (isSuperadmin) {
     const cookieStore = await cookies();
-    const selectedClub = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
-    if (selectedClub) {
-      clubId = selectedClub;
-    }
+    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || memberships[0].club_id!;
+    if (!clubId) redirect('/select-admin-club');
+  } else {
+    const adminMembership = memberships.find((m: any) => m.role === 'admin');
+    clubId = adminMembership?.club_id!;
+    if (!clubId) redirect('/member');
   }
 
   // Fetch seasons with explicit field selection

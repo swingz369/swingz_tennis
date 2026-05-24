@@ -56,19 +56,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: () => mockCreateAdminClient(),
 }));
 
-// requireAuthApi is used by gamification (and shop/coupons) routes.
-// It creates its own Supabase client internally via cookies + @supabase/ssr,
-// so we mock it here to feed controlled auth state to those routes.
-const mockRequireAuthApi = vi.fn();
-vi.mock('@/lib/auth', async () => {
-  const actual = await vi.importActual('@/lib/auth');
-  return {
-    ...(actual as Record<string, unknown>),
-    requireAuthApi: () => mockRequireAuthApi(),
-  };
-});
-
-// Mock @/lib/api-auth — used by admin/approvals and other routes.
+// Mock @/lib/api-auth — used by admin/approvals, gamification, shop, coupons, and other routes.
 // withApiAuth ties into mockCreateClient so auth state is controlled
 // the same way as routes that call createClient() directly.
 // verifyRole checks auth.role (built from membership query) so existing
@@ -137,7 +125,6 @@ beforeEach(() => {
   console.error = vi.fn();
   mockCreateClient.mockReset();
   mockCreateAdminClient.mockReset();
-  mockRequireAuthApi.mockReset();
 });
 afterEach(() => {
   console.error = originalConsoleError;
@@ -716,12 +703,9 @@ describe('GET /api/gamification', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockRequireAuthApi.mockResolvedValue({
-      error: new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    });
+    const mockSupabase = createMockSupabase(() => createMockQueryBuilder());
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockCreateClient.mockResolvedValue(mockSupabase);
 
     const res = await GET();
     expect(res.status).toBe(401);
@@ -789,14 +773,19 @@ describe('GET /api/gamification', () => {
       }),
     });
 
+    const qbMembership = createMockQueryBuilder({
+      maybeSingle: vi.fn().mockResolvedValue({ data: { role: 'member', club_id: 'club-1' }, error: null }),
+    });
+
     const mockSupabase = createMockSupabase((table: string) => {
+      if (table === 'user_club_memberships') return qbMembership;
       if (table === 'gamification_points') return qbPoints;
       if (table === 'gamification_badges') return qbBadges;
       if (table === 'attendance_records') return qbAttendance;
       return createMockQueryBuilder();
     });
-
-    mockRequireAuthApi.mockResolvedValue({ supabase: mockSupabase, user: { id: 'u1' } });
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    mockCreateClient.mockResolvedValue(mockSupabase);
 
     const res = await GET();
     expect(res.status).toBe(200);
