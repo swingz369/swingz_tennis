@@ -99,6 +99,16 @@ const nextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
           {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+          {
+            // credentialless: erlaubt Cross-Origin-Ressourcen (Supabase, Stripe, Fonts) ohne Credentials,
+            // sicherer Kompromiss zwischen require-corp (zu strikt) und unsafe-none (schwächt COOP ab)
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'credentialless',
+          },
+          {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",

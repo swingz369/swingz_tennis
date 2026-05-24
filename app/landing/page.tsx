@@ -867,7 +867,7 @@ export default function LandingPage() {
                     <p className="mt-4 text-sm text-gray-500 leading-relaxed">{plan.description}</p>
                   </div>
 
-                  <ul className="mt-8 space-y-3.5" role="list">
+                  <ul className="mt-8 space-y-3.5">
                     {plan.features.map((feature, fIdx) => (
                       <li key={fIdx} className="flex items-start gap-3">
                         <CheckCircle2
@@ -970,18 +970,18 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-sm text-gray-400">
-              <a href="#" className="hover:text-white transition-colors">
+              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
                 Impressum
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
+              </button>
+              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
                 Datenschutz
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
+              </button>
+              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
                 AGB
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
+              </button>
+              <button type="button" className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-gray-400 text-sm">
                 Kontakt
-              </a>
+              </button>
             </div>
             <p className="text-sm text-gray-500">© 2025 SWINGZ — Alle Rechte vorbehalten.</p>
           </div>

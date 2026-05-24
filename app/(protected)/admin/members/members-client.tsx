@@ -377,7 +377,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                     </td>
                     <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="Details">
+                        <Button variant="ghost" size="icon" title="Details" asChild>
                           <Link href={`/admin/members/${member.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>

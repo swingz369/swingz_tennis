@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -346,9 +347,9 @@ export default function TrialTrainingRegistration() {
 
               <p className="text-xs text-gray-500 text-center">
                 Mit der Anmeldung stimmst du unseren{' '}
-                <a href="#" className="text-brand-primary hover:underline">
+                <Link href="/privacy" className="text-brand-primary hover:underline">
                   Datenschutzbestimmungen
-                </a>{' '}
+                </Link>{' '}
                 zu.
               </p>
             </form>
