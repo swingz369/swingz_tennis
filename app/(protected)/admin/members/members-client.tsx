@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, UserCheck, UserX, Search, Download, UserPlus, CheckSquare, Square } from 'lucide-react';
+import { Eye, UserCheck, UserX, Search, Download, UserPlus, CheckSquare, Square, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
+import { csrfHeaders } from '@/lib/csrf-client';
 import type { Member } from './member.types';
 
 function BalanceDisplay({ balance }: { balance: number }) {
@@ -43,6 +44,8 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
     role: 'member' as 'member' | 'trainer' | 'admin',
   });
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(25);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -65,6 +68,11 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
     fetchBalances();
   }, [initialMembers, clubId]);
 
+  // Reset page when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, statusFilter]);
+
   // Filter members
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
@@ -76,11 +84,16 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedMembers = filteredMembers.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   const handleTogglePlanning = async (memberId: string, currentValue: boolean) => {
     try {
       const res = await fetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ include_in_planning: !currentValue }),
       });
 
@@ -107,7 +120,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
     try {
       const res = await fetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ is_active: !currentActive }),
       });
 
@@ -153,7 +166,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
     try {
       const res = await fetch('/api/members/invite', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({
           ...inviteForm,
           club_id: clubId,
@@ -307,7 +320,7 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
                   </td>
                 </tr>
               ) : (
-                filteredMembers.map((member) => (
+                paginatedMembers.map((member) => (
                   <tr
                     key={member.id}
                     className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
@@ -404,9 +417,62 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
         </div>
       </div>
 
+      {/* Pagination */}
+      {filteredMembers.length > 0 && (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <span>Zeige</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(v) => {
+              setPageSize(Number(v));
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[80px] h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+          <span>von {filteredMembers.length}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            disabled={safePage <= 1}
+            aria-label="Vorherige Seite"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="px-3 text-sm text-gray-600 dark:text-gray-400 min-w-[80px] text-center">
+            Seite {safePage} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            disabled={safePage >= totalPages}
+            aria-label="Nächste Seite"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      )}
+
       {/* Stats */}
       <div className="text-sm text-gray-500 dark:text-gray-400">
-        {filteredMembers.length} von {members.length} Mitgliedern angezeigt
+        {filteredMembers.length > 0
+          ? `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, filteredMembers.length)} von ${filteredMembers.length}`
+          : `0 von ${members.length}`} Mitgliedern
         {(() => {
           const planned = members.filter((m) => m.include_in_planning !== false && m.role === 'member').length;
           return planned > 0 ? ` · ${planned} für Saisonplanung` : '';
