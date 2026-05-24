@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { isActivePath } from '@/lib/navigation-utils';
+import { useUserRole } from '@/hooks/use-user-role';
 import {
   Home,
   Calendar,
   User,
   Menu,
   GraduationCap,
-  ClipboardCheck,
   Users,
   BarChart3,
   Layout,
@@ -17,8 +18,6 @@ import {
   BookOpen,
   CreditCard,
   Clock,
-  FileText,
-  Trophy,
 } from 'lucide-react';
 
 interface MobileBottomNavProps {
@@ -37,9 +36,8 @@ export function MobileBottomNav({
 }: MobileBottomNavProps) {
   const pathname = usePathname();
 
-  const isSuperAdmin = roles?.includes('superadmin') ?? false;
-  const isAdmin = roles?.includes('admin') ?? false;
-  const isTrainer = roles?.includes('trainer') ?? false;
+  // Centralised role detection via hook
+  const { isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
 
   // Navigation items based on HIGHEST role — matches TSOW tab bar
   let navItems: { name: string; href: string; icon: React.ElementType }[] = [];
@@ -60,14 +58,12 @@ export function MobileBottomNav({
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else if (isTrainer) {
-    // Trainer: 7 tabs
+    // Trainer: 5 tabs (reduced from 7 — Gamification + Stunden accessible via dashboard)
     navItems = [
       { name: 'Übersicht', href: '/trainer', icon: Home },
       { name: 'Einheiten', href: '/scheduler', icon: Calendar },
-      { name: 'Anwesenheit', href: '/attendance-history', icon: ClipboardCheck },
-      { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
-      { name: 'Gamification', href: '/gamification', icon: Trophy },
-      { name: 'Stunden', href: '/trainer/hours-logs', icon: FileText },
+      { name: 'Anwesenheit', href: '/attendance-history', icon: Clock },
+      { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Calendar },
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else {
@@ -95,13 +91,7 @@ export function MobileBottomNav({
       <div className="relative flex justify-around items-center h-16 px-2">
         {/* Active indicator background */}
         {navItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== '/member' &&
-              item.href !== '/trainer' &&
-              item.href !== '/admin' &&
-              item.href !== '/superadmin' &&
-              pathname.startsWith(item.href));
+          const isActive = isActivePath(pathname, item.href);
           return isActive ? (
             <div
               key={`indicator-${item.name}`}
@@ -114,13 +104,7 @@ export function MobileBottomNav({
           ) : null;
         })}
         {navItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== '/member' &&
-              item.href !== '/trainer' &&
-              item.href !== '/admin' &&
-              item.href !== '/superadmin' &&
-              pathname.startsWith(item.href));
+          const isActive = isActivePath(pathname, item.href);
           return (
             <Link
               key={item.name}

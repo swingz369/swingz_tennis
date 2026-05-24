@@ -1,25 +1,24 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { isActivePath, isExactActive } from '@/lib/navigation-utils';
+import { useUserRole } from '@/hooks/use-user-role';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { NavigationBadge } from './navigation-badge';
-import { NavigationCategory } from './navigation-category';
+import { AdminSection } from './admin-section';
 import {
   Home,
-  Calendar,
   Users,
   Settings,
-  Bell,
   Newspaper,
   GraduationCap,
   Trophy,
   X,
   Layout,
   CheckCircle,
-  TrendingUp,
   User,
   CreditCard,
   Building2,
@@ -28,7 +27,6 @@ import {
   ChevronDown,
   UserPlus,
   DollarSign,
-  Clock,
 } from 'lucide-react';
 
 interface Club {
@@ -132,18 +130,8 @@ export function Sidebar({
     return undefined;
   }, [open, onClose]);
 
-  // Role detection — use HIGHEST role (superadmin > admin > trainer > member)
-  const isSuperAdmin = roles?.includes('superadmin') ?? false;
-  const isAdmin = roles?.includes('admin') ?? false;
-  const isTrainer = roles?.includes('trainer') ?? false;
-
-  const currentRole = isSuperAdmin
-    ? 'superadmin'
-    : isAdmin
-      ? 'admin'
-      : isTrainer
-        ? 'trainer'
-        : 'member';
+  // Centralised role detection via hook
+  const { currentRole, isSuperAdmin, isAdmin } = useUserRole(roles);
   const colors = roleColors[currentRole];
 
   // Active club for display
@@ -151,17 +139,10 @@ export function Sidebar({
   const hasMultipleClubs = (clubs?.length ?? 0) > 1;
 
   // Fetch notification and approval counts from API
-  const [notificationCount, setNotificationCount] = useState(0);
   const [approvalCount, setApprovalCount] = useState(0);
 
   useEffect(() => {
     const abortController = new AbortController();
-
-    // Fetch notification count (all roles)
-    fetch('/api/user/notifications/count', { signal: abortController.signal })
-      .then((res) => res.json())
-      .then((data) => setNotificationCount(data?.count ?? 0))
-      .catch(() => {});
 
     // Fetch pending approval count (admin only)
     if (isAdmin) {
@@ -197,7 +178,7 @@ export function Sidebar({
     badge?: number;
   }
 
-  // Secondary navigation (defined early so primaryNav can reference it for trainer fallback)
+  // Secondary navigation
   const secondaryNav: NavItem[] = [
     { name: 'Mein Profil', href: '/profile', icon: User },
     ...(!isSuperAdmin
@@ -206,51 +187,15 @@ export function Sidebar({
     { name: 'News & Updates', href: '/news', icon: Newspaper },
   ];
 
-  // Primary navigation — role-based, highest role wins
-  const primaryNav: NavItem[] = (() => {
-    // SUPERADMIN: Platform-wide administration
-    if (isSuperAdmin) {
-      return [
+  // Primary navigation — superadmin only (trainer/member use bottom nav, never sidebar)
+  const primaryNav: NavItem[] = isSuperAdmin
+    ? [
         { name: 'Superadmin Dashboard', href: '/superadmin', icon: Layout },
         { name: 'Vereinsübersicht', href: '/superadmin/tenants', icon: Building2 },
         { name: 'Club-Verwaltung', href: '/superadmin/clubs', icon: Building2 },
         { name: 'Plattform-Analyse', href: '/admin/analytics', icon: BarChart3 },
-      ];
-    }
-
-    // TRAINER: Uses bottom nav (no sidebar needed); this is a fallback
-    if (isTrainer) {
-      return [
-        { name: 'Trainer Dashboard', href: '/trainer', icon: GraduationCap },
-        { name: 'Termin-Verwaltung', href: '/scheduler', icon: Calendar },
-        { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
-        { name: 'Meine Anwesenheit', href: '/attendance-history', icon: TrendingUp },
-        { name: 'Gamification', href: '/gamification', icon: Trophy },
-        {
-          name: 'Benachrichtigungen',
-          href: '/notifications',
-          icon: Bell,
-          badge: notificationCount,
-        },
-        ...(secondaryNav as NavItem[]),
-      ];
-    }
-
-    // MEMBER: Uses bottom nav; this is a fallback
-    return [
-      { name: 'Home', href: '/member', icon: Home },
-      { name: 'Buchungen & Kalender', href: '/bookings', icon: Calendar },
-      { name: 'Trainingszeiten', href: '/training-schedule', icon: Calendar },
-      { name: 'Meine Anwesenheit', href: '/attendance-history', icon: TrendingUp },
-      { name: 'Gamification', href: '/gamification', icon: Trophy },
-      {
-        name: 'Benachrichtigungen',
-        href: '/notifications',
-        icon: Bell,
-        badge: notificationCount,
-      },
-    ];
-  })();
+      ]
+    : [];
 
   // Admin structured navigation sections (6 sections)
   const adminNav = isAdmin
@@ -328,11 +273,7 @@ export function Sidebar({
   const activeGradient = `bg-gradient-to-r ${colors.gradient} text-white shadow-lg`;
   const sectionLabel = isSuperAdmin
     ? 'Plattform'
-    : isAdmin
-      ? 'Administration'
-      : isTrainer
-        ? 'Trainer'
-        : 'Hauptmenü';
+    : 'Administration';
 
   return (
     <aside
@@ -437,15 +378,27 @@ export function Sidebar({
           {/* ── ADMIN: Structured 6-section sidebar ── */}
           {isAdmin && adminNav ? (
             <>
-              {/* Section 1 – ÜBERSICHT */}
-              <AdminSection
-                label="Übersicht"
-                icon={Home}
-                subItems={[{ name: 'Dashboard', href: '/admin' }]}
-                pathname={pathname}
-                onClose={onClose}
-                colors={colors}
-              />
+              {/* Dashboard – Direktlink (nur exakter /admin Match) */}
+              <Link
+                href="/admin"
+                onClick={() => onClose?.()}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 mb-2',
+                  isExactActive(pathname, '/admin')
+                    ? activeGradient
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
+                )}
+                aria-current={isExactActive(pathname, '/admin') ? 'page' : undefined}
+              >
+                <Home
+                  className={cn(
+                    'h-5 w-5 shrink-0 transition-transform duration-200',
+                    isExactActive(pathname, '/admin') && 'scale-110'
+                  )}
+                  aria-hidden="true"
+                />
+                <span>Dashboard</span>
+              </Link>
 
               {/* Section 2 – MITGLIEDER */}
               <AdminSection
@@ -519,15 +472,33 @@ export function Sidebar({
                 role="separator"
               />
 
-              {/* Section 7 – SERVICE & KOMMUNIKATION */}
-              <AdminSection
-                label="Service & Kommunikation"
-                icon={Newspaper}
-                subItems={adminNav.service.subItems}
-                pathname={pathname}
-                onClose={onClose}
-                colors={colors}
-              />
+              {/* Service & Kommunikation – direkte Links */}
+              {adminNav.service.subItems.map((item) => {
+                const isActive = isActivePath(pathname, item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => onClose?.()}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                      isActive
+                        ? `${colors.bg} ${colors.text} shadow-sm`
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
+                    )}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <Newspaper
+                      className={cn(
+                        'h-5 w-5 shrink-0 transition-transform duration-200',
+                        isActive && 'scale-110'
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
             </>
           ) : (
             <>
@@ -540,11 +511,9 @@ export function Sidebar({
                 {sectionLabel}
               </div>
 
-              {/* Primary Navigation (superadmin / trainer / member) */}
+              {/* Primary Navigation (superadmin) */}
               {primaryNav.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                const isActive = isActivePath(pathname, item.href);
                 return (
                   <Link
                     key={item.name}
@@ -579,20 +548,15 @@ export function Sidebar({
               {/* Category sections (superadmin only) */}
               {categoryNav.length > 0 && (
                 <>
-                  <div
-                    className="mt-6 mb-2 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
-                    role="heading"
-                    aria-level={2}
-                  >
-                    Verwaltung
-                  </div>
                   {categoryNav.map((category) => (
-                    <NavigationCategory
+                    <AdminSection
                       key={category.name}
-                      name={category.name}
+                      label={category.name}
                       icon={category.icon}
                       subItems={category.subItems}
+                      pathname={pathname}
                       onClose={onClose}
+                      colors={colors}
                     />
                   ))}
                 </>
@@ -609,7 +573,7 @@ export function Sidebar({
                     Weitere
                   </div>
                   {secondaryNav.map((item) => {
-                    const isActive = pathname === item.href;
+                    const isActive = isActivePath(pathname, item.href);
                     return (
                       <Link
                         key={item.name}
@@ -645,175 +609,3 @@ export function Sidebar({
   );
 }
 
-// ─────────────────────────────────────────────
-// AdminSection: collapsible section for admin nav
-// ─────────────────────────────────────────────
-
-interface AdminSubItem {
-  name: string;
-  href: string;
-  badge?: number;
-}
-
-interface AdminSectionProps {
-  label: string;
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
-  subItems: AdminSubItem[];
-  pathname: string;
-  onClose?: () => void;
-  colors: typeof roleColors.admin;
-  extraAction?: {
-    label: string;
-    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
-    onClick: () => void;
-  };
-}
-
-function AdminSection({
-  label,
-  icon: Icon,
-  subItems,
-  pathname,
-  onClose,
-  colors,
-  extraAction,
-}: AdminSectionProps) {
-  const hasActiveChild = subItems.some(
-    (item) => pathname === item.href || pathname.startsWith(item.href + '/')
-  );
-  const [isOpen, setIsOpen] = useState(hasActiveChild);
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  // Keyboard navigation within section (roving tabindex)
-  const handleSectionKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
-
-    const section = sectionRef.current;
-    if (!section) return;
-
-    e.preventDefault();
-    const focusable = section.querySelectorAll<HTMLElement>(
-      'button, a, [tabindex]:not([tabindex="-1"])'
-    );
-    if (focusable.length === 0) return;
-
-    const currentIndex = Array.from(focusable).indexOf(document.activeElement as HTMLElement);
-    let nextIndex: number;
-
-    switch (e.key) {
-      case 'ArrowDown':
-        nextIndex = currentIndex + 1 >= focusable.length ? 0 : currentIndex + 1;
-        break;
-      case 'ArrowUp':
-        nextIndex = currentIndex - 1 < 0 ? focusable.length - 1 : currentIndex - 1;
-        break;
-      case 'Home':
-        nextIndex = 0;
-        break;
-      case 'End':
-        nextIndex = focusable.length - 1;
-        break;
-      default:
-        return;
-    }
-
-    focusable[nextIndex]?.focus();
-  }, []);
-
-  /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-  return (
-    <div
-      ref={sectionRef}
-      className="space-y-0.5"
-      onKeyDown={handleSectionKeyDown}
-      role="group"
-      aria-label={`${label} Bereich`}
-    >
-      {/* Section header / toggle */}
-      <button
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={cn(
-          'w-full flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold font-display uppercase tracking-[0.15em] transition-all duration-200',
-          hasActiveChild
-            ? colors.text
-            : 'text-gray-400/50 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50'
-        )}
-        aria-expanded={isOpen}
-        aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
-      >
-        <div className="flex items-center gap-2">
-          <Icon
-            className={cn(
-              'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
-              hasActiveChild && 'scale-110'
-            )}
-            aria-hidden="true"
-          />
-          <span>{label}</span>
-        </div>
-        <ChevronDown
-          className={cn('h-3 w-3 transition-all duration-300 opacity-50', isOpen && 'rotate-180')}
-          aria-hidden="true"
-        />
-      </button>
-
-      {/* Sub-items with smooth animation */}
-      <div
-        className={cn(
-          'overflow-hidden transition-all duration-300 ease-out',
-          isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-        )}
-      >
-        <div
-          className="ml-2 pl-2 border-l border-gray-200/50 dark:border-white/[0.06] space-y-0.5 pb-0.5"
-          role="list"
-        >
-          {subItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => onClose?.()}
-                role="listitem"
-                className={cn(
-                  'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
-                  isActive
-                    ? `${colors.bg} ${colors.text} shadow-sm`
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200'
-                )}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <div className="flex items-center gap-2">
-                  {isActive && (
-                    <span
-                      className={cn(
-                        'h-1.5 w-1.5 rounded-full',
-                        colors.text.replace('text-', 'bg-').replace('dark:text-', 'dark:bg-')
-                      )}
-                    />
-                  )}
-                  <span>{item.name}</span>
-                </div>
-                {item.badge !== undefined && (
-                  <NavigationBadge count={item.badge} variant="danger" />
-                )}
-              </Link>
-            );
-          })}
-          {/* Extra action (e.g. Invite button) */}
-          {extraAction && (
-            <button
-              onClick={extraAction.onClick}
-              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-150"
-            >
-              <extraAction.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
-              <span>{extraAction.label}</span>
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-  /* eslint-enable jsx-a11y/no-noninteractive-element-interactions */
-}
