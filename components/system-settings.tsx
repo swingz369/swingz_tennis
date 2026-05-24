@@ -63,26 +63,25 @@ export default function SystemSettingsManagement({ clubId, embedded }: { clubId?
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadSettings();
-  }, [clubId]);
-
-  const loadSettings = async () => {
-    try {
-      setIsLoading(true);
-      const url = clubId ? `/api/system-settings?clubId=${encodeURIComponent(clubId)}` : '/api/system-settings';
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to load system settings');
+    const fetchSettings = async () => {
+      try {
+        setIsLoading(true);
+        const url = clubId ? `/api/system-settings?clubId=${encodeURIComponent(clubId)}` : '/api/system-settings';
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to load system settings');
+        }
+        const data = await response.json();
+        setSettings(data.systemSettings || []);
+      } catch (error) {
+        console.error('Failed to load system settings:', error);
+        toast.error('Fehler beim Laden der Systemeinstellungen');
+      } finally {
+        setIsLoading(false);
       }
-      const data = await response.json();
-      setSettings(data.systemSettings || []);
-    } catch (error) {
-      console.error('Failed to load system settings:', error);
-      toast.error('Fehler beim Laden der Systemeinstellungen');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+    fetchSettings();
+  }, [clubId]);
 
   const handleCreateSetting = async () => {
     try {

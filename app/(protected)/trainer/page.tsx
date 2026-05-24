@@ -14,10 +14,12 @@ import {
   Award,
   BarChart3,
   Bell,
+
 } from 'lucide-react';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TrainerRsvpList } from '@/components/trainer-rsvp-list';
 
 interface Session {
   id: string;
@@ -318,6 +320,11 @@ export default function TrainerPage() {
             )}
           </CardContent>
         </Card>
+      </ScrollReveal>
+
+      {/* Session RSVPs & Check-in */}
+      <ScrollReveal delay={250}>
+        <TrainerRsvpList sessions={sessions} />
       </ScrollReveal>
 
       {/* Quick links */}

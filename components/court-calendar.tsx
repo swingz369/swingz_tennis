@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   eachDayOfInterval,
@@ -59,7 +59,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
   const { data: courts = [], isLoading: courtsLoading } = useCourts(clubId);
   const { data: sessions = [], isLoading: sessionsLoading } = useSessions(clubId);
   const { data: seasonPlanData } = useSeasonPlanGrid(activeSeasonId);
-  const planSlots = seasonPlanData?.slots ?? [];
+  const planSlots = useMemo(() => seasonPlanData?.slots ?? [], [seasonPlanData]);
 
   // Find active/published season for plan entries
   useEffect(() => {

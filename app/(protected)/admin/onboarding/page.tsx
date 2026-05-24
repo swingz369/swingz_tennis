@@ -319,7 +319,7 @@ export default function OnboardingPage() {
     } finally {
       setLoading(false);
     }
-  }, [courtForm]);
+  }, [club?.id, courtForm]);
 
   const savePriceData = useCallback(async (): Promise<boolean> => {
     if (!club?.id) return false;
@@ -370,7 +370,7 @@ export default function OnboardingPage() {
     } finally {
       setLoading(false);
     }
-  }, [rulesForm]);
+  }, [club?.id, rulesForm]);
 
   const saveTrainerInvite = useCallback(async (): Promise<boolean> => {
     if (!trainerForm.email.trim()) return true;

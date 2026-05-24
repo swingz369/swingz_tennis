@@ -69,7 +69,7 @@ export function useSchedulePlan() {
   const activeDays = useCallback((): number[] => {
     const groups = byDay();
     return [1, 2, 3, 4, 5, 6, 7].filter((d) => groups[d]?.length > 0);
-  }, [plan]);
+  }, [byDay]);
 
   return {
     plan,

@@ -252,7 +252,7 @@ export class SeasonClusteringEngine {
 
     // Load trainer feedback from previous season
     const previousSeasonId = await this.getPreviousSeasonId();
-    let feedbackMap = new Map<string, { ready: boolean; level: SkillLevel | null; attendance: number | null }>();
+    const feedbackMap = new Map<string, { ready: boolean; level: SkillLevel | null; attendance: number | null }>();
 
     if (previousSeasonId) {
       const feedback = await getDb()

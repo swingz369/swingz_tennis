@@ -1,4 +1,5 @@
-import { chromium, Browser, Page } from 'playwright';
+import type { Browser, Page } from 'playwright';
+import { chromium } from 'playwright';
 import { PlaywrightAgent, type WebPageAgentOpt } from '@midscene/web/playwright';
 
 export interface WebTestContext {

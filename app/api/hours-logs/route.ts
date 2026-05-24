@@ -122,11 +122,11 @@ export async function POST(_request: NextRequest) {
 
     try {
       const body = await _request.json();
-      const { trainerId, trainerName, date, startTime, endTime, type, sessionId, notes } = body;
+      const { date, startTime, endTime, type, sessionId, notes } = body;
 
-      if (!trainerId || !date || !startTime || !endTime || !type) {
+      if (!date || !startTime || !endTime || !type) {
         return NextResponse.json(
-          { error: 'trainerId, date, startTime, endTime, type are required' },
+          { error: 'date, startTime, endTime, type are required' },
           { status: 400 }
         );
       }
@@ -142,11 +142,21 @@ export async function POST(_request: NextRequest) {
 
       const supabase = auth.supabase;
 
+      // For trainers, always use their own user ID — the body's trainerId is ignored
+      const trainerId = auth.user.id;
+
+      // Fetch trainer name for display
+      const { data: user } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', trainerId)
+        .maybeSingle();
+
       const { data: hoursLog, error } = await supabase
         .from('hours_logs')
         .insert({
           trainer_id: trainerId,
-          trainer_name: trainerName || 'Trainer',
+          trainer_name: user?.full_name || 'Trainer',
           date,
           start_time: startTime,
           end_time: endTime,

@@ -1079,6 +1079,54 @@ export const attendanceRecordsRelations = relations(attendanceRecords, ({ one })
 }));
 
 // ==============================================================================
+// Session RSVPs (member attendance confirmation for training sessions)
+// ==============================================================================
+
+export const sessionRsvps = pgTable(
+  'session_rsvps',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    session_id: uuid('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    status: varchar('status', { length: 20 }).notNull().default('pending'),
+    responded_at: timestamp('responded_at', { withTimezone: true }),
+    notes: text('notes'),
+    reminded_at: timestamp('reminded_at', { withTimezone: true }),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    session_member_idx: index('rsvp_session_member_idx').on(table.session_id, table.member_id),
+    member_idx: index('rsvp_member_idx').on(table.member_id),
+    status_idx: index('rsvp_status_idx').on(table.status),
+    session_status_idx: index('rsvp_session_status_idx').on(table.session_id, table.status),
+    club_idx: index('rsvp_club_idx').on(table.club_id),
+  })
+);
+
+export const sessionRsvpsRelations = relations(sessionRsvps, ({ one }) => ({
+  session: one(sessions, {
+    fields: [sessionRsvps.session_id],
+    references: [sessions.id],
+  }),
+  member: one(users, {
+    fields: [sessionRsvps.member_id],
+    references: [users.id],
+  }),
+  club: one(clubs, {
+    fields: [sessionRsvps.club_id],
+    references: [clubs.id],
+  }),
+}));
+
+// ==============================================================================
 // Trainer Availability Table
 // ==============================================================================
 

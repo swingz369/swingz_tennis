@@ -12,6 +12,24 @@ export const createClient = () => {
     );
   }
 
+  // Guard against server-side execution during SSR / static generation
+  // where document and window are not available.
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        get() {
+          return undefined;
+        },
+        set() {
+          // noop during SSR
+        },
+        remove() {
+          // noop during SSR
+        },
+      },
+    });
+  }
+
   return createBrowserClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       get(name: string) {

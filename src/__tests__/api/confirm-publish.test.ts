@@ -6,7 +6,7 @@
  * audit trail) must be rolled back.
  */
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 // ════════════════════════════════════════════════════════════
 // TEST CONSTANTS
@@ -229,8 +229,7 @@ let mockGetDb: ReturnType<typeof vi.fn>;
 // Mock drizzle-orm's SQL functions while preserving all other exports.
 // The real implementations introspect Column objects and fail on our plain
 // mock schema objects, so eq/and/inArray return harmless empty mocks.
-vi.mock('drizzle-orm', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('drizzle-orm')>();
+vi.mock('drizzle-orm', async (importOriginal) => {    const actual = await importOriginal();
   return {
     ...actual,
     eq: vi.fn(() => ({})),

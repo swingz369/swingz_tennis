@@ -1,6 +1,14 @@
+import dynamicImport from 'next/dynamic';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import { SeasonPlanGridClient } from './season-plan-grid-client';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const SeasonPlanGridClient = dynamicImport(
+  () => import('./season-plan-grid-client').then((m) => m.SeasonPlanGridClient),
+  {
+    loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
+  }
+);
 
 export const dynamic = 'force-dynamic';
 

@@ -95,26 +95,6 @@ function generateAvailability(days: number[]): Record<string, Array<{ start: str
   return availability;
 }
 
-function generateWishPartners(currentIndex: number, total: number): string[] {
-  // Some members have wish partners
-  if (Math.random() > 0.4) return [];
-  const count = Math.floor(Math.random() * 2) + 1; // 1-2 wish partners
-  const partners: number[] = [];
-  for (let i = 0; i < count; i++) {
-    let partner = Math.floor(Math.random() * total);
-    // Avoid pairing with self
-    if (partner === currentIndex) {
-      partner = (partner + 1) % total;
-    }
-    // Avoid duplicates
-    const partnerId = `${CLUB_ID.slice(0, 8)}-${partner.toString().padStart(4, '0')}-${'0'.repeat(12)}`;
-    if (!partners.includes(partner)) {
-      partners.push(partner);
-    }
-  }
-  return partners.map(p => p.toString());
-}
-
 async function seed() {
   console.log('🚀 Starte Seed für Squash Club Munich...\n');
   
@@ -367,7 +347,7 @@ async function seed() {
     const availability = generateAvailability(days);
     
     // Some members have wish partners
-    let wishPartners: string[] = [];
+    const wishPartners: string[] = [];
     if (Math.random() > 0.6) {
       const partnerCount = Math.floor(Math.random() * 2) + 1;
       for (let p = 0; p < partnerCount; p++) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { DragStartEvent, DragOverEvent, DragEndEvent } from '@dnd-kit/core';
 import {
   DndContext,
@@ -126,7 +126,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
 
   // Fetch active season for plan entries
   const { data: seasonPlanData } = useSeasonPlanGrid(activeSeasonId);
-  const planSlots = seasonPlanData?.slots ?? [];
+  const planSlots = useMemo(() => seasonPlanData?.slots ?? [], [seasonPlanData]);
 
   // Find the latest published/active season
   useEffect(() => {

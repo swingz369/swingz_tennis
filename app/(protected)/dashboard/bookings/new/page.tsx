@@ -1,6 +1,14 @@
+import dynamicImport from 'next/dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { CreateBookingForm } from '@/components/bookings/CreateBookingForm';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const CreateBookingForm = dynamicImport(
+  () => import('@/components/bookings/CreateBookingForm').then((m) => m.CreateBookingForm),
+  {
+    loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
+  }
+);
 
 export const dynamic = 'force-dynamic'; // No caching for booking pages
 

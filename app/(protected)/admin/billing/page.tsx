@@ -1,7 +1,12 @@
+import dynamicImport from 'next/dynamic';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
-import BillingClient from './billing-client';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Subscription, Invoice } from './billing-client';
+
+const BillingClient = dynamicImport(() => import('./billing-client'), {
+  loading: () => <Skeleton className="h-96 w-full rounded-xl" />
+});
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic';

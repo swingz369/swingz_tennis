@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   CheckCircle,
   XCircle,
@@ -34,6 +34,8 @@ export default function ScheduleReadinessCheck({
   const [items, setItems] = useState<CheckItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
 
   useEffect(() => {
     if (!clubId) return;
@@ -102,7 +104,7 @@ export default function ScheduleReadinessCheck({
       const allRequired = checks
         .filter((c) => c.required > 0)
         .every((c) => c.status === 'ok');
-      onReady(allRequired);
+      onReadyRef.current(allRequired);
       setLoading(false);
     }
     check();

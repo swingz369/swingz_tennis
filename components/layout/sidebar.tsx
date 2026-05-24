@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -255,7 +255,6 @@ export function Sidebar({
   // Admin structured navigation sections (6 sections)
   const adminNav = isAdmin
     ? {
-        overview: { name: 'Dashboard', href: '/admin', icon: Home },
         members: {
           name: 'MITGLIEDER',
           icon: Users,
@@ -280,7 +279,7 @@ export function Sidebar({
           icon: MapPin,
           subItems: [
             { name: 'Platz-Kalender', href: '/admin/courts' },
-            { name: 'Buchungsübersicht', href: '/bookings' },
+            { name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' },
             { name: 'Saison-Stundenplan', href: '/admin/season-plan' },
             { name: 'Plätze verwalten', href: '/admin/courts/manage' },
           ],
@@ -292,13 +291,13 @@ export function Sidebar({
             { name: 'Abrechnung', href: '/admin/billing' },
             { name: 'Analytics', href: '/admin/analytics' },
             { name: 'Berichte', href: '/admin/reports' },
+            { name: 'Vereinseinstellungen', href: '/admin/settings' },
           ],
         },
-        settings: {
-          name: 'EINSTELLUNGEN',
-          icon: Settings,
+        service: {
+          name: 'SERVICE & KOMMUNIKATION',
+          icon: Newspaper,
           subItems: [
-            { name: 'Vereinseinstellungen', href: '/admin/settings' },
             { name: 'News & Kommunikation', href: '/news' },
             { name: 'Shop', href: '/shop' },
           ],
@@ -317,7 +316,6 @@ export function Sidebar({
             { name: 'System-Einstellungen', href: '/admin/settings' },
             { name: 'Billing-Verwaltung', href: '/admin/billing' },
             { name: 'Audit-Logs', href: '/admin/audit-logs' },
-            { name: 'Verein wechseln', href: '/select-admin-club' },
           ],
         },
       ];
@@ -340,14 +338,13 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'h-[calc(100vh-4rem)] w-64 border-r border-gray-200/60 dark:border-white/[0.06] bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl transition-transform duration-300 ease-out',
+        'h-[calc(100vh-4rem)] w-64 border-r border-gray-200/60 dark:border-white/[0.06] bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
           : 'fixed inset-y-0 left-0 z-50 -translate-x-full md:relative md:translate-x-0 md:shadow-none'
-      )}
-      role="navigation"
-      aria-label="Main navigation"
+      )}        role="navigation"
+      aria-label="Seitennavigation"
       aria-hidden={isMobile === true && !open ? true : undefined}
     >
       {/* Mobile close button */}
@@ -364,8 +361,8 @@ export function Sidebar({
 
       <ScrollArea className="h-full py-6">
         {/* Logo + Role badge */}
-        <div className="px-4 mb-5">
-          <div className="flex items-center justify-between mb-3">
+        <div className="px-4 mb-6">
+          <div className="flex items-center justify-between mb-2">
             <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="relative">
                 <div className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
@@ -393,7 +390,7 @@ export function Sidebar({
           <div className="mx-3 mb-4 border border-gray-200/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/[0.04] transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/[0.04] transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
@@ -413,7 +410,7 @@ export function Sidebar({
                     key={club.id}
                     onClick={() => handleSwitchClub(club.id)}
                     className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors',
+                      'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                       club.id === (selectedClubId ?? activeClub?.id)
                         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-medium'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04]'
@@ -439,55 +436,16 @@ export function Sidebar({
           {/* ── ADMIN: Structured 6-section sidebar ── */}
           {isAdmin && adminNav ? (
             <>
-              {/* Section 1 – ÜBERSICHT (single link, no collapse) */}
-              <div
-                className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
-                role="heading"
-                aria-level={2}
-              >
-                Übersicht
-              </div>
-              {(() => {
-                const item = adminNav.overview;
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    href={item.href}
-                    onClick={() => onClose?.()}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group',
-                      isActive
-                        ? `${colors.bg} ${colors.text} shadow-sm`
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
-                    )}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <item.icon
-                      className={cn(
-                        'h-4 w-4 shrink-0 transition-transform duration-200',
-                        isActive && 'scale-110'
-                      )}
-                      aria-hidden="true"
-                    />
-                    <span className="relative">
-                      Dashboard
-                      {isActive && (
-                        <span
-                          className={cn(
-                            'absolute -bottom-0.5 left-0 right-0 h-[2px] rounded-full',
-                            colors.text.replace('text-', 'bg-').replace('dark:text-', 'dark:bg-')
-                          )}
-                        />
-                      )}
-                    </span>
-                  </Link>
-                );
-              })()}
-
-              {/* Separator */}
-              <div
-                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
-                role="separator"
+              {/* Section 1 – ÜBERSICHT */}
+              <AdminSection
+                label="Übersicht"
+                icon={Home}
+                subItems={[
+                  { name: 'Dashboard', href: '/admin' }
+                ]}
+                pathname={pathname}
+                onClose={onClose}
+                colors={colors}
               />
 
               {/* Section 2 – MITGLIEDER */}
@@ -513,7 +471,7 @@ export function Sidebar({
               />
 
               <div
-                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
+                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -528,7 +486,7 @@ export function Sidebar({
               />
 
               <div
-                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
+                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -543,7 +501,7 @@ export function Sidebar({
               />
 
               <div
-                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
+                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
@@ -558,15 +516,17 @@ export function Sidebar({
               />
 
               <div
-                className="my-3 border-t border-gray-100/50 dark:border-white/[0.04]"
+                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
                 role="separator"
               />
 
-              {/* Section 6 – EINSTELLUNGEN */}
+
+
+              {/* Section 7 – SERVICE & KOMMUNIKATION */}
               <AdminSection
-                label="Einstellungen"
-                icon={Settings}
-                subItems={adminNav.settings.subItems}
+                label="Service & Kommunikation"
+                icon={Newspaper}
+                subItems={adminNav.service.subItems}
                 pathname={pathname}
                 onClose={onClose}
                 colors={colors}
@@ -576,7 +536,7 @@ export function Sidebar({
             <>
               {/* Section label */}
               <div
-                className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
+                className="mb-2 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
                 role="heading"
                 aria-level={2}
               >
@@ -594,7 +554,7 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => onClose?.()}
                     className={cn(
-                      'group flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      'group flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
                         ? activeGradient
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
@@ -623,7 +583,7 @@ export function Sidebar({
               {categoryNav.length > 0 && (
                 <>
                   <div
-                    className="mt-6 mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
+                    className="mt-6 mb-2 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
                     role="heading"
                     aria-level={2}
                   >
@@ -645,7 +605,7 @@ export function Sidebar({
               {secondaryNav.length > 0 && (
                 <>
                   <div
-                    className="mt-8 mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
+                    className="mt-6 mb-2 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
                     role="heading"
                     aria-level={2}
                   >
@@ -659,7 +619,7 @@ export function Sidebar({
                         href={item.href}
                         onClick={() => onClose?.()}
                         className={cn(
-                          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                          'group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                           isActive
                             ? activeGradient
                             : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
@@ -725,14 +685,51 @@ function AdminSection({
     (item) => pathname === item.href || pathname.startsWith(item.href + '/')
   );
   const [isOpen, setIsOpen] = useState(hasActiveChild);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard navigation within section (roving tabindex)
+  const handleSectionKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Home' && e.key !== 'End') return;
+
+    const section = sectionRef.current;
+    if (!section) return;
+
+    e.preventDefault();
+    const focusable = section.querySelectorAll<HTMLElement>(
+      'button, a, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable.length === 0) return;
+
+    const currentIndex = Array.from(focusable).indexOf(document.activeElement as HTMLElement);
+    let nextIndex: number;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        nextIndex = currentIndex + 1 >= focusable.length ? 0 : currentIndex + 1;
+        break;
+      case 'ArrowUp':
+        nextIndex = currentIndex - 1 < 0 ? focusable.length - 1 : currentIndex - 1;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = focusable.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    focusable[nextIndex]?.focus();
+  }, []);
 
   return (
-    <div className="space-y-0.5">
+    <div ref={sectionRef} className="space-y-0.5" onKeyDown={handleSectionKeyDown} role="group" aria-label={`${label} Bereich`}>
       {/* Section header / toggle */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          'w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-200',
+          'w-full flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold font-display uppercase tracking-[0.15em] transition-all duration-200',
           hasActiveChild
             ? colors.text
             : 'text-gray-400/50 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50'
@@ -740,7 +737,7 @@ function AdminSection({
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <Icon
             className={cn(
               'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
@@ -763,7 +760,7 @@ function AdminSection({
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         )}
       >
-        <div className="ml-3 pl-3 border-l border-gray-200/50 dark:border-white/[0.06] space-y-0.5 pb-0.5">
+        <div className="ml-2 pl-2 border-l border-gray-200/50 dark:border-white/[0.06] space-y-0.5 pb-0.5" role="list">
           {subItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -771,6 +768,7 @@ function AdminSection({
                 key={item.name}
                 href={item.href}
                 onClick={() => onClose?.()}
+                role="listitem"
                 className={cn(
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive

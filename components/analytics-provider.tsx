@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { trackPageView } from '@/lib/analytics';
 import Script from 'next/script';
 
-export function AnalyticsProvider() {
+function TrackPageView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -15,34 +15,40 @@ export function AnalyticsProvider() {
     trackPageView(path);
   }, [pathname, searchParams]);
 
-  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID;
+  return null;
+}
 
-  // If no GA ID configured, don't inject script
-  if (!GA_MEASUREMENT_ID) {
-    return null;
-  }
+export function AnalyticsProvider() {
+  const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID;
 
   return (
     <>
-      {/* Google Analytics 4 */}
-      <Script
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-      />
-      <Script
-        id="google-analytics"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}', {
-              page_path: window.location.pathname,
-            });
-          `,
-        }}
-      />
+      <Suspense fallback={null}>
+        <TrackPageView />
+      </Suspense>
+      {GA_MEASUREMENT_ID && (
+        <>
+          {/* Google Analytics 4 */}
+          <Script
+            strategy="afterInteractive"
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          />
+          <Script
+            id="google-analytics"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}', {
+                  page_path: window.location.pathname,
+                });
+              `,
+            }}
+          />
+        </>
+      )}
     </>
   );
 }

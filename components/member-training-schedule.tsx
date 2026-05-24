@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight, Calendar, Clock, User, MapPin } from 'lucide
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
+import { RsvpSection } from '@/components/rsvp-section';
 
 export default function MemberTrainingSchedule() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -194,7 +195,7 @@ export default function MemberTrainingSchedule() {
                 return (
                   <div
                     key={session.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-brand-primary/10 rounded-lg">
@@ -216,9 +217,21 @@ export default function MemberTrainingSchedule() {
                             <span>{session.trainerName || 'Trainer'}</span>
                           </div>
                         </div>
+                        {/* RSVP Section */}
+                        <div className="mt-2">
+                          <RsvpSection
+                            sessionId={session.id}
+                            sessionDate={getSessionDate(session)}
+                            startTime={session.startTime}
+                            endTime={session.endTime}
+                            courtName={session.courtName}
+                            trainerName={session.trainerName}
+                            currentStatus={session.rsvpStatus}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}>
                       {status.label}
                     </div>
                   </div>
@@ -248,7 +261,7 @@ export default function MemberTrainingSchedule() {
                 return (
                   <div
                     key={session.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border transition-colors ${
                       isToday
                         ? 'bg-brand-primary/10 border-brand-primary/30'
                         : 'bg-white border-gray-200 hover:bg-gray-50'
@@ -295,9 +308,21 @@ export default function MemberTrainingSchedule() {
                             </div>
                           )}
                         </div>
+                        {/* RSVP Section */}
+                        <div className="mt-2">
+                          <RsvpSection
+                            sessionId={session.id}
+                            sessionDate={getSessionDate(session)}
+                            startTime={session.startTime}
+                            endTime={session.endTime}
+                            courtName={session.courtName}
+                            trainerName={session.trainerName}
+                            currentStatus={session.rsvpStatus}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}>
                       {status.label}
                     </div>
                   </div>

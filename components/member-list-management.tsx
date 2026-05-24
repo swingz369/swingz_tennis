@@ -82,26 +82,25 @@ export default function MemberListManagement({ clubId, embedded }: { clubId?: st
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadMembers();
-  }, [clubId]);
-
-  const loadMembers = async () => {
-    try {
-      setIsLoading(true);
-      const url = clubId ? `/api/members?clubId=${encodeURIComponent(clubId)}` : '/api/members';
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Failed to load members');
+    const fetchMembers = async () => {
+      try {
+        setIsLoading(true);
+        const url = clubId ? `/api/members?clubId=${encodeURIComponent(clubId)}` : '/api/members';
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to load members');
+        }
+        const data = await response.json();
+        setMembers(data.members || []);
+      } catch (error) {
+        console.error('Failed to load members:', error);
+        toast.error('Fehler beim Laden der Mitglieder');
+      } finally {
+        setIsLoading(false);
       }
-      const data = await response.json();
-      setMembers(data.members || []);
-    } catch (error) {
-      console.error('Failed to load members:', error);
-      toast.error('Fehler beim Laden der Mitglieder');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+    fetchMembers();
+  }, [clubId]);
 
   const handleEdit = (member: Member) => {
     setSelectedMember(member);

@@ -17,6 +17,8 @@ import {
   BookOpen,
   CreditCard,
   Clock,
+  FileText,
+  Trophy,
 } from 'lucide-react';
 
 interface MobileBottomNavProps {
@@ -53,7 +55,7 @@ export function MobileBottomNav({
     navItems = [
       { name: 'Dashboard', href: '/admin', icon: Home },
       { name: 'Mitglieder', href: '/admin/members', icon: Users },
-      { name: 'Buchungen', href: '/bookings', icon: Calendar },
+      { name: 'Plätze', href: '/admin/courts', icon: Calendar },
       { name: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
       { name: 'Profil', href: '/profile', icon: User },
     ];
@@ -64,8 +66,8 @@ export function MobileBottomNav({
       { name: 'Einheiten', href: '/scheduler', icon: Calendar },
       { name: 'Anwesenheit', href: '/attendance-history', icon: ClipboardCheck },
       { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
-      { name: 'Gamification', href: '/gamification', icon: GraduationCap },
-      { name: 'Abrechnung', href: '/billing', icon: CreditCard },
+      { name: 'Gamification', href: '/gamification', icon: Trophy },
+      { name: 'Stunden', href: '/trainer/hours-logs', icon: FileText },
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else {
@@ -103,7 +105,7 @@ export function MobileBottomNav({
           return isActive ? (
             <div
               key={`indicator-${item.name}`}
-              className="absolute bottom-1 h-[3px] w-10 rounded-full bg-brand-light dark:bg-brand-light transition-all duration-300"
+              className="absolute bottom-1 h-[3px] w-10 rounded-full bg-brand-light dark:bg-brand-light shadow-sm transition-all duration-300"
               style={{
                 left: `${(navItems.indexOf(item) / navItems.length) * 100 + 50 / navItems.length}%`,
                 transform: 'translateX(-50%)',
@@ -126,7 +128,7 @@ export function MobileBottomNav({
               className={cn(
                 'group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1',
                 isActive
-                  ? 'text-brand-light dark:text-brand-light'
+                  ? 'text-brand-light dark:text-brand-light bg-brand-light/10 dark:bg-brand-light/20'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-white/[0.03]'
               )}
               aria-current={isActive ? 'page' : undefined}

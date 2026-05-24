@@ -36,7 +36,7 @@ export function NavigationCategory({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
+          'w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
           'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
         )}
         aria-expanded={isOpen}

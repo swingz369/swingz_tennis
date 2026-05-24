@@ -380,7 +380,7 @@ export default function MemberPreferencesPage() {
             Besondere Wünsche / Anmerkungen
           </CardTitle>
           <CardDescription>
-            z.B. "Ich möchte mit Person X in einer Gruppe sein" oder "Ich kann nur vormittags wegen Arbeit"
+            {"z.B. \"Ich möchte mit Person X in einer Gruppe sein\" oder \"Ich kann nur vormittags wegen Arbeit\""}
           </CardDescription>
         </CardHeader>
         <CardContent>

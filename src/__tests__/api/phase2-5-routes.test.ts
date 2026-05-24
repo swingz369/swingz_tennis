@@ -112,12 +112,12 @@ vi.mock('@/lib/api-auth', async (importOriginal) => {
 
   return {
     ...actual,
-    withApiAuth: async (_request: Request, handler: Function) => {
+    withApiAuth: async (_request: Request, handler: (...args: unknown[]) => unknown) => {
       const { auth } = await resolveAuth();
       if (!auth) return json(401, { error: 'Unauthorized' });
       return handler(auth);
     },
-    withAuth: async (_request: Request, handler: Function) => {
+    withAuth: async (_request: Request, handler: (...args: unknown[]) => unknown) => {
       const { auth } = await resolveAuth();
       if (!auth) return json(401, { error: 'Unauthorized' });
       return handler(auth);

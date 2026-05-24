@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -41,6 +42,14 @@ import FeedbackModal from '@/components/feedback/feedback-modal';
 import CourtCalendar from '@/components/court-calendar';
 
 export default function BookingsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center text-gray-500">Laden...</div>}>
+      <BookingsContent />
+    </Suspense>
+  );
+}
+
+function BookingsContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams?.get('tab') || 'bookings';
 

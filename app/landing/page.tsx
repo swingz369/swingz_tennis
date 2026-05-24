@@ -540,7 +540,7 @@ export default function LandingPage() {
                   </svg>
                 </div>
                 {/* Floating cards */}
-                <div className="absolute top-8 right-0 glass-dark-strong rounded-2xl p-4 shadow-2xl animate-float-slow">
+                <div className="absolute top-8 right-0 glass-strong rounded-2xl p-4 shadow-2xl animate-float-slow">
                   <div className="flex items-center gap-3">
                     <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-brand-accent to-orange-700 flex items-center justify-center shadow-lg">
                       <Brain className="h-5 w-5 text-white" />
@@ -552,7 +552,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div
-                  className="absolute bottom-16 -left-8 glass-dark-strong rounded-2xl p-4 shadow-2xl animate-float-slow"
+                  className="absolute bottom-16 -left-8 glass-strong rounded-2xl p-4 shadow-2xl animate-float-slow"
                   style={{ animationDelay: '2.5s' }}
                 >
                   <div className="flex items-center gap-3">
@@ -566,7 +566,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div
-                  className="absolute top-1/2 -right-6 glass-dark-strong rounded-2xl p-4 shadow-2xl animate-float-slow"
+                  className="absolute top-1/2 -right-6 glass-strong rounded-2xl p-4 shadow-2xl animate-float-slow"
                   style={{ animationDelay: '5s' }}
                 >
                   <div className="flex items-center gap-3">

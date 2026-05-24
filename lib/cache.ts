@@ -1,14 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
 
-export const CACHE_TIMES = {
-  IMMEDIATE: 0,
-  SHORT: 1000 * 60, // 1 minute
-  MEDIUM: 1000 * 60 * 5, // 5 minutes
-  LONG: 1000 * 60 * 15, // 15 minutes
-  VERY_LONG: 1000 * 60 * 60, // 1 hour
-  DAY: 1000 * 60 * 60 * 24, // 24 hours
-};
-
 export const STALE_TIMES = {
   IMMEDIATE: 0,
   SHORT: 1000 * 30, // 30 seconds
@@ -89,10 +80,6 @@ export function cancelQueries(queryClient: QueryClient, key: readonly unknown[])
 
 export function resetQueries(queryClient: QueryClient, key: readonly unknown[]) {
   return queryClient.resetQueries({ queryKey: key });
-}
-
-export function clearQueries(queryClient: QueryClient) {
-  return queryClient.clear();
 }
 
 export function getQueryCache(queryClient: QueryClient) {
