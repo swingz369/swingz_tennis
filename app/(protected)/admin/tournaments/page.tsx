@@ -1,127 +1,60 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/infrastructure/external/supabase/server';
+import { cookies } from 'next/headers';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { TournamentsClient } from './tournaments-client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Plus, Trophy, Calendar, Users, Loader2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { IconBox } from '@/components/ui/icon-box';
-import {
-  STATUS_LABELS,
-  STATUS_VARIANTS,
-  FORMAT_LABELS_SHORT as FORMAT_LABELS,
-} from '@/src/constants/tournaments';
+export const dynamic = 'force-dynamic';
 
-interface Tournament {
-  id: string;
-  name: string;
-  description?: string;
-  format: string;
-  category: string;
-  start_date: string;
-  end_date?: string;
-  status: string;
-  max_participants?: number;
-  registration_deadline?: string;
-  entry_fee?: number;
-}
+export default async function AdminTournamentsPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
 
-export default function AdminTournamentsPage() {
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Get club memberships
+  const { data: memberships } = await supabase
+    .from('user_club_memberships')
+    .select('club_id, role')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
 
-  useEffect(() => {
-    fetch('/api/tournaments')
-      .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
-      .then((data) => setTournaments(Array.isArray(data) ? data : (data.tournaments ?? [])))
-      .catch((e) => setError(String(e)))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+  if (!memberships || memberships.length === 0) {
+    redirect('/dashboard');
   }
 
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Turniere</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Turnierverwaltung des Vereins</p>
-        </div>
-        <Button asChild size="sm" variant="brand" className="gap-1.5">
-          <Link href="/admin/tournaments/new">
-            <Plus className="h-4 w-4" />
-            Neues Turnier
-          </Link>
-        </Button>
-      </div>
+  const isSuperadmin = memberships.some((m: { role: string }) => m.role === 'superadmin');
+  const firstClubId: string = memberships[0].club_id!;
+  let clubId = firstClubId;
+  if (isSuperadmin) {
+    const cookieStore = await cookies();
+    const selectedClub = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
+    if (selectedClub) {
+      clubId = selectedClub;
+    }
+  }
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:border-red-700/50 dark:text-red-400">
-          Fehler: {error}
-        </div>
-      )}
+  // Fetch tournaments with error handling
+  let tournaments: Parameters<typeof TournamentsClient>[0]['initialTournaments'] = [];
+  try {
+    const { data: tournamentsData, error: tournamentsError } = await supabase
+      .from('tournaments')
+      .select(
+        'id, name, description, format, category, start_date, end_date, status, ' +
+          'max_participants, registration_deadline, entry_fee'
+      )
+      .eq('club_id', clubId)
+      .order('start_date', { ascending: true });
 
-      {!loading && tournaments.length === 0 && !error && (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <IconBox icon={Trophy} size="lg" variant="amber" className="h-16 w-16" />
-          <h3 className="font-semibold">Noch keine Turniere</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Lege dein erstes Turnier an und lade Mitglieder zur Anmeldung ein.
-          </p>
-          <Button asChild size="sm" variant="brand" className="mt-2">
-            <Link href="/admin/tournaments/new">Erstes Turnier anlegen</Link>
-          </Button>
-        </div>
-      )}
+    if (tournamentsError) {
+      console.error('[TournamentsPage] Query error:', tournamentsError);
+    } else {
+      tournaments = (tournamentsData || []) as unknown as typeof tournaments;
+    }
+  } catch (err) {
+    console.error('[TournamentsPage] Unexpected error:', err);
+  }
 
-      {tournaments.length > 0 && (
-        <div className="space-y-3">
-          {tournaments.map((t) => (
-            <Card key={t.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4 flex items-center gap-4">
-                <IconBox icon={Trophy} size="md" variant="amber" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold truncate">{t.name}</p>
-                    <Badge variant={STATUS_VARIANTS[t.status] ?? 'secondary'} className="text-xs">
-                      {STATUS_LABELS[t.status] ?? t.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(t.start_date).toLocaleDateString('de-DE')}
-                      {t.end_date && ` – ${new Date(t.end_date).toLocaleDateString('de-DE')}`}
-                    </span>
-                    <span>{FORMAT_LABELS[t.format] ?? t.format}</span>
-                    {t.max_participants && (
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        max. {t.max_participants}
-                      </span>
-                    )}
-                    {t.entry_fee && t.entry_fee > 0 && <span>€{t.entry_fee}</span>}
-                  </div>
-                </div>
-                <Link
-                  href={`/admin/tournaments/${t.id}`}
-                  className="text-xs text-brand-light hover:underline shrink-0"
-                >
-                  Details →
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <TournamentsClient initialTournaments={tournaments} />;
 }
