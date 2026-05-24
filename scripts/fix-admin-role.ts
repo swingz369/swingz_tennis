@@ -9,18 +9,10 @@ import { resolve } from 'path';
 // Load .env.local
 config({ path: resolve(process.cwd(), '.env.local') });
 
+import { createServiceClient } from '@/lib/supabase/service';
+
 async function fixAdminRole() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase credentials in .env.local');
-  }
-
-  console.log('🔧 Fixing admin@swingz.com role in production...\n');
-
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const supabase = createServiceClient();
 
   // 1. Find the user
   const { data: user, error: userError } = await supabase

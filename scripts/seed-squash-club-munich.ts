@@ -5,7 +5,7 @@
  * Trainer einrichten) als Vorbereitung für die Cluster-API (Schritte 4-7).
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 
 const CLUB_ID = 'e7cb492c-8e16-4b89-b62d-12d46fba8bbf';
 const SEASON_ID = '6bd8f187-48b8-45eb-af39-e0813e8af088';
@@ -98,10 +98,7 @@ function generateAvailability(days: number[]): Record<string, Array<{ start: str
 async function seed() {
   console.log('🚀 Starte Seed für Squash Club Munich...\n');
   
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabase = createServiceClient();
 
   // ─── Schritt 1: Bestehende Daten prüfen ─────────────────────────
   const { data: existingMembers } = await supabase

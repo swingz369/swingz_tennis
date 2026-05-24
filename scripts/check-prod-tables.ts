@@ -1,10 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
+import { createServiceClient } from '@/lib/supabase/service';
 
-const supabaseUrl = 'https://qeckztuzeymuwwtyoryi.supabase.co';
-const supabaseServiceKey =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlY2t6dHV6ZXltdXd3dHlvcnlpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzM0NzY0MiwiZXhwIjoyMDkyOTIzNjQyfQ.SCZbiLKSio02oC4rlQ8fpuLL_9MTnXEAVl86Ra1fzDA';
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createServiceClient();
 
 async function checkTables() {
   // Check which Drizzle schema tables exist in production

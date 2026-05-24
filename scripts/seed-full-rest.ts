@@ -3,15 +3,10 @@
 // Cloudflare blockiert Port 5432, aber HTTPS auf 443 funktioniert
 // Aufruf: npx tsx scripts/seed-full-rest.ts
 
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 import crypto from 'crypto';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+const supabase = createServiceClient();
 
 function generatePassword(): string {
   return crypto.randomBytes(16).toString('base64url') + '!A1';

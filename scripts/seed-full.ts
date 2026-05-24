@@ -1,17 +1,13 @@
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 
 // Load .env.local specifically
 dotenv.config({ path: '.env.local' });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const dbUrl = process.env.DATABASE_URL!.split('?')[0];
 
-const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-  // Use service role for admin operations
-});
+const supabaseAdmin = createServiceClient();
 
 const pool = new Pool({
   connectionString: dbUrl,

@@ -3,14 +3,11 @@
  * Execute SQL directly in Supabase
  */
 
-import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
+import { createServiceClient } from '@/lib/supabase/service';
 
 async function executeSql() {
-  const supabaseUrl = 'https://qeckztuzeymuwwtyoryi.supabase.co';
-  const supabaseServiceKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlY2t6dHV6ZXltdXd3dHlvcnlpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzM0NzY0MiwiZXhwIjoyMDkyOTIzNjQyfQ.SCZbiLKSio02oC4rlQ8fpuLL_9MTnXEAVl86Ra1fzDA';
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const supabase = createServiceClient();
 
   console.log('🚀 Setting up admin membership via SQL...\n');
 

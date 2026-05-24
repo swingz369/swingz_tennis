@@ -1,18 +1,7 @@
 import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-console.log('URL:', supabaseUrl);
-console.log('Key:', serviceKey ? 'present' : 'missing');
-
-const supabase = createClient(supabaseUrl, serviceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+const supabase = createServiceClient();
 
 async function listClubs() {
   const { data: clubs, error } = await supabase.from('clubs').select('id, name').order('name');

@@ -2,14 +2,10 @@
 // Aufruf: npx tsx scripts/seed-users.ts
 // NIEMALS ins Repo committen – nur lokal/CI mit .env.local
 
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 import crypto from 'crypto';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // Nur Server-seitig!
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+const supabase = createServiceClient();
 
 // Passwörter werden ZUFÄLLIG generiert – nie hardcoded!
 function generatePassword(): string {

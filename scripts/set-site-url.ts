@@ -1,13 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  // Use service role for admin operations
-});
+const supabase = createServiceClient();
 
 async function setSiteUrl() {
   const newSiteUrl = 'https://swingz-fxdvirllf-bartmz-3856s-projects.vercel.app';

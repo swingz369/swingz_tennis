@@ -4,7 +4,7 @@
  * Creates admin user in Supabase Auth and sets up profile + membership
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 
 const ADMIN_EMAIL = 'admin@swingz.com';
 const ADMIN_PASSWORD = 'AdminPass123!';
@@ -12,22 +12,9 @@ const CLUB_SLUG = 'demo-club';
 const CLUB_NAME = 'Demo Tennis Club';
 
 async function setupCompleteAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('❌ Missing environment variables');
-    process.exit(1);
-  }
-
   console.log('🚀 Complete Admin Setup Starting...\n');
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  const supabase = createServiceClient();
 
   try {
     // 1. Check if user exists in auth, if not create
