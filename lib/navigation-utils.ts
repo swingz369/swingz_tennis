@@ -20,11 +20,7 @@
  * @param exactOnly    - If true, only exact matches are active.
  *                       Use for root/dashboard links.
  */
-export function isActivePath(
-  currentPath: string | null,
-  href: string,
-  exactOnly = false,
-): boolean {
+export function isActivePath(currentPath: string | null, href: string, exactOnly = false): boolean {
   if (!currentPath) return false;
   if (currentPath === href) return true;
   if (exactOnly) return false;

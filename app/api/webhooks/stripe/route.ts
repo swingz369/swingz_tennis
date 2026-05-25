@@ -21,17 +21,21 @@ export async function POST(_request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { invoiceId, bookingId } = session.metadata || {};
+        const { invoiceId, bookingId, orderId, orderType } = session.metadata || {};
 
+        // Handle shop orders
+        if (orderType === 'shop' && orderId) {
+          await handleShopOrderPayment(session, orderId);
+        }
         // Handle invoice payments
-        if (invoiceId) {
+        else if (invoiceId) {
           await handleInvoicePayment(session, invoiceId);
         }
         // Handle booking payments
         else if (bookingId) {
           await handleBookingPayment(session, bookingId);
         } else {
-          console.error('No invoiceId or bookingId in session metadata');
+          console.error('No recognized ID in session metadata');
         }
         break;
       }
@@ -144,6 +148,56 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
       action_url: '/bookings',
     });
   }
+}
+
+// --- Shop order payment handling ---
+
+async function handleShopOrderPayment(_session: Stripe.Checkout.Session, orderId: string) {
+  const supabase = await createAdminClient();
+
+  // Check for idempotency
+  const { data: order } = await supabase
+    .from('shop_orders')
+    .select('id, status, payment_status, items')
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (!order) {
+    console.error(`[Stripe Webhook] Shop order ${orderId} not found`);
+    return;
+  }
+
+  if (order.payment_status === 'paid') {
+    console.log(`[Stripe Webhook] Shop order ${orderId} already paid — skipping`);
+    return;
+  }
+
+  // Mark payment as complete; fulfillment status starts at 'pending'
+  const { error: updateError } = await supabase
+    .from('shop_orders')
+    .update({
+      status: 'pending',
+      payment_status: 'paid',
+    })
+    .eq('id', orderId);
+
+  if (updateError) {
+    console.error('[Stripe Webhook] Failed to update shop order:', updateError);
+    return;
+  }
+
+  // Reduce stock for each item
+  const items = (order.items as any[]) || [];
+  for (const item of items) {
+    if (!item.product_id || !item.quantity) continue;
+    await (supabase as any)
+      .from('shop_products')
+      .update({ stock: (supabase as any).raw(`stock - ${item.quantity}`) })
+      .eq('id', item.product_id)
+      .gte('stock', item.quantity);
+  }
+
+  console.log(`[Stripe Webhook] Shop order ${orderId} payment completed`);
 }
 
 async function handleBookingPaymentFailed(paymentIntentId: string) {

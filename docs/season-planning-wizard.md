@@ -31,6 +31,7 @@ Der Season-Planning-Wizard ist ein 3-stufiger, KI-gestützter Planungsassistent 
 ```
 
 Die Step-Navigation zeigt:
+
 - **Aktiv** (blau mit Shadow): aktueller Step
 - **Abgeschlossen** (grün mit Häkchen): vorherige Steps — klickbar
 - **Deaktiviert** (grau): zukünftige Steps — nicht klickbar
@@ -43,11 +44,11 @@ Das `maxReachedStep`-Tracking verhindert Überspringen von Steps.
 
 ### Komponenten
 
-| Komponente | Datei | Funktion |
-|------------|-------|----------|
-| `ConfigStep` | `steps/config-step.tsx` | Container: Readiness + Config + MemberSelector |
-| `ScheduleReadinessCheck` | `lib/season-planning/readiness-check.tsx` | Prüft, ob alle Voraussetzungen erfüllt sind |
-| `MemberSelector` | `steps/member-selector.tsx` | Mitgliedertabelle mit Filter, Checkboxen, Höherstufungen |
+| Komponente               | Datei                                     | Funktion                                                 |
+| ------------------------ | ----------------------------------------- | -------------------------------------------------------- |
+| `ConfigStep`             | `steps/config-step.tsx`                   | Container: Readiness + Config + MemberSelector           |
+| `ScheduleReadinessCheck` | `lib/season-planning/readiness-check.tsx` | Prüft, ob alle Voraussetzungen erfüllt sind              |
+| `MemberSelector`         | `steps/member-selector.tsx`               | Mitgliedertabelle mit Filter, Checkboxen, Höherstufungen |
 
 ### Ablauf
 
@@ -58,6 +59,7 @@ Das `maxReachedStep`-Tracking verhindert Überspringen von Steps.
    - Setzt `state.isReady = true/false` → steuert "Weiter"-Button
 
 2. **Planungseinstellungen** (Card mit 6 Input-Feldern):
+
    ```
    groupMaxSize:           2–10   (default: 6)
    groupMinSize:           1–6    (default: 3)
@@ -66,8 +68,9 @@ Das `maxReachedStep`-Tracking verhindert Überspringen von Steps.
    maxNiveauSpanAdvanced:  1–4    (default: 2)
    slotFailureThreshold:   10–80  (default: 30)
    ```
-   + Checkboxen: Historische Gruppen bevorzugen, Hohe Ausfallraten vermeiden
-   + **Auto-Plan-Optionen:** Max. Iterationen (100–5000), Optimierungsziele (Konflikte, Trainer-Last, Präferenzen), KI-Optimierung (OpenAI), Überbuchung, Konsistente Zeitslots
+
+   - Checkboxen: Historische Gruppen bevorzugen, Hohe Ausfallraten vermeiden
+   - **Auto-Plan-Optionen:** Max. Iterationen (100–5000), Optimierungsziele (Konflikte, Trainer-Last, Präferenzen), KI-Optimierung (OpenAI), Überbuchung, Konsistente Zeitslots
 
 3. **Mitgliederauswahl** (`MemberSelector`):
    - `GET /api/seasons/[id]/planning/members` — lädt alle Club-Mitglieder mit:
@@ -88,9 +91,9 @@ dispatch({ type: 'SELECT_MEMBERS', memberIds, ... }) // Mitglieder
 
 ### API Call
 
-| Route | Method | Zweck |
-|-------|--------|-------|
-| `/api/seasons/[id]/planning/members` | GET | Mitgliederliste + Höherstufungen + Warteliste laden |
+| Route                                | Method | Zweck                                               |
+| ------------------------------------ | ------ | --------------------------------------------------- |
+| `/api/seasons/[id]/planning/members` | GET    | Mitgliederliste + Höherstufungen + Warteliste laden |
 
 ---
 
@@ -98,24 +101,27 @@ dispatch({ type: 'SELECT_MEMBERS', memberIds, ... }) // Mitglieder
 
 ### Komponenten
 
-| Komponente | Datei | Funktion |
-|------------|-------|----------|
-| `PlanEditStep` | `steps/plan-edit-step.tsx` | Container: Generate + Metrics + ScheduleGrid + AI |
-| `ScheduleGrid` | `lib/season-planning/schedule-grid.tsx` | Drag & Drop Wochenstundenplan (Zeilen = Tage, Spalten = Zeit) |
-| `GroupListView` | `lib/season-planning/group-list-view.tsx` | Listenansicht der Gruppen mit Mitglieder-Detail |
-| `useSchedulePlan` | `lib/season-planning/use-schedule-plan.ts` | Hook für DnD-State (dragging, dragOver, drop, moveMember) |
-| `generateAIAnalysis` | `lib/season-planning/ai-analysis.ts` | Optionale KI-Bewertung des Plans (OpenAI) |
+| Komponente           | Datei                                      | Funktion                                                      |
+| -------------------- | ------------------------------------------ | ------------------------------------------------------------- |
+| `PlanEditStep`       | `steps/plan-edit-step.tsx`                 | Container: Generate + Metrics + ScheduleGrid + AI             |
+| `ScheduleGrid`       | `lib/season-planning/schedule-grid.tsx`    | Drag & Drop Wochenstundenplan (Zeilen = Tage, Spalten = Zeit) |
+| `GroupListView`      | `lib/season-planning/group-list-view.tsx`  | Listenansicht der Gruppen mit Mitglieder-Detail               |
+| `useSchedulePlan`    | `lib/season-planning/use-schedule-plan.ts` | Hook für DnD-State (dragging, dragOver, drop, moveMember)     |
+| `generateAIAnalysis` | `lib/season-planning/ai-analysis.ts`       | Optionale KI-Bewertung des Plans (OpenAI)                     |
 
 ### Ablauf
 
 1. **Plan generieren** — Button ruft `runClustering()` aus WizardContext:
+
    ```
    POST /api/seasons/[id]/planning/cluster
    Body: { seasonId, config: WizardState.planningConfig, dryRun }
    ```
+
    → `SeasonClusteringEngine.runClustering()` wird serverseitig ausgeführt
 
 2. **Clustering-Engine** (`lib/season-planning/clustering-engine.ts`) — 9 Schritte:
+
    ```
    Step 0: loadConfig()          — DB-Config laden (überschreibt Defaults)
    Step 1: loadMembers()         — Mitglieder mit Präferenzen + Trainer-Feedback
@@ -161,14 +167,14 @@ dispatch({ type: 'SELECT_MEMBERS', memberIds, ... }) // Mitglieder
 
 6. **State-Sync:** `plan`-Änderungen (via DnD) werden per `useEffect` in den WizardContext synchronisiert:
    ```typescript
-   dispatch({ type: 'SET_SCHEDULE_SLOTS', slots: plan })
+   dispatch({ type: 'SET_SCHEDULE_SLOTS', slots: plan });
    ```
 
 ### API Calls
 
-| Route | Method | Zweck |
-|-------|--------|-------|
-| `/api/seasons/[id]/planning/cluster` | POST | Clustering ausführen (Rate-Limit: 5/h) |
+| Route                                | Method | Zweck                                  |
+| ------------------------------------ | ------ | -------------------------------------- |
+| `/api/seasons/[id]/planning/cluster` | POST   | Clustering ausführen (Rate-Limit: 5/h) |
 
 ---
 
@@ -176,14 +182,15 @@ dispatch({ type: 'SELECT_MEMBERS', memberIds, ... }) // Mitglieder
 
 ### Komponenten
 
-| Komponente | Datei | Funktion |
-|------------|-------|----------|
-| `FinalizeStep` | `steps/finalize-step.tsx` | Container: Konfliktprüfung + Bestätigung |
-| `ConflictCard` | (inline) | Einzelner Konflikt mit Lösen/Ignorieren-Buttons |
+| Komponente     | Datei                     | Funktion                                        |
+| -------------- | ------------------------- | ----------------------------------------------- |
+| `FinalizeStep` | `steps/finalize-step.tsx` | Container: Konfliktprüfung + Bestätigung        |
+| `ConflictCard` | (inline)                  | Einzelner Konflikt mit Lösen/Ignorieren-Buttons |
 
 ### Ablauf
 
 1. **Konfliktprüfung starten** — Button ruft `detectConflicts()`:
+
    ```
    POST /api/seasons/[id]/planning/conflicts
    → ConflictDetector.detectAll()
@@ -191,15 +198,15 @@ dispatch({ type: 'SELECT_MEMBERS', memberIds, ... }) // Mitglieder
 
 2. **ConflictDetector** (`lib/season-planning/conflict-detector.ts`) — 7 Konflikttypen:
 
-   | # | Typ | Schwere | Beschreibung |
-   |---|-----|---------|--------------|
-   | 1 | `trainer_double_booking` | 🔴 Kritisch | Trainer zur selben Zeit doppelt gebucht |
-   | 2 | `member_double_booking` | 🔴 Kritisch | Mitglied in zwei überlappenden Gruppen |
-   | 3 | `no_trainer_assigned` | 🔴 Kritisch | Gruppe ohne Trainer |
-   | 4 | `court_unavailable` | 🔴 Kritisch | Court doppelt belegt |
-   | 5 | `trainer_over_limit` | 🟡 Warnung | Trainer über Stundenlimit |
-   | 6 | `high_failure_rate_slot` | 🔵 Hinweis | Slot mit ≥30% historischer Ausfallrate |
-   | 7 | `large_niveau_span` | 🔵 Hinweis | Niveau-Spanne zu groß |
+   | #   | Typ                      | Schwere     | Beschreibung                            |
+   | --- | ------------------------ | ----------- | --------------------------------------- |
+   | 1   | `trainer_double_booking` | 🔴 Kritisch | Trainer zur selben Zeit doppelt gebucht |
+   | 2   | `member_double_booking`  | 🔴 Kritisch | Mitglied in zwei überlappenden Gruppen  |
+   | 3   | `no_trainer_assigned`    | 🔴 Kritisch | Gruppe ohne Trainer                     |
+   | 4   | `court_unavailable`      | 🔴 Kritisch | Court doppelt belegt                    |
+   | 5   | `trainer_over_limit`     | 🟡 Warnung  | Trainer über Stundenlimit               |
+   | 6   | `high_failure_rate_slot` | 🔵 Hinweis  | Slot mit ≥30% historischer Ausfallrate  |
+   | 7   | `large_niveau_span`      | 🔵 Hinweis  | Niveau-Spanne zu groß                   |
 
 3. **Konflikt-UI:**
    - **Kritische Konflikte** (rote Card): Müssen gelöst werden — blockieren Bestätigung
@@ -257,11 +264,11 @@ dispatch({ type: 'SELECT_MEMBERS', memberIds, ... }) // Mitglieder
 
 ### API Calls
 
-| Route | Method | Zweck |
-|-------|--------|-------|
-| `/api/seasons/[id]/planning/conflicts` | GET/POST | Konfliktprüfung ausführen |
-| `/api/seasons/[id]/planning/conflicts` | PATCH | Einzelnen Konflikt lösen/ignorieren |
-| `/api/seasons/[id]/planning/confirm` | POST | Plan veröffentlichen (Rate-Limit: 3/h, CSRF) |
+| Route                                  | Method   | Zweck                                        |
+| -------------------------------------- | -------- | -------------------------------------------- |
+| `/api/seasons/[id]/planning/conflicts` | GET/POST | Konfliktprüfung ausführen                    |
+| `/api/seasons/[id]/planning/conflicts` | PATCH    | Einzelnen Konflikt lösen/ignorieren          |
+| `/api/seasons/[id]/planning/confirm`   | POST     | Plan veröffentlichen (Rate-Limit: 3/h, CSRF) |
 
 ---
 
@@ -296,13 +303,22 @@ interface WizardState {
   promotedMemberIds: string[];
   preferencesResponseRate: number;
   slotFailureRates: Record<string, number>;
-  incompatibleWishPartnerPairs: Array<{ memberA, memberB, reason }>;
-  trainerUtilization: Record<string, { current, max, pct }>;
+  incompatibleWishPartnerPairs: Array<{ memberA; memberB; reason }>;
+  trainerUtilization: Record<string, { current; max; pct }>;
   planningConfig: {
-    groupMaxSize, groupMinSize, maxNiveauSpanBeginner, maxNiveauSpanAdvanced,
-    trainerUtilizationMaxPct, preferHistoricGroups, avoidHighFailureSlots,
-    slotFailureThreshold, maxIterations, optimizationGoals,
-    allowOverbooking, preferConsistentTimeslots, useAI
+    groupMaxSize;
+    groupMinSize;
+    maxNiveauSpanBeginner;
+    maxNiveauSpanAdvanced;
+    trainerUtilizationMaxPct;
+    preferHistoricGroups;
+    avoidHighFailureSlots;
+    slotFailureThreshold;
+    maxIterations;
+    optimizationGoals;
+    allowOverbooking;
+    preferConsistentTimeslots;
+    useAI;
   };
 
   // Step 2: Planen
@@ -319,21 +335,21 @@ interface WizardState {
 
 ### Actions (useReducer)
 
-| Action | Payload | Setzt |
-|--------|---------|-------|
-| `SET_STEP` | `step: WizardStep` | currentStep, maxReachedStep |
-| `SET_PROCESSING` | `isProcessing` | Ladezustand |
-| `SET_ERROR` | `error` | Fehlermeldung |
-| `SET_READY` | `isReady` | Bereitschaftsstatus |
-| `SET_PLANNING_CONFIG` | `config` | Planungseinstellungen (merged) |
-| `SET_SCHEDULE_SLOTS` | `slots: ScheduleSlot[]` | DnD-Ergebnisse |
-| `SELECT_MEMBERS` | `memberIds, promotedIds, response` | Mitgliederauswahl |
-| `SET_PREFERENCES_SUMMARY` | `summary` | Präferenz-Statistiken |
-| `SET_TRAINER_AVAILABILITY` | `summary` | Trainer-Auslastung |
-| `SET_CLUSTERING_RESULT` | `result: ClusteringResult` | Plan, leert scheduleSlots |
-| `SET_CONFLICTS` | `conflicts` | Konfliktliste |
-| `CONFIRM_PLAN` | `response` | isConfirmed, publishedSessionIds |
-| `RESET_WIZARD` | — | Kompletter Reset |
+| Action                     | Payload                            | Setzt                            |
+| -------------------------- | ---------------------------------- | -------------------------------- |
+| `SET_STEP`                 | `step: WizardStep`                 | currentStep, maxReachedStep      |
+| `SET_PROCESSING`           | `isProcessing`                     | Ladezustand                      |
+| `SET_ERROR`                | `error`                            | Fehlermeldung                    |
+| `SET_READY`                | `isReady`                          | Bereitschaftsstatus              |
+| `SET_PLANNING_CONFIG`      | `config`                           | Planungseinstellungen (merged)   |
+| `SET_SCHEDULE_SLOTS`       | `slots: ScheduleSlot[]`            | DnD-Ergebnisse                   |
+| `SELECT_MEMBERS`           | `memberIds, promotedIds, response` | Mitgliederauswahl                |
+| `SET_PREFERENCES_SUMMARY`  | `summary`                          | Präferenz-Statistiken            |
+| `SET_TRAINER_AVAILABILITY` | `summary`                          | Trainer-Auslastung               |
+| `SET_CLUSTERING_RESULT`    | `result: ClusteringResult`         | Plan, leert scheduleSlots        |
+| `SET_CONFLICTS`            | `conflicts`                        | Konfliktliste                    |
+| `CONFIRM_PLAN`             | `response`                         | isConfirmed, publishedSessionIds |
+| `RESET_WIZARD`             | —                                  | Kompletter Reset                 |
 
 ### Context-Methoden
 
@@ -341,14 +357,14 @@ interface WizardState {
 interface WizardContextValue {
   state: WizardState;
   dispatch: React.Dispatch<WizardAction>;
-  goToStep(step): void;       // Direkt zu Step springen (nur wenn ≤ maxReachedStep)
-  nextStep(): void;           // Nächster Step
-  prevStep(): void;           // Vorheriger Step
-  setMemberIds(ids): void;    // Mitglieder setzen
-  runClustering(dryRun?): Promise<void>;  // POST /cluster
-  detectConflicts(): Promise<void>;       // POST /conflicts
-  confirmPlan(): Promise<ConfirmPlanResponse>;  // POST /confirm
-  resetWizard(): void;        // Komplett zurücksetzen
+  goToStep(step): void; // Direkt zu Step springen (nur wenn ≤ maxReachedStep)
+  nextStep(): void; // Nächster Step
+  prevStep(): void; // Vorheriger Step
+  setMemberIds(ids): void; // Mitglieder setzen
+  runClustering(dryRun?): Promise<void>; // POST /cluster
+  detectConflicts(): Promise<void>; // POST /conflicts
+  confirmPlan(): Promise<ConfirmPlanResponse>; // POST /confirm
+  resetWizard(): void; // Komplett zurücksetzen
 }
 ```
 
@@ -426,28 +442,28 @@ Historic Groups (bewährte Gruppen aus Vorsaison)
 
 ### Severity-Level
 
-| Level | Bedeutung | Blockiert Confirm? |
-|-------|-----------|-------------------|
-| `critical` | Muss gelöst werden | ✅ Ja |
-| `warning` | Sollte beachtet werden | ❌ Nein (muss aber akzeptiert werden) |
-| `info` | Zur Kenntnisnahme | ❌ Nein (muss aber akzeptiert werden) |
+| Level      | Bedeutung              | Blockiert Confirm?                    |
+| ---------- | ---------------------- | ------------------------------------- |
+| `critical` | Muss gelöst werden     | ✅ Ja                                 |
+| `warning`  | Sollte beachtet werden | ❌ Nein (muss aber akzeptiert werden) |
+| `info`     | Zur Kenntnisnahme      | ❌ Nein (muss aber akzeptiert werden) |
 
 ---
 
 ## API-Routen Übersicht
 
-| Route | Method | Auth | Rate-Limit | CSRF | Beschreibung |
-|-------|--------|------|------------|------|-------------|
-| `/api/seasons/[id]/planning/members` | GET | Admin/Superadmin | 30/min | ❌ | Mitgliederliste |
-| `/api/seasons/[id]/planning/cluster` | POST | Admin/Superadmin | 5/h | ❌ | Clustering ausführen |
-| `/api/seasons/[id]/planning/conflicts` | GET/POST | Admin/Superadmin | 30/min | ❌ | Konfliktprüfung |
-| `/api/seasons/[id]/planning/conflicts` | PATCH | Admin/Superadmin | 30/min | ❌ | Konflikt lösen/ignorieren |
-| `/api/seasons/[id]/planning/confirm` | POST | Admin/Superadmin | 3/h | ✅ | Plan veröffentlichen |
-| `/api/seasons/[id]/planning/waitlist` | GET | Admin/Superadmin | 30/min | ❌ | Warteliste abrufen |
-| `/api/seasons/[id]/planning/waitlist` | POST | Admin | 30/min | ✅ | Mitglied aus Warteliste befördern |
-| `/api/seasons/[id]/planning/remind` | POST | Admin/Superadmin | 5/h | ✅ | Erinnerungsmails senden |
-| `/api/seasons/[id]/planning/preferences-summary` | GET | Admin/Superadmin | 30/min | ❌ | Präferenz-Statistiken |
-| `/api/seasons/[id]/planning/trainers` | GET | Admin/Superadmin | 30/min | ❌ | Trainer-Verfügbarkeiten |
+| Route                                            | Method   | Auth             | Rate-Limit | CSRF | Beschreibung                      |
+| ------------------------------------------------ | -------- | ---------------- | ---------- | ---- | --------------------------------- |
+| `/api/seasons/[id]/planning/members`             | GET      | Admin/Superadmin | 30/min     | ❌   | Mitgliederliste                   |
+| `/api/seasons/[id]/planning/cluster`             | POST     | Admin/Superadmin | 5/h        | ❌   | Clustering ausführen              |
+| `/api/seasons/[id]/planning/conflicts`           | GET/POST | Admin/Superadmin | 30/min     | ❌   | Konfliktprüfung                   |
+| `/api/seasons/[id]/planning/conflicts`           | PATCH    | Admin/Superadmin | 30/min     | ❌   | Konflikt lösen/ignorieren         |
+| `/api/seasons/[id]/planning/confirm`             | POST     | Admin/Superadmin | 3/h        | ✅   | Plan veröffentlichen              |
+| `/api/seasons/[id]/planning/waitlist`            | GET      | Admin/Superadmin | 30/min     | ❌   | Warteliste abrufen                |
+| `/api/seasons/[id]/planning/waitlist`            | POST     | Admin            | 30/min     | ✅   | Mitglied aus Warteliste befördern |
+| `/api/seasons/[id]/planning/remind`              | POST     | Admin/Superadmin | 5/h        | ✅   | Erinnerungsmails senden           |
+| `/api/seasons/[id]/planning/preferences-summary` | GET      | Admin/Superadmin | 30/min     | ❌   | Präferenz-Statistiken             |
+| `/api/seasons/[id]/planning/trainers`            | GET      | Admin/Superadmin | 30/min     | ❌   | Trainer-Verfügbarkeiten           |
 
 ### Authentifizierung
 
@@ -463,18 +479,18 @@ Club-Isolation: Superadmins sehen alle Clubs, Admins nur ihren eigenen (`season.
 
 ```typescript
 const {
-  plan,           // ScheduleSlot[] — aktueller Plan
-  setPlan,        // Setter
-  dragging,       // ScheduleSlot | null — was wird gezogen
+  plan, // ScheduleSlot[] — aktueller Plan
+  setPlan, // Setter
+  dragging, // ScheduleSlot | null — was wird gezogen
   setDragging,
-  dragOver,       // string | null — Ziel-Slot-Key ("day_start")
+  dragOver, // string | null — Ziel-Slot-Key ("day_start")
   setDragOver,
-  expandedSlot,   // string | null — welche Gruppe ist aufgeklappt
+  expandedSlot, // string | null — welche Gruppe ist aufgeklappt
   setExpandedSlot,
-  moveMember,     // (memberId, fromSlotId, toSlotId) => void
-  drop,           // (targetKey: "day_start") => void — Gruppe in Slot droppen
-  byDay,          // () => Record<number, ScheduleSlot[]>
-  activeDays,     // () => number[]
+  moveMember, // (memberId, fromSlotId, toSlotId) => void
+  drop, // (targetKey: "day_start") => void — Gruppe in Slot droppen
+  byDay, // () => Record<number, ScheduleSlot[]>
+  activeDays, // () => number[]
 } = useSchedulePlan();
 ```
 

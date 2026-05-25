@@ -651,9 +651,7 @@ export default function DesignPreviewPage() {
                       key={el}
                       className="px-5 py-3 rounded-xl bg-white dark:bg-surface-dark border border-gray-200/40 dark:border-white/[0.06]"
                     >
-                      <button
-                        className="text-sm text-gray-600 dark:text-gray-300 bg-transparent border-none cursor-pointer p-0"
-                      >
+                      <button className="text-sm text-gray-600 dark:text-gray-300 bg-transparent border-none cursor-pointer p-0">
                         {el}
                       </button>
                     </div>

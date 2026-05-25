@@ -170,3 +170,67 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # ─────────────────────────────────────────
+  e2e-vitest:
+    name: 🤖 E2E Tests (Vitest + Midscene)
+    runs-on: ubuntu-latest
+    needs: [build]
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
+      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+      TEST_MEMBER_EMAIL: ${{ secrets.TEST_MEMBER_EMAIL }}
+      TEST_MEMBER_PASSWORD: ${{ secrets.TEST_MEMBER_PASSWORD }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start dev server
+        run: |
+          npm run dev &
+          echo "DEV_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for server
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w '%{http_code}' http://localhost:3000 | grep -q '200\|302\|304\|301'; then
+              echo "Server ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start within 30s"
+          exit 1
+
+      - name: Run Vitest E2E tests
+        run: npx vitest run e2e/
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-e2e-results
+          path: midscene_run/
+          retention-days: 7
+
+      - name: Kill dev server
+        if: always()
+        run: |
+          kill -TERM -- -$DEV_PID 2>/dev/null || true
+          pkill -f "next dev" 2>/dev/null || true

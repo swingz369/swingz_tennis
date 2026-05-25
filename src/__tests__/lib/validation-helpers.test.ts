@@ -11,10 +11,7 @@ import { formatZodErrors, formatZodErrorRecord } from '@/lib/validation-helpers'
 /**
  * Helper to trigger Zod validation and extract the error.
  */
-function parseWithError<T extends z.ZodTypeAny>(
-  schema: T,
-  data: unknown
-): z.ZodError<z.infer<T>> {
+function parseWithError<T extends z.ZodTypeAny>(schema: T, data: unknown): z.ZodError<z.infer<T>> {
   const result = schema.safeParse(data);
   if (result.success) throw new Error('Expected validation to fail');
   return result.error;
@@ -100,7 +97,10 @@ describe('formatZodErrors', () => {
 
   it('formats errors from transformed schemas', () => {
     const schema = z.object({
-      count: z.string().transform((val) => parseInt(val, 10)).pipe(z.number().min(10)),
+      count: z
+        .string()
+        .transform((val) => parseInt(val, 10))
+        .pipe(z.number().min(10)),
     });
     const error = parseWithError(schema, { count: '5' });
 

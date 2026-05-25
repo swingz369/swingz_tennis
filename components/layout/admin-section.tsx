@@ -16,7 +16,7 @@ export interface AdminSubItem {
 }
 
 export interface AdminSectionColors {
-  gradient: string;
+  gradient?: string;
   bg: string;
   text: string;
   light: string;
@@ -100,7 +100,7 @@ export function AdminSection({
 
     e.preventDefault();
     const focusable = section.querySelectorAll<HTMLElement>(
-      'button, a, [tabindex]:not([tabindex="-1"])',
+      'button, a, [tabindex]:not([tabindex="-1"])'
     );
     if (focusable.length === 0) return;
 
@@ -143,7 +143,7 @@ export function AdminSection({
           'w-full flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold font-display uppercase tracking-[0.15em] transition-all duration-200',
           hasActiveChild
             ? colors.text
-            : 'text-gray-400/50 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50',
+            : 'text-gray-400/50 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
@@ -152,7 +152,7 @@ export function AdminSection({
           <Icon
             className={cn(
               'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
-              hasActiveChild && 'scale-110',
+              hasActiveChild && 'scale-110'
             )}
             aria-hidden="true"
           />
@@ -168,7 +168,7 @@ export function AdminSection({
       <div
         className={cn(
           'overflow-hidden transition-all duration-300 ease-out',
-          isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0',
+          isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         )}
       >
         <div
@@ -187,7 +187,7 @@ export function AdminSection({
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
                     ? `${colors.bg} ${colors.text} shadow-sm`
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200',
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -196,7 +196,7 @@ export function AdminSection({
                     <span
                       className={cn(
                         'h-1.5 w-1.5 rounded-full',
-                        colors.text.replace('text-', 'bg-').replace('dark:text-', 'dark:bg-'),
+                        colors.text.replace('text-', 'bg-').replace('dark:text-', 'dark:bg-')
                       )}
                     />
                   )}

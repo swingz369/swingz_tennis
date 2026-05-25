@@ -209,7 +209,10 @@ export default function TrainerHoursLogsPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label htmlFor="trainer-hl-date" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="trainer-hl-date"
+                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                >
                   Datum *
                 </label>
                 <Input
@@ -220,7 +223,10 @@ export default function TrainerHoursLogsPage() {
                 />
               </div>
               <div>
-                <label htmlFor="trainer-hl-start" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="trainer-hl-start"
+                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                >
                   Startzeit *
                 </label>
                 <Input
@@ -231,7 +237,10 @@ export default function TrainerHoursLogsPage() {
                 />
               </div>
               <div>
-                <label htmlFor="trainer-hl-end" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="trainer-hl-end"
+                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                >
                   Endzeit *
                 </label>
                 <Input
@@ -242,7 +251,10 @@ export default function TrainerHoursLogsPage() {
                 />
               </div>
               <div>
-                <label htmlFor="trainer-hl-type" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="trainer-hl-type"
+                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                >
                   Typ *
                 </label>
                 <Select
@@ -263,7 +275,10 @@ export default function TrainerHoursLogsPage() {
             </div>
 
             <div>
-              <label htmlFor="trainer-hl-notes" className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="trainer-hl-notes"
+                className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+              >
                 Notizen
               </label>
               <Textarea
@@ -368,7 +383,10 @@ export default function TrainerHoursLogsPage() {
         <CardContent className="pt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="trainer-hl-filter-status" className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400">
+              <label
+                htmlFor="trainer-hl-filter-status"
+                className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400"
+              >
                 Status
               </label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -384,7 +402,10 @@ export default function TrainerHoursLogsPage() {
               </Select>
             </div>
             <div>
-              <label htmlFor="trainer-hl-filter-month" className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400">
+              <label
+                htmlFor="trainer-hl-filter-month"
+                className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400"
+              >
                 Monat
               </label>
               <Input

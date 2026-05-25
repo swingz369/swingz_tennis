@@ -1,6 +1,8 @@
 import type { Page } from 'playwright';
 
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
+// Note: we use APP_BASE_URL not BASE_URL — Vite hijacks process.env.BASE_URL
+// and replaces it with "/" (the Vite base path) during transform.
+const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
 
 /**
  * Perform real Supabase API login via POST /api/auth/login.
@@ -9,11 +11,7 @@ const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
  * Adapted from tests/helpers/auth.ts for use with Midscene/Vitest
  * (uses plain Playwright `page` instead of @playwright/test fixture).
  */
-async function doLogin(
-  page: Page,
-  email: string,
-  password: string,
-): Promise<string> {
+async function doLogin(page: Page, email: string, password: string): Promise<string> {
   const loginRes = await page.request.post(`${BASE_URL}/api/auth/login`, {
     data: { email, password },
     headers: { Cookie: 'swingz_test_mode=true' },
@@ -36,5 +34,3 @@ export async function loginAs(page: Page, email: string, password: string): Prom
   const targetUrl = await doLogin(page, email, password);
   await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 }
-
-

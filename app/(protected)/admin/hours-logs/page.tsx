@@ -230,7 +230,9 @@ export default function HoursLogsOverviewPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Status Filter */}
             <div>
-              <label htmlFor="hours-status-filter" className="text-sm font-medium mb-2 block">Status</label>
+              <label htmlFor="hours-status-filter" className="text-sm font-medium mb-2 block">
+                Status
+              </label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger id="hours-status-filter">
                   <SelectValue placeholder="Alle" />
@@ -246,7 +248,9 @@ export default function HoursLogsOverviewPage() {
 
             {/* Search */}
             <div>
-              <label htmlFor="hours-trainer-search" className="text-sm font-medium mb-2 block">Trainer suchen</label>
+              <label htmlFor="hours-trainer-search" className="text-sm font-medium mb-2 block">
+                Trainer suchen
+              </label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -261,7 +265,9 @@ export default function HoursLogsOverviewPage() {
 
             {/* Month Filter */}
             <div>
-              <label htmlFor="hours-month-filter" className="text-sm font-medium mb-2 block">Monat</label>
+              <label htmlFor="hours-month-filter" className="text-sm font-medium mb-2 block">
+                Monat
+              </label>
               <Input
                 id="hours-month-filter"
                 type="month"

@@ -18,7 +18,9 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebTest, type WebTestContext } from './helpers/web-test';
 import { loginAs } from './helpers/auth';
 
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
+// Note: we use APP_BASE_URL not BASE_URL — Vite hijacks process.env.BASE_URL
+// and replaces it with "/" (the Vite base path) during transform.
+const BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
 
 // ═══ Test Credentials (must be set in .env) ═══
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL!;
@@ -60,22 +62,22 @@ describe('Member Lifecycle E2E', () => {
 
       // Verify we're on the admin dashboard
       const onAdmin = await adminCtx.agent.aiQuery(
-        'Is the current page showing an admin dashboard or admin overview?',
+        'Is the current page showing an admin dashboard or admin overview?'
       );
       expect(onAdmin).toBe(true);
 
       // Navigate to Approvals (Mitglieder → Genehmigungen)
       await adminCtx.agent.aiAct(
-        'Click on "Mitglieder" in the sidebar or navigation, then click on "Genehmigungen" if visible',
+        'Click on "Mitglieder" in the sidebar or navigation, then click on "Genehmigungen" if visible'
       );
 
       // Verify the approvals page loaded
       const hasApprovals = await adminCtx.agent.aiQuery(
-        'Is there a table or list showing registration requests (Genehmigungen)? Or an empty state message?',
+        'Is there a table or list showing registration requests (Genehmigungen)? Or an empty state message?'
       );
       expect(hasApprovals).toBe(true);
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT
   );
 
   // ════════════════════════════════════════════════════════════════
@@ -91,30 +93,30 @@ describe('Member Lifecycle E2E', () => {
 
       // Check if there are any pending approval buttons
       const hasApproveBtn = await adminCtx.agent.aiQuery(
-        'Is there a visible "Genehmigen" or "Approve" button for any registration request in the list?',
+        'Is there a visible "Genehmigen" or "Approve" button for any registration request in the list?'
       );
 
       if (hasApproveBtn) {
         // Click the first approve button
         await adminCtx.agent.aiAct(
-          'Click the first "Genehmigen" or approve button for a registration request',
+          'Click the first "Genehmigen" or approve button for a registration request'
         );
 
         // Verify success feedback
         const successShown = await adminCtx.agent.aiQuery(
-          'Is there a success message or toast notification visible, or did the request disappear from the list?',
+          'Is there a success message or toast notification visible, or did the request disappear from the list?'
         );
         expect(successShown).toBe(true);
       } else {
         // No pending approvals — this is OK (empty state)
         const emptyStateShown = await adminCtx.agent.aiQuery(
-          'Is there a message saying there are no pending requests, or is the list empty?',
+          'Is there a message saying there are no pending requests, or is the list empty?'
         );
         // Assert that empty state is actually visible (not a broken page)
         expect(emptyStateShown).toBe(true);
       }
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT
   );
 
   // ════════════════════════════════════════════════════════════════
@@ -124,9 +126,7 @@ describe('Member Lifecycle E2E', () => {
     'Phase 3: Member login → Training / Buchungen anzeigen',
     async () => {
       if (!MEMBER_EMAIL || !MEMBER_PASSWORD) {
-        console.warn(
-          'Phase 3 SKIPPED: TEST_MEMBER_EMAIL and TEST_MEMBER_PASSWORD not set in .env',
-        );
+        console.warn('Phase 3 SKIPPED: TEST_MEMBER_EMAIL and TEST_MEMBER_PASSWORD not set in .env');
         return;
       }
 
@@ -140,13 +140,13 @@ describe('Member Lifecycle E2E', () => {
 
       // Verify member dashboard loaded (should not be admin)
       const isMemberArea = await memberCtx.agent.aiQuery(
-        'Is the current page showing a member dashboard (not an admin dashboard)? Look for "Dashboard" or "Übersicht" heading.',
+        'Is the current page showing a member dashboard (not an admin dashboard)? Look for "Dashboard" or "Übersicht" heading.'
       );
       expect(isMemberArea).toBe(true);
 
       // Navigate to bookings / training page
       await memberCtx.agent.aiAct(
-        'Click on "Training" or "Buchen" in the navigation to see available training sessions',
+        'Click on "Training" or "Buchen" in the navigation to see available training sessions'
       );
 
       // Wait for sessions to load
@@ -154,17 +154,17 @@ describe('Member Lifecycle E2E', () => {
 
       // Verify the training/bookings page loaded correctly
       const onTrainingPage = await memberCtx.agent.aiQuery(
-        'Is there a heading or title containing "Training", "Buchen", or "Sessions" on the current page? The page should not show a 404 or error message.',
+        'Is there a heading or title containing "Training", "Buchen", or "Sessions" on the current page? The page should not show a 404 or error message.'
       );
       expect(onTrainingPage).toBe(true);
 
       // Check if sessions are visible
       const hasSessions = await memberCtx.agent.aiQuery(
-        'Are there any training sessions, time slots, or booking cards visible on the page?',
+        'Are there any training sessions, time slots, or booking cards visible on the page?'
       );
       console.log('Phase 3: Sessions visible:', hasSessions);
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT
   );
 
   // ════════════════════════════════════════════════════════════════
@@ -180,13 +180,13 @@ describe('Member Lifecycle E2E', () => {
 
       // Check if there's a bookable session
       const hasBookButton = await memberCtx.agent.aiQuery(
-        'Is there a visible "Buchen" or "Book" button for any training session on the current page?',
+        'Is there a visible "Buchen" or "Book" button for any training session on the current page?'
       );
 
       if (hasBookButton) {
         // Click the first book button
         await memberCtx.agent.aiAct(
-          'Click the first "Buchen" or book button for an available training session',
+          'Click the first "Buchen" or book button for an available training session'
         );
 
         // Wait for booking to process
@@ -194,14 +194,14 @@ describe('Member Lifecycle E2E', () => {
 
         // Verify booking confirmation
         const bookingConfirmed = await memberCtx.agent.aiQuery(
-          'Is there a success message, a confirmation, or is the session now marked as booked?',
+          'Is there a success message, a confirmation, or is the session now marked as booked?'
         );
         expect(bookingConfirmed).toBe(true);
       } else {
         console.warn('Phase 4: No bookable sessions found — skipping booking step');
       }
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT
   );
 
   // ════════════════════════════════════════════════════════════════
@@ -217,31 +217,31 @@ describe('Member Lifecycle E2E', () => {
 
       // Navigate to "Meine Buchungen"
       await memberCtx.agent.aiAct(
-        'Click on "Meine Buchungen", "Buchungen", or navigate to the page showing my booked sessions',
+        'Click on "Meine Buchungen", "Buchungen", or navigate to the page showing my booked sessions'
       );
 
       await memberCtx.page.waitForTimeout(2000);
 
       // Check for cancel button on any booking
       const hasCancelBtn = await memberCtx.agent.aiQuery(
-        'Is there a visible "Stornieren" or "Cancel" button for any of my booked sessions?',
+        'Is there a visible "Stornieren" or "Cancel" button for any of my booked sessions?'
       );
 
       if (hasCancelBtn) {
         // Click the first cancel button
         await memberCtx.agent.aiAct(
-          'Click the first "Stornieren" or cancel button for a booked session',
+          'Click the first "Stornieren" or cancel button for a booked session'
         );
 
         await memberCtx.page.waitForTimeout(1000);
 
         // Confirm cancellation if dialog appears
         const hasConfirmDialog = await memberCtx.agent.aiQuery(
-          'Is there a confirmation dialog asking "Wirklich stornieren?" or similar?',
+          'Is there a confirmation dialog asking "Wirklich stornieren?" or similar?'
         );
         if (hasConfirmDialog) {
           await memberCtx.agent.aiAct(
-            'Click the confirm or "Ja" button in the cancellation dialog',
+            'Click the confirm or "Ja" button in the cancellation dialog'
           );
         }
 
@@ -249,13 +249,13 @@ describe('Member Lifecycle E2E', () => {
 
         // Verify cancellation
         const cancelled = await memberCtx.agent.aiQuery(
-          'Is the session now shown as cancelled, removed from the list, or is there a success message?',
+          'Is the session now shown as cancelled, removed from the list, or is there a success message?'
         );
         expect(cancelled).toBe(true);
       } else {
         console.warn('Phase 5: No bookings to cancel — skipping cancellation step');
       }
     },
-    TEST_TIMEOUT,
+    TEST_TIMEOUT
   );
 });

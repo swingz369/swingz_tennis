@@ -76,9 +76,7 @@ describe('useUserRole — multiple roles (priority)', () => {
   });
 
   it('superadmin wins over all three lower roles', () => {
-    const { result } = renderHook(() =>
-      useUserRole(['member', 'trainer', 'admin', 'superadmin']),
-    );
+    const { result } = renderHook(() => useUserRole(['member', 'trainer', 'admin', 'superadmin']));
 
     expect(result.current.currentRole).toBe('superadmin');
     expect(result.current.isSuperAdmin).toBe(true);
@@ -113,9 +111,7 @@ describe('useUserRole — multiple roles (priority)', () => {
   });
 
   it('admin + trainer + member → admin wins', () => {
-    const { result } = renderHook(() =>
-      useUserRole(['member', 'trainer', 'admin']),
-    );
+    const { result } = renderHook(() => useUserRole(['member', 'trainer', 'admin']));
 
     expect(result.current.currentRole).toBe('admin');
     expect(result.current.isSuperAdmin).toBe(false);
@@ -185,10 +181,9 @@ describe('useUserRole — empty and edge cases', () => {
 describe('useUserRole — memoization', () => {
   it('returns the same object reference when roles array reference is unchanged', () => {
     const roles = ['admin'];
-    const { result, rerender } = renderHook(
-      (r: string[]) => useUserRole(r),
-      { initialProps: roles },
-    );
+    const { result, rerender } = renderHook((r: string[]) => useUserRole(r), {
+      initialProps: roles,
+    });
 
     const first = result.current;
     rerender(roles); // same array reference → useMemo returns cached value
@@ -198,10 +193,9 @@ describe('useUserRole — memoization', () => {
   });
 
   it('returns a new object when roles array reference changes even if content is same', () => {
-    const { result, rerender } = renderHook(
-      (r: string[]) => useUserRole(r),
-      { initialProps: ['admin'] },
-    );
+    const { result, rerender } = renderHook((r: string[]) => useUserRole(r), {
+      initialProps: ['admin'],
+    });
 
     const first = result.current;
     rerender(['admin']); // new array instance (same content) → useMemo recomputes

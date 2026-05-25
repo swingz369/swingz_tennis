@@ -29,9 +29,7 @@ export async function POST(request: NextRequest) {
         .select('key, value')
         .eq('club_id', clubId)
         .in('key', ['club_name']);
-      const clubName =
-        settingRows?.find((r) => r.key === 'club_name')?.value ||
-        'SWINGZ';
+      const clubName = settingRows?.find((r) => r.key === 'club_name')?.value || 'SWINGZ';
 
       const template = EmailService.generateMembershipApprovalEmail({
         recipientName: firstName || 'Mitglied',

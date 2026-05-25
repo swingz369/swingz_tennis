@@ -169,9 +169,7 @@ describe('isExactActive', () => {
     ] as const;
 
     for (const [current, href] of cases) {
-      expect(isExactActive(current, href)).toBe(
-        isActivePath(current, href, true),
-      );
+      expect(isExactActive(current, href)).toBe(isActivePath(current, href, true));
     }
   });
 });

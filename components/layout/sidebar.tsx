@@ -36,28 +36,24 @@ interface Club {
 
 const roleColors = {
   superadmin: {
-    gradient: 'from-purple-500 to-purple-700',
     bg: 'bg-purple-50 dark:bg-purple-900/20',
     text: 'text-purple-700 dark:text-purple-300',
     light: 'purple',
     ring: 'ring-purple-300/40',
   },
   admin: {
-    gradient: 'from-brand-light to-brand-primary',
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
     text: 'text-brand-light dark:text-green-300',
     light: 'brand-light',
     ring: 'ring-brand-light/30',
   },
   trainer: {
-    gradient: 'from-emerald-500 to-emerald-700',
     bg: 'bg-emerald-50 dark:bg-emerald-900/20',
     text: 'text-emerald-600 dark:text-emerald-300',
     light: 'emerald',
     ring: 'ring-emerald-300/40',
   },
   member: {
-    gradient: 'from-brand-primary to-brand-dark',
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
     text: 'text-brand-light dark:text-green-300',
     light: 'brand-light',
@@ -245,6 +241,7 @@ export function Sidebar({
           subItems: [
             { name: 'News & Kommunikation', href: '/news' },
             { name: 'Shop', href: '/shop' },
+            { name: 'Shop verwalten', href: '/admin/shop' },
           ],
         },
       }
@@ -269,11 +266,7 @@ export function Sidebar({
     return [];
   })();
 
-  // Active color theme per role
-  const activeGradient = `bg-gradient-to-r ${colors.gradient} text-white shadow-lg`;
-  const sectionLabel = isSuperAdmin
-    ? 'Plattform'
-    : 'Administration';
+  const sectionLabel = isSuperAdmin ? 'Plattform' : 'Administration';
 
   return (
     <aside
@@ -378,27 +371,36 @@ export function Sidebar({
           {/* ── ADMIN: Structured 6-section sidebar ── */}
           {isAdmin && adminNav ? (
             <>
-              {/* Dashboard – Direktlink (nur exakter /admin Match) */}
-              <Link
-                href="/admin"
-                onClick={() => onClose?.()}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 mb-2',
-                  isExactActive(pathname, '/admin')
-                    ? activeGradient
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
-                )}
-                aria-current={isExactActive(pathname, '/admin') ? 'page' : undefined}
-              >
-                <Home
+              {/* Dashboard – Direktlink mit konsistentem Design */}
+              <div className="mb-3">
+                <div
+                  className="mb-1 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
+                  role="heading"
+                  aria-level={2}
+                >
+                  Hauptbereich
+                </div>
+                <Link
+                  href="/admin"
+                  onClick={() => onClose?.()}
                   className={cn(
-                    'h-5 w-5 shrink-0 transition-transform duration-200',
-                    isExactActive(pathname, '/admin') && 'scale-110'
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                    isExactActive(pathname, '/admin')
+                      ? `${colors.bg} ${colors.text} shadow-sm`
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
                   )}
-                  aria-hidden="true"
-                />
-                <span>Dashboard</span>
-              </Link>
+                  aria-current={isExactActive(pathname, '/admin') ? 'page' : undefined}
+                >
+                  <Home
+                    className={cn(
+                      'h-5 w-5 shrink-0 transition-transform duration-200',
+                      isExactActive(pathname, '/admin') && 'scale-110'
+                    )}
+                    aria-hidden="true"
+                  />
+                  <span>Dashboard</span>
+                </Link>
+              </div>
 
               {/* Section 2 – MITGLIEDER */}
               <AdminSection
@@ -520,9 +522,9 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => onClose?.()}
                     className={cn(
-                      'group flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                      'flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? activeGradient
+                        ? `${colors.bg} ${colors.text} shadow-sm`
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
@@ -580,9 +582,9 @@ export function Sidebar({
                         href={item.href}
                         onClick={() => onClose?.()}
                         className={cn(
-                          'group flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                          'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                           isActive
-                            ? activeGradient
+                            ? `${colors.bg} ${colors.text} shadow-sm`
                             : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
                         )}
                         aria-current={isActive ? 'page' : undefined}
@@ -608,4 +610,3 @@ export function Sidebar({
     </aside>
   );
 }
-

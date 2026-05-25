@@ -580,69 +580,69 @@ flowchart LR
     style G fill:#51cf6622
 ```
 
-| Schicht | Mechanismus | Fehler |
-|---------|------------|--------|
-| 1. Auth | `withApiAuth` → Supabase Session Cookie | 401 |
-| 2. Role | `verifyRole(auth, 'admin'\|'trainer'\|'member')` | 403 |
-| 3. Rate Limit | `checkRateLimitOrFail(req, {max, windowMs})` | 429 |
-| 4. CSRF | `withCSRFProtection` (nur bei POST/PATCH/DELETE mit Side Effects) | 403 |
-| 5. Business | Zod-Validierung, Club-Zugehörigkeit, Business-Rules | 400/409/500 |
+| Schicht       | Mechanismus                                                       | Fehler      |
+| ------------- | ----------------------------------------------------------------- | ----------- |
+| 1. Auth       | `withApiAuth` → Supabase Session Cookie                           | 401         |
+| 2. Role       | `verifyRole(auth, 'admin'\|'trainer'\|'member')`                  | 403         |
+| 3. Rate Limit | `checkRateLimitOrFail(req, {max, windowMs})`                      | 429         |
+| 4. CSRF       | `withCSRFProtection` (nur bei POST/PATCH/DELETE mit Side Effects) | 403         |
+| 5. Business   | Zod-Validierung, Club-Zugehörigkeit, Business-Rules               | 400/409/500 |
 
 ---
 
 ## 📋 Rollen-Matrix: Wer darf was?
 
-| Aktion | Member | Trainer | Admin | Superadmin |
-|--------|:------:|:-------:|:-----:|:----------:|
-| **Eigene Buchungen** | ✅ | ✅ | ✅ | ✅ |
-| **Session buchen** | ✅ | ✅ | ✅ | ✅ |
-| **Buchung stornieren (eigene)** | ✅ | ✅ | ✅ | ✅ |
-| **Buchungsstatus ändern** | ❌ | ✅ | ✅ | ✅ |
-| **Stunden erfassen** | ❌ | ✅ | ✅ | ✅ |
-| **Stunden genehmigen** | ❌ | ❌ | ✅ | ✅ |
-| **Mitglieder verwalten** | ❌ | ❌ | ✅ | ✅ |
-| **Mitglieder einladen** | ❌ | ❌ | ✅ | ✅ |
-| **Registrierungen genehmigen** | ❌ | ❌ | ✅ | ✅ |
-| **Saison erstellen** | ❌ | ❌ | ✅ | ✅ |
-| **Saison-Planung (Wizard)** | ❌ | ❌ | ✅ | ✅ |
-| **Rechnungen generieren** | ❌ | ❌ | ✅ | ✅ |
-| **Zahlungen erfassen** | ❌ | ✅ | ✅ | ✅ |
-| **SEPA-Lastschrift** | ❌ | ❌ | ❌ | ✅ |
-| **Trainer-Abrechnung** | ❌ | ❌ | ✅ | ✅ |
-| **Eigene Rechnungen sehen** | ✅ | ✅ | ✅ | ✅ |
-| **Alle Rechnungen sehen** | ❌ | ❌ | ✅ | ✅ |
+| Aktion                          | Member | Trainer | Admin | Superadmin |
+| ------------------------------- | :----: | :-----: | :---: | :--------: |
+| **Eigene Buchungen**            |   ✅   |   ✅    |  ✅   |     ✅     |
+| **Session buchen**              |   ✅   |   ✅    |  ✅   |     ✅     |
+| **Buchung stornieren (eigene)** |   ✅   |   ✅    |  ✅   |     ✅     |
+| **Buchungsstatus ändern**       |   ❌   |   ✅    |  ✅   |     ✅     |
+| **Stunden erfassen**            |   ❌   |   ✅    |  ✅   |     ✅     |
+| **Stunden genehmigen**          |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Mitglieder verwalten**        |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Mitglieder einladen**         |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Registrierungen genehmigen**  |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Saison erstellen**            |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Saison-Planung (Wizard)**     |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Rechnungen generieren**       |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Zahlungen erfassen**          |   ❌   |   ✅    |  ✅   |     ✅     |
+| **SEPA-Lastschrift**            |   ❌   |   ❌    |  ❌   |     ✅     |
+| **Trainer-Abrechnung**          |   ❌   |   ❌    |  ✅   |     ✅     |
+| **Eigene Rechnungen sehen**     |   ✅   |   ✅    |  ✅   |     ✅     |
+| **Alle Rechnungen sehen**       |   ❌   |   ❌    |  ✅   |     ✅     |
 
 ---
 
 ## 🔗 Datei-Übersicht
 
-| Schicht | Datei | Beschreibung |
-|---------|-------|-------------|
-| **API Routes** | `app/api/bookings/route.ts` | Buchung erstellen + eigene abrufen |
-| | `app/api/bookings/[id]/cancel/route.ts` | Buchung stornieren |
-| | `app/api/bookings/[id]/status/route.ts` | Status ändern (Admin/Trainer) |
-| | `app/api/bookings/series/route.ts` | Serienbuchung |
-| | `app/api/seasons/route.ts` | Saisons CRUD |
-| | `app/api/seasons/[id]/planning/cluster/route.ts` | Clustering ausführen |
-| | `app/api/seasons/[id]/planning/confirm/route.ts` | Plan publizieren (Transaktion) |
-| | `app/api/billing/generate-invoices/route.ts` | Monats-Rechnungen |
-| | `app/api/billing/invoices/route.ts` | Ad-hoc-Rechnungen |
-| | `app/api/billing/trainers/route.ts` | Trainer-Abrechnung |
-| | `app/api/payments/route.ts` | Zahlungen erfassen |
-| | `app/api/hours-logs/route.ts` | Stunden CRUD (GET, POST) |
-| | `app/api/hours-logs/[id]/route.ts` | Einzel-Stunde (GET, PATCH, DELETE) |
-| | `app/api/hours-logs/[id]/approve/route.ts` | Genehmigen + Auto-Invoice |
-| | `app/api/hours-logs/[id]/reject/route.ts` | Ablehnen mit Begründung |
-| | `app/api/members/invite/route.ts` | Member-Einladung |
-| | `app/api/admin/approvals/route.ts` | Registrierungen genehmigen |
-| **Business Logic** | `lib/booking/safe-booking.ts` | Atomare Buchung (RPC) |
-| | `lib/season-planning/clustering-engine.ts` | Greedy-Clustering (9 Steps) |
-| | `lib/season-planning/conflict-detector.ts` | 7 Konflikt-Typen |
-| | `lib/billing-engine.ts` | Billing Facade (Singleton) |
-| | `src/application/use-cases/booking-status.use-cases.ts` | Buchungsstatus-Änderung |
-| **Security** | `lib/api-auth.ts` | `withApiAuth`, `verifyRole` |
-| | `lib/rate-limit.ts` | `checkRateLimitOrFail` |
-| | `lib/csrf.ts` | `withCSRFProtection` |
-| **Documentation** | `docs/api-routes-overview.md` | API-Routen-Referenz |
-| | `docs/season-planning-wizard.md` | Wizard-Architektur |
-| | `docs/workflows.md` | Diese Datei |
+| Schicht            | Datei                                                   | Beschreibung                       |
+| ------------------ | ------------------------------------------------------- | ---------------------------------- |
+| **API Routes**     | `app/api/bookings/route.ts`                             | Buchung erstellen + eigene abrufen |
+|                    | `app/api/bookings/[id]/cancel/route.ts`                 | Buchung stornieren                 |
+|                    | `app/api/bookings/[id]/status/route.ts`                 | Status ändern (Admin/Trainer)      |
+|                    | `app/api/bookings/series/route.ts`                      | Serienbuchung                      |
+|                    | `app/api/seasons/route.ts`                              | Saisons CRUD                       |
+|                    | `app/api/seasons/[id]/planning/cluster/route.ts`        | Clustering ausführen               |
+|                    | `app/api/seasons/[id]/planning/confirm/route.ts`        | Plan publizieren (Transaktion)     |
+|                    | `app/api/billing/generate-invoices/route.ts`            | Monats-Rechnungen                  |
+|                    | `app/api/billing/invoices/route.ts`                     | Ad-hoc-Rechnungen                  |
+|                    | `app/api/billing/trainers/route.ts`                     | Trainer-Abrechnung                 |
+|                    | `app/api/payments/route.ts`                             | Zahlungen erfassen                 |
+|                    | `app/api/hours-logs/route.ts`                           | Stunden CRUD (GET, POST)           |
+|                    | `app/api/hours-logs/[id]/route.ts`                      | Einzel-Stunde (GET, PATCH, DELETE) |
+|                    | `app/api/hours-logs/[id]/approve/route.ts`              | Genehmigen + Auto-Invoice          |
+|                    | `app/api/hours-logs/[id]/reject/route.ts`               | Ablehnen mit Begründung            |
+|                    | `app/api/members/invite/route.ts`                       | Member-Einladung                   |
+|                    | `app/api/admin/approvals/route.ts`                      | Registrierungen genehmigen         |
+| **Business Logic** | `lib/booking/safe-booking.ts`                           | Atomare Buchung (RPC)              |
+|                    | `lib/season-planning/clustering-engine.ts`              | Greedy-Clustering (9 Steps)        |
+|                    | `lib/season-planning/conflict-detector.ts`              | 7 Konflikt-Typen                   |
+|                    | `lib/billing-engine.ts`                                 | Billing Facade (Singleton)         |
+|                    | `src/application/use-cases/booking-status.use-cases.ts` | Buchungsstatus-Änderung            |
+| **Security**       | `lib/api-auth.ts`                                       | `withApiAuth`, `verifyRole`        |
+|                    | `lib/rate-limit.ts`                                     | `checkRateLimitOrFail`             |
+|                    | `lib/csrf.ts`                                           | `withCSRFProtection`               |
+| **Documentation**  | `docs/api-routes-overview.md`                           | API-Routen-Referenz                |
+|                    | `docs/season-planning-wizard.md`                        | Wizard-Architektur                 |
+|                    | `docs/workflows.md`                                     | Diese Datei                        |
