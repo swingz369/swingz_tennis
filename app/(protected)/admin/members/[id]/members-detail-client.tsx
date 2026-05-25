@@ -39,8 +39,8 @@ import {
   Edit,
   AlertCircle,
   Target,
-  Clock,
 } from 'lucide-react';
+import { PreferencesTab } from './preferences-tab';
 import type { Member } from '../member.types';
 
 interface Props {
@@ -502,39 +502,19 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
             </CardContent>
           </Card>
 
-          {/* Saison-Präferenzen */}
+          {/* Trainings-Präferenzen */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Target className="h-4 w-4 text-brandPrimary" />
-                Saisonplanung
+                Trainings-Präferenzen
               </CardTitle>
               <CardDescription>
-                Präferenzen für die Trainingsplanung in der aktuellen Saison
+                Verfügbarkeiten und Wünsche für die Trainingsplanung
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-brandPrimary/5 border border-brandPrimary/10 rounded-xl">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <AlertCircle className="h-4 w-4 text-brandAccent" />
-                    Saison-Präferenzen
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Hier kannst du die Trainingszeiten und bevorzugten Tage für die Saisonplanung
-                    des Mitglieds festlegen.
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 gap-2"
-                  onClick={() => toast.info('Präferenz-Seite wird in Kürze verfügbar sein')}
-                >
-                  <Clock className="h-4 w-4" />
-                  Präferenzen verwalten
-                </Button>
-              </div>
+              <PreferencesTab userId={member.user_id} clubId={clubId} />
             </CardContent>
           </Card>
 

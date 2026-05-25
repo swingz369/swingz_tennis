@@ -1755,3 +1755,80 @@ export const trialTrainingsRelations = relations(trialTrainings, ({ one }) => ({
     references: [courts.id],
   }),
 }));
+
+// ==============================================================================
+// Member Schedule Preferences Table
+// ==============================================================================
+
+/**
+ * General (non-season-specific) member schedule preferences.
+ * Complements the season-specific user_training_preferences table.
+ */
+export const memberSchedulePreferences = pgTable(
+  'member_schedule_preferences',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    user_id: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+
+    preferred_level: varchar('preferred_level', { length: 20 }),
+    preferred_age_group: varchar('preferred_age_group', { length: 20 }),
+
+    weekly_availability: jsonb('weekly_availability')
+      .$type<{
+        monday: Array<{ start: string; end: string }>;
+        tuesday: Array<{ start: string; end: string }>;
+        wednesday: Array<{ start: string; end: string }>;
+        thursday: Array<{ start: string; end: string }>;
+        friday: Array<{ start: string; end: string }>;
+        saturday: Array<{ start: string; end: string }>;
+        sunday: Array<{ start: string; end: string }>;
+      }>()
+      .notNull()
+      .default({
+        monday: [],
+        tuesday: [],
+        wednesday: [],
+        thursday: [],
+        friday: [],
+        saturday: [],
+        sunday: [],
+      }),
+
+    wish_partner_ids: jsonb('wish_partner_ids').$type<string[]>().default([]),
+    preferred_trainer_ids: jsonb('preferred_trainer_ids').$type<string[]>().default([]),
+    preferred_court_ids: jsonb('preferred_court_ids').$type<string[]>().default([]),
+
+    max_sessions_per_week: integer('max_sessions_per_week'),
+    special_requests: text('special_requests'),
+    notes: text('notes'),
+
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    user_club_unique: { unique: true, columns: [table.user_id, table.club_id] },
+    user_idx: index('member_sched_prefs_user_idx').on(table.user_id),
+    club_idx: index('member_sched_prefs_club_idx').on(table.club_id),
+    level_idx: index('member_sched_prefs_level_idx').on(table.preferred_level),
+  })
+);
+
+// Relations
+export const memberSchedulePreferencesRelations = relations(
+  memberSchedulePreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [memberSchedulePreferences.user_id],
+      references: [users.id],
+    }),
+    club: one(clubs, {
+      fields: [memberSchedulePreferences.club_id],
+      references: [clubs.id],
+    }),
+  })
+);

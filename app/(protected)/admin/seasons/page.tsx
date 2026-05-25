@@ -51,8 +51,76 @@ export default async function SeasonsPage() {
 
     if (seasonsError) {
       console.error('[SeasonsPage] Query error:', seasonsError);
-    } else {
-      seasons = (seasonsData || []).map((s: any) => ({
+    }
+
+    const seasonIds = (seasonsData || []).map((s: any) => s.id);
+
+    // Fetch real stats from related tables
+    let prefsData: any[] = [];
+    let entriesData: any[] = [];
+    let conflictsData: any[] = [];
+    let groupsData: any[] = [];
+
+    if (seasonIds.length > 0) {
+      const [prefsRes, entriesRes, conflictsRes, groupsRes] = await Promise.all([
+        supabase
+          .from('user_training_preferences')
+          .select('season_id, is_submitted')
+          .in('season_id', seasonIds),
+        supabase
+          .from('season_plan_entries')
+          .select('season_id, group_id')
+          .in('season_id', seasonIds),
+        supabase
+          .from('planning_conflicts')
+          .select('season_id, status')
+          .in('season_id', seasonIds)
+          .eq('status', 'open'),
+        supabase
+          .from('season_plan_entries')
+          .select('season_id, group_id')
+          .in('season_id', seasonIds)
+          .not('group_id', 'is', null),
+      ]);
+
+      prefsData = prefsRes.data || [];
+      entriesData = entriesRes.data || [];
+      conflictsData = conflictsRes.data || [];
+      groupsData = groupsRes.data || [];
+    }
+
+    // Compute per-season statistics
+    const prefsBySeason = new Map<string, { total: number; submitted: number }>();
+    for (const p of prefsData) {
+      const sid = p.season_id as string;
+      const cur = prefsBySeason.get(sid) || { total: 0, submitted: 0 };
+      cur.total++;
+      if (p.is_submitted) cur.submitted++;
+      prefsBySeason.set(sid, cur);
+    }
+
+    const entriesBySeason = new Map<string, number>();
+    for (const e of entriesData) {
+      const sid = e.season_id as string;
+      entriesBySeason.set(sid, (entriesBySeason.get(sid) || 0) + 1);
+    }
+
+    const conflictsBySeason = new Map<string, number>();
+    for (const c of conflictsData) {
+      const sid = c.season_id as string;
+      conflictsBySeason.set(sid, (conflictsBySeason.get(sid) || 0) + 1);
+    }
+
+    const groupsBySeason = new Map<string, Set<string>>();
+    for (const g of groupsData) {
+      const sid = g.season_id as string;
+      if (!groupsBySeason.has(sid)) groupsBySeason.set(sid, new Set());
+      groupsBySeason.get(sid)!.add(g.group_id as string);
+    }
+
+    seasons = (seasonsData || []).map((s: any) => {
+      const prefs = prefsBySeason.get(s.id);
+      return {
         id: s.id,
         name: s.name,
         season_type: s.season_type,
@@ -66,14 +134,14 @@ export default async function SeasonsPage() {
         notes: s.notes,
         created_at: s.created_at,
         club_id: s.club_id,
-        total_preferences: 0,
-        submitted_preferences: 0,
-        planned_entries: 0,
-        open_conflicts: 0,
-        trainers_count: 0,
-        groups_covered: 0,
-      })) as typeof seasons;
-    }
+        total_preferences: prefs?.total ?? 0,
+        submitted_preferences: prefs?.submitted ?? 0,
+        planned_entries: entriesBySeason.get(s.id) ?? 0,
+        open_conflicts: conflictsBySeason.get(s.id) ?? 0,
+        trainers_count: 0, // needs trainer_id aggregation on entries
+        groups_covered: groupsBySeason.get(s.id)?.size ?? 0,
+      };
+    }) as typeof seasons;
   } catch (err) {
     console.error('[SeasonsPage] Unexpected error:', err);
   }
