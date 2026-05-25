@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,6 +134,8 @@ export default function AdminShopPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
+  const [dragOver, setDragOver] = useState(false);
+  const dragCounter = useRef(0);
 
   // ── Order state ──
   const [orders, setOrders] = useState<ShopOrder[]>([]);
@@ -210,6 +212,11 @@ export default function AdminShopPage() {
     } finally {
       setUpdatingOrderId(null);
     }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!confirm('Möchtest du diese Bestellung wirklich stornieren? Bei bereits bezahlten Bestellungen muss die Rückerstattung manuell über das Stripe-Dashboard erfolgen.')) return;
+    await handleAdvanceStatus(orderId, 'cancelled');
   };
 
   // ── Product actions ──
@@ -486,7 +493,6 @@ export default function AdminShopPage() {
                         id="prod-category"
                         value={form.category}
                         onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                        className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-light/50"
                       >
                         {CATEGORIES.map((c) => (
                           <option key={c} value={c}>{c}</option>
@@ -553,7 +559,40 @@ export default function AdminShopPage() {
                           {/* Drop zone */}
                           <label
                             htmlFor="prod-image-upload"
-                            className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl cursor-pointer hover:border-brand-light/40 transition-colors bg-gray-50/50 dark:bg-white/[0.02]"
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onDragEnter={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dragCounter.current++;
+                              setDragOver(true);
+                            }}
+                            onDragLeave={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dragCounter.current--;
+                              if (dragCounter.current <= 0) {
+                                dragCounter.current = 0;
+                                setDragOver(false);
+                              }
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dragCounter.current = 0;
+                              setDragOver(false);
+                              const file = e.dataTransfer.files?.[0];
+                              if (file) {
+                                handleImageSelected(file);
+                              }
+                            }}
+                            className={`flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
+                              dragOver
+                                ? 'border-brand-light bg-brand-light/5 scale-[1.02] shadow-lg shadow-brand-light/10'
+                                : 'border-gray-200 dark:border-white/10 hover:border-brand-light/40 bg-gray-50/50 dark:bg-white/[0.02]'
+                            }`}
                           >
                             {imagePreview ? (
                               <div className="relative w-full max-w-[200px] aspect-square rounded-lg overflow-hidden">
@@ -570,7 +609,7 @@ export default function AdminShopPage() {
                                   <ImagePlus className="h-6 w-6 text-gray-400" />
                                 </div>                <div className="text-center">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Bild auswählen
+                    Bild auswählen oder hier ablegen
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
                     JPG, PNG, WebP, AVIF · max. 5 MB
@@ -938,24 +977,52 @@ export default function AdminShopPage() {
                             </td>
                             <td className="py-3 px-2 text-right">
                               {nextAction && order.payment_status === 'paid' ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 text-xs gap-1 border-brand-light/30 text-brand-light hover:bg-brand-light/5"
-                                  disabled={updatingOrderId === order.id}
-                                  onClick={() => handleAdvanceStatus(order.id, nextAction.next)}
-                                >
-                                  {updatingOrderId === order.id ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <nextAction.icon className="h-3 w-3" />
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs gap-1 border-brand-light/30 text-brand-light hover:bg-brand-light/5"
+                                    disabled={updatingOrderId === order.id}
+                                    onClick={() => handleAdvanceStatus(order.id, nextAction.next)}
+                                  >
+                                    {updatingOrderId === order.id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      <nextAction.icon className="h-3 w-3" />
+                                    )}
+                                    {nextAction.label}
+                                  </Button>
+                                  {order.status === 'pending' && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                      disabled={updatingOrderId === order.id}
+                                      onClick={() => handleCancelOrder(order.id)}
+                                      title="Stornieren"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
                                   )}
-                                  {nextAction.label}
-                                </Button>
+                                </div>
                               ) : order.status === 'shipped' ? (
                                 <span className="text-[11px] text-gray-400 italic">Erledigt</span>
+                              ) : order.status === 'cancelled' ? (
+                                <span className="text-[11px] text-red-400 italic">Storniert</span>
                               ) : order.payment_status !== 'paid' ? (
-                                <span className="text-[11px] text-gray-400 italic">Warte auf Zahlung</span>
+                                <div className="flex items-center justify-end gap-1">
+                                  <span className="text-[11px] text-gray-400 italic">Warte auf Zahlung</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    disabled={updatingOrderId === order.id}
+                                    onClick={() => handleCancelOrder(order.id)}
+                                    title="Stornieren"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               ) : null}
                             </td>
                           </tr>

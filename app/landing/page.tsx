@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 import { analytics } from '@/lib/analytics';
@@ -360,6 +361,9 @@ export default function LandingPage() {
                 </span>
               </Link>
               <div className="hidden md:flex md:items-center md:gap-3">
+                <ThemeToggle
+                  className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                />
                 <Link href="/login">
                   <Button
                     size="md"

@@ -626,7 +626,7 @@ export const seasonPlanEntries = pgTable(
       .notNull()
       .references(() => trainers.id, { onDelete: 'restrict' }),
     court_id: uuid('court_id').references(() => courts.id, { onDelete: 'set null' }),
-    group_id: uuid('group_id').references(() => groups.id, { onDelete: 'cascade' }),
+    group_id: uuid('group_id').references(() => trainingGroups.id, { onDelete: 'cascade' }),
 
     // Timing (recurring weekly pattern)
     day_of_week: integer('day_of_week').notNull(),
@@ -830,9 +830,9 @@ export const seasonPlanEntriesRelations = relations(seasonPlanEntries, ({ one })
     fields: [seasonPlanEntries.court_id],
     references: [courts.id],
   }),
-  group: one(groups, {
+  group: one(trainingGroups, {
     fields: [seasonPlanEntries.group_id],
-    references: [groups.id],
+    references: [trainingGroups.id],
   }),
   publishedSession: one(sessions, {
     fields: [seasonPlanEntries.published_session_id],

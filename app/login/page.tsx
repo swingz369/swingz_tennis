@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Trophy, Sparkles, ArrowRight, Eye, EyeOff, Shield, CheckCircle2 } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 
@@ -71,6 +72,10 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 flex flex-col justify-between p-16 text-white">
+          {/* Theme Toggle — top right */}
+          <div className="absolute top-6 right-6">
+            <ThemeToggle className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10" />
+          </div>
           <div>
             <div className="flex items-center gap-3 mb-12 group">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
@@ -124,6 +129,10 @@ export default function LoginPage() {
 
       {/* ── Right: Login Form ── */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-white dark:bg-gray-900 relative">
+        {/* Theme Toggle — always visible (mobile + desktop) */}
+        <div className="absolute top-4 right-4 z-10">
+          <ThemeToggle className="h-9 w-9 rounded-full" />
+        </div>
         <div className="absolute inset-0 bg-grid opacity-[0.15]" />
 
         <div className="relative w-full max-w-md animate-fade-in-up">

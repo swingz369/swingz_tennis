@@ -8,7 +8,7 @@ import {
   seasonPlanEntries,
   trainers,
   courts,
-  groups,
+  trainingGroups,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq } from 'drizzle-orm';
 
@@ -35,47 +35,72 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
-  return withApiAuth(request, async () => {
+  return withApiAuth(request, async (_auth) => {
     try {
       const { id: seasonId } = await context.params;
       const db = getDb();
 
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+      // 1) Season lookup
+      let season;
+      try {
+        [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
+      } catch (err) {
+        console.error('plan-grid: season query failed:', err);
+        return NextResponse.json({ error: 'Database error loading season' }, { status: 500 });
+      }
       if (!season) {
         return NextResponse.json({ error: 'Season not found' }, { status: 404 });
       }
 
-      // Get all active groups for this club
-      const allGroups = await db
-        .select()
-        .from(groups)
-        .where(and(eq(groups.club_id, season.club_id), eq(groups.is_active, true)));
+      // 2) Training groups for this club (the FK season_plan_entries.group_id → training_groups.id)
+      let allGroups;
+      try {
+        allGroups = await db
+          .select()
+          .from(trainingGroups)
+          .where(and(eq(trainingGroups.club_id, season.club_id), eq(trainingGroups.is_active, true)));
+      } catch (err) {
+        console.error('plan-grid: trainingGroups query failed:', err);
+        return NextResponse.json({ error: 'Database error loading groups' }, { status: 500 });
+      }
 
       const colorMap = new Map<string, string>();
       allGroups.forEach((g, i) => {
         colorMap.set(g.id, GROUP_COLORS[i % GROUP_COLORS.length]);
       });
 
-      // Get all courts for this club
-      const clubCourts = await db
-        .select({ id: courts.id, name: courts.name })
-        .from(courts)
-        .where(eq(courts.club_id, season.club_id));
+      // 3) Courts for this club
+      let clubCourts;
+      try {
+        clubCourts = await db
+          .select({ id: courts.id, name: courts.name })
+          .from(courts)
+          .where(eq(courts.club_id, season.club_id));
+      } catch (err) {
+        console.error('plan-grid: courts query failed:', err);
+        return NextResponse.json({ error: 'Database error loading courts' }, { status: 500 });
+      }
 
-      // Get plan entries with details
-      const entries = await db
-        .select({
-          entry: seasonPlanEntries,
-          trainer_name: trainers.name,
-          court_name: courts.name,
-          group_name: groups.name,
-        })
-        .from(seasonPlanEntries)
-        .leftJoin(trainers, eq(seasonPlanEntries.trainer_id, trainers.id))
-        .leftJoin(courts, eq(seasonPlanEntries.court_id, courts.id))
-        .leftJoin(groups, eq(seasonPlanEntries.group_id, groups.id))
-        .where(eq(seasonPlanEntries.season_id, seasonId))
-        .orderBy(seasonPlanEntries.day_of_week, seasonPlanEntries.start_time);
+      // 4) Plan entries with training-group + trainer + court details
+      let entries;
+      try {
+        entries = await db
+          .select({
+            entry: seasonPlanEntries,
+            trainer_name: trainers.name,
+            court_name: courts.name,
+            group_name: trainingGroups.name,
+          })
+          .from(seasonPlanEntries)
+          .leftJoin(trainers, eq(seasonPlanEntries.trainer_id, trainers.id))
+          .leftJoin(courts, eq(seasonPlanEntries.court_id, courts.id))
+          .leftJoin(trainingGroups, eq(seasonPlanEntries.group_id, trainingGroups.id))
+          .where(eq(seasonPlanEntries.season_id, seasonId))
+          .orderBy(seasonPlanEntries.day_of_week, seasonPlanEntries.start_time);
+      } catch (err) {
+        console.error('plan-grid: entries query failed:', err);
+        return NextResponse.json({ error: 'Database error loading plan entries' }, { status: 500 });
+      }
 
       const slots = entries.map((row) => ({
         id: row.entry.id,

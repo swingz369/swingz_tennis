@@ -18,7 +18,9 @@ import {
   BookOpen,
   CreditCard,
   Clock,
+  ShoppingBag,
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface MobileBottomNavProps {
   roles?: string[];
@@ -67,13 +69,14 @@ export function MobileBottomNav({
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else {
-    // Member: 6 tabs like TSOW
+    // Member: 7 tabs
     navItems = [
       { name: 'Home', href: '/member', icon: Home },
       { name: 'Buchen', href: '/bookings', icon: Calendar },
       { name: 'Training', href: '/training-schedule', icon: BookOpen },
       { name: 'Gamification', href: '/gamification', icon: GraduationCap },
       { name: 'Abrechnung', href: '/billing', icon: CreditCard },
+      { name: 'Bestellungen', href: '/meine-bestellungen', icon: ShoppingBag },
       { name: 'Profil', href: '/profile', icon: User },
     ];
   }
@@ -89,6 +92,13 @@ export function MobileBottomNav({
       aria-label="Navigation"
     >
       <div className="relative flex justify-around items-center h-16 px-2">
+        {/* Theme Toggle — absolutely positioned so it doesn't affect justify-around distribution */}
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
+          <ThemeToggle
+            iconSize={16}
+            className="h-8 w-8 rounded-lg"
+          />
+        </div>
         {/* Active indicator background */}
         {navItems.map((item) => {
           const isActive = isActivePath(pathname, item.href);

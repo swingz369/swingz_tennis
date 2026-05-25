@@ -1,6 +1,33 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
+
+const STORAGE_BUCKET = 'swingz-files';
+
+/**
+ * Extract the storage path from a Supabase Storage public URL.
+ * Returns null if the URL is not a Supabase Storage URL.
+ */
+function extractStoragePath(url: string): string | null {
+  try {
+    // Supabase storage URLs look like:
+    // https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
+    const parsed = new URL(url);
+    const publicPrefix = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+    if (parsed.pathname.startsWith(publicPrefix)) {
+      return parsed.pathname.slice(publicPrefix.length);
+    }
+    // Alternative: /storage/v1/object/sign/<bucket>/<path>
+    const signPrefix = `/storage/v1/object/sign/${STORAGE_BUCKET}/`;
+    if (parsed.pathname.startsWith(signPrefix)) {
+      return parsed.pathname.slice(signPrefix.length).split('?')[0];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * GET /api/admin/shop/products
@@ -172,10 +199,34 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
+    // Fetch the product before deleting (to get image_url for storage cleanup)
+    const { data: existingProduct } = await sb
+      .from('shop_products')
+      .select('image_url')
+      .eq('id', id)
+      .maybeSingle();
+
     const { error } = await sb.from('shop_products').delete().eq('id', id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Clean up Storage file if the product had a Supabase Storage image
+    if (existingProduct?.image_url) {
+      const storagePath = extractStoragePath(existingProduct.image_url);
+      if (storagePath) {
+        try {
+          const serviceClient = createServiceClient();
+          await serviceClient.storage.from(STORAGE_BUCKET).remove([storagePath]);
+        } catch (cleanupErr) {
+          // Non-critical: log but don't fail the deletion
+          console.warn(
+            `[Shop Delete] Could not delete storage file for product ${id}:`,
+            cleanupErr
+          );
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

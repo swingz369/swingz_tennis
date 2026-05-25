@@ -9,8 +9,8 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending: ['confirmed'],
-  confirmed: ['shipped'],
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['shipped', 'cancelled'],
 };
 
 const STATUS_LABELS: Record<string, string> = {

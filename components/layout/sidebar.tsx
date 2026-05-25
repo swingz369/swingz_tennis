@@ -9,6 +9,7 @@ import { useUserRole } from '@/hooks/use-user-role';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { NavigationBadge } from './navigation-badge';
 import { AdminSection } from './admin-section';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   Home,
   Users,
@@ -606,6 +607,15 @@ export function Sidebar({
             </>
           )}
         </nav>
+
+        {/* Theme Toggle — at the bottom of the sidebar */}
+        <div className="mt-6 px-3 pb-4">
+          <div
+            className="border-t border-gray-100/50 dark:border-white/[0.04] pt-4"
+            role="separator"
+          />
+          <ThemeToggle showLabel className="w-full justify-start px-3" />
+        </div>
       </ScrollArea>
     </aside>
   );

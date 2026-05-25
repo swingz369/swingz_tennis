@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   Menu,
   User,
@@ -14,8 +14,6 @@ import {
   Settings,
   Trophy,
   ChevronDown,
-  Moon,
-  Sun,
   LayoutDashboard,
 } from 'lucide-react';
 import { GlobalSearch } from '@/components/layout/global-search';
@@ -36,14 +34,8 @@ interface HeaderProps {
 export function Header({ user, onMenuClick }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme } = useTheme();
   const router = useRouter();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Close user menu on outside click
   useEffect(() => {
@@ -117,22 +109,8 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
         {/* Right actions */}
         <div className="flex items-center gap-1.5">
-          {/* Theme Toggle — animated sun/moon swap */}
-          {mounted && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              aria-label={
-                theme === 'dark' ? 'Zum hellen Design wechseln' : 'Zum dunklen Design wechseln'
-              }
-            >
-              <Sun className="h-[18px] w-[18px] absolute transition-all duration-500 rotate-0 scale-100 dark:-rotate-90 dark:scale-0" />
-              <Moon className="h-[18px] w-[18px] absolute transition-all duration-500 rotate-90 scale-0 dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Theme wechseln</span>
-            </Button>
-          )}
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Notifications */}
           {user?.id && <NotificationBell userId={user.id} />}

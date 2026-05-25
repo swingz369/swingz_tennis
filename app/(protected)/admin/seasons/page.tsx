@@ -44,9 +44,7 @@ export default async function SeasonsPage() {
       .from('seasons')
       .select(
         'id, name, season_type, year, start_date, end_date, planning_status, is_active, ' +
-          'preferences_deadline, description, notes, created_at, club_id, ' +
-          'total_preferences, submitted_preferences, planned_entries, ' +
-          'open_conflicts, trainers_count, groups_covered'
+          'preferences_deadline, description, notes, created_at, club_id'
       )
       .eq('club_id', clubId)
       .order('created_at', { ascending: false });
@@ -68,12 +66,12 @@ export default async function SeasonsPage() {
         notes: s.notes,
         created_at: s.created_at,
         club_id: s.club_id,
-        total_preferences: Number(s.total_preferences || 0),
-        submitted_preferences: Number(s.submitted_preferences || 0),
-        planned_entries: Number(s.planned_entries || 0),
-        open_conflicts: Number(s.open_conflicts || 0),
-        trainers_count: Number(s.trainers_count || 0),
-        groups_covered: Number(s.groups_covered || 0),
+        total_preferences: 0,
+        submitted_preferences: 0,
+        planned_entries: 0,
+        open_conflicts: 0,
+        trainers_count: 0,
+        groups_covered: 0,
       })) as typeof seasons;
     }
   } catch (err) {

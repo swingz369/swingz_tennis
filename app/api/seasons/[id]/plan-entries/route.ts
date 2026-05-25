@@ -9,7 +9,7 @@ import {
   seasonPlanEntries,
   trainers,
   courts,
-  groups,
+  trainingGroups,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql, inArray } from 'drizzle-orm';
 import type { CreatePlanEntryRequest } from '@/lib/types/season-planning';
@@ -87,12 +87,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
           entry: seasonPlanEntries,
           trainer_name: trainers.name,
           court_name: courts.name,
-          group_name: groups.name,
+          group_name: trainingGroups.name,
         })
         .from(seasonPlanEntries)
         .leftJoin(trainers, eq(seasonPlanEntries.trainer_id, trainers.id))
         .leftJoin(courts, eq(seasonPlanEntries.court_id, courts.id))
-        .leftJoin(groups, eq(seasonPlanEntries.group_id, groups.id))
+        .leftJoin(trainingGroups, eq(seasonPlanEntries.group_id, trainingGroups.id))
         .where(and(...conditions))
         .orderBy(seasonPlanEntries.day_of_week, seasonPlanEntries.start_time);
 
