@@ -119,3 +119,7 @@ tramp
 
 
 \n# Build artifacts\n*.tsbuildinfo
+
+# Auto-generated
+next-env.d.ts
+tsconfig.tsbuildinfo
