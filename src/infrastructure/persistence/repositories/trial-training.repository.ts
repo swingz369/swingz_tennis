@@ -1,6 +1,6 @@
 import { eq, and, desc, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { trialTrainings } from '../schema';
+import { trialTrainings, trainers, courts } from '../schema';
 import type { ITrialTrainingRepository } from '@/domain/repositories/trial-training-repository.interface';
 import type {
   TrialTraining,
@@ -282,28 +282,58 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     const now = new Date();
 
     try {
-      const result = await db
-        .insert(trialTrainings)
-        .values({
-          club_id: clubId,
-          participant_first_name: input.participant.firstName,
-          participant_last_name: input.participant.lastName,
-          participant_email: input.participant.email,
-          participant_phone: input.participant.phone,
-          participant_date_of_birth: new Date(input.participant.dateOfBirth),
-          scheduled_date: new Date(input.scheduledDate),
-          scheduled_time: input.scheduledTime,
-          duration: input.duration,
-          trainer_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
-          trainer_name: 'Noch nicht zugewiesen',
-          court_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
-          court_name: 'Noch nicht zugewiesen',
-          status: 'requested',
-          notes: input.notes,
-          created_at: now,
-          updated_at: now,
-        })
-        .returning();
+      const result = await db.transaction(async (tx) => {
+        // Ensure placeholder trainer record exists for FK constraint
+        await tx
+          .insert(trainers)
+          .values({
+            id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
+            email: 'unassigned@placeholder.local',
+            name: 'Noch nicht zugewiesen',
+            specialties: [],
+            max_hours_per_week: 0,
+            is_active: false,
+            created_at: now,
+            updated_at: now,
+          })
+          .onConflictDoNothing();
+
+        // Ensure placeholder court record exists for FK constraint
+        await tx
+          .insert(courts)
+          .values({
+            id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
+            club_id: clubId,
+            name: 'Noch nicht zugewiesen',
+            surface: 'hard',
+            is_active: false,
+            created_at: now,
+          })
+          .onConflictDoNothing();
+
+        return tx
+          .insert(trialTrainings)
+          .values({
+            club_id: clubId,
+            participant_first_name: input.participant.firstName,
+            participant_last_name: input.participant.lastName,
+            participant_email: input.participant.email,
+            participant_phone: input.participant.phone,
+            participant_date_of_birth: new Date(input.participant.dateOfBirth),
+            scheduled_date: new Date(input.scheduledDate),
+            scheduled_time: input.scheduledTime,
+            duration: input.duration,
+            trainer_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
+            trainer_name: 'Noch nicht zugewiesen',
+            court_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
+            court_name: 'Noch nicht zugewiesen',
+            status: 'requested',
+            notes: input.notes,
+            created_at: now,
+            updated_at: now,
+          })
+          .returning();
+      });
 
       return this.mapToDomain(result[0]);
     } catch (error) {

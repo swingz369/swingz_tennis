@@ -113,7 +113,7 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               `script-src ${scriptSrc}`,
-              "style-src 'self' 'unsafe-inline' https://cdn.fontshare.com https://fonts.googleapis.com",
+              "style-src 'self' 'unsafe-inline' https://cdn.fontshare.com https://api.fontshare.com https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com",
               "connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co https://api.github.com https://*.sentry.io",
