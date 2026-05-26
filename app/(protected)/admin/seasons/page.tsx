@@ -60,6 +60,16 @@ export default async function SeasonsPage() {
     let entriesData: any[] = [];
     let conflictsData: any[] = [];
     let groupsData: any[] = [];
+    let trainerCount = 0;
+
+    // Count trainers for this club
+    const { count: trainersInClub } = await supabase
+      .from('user_club_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('club_id', clubId)
+      .eq('role', 'trainer')
+      .eq('is_active', true);
+    trainerCount = trainersInClub ?? 0;
 
     if (seasonIds.length > 0) {
       const [prefsRes, entriesRes, conflictsRes, groupsRes] = await Promise.all([
@@ -138,7 +148,7 @@ export default async function SeasonsPage() {
         submitted_preferences: prefs?.submitted ?? 0,
         planned_entries: entriesBySeason.get(s.id) ?? 0,
         open_conflicts: conflictsBySeason.get(s.id) ?? 0,
-        trainers_count: 0, // needs trainer_id aggregation on entries
+        trainers_count: trainerCount,
         groups_covered: groupsBySeason.get(s.id)?.size ?? 0,
       };
     }) as typeof seasons;

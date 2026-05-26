@@ -38,15 +38,63 @@ export async function GET(request: NextRequest, context: RouteContext) {
         }
       }
 
+      // Aggregate real stats from related tables
+      const seasonId = season.id;
+      const clubId = season.club_id;
+
+      const [
+        { count: totalPrefs },
+        { count: submittedPrefs },
+        { count: plannedEntries },
+        { count: openConflicts },
+        { count: trainerCount },
+        { data: groupsData },
+      ] = await Promise.all([
+        supabase
+          .from('user_training_preferences')
+          .select('id', { count: 'exact', head: true })
+          .eq('season_id', seasonId),
+        supabase
+          .from('user_training_preferences')
+          .select('id', { count: 'exact', head: true })
+          .eq('season_id', seasonId)
+          .eq('is_submitted', true),
+        supabase
+          .from('season_plan_entries')
+          .select('id', { count: 'exact', head: true })
+          .eq('season_id', seasonId),
+        supabase
+          .from('planning_conflicts')
+          .select('id', { count: 'exact', head: true })
+          .eq('season_id', seasonId)
+          .eq('status', 'open'),
+        clubId
+          ? supabase
+              .from('user_club_memberships')
+              .select('id', { count: 'exact', head: true })
+              .eq('club_id', clubId)
+              .eq('role', 'trainer')
+              .eq('is_active', true)
+          : Promise.resolve({ count: 0 }),
+        supabase
+          .from('season_plan_entries')
+          .select('group_id')
+          .eq('season_id', seasonId)
+          .not('group_id', 'is', null),
+      ]);
+
+      const groupsCovered = new Set((groupsData ?? []).map((g: any) => g.group_id).filter(Boolean))
+        .size;
+
       return NextResponse.json({
         season: {
           ...season,
-          submitted_preferences: 0,
-          total_preferences: 0,
-          planned_entries: 0,
-          open_conflicts: 0,
-          trainers_count: 0,
-          groups_covered: 0,
+          submitted_preferences: submittedPrefs ?? 0,
+          total_preferences: totalPrefs ?? 0,
+          planned_entries: plannedEntries ?? 0,
+          open_conflicts: openConflicts ?? 0,
+          trainers_count: trainerCount ?? 0,
+          groups_covered: groupsCovered,
         },
       });
     } catch (error) {

@@ -375,6 +375,10 @@ export class SeasonClusteringEngine {
     });
 
     // 2. Get active trainers from the club who haven't submitted preferences
+    //    These trainers get default weekday 8-22 availability so they can still
+    //    be assigned by the clustering algorithm.
+    const defaultAvailability = this.buildDefaultAvailability();
+
     const clubTrainers = await db
       .select({ trainer: trainers })
       .from(trainers)
@@ -389,7 +393,7 @@ export class SeasonClusteringEngine {
         specialties: (trainer.specialties as string[]) || [],
         maxHoursPerWeek: trainer.max_hours_per_week || 30,
         utilizationPct: this.config.trainerUtilizationMaxPct,
-        availability: {} as WeeklyAvailability,
+        availability: defaultAvailability,
         maxSessionsPerWeek: Math.floor((trainer.max_hours_per_week || 30) / 1.5),
         preferredCourtIds: [],
         canTeachGroups: (trainer.specialties as string[]) || [],
@@ -1078,6 +1082,24 @@ export class SeasonClusteringEngine {
     }
 
     return bestResult;
+  }
+
+  /**
+   * Build default weekday availability (Mon-Fri 08:00-22:00) for trainers
+   * who haven't submitted explicit preferences. This ensures they can still
+   * be assigned to time slots by the clustering algorithm.
+   */
+  private buildDefaultAvailability(): WeeklyAvailability {
+    const defaultSlot = { start: '08:00', end: '22:00' };
+    return {
+      monday: [defaultSlot],
+      tuesday: [defaultSlot],
+      wednesday: [defaultSlot],
+      thursday: [defaultSlot],
+      friday: [defaultSlot],
+      saturday: [],
+      sunday: [],
+    };
   }
 
   private timeSlotsOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
