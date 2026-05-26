@@ -10,6 +10,7 @@ import {
   seasons,
   users,
   trainers as trainersTable,
+  trainerClubs,
   userTrainingPreferences,
   seasonPlanEntries,
 } from '@/src/infrastructure/persistence/schema';
@@ -53,6 +54,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
           )
         );
 
+      // Get ALL active club trainers (to cover trainers without submitted preferences)
+      const clubTrainers = await db
+        .select({ trainer: trainersTable })
+        .from(trainersTable)
+        .innerJoin(trainerClubs, eq(trainersTable.id, trainerClubs.trainer_id))
+        .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainersTable.is_active, true)));
+
       // Get existing plan entries for utilization calculation
       const existingEntries = await db
         .select()
@@ -73,8 +81,24 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const maxUtilizationPct = config?.trainer_utilization_max_pct || 80;
       const burnoutWarnings: string[] = [];
 
-      const trainerSummaries = trainerPrefs.map((tp) => {
-        const maxHours = tp.trainer?.max_hours_per_week || 30;
+      const trainerSummaries: Array<{
+        trainerId: string;
+        trainerName: string;
+        maxHoursPerWeek: number;
+        maxUtilizationPct: number;
+        effectiveMaxHours: number;
+        currentAssignedHours: number;
+        availableSlots: number;
+        utilizationStatus: 'under' | 'optimal' | 'near_limit' | 'over';
+      }> = [];
+      const processedTrainerIds = new Set<string>();
+
+      // Process submitted trainers first
+      trainerPrefs.forEach((tp) => {
+        if (!tp.trainer) return;
+        processedTrainerIds.add(tp.trainer.id);
+
+        const maxHours = tp.trainer.max_hours_per_week || 30;
         const effectiveMaxHours = maxHours * (maxUtilizationPct / 100);
         const sessionsAssigned = existingEntries.filter(
           (e) => e.trainer_id === tp.pref.user_id
@@ -95,7 +119,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           );
         }
 
-        return {
+        trainerSummaries.push({
           trainerId: tp.pref.user_id,
           trainerName: tp.user_name || tp.trainer?.name || 'Unbekannt',
           maxHoursPerWeek: maxHours,
@@ -104,8 +128,45 @@ export async function GET(request: NextRequest, context: RouteContext) {
           currentAssignedHours: hoursAssigned,
           availableSlots,
           utilizationStatus,
-        };
+        });
       });
+
+      // Add unsubmitted trainers from club
+      for (const { trainer } of clubTrainers) {
+        if (processedTrainerIds.has(trainer.id)) continue;
+        processedTrainerIds.add(trainer.id);
+
+        const maxHours = trainer.max_hours_per_week || 30;
+        const effectiveMaxHours = maxHours * (maxUtilizationPct / 100);
+        const trainerKey = trainer.user_id || trainer.id;
+        const sessionsAssigned = existingEntries.filter((e) => e.trainer_id === trainerKey).length;
+        const hoursAssigned = sessionsAssigned * 1.5;
+        const availableSlots = Math.max(0, Math.floor(effectiveMaxHours / 1.5) - sessionsAssigned);
+
+        let utilizationStatus: 'under' | 'optimal' | 'near_limit' | 'over';
+        const pctUsed = effectiveMaxHours > 0 ? (hoursAssigned / effectiveMaxHours) * 100 : 0;
+        if (pctUsed > 100) utilizationStatus = 'over';
+        else if (pctUsed > 80) utilizationStatus = 'near_limit';
+        else if (pctUsed < 30) utilizationStatus = 'under';
+        else utilizationStatus = 'optimal';
+
+        if (utilizationStatus === 'over') {
+          burnoutWarnings.push(
+            `${trainer.name}: ${hoursAssigned.toFixed(1)}h von max ${effectiveMaxHours.toFixed(1)}h (${pctUsed.toFixed(0)}%) – Burnout-Risiko!`
+          );
+        }
+
+        trainerSummaries.push({
+          trainerId: trainerKey,
+          trainerName: trainer.name,
+          maxHoursPerWeek: maxHours,
+          maxUtilizationPct,
+          effectiveMaxHours,
+          currentAssignedHours: hoursAssigned,
+          availableSlots,
+          utilizationStatus,
+        });
+      }
 
       const overallUtilization =
         trainerSummaries.length > 0

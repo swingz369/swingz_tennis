@@ -11,6 +11,8 @@ import {
   seasonPlanningHistory,
   courts,
   groups,
+  trainers,
+  trainerClubs,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import type { InferSelectModel } from 'drizzle-orm';
@@ -96,12 +98,21 @@ export class AutoPlanningService {
         )
       );
 
+    // Fetch all active trainers for the club (including those without submitted prefs)
+    const clubTrainers = await db
+      .select({ trainer: trainers })
+      .from(trainers)
+      .innerJoin(trainerClubs, eq(trainers.id, trainerClubs.trainer_id))
+      .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainers.is_active, true)));
+
     // Separate trainers and members
     const trainerPrefs: TrainerPreference[] = [];
     const memberPrefs: MemberPreference[] = [];
+    const submittedTrainerIds = new Set<string>();
 
     for (const { pref, user_name } of allPreferences) {
       if (pref.user_role === 'trainer') {
+        submittedTrainerIds.add(pref.user_id);
         trainerPrefs.push({
           trainer_id: pref.user_id,
           trainer_name: user_name || 'Unknown',
@@ -122,6 +133,20 @@ export class AutoPlanningService {
           priority: pref.priority,
         });
       }
+    }
+
+    // Add unsubmitted trainers from club trainers table
+    for (const { trainer } of clubTrainers) {
+      if (trainer.user_id && submittedTrainerIds.has(trainer.user_id)) continue;
+      trainerPrefs.push({
+        trainer_id: trainer.user_id || trainer.id,
+        trainer_name: trainer.name || 'Unknown',
+        weekly_availability: {} as WeeklyAvailability,
+        max_sessions_per_week: Math.floor(trainer.max_hours_per_week / 1.5),
+        can_teach_groups: (trainer.specialties as string[]) || [],
+        preferred_court_ids: [],
+        priority: 5,
+      });
     }
 
     // 3. Fetch available courts
@@ -221,6 +246,37 @@ export class AutoPlanningService {
       return { ...result, aiEnhanced: false, modelUsed: 'none' };
     }
 
+    // Fetch all active trainers for the club (including those without submitted prefs)
+    const clubTrainers = await db
+      .select({ trainer: trainers })
+      .from(trainers)
+      .innerJoin(trainerClubs, eq(trainers.id, trainerClubs.trainer_id))
+      .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainers.is_active, true)));
+
+    const submittedTrainerIds = new Set<string>();
+    const aiTrainers = allPreferences
+      .filter(({ pref }) => pref.user_role === 'trainer')
+      .map(({ pref, user_name }) => {
+        submittedTrainerIds.add(pref.user_id);
+        return {
+          id: pref.user_id,
+          name: user_name || 'Unknown',
+          specialization: pref.can_teach_groups?.[0] || 'general',
+          availability: this.flattenAvailability(pref.weekly_availability as WeeklyAvailability),
+        };
+      });
+
+    // Add unsubmitted trainers from club trainers table
+    for (const { trainer } of clubTrainers) {
+      if (trainer.user_id && submittedTrainerIds.has(trainer.user_id)) continue;
+      aiTrainers.push({
+        id: trainer.user_id || trainer.id,
+        name: trainer.name || 'Unknown',
+        specialization: trainer.specialties?.[0] || 'general',
+        availability: [],
+      });
+    }
+
     const planningData = {
       members: allPreferences
         .filter(({ pref }) => pref.user_role !== 'trainer')
@@ -230,14 +286,7 @@ export class AutoPlanningService {
           skillLevel: pref.preferred_level || 'intermediate',
           availability: this.flattenAvailability(pref.weekly_availability as WeeklyAvailability),
         })),
-      trainers: allPreferences
-        .filter(({ pref }) => pref.user_role === 'trainer')
-        .map(({ pref, user_name }) => ({
-          id: pref.user_id,
-          name: user_name || 'Unknown',
-          specialization: pref.can_teach_groups?.[0] || 'general',
-          availability: this.flattenAvailability(pref.weekly_availability as WeeklyAvailability),
-        })),
+      trainers: aiTrainers,
       courts: availableCourts.map((c) => ({
         id: c.id,
         name: c.name || `Court ${c.id.slice(0, 8)}`,

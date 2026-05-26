@@ -12,6 +12,7 @@ import {
   courts,
   seasonPlanEntries,
   userClubMemberships,
+  trainerClubs,
 } from '@/src/infrastructure/persistence/schema';
 import {
   seasonWaitlists,
@@ -337,6 +338,7 @@ export class SeasonClusteringEngine {
   }
 
   private async loadTrainers(): Promise<TrainerWithDetails[]> {
+    // 1. Get trainers who submitted preferences
     const prefs = await db
       .select({
         pref: userTrainingPreferences,
@@ -354,18 +356,48 @@ export class SeasonClusteringEngine {
         )
       );
 
-    return prefs.map((p) => ({
-      id: p.trainer.id,
-      name: p.trainer_name || p.trainer?.name || 'Unbekannt',
-      specialties: (p.trainer?.specialties as string[]) || [],
-      maxHoursPerWeek: p.trainer?.max_hours_per_week || 30,
-      utilizationPct: this.config.trainerUtilizationMaxPct,
-      availability: p.pref.weekly_availability as WeeklyAvailability,
-      maxSessionsPerWeek: p.pref.max_sessions_per_week || 20,
-      preferredCourtIds: (p.pref.preferred_court_ids as string[]) || [],
-      canTeachGroups: (p.pref.can_teach_groups as string[]) || [],
-      sessionsAssigned: 0,
-    }));
+    const submittedTrainerIds = new Set<string>();
+
+    const loadedTrainers: TrainerWithDetails[] = prefs.map((p) => {
+      submittedTrainerIds.add(p.trainer.id);
+      return {
+        id: p.trainer.id,
+        name: p.trainer_name || p.trainer?.name || 'Unbekannt',
+        specialties: (p.trainer?.specialties as string[]) || [],
+        maxHoursPerWeek: p.trainer?.max_hours_per_week || 30,
+        utilizationPct: this.config.trainerUtilizationMaxPct,
+        availability: p.pref.weekly_availability as WeeklyAvailability,
+        maxSessionsPerWeek: p.pref.max_sessions_per_week || 20,
+        preferredCourtIds: (p.pref.preferred_court_ids as string[]) || [],
+        canTeachGroups: (p.pref.can_teach_groups as string[]) || [],
+        sessionsAssigned: 0,
+      };
+    });
+
+    // 2. Get active trainers from the club who haven't submitted preferences
+    const clubTrainers = await db
+      .select({ trainer: trainers })
+      .from(trainers)
+      .innerJoin(trainerClubs, eq(trainers.id, trainerClubs.trainer_id))
+      .where(and(eq(trainerClubs.club_id, this.clubId), eq(trainers.is_active, true)));
+
+    for (const { trainer } of clubTrainers) {
+      if (submittedTrainerIds.has(trainer.id)) continue;
+      loadedTrainers.push({
+        id: trainer.id,
+        name: trainer.name || 'Unbekannt',
+        specialties: (trainer.specialties as string[]) || [],
+        maxHoursPerWeek: trainer.max_hours_per_week || 30,
+        utilizationPct: this.config.trainerUtilizationMaxPct,
+        availability: {} as WeeklyAvailability,
+        maxSessionsPerWeek: Math.floor((trainer.max_hours_per_week || 30) / 1.5),
+        preferredCourtIds: [],
+        canTeachGroups: (trainer.specialties as string[]) || [],
+        sessionsAssigned: 0,
+      });
+    }
+
+    return loadedTrainers;
   }
 
   private async loadCourts(): Promise<CourtInfo[]> {
