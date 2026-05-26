@@ -44,8 +44,6 @@
   }
 }
 
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@1&display=swap');
-
 :root {
   color-scheme: light;
 
