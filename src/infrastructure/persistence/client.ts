@@ -26,6 +26,7 @@ export function createMockDb(): ReturnType<typeof drizzle> {
     limit: () => emptyArray,
     offset: () => createQuery(),
     forUpdate: () => createQuery(),
+    forShare: () => createQuery(),
     leftJoin: () => createQuery(),
     rightJoin: () => createQuery(),
     innerJoin: () => createQuery(),
