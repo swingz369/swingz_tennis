@@ -13,7 +13,6 @@ import {
   GraduationCap,
   Users,
   BarChart3,
-  Layout,
   Building2,
   BookOpen,
   CreditCard,
@@ -46,7 +45,7 @@ export function MobileBottomNav({
 
   if (isSuperAdmin) {
     navItems = [
-      { name: 'Dashboard', href: '/superadmin', icon: Layout },
+      { name: 'Dashboard', href: '/superadmin', icon: Home },
       { name: 'Vereine', href: '/superadmin/tenants', icon: Building2 },
       { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
       { name: 'Profil', href: '/profile', icon: User },
