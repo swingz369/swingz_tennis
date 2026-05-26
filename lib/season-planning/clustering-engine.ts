@@ -571,7 +571,7 @@ export class SeasonClusteringEngine {
     const adults = sortedMembers.filter((m) => !m.isMinor);
 
     // Assign kids first (usually smaller groups, more attention needed)
-    let groupIndex = await this.assignMembersToGroups(
+    let _groupIndex = await this.assignMembersToGroups(
       kids,
       'kids',
       trainers,
@@ -587,7 +587,7 @@ export class SeasonClusteringEngine {
     );
 
     // Then assign adults
-    groupIndex = await this.assignMembersToGroups(
+    _groupIndex = await this.assignMembersToGroups(
       adults,
       'adult',
       trainers,
@@ -599,7 +599,7 @@ export class SeasonClusteringEngine {
       courtTimeSlotUsage,
       assignments,
       assignedMemberIds,
-      groupIndex
+      _groupIndex
     );
 
     // SECOND PASS: try to place unassigned members (e.g. avoid-conflict victims)

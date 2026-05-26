@@ -116,7 +116,7 @@ export function TrainerAvailabilityPanel() {
 
     fetchTrainers();
     // Re-fetch when season or planning config changes
-  }, [state.seasonId, state.planningConfig.trainerUtilizationMaxPct]);
+  }, [state.seasonId, state.planningConfig.trainerUtilizationMaxPct, dispatch]);
 
   if (loading) {
     return (

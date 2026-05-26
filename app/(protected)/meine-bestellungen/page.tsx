@@ -154,6 +154,14 @@ export default function MeineBestellungenPage() {
                 key={order.id}
                 className="hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => setSelectedOrder(order)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedOrder(order);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between gap-4">
@@ -223,6 +231,11 @@ export default function MeineBestellungenPage() {
           <div
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
             onClick={() => setSelectedOrder(null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setSelectedOrder(null);
+            }}
+            role="button"
+            tabIndex={0}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <Card className="max-w-lg w-full shadow-2xl pointer-events-auto">

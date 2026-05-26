@@ -9,7 +9,7 @@ const compat = new FlatCompat({
   resolvePluginsRelativeTo: __dirname,
 });
 
-export default [
+const eslintConfig = [
   // ═══ Global ignores (migrated from .eslintignore) ═══
   {
     ignores: [
@@ -108,3 +108,5 @@ export default [
     },
   },
 ];
+
+export default eslintConfig;

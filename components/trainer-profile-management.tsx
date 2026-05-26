@@ -139,6 +139,7 @@ export default function TrainerProfileManagement() {
       return;
     }
     loadAvailabilitySlots(selectedTrainer.userId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTrainer?.userId]);
 
   const loadAvailabilitySlots = async (trainerId: string) => {

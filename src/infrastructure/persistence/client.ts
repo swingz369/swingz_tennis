@@ -1,4 +1,4 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
+import type { drizzle } from 'drizzle-orm/postgres-js';
 
 /**
  * createMockDb()
