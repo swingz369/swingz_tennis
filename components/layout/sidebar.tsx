@@ -211,6 +211,7 @@ export function Sidebar({
             { name: 'Saisonplanung', href: '/admin/seasons' },
             { name: 'Trainer & Stunden', href: '/admin/trainers' },
             { name: 'Stundennachweise', href: '/admin/hours-logs' },
+            { name: 'Probetrainings', href: '/admin/trial-training' },
             { name: 'Turniere', href: '/admin/tournaments' },
           ],
         },
