@@ -8,6 +8,7 @@ import type {
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import type { SkillLevel, DayOfWeek, WeeklyAvailability } from '@/lib/types/season-planning';
+import type { WeekInfo as HolidayWeekInfo } from '@/lib/season-planning/holidays';
 
 // ============================================
 // NEW DB TABLE TYPES
@@ -65,6 +66,9 @@ export interface WizardState {
     preferHistoricGroups: boolean;
     avoidHighFailureSlots: boolean;
     slotFailureThreshold: number;
+    slotDurationMinutes: number;
+    kidsGroupMaxSize: number;
+    kidsGroupMinSize: number;
     // Auto-Plan options (merged from auto-plan page)
     maxIterations: number;
     optimizationGoals: string[];
@@ -77,6 +81,8 @@ export interface WizardState {
   clusteringResult: ClusteringResult | null;
   scheduleSlots: ScheduleSlot[];
   aiAnalysisText: string | null;
+  holidayWeeks: HolidayWeekInfo[];
+  bundeslandCode: string | null;
 
   // Schritt 3: Abschließen
   conflicts: ConflictDetectionResult[];
@@ -100,8 +106,10 @@ export interface MemberWithDetails {
   promotedLevel: SkillLevel | null; // adjusted level for clustering
   availability: WeeklyAvailability;
   wishPartnerIds: string[];
+  avoidMemberIds: string[];
   selfAssessedLevel: SkillLevel | null;
   previousGroupId: string | null;
+  isMinor: boolean;
 }
 
 export interface TrainerWithDetails {
@@ -231,7 +239,8 @@ export type ConflictTypeCode =
   | 'court_unavailable'
   | 'trainer_over_limit'
   | 'high_failure_rate_slot'
-  | 'large_niveau_span';
+  | 'large_niveau_span'
+  | 'avoid_partner_conflict';
 
 export interface ConflictDetectionResult {
   id: string;
@@ -341,16 +350,19 @@ export interface TrainerAvailabilitySummary {
 export interface RunClusteringRequest {
   seasonId: string;
   config?: Partial<{
-    maxNiveauSpanBeginner: number;
-    maxNiveauSpanAdvanced: number;
-    trainerUtilizationMaxPct: number;
-    groupMaxSize: number;
-    groupMinSize: number;
-    provenGroupThreshold: number;
-    slotFailureThreshold: number;
-    waitlistPriorityRule: string;
-    preferHistoricGroups: boolean;
-    avoidHighFailureSlots: boolean;
+  maxNiveauSpanBeginner: number;
+  maxNiveauSpanAdvanced: number;
+  trainerUtilizationMaxPct: number;
+  groupMaxSize: number;
+  groupMinSize: number;
+  kidsGroupMaxSize: number;
+  kidsGroupMinSize: number;
+  slotDurationMinutes: number;
+  provenGroupThreshold: number;
+  slotFailureThreshold: number;
+  waitlistPriorityRule: string;
+  preferHistoricGroups: boolean;
+  avoidHighFailureSlots: boolean;
   }>;
   dryRun?: boolean;
 }

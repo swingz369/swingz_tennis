@@ -251,11 +251,16 @@ export const seasonPlanningConfigs = pgTable(
     // Group sizing
     group_min_size: integer('group_min_size').notNull().default(3),
     group_max_size: integer('group_max_size').notNull().default(12),
+    kids_group_max_size: integer('kids_group_max_size').notNull().default(6),
+    kids_group_min_size: integer('kids_group_min_size').notNull().default(3),
 
     // Historic group reuse
     proven_group_attendance_threshold_pct: integer('proven_group_attendance_threshold_pct')
       .notNull()
       .default(80),
+
+    // Slot configuration
+    slot_duration_minutes: integer('slot_duration_minutes').notNull().default(90),
 
     // AI/Algorithm
     ai_clustering_enabled: boolean('ai_clustering_enabled').notNull().default(true),

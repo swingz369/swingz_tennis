@@ -147,6 +147,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // If role is trainer, ensure trainers record exists (trainers.id = users.id for FK compatibility)
+    if (role === 'trainer') {
+      const displayName = full_name || email.split('@')[0];
+      const { data: existingTrainer } = await adminSupabase
+        .from('trainers')
+        .select('id')
+        .eq('id', invitedUserId)
+        .maybeSingle();
+
+      if (!existingTrainer) {
+        await adminSupabase.from('trainers').upsert({
+          id: invitedUserId,
+          email,
+          name: displayName,
+          specialties: [],
+          max_hours_per_week: 30,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }
+
     // Fetch club name for response
     const { data: club } = await adminSupabase
       .from('clubs')

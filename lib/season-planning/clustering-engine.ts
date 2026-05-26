@@ -11,6 +11,7 @@ import {
   groups,
   courts,
   seasonPlanEntries,
+  userClubMemberships,
 } from '@/src/infrastructure/persistence/schema';
 import {
   seasonWaitlists,
@@ -41,6 +42,9 @@ interface ClusteringConfig {
   trainerUtilizationMaxPct: number; // default 80
   groupMaxSize: number; // default 12
   groupMinSize: number; // default 3
+  kidsGroupMaxSize: number; // default 6
+  kidsGroupMinSize: number; // default 3
+  slotDurationMinutes: number; // default 90
   provenGroupThreshold: number; // attendance pct, default 80
   slotFailureThreshold: number; // pct, default 30
   waitlistPriorityRule: string;
@@ -54,6 +58,9 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   trainerUtilizationMaxPct: 80,
   groupMaxSize: 12,
   groupMinSize: 3,
+  kidsGroupMaxSize: 6,
+  kidsGroupMinSize: 3,
+  slotDurationMinutes: 90,
   provenGroupThreshold: 80,
   slotFailureThreshold: 30,
   waitlistPriorityRule: 'registration_time',
@@ -65,16 +72,43 @@ const DEFAULT_CONFIG: ClusteringConfig = {
 // TIME SLOTS (standard training times)
 // ============================================
 
-const STANDARD_TIME_SLOTS: Array<{ start: string; end: string }> = [
-  { start: '08:00', end: '09:30' },
-  { start: '09:30', end: '11:00' },
-  { start: '11:00', end: '12:30' },
-  { start: '14:00', end: '15:30' },
-  { start: '15:30', end: '17:00' },
-  { start: '17:00', end: '18:30' },
-  { start: '18:30', end: '20:00' },
-  { start: '20:00', end: '21:30' },
-];
+/**
+ * Build standard training time slots from 08:00 to maxEndHour (default 21:00).
+ * Slots are generated with the configured duration in minutes.
+ * The last slot must start before maxEndHour to ensure it fits within court hours.
+ */
+function buildStandardTimeSlots(
+  durationMinutes: number,
+  maxEndHour: number = 21
+): Array<{ start: string; end: string }> {
+  const slots: Array<{ start: string; end: string }> = [];
+  let hour = 8;
+  let minute = 0;
+  while (hour < maxEndHour) {
+    const startH = hour.toString().padStart(2, '0');
+    const startM = minute.toString().padStart(2, '0');
+    const endTotal = hour * 60 + minute + durationMinutes;
+    const endH = Math.floor(endTotal / 60)
+      .toString()
+      .padStart(2, '0');
+    const endM = (endTotal % 60).toString().padStart(2, '0');
+
+    // Only add if the slot ends by maxEndHour
+    const endHour = Math.floor(endTotal / 60);
+    if (endHour <= maxEndHour) {
+      slots.push({ start: `${startH}:${startM}`, end: `${endH}:${endM}` });
+    }
+
+    minute += durationMinutes;
+    while (minute >= 60) {
+      hour++;
+      minute -= 60;
+    }
+  }
+  return slots;
+}
+
+
 
 const DAY_NAMES: Array<keyof WeeklyAvailability> = [
   'monday',
@@ -133,19 +167,23 @@ export class SeasonClusteringEngine {
     // Step 3: Build candidate groups from historic patterns (Schritt 4b)
     const candidateGroups = this.buildCandidateGroups(members, trainers, groups, historicGroups);
 
-    // Step 4: Run greedy clustering with hard + soft constraints
+    // Step 4: Build dynamic time slots based on configured duration
+    const timeSlots = buildStandardTimeSlots(this.config.slotDurationMinutes);
+
+    // Step 5: Run greedy clustering with hard + soft constraints
     const { assignments, unassigned } = await this.greedyCluster(
       members,
       trainers,
       courts,
       candidateGroups,
-      slotFailureRates
+      slotFailureRates,
+      timeSlots
     );
 
-    // Step 5: Apply waitlist logic (Schritt 4d)
+    // Step 6: Apply waitlist logic (Schritt 4d)
     const waitlistResult = this.applyWaitlistLogic(assignments, members, groups);
 
-    // Step 6: Compute metrics
+    // Step 7: Compute metrics
     const metrics = this.computeMetrics(
       members,
       trainers,
@@ -154,7 +192,7 @@ export class SeasonClusteringEngine {
       waitlistResult.waitlisted
     );
 
-    // Step 7: Generate explanations
+    // Step 8: Generate explanations
     const explanations = this.generateExplanations(assignments, members, trainers);
 
     const result: ClusteringResult = {
@@ -169,7 +207,7 @@ export class SeasonClusteringEngine {
       explanations,
     };
 
-    // Step 8: Save to DB if not dry run
+    // Step 9: Save to DB if not dry run
     if (!dryRun) {
       await this.saveToDatabase(result);
     }
@@ -212,6 +250,12 @@ export class SeasonClusteringEngine {
           dbConfig.prefer_historic_groups ?? DEFAULT_CONFIG.preferHistoricGroups,
         avoidHighFailureSlots:
           dbConfig.avoid_high_failure_slots ?? DEFAULT_CONFIG.avoidHighFailureSlots,
+        kidsGroupMaxSize:
+          dbConfig.kids_group_max_size ?? DEFAULT_CONFIG.kidsGroupMaxSize,
+        kidsGroupMinSize:
+          dbConfig.kids_group_min_size ?? DEFAULT_CONFIG.kidsGroupMinSize,
+        slotDurationMinutes:
+          dbConfig.slot_duration_minutes ?? DEFAULT_CONFIG.slotDurationMinutes,
       };
     }
   }
@@ -234,6 +278,24 @@ export class SeasonClusteringEngine {
           eq(userTrainingPreferences.user_role, 'member')
         )
       );
+
+    // Also load user_club_memberships to check is_minor / age_group info
+    const memberships = await getDb()
+      .select({
+        user_id: userClubMemberships.user_id,
+        role: userClubMemberships.role,
+      })
+      .from(userClubMemberships)
+      .where(
+        and(
+          eq(userClubMemberships.club_id, this.clubId),
+          eq(userClubMemberships.is_active, true)
+        )
+      );
+    const membershipRoleMap = new Map<string, string>();
+    for (const m of memberships) {
+      membershipRoleMap.set(m.user_id, m.role);
+    }
 
     // Load trainer feedback from previous season
     const previousSeasonId = await this.getPreviousSeasonId();
@@ -259,6 +321,8 @@ export class SeasonClusteringEngine {
     return prefs.map((p) => {
       const fb = feedbackMap.get(p.pref.user_id);
       const skillLevel = (p.user_skill_level || p.pref.preferred_level || 'beginner') as SkillLevel;
+      const prefAgeGroup = p.pref.preferred_age_group || '';
+      const isMinor = prefAgeGroup === 'kids' || membershipRoleMap.get(p.pref.user_id) === 'junior';
       return {
         id: p.pref.user_id,
         name: p.user_name || p.user_email || 'Unbekannt',
@@ -271,8 +335,10 @@ export class SeasonClusteringEngine {
         promotedLevel: null,
         availability: p.pref.weekly_availability as WeeklyAvailability,
         wishPartnerIds: (p.pref.wish_partner_ids as string[]) || [],
+        avoidMemberIds: (p.pref.avoid_member_ids as string[]) || [],
         selfAssessedLevel: (p.pref.self_assessed_level as SkillLevel) || null,
         previousGroupId: null,
+        isMinor,
         _unassignedReason: undefined,
       };
     });
@@ -479,7 +545,8 @@ export class SeasonClusteringEngine {
     trainers: TrainerWithDetails[],
     courts: CourtInfo[],
     candidateGroups: Map<string, GroupInfo>,
-    slotFailureRates: Record<string, number>
+    slotFailureRates: Record<string, number>,
+    timeSlots: Array<{ start: string; end: string }>
   ): Promise<{
     assignments: GroupAssignment[];
     unassigned: (MemberWithDetails & { _unassignedReason?: string })[];
@@ -510,70 +577,232 @@ export class SeasonClusteringEngine {
       return b.experienceMonths - a.experienceMonths;
     });
 
+    // Split members into kids and adults, then by skill level
+    const kids = sortedMembers.filter((m) => m.isMinor);
+    const adults = sortedMembers.filter((m) => !m.isMinor);
+
+    // Assign kids first (usually smaller groups, more attention needed)
+    let groupIndex = await this.assignMembersToGroups(
+      kids,
+      'kids',
+      trainers,
+      courts,
+      candidateGroups,
+      slotFailureRates,
+      timeSlots,
+      trainerSessionCount,
+      courtTimeSlotUsage,
+      assignments,
+      assignedMemberIds,
+      0
+    );
+
+    // Then assign adults
+    groupIndex = await this.assignMembersToGroups(
+      adults,
+      'adult',
+      trainers,
+      courts,
+      candidateGroups,
+      slotFailureRates,
+      timeSlots,
+      trainerSessionCount,
+      courtTimeSlotUsage,
+      assignments,
+      assignedMemberIds,
+      groupIndex
+    );
+
+    // SECOND PASS: try to place unassigned members (e.g. avoid-conflict victims)
+    // into groups that have remaining capacity, matching level/age-group, and no avoid-conflicts.
+    // NOTE: This is best-effort — it does NOT verify time-slot availability per member,
+    //       so a member could be assigned to a time they can't attend. Admins should
+    //       review second-pass placements in the plan-edit step.
+    const stillUnassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
+    if (stillUnassigned.length > 0) {
+      for (const member of stillUnassigned) {
+        const effectiveLevel = member.promotedLevel || member.skillLevel;
+        const memberAgeGroup = member.isMinor ? 'kids' : 'adult';
+        const maxSize = member.isMinor ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
+
+        // Try to find an existing group with space, matching level/age, and no avoid-conflicts
+        let placed = false;
+        for (const assignment of assignments) {
+          // Capacity check
+          if (assignment.memberIds.length >= maxSize) continue;
+
+          // Level compatibility: must match the group's level
+          const groupInfo = candidateGroups.get(assignment.groupId);
+          if (groupInfo && groupInfo.level !== effectiveLevel) continue;
+
+          // Age-group compatibility: must match the group's age group
+          if (groupInfo && groupInfo.ageGroup && groupInfo.ageGroup !== memberAgeGroup) continue;
+
+          // Avoid conflicts: member avoids any existing group member
+          if (member.avoidMemberIds.length > 0) {
+            const hasConflict = assignment.memberIds.some((mid) =>
+              member.avoidMemberIds.includes(mid)
+            );
+            if (hasConflict) continue;
+          }
+
+          // Avoid conflicts: any existing group member avoids this member
+          const groupMemberAvoids = sortedMembers.filter(
+            (m) => assignment.memberIds.includes(m.id) && m.avoidMemberIds.includes(member.id)
+          );
+          if (groupMemberAvoids.length > 0) continue;
+
+          // Place member in this group
+          assignment.memberIds.push(member.id);
+          assignment.memberDetails.push({
+            memberId: member.id,
+            memberName: member.name,
+            niveauMatch: -1, // -1 = not computed (second-pass placement)
+            experienceMonths: member.experienceMonths,
+            groupExperienceSpan: '—',
+            wishPartnerFulfilled: false,
+            wishPartnerNames: [],
+            isPromoted: !!member.promotedLevel,
+            assignmentReason: 'Nachträglich zugewiesen (zweite Runde)',
+          });
+          assignedMemberIds.add(member.id);
+          member._unassignedReason = undefined;
+          placed = true;
+          break;
+        }
+
+        if (!placed) {
+          member._unassignedReason =
+            member._unassignedReason ||
+            `Keine passende Gruppe mit Kapazität gefunden (${memberAgeGroup}, ${effectiveLevel})`;
+        }
+      }
+    }
+
+    const unassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
+    return { assignments, unassigned };
+  }
+
+  /**
+   * Assign a cohort (kids or adults) to groups by skill level.
+   * Kids use kidsGroupMaxSize/kidsGroupMinSize; adults use groupMaxSize/groupMinSize.
+   * Avoid-member pairs are checked before placing members together.
+   * Returns the updated groupIndex after all assignments.
+   */
+  private async assignMembersToGroups(
+    cohort: (MemberWithDetails & { _unassignedReason?: string })[],
+    ageGroup: 'kids' | 'adult',
+    trainers: TrainerWithDetails[],
+    courts: CourtInfo[],
+    candidateGroups: Map<string, GroupInfo>,
+    slotFailureRates: Record<string, number>,
+    timeSlots: Array<{ start: string; end: string }>,
+    trainerSessionCount: Map<string, number>,
+    courtTimeSlotUsage: Map<string, Set<string>>,
+    assignments: GroupAssignment[],
+    assignedMemberIds: Set<string>,
+    startGroupIndex: number
+  ): Promise<number> {
+    const maxSize =
+      ageGroup === 'kids' ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
+    const minSize =
+      ageGroup === 'kids' ? this.config.kidsGroupMinSize : this.config.groupMinSize;
+
     // Group members by effective level (promoted or original)
-    const levelGroups = new Map<SkillLevel, typeof sortedMembers>();
+    const levelGroups = new Map<SkillLevel, typeof cohort>();
     for (const skill of ['beginner', 'intermediate', 'advanced', 'professional'] as SkillLevel[]) {
       levelGroups.set(skill, []);
     }
-    for (const m of sortedMembers) {
+    for (const m of cohort) {
       const effectiveLevel = m.promotedLevel || m.skillLevel;
       levelGroups.get(effectiveLevel)?.push(m);
     }
 
-    // For each skill level, create groups
-    let groupIndex = 0;
+    let groupIndex = startGroupIndex;
+
     for (const [skillLevel, levelMembers] of levelGroups) {
       if (levelMembers.length === 0) continue;
 
-      // Find matching groups for this level
       const matchingGroups = Array.from(candidateGroups.values()).filter(
-        (g) => g.level === skillLevel
+        (g) => g.level === skillLevel && g.ageGroup === ageGroup
       );
 
-      // Split members into groups of groupMaxSize
-      const maxSize = this.config.groupMaxSize;
+      // If no age-specific groups found, allow any matching level group
+      const allMatching =
+        matchingGroups.length > 0
+          ? matchingGroups
+          : Array.from(candidateGroups.values()).filter((g) => g.level === skillLevel);
+
+      // Build avoid-member map for this cohort
+      const avoidMap = new Map<string, Set<string>>();
+      for (const m of levelMembers) {
+        if (m.avoidMemberIds.length > 0) {
+          avoidMap.set(m.id, new Set(m.avoidMemberIds));
+        }
+      }
+
       const numGroups = Math.ceil(levelMembers.length / maxSize);
 
       for (let i = 0; i < numGroups; i++) {
         const slice = levelMembers.slice(i * maxSize, (i + 1) * maxSize);
-        if (slice.length < this.config.groupMinSize && numGroups > 1) {
-          // Too small, merge with previous group if possible
+
+        // Filter out avoid-member conflicts from this slice
+        const filteredSlice = slice.filter((m) => {
+          const enemies = avoidMap.get(m.id);
+          if (!enemies || enemies.size === 0) return true;
+          // Check if any member in this slice is on m's avoid list
+          return !slice.some((other) => other.id !== m.id && enemies.has(other.id));
+        });
+
+        if (filteredSlice.length < minSize && numGroups > 1) {
+          // Mark avoid-conflicted members for later retry
+          for (const m of slice) {
+            if (!filteredSlice.includes(m) && !assignedMemberIds.has(m.id)) {
+              if (!m._unassignedReason) {
+                m._unassignedReason = `Avoid-Konflikt in ${skillLevel} (${ageGroup}) — wird in zweiter Runde neu zugewiesen`;
+              }
+            }
+          }
           continue;
         }
 
         // Find best time slot
         const bestSlot = this.findBestTimeSlot(
-          slice,
+          filteredSlice,
           trainers,
           courts,
           trainerSessionCount,
           courtTimeSlotUsage,
           slotFailureRates,
-          assignments
+          assignments,
+          timeSlots
         );
 
         if (!bestSlot) {
-          for (const m of slice) {
-            m._unassignedReason = `Kein verfügbarer Zeitslot mit Trainer für Level ${skillLevel}`;
+          // No slot found — mark all for retry (will be picked up in second pass or remain unassigned)
+          for (const m of filteredSlice) {
+            if (!assignedMemberIds.has(m.id)) {
+              m._unassignedReason = `Kein verfügbarer Zeitslot mit Trainer für Level ${skillLevel} (${ageGroup})`;
+            }
           }
           continue;
         }
 
         // Select matching group or create placeholder in DB
-        const existingGroup = matchingGroups[groupIndex % Math.max(1, matchingGroups.length)];
+        const existingGroup = allMatching[groupIndex % Math.max(1, allMatching.length)];
         let group: GroupInfo;
         if (existingGroup) {
           group = existingGroup;
         } else {
-          // Create a new group in the DB so we get a real UUID with FK support
-          const groupName = `${skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1)} Gruppe ${groupIndex + 1}`;
+          const prefix = ageGroup === 'kids' ? 'Kids' : skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1);
+          const groupName = `${prefix} Gruppe ${groupIndex + 1}`;
           const [newGroup] = await getDb()
             .insert(groups)
             .values({
               club_id: this.clubId,
               name: groupName,
               level: skillLevel,
-              age_group: 'adult',
+              age_group: ageGroup === 'kids' ? 'kids' : 'adult',
               is_active: true,
               member_ids: [],
             })
@@ -594,7 +823,7 @@ export class SeasonClusteringEngine {
         groupIndex++;
 
         // Calculate niveau spans
-        const experiences = slice.map((m) => m.experienceMonths);
+        const experiences = filteredSlice.map((m) => m.experienceMonths);
         const minExp = Math.min(...experiences);
         const maxExp = Math.max(...experiences);
         const span = maxExp - minExp;
@@ -616,9 +845,17 @@ export class SeasonClusteringEngine {
           );
         }
 
-        if (slice.length < this.config.groupMinSize) {
+        if (filteredSlice.length < minSize) {
           warnings.push(
-            `Gruppe hat nur ${slice.length} Mitglieder (Minimum: ${this.config.groupMinSize})`
+            `Gruppe hat nur ${filteredSlice.length} Mitglieder (Minimum: ${minSize})`
+          );
+        }
+
+        // Warn about avoid conflicts that were filtered out
+        const removedCount = slice.length - filteredSlice.length;
+        if (removedCount > 0) {
+          warnings.push(
+            `${removedCount} Mitglieder wegen Avoid-Konflikten aus dieser Gruppe entfernt`
           );
         }
 
@@ -633,11 +870,11 @@ export class SeasonClusteringEngine {
         courtTimeSlotUsage.set(bestSlot.courtId || '', courtUsage);
 
         // Build member details with wish partner tracking
-        const memberDetails = slice.map((m) => {
+        const memberDetails = filteredSlice.map((m) => {
           const fulfilledWishes = m.wishPartnerIds.filter((wpid) =>
-            slice.some((sm) => sm.id === wpid)
+            filteredSlice.some((sm) => sm.id === wpid)
           );
-          const niveauMatch = this.computeNiveauMatch(m, slice);
+          const niveauMatch = this.computeNiveauMatch(m, filteredSlice);
           const reason = this.buildAssignmentReason(m, bestSlot!, fulfilledWishes);
 
           return {
@@ -648,7 +885,7 @@ export class SeasonClusteringEngine {
             groupExperienceSpan: `${minExp}-${maxExp} Monate`,
             wishPartnerFulfilled: fulfilledWishes.length > 0,
             wishPartnerNames: fulfilledWishes.map(
-              (wpid) => slice.find((sm) => sm.id === wpid)?.name || 'Unbekannt'
+              (wpid) => filteredSlice.find((sm) => sm.id === wpid)?.name || 'Unbekannt'
             ),
             isPromoted: !!m.promotedLevel,
             assignmentReason: reason,
@@ -665,7 +902,7 @@ export class SeasonClusteringEngine {
           endTime: bestSlot.endTime,
           courtId: bestSlot.courtId,
           courtName: bestSlot.courtName,
-          memberIds: slice.map((m) => m.id),
+          memberIds: filteredSlice.map((m) => m.id),
           memberDetails,
           waitlistIds: [],
           waitlistDetails: [],
@@ -673,14 +910,13 @@ export class SeasonClusteringEngine {
           conflictIds: [],
         });
 
-        for (const m of slice) {
+        for (const m of filteredSlice) {
           assignedMemberIds.add(m.id);
         }
       }
     }
 
-    const unassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
-    return { assignments, unassigned };
+    return groupIndex;
   }
 
   private findBestTimeSlot(
@@ -690,7 +926,8 @@ export class SeasonClusteringEngine {
     trainerSessionCount: Map<string, number>,
     courtTimeSlotUsage: Map<string, Set<string>>,
     slotFailureRates: Record<string, number>,
-    existingAssignments: GroupAssignment[]
+    existingAssignments: GroupAssignment[],
+    timeSlots: Array<{ start: string; end: string }>
   ):
     | (TimeSlotInfo & {
         trainerId: string;
@@ -712,7 +949,7 @@ export class SeasonClusteringEngine {
     for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
       const dayName = DAY_NAMES[dayOfWeek];
 
-      for (const timeSlot of STANDARD_TIME_SLOTS) {
+      for (const timeSlot of timeSlots) {
         // HARD CONSTRAINT: Check member availability
         const availableMembers = members.filter((m) => {
           const daySlots = m.availability[dayName] || [];

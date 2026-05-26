@@ -4,10 +4,21 @@ import { useState } from 'react';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import ScheduleReadinessCheck from '@/lib/season-planning/readiness-check';
 import { MemberSelector } from './member-selector';
+import { TrainerAvailabilityPanel } from './trainer-availability';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Settings, Users, Gauge, AlertTriangle, CheckCircle, Sparkles, Zap } from 'lucide-react';
+import {
+  Settings,
+  Users,
+  Gauge,
+  AlertTriangle,
+  CheckCircle,
+  Sparkles,
+  Zap,
+  Baby,
+  Clock,
+} from 'lucide-react';
 
 export function ConfigStep() {
   const { state, dispatch } = useWizard();
@@ -39,10 +50,11 @@ export function ConfigStep() {
           </CardTitle>
           <CardDescription>Diese Einstellungen steuern den Clustering-Algorithmus</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+        <CardContent>            <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Max. Gruppengröße</Label>
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" /> Max. Gruppengröße (Erwachsene)
+              </Label>
               <Input
                 type="number"
                 min={2}
@@ -53,7 +65,7 @@ export function ConfigStep() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Min. Gruppengröße</Label>
+              <Label className="text-xs text-muted-foreground">Min. Gruppengröße (Erwachsene)</Label>
               <Input
                 type="number"
                 min={1}
@@ -72,6 +84,48 @@ export function ConfigStep() {
                 value={config.trainerUtilizationMaxPct}
                 onChange={(e) =>
                   handleConfigChange('trainerUtilizationMaxPct', Number(e.target.value))
+                }
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Baby className="h-3 w-3" /> Max. Gruppengröße (Kinder)
+              </Label>
+              <Input
+                type="number"
+                min={2}
+                max={10}
+                value={config.kidsGroupMaxSize}
+                onChange={(e) => handleConfigChange('kidsGroupMaxSize', Number(e.target.value))}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Baby className="h-3 w-3" /> Min. Gruppengröße (Kinder)
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                max={6}
+                value={config.kidsGroupMinSize}
+                onChange={(e) => handleConfigChange('kidsGroupMinSize', Number(e.target.value))}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Slot-Dauer (Minuten)
+              </Label>
+              <Input
+                type="number"
+                min={30}
+                max={180}
+                step={15}
+                value={config.slotDurationMinutes}
+                onChange={(e) =>
+                  handleConfigChange('slotDurationMinutes', Number(e.target.value))
                 }
                 className="h-9"
               />
@@ -312,6 +366,9 @@ export function ConfigStep() {
 
       {/* Member Selector */}
       <MemberSelector />
+
+      {/* Trainer Availability */}
+      <TrainerAvailabilityPanel />
     </div>
   );
 }

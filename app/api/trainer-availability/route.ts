@@ -1,199 +1,222 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { trainerAvailabilityService } from '@/src/application/services/trainer-availability-service.adapter';
+import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
+/**
+ * GET /api/trainer-availability
+ * Query trainer availability slots. Filterable by trainer_id, start_date, end_date.
+ */
 export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'trainer');
+    if (!hasPermission) {
+      return forbiddenResponse('Trainer or admin access required');
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const trainerId = searchParams.get('trainer_id');
-    const startDate = searchParams.get('start_date');
-    const clubId = searchParams.get('club_id');
-
-    // Build query
-    let query = (supabase as any).from('trainer_availability').select('*');
-
-    if (trainerId) {
-      query = query.eq('trainer_id', trainerId);
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
-    if (clubId) {
-      query = query.eq('club_id', clubId);
+    try {
+      const searchParams = request.nextUrl.searchParams;
+      const trainerId = searchParams.get('trainer_id');
+      const startDate = searchParams.get('start_date');
+      const endDate = searchParams.get('end_date');
+      const status = searchParams.get('status');
+
+      // For trainer role, they can only see their own availability
+      if (auth.role === 'trainer') {
+        const profile = await trainerProfileService.getTrainerProfileByUserId(auth.user.id);
+        if (!profile) {
+          return NextResponse.json({ availabilities: [] });
+        }
+        // Override trainer_id with their own
+        const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
+          trainerId: profile.userId,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          status: (status as any) || undefined,
+        });
+        return NextResponse.json({ availabilities });
+      }
+
+      // For admin/superadmin: fetch all trainers in club, then their availabilities
+      if (trainerId) {
+        const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
+          trainerId,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          status: (status as any) || undefined,
+        });
+        return NextResponse.json({ availabilities });
+      }
+
+      // Fetch all trainers in club, then their availabilities
+      const clubId = auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ availabilities: [] });
+      }
+
+      const profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
+      if (profiles.length === 0) {
+        return NextResponse.json({ availabilities: [] });
+      }
+
+      // Collect availabilities for all trainers in the club
+      const allAvailabilities = await Promise.all(
+        profiles.map((p) =>
+          trainerAvailabilityService.queryTrainerAvailabilities({
+            trainerId: p.userId,
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+            status: (status as any) || undefined,
+          })
+        )
+      );
+
+      return NextResponse.json({
+        availabilities: allAvailabilities.flat(),
+      });
+    } catch (error) {
+      console.error('Trainer availability GET error:', error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Internal server error' },
+        { status: 500 }
+      );
     }
-
-    if (startDate) {
-      query = query.gte('day_of_week', new Date(startDate).getDay());
-    }
-
-    const { data: availabilities, error } = await query.order('day_of_week', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching availabilities:', error);
-      return NextResponse.json({ error: 'Failed to fetch availabilities' }, { status: 500 });
-    }
-
-    return NextResponse.json({ availabilities: availabilities || [] });
-  } catch (error) {
-    console.error('Trainer availability GET error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }
 
+/**
+ * POST /api/trainer-availability
+ * Create a new trainer availability slot.
+ */
 export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'trainer');
+    if (!hasPermission) {
+      return forbiddenResponse('Trainer or admin access required');
     }
 
-    const body = await request.json();
-    const { trainer_id, club_id, day_of_week, start_time, end_time, is_available } = body;
-
-    // Validate required fields
-    if (
-      trainer_id === undefined ||
-      club_id === undefined ||
-      day_of_week === undefined ||
-      !start_time ||
-      !end_time
-    ) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
-    // Check if trainer exists and user has permission
-    const { data: profile } = await (supabase as any)
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    try {
+      const body = await request.json();
+      const { trainer_id, date, start_time, end_time, status, notes } = body;
 
-    if (!profile || !['admin', 'trainer', 'superadmin'].includes(profile.role)) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
+      if (!trainer_id || !date || !start_time || !end_time) {
+        return NextResponse.json(
+          { error: 'Missing required fields: trainer_id, date, start_time, end_time' },
+          { status: 400 }
+        );
+      }
+
+      // Trainer can only create own availability
+      if (auth.role === 'trainer') {
+        const profile = await trainerProfileService.getTrainerProfileByUserId(auth.user.id);
+        if (!profile || profile.userId !== trainer_id) {
+          return forbiddenResponse('You can only create your own availability');
+        }
+      }
+
+      // Admin: verify the trainer belongs to their club
+      if (auth.role !== 'trainer' && auth.clubId) {
+        const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(auth.clubId);
+        const isInClub = clubProfiles.some((p) => p.userId === trainer_id);
+        if (!isInClub) {
+          return NextResponse.json(
+            { error: 'Trainer does not belong to your club' },
+            { status: 403 }
+          );
+        }
+      }
+
+      const availability = await trainerAvailabilityService.createTrainerAvailability({
+        trainerId: trainer_id,
+        date,
+        startTime: start_time,
+        endTime: end_time,
+        status: status || 'available',
+        notes: notes || undefined,
+      });
+
+      return NextResponse.json({ availability }, { status: 201 });
+    } catch (error) {
+      console.error('Trainer availability POST error:', error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Internal server error' },
+        { status: 500 }
+      );
     }
-
-    // If trainer role, can only manage own availability
-    if (profile.role === 'trainer' && trainer_id !== user.id) {
-      return NextResponse.json({ error: 'Can only manage own availability' }, { status: 403 });
-    }
-
-    // Check for conflicts
-    const { data: conflicts } = await (supabase as any)
-      .from('trainer_availability')
-      .select('id')
-      .eq('trainer_id', trainer_id)
-      .eq('club_id', club_id)
-      .eq('day_of_week', day_of_week)
-      .or(`and(start_time.lte.${end_time},end_time.gte.${start_time})`);
-
-    if (conflicts && conflicts.length > 0) {
-      return NextResponse.json({ error: 'Availability conflict detected' }, { status: 409 });
-    }
-
-    // Create availability
-    const { data: availability, error } = await (supabase as any)
-      .from('trainer_availability')
-      .insert({
-        trainer_id,
-        club_id,
-        day_of_week,
-        start_time,
-        end_time,
-        is_available: is_available !== false,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating availability:', error);
-      return NextResponse.json({ error: 'Failed to create availability' }, { status: 500 });
-    }
-
-    return NextResponse.json({ availability }, { status: 201 });
-  } catch (error) {
-    console.error('Trainer availability POST error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }
 
+/**
+ * DELETE /api/trainer-availability?id=...
+ * Delete a trainer availability slot.
+ */
 export async function DELETE(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'trainer');
+    if (!hasPermission) {
+      return forbiddenResponse('Trainer or admin access required');
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const availabilityId = searchParams.get('id');
-
-    if (!availabilityId) {
-      return NextResponse.json({ error: 'Availability ID required' }, { status: 400 });
+    const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
+    if (rateLimitError) {
+      return rateLimitError;
     }
 
-    // Get availability to check permissions
-    const { data: availability } = await (supabase as any)
-      .from('trainer_availability')
-      .select('trainer_id')
-      .eq('id', availabilityId)
-      .single();
+    try {
+      const searchParams = request.nextUrl.searchParams;
+      const availabilityId = searchParams.get('id');
 
-    if (!availability) {
-      return NextResponse.json({ error: 'Availability not found' }, { status: 404 });
+      if (!availabilityId) {
+        return NextResponse.json({ error: 'Availability ID required' }, { status: 400 });
+      }
+
+      // Look up the availability record
+      const availability =
+        await trainerAvailabilityService.getTrainerAvailabilityById(availabilityId);
+      if (!availability) {
+        return NextResponse.json({ error: 'Availability not found' }, { status: 404 });
+      }
+
+      // Trainer: can only delete own availability
+      if (auth.role === 'trainer') {
+        const profile = await trainerProfileService.getTrainerProfileByUserId(auth.user.id);
+        if (!profile || profile.userId !== availability.trainerId) {
+          return forbiddenResponse('You can only delete your own availability');
+        }
+      }
+
+      // Admin/Superadmin: verify the availability's trainer belongs to their club
+      if (auth.role !== 'trainer' && auth.clubId) {
+        const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(auth.clubId);
+        const isInClub = clubProfiles.some((p) => p.userId === availability.trainerId);
+        if (!isInClub) {
+          return NextResponse.json(
+            { error: 'Availability does not belong to your club' },
+            { status: 403 }
+          );
+        }
+      }
+
+      await trainerAvailabilityService.deleteTrainerAvailability(availabilityId);
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error('Trainer availability DELETE error:', error);
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Internal server error' },
+        { status: 500 }
+      );
     }
-
-    // Check permissions
-    const { data: profile } = await (supabase as any)
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || !['admin', 'trainer', 'superadmin'].includes(profile.role)) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
-    if (profile.role === 'trainer' && availability.trainer_id !== user.id) {
-      return NextResponse.json({ error: 'Can only delete own availability' }, { status: 403 });
-    }
-
-    // Delete availability
-    const { error } = await (supabase as any)
-      .from('trainer_availability')
-      .delete()
-      .eq('id', availabilityId);
-
-    if (error) {
-      console.error('Error deleting availability:', error);
-      return NextResponse.json({ error: 'Failed to delete availability' }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Trainer availability DELETE error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }

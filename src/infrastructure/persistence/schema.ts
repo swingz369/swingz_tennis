@@ -323,8 +323,7 @@ export const userClubMemberships = pgTable(
     created_at: timestamp('created_at').notNull().defaultNow(),
   },
   (table) => ({
-    pk: { primaryKey: true, columns: [table.user_id, table.club_id] },
-    user_club_idx: index('user_club_memberships_user_club_idx').on(table.user_id, table.club_id),
+    user_club_unique: { unique: true, columns: [table.user_id, table.club_id] },
     tenant_idx: index('user_club_memberships_tenant_idx').on(table.tenant_id),
   })
 );
@@ -581,6 +580,8 @@ export const userTrainingPreferences = pgTable(
 
     // Wish partners (member IDs they'd like to be grouped with)
     wish_partner_ids: jsonb('wish_partner_ids').$type<string[]>().default([]),
+    // Avoid partners (member IDs they do NOT want to be grouped with)
+    avoid_member_ids: jsonb('avoid_member_ids').$type<string[]>().default([]),
     // Member's self-assessed level (compared with trainer assessment)
     self_assessed_level: varchar('self_assessed_level', { length: 20 }),
 

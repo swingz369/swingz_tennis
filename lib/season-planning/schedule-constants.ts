@@ -19,8 +19,33 @@ export const HOURS = Array.from(
 
 export const MAX_ADULTS = 3;
 export const MAX_KIDS = 6;
-export const SLOT_DURATION = 90; // minutes
+export const SLOT_DURATION = 90; // minutes — default, override with seasonPlanningConfigs.slot_duration_minutes
 export const MAX_ROUNDS = 3;
+
+/**
+ * Holiday visual marker color for schedule grid.
+ * Used as CSS class suffix, e.g. bg-holiday-50.
+ */
+export const HOLIDAY_ROW_CLASS = 'bg-amber-50/60 border-l-2 border-l-amber-400';
+
+/**
+ * Builds the time slot rows array dynamically based on slot duration.
+ * For display in the schedule grid (label only, actual slot placement uses times).
+ */
+export function buildHourLabels(durationMinutes: number = 90): string[] {
+  const labels: string[] = [];
+  let hour = 8;
+  let minute = 0;
+  while (hour < 22) {
+    labels.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+    minute += durationMinutes;
+    while (minute >= 60) {
+      hour++;
+      minute -= 60;
+    }
+  }
+  return labels;
+}
 
 export const SEASONS = [
   {

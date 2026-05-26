@@ -461,6 +461,48 @@ const CONFLICT_RULES: ConflictRule[] = [
       return conflicts;
     },
   },
+
+  // 8. Avoid partner conflict (WARNUNG) — members who don't want to be grouped together
+  {
+    type: 'avoid_partner_conflict',
+    severity: 'warning',
+    description:
+      'Avoid-Partner-Konflikt: Zwei Mitglieder, die sich gegenseitig ausschließen, sind in derselben Gruppe',
+    check: async (params) => {
+      const conflicts: ConflictDetectionResult[] = [];
+
+      for (const assignment of params.assignments) {
+        const warning = assignment.warnings.find((w) => w.includes('Avoid-Konflikten'));
+        if (warning) {
+          conflicts.push({
+            id: `conflict_apc_${assignment.groupId}`,
+            type: 'avoid_partner_conflict',
+            severity: 'warning',
+            description: `Gruppe ${assignment.groupName}: ${warning}`,
+            suggestedResolution:
+              'Trennen Sie die betroffenen Mitglieder auf verschiedene Gruppen auf oder klären Sie den Konflikt manuell.',
+            affectedEntities: {
+              trainerIds: [assignment.trainerId],
+              memberIds: assignment.memberIds,
+              courtIds: assignment.courtId ? [assignment.courtId] : [],
+              groupIds: [assignment.groupId],
+              planEntryIds: [],
+            },
+            timeSlot: {
+              dayOfWeek: assignment.dayOfWeek,
+              startTime: assignment.startTime,
+              endTime: assignment.endTime,
+            },
+            status: 'open',
+            resolvedAt: null,
+            resolvedBy: null,
+            resolutionNotes: null,
+          });
+        }
+      }
+      return conflicts;
+    },
+  },
 ];
 
 // ============================================

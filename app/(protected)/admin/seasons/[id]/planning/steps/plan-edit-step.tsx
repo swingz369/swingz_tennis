@@ -209,17 +209,25 @@ export function PlanEditStep() {
                   <Zap className="h-4 w-4 text-amber-500" />
                   Planungs-Score
                 </CardTitle>
-                <Badge
-                  variant={
-                    scoreData.score >= 80 ? 'success' : scoreData.score >= 60 ? 'warning' : 'error'
-                  }
-                >
-                  {scoreData.score >= 80
-                    ? 'Sehr gut'
-                    : scoreData.score >= 60
-                      ? 'Gut'
-                      : 'Verbesserungswürdig'}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                  >
+                    Quelle: Auto
+                  </Badge>
+                  <Badge
+                    variant={
+                      scoreData.score >= 80 ? 'success' : scoreData.score >= 60 ? 'warning' : 'error'
+                    }
+                  >
+                    {scoreData.score >= 80
+                      ? 'Sehr gut'
+                      : scoreData.score >= 60
+                        ? 'Gut'
+                        : 'Verbesserungswürdig'}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">

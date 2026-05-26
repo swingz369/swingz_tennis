@@ -42,8 +42,20 @@ import {
   Euro,
   ArrowLeft,
   X,
+  RefreshCw,
+  XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+export interface TrainerAvailabilitySlot {
+  id: string;
+  trainerId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: 'available' | 'unavailable' | 'booked' | 'blocked';
+  notes?: string;
+}
 
 export interface TrainerProfile {
   id: string;
@@ -113,10 +125,36 @@ export default function TrainerProfileManagement() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [availabilitySlots, setAvailabilitySlots] = useState<TrainerAvailabilitySlot[]>([]);
+  const [availLoading, setAvailLoading] = useState(false);
 
   useEffect(() => {
     loadTrainers();
   }, []);
+
+  // Fetch real availability slots when a trainer is selected
+  useEffect(() => {
+    if (!selectedTrainer) {
+      setAvailabilitySlots([]);
+      return;
+    }
+    loadAvailabilitySlots(selectedTrainer.userId);
+  }, [selectedTrainer?.userId]);
+
+  const loadAvailabilitySlots = async (trainerId: string) => {
+    setAvailLoading(true);
+    try {
+      const res = await fetch(`/api/trainer-availability?trainer_id=${trainerId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAvailabilitySlots(data.availabilities || []);
+      }
+    } catch (err) {
+      console.error('Failed to load availability slots:', err);
+    } finally {
+      setAvailLoading(false);
+    }
+  };
 
   const loadTrainers = async () => {
     try {
@@ -986,6 +1024,7 @@ export default function TrainerProfileManagement() {
 
                   {/* ── Availability Tab ─────────────────────────────────────── */}
                   <TabsContent value="availability" className="space-y-6 animate-in">
+                    {/* Reguläre Wochenverfügbarkeit */}
                     <div>
                       <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
                         <Calendar className="h-4 w-4 text-brandPrimary" />
@@ -1016,6 +1055,79 @@ export default function TrainerProfileManagement() {
                       </div>
                     </div>
 
+                    {/* Konkrete Verfügbarkeitsslots (aus trainer_availabilities) */}
+                    <Card variant="flat">
+                      <CardContent className="p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold flex items-center gap-2 text-base">
+                            <Clock className="h-4 w-4 text-brandAccent" />
+                            Konkrete Verfügbarkeiten
+                          </h3>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => loadAvailabilitySlots(selectedTrainer.userId)}
+                            disabled={availLoading}
+                          >
+                            <RefreshCw className={`h-4 w-4 ${availLoading ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </div>
+                        {availLoading ? (
+                          <div className="space-y-2">
+                            {[1, 2, 3].map((i) => (
+                              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                            ))}
+                          </div>
+                        ) : availabilitySlots.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {availabilitySlots.slice(0, 20).map((slot) => (
+                              <div
+                                key={slot.id}
+                                className={`flex items-center gap-3 p-3 rounded-lg border text-sm ${
+                                  slot.status === 'available'
+                                    ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800'
+                                    : slot.status === 'booked'
+                                      ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800'
+                                      : slot.status === 'blocked'
+                                        ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800'
+                                        : 'bg-gray-50 border-gray-200 dark:bg-gray-900/10 dark:border-gray-800'
+                                }`}
+                              >
+                                <div className="shrink-0">
+                                  {slot.status === 'available' ? (
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                  ) : slot.status === 'booked' ? (
+                                    <Calendar className="h-4 w-4 text-blue-500" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-xs truncate">
+                                    {format(parseISO(slot.date), 'dd. MMM yyyy', { locale: de })}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {slot.startTime} – {slot.endTime}
+                                    <span className="ml-2 capitalize">({slot.status})</span>
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-400 py-4 text-center">
+                            Keine konkreten Verfügbarkeiten eingetragen.
+                            <br />
+                            <span className="text-xs">
+                              Trainer kann seine Verfügbarkeiten im Trainer-Portal eintragen.
+                            </span>
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Bevorzugte Arbeitszeiten */}
                     <Card variant="flat">
                       <CardContent className="p-5">
                         <h3 className="font-semibold mb-3 flex items-center gap-2 text-base">

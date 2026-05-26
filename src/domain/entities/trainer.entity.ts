@@ -60,6 +60,7 @@ export interface TrainerProfile {
 
 export interface CreateTrainerProfileInput {
   userId: string;
+  clubId?: string;
   firstName: string;
   lastName: string;
   email: string;

@@ -1,7 +1,7 @@
 import type { SQL } from 'drizzle-orm';
 import { desc, eq, ilike, or, and } from 'drizzle-orm';
 import { db } from '../db';
-import { trainerProfiles } from '../schema';
+import { trainerProfiles, trainers } from '../schema';
 import type {
   TrainerProfile,
   CreateTrainerProfileInput,
@@ -49,10 +49,22 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
         sunday: false,
       };
 
+      if (!input.clubId) {
+        throw new Error('clubId is required to create a trainer profile (club_id is NOT NULL in schema)');
+      }
+
+      // Ensure a trainers record exists (trainers.id must match users.id for FK compatibility)
+      await this.ensureTrainersRecord(
+        input.userId,
+        input.email,
+        `${input.firstName} ${input.lastName}`.trim()
+      );
+
       const [profile] = await db
         .insert(trainerProfiles)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .values({
+          club_id: input.clubId,
           user_id: input.userId,
           first_name: input.firstName,
           last_name: input.lastName,
@@ -374,6 +386,75 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
       throw new Error(
         `Failed to search trainer profiles: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
+    }
+  }
+
+  /**
+   * Ensure a trainers record exists with trainers.id = userId (legacy FK compatibility).
+   * All FK references (trainer_availabilities, trainer_absences, sessions, etc.) point to trainers.id,
+   * so we must ensure trainers.id === users.id for each trainer user.
+   */
+  /**
+   * Returns the effective trainers.id to use for FK queries.
+   * Normally this equals userId, but if an email-duplicate record exists with a different id,
+   * we return that id so that availability queries still work.
+   */
+  private async ensureTrainersRecord(
+    userId: string,
+    email: string,
+    name: string
+  ): Promise<string> {
+    try {
+      const trainerEmail = email || `${userId}@trainer.swingz.local`;
+      const trainerName = name || 'Trainer';
+      const now = new Date();
+
+      // Use onConflictDoNothing to handle race conditions gracefully
+      await db
+        .insert(trainers)
+        .values({
+          id: userId,
+          email: trainerEmail,
+          name: trainerName,
+          specialties: [],
+          max_hours_per_week: 30,
+          is_active: true,
+          created_at: now,
+          updated_at: now,
+        })
+        .onConflictDoNothing();
+
+      // Check what record actually exists for this email
+      const [existingByEmail] = await db
+        .select({ id: trainers.id })
+        .from(trainers)
+        .where(eq(trainers.email, trainerEmail))
+        .limit(1);
+
+      if (existingByEmail && existingByEmail.id !== userId) {
+        // Email uniqueness prevented insert — a different trainers record already has this email.
+        // We cannot change its id due to FK constraints on other tables.
+        // Return the actual trainers.id so callers can use it for availability queries.
+        console.error(
+          `[ensureTrainersRecord] Email collision: trainers record for "${trainerEmail}" has id ${existingByEmail.id}, ` +
+            `but expected ${userId}. Trainer availability queries will use id ${existingByEmail.id}. ` +
+            `Run supabase/migrations/20260604_ensure_trainers_records.sql to align records.`
+        );
+        await db
+          .update(trainers)
+          .set({ name: trainerName, is_active: true, updated_at: now })
+          .where(eq(trainers.id, existingByEmail.id));
+        return existingByEmail.id;
+      }
+
+      return userId;
+    } catch (err) {
+      // Log but don't block profile creation — availability will work once trainers record exists
+      console.error(
+        `[ensureTrainersRecord] Failed to ensure trainers record for userId=${userId}, email=${email}:`,
+        err
+      );
+      return userId; // best effort
     }
   }
 

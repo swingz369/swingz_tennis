@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { csrfHeaders } from '@/lib/csrf-client';
 import { useWizard } from '@/lib/season-planning/wizard-context';
+import { generateAIAnalysis } from '@/lib/season-planning/ai-analysis';
 import {
   CheckCircle,
   AlertTriangle,
@@ -25,6 +26,7 @@ import {
   XCircle,
   ChevronRight,
   RefreshCw,
+  Brain,
 } from 'lucide-react';
 import type { ConflictDetectionResult, ConflictSeverityLevel } from '@/lib/season-planning/types';
 
@@ -41,6 +43,9 @@ export function FinalizeStep() {
   const [confirmedWarnings, setConfirmedWarnings] = useState<Set<string>>(new Set());
   const [adminNotes, setAdminNotes] = useState('');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [aiReviewText, setAiReviewText] = useState<string | null>(null);
+  const [aiReviewLoading, setAiReviewLoading] = useState(false);
+  const [hasRunAiReview, setHasRunAiReview] = useState(false);
 
   const conflicts = state.conflicts;
   const criticalConflicts = conflicts.filter(
@@ -98,6 +103,50 @@ export function FinalizeStep() {
       setResolvingId(null);
     }
   };
+
+  // AI Review: analyzes the plan + conflicts and gives a human-readable summary
+  const handleAiReview = useCallback(async () => {
+    setAiReviewLoading(true);
+    setHasRunAiReview(true);
+    try {
+      const groups = state.clusteringResult?.groups || [];
+      const planSlots = groups.map((g) => ({
+        id: g.groupId,
+        groupName: g.groupName,
+        groupColor: '#6366F1',
+        trainerId: g.trainerId,
+        trainerName: g.trainerName,
+        dayOfWeek: g.dayOfWeek as number,
+        startTime: g.startTime,
+        endTime: g.endTime,
+        durationMin: 90,
+        courtId: g.courtId,
+        courtName: g.courtName,
+        memberIds: g.memberIds,
+        memberNames: g.memberDetails.map((d) => d.memberName),
+      }));
+
+      const text = await generateAIAnalysis({
+        plan: planSlots,
+        totalMembers: state.selectedMemberIds.length,
+        totalMembersPlanned:
+          state.clusteringResult?.metrics.totalMembers || 0,
+        membersMultipleGroups: 0,
+        membersNotPlanned: state.clusteringResult?.unassignedMembers.map((m) => ({
+          name: m.memberName,
+        })) || [],
+        seasonStart: '',
+        seasonEnd: '',
+        activeWeeks: 1,
+        useAI: true,
+      });
+      setAiReviewText(text);
+    } catch {
+      setAiReviewText('KI-Review momentan nicht verfügbar.');
+    } finally {
+      setAiReviewLoading(false);
+    }
+  }, [state.clusteringResult, state.selectedMemberIds]);
 
   const handleConfirm = useCallback(async () => {
     if (hasBlockingConflicts || !allWarningsAccepted) return;
@@ -473,6 +522,58 @@ export function FinalizeStep() {
           </CardContent>
         </Card>
       )}
+
+      {/* AI Review */}
+      <Card className="border-purple-200 bg-purple-50/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2 text-purple-800">
+            <Brain className="h-4 w-4" />
+            KI-Review der Planung
+          </CardTitle>
+          <CardDescription className="text-purple-600">
+            Automatische Zusammenfassung und Bewertung vor der finalen Bestätigung
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {aiReviewText ? (
+            <div className="rounded-lg bg-white border border-purple-200 p-4">
+              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                {aiReviewText}
+              </p>
+            </div>
+          ) : hasRunAiReview ? (
+            <p className="text-sm text-muted-foreground">
+              KI-Review momentan nicht verfügbar.
+            </p>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-sm text-purple-700 mb-3">
+                Lassen Sie die KI eine Zusammenfassung und Bewertung der Planung erstellen, bevor Sie
+                bestätigen.
+              </p>
+              <Button
+                onClick={handleAiReview}
+                disabled={aiReviewLoading}
+                variant="outline"
+                size="sm"
+                className="gap-2 border-purple-300 text-purple-700 hover:bg-purple-100"
+              >
+                {aiReviewLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Analysiere...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="h-4 w-4" />
+                    KI-Review starten
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Admin Notes */}
       <Card>
