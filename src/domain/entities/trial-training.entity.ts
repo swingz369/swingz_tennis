@@ -27,7 +27,7 @@ export interface TrialTraining {
     id: string;
     name: string;
   };
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted';
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted' | 'requested';
   notes?: string;
   feedback?: TrialTrainingFeedback;
   convertedToMemberId?: string;
@@ -50,6 +50,10 @@ export interface UpdateTrialTrainingInput {
   notes?: string;
   feedback?: TrialTrainingFeedback;
   convertedToMemberId?: string;
+  trainerId?: string;
+  trainerName?: string;
+  courtId?: string;
+  courtName?: string;
 }
 
 export interface TrialTrainingStats {

@@ -75,6 +75,15 @@ export interface ITrialTrainingRepository {
   search(query: string, clubId: string): Promise<TrialTraining[]>;
 
   /**
+   * Create a requested trial training (public booking by non-members)
+   * Uses placeholder trainer/court UUIDs — admin assigns real resources later.
+   * @param input - Minimal trial training data (no trainer/court required)
+   * @param clubId - Club ID for tenant isolation
+   * @returns Created trial training with status 'requested'
+   */
+  createRequested(input: CreateTrialTrainingInput, clubId: string): Promise<TrialTraining>;
+
+  /**
    * Find trial trainings by date range
    * @param clubId - Club ID for tenant isolation
    * @param startDate - Start date (YYYY-MM-DD)

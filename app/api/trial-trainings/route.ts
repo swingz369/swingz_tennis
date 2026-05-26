@@ -101,7 +101,7 @@ export async function GET(_request: NextRequest) {
 
       if (status) {
         const trialTrainings = await trialTrainingService.getTrialTrainingsByStatus(
-          status as 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted'
+          status as 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted' | 'requested'
         );
         return NextResponse.json({ trialTrainings });
       }

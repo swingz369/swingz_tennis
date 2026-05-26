@@ -51,13 +51,26 @@ export async function PATCH(
       const { id } = await params;
       const body = await _request.json();
 
-      const { status, notes, feedback, convertedToMemberId } = body;
+      const {
+        status,
+        notes,
+        feedback,
+        convertedToMemberId,
+        trainerId,
+        trainerName,
+        courtId,
+        courtName,
+      } = body;
 
       const updated = await trialTrainingService.updateTrialTraining(id, {
         status,
         notes,
         feedback,
         convertedToMemberId,
+        trainerId,
+        trainerName,
+        courtId,
+        courtName,
       });
 
       if (!updated) {

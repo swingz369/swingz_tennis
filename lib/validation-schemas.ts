@@ -119,7 +119,9 @@ export const CreateTrialTrainingSchema = z.object({
   trainingDate: dateSchema,
   trainingGroup: z.string().max(100).optional(),
   notes: z.string().max(2000).optional(),
-  status: z.enum(['scheduled', 'completed', 'cancelled', 'no-show']).default('scheduled'),
+  status: z
+    .enum(['scheduled', 'completed', 'cancelled', 'no-show', 'requested'])
+    .default('scheduled'),
 });
 
 // Hours Log validation schemas

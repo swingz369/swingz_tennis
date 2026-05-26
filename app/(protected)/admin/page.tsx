@@ -18,6 +18,7 @@ import {
   LockKeyhole,
   Activity,
   ArrowUpRight,
+  Sparkles,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -545,6 +546,7 @@ export default async function AdminPage() {
             { label: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
             { label: 'Saisonplanung', href: '/admin/seasons', icon: Calendar },
             { label: 'Plätze', href: '/admin/courts', icon: MapPin },
+            { label: 'Probetrainings', href: '/admin/trial-training', icon: Sparkles },
             { label: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock },
             { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
           ].map((a) => (

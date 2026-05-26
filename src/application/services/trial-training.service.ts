@@ -71,6 +71,53 @@ export class TrialTrainingService {
   }
 
   /**
+   * Validate public trial training input (relaxed — no trainer/court required)
+   */
+  static validatePublicTrialInput(input: CreateTrialTrainingInput): {
+    valid: boolean;
+    errors: string[];
+  } {
+    const errors: string[] = [];
+
+    if (!input.participant.firstName || input.participant.firstName.trim().length < 2) {
+      errors.push('Vorname muss mindestens 2 Zeichen lang sein');
+    }
+
+    if (!input.participant.lastName || input.participant.lastName.trim().length < 2) {
+      errors.push('Nachname muss mindestens 2 Zeichen lang sein');
+    }
+
+    if (!input.participant.email || !this.isValidEmail(input.participant.email)) {
+      errors.push('Ungültige E-Mail-Adresse');
+    }
+
+    if (!input.participant.phone || input.participant.phone.trim().length < 5) {
+      errors.push('Telefonnummer muss mindestens 5 Zeichen lang sein');
+    }
+
+    if (!input.participant.dateOfBirth || !this.isValidDate(input.participant.dateOfBirth)) {
+      errors.push('Ungültiges Geburtsdatum');
+    }
+
+    if (!input.scheduledDate || !this.isValidDate(input.scheduledDate)) {
+      errors.push('Ungültiges Trainingsdatum');
+    }
+
+    if (!input.scheduledTime || !this.isValidTime(input.scheduledTime)) {
+      errors.push('Ungültige Trainingszeit');
+    }
+
+    if (!input.duration || input.duration < 30 || input.duration > 180) {
+      errors.push('Dauer muss zwischen 30 und 180 Minuten liegen');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
    * Validate email format
    */
   private static isValidEmail(email: string): boolean {

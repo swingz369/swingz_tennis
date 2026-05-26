@@ -220,6 +220,10 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
 
       if (input.status !== undefined) updateData.status = input.status;
       if (input.notes !== undefined) updateData.notes = input.notes;
+      if (input.trainerId !== undefined) updateData.trainer_id = input.trainerId;
+      if (input.trainerName !== undefined) updateData.trainer_name = input.trainerName;
+      if (input.courtId !== undefined) updateData.court_id = input.courtId;
+      if (input.courtName !== undefined) updateData.court_name = input.courtName;
       if (input.feedback !== undefined) {
         updateData.feedback_rating = input.feedback.rating;
         updateData.feedback_comments = input.feedback.comments;
@@ -267,6 +271,46 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     return result.length > 0;
   }
 
+  /** Unassigned placeholder UUID for public trial training requests */
+  private static readonly UNASSIGNED_ID = '00000000-0000-0000-0000-000000000000';
+
+  /**
+   * Create a requested trial training from public booking (non-member)
+   * Uses placeholder trainer/court so admin can assign real resources later.
+   */
+  async createRequested(input: CreateTrialTrainingInput, clubId: string): Promise<TrialTraining> {
+    const now = new Date();
+
+    try {
+      const result = await db
+        .insert(trialTrainings)
+        .values({
+          club_id: clubId,
+          participant_first_name: input.participant.firstName,
+          participant_last_name: input.participant.lastName,
+          participant_email: input.participant.email,
+          participant_phone: input.participant.phone,
+          participant_date_of_birth: new Date(input.participant.dateOfBirth),
+          scheduled_date: new Date(input.scheduledDate),
+          scheduled_time: input.scheduledTime,
+          duration: input.duration,
+          trainer_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
+          trainer_name: 'Noch nicht zugewiesen',
+          court_id: DrizzleTrialTrainingRepository.UNASSIGNED_ID,
+          court_name: 'Noch nicht zugewiesen',
+          status: 'requested',
+          notes: input.notes,
+          created_at: now,
+          updated_at: now,
+        })
+        .returning();
+
+      return this.mapToDomain(result[0]);
+    } catch (error) {
+      throw parsePostgresError(error);
+    }
+  }
+
   /**
    * Map database row to domain entity
    */
@@ -292,7 +336,13 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
         id: row.court_id,
         name: row.court_name,
       },
-      status: row.status as 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted',
+      status: row.status as
+        | 'scheduled'
+        | 'completed'
+        | 'cancelled'
+        | 'no_show'
+        | 'converted'
+        | 'requested',
       notes: row.notes ?? undefined,
       feedback: row.feedback_rating
         ? {

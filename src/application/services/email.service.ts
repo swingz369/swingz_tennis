@@ -971,4 +971,238 @@ Dein ${clubName}-Team
     const email = this.generateRejectionEmail(data);
     return this.sendEmail(data.recipientEmail, email);
   }
+
+  /**
+   * Generate admin notification email for new trial training request
+   */
+  static generateNewTrialRequestEmail(data: {
+    adminName: string;
+    participantName: string;
+    participantEmail: string;
+    participantPhone: string;
+    preferredDate: string;
+    preferredTime: string;
+    experienceLevel?: string;
+    notes?: string;
+    clubName: string;
+    adminDashboardUrl: string;
+  }): EmailTemplate {
+    const {
+      adminName,
+      participantName,
+      participantEmail,
+      participantPhone,
+      preferredDate,
+      preferredTime,
+      experienceLevel,
+      notes,
+      clubName,
+      adminDashboardUrl,
+    } = data;
+
+    const subject = `Neue Probetraining-Anfrage – ${participantName}`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neue Probetraining-Anfrage</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .header p {
+      margin: 0;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .content {
+      padding: 30px;
+    }
+    .greeting {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .info-box {
+      background: #f8f9fa;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .info-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #d97706;
+    }
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    .info-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .info-table td:first-child {
+      font-weight: bold;
+      color: #555;
+      width: 40%;
+    }
+    .cta-button {
+      display: inline-block;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      text-decoration: none;
+      padding: 12px 30px;
+      border-radius: 5px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .footer {
+      background: #f8f9fa;
+      padding: 20px 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎾 Neue Probetraining-Anfrage</h1>
+      <p>${clubName}</p>
+    </div>
+
+    <div class="content">
+      <p class="greeting">
+        Hallo ${adminName},
+      </p>
+
+      <p>
+        eine neue Probetraining-Anfrage ist über die öffentliche Buchungsseite eingegangen.
+        Bitte überprüfe die Details und weise einen Trainer und Platz zu.
+      </p>
+
+      <div class="info-box">
+        <h3>👤 Teilnehmer</h3>
+        <table class="info-table">
+          <tr><td>Name</td><td>${participantName}</td></tr>
+          <tr><td>E-Mail</td><td>${participantEmail}</td></tr>
+          <tr><td>Telefon</td><td>${participantPhone}</td></tr>
+          ${experienceLevel ? `<tr><td>Spielstärke</td><td>${experienceLevel}</td></tr>` : ''}
+        </table>
+      </div>
+
+      <div class="info-box">
+        <h3>📅 Wunschtermin</h3>
+        <table class="info-table">
+          <tr><td>Datum</td><td>${preferredDate}</td></tr>
+          <tr><td>Uhrzeit</td><td>${preferredTime} Uhr</td></tr>
+        </table>
+      </div>
+
+      ${
+        notes
+          ? `
+      <div class="info-box">
+        <h3>📝 Anmerkungen</h3>
+        <p style="font-size: 14px; color: #666;">${notes}</p>
+      </div>
+      `
+          : ''
+      }
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${adminDashboardUrl}" class="cta-button">
+          📋 Zum Admin-Dashboard
+        </a>
+      </div>
+
+      <p style="font-size: 14px; color: #888;">
+        Du kannst die Anfrage im Admin-Bereich unter <strong>Probetrainings</strong> annehmen oder ablehnen.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von SwingZ generiert.</p>
+      <p>© ${new Date().getFullYear()} SwingZ. Alle Rechte vorbehalten.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const text = `
+Neue Probetraining-Anfrage – ${participantName}
+
+Hallo ${adminName},
+
+eine neue Probetraining-Anfrage ist eingegangen:
+
+Teilnehmer: ${participantName}
+E-Mail: ${participantEmail}
+Telefon: ${participantPhone}
+${experienceLevel ? `Spielstärke: ${experienceLevel}` : ''}
+
+Wunschtermin: ${preferredDate} um ${preferredTime} Uhr
+${notes ? `\nAnmerkungen: ${notes}` : ''}
+
+Zum Admin-Dashboard: ${adminDashboardUrl}
+
+Du kannst die Anfrage unter "Probetrainings" annehmen oder ablehnen.
+
+Dein SwingZ-Team
+    `.trim();
+
+    return { subject, html, text };
+  }
+
+  /**
+   * Send notification email to admins about a new trial training request
+   */
+  static async sendNewTrialRequestNotification(data: {
+    adminEmail: string;
+    adminName: string;
+    participantName: string;
+    participantEmail: string;
+    participantPhone: string;
+    preferredDate: string;
+    preferredTime: string;
+    experienceLevel?: string;
+    notes?: string;
+    clubName: string;
+    adminDashboardUrl: string;
+  }): Promise<boolean> {
+    const email = this.generateNewTrialRequestEmail(data);
+    return this.sendEmail(data.adminEmail, email);
+  }
 }
