@@ -123,6 +123,13 @@ export const courts = pgTable(
     has_indoor: boolean('has_indoor').notNull().default(false),
     is_active: boolean('is_active').notNull().default(true),
     created_at: timestamp('created_at').notNull().defaultNow(),
+    court_type_id: uuid('court_type_id'),
+    has_lighting: boolean('has_lighting').default(false),
+    number: integer('number'),
+    location: text('location'),
+    description: text('description'),
+    status: text('status').default('active'),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   },
   (table) => ({
     club_idx: index('courts_club_idx').on(table.club_id),
