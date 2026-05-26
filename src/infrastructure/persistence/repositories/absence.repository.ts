@@ -93,7 +93,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findByDateRange(startDate: string, endDate: string, clubId: string): Promise<Absence[]> {
-
     // Find absences that overlap with the query range
     // Overlap occurs when: (absence_start <= range_end) AND (absence_end >= range_start)
     const result = await db
@@ -137,7 +136,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
     clubId: string,
     excludeId?: string
   ): Promise<Absence[]> {
-
     const conditions = [
       eq(trainerAbsences.trainer_id, trainerId),
       eq(trainerAbsences.club_id, clubId),

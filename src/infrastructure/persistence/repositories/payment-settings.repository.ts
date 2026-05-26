@@ -142,7 +142,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async setAsDefault(id: string, clubId: string): Promise<PaymentSettings | null> {
-
     try {
       // The trigger in the migration will handle unsetting other defaults
       const result = await db
@@ -171,7 +170,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async calculateFee(paymentSettingsId: string, amount: number): Promise<number> {
-
     // Use the PostgreSQL helper function
     const result = await db.execute<{ calculate_payment_fee: string }>(sql`
       SELECT calculate_payment_fee(

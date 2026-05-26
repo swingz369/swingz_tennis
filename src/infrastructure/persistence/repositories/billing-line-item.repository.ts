@@ -58,7 +58,6 @@ export class DrizzleBillingLineItemRepository implements BillingLineItemReposito
   }
 
   async update(id: string, data: Partial<BillingLineItem>): Promise<BillingLineItem | null> {
-
     try {
       const updateData: any = {};
 

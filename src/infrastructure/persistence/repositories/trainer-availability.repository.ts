@@ -181,7 +181,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     endTime: string,
     excludeId?: string
   ): Promise<AvailabilityConflict[]> {
-
     // Use the PostgreSQL function for overlap detection
     const result = await db.execute<{
       id: string;

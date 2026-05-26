@@ -102,7 +102,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async findUpcoming(clubId: string, days: number = 7): Promise<TrialTraining[]> {
-
     // Use the PostgreSQL helper function
     const result = await db.execute<typeof trialTrainings.$inferSelect>(sql`
       SELECT *
@@ -145,7 +144,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     startDate?: string,
     endDate?: string
   ): Promise<TrialTrainingStats> {
-
     // Use the PostgreSQL helper function
     const result = await db.execute<{
       total: string;

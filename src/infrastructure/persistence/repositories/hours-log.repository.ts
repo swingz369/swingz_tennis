@@ -185,7 +185,6 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async getAllSummaries(): Promise<HoursSummary[]> {
-
     // Get distinct trainer IDs
     const result = await db
       .select({

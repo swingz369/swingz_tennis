@@ -48,7 +48,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async findByKey(key: string, clubId: string | null): Promise<SystemSettings | null> {
-
     const condition = clubId
       ? and(eq(systemSettings.key, key), eq(systemSettings.club_id, clubId))
       : and(eq(systemSettings.key, key), isNull(systemSettings.club_id));
@@ -60,7 +59,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async getValue(key: string, clubId: string | null): Promise<string | null> {
-
     // Use the PostgreSQL helper function
     const result = await db.execute<{ get_setting_value: string | null }>(sql`
       SELECT get_setting_value(
@@ -77,7 +75,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async findAll(clubId: string | null): Promise<SystemSettings[]> {
-
     const condition = clubId ? eq(systemSettings.club_id, clubId) : isNull(systemSettings.club_id);
 
     const result = await db
@@ -93,7 +90,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
     category: SystemSettings['category'],
     clubId: string | null
   ): Promise<SystemSettings[]> {
-
     const condition = clubId
       ? and(eq(systemSettings.category, category), eq(systemSettings.club_id, clubId))
       : and(eq(systemSettings.category, category), isNull(systemSettings.club_id));
@@ -108,7 +104,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async findPublic(clubId: string | null): Promise<SystemSettings[]> {
-
     const condition = clubId
       ? and(eq(systemSettings.is_public, true), eq(systemSettings.club_id, clubId))
       : and(eq(systemSettings.is_public, true), isNull(systemSettings.club_id));
@@ -127,7 +122,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
     clubId: string | null,
     publicOnly: boolean = false
   ): Promise<Record<string, any>> {
-
     // Use the PostgreSQL helper function
     const result = await db.execute<{ get_settings_as_object: Record<string, any> }>(sql`
       SELECT get_settings_as_object(
@@ -177,7 +171,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async delete(id: string): Promise<boolean> {
-
     try {
       const result = await db.delete(systemSettings).where(eq(systemSettings.id, id)).returning();
 

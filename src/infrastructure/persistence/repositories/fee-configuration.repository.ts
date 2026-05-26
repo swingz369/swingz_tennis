@@ -117,7 +117,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
     clubId: string,
     trainingGroup?: string
   ): Promise<FeeConfiguration[]> {
-
     // Use the PostgreSQL helper function
     const result = await db.execute<typeof feeConfigurations.$inferSelect>(sql`
       SELECT *
