@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { isActivePath, isExactActive } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { NavigationBadge } from './navigation-badge';
+
 import { AdminSection } from './admin-section';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
@@ -18,16 +18,15 @@ import {
   GraduationCap,
   Trophy,
   X,
-  Layout,
   CheckCircle,
   User,
   CreditCard,
   Building2,
   MapPin,
-  BarChart3,
   ChevronDown,
   UserPlus,
   DollarSign,
+  Shield,
 } from 'lucide-react';
 
 interface Club {
@@ -168,46 +167,45 @@ export function Sidebar({
     }
   };
 
-  interface NavItem {
-    name: string;
-    href: string;
+  // ────────────────────────────────────────────────────────────────────
+  // Unified navigation definitions — both roles use AdminSection format
+  // ────────────────────────────────────────────────────────────────────
+
+  interface SectionDef {
+    label: string;
     icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
-    badge?: number;
+    subItems: { name: string; href: string; badge?: number }[];
+    extraAction?: {
+      label: string;
+      icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+      onClick: () => void;
+    };
   }
 
-  // Secondary navigation
-  const secondaryNav: NavItem[] = [
-    { name: 'Mein Profil', href: '/profile', icon: User },
-    ...(!isSuperAdmin
-      ? [{ name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard }]
-      : []),
-    { name: 'News & Updates', href: '/news', icon: Newspaper },
-  ];
-
-  // Primary navigation — superadmin only (trainer/member use bottom nav, never sidebar)
-  const primaryNav: NavItem[] = isSuperAdmin
-    ? [
-        { name: 'Superadmin Dashboard', href: '/superadmin', icon: Layout },
-        { name: 'Vereinsübersicht', href: '/superadmin/tenants', icon: Building2 },
-        { name: 'Club-Verwaltung', href: '/superadmin/clubs', icon: Building2 },
-        { name: 'Plattform-Analyse', href: '/admin/analytics', icon: BarChart3 },
-      ]
-    : [];
-
-  // Admin structured navigation sections (6 sections)
-  const adminNav = isAdmin
-    ? {
-        members: {
-          name: 'MITGLIEDER',
+  // Role-specific collapsible sections — uniform structure for both roles
+  const roleSections: SectionDef[] = (() => {
+    if (isAdmin) {
+      return [
+        {
+          label: 'Mitglieder',
           icon: Users,
           subItems: [
             { name: 'Alle Mitglieder', href: '/admin/members' },
             { name: 'Genehmigungen', href: '/admin/approvals', badge: approvalCount },
           ],
-          hasInvite: true,
+          extraAction: onInvite
+            ? {
+                label: 'Einladen',
+                icon: UserPlus,
+                onClick: () => {
+                  onClose?.();
+                  onInvite();
+                },
+              }
+            : undefined,
         },
-        training: {
-          name: 'TRAINING',
+        {
+          label: 'Training',
           icon: GraduationCap,
           subItems: [
             { name: 'Saisonplanung', href: '/admin/seasons' },
@@ -216,8 +214,8 @@ export function Sidebar({
             { name: 'Turniere', href: '/admin/tournaments' },
           ],
         },
-        courts: {
-          name: 'PLÄTZE & BUCHUNGEN',
+        {
+          label: 'Plätze & Buchungen',
           icon: MapPin,
           subItems: [
             { name: 'Platz-Kalender', href: '/admin/courts' },
@@ -226,8 +224,8 @@ export function Sidebar({
             { name: 'Plätze verwalten', href: '/admin/courts/manage' },
           ],
         },
-        finance: {
-          name: 'FINANZEN',
+        {
+          label: 'Finanzen',
           icon: DollarSign,
           subItems: [
             { name: 'Abrechnung', href: '/admin/billing' },
@@ -236,8 +234,8 @@ export function Sidebar({
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
           ],
         },
-        service: {
-          name: 'SERVICE & KOMMUNIKATION',
+        {
+          label: 'Service & Kommunikation',
           icon: Newspaper,
           subItems: [
             { name: 'News & Kommunikation', href: '/news' },
@@ -245,19 +243,26 @@ export function Sidebar({
             { name: 'Shop verwalten', href: '/admin/shop' },
           ],
         },
-      }
-    : null;
+      ];
+    }
 
-  // Category sections with sub-items (superadmin only now)
-  const categoryNav = (() => {
     if (isSuperAdmin) {
       return [
         {
-          name: 'Plattform-Verwaltung',
+          label: 'Plattform',
+          icon: Shield,
+          subItems: [
+            { name: 'Vereinsübersicht', href: '/superadmin/tenants' },
+            { name: 'Club-Verwaltung', href: '/superadmin/clubs' },
+            { name: 'Plattform-Analyse', href: '/admin/analytics' },
+          ],
+        },
+        {
+          label: 'Verwaltung',
           icon: Settings,
           subItems: [
-            { name: 'System-Einstellungen', href: '/admin/settings' },
             { name: 'Billing-Verwaltung', href: '/admin/billing' },
+            { name: 'System-Einstellungen', href: '/admin/settings' },
             { name: 'Audit-Logs', href: '/admin/audit-logs' },
           ],
         },
@@ -267,7 +272,28 @@ export function Sidebar({
     return [];
   })();
 
+  interface NavItem {
+    name: string;
+    href: string;
+    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+    badge?: number;
+  }
+
+  // Secondary navigation — shown consistently for both admin & superadmin
+  const secondaryNav: NavItem[] = [
+    { name: 'Mein Profil', href: '/profile', icon: User },
+    ...(!isSuperAdmin
+      ? [{ name: 'Abonnement & Rechnung', href: '/billing', icon: CreditCard }]
+      : []),
+    { name: 'News & Updates', href: '/news', icon: Newspaper },
+  ];
+
+  const dashboardHref = isSuperAdmin ? '/superadmin' : '/admin';
   const sectionLabel = isSuperAdmin ? 'Plattform' : 'Administration';
+
+  // ────────────────────────────────────────────────────────────────────
+  // Render
+  // ────────────────────────────────────────────────────────────────────
 
   return (
     <aside
@@ -368,115 +394,59 @@ export function Sidebar({
           </div>
         )}
 
+        {/* ── Unified Navigation ── */}
         <nav className="flex flex-col gap-1 px-3" role="navigation" aria-label="Hauptnavigation">
-          {/* ── ADMIN: Structured 6-section sidebar ── */}
-          {isAdmin && adminNav ? (
-            <>
-              {/* Dashboard – Direktlink mit konsistentem Design */}
-              <div className="mb-3">
-                <div
-                  className="mb-1 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
-                  role="heading"
-                  aria-level={2}
-                >
-                  Hauptbereich
-                </div>
-                <Link
-                  href="/admin"
-                  onClick={() => onClose?.()}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
-                    isExactActive(pathname, '/admin')
-                      ? `${colors.bg} ${colors.text} shadow-sm`
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
-                  )}
-                  aria-current={isExactActive(pathname, '/admin') ? 'page' : undefined}
-                >
-                  <Home
-                    className={cn(
-                      'h-5 w-5 shrink-0 transition-transform duration-200',
-                      isExactActive(pathname, '/admin') && 'scale-110'
-                    )}
-                    aria-hidden="true"
-                  />
-                  <span>Dashboard</span>
-                </Link>
+          {/* Dashboard — prominent first link, consistent for both roles */}
+          <Link
+            href={dashboardHref}
+            onClick={() => onClose?.()}
+            className={cn(
+              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+              isExactActive(pathname, dashboardHref)
+                ? `${colors.bg} ${colors.text} shadow-sm`
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
+            )}
+            aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
+          >
+            <Home
+              className={cn(
+                'h-5 w-5 shrink-0 transition-transform duration-200',
+                isExactActive(pathname, dashboardHref) && 'scale-110'
+              )}
+              aria-hidden="true"
+            />
+            <span>Dashboard</span>
+          </Link>
+
+          {/* Role-specific collapsible sections — unified rendering for both roles */}
+          {roleSections.length > 0 && (
+            <div className="mt-2 space-y-0.5">
+              {roleSections.map((section) => (
+                <AdminSection
+                  key={section.label}
+                  label={section.label}
+                  icon={section.icon}
+                  subItems={section.subItems}
+                  pathname={pathname}
+                  onClose={onClose}
+                  colors={colors}
+                  extraAction={section.extraAction}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Secondary Navigation — shown for both roles */}
+          {secondaryNav.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-gray-100/50 dark:border-white/[0.04]">
+              <div
+                className="mb-1.5 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
+                role="heading"
+                aria-level={2}
+              >
+                Allgemein
               </div>
-
-              {/* Section 2 – MITGLIEDER */}
-              <AdminSection
-                label="Mitglieder"
-                icon={Users}
-                subItems={adminNav.members.subItems}
-                pathname={pathname}
-                onClose={onClose}
-                colors={colors}
-                extraAction={
-                  onInvite
-                    ? {
-                        label: 'Einladen',
-                        icon: UserPlus,
-                        onClick: () => {
-                          onClose?.();
-                          onInvite();
-                        },
-                      }
-                    : undefined
-                }
-              />
-
-              <div
-                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
-                role="separator"
-              />
-
-              {/* Section 3 – TRAINING */}
-              <AdminSection
-                label="Training"
-                icon={GraduationCap}
-                subItems={adminNav.training.subItems}
-                pathname={pathname}
-                onClose={onClose}
-                colors={colors}
-              />
-
-              <div
-                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
-                role="separator"
-              />
-
-              {/* Section 4 – PLÄTZE & BUCHUNGEN */}
-              <AdminSection
-                label="Plätze & Buchungen"
-                icon={MapPin}
-                subItems={adminNav.courts.subItems}
-                pathname={pathname}
-                onClose={onClose}
-                colors={colors}
-              />
-
-              <div
-                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
-                role="separator"
-              />
-
-              {/* Section 5 – FINANZEN */}
-              <AdminSection
-                label="Finanzen"
-                icon={DollarSign}
-                subItems={adminNav.finance.subItems}
-                pathname={pathname}
-                onClose={onClose}
-                colors={colors}
-              />
-
-              <div
-                className="my-2 border-t border-gray-100/50 dark:border-white/[0.04]"
-                role="separator"
-              />
-
-              {/* Service & Kommunikation – direkte Links */}
-              {adminNav.service.subItems.map((item) => {
+              {secondaryNav.map((item) => {
                 const isActive = isActivePath(pathname, item.href);
                 return (
                   <Link
@@ -484,14 +454,15 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => onClose?.()}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                      'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
                         ? `${colors.bg} ${colors.text} shadow-sm`
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
+                    aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
                   >
-                    <Newspaper
+                    <item.icon
                       className={cn(
                         'h-5 w-5 shrink-0 transition-transform duration-200',
                         isActive && 'scale-110'
@@ -502,114 +473,12 @@ export function Sidebar({
                   </Link>
                 );
               })}
-            </>
-          ) : (
-            <>
-              {/* Section label */}
-              <div
-                className="mb-2 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
-                role="heading"
-                aria-level={2}
-              >
-                {sectionLabel}
-              </div>
-
-              {/* Primary Navigation (superadmin) */}
-              {primaryNav.map((item) => {
-                const isActive = isActivePath(pathname, item.href);
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => onClose?.()}
-                    className={cn(
-                      'flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
-                      isActive
-                        ? `${colors.bg} ${colors.text} shadow-sm`
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
-                    )}
-                    aria-current={isActive ? 'page' : undefined}
-                    aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon
-                        className={cn(
-                          'h-5 w-5 shrink-0 transition-transform duration-200',
-                          isActive && 'scale-110'
-                        )}
-                        aria-hidden="true"
-                      />
-                      <span>{item.name}</span>
-                    </div>
-                    {(item as NavItem).badge != null && (item as NavItem).badge !== undefined && (
-                      <NavigationBadge count={(item as NavItem).badge!} variant="default" />
-                    )}
-                  </Link>
-                );
-              })}
-
-              {/* Category sections (superadmin only) */}
-              {categoryNav.length > 0 && (
-                <>
-                  {categoryNav.map((category) => (
-                    <AdminSection
-                      key={category.name}
-                      label={category.name}
-                      icon={category.icon}
-                      subItems={category.subItems}
-                      pathname={pathname}
-                      onClose={onClose}
-                      colors={colors}
-                    />
-                  ))}
-                </>
-              )}
-
-              {/* Secondary Navigation */}
-              {secondaryNav.length > 0 && (
-                <>
-                  <div
-                    className="mt-6 mb-2 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
-                    role="heading"
-                    aria-level={2}
-                  >
-                    Weitere
-                  </div>
-                  {secondaryNav.map((item) => {
-                    const isActive = isActivePath(pathname, item.href);
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => onClose?.()}
-                        className={cn(
-                          'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
-                          isActive
-                            ? `${colors.bg} ${colors.text} shadow-sm`
-                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
-                        )}
-                        aria-current={isActive ? 'page' : undefined}
-                        aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
-                      >
-                        <item.icon
-                          className={cn(
-                            'h-5 w-5 shrink-0 transition-transform duration-200',
-                            isActive && 'scale-110'
-                          )}
-                          aria-hidden="true"
-                        />
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </>
-              )}
-            </>
+            </div>
           )}
         </nav>
 
         {/* Theme Toggle — at the bottom of the sidebar */}
-        <div className="mt-6 px-3 pb-4">
+        <div className="mt-4 px-3 pb-4">
           <div
             className="border-t border-gray-100/50 dark:border-white/[0.04] pt-4"
             role="separator"
