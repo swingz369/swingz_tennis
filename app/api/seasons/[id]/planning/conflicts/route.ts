@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasons,
   seasonPlanEntries,
@@ -21,7 +21,7 @@ interface RouteContext {
 
 async function detectConflictsForSeason(seasonId: string, clubId: string) {
   const detector = new ConflictDetector(seasonId, clubId);
-  const entries = await getDb()
+  const entries = await db
     .select()
     .from(seasonPlanEntries)
     .where(eq(seasonPlanEntries.season_id, seasonId));
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
       if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
       const isAdmin = await verifyRole(auth, 'admin');
@@ -102,7 +102,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
       if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
       const isAdmin = await verifyRole(auth, 'admin');
@@ -122,13 +122,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const newStatus = body.action === 'resolve' ? 'resolved' : 'ignored';
 
       // Update in planning_conflicts table if it exists
-      const [existing] = await getDb()
+      const [existing] = await db
         .select()
         .from(planningConflicts)
         .where(eq(planningConflicts.id, body.conflictId));
 
       if (existing) {
-        await getDb()
+        await db
           .update(planningConflicts)
           .set({
             status: newStatus,

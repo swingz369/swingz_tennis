@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasonPlanEntries,
   trainers,
@@ -29,7 +29,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
-    const db = getDb();
     const { id: seasonId, entryId } = await context.params;
     try {
       // Fetch entry with details
@@ -92,7 +91,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
-      const db = getDb();
       const { id: seasonId, entryId } = await context.params;
       try {
         // Only admins can update plan entries
@@ -243,7 +241,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
-      const db = getDb();
       const { id: seasonId, entryId } = await context.params;
       try {
         // Only admins can delete plan entries
@@ -278,7 +275,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         }
 
         // Delete entry
-        await getDb().delete(seasonPlanEntries).where(eq(seasonPlanEntries.id, entryId));
+        await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.id, entryId));
 
         return NextResponse.json({
           success: true,

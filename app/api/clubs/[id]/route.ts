@@ -8,6 +8,7 @@ import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { clubs } from '@/infrastructure/persistence/schema';
+import { db } from '@/infrastructure/persistence/db';
 import { eq } from 'drizzle-orm';
 
 const clubRepo = new DrizzleClubRepository();
@@ -30,9 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         return NextResponse.json({ error: 'Club not found' }, { status: 404 });
       }
       // Query default_hourly_rate from DB
-      const { getDb } = await import('@/infrastructure/persistence/client');
-      const db2 = getDb();
-      const result = await db2
+      const result = await db
         .select({
           default_hourly_rate: clubs.default_hourly_rate,
           bundesland: clubs.bundesland,
@@ -117,8 +116,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           input.invoice_number_prefix !== undefined;
 
         if (hasExtraUpdates) {
-          const { getDb } = await import('@/infrastructure/persistence/client');
-          const db = getDb();
           await db
             .update(clubs)
             .set({

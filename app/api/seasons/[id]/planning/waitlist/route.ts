@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import { seasons, users } from '@/src/infrastructure/persistence/schema';
 import { seasonWaitlists } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, asc } from 'drizzle-orm';
@@ -22,14 +22,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
       if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
-      const waitlist = await getDb()
+      const waitlist = await db
         .select({
           entry: seasonWaitlists,
           member_name: users.full_name,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           return NextResponse.json({ error: 'waitlistId required' }, { status: 400 });
         }
 
-        const [entry] = await getDb()
+        const [entry] = await db
           .select()
           .from(seasonWaitlists)
           .where(eq(seasonWaitlists.id, waitlistId));
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
 
         // Update waitlist entry
-        await getDb()
+        await db
           .update(seasonWaitlists)
           .set({
             status: 'accepted',

@@ -4,7 +4,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { aiScheduleServiceV2 } from '@/lib/ai/schedule-generator-v2';
 import type { ScheduleGenerationInput } from '@/lib/ai/schedule-generator-v2';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import { seasons, userTrainingPreferences, courts } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import type { WeeklyAvailability } from '@/lib/types/season-planning';
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       }
 
       // ── Fetch season data ──────────────────────────────────
-      const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
       if (!season) {
         return NextResponse.json({ error: 'Season not found' }, { status: 404 });
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       const effectiveClubId = clubId || season.club_id;
 
       // ── Fetch all submitted preferences ────────────────────
-      const allPreferences = await getDb()
+      const allPreferences = await db
         .select({
           pref: userTrainingPreferences,
           user_name: sql<string>`COALESCE(users.full_name, users.email)`,
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         );
 
       // ── Fetch available courts ─────────────────────────────
-      const availableCourts = await getDb()
+      const availableCourts = await db
         .select()
         .from(courts)
         .where(and(eq(courts.club_id, effectiveClubId), eq(courts.is_active, true)));

@@ -3,7 +3,7 @@
 
 import { ConflictDetector } from '../lib/season-planning/conflict-detector';
 import type { GroupAssignment } from '../lib/season-planning/types';
-import { getDb } from '../src/infrastructure/persistence/client';
+import { db } from '../src/infrastructure/persistence/db';
 import { seasonPlanEntries } from '../src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
 
@@ -14,7 +14,6 @@ async function main() {
   console.log('🚀 Lade Plan-Einträge aus der DB...');
 
   // Load plan entries (same logic as the API route)
-  const db = getDb();
   const entries = await db
     .select()
     .from(seasonPlanEntries)

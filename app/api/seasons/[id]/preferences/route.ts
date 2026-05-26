@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/persistence/schema';
 import { and, eq, desc } from 'drizzle-orm';
 import type { SubmitPreferencesRequest } from '@/lib/types/season-planning';
@@ -31,13 +31,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
-    const db = getDb();
     try {
       const { id: seasonId } = await context.params;
       const { searchParams } = new URL(request.url);
 
       // Verify season exists
-      const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
       if (!season) {
         return NextResponse.json({ error: 'Season not found' }, { status: 404 });
@@ -119,12 +118,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (rateLimitError) return rateLimitError;
 
     return withApiAuth(request, async (auth) => {
-      const db = getDb();
       try {
         const { id: seasonId } = await context.params;
 
         // Verify season exists
-        const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
 
         if (!season) {
           return NextResponse.json({ error: 'Season not found' }, { status: 404 });

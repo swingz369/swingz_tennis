@@ -7,7 +7,7 @@ import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositor
 import { ClubId } from '@/domain/value-objects';
 import { optimizeScheduleSchema, updateSessionsSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
-import { getDb } from '@/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import { eq } from 'drizzle-orm';
 import { sessions } from '@/infrastructure/persistence/schema';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
@@ -123,7 +123,6 @@ export async function PUT(req: NextRequest) {
 
     return withValidation(updateSessionsSchema, async (input) => {
       try {
-        const db = getDb();
 
         // Use a transaction to batch all updates together for better performance
         await db.transaction(async (tx) => {

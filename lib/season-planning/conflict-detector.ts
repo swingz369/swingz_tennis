@@ -2,7 +2,7 @@
 // Implements Schritt 5: automatic conflict detection with 7 conflict types
 // Runs continuously in the background, blocks confirmation for critical issues
 
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasonPlanEntries,
   trainers,
@@ -585,10 +585,10 @@ export class ConflictDetector {
   ): Promise<number> {
     if (conflicts.length === 0) return 0;
 
-    const db = tx ?? getDb();
+    const dbInstance = tx ?? db;
 
     // Delete previously detected open conflicts for this season (re-detect on each run)
-    await db
+    await dbInstance
       .delete(planningConflicts)
       .where(
         and(eq(planningConflicts.season_id, this.seasonId), eq(planningConflicts.status, 'open'))
@@ -611,7 +611,7 @@ export class ConflictDetector {
       detection_source: 'auto_planner',
     }));
 
-    await db.insert(planningConflicts).values(rows as any);
+    await dbInstance.insert(planningConflicts).values(rows as any);
     return rows.length;
   }
 
@@ -621,19 +621,19 @@ export class ConflictDetector {
 
   private async buildCheckParams(assignments: GroupAssignment[]): Promise<ConflictCheckParams> {
     // Load plan entries for this season (for checking against existing data)
-    const entries = await getDb()
+    const entries = await db
       .select()
       .from(seasonPlanEntries)
       .where(eq(seasonPlanEntries.season_id, this.seasonId));
 
     // Load trainers
-    const trainerRows = await getDb().select().from(trainers);
+    const trainerRows = await db.select().from(trainers);
 
     // Load courts
-    const courtRows = await getDb().select().from(courts).where(eq(courts.club_id, this.clubId));
+    const courtRows = await db.select().from(courts).where(eq(courts.club_id, this.clubId));
 
     // Load slot failure rates from statistics
-    const stats = await getDb()
+    const stats = await db
       .select()
       .from(seasonStatistics)
       .where(eq(seasonStatistics.club_id, this.clubId));
@@ -656,7 +656,7 @@ export class ConflictDetector {
     }
 
     // Load config
-    const [dbConfig] = await getDb()
+    const [dbConfig] = await db
       .select()
       .from(seasonPlanningConfigs)
       .where(

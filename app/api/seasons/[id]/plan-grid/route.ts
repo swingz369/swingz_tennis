@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasons,
   seasonPlanEntries,
@@ -38,7 +38,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (_auth) => {
     try {
       const { id: seasonId } = await context.params;
-      const db = getDb();
 
       // 1) Season lookup
       let season;

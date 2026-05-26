@@ -2,7 +2,7 @@
 // Implements Schritt 4a (hard constraints), 4b (soft constraints),
 // 4c (niveau development), and 4d (waitlist logic)
 
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasons,
   users,
@@ -220,7 +220,7 @@ export class SeasonClusteringEngine {
   // ============================================
 
   private async loadConfig(): Promise<void> {
-    const [dbConfig] = await getDb()
+    const [dbConfig] = await db
       .select()
       .from(seasonPlanningConfigs)
       .where(
@@ -261,7 +261,7 @@ export class SeasonClusteringEngine {
   }
 
   private async loadMembers(): Promise<(MemberWithDetails & { _unassignedReason?: string })[]> {
-    const prefs = await getDb()
+    const prefs = await db
       .select({
         pref: userTrainingPreferences,
         user_name: users.full_name,
@@ -280,7 +280,7 @@ export class SeasonClusteringEngine {
       );
 
     // Also load user_club_memberships to check is_minor / age_group info
-    const memberships = await getDb()
+    const memberships = await db
       .select({
         user_id: userClubMemberships.user_id,
         role: userClubMemberships.role,
@@ -305,7 +305,7 @@ export class SeasonClusteringEngine {
     >();
 
     if (previousSeasonId) {
-      const feedback = await getDb()
+      const feedback = await db
         .select()
         .from(trainerFeedback)
         .where(eq(trainerFeedback.season_id, previousSeasonId));
@@ -345,7 +345,7 @@ export class SeasonClusteringEngine {
   }
 
   private async loadTrainers(): Promise<TrainerWithDetails[]> {
-    const prefs = await getDb()
+    const prefs = await db
       .select({
         pref: userTrainingPreferences,
         trainer_name: users.full_name,
@@ -377,7 +377,7 @@ export class SeasonClusteringEngine {
   }
 
   private async loadCourts(): Promise<CourtInfo[]> {
-    const courtRows = await getDb()
+    const courtRows = await db
       .select()
       .from(courts)
       .where(and(eq(courts.club_id, this.clubId), eq(courts.is_active, true)));
@@ -390,7 +390,7 @@ export class SeasonClusteringEngine {
   }
 
   private async loadGroups(): Promise<GroupInfo[]> {
-    const groupRows = await getDb()
+    const groupRows = await db
       .select()
       .from(groups)
       .where(and(eq(groups.club_id, this.clubId), eq(groups.is_active, true)));
@@ -403,7 +403,7 @@ export class SeasonClusteringEngine {
   }
 
   private async loadSlotFailureRates(): Promise<Record<string, number>> {
-    const stats = await getDb()
+    const stats = await db
       .select()
       .from(seasonStatistics)
       .where(eq(seasonStatistics.club_id, this.clubId))
@@ -429,12 +429,12 @@ export class SeasonClusteringEngine {
     const previousSeasonId = await this.getPreviousSeasonId();
     if (!previousSeasonId) return new Map();
 
-    const entries = await getDb()
+    const entries = await db
       .select()
       .from(seasonPlanEntries)
       .where(eq(seasonPlanEntries.season_id, previousSeasonId));
 
-    const feedback = await getDb()
+    const feedback = await db
       .select()
       .from(trainerFeedback)
       .where(eq(trainerFeedback.season_id, previousSeasonId));
@@ -470,14 +470,14 @@ export class SeasonClusteringEngine {
   }
 
   private async getPreviousSeasonId(): Promise<string | null> {
-    const [currentSeason] = await getDb()
+    const [currentSeason] = await db
       .select()
       .from(seasons)
       .where(eq(seasons.id, this.seasonId));
 
     if (!currentSeason) return null;
 
-    const previousSeasons = await getDb()
+    const previousSeasons = await db
       .select()
       .from(seasons)
       .where(
@@ -796,7 +796,7 @@ export class SeasonClusteringEngine {
         } else {
           const prefix = ageGroup === 'kids' ? 'Kids' : skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1);
           const groupName = `${prefix} Gruppe ${groupIndex + 1}`;
-          const [newGroup] = await getDb()
+          const [newGroup] = await db
             .insert(groups)
             .values({
               club_id: this.clubId,
@@ -1299,7 +1299,6 @@ export class SeasonClusteringEngine {
   // ============================================
 
   private async saveToDatabase(result: ClusteringResult): Promise<void> {
-    const db = getDb();
 
     // Delete existing plan entries for this season (re-planning)
     await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, this.seasonId));

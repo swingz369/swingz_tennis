@@ -2,7 +2,7 @@
 // Optimizes season planning based on user preferences and constraints
 // Supports both deterministic greedy algorithm and AI-powered scheduling (V2)
 
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasons,
   userTrainingPreferences,
@@ -76,13 +76,13 @@ export class AutoPlanningService {
     const startTime = Date.now();
 
     // 1. Fetch season data
-    const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+    const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
     if (!season) {
       throw new Error('Season not found');
     }
 
     // 2. Fetch all preferences
-    const allPreferences = await getDb()
+    const allPreferences = await db
       .select({
         pref: userTrainingPreferences,
         user_name: sql<string>`COALESCE(users.full_name, users.email)`,
@@ -125,13 +125,13 @@ export class AutoPlanningService {
     }
 
     // 3. Fetch available courts
-    const availableCourts = await getDb()
+    const availableCourts = await db
       .select()
       .from(courts)
       .where(and(eq(courts.club_id, season.club_id), eq(courts.is_active, true)));
 
     // 4. Fetch groups
-    const availableGroups = await getDb()
+    const availableGroups = await db
       .select()
       .from(groups)
       .where(and(eq(groups.club_id, season.club_id), eq(groups.is_active, true)));
@@ -193,10 +193,10 @@ export class AutoPlanningService {
   }> {
     const startTime = Date.now();
 
-    const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+    const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
     if (!season) throw new Error('Season not found');
 
-    const allPreferences = await getDb()
+    const allPreferences = await db
       .select({
         pref: userTrainingPreferences,
         user_name: sql<string>`COALESCE(users.full_name, users.email)`,
@@ -210,7 +210,7 @@ export class AutoPlanningService {
         )
       );
 
-    const availableCourts = await getDb()
+    const availableCourts = await db
       .select()
       .from(courts)
       .where(and(eq(courts.club_id, season.club_id), eq(courts.is_active, true)));
@@ -568,11 +568,11 @@ export class AutoPlanningService {
     metrics: AlgorithmMetrics
   ): Promise<void> {
     // Delete existing plan entries (if re-planning)
-    await getDb().delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, seasonId));
+    await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, seasonId));
 
     // Insert new plan entries
     if (slots.length > 0) {
-      await getDb()
+      await db
         .insert(seasonPlanEntries)
         .values(
           slots.map((slot) => ({
@@ -606,7 +606,7 @@ export class AutoPlanningService {
 
     // Save conflicts
     if (conflicts.length > 0) {
-      await getDb()
+      await db
         .insert(planningConflicts)
         .values(
           conflicts.map((conflict) => ({
@@ -624,7 +624,7 @@ export class AutoPlanningService {
     }
 
     // Log to history
-    await getDb()
+    await db
       .insert(seasonPlanningHistory)
       .values({
         season_id: seasonId,
@@ -640,7 +640,7 @@ export class AutoPlanningService {
       });
 
     // Update season status
-    await getDb()
+    await db
       .update(seasons)
       .set({
         planning_status: 'manual_review',

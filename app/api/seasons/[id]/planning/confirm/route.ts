@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasons,
   seasonPlanEntries,
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return withApiAuth(request, async (auth) => {
       try {
         const { id: seasonId } = await context.params;
-        const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+        const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
         if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
         const isAdmin = await verifyRole(auth, 'admin');
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         // Re-run conflict detection
         const detector = new ConflictDetector(seasonId, season.club_id);
-        const entries = await getDb()
+        const entries = await db
           .select()
           .from(seasonPlanEntries)
           .where(eq(seasonPlanEntries.season_id, seasonId));
@@ -136,7 +136,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
         // sessions are created (audit trail, conflict persistence, season
         // status update), the entire publish rolls back automatically.
         // ──────────────────────────────────────────────────────────────────
-        const db = getDb();
         const { publishedCount, publishedIds, scheduleId } = await db.transaction(async (tx) => {
           let publishedCount = 0;
           const publishedIds: string[] = [];

@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
-import { getDb } from '@/src/infrastructure/persistence/client';
+import { db } from '@/src/infrastructure/persistence/db';
 import {
   seasons,
   users,
@@ -28,14 +28,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      const [season] = await getDb().select().from(seasons).where(eq(seasons.id, seasonId));
+      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
       if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
-      const db = getDb();
 
       // Get trainer preferences
       const trainerPrefs = await db
