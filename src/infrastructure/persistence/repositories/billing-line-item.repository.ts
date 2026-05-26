@@ -1,5 +1,5 @@
 import { eq, desc } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { billingLineItems } from '../schema';
 import type {
   BillingLineItem,
@@ -17,7 +17,6 @@ export class DrizzleBillingLineItemRepository implements BillingLineItemReposito
     type: 'training' | 'preparation' | 'meeting' | 'other',
     sessionId?: string
   ): Promise<BillingLineItem> {
-    const db = getDb();
     const amount = hours * rate;
     const now = new Date();
 
@@ -44,7 +43,6 @@ export class DrizzleBillingLineItemRepository implements BillingLineItemReposito
   }
 
   async findByTrainerBilling(trainerBillingId: string): Promise<BillingLineItem[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(billingLineItems)
@@ -55,13 +53,11 @@ export class DrizzleBillingLineItemRepository implements BillingLineItemReposito
   }
 
   async findAll(): Promise<BillingLineItem[]> {
-    const db = getDb();
     const result = await db.select().from(billingLineItems).orderBy(desc(billingLineItems.date));
     return result.map((row) => this.mapToDomain(row));
   }
 
   async update(id: string, data: Partial<BillingLineItem>): Promise<BillingLineItem | null> {
-    const db = getDb();
 
     try {
       const updateData: any = {};
@@ -88,7 +84,6 @@ export class DrizzleBillingLineItemRepository implements BillingLineItemReposito
   }
 
   async delete(id: string): Promise<void> {
-    const db = getDb();
     await db.delete(billingLineItems).where(eq(billingLineItems.id, id));
   }
 

@@ -1,5 +1,5 @@
 import { eq, and, isNull, sql } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { systemSettings } from '../schema';
 import type { ISystemSettingsRepository } from '@/domain/repositories/system-settings-repository.interface';
 import type {
@@ -15,7 +15,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
  */
 export class DrizzleSystemSettingsRepository implements ISystemSettingsRepository {
   async create(input: CreateSystemSettingsInput, clubId: string | null): Promise<SystemSettings> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -42,7 +41,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async findById(id: string): Promise<SystemSettings | null> {
-    const db = getDb();
     const result = await db.select().from(systemSettings).where(eq(systemSettings.id, id)).limit(1);
 
     if (result.length === 0) return null;
@@ -50,7 +48,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async findByKey(key: string, clubId: string | null): Promise<SystemSettings | null> {
-    const db = getDb();
 
     const condition = clubId
       ? and(eq(systemSettings.key, key), eq(systemSettings.club_id, clubId))
@@ -63,7 +60,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async getValue(key: string, clubId: string | null): Promise<string | null> {
-    const db = getDb();
 
     // Use the PostgreSQL helper function
     const result = await db.execute<{ get_setting_value: string | null }>(sql`
@@ -81,7 +77,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async findAll(clubId: string | null): Promise<SystemSettings[]> {
-    const db = getDb();
 
     const condition = clubId ? eq(systemSettings.club_id, clubId) : isNull(systemSettings.club_id);
 
@@ -98,7 +93,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
     category: SystemSettings['category'],
     clubId: string | null
   ): Promise<SystemSettings[]> {
-    const db = getDb();
 
     const condition = clubId
       ? and(eq(systemSettings.category, category), eq(systemSettings.club_id, clubId))
@@ -114,7 +108,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async findPublic(clubId: string | null): Promise<SystemSettings[]> {
-    const db = getDb();
 
     const condition = clubId
       ? and(eq(systemSettings.is_public, true), eq(systemSettings.club_id, clubId))
@@ -134,7 +127,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
     clubId: string | null,
     publicOnly: boolean = false
   ): Promise<Record<string, any>> {
-    const db = getDb();
 
     // Use the PostgreSQL helper function
     const result = await db.execute<{ get_settings_as_object: Record<string, any> }>(sql`
@@ -157,7 +149,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
     input: UpdateSystemSettingsInput,
     updatedBy: string
   ): Promise<SystemSettings | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -186,7 +177,6 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
   }
 
   async delete(id: string): Promise<boolean> {
-    const db = getDb();
 
     try {
       const result = await db.delete(systemSettings).where(eq(systemSettings.id, id)).returning();

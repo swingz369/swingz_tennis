@@ -1,5 +1,5 @@
 import { eq, and, desc, ilike, or, sql } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { trialTrainings } from '../schema';
 import type { ITrialTrainingRepository } from '@/domain/repositories/trial-training-repository.interface';
 import type {
@@ -16,7 +16,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
  */
 export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository {
   async create(input: CreateTrialTrainingInput, clubId: string): Promise<TrialTraining> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -50,7 +49,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async findById(id: string, clubId: string): Promise<TrialTraining | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trialTrainings)
@@ -62,7 +60,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async findAll(clubId: string): Promise<TrialTraining[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trialTrainings)
@@ -73,7 +70,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async findByStatus(status: TrialTraining['status'], clubId: string): Promise<TrialTraining[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trialTrainings)
@@ -84,7 +80,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async findByParticipantEmail(email: string, clubId: string): Promise<TrialTraining[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trialTrainings)
@@ -97,7 +92,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async findByTrainer(trainerId: string, clubId: string): Promise<TrialTraining[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trialTrainings)
@@ -108,7 +102,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async findUpcoming(clubId: string, days: number = 7): Promise<TrialTraining[]> {
-    const db = getDb();
 
     // Use the PostgreSQL helper function
     const result = await db.execute<typeof trialTrainings.$inferSelect>(sql`
@@ -127,7 +120,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async search(query: string, clubId: string): Promise<TrialTraining[]> {
-    const db = getDb();
     const searchPattern = `%${query}%`;
 
     const result = await db
@@ -153,7 +145,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     startDate?: string,
     endDate?: string
   ): Promise<TrialTrainingStats> {
-    const db = getDb();
 
     // Use the PostgreSQL helper function
     const result = await db.execute<{
@@ -202,7 +193,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     input: UpdateTrialTrainingInput,
     clubId: string
   ): Promise<TrialTraining | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -251,7 +241,6 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
   }
 
   async delete(id: string, clubId: string): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .delete(trialTrainings)
       .where(and(eq(trialTrainings.id, id), eq(trialTrainings.club_id, clubId)))

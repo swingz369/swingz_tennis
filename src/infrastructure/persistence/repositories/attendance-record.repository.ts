@@ -1,5 +1,5 @@
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { attendanceRecords } from '../schema';
 import type {
   AttendanceRecord,
@@ -11,7 +11,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
 
 export class DrizzleAttendanceRecordRepository implements AttendanceRecordRepository {
   async create(input: CreateAttendanceRecordInput): Promise<AttendanceRecord> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -40,7 +39,6 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
   }
 
   async findById(id: string): Promise<AttendanceRecord | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(attendanceRecords)
@@ -52,7 +50,6 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
   }
 
   async findBySessionId(sessionId: string): Promise<AttendanceRecord[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(attendanceRecords)
@@ -63,7 +60,6 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
   }
 
   async findByTrainerId(trainerId: string): Promise<AttendanceRecord[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(attendanceRecords)
@@ -74,7 +70,6 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
   }
 
   async findByParticipantId(participantId: string): Promise<AttendanceRecord[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(attendanceRecords)
@@ -85,13 +80,11 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
   }
 
   async findAll(): Promise<AttendanceRecord[]> {
-    const db = getDb();
     const result = await db.select().from(attendanceRecords).orderBy(desc(attendanceRecords.date));
     return result.map((row) => this.mapToDomain(row));
   }
 
   async findByDateRange(startDate: string, endDate: string): Promise<AttendanceRecord[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(attendanceRecords)
@@ -107,7 +100,6 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
   }
 
   async update(id: string, input: UpdateAttendanceRecordInput): Promise<AttendanceRecord | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -134,7 +126,6 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
   }
 
   async delete(id: string): Promise<void> {
-    const db = getDb();
     await db.delete(attendanceRecords).where(eq(attendanceRecords.id, id));
   }
 

@@ -1,5 +1,5 @@
 import { eq, inArray, sql } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { users, clubMemberships } from '../schema';
 import type { Member } from '@/domain/repositories/member-repository.interface';
 import { MemberId, ClubId } from '@/domain/value-objects';
@@ -7,21 +7,18 @@ import type { MemberRepository } from '@/domain/repositories/member-repository.i
 
 export class DrizzleMemberRepository implements MemberRepository {
   async findById(id: MemberId): Promise<Member | null> {
-    const db = getDb();
     const result = await db.select().from(users).where(eq(users.id, id.getValue())).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByEmail(email: string): Promise<Member | null> {
-    const db = getDb();
     const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByClub(clubId: ClubId): Promise<Member[]> {
-    const db = getDb();
     const memberships = await db
       .select()
       .from(clubMemberships)
@@ -46,7 +43,6 @@ export class DrizzleMemberRepository implements MemberRepository {
   }
 
   async save(member: Member): Promise<void> {
-    const db = getDb();
     const now = new Date();
     const userData = {
       id: member.id.getValue(),
@@ -72,7 +68,6 @@ export class DrizzleMemberRepository implements MemberRepository {
   }
 
   async exists(id: MemberId): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
@@ -81,7 +76,6 @@ export class DrizzleMemberRepository implements MemberRepository {
   }
 
   async getMemberEmailAndName(id: MemberId): Promise<{ email: string; name: string } | null> {
-    const db = getDb();
     const result = await db
       .select({ email: users.email, name: users.full_name })
       .from(users)

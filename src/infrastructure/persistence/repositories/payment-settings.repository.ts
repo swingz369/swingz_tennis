@@ -1,5 +1,5 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { paymentSettings } from '../schema';
 import type { IPaymentSettingsRepository } from '@/domain/repositories/payment-settings-repository.interface';
 import type {
@@ -15,7 +15,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
  */
 export class DrizzlePaymentSettingsRepository implements IPaymentSettingsRepository {
   async create(input: CreatePaymentSettingsInput, clubId: string): Promise<PaymentSettings> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -49,7 +48,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async findById(id: string, clubId: string): Promise<PaymentSettings | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(paymentSettings)
@@ -61,7 +59,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async findAll(clubId: string): Promise<PaymentSettings[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(paymentSettings)
@@ -72,7 +69,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async findActive(clubId: string): Promise<PaymentSettings[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(paymentSettings)
@@ -83,7 +79,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async findDefault(clubId: string): Promise<PaymentSettings | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(paymentSettings)
@@ -98,7 +93,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
     gateway: PaymentSettings['gateway'],
     clubId: string
   ): Promise<PaymentSettings[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(paymentSettings)
@@ -113,7 +107,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
     input: UpdatePaymentSettingsInput,
     clubId: string
   ): Promise<PaymentSettings | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -149,7 +142,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async setAsDefault(id: string, clubId: string): Promise<PaymentSettings | null> {
-    const db = getDb();
 
     try {
       // The trigger in the migration will handle unsetting other defaults
@@ -170,7 +162,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async delete(id: string, clubId: string): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .delete(paymentSettings)
       .where(and(eq(paymentSettings.id, id), eq(paymentSettings.club_id, clubId)))
@@ -180,7 +171,6 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
   }
 
   async calculateFee(paymentSettingsId: string, amount: number): Promise<number> {
-    const db = getDb();
 
     // Use the PostgreSQL helper function
     const result = await db.execute<{ calculate_payment_fee: string }>(sql`

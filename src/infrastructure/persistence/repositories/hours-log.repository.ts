@@ -1,5 +1,5 @@
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { hoursLogs } from '../schema';
 import type {
   HoursLog,
@@ -12,7 +12,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
 
 export class DrizzleHoursLogRepository implements HoursLogRepository {
   async create(input: CreateHoursLogInput): Promise<HoursLog> {
-    const db = getDb();
     const duration = this.calculateDuration(input.startTime, input.endTime);
     const now = new Date();
 
@@ -42,7 +41,6 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async findById(id: string): Promise<HoursLog | null> {
-    const db = getDb();
     const result = await db.select().from(hoursLogs).where(eq(hoursLogs.id, id)).limit(1);
 
     if (result.length === 0) return null;
@@ -50,7 +48,6 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async findByTrainerId(trainerId: string): Promise<HoursLog[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(hoursLogs)
@@ -61,13 +58,11 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async findAll(): Promise<HoursLog[]> {
-    const db = getDb();
     const result = await db.select().from(hoursLogs).orderBy(desc(hoursLogs.date));
     return result.map((row) => this.mapToDomain(row));
   }
 
   async findByDateRange(startDate: string, endDate: string): Promise<HoursLog[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(hoursLogs)
@@ -78,7 +73,6 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async findByStatus(status: HoursLog['status']): Promise<HoursLog[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(hoursLogs)
@@ -89,7 +83,6 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async update(id: string, input: UpdateHoursLogInput): Promise<HoursLog | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -145,7 +138,6 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const db = getDb();
     await db.delete(hoursLogs).where(eq(hoursLogs.id, id));
   }
 
@@ -193,7 +185,6 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
   }
 
   async getAllSummaries(): Promise<HoursSummary[]> {
-    const db = getDb();
 
     // Get distinct trainer IDs
     const result = await db

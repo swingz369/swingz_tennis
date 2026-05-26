@@ -1,19 +1,17 @@
 import { eq, and, sql } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { pricing_rules } from '../schema';
 import type { PricingRule } from '@/domain/entities/pricing-rule.entity';
 import { ClubId, CourtId } from '@/domain/value-objects';
 
 export class DrizzlePricingRuleRepository {
   async findById(id: string): Promise<PricingRule | null> {
-    const db = getDb();
     const result = await db.select().from(pricing_rules).where(eq(pricing_rules.id, id)).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByClubId(clubId: ClubId, activeOnly: boolean = true): Promise<PricingRule[]> {
-    const db = getDb();
     const conditions = [eq(pricing_rules.club_id, clubId.getValue())];
     if (activeOnly) {
       conditions.push(eq(pricing_rules.is_active, true));
@@ -26,7 +24,6 @@ export class DrizzlePricingRuleRepository {
   }
 
   async findByCourtId(courtId: CourtId, activeOnly: boolean = true): Promise<PricingRule[]> {
-    const db = getDb();
     const conditions = [eq(pricing_rules.court_id, courtId.getValue())];
     if (activeOnly) {
       conditions.push(eq(pricing_rules.is_active, true));
@@ -43,7 +40,6 @@ export class DrizzlePricingRuleRepository {
     memberType: string,
     activeOnly: boolean = true
   ): Promise<PricingRule[]> {
-    const db = getDb();
     const conditions = [eq(pricing_rules.club_id, clubId.getValue())];
     if (activeOnly) {
       conditions.push(eq(pricing_rules.is_active, true));
@@ -61,7 +57,6 @@ export class DrizzlePricingRuleRepository {
   }
 
   async save(rule: PricingRule): Promise<void> {
-    const db = getDb();
     const now = new Date();
     const values = {
       id: rule.id,
@@ -91,12 +86,10 @@ export class DrizzlePricingRuleRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const db = getDb();
     await db.delete(pricing_rules).where(eq(pricing_rules.id, id));
   }
 
   async exists(id: string): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(pricing_rules)

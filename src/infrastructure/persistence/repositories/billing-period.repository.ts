@@ -1,5 +1,5 @@
 import { eq, desc } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { billingPeriods } from '../schema';
 import type {
   BillingPeriod,
@@ -9,7 +9,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
 
 export class DrizzleBillingPeriodRepository implements BillingPeriodRepository {
   async create(startDate: Date, endDate: Date): Promise<BillingPeriod> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -31,7 +30,6 @@ export class DrizzleBillingPeriodRepository implements BillingPeriodRepository {
   }
 
   async findById(id: string): Promise<BillingPeriod | null> {
-    const db = getDb();
     const result = await db.select().from(billingPeriods).where(eq(billingPeriods.id, id)).limit(1);
 
     if (result.length === 0) return null;
@@ -39,13 +37,11 @@ export class DrizzleBillingPeriodRepository implements BillingPeriodRepository {
   }
 
   async findAll(): Promise<BillingPeriod[]> {
-    const db = getDb();
     const result = await db.select().from(billingPeriods).orderBy(desc(billingPeriods.start_date));
     return result.map((row) => this.mapToDomain(row));
   }
 
   async findCurrent(): Promise<BillingPeriod | null> {
-    const db = getDb();
     const now = new Date();
 
     const result = await db
@@ -65,7 +61,6 @@ export class DrizzleBillingPeriodRepository implements BillingPeriodRepository {
   }
 
   async close(id: string): Promise<BillingPeriod | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -83,7 +78,6 @@ export class DrizzleBillingPeriodRepository implements BillingPeriodRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const db = getDb();
     await db.delete(billingPeriods).where(eq(billingPeriods.id, id));
   }
 

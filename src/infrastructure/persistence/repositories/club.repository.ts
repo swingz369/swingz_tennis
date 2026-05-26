@@ -1,5 +1,5 @@
 import { eq, inArray, sql, and, gte, lt } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { clubs, userClubMemberships } from '../schema';
 import { Club } from '@/domain/entities/club';
 import type { MemberId } from '@/domain/value-objects';
@@ -8,21 +8,18 @@ import type { ClubRepository } from '@/domain/repositories/club-repository.inter
 
 export class DrizzleClubRepository implements ClubRepository {
   async findById(id: ClubId): Promise<Club | null> {
-    const db = getDb();
     const result = await db.select().from(clubs).where(eq(clubs.id, id.getValue())).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByName(name: string): Promise<Club | null> {
-    const db = getDb();
     const result = await db.select().from(clubs).where(eq(clubs.name, name)).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async save(club: Club): Promise<void> {
-    const db = getDb();
     const now = new Date();
     const clubData = {
       id: club.getId().getValue(),
@@ -42,18 +39,15 @@ export class DrizzleClubRepository implements ClubRepository {
   }
 
   async delete(id: ClubId): Promise<void> {
-    const db = getDb();
     await db.delete(clubs).where(eq(clubs.id, id.getValue()));
   }
 
   async findAll(): Promise<Club[]> {
-    const db = getDb();
     const result = await db.select().from(clubs).orderBy(clubs.created_at);
     return result.map((row: typeof clubs.$inferSelect) => this.mapToDomain(row));
   }
 
   async findByMemberId(memberId: MemberId): Promise<Club[]> {
-    const db = getDb();
     const memberships = await db
       .select()
       .from(userClubMemberships)
@@ -65,7 +59,6 @@ export class DrizzleClubRepository implements ClubRepository {
   }
 
   async exists(id: ClubId): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(clubs)
@@ -78,7 +71,6 @@ export class DrizzleClubRepository implements ClubRepository {
     startDate: Date,
     endDate: Date
   ): Promise<{ total: number; new: number; active: number }> {
-    const db = getDb();
     const totalResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(userClubMemberships)
@@ -115,7 +107,6 @@ export class DrizzleClubRepository implements ClubRepository {
     startDate: Date,
     endDate: Date
   ): Promise<Array<{ month: string; count: number }>> {
-    const db = getDb();
     const result = await db
       .select({
         month: sql<Date>`date_trunc('month', ${userClubMemberships.joined_at})`,

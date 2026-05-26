@@ -1,5 +1,5 @@
 import { eq, inArray, sql, and } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { groups } from '../schema';
 import type { Group } from '@/domain/entities/group.entity';
 import { GroupEntity } from '@/domain/entities/group.entity';
@@ -7,28 +7,24 @@ import { GroupId, ClubId, MemberId } from '@/domain/value-objects';
 import type { GroupRepository } from '@/domain/repositories/group-repository.interface';
 export class DrizzleGroupRepository implements GroupRepository {
   async findById(id: GroupId): Promise<Group | null> {
-    const db = getDb();
     const result = await db.select().from(groups).where(eq(groups.id, id.getValue())).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByClubId(clubId: ClubId): Promise<Group[]> {
-    const db = getDb();
     const result = await db.select().from(groups).where(eq(groups.club_id, clubId.getValue()));
     return result.map((row: typeof groups.$inferSelect) => this.mapToDomain(row));
   }
 
   async findByIds(ids: GroupId[]): Promise<Group[]> {
     if (ids.length === 0) return [];
-    const db = getDb();
     const idValues = ids.map((id) => id.getValue());
     const result = await db.select().from(groups).where(inArray(groups.id, idValues));
     return result.map((row: typeof groups.$inferSelect) => this.mapToDomain(row));
   }
 
   async save(group: Group): Promise<void> {
-    const db = getDb();
     const now = new Date();
     const values = {
       id: group.getId().getValue(),
@@ -54,12 +50,10 @@ export class DrizzleGroupRepository implements GroupRepository {
   }
 
   async delete(id: GroupId): Promise<void> {
-    const db = getDb();
     await db.delete(groups).where(eq(groups.id, id.getValue()));
   }
 
   async exists(id: GroupId): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(groups)
@@ -94,7 +88,6 @@ export class DrizzleGroupRepository implements GroupRepository {
   }
 
   async findActiveGroupsByClub(clubId: ClubId): Promise<Group[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(groups)
@@ -103,7 +96,6 @@ export class DrizzleGroupRepository implements GroupRepository {
   }
 
   async findGroupsByMember(memberId: MemberId): Promise<Group[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(groups)

@@ -1,5 +1,5 @@
 import { eq, desc } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { trainerBillings } from '../schema';
 import type {
   TrainerBilling,
@@ -12,7 +12,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
 
 export class DrizzleTrainerBillingRepository implements TrainerBillingRepository {
   async create(input: CreateTrainerBillingInput): Promise<TrainerBilling> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -40,7 +39,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async findById(id: string): Promise<TrainerBilling | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerBillings)
@@ -52,7 +50,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async findByBillingPeriod(billingPeriodId: string): Promise<TrainerBilling[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerBillings)
@@ -63,7 +60,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async findByTrainerId(trainerId: string): Promise<TrainerBilling[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerBillings)
@@ -74,7 +70,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async findAll(status?: string): Promise<TrainerBilling[]> {
-    const db = getDb();
     const query = status
       ? db.select().from(trainerBillings).where(eq(trainerBillings.status, status))
       : db.select().from(trainerBillings);
@@ -84,7 +79,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async update(id: string, input: UpdateTrainerBillingInput): Promise<TrainerBilling | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -157,7 +151,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async generateInvoiceNumber(): Promise<string> {
-    const db = getDb();
     const year = new Date().getFullYear();
     const month = String(new Date().getMonth() + 1).padStart(2, '0');
     const prefix = `INV-${year}${month}`;
@@ -182,7 +175,6 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
   }
 
   async delete(id: string): Promise<void> {
-    const db = getDb();
     await db.delete(trainerBillings).where(eq(trainerBillings.id, id));
   }
 

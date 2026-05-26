@@ -1,5 +1,5 @@
 import { eq, and, gte, lte, or, desc, sql, isNull } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { feeConfigurations } from '../schema';
 import type { IFeeConfigurationRepository } from '@/domain/repositories/fee-configuration-repository.interface';
 import type {
@@ -15,7 +15,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
  */
 export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepository {
   async create(input: CreateFeeConfigurationInput, clubId: string): Promise<FeeConfiguration> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -45,7 +44,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
   }
 
   async findById(id: string, clubId: string): Promise<FeeConfiguration | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(feeConfigurations)
@@ -57,7 +55,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
   }
 
   async findAll(clubId: string): Promise<FeeConfiguration[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(feeConfigurations)
@@ -68,7 +65,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
   }
 
   async findActive(clubId: string, date?: string): Promise<FeeConfiguration[]> {
-    const db = getDb();
     const targetDate = date ? new Date(date) : new Date();
 
     const result = await db
@@ -88,7 +84,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
   }
 
   async findByType(type: FeeConfiguration['type'], clubId: string): Promise<FeeConfiguration[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(feeConfigurations)
@@ -102,7 +97,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
     billingCycle: FeeConfiguration['billingCycle'],
     clubId: string
   ): Promise<FeeConfiguration[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(feeConfigurations)
@@ -123,7 +117,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
     clubId: string,
     trainingGroup?: string
   ): Promise<FeeConfiguration[]> {
-    const db = getDb();
 
     // Use the PostgreSQL helper function
     const result = await db.execute<typeof feeConfigurations.$inferSelect>(sql`
@@ -148,7 +141,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
     input: UpdateFeeConfigurationInput,
     clubId: string
   ): Promise<FeeConfiguration | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -183,7 +175,6 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
   }
 
   async delete(id: string, clubId: string): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .delete(feeConfigurations)
       .where(and(eq(feeConfigurations.id, id), eq(feeConfigurations.club_id, clubId)))

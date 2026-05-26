@@ -242,9 +242,17 @@ vi.mock('drizzle-orm', async (importOriginal) => {
   };
 });
 
-vi.mock('@/src/infrastructure/persistence/client', () => ({
-  getDb: (...args: unknown[]) => mockGetDb(...args),
-}));
+vi.mock('@/src/infrastructure/persistence/db', () => {
+  // Proxy so that db.select / db.transaction / db.insert etc. delegate to
+  // the mockGetDb() instance which is rebuilt per-test in beforeEach.
+  const dbProxy = new Proxy({} as any, {
+    get(_target, prop) {
+      const db = mockGetDb();
+      return db[prop];
+    },
+  });
+  return { db: dbProxy };
+});
 
 vi.mock('@/src/infrastructure/persistence/schema', () => ({
   seasons: {

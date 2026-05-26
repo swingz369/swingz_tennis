@@ -1,10 +1,13 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as schema from './schema';
 
-let _db: ReturnType<typeof drizzle> | null = null;
-
-function createMockDb(): ReturnType<typeof drizzle> {
+/**
+ * createMockDb()
+ * Returns a fully-mocked Drizzle instance that returns empty results.
+ * Used in test environments where no real database is available.
+ * Supports all common Drizzle query patterns: select, insert, update,
+ * delete, joins, groupBy, having, and conflict resolution.
+ */
+export function createMockDb(): ReturnType<typeof drizzle> {
   // Shared empty-array promise for all mock queries
   const emptyArray = Promise.resolve([] as any[]);
 
@@ -62,28 +65,4 @@ function createMockDb(): ReturnType<typeof drizzle> {
     none: () => Promise.resolve({}),
     execute: () => Promise.resolve({}),
   } as any;
-}
-
-export function getDb(): ReturnType<typeof drizzle> {
-  if (_db) return _db;
-
-  // Return mock in test environment or when DATABASE_URL is not available (e.g., during build)
-  if (process.env.NODE_ENV === 'test' || !process.env.DATABASE_URL) {
-    if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
-      console.error(
-        '[getDb] DATABASE_URL not set — using mock DB. All queries will return empty results.'
-      );
-    }
-    return createMockDb();
-  }
-
-  try {
-    const client = postgres(process.env.DATABASE_URL);
-    const db = drizzle(client, { schema });
-    _db = db;
-    return db;
-  } catch (error) {
-    console.error('Failed to initialize database, falling back to mock:', error);
-    return createMockDb();
-  }
 }

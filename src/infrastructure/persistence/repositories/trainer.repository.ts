@@ -1,5 +1,5 @@
 import { eq, inArray, sql } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { trainers, trainerClubs } from '../schema';
 import type { Trainer } from '@/domain/entities/club';
 import { TrainerId, ClubId } from '@/domain/value-objects';
@@ -7,7 +7,6 @@ import type { TrainerRepository } from '@/domain/repositories/trainer-repository
 
 export class DrizzleTrainerRepository implements TrainerRepository {
   async findById(id: TrainerId): Promise<Trainer | null> {
-    const db = getDb();
     const result = await db.select().from(trainers).where(eq(trainers.id, id.getValue())).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
@@ -15,21 +14,18 @@ export class DrizzleTrainerRepository implements TrainerRepository {
 
   async findByIds(ids: TrainerId[]): Promise<Trainer[]> {
     if (ids.length === 0) return [];
-    const db = getDb();
     const trainerIds = ids.map((id) => id.getValue());
     const result = await db.select().from(trainers).where(inArray(trainers.id, trainerIds));
     return result.map((row) => this.mapToDomain(row));
   }
 
   async findByEmail(email: string): Promise<Trainer | null> {
-    const db = getDb();
     const result = await db.select().from(trainers).where(eq(trainers.email, email)).limit(1);
     if (result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
 
   async findByClub(clubId: ClubId): Promise<Trainer[]> {
-    const db = getDb();
     const trainerClubsList = await db
       .select()
       .from(trainerClubs)
@@ -57,7 +53,6 @@ export class DrizzleTrainerRepository implements TrainerRepository {
   }
 
   async findBySpecialty(specialty: string): Promise<Trainer[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainers)
@@ -66,7 +61,6 @@ export class DrizzleTrainerRepository implements TrainerRepository {
   }
 
   async save(trainer: Trainer): Promise<void> {
-    const db = getDb();
     const now = new Date();
     const trainerData = {
       id: trainer.trainerId.getValue(),
@@ -100,7 +94,6 @@ export class DrizzleTrainerRepository implements TrainerRepository {
   }
 
   async exists(id: TrainerId): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .select({ count: sql<number>`count(*)` })
       .from(trainers)

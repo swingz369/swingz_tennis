@@ -1,5 +1,5 @@
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { trainerAvailabilities } from '../schema';
 import type {
   TrainerAvailability,
@@ -13,7 +13,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
 
 export class DrizzleTrainerAvailabilityRepository implements TrainerAvailabilityRepository {
   async create(input: CreateTrainerAvailabilityInput): Promise<TrainerAvailability> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -39,7 +38,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async findById(id: string): Promise<TrainerAvailability | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAvailabilities)
@@ -51,7 +49,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async findByTrainerId(trainerId: string): Promise<TrainerAvailability[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAvailabilities)
@@ -62,7 +59,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async findAll(): Promise<TrainerAvailability[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAvailabilities)
@@ -71,7 +67,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async findByQuery(query: AvailabilityQuery): Promise<TrainerAvailability[]> {
-    const db = getDb();
     const conditions: any[] = [];
 
     if (query.trainerId) {
@@ -104,7 +99,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     startDate: string,
     endDate: string
   ): Promise<TrainerAvailability[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAvailabilities)
@@ -124,7 +118,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     trainerId: string,
     status: TrainerAvailability['status']
   ): Promise<TrainerAvailability[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAvailabilities)
@@ -143,7 +136,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     id: string,
     input: UpdateTrainerAvailabilityInput
   ): Promise<TrainerAvailability | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -179,7 +171,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async delete(id: string): Promise<void> {
-    const db = getDb();
     await db.delete(trainerAvailabilities).where(eq(trainerAvailabilities.id, id));
   }
 
@@ -190,7 +181,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     endTime: string,
     excludeId?: string
   ): Promise<AvailabilityConflict[]> {
-    const db = getDb();
 
     // Use the PostgreSQL function for overlap detection
     const result = await db.execute<{
@@ -227,7 +217,6 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async getAvailableSlots(trainerId: string, date: string): Promise<TrainerAvailability[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAvailabilities)

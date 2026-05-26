@@ -1,5 +1,5 @@
 import { eq, and, gte, lte, desc, ne } from 'drizzle-orm';
-import { getDb } from '../client';
+import { db } from '../db';
 import { trainerAbsences } from '../schema';
 import type { IAbsenceRepository } from '@/domain/repositories/absence-repository.interface';
 import type {
@@ -15,7 +15,6 @@ import { parsePostgresError } from '@/lib/errors/database-errors';
  */
 export class DrizzleAbsenceRepository implements IAbsenceRepository {
   async create(input: CreateAbsenceInput, clubId: string): Promise<Absence> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -43,7 +42,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findById(id: string, clubId: string): Promise<Absence | null> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAbsences)
@@ -55,7 +53,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findByTrainerId(trainerId: string, clubId: string): Promise<Absence[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAbsences)
@@ -66,7 +63,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findAll(clubId: string): Promise<Absence[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAbsences)
@@ -77,7 +73,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findByStatus(status: Absence['status'], clubId: string): Promise<Absence[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAbsences)
@@ -88,7 +83,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findByType(type: Absence['type'], clubId: string): Promise<Absence[]> {
-    const db = getDb();
     const result = await db
       .select()
       .from(trainerAbsences)
@@ -99,7 +93,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findByDateRange(startDate: string, endDate: string, clubId: string): Promise<Absence[]> {
-    const db = getDb();
 
     // Find absences that overlap with the query range
     // Overlap occurs when: (absence_start <= range_end) AND (absence_end >= range_start)
@@ -119,7 +112,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async findActiveForDate(date: string, clubId: string): Promise<Absence[]> {
-    const db = getDb();
     const targetDate = new Date(date);
 
     const result = await db
@@ -145,7 +137,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
     clubId: string,
     excludeId?: string
   ): Promise<Absence[]> {
-    const db = getDb();
 
     const conditions = [
       eq(trainerAbsences.trainer_id, trainerId),
@@ -171,7 +162,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async update(id: string, input: UpdateAbsenceInput, clubId: string): Promise<Absence | null> {
-    const db = getDb();
     const now = new Date();
 
     try {
@@ -226,7 +216,6 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
   }
 
   async delete(id: string, clubId: string): Promise<boolean> {
-    const db = getDb();
     const result = await db
       .delete(trainerAbsences)
       .where(and(eq(trainerAbsences.id, id), eq(trainerAbsences.club_id, clubId)))
