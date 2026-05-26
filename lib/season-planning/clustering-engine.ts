@@ -347,7 +347,7 @@ export class SeasonClusteringEngine {
       })
       .from(userTrainingPreferences)
       .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
-      .innerJoin(trainers, eq(users.email, trainers.email))
+      .innerJoin(trainers, eq(users.id, trainers.user_id))
       .where(
         and(
           eq(userTrainingPreferences.season_id, this.seasonId),
