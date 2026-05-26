@@ -16,7 +16,7 @@ interface RouteContext {
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  const rateLimitError = await checkRateLimitOrFail(request, { max: 5, windowMs: 3600000 });
+  const rateLimitError = await checkRateLimitOrFail(request, { max: 50, windowMs: 3600000 });
   if (rateLimitError) return rateLimitError;
 
   return withApiAuth(request, async (auth) => {
@@ -28,7 +28,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
-      if (!isSuperadmin && season.club_id !== auth.clubId) return forbiddenResponse('Kein Zugriff');
+      // Check club access via memberships (not just active club) — admin may belong to multiple clubs
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
 
       const body: RunClusteringRequest = await request.json();
       const dryRun = body.dryRun !== false;

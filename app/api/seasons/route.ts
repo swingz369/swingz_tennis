@@ -52,8 +52,11 @@ export async function GET(request: NextRequest) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
 
-      if (!isAdmin && !isSuperadmin && clubId !== auth.clubId) {
-        return forbiddenResponse('You do not have access to this club');
+      if (!isAdmin && !isSuperadmin) {
+        const hasClubAccess = auth.memberships.some((m) => m.club_id === clubId);
+        if (!hasClubAccess) {
+          return forbiddenResponse('You do not have access to this club');
+        }
       }
 
       const supabase = auth.supabase;
@@ -153,8 +156,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (!isSuperadmin && body.club_id !== auth.clubId) {
-        return forbiddenResponse('You do not have access to this club');
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === body.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('You do not have access to this club');
       }
 
       const startDate = new Date(body.start_date);

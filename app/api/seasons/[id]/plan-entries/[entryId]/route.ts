@@ -53,8 +53,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
 
-      if (!isAdmin && !isSuperadmin && result.entry.club_id !== auth.clubId) {
-        return forbiddenResponse('You do not have access to this plan entry');
+      if (!isAdmin && !isSuperadmin) {
+        const hasClubAccess = auth.memberships.some((m) => m.club_id === result.entry.club_id);
+        if (!hasClubAccess) {
+          return forbiddenResponse('You do not have access to this plan entry');
+        }
       }
 
       const entryWithDetails = {
@@ -112,8 +115,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         }
 
         // Verify access
-        if (!isSuperadmin && existingEntry.club_id !== auth.clubId) {
-          return forbiddenResponse('You do not have access to this plan entry');
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) =>
+              m.club_id === existingEntry.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('You do not have access to this plan entry');
         }
 
         const body: UpdatePlanEntryRequest = await request.json();
@@ -262,8 +269,12 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         }
 
         // Verify access
-        if (!isSuperadmin && existingEntry.club_id !== auth.clubId) {
-          return forbiddenResponse('You do not have access to this plan entry');
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) =>
+              m.club_id === existingEntry.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('You do not have access to this plan entry');
         }
 
         // Cannot delete published entries

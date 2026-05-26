@@ -55,8 +55,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         // Verify access
-        if (!isSuperadmin && season.club_id !== auth.clubId) {
-          return forbiddenResponse('You do not have access to this season');
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
         }
 
         const clubId = season.club_id;

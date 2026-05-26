@@ -52,8 +52,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
 
-      if (!isAdmin && !isSuperadmin && season.club_id !== auth.clubId) {
-        return forbiddenResponse('You do not have access to this season');
+      if (!isAdmin && !isSuperadmin) {
+        const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
+        if (!hasClubAccess) {
+          return forbiddenResponse('You do not have access to this season');
+        }
       }
 
       // Build query conditions
@@ -152,8 +155,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         // Verify access
-        if (!isSuperadmin && season.club_id !== auth.clubId) {
-          return forbiddenResponse('You do not have access to this season');
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
         }
 
         const body: CreatePlanEntryRequest = await request.json();

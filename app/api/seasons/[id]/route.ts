@@ -31,8 +31,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
       }
 
       const isSuperadmin = await verifyRole(auth, 'superadmin');
-      if (!isSuperadmin && season.club_id !== auth.clubId) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some((m) => m.club_id === season.club_id);
+        if (!hasClubAccess) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
       }
 
       return NextResponse.json({
@@ -85,8 +88,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         if (fetchError || !existing) {
           return NextResponse.json({ error: 'Season not found' }, { status: 404 });
         }
-        if (!isSuperadmin && existing.club_id !== auth.clubId) {
-          return forbiddenResponse('You do not have access to this season');
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) => m.club_id === existing.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
         }
 
         const body = await request.json();
@@ -174,8 +180,11 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         if (fetchError || !existing) {
           return NextResponse.json({ error: 'Season not found' }, { status: 404 });
         }
-        if (!isSuperadmin && existing.club_id !== auth.clubId) {
-          return forbiddenResponse('You do not have access to this season');
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) => m.club_id === existing.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('You do not have access to this season');
         }
         const { error: deleteError } = await supabase.from('seasons').delete().eq('id', id);
         if (deleteError) throw deleteError;

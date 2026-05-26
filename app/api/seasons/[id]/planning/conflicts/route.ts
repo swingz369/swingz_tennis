@@ -73,7 +73,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
-      if (!isSuperadmin && season.club_id !== auth.clubId) return forbiddenResponse('Kein Zugriff');
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
 
       const { conflicts, summary } = await detectConflictsForSeason(seasonId, season.club_id);
 
@@ -108,7 +113,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
-      if (!isSuperadmin && season.club_id !== auth.clubId) return forbiddenResponse('Kein Zugriff');
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
 
       const body = (await request.json()) as {
         conflictId: string;

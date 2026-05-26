@@ -30,8 +30,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
         const isAdmin = await verifyRole(auth, 'admin');
         const isSuperadmin = await verifyRole(auth, 'superadmin');
         if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
-        if (!isSuperadmin && season.club_id !== auth.clubId)
-          return forbiddenResponse('Kein Zugriff');
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+        }
 
         if (!season.preferences_open) {
           return NextResponse.json(

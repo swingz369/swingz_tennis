@@ -205,3 +205,19 @@ CREATE POLICY "Members can update their bookings" ON bookings
 -- Unique constraint to prevent double booking
 ALTER TABLE bookings ADD CONSTRAINT IF NOT EXISTS unique_session_member UNIQUE (session_id, member_id);
 
+-- =============================================================================
+-- SEASON PLANNING: Additional columns (added 2026-05-26)
+-- =============================================================================
+
+-- season_planning_configs: kids group size config and slot duration
+ALTER TABLE season_planning_configs
+  ADD COLUMN IF NOT EXISTS kids_group_max_size integer NOT NULL DEFAULT 6;
+ALTER TABLE season_planning_configs
+  ADD COLUMN IF NOT EXISTS kids_group_min_size integer NOT NULL DEFAULT 3;
+ALTER TABLE season_planning_configs
+  ADD COLUMN IF NOT EXISTS slot_duration_minutes integer NOT NULL DEFAULT 90;
+
+-- user_training_preferences: members to avoid (negative partner wishes)
+ALTER TABLE user_training_preferences
+  ADD COLUMN IF NOT EXISTS avoid_member_ids jsonb DEFAULT '[]'::jsonb;
+
