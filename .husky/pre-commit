@@ -1,1 +1,1 @@
-npx prettier --check . && npm test
+npx lint-staged
