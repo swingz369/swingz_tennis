@@ -181,8 +181,13 @@ export async function GET(_request: NextRequest) {
 
       return NextResponse.json({ profiles: enrichedProfiles });
     } catch (error) {
-      console.error('Trainer profile fetch error:', error);
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const stack = error instanceof Error ? error.stack : '';
+      console.error('Trainer profile fetch error:', message, stack);
+      return NextResponse.json(
+        { error: `Failed to load trainers: ${message}` },
+        { status: 500 }
+      );
     }
   });
 }

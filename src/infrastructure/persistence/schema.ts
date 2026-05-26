@@ -1,6 +1,8 @@
 import {
   pgTable,
   timestamp,
+  date,
+  time,
   boolean,
   jsonb,
   uuid,
@@ -76,6 +78,7 @@ export const trainers = pgTable(
   'trainers',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    user_id: uuid('user_id'),
     email: varchar('email', { length: 255 }).notNull().unique(),
     name: varchar('name', { length: 100 }).notNull(),
     specialties: jsonb('specialties').$type<string[]>().notNull().default([]),
@@ -631,8 +634,8 @@ export const seasonPlanEntries = pgTable(
 
     // Timing (recurring weekly pattern)
     day_of_week: integer('day_of_week').notNull(),
-    start_time: varchar('start_time', { length: 8 }).notNull(), // "HH:MM:SS"
-    end_time: varchar('end_time', { length: 8 }).notNull(),
+    start_time: time('start_time').notNull(), // "HH:MM:SS"
+    end_time: time('end_time').notNull(),
     duration_minutes: integer('duration_minutes').notNull(),
 
     // Recurrence within season
@@ -1579,7 +1582,7 @@ export const trainerProfiles = pgTable(
     last_name: varchar('last_name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).notNull(),
     phone: varchar('phone', { length: 50 }).notNull(),
-    dateOfBirth: varchar('date_of_birth', { length: 10 }).notNull(),
+    dateOfBirth: date('date_of_birth').notNull(),
     bio: text('bio'),
     profileImageUrl: text('profile_image_url'),
     // Complex JSONB fields

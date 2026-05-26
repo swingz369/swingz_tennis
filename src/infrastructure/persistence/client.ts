@@ -5,16 +5,32 @@ import * as schema from './schema';
 let _db: ReturnType<typeof drizzle> | null = null;
 
 function createMockDb(): ReturnType<typeof drizzle> {
-  const createQuery = () => ({
+  // Shared empty-array promise for all mock queries
+  const emptyArray = Promise.resolve([] as any[]);
+
+  // Thenable: works with both `await` and chained `.returning()`
+  const makeThenable = (): any => {
+    const result: any = { returning: () => emptyArray };
+    result.then = (resolve: any) => resolve([]);
+    return result;
+  };
+
+  const createQuery = (): any => ({
     from: () => createQuery(),
     where: () => createQuery(),
     orderBy: () => createQuery(),
-    limit: () => Promise.resolve([]),
+    limit: () => emptyArray,
+    leftJoin: () => createQuery(),
+    rightJoin: () => createQuery(),
+    innerJoin: () => createQuery(),
+    fullJoin: () => createQuery(),
+    groupBy: () => createQuery(),
+    having: () => createQuery(),
     eq: () => ({}),
     inArray: () => ({}),
     asc: () => ({}),
     desc: () => ({}),
-    all: () => Promise.resolve([]),
+    all: () => emptyArray,
     one: () => Promise.resolve({}),
     none: () => Promise.resolve({}),
   });
@@ -23,23 +39,24 @@ function createMockDb(): ReturnType<typeof drizzle> {
     select: () => createQuery(),
     insert: () => ({
       values: () => ({
-        returning: () => Promise.resolve([]),
+        returning: () => emptyArray,
+        onConflictDoNothing: () => emptyArray,
       }),
     }),
     update: () => ({
       set: () => ({
-        where: () => Promise.resolve([]),
+        where: () => makeThenable(),
       }),
     }),
     delete: () => ({
-      where: () => Promise.resolve([]),
+      where: () => makeThenable(),
     }),
-    query: () => Promise.resolve([]),
-    transact: () => Promise.resolve([]),
-    run: () => Promise.resolve([]),
-    create: () => Promise.resolve([]),
+    query: () => emptyArray,
+    transact: () => emptyArray,
+    run: () => emptyArray,
+    create: () => emptyArray,
     cast: () => ({}),
-    all: () => Promise.resolve([]),
+    all: () => emptyArray,
     one: () => Promise.resolve({}),
     none: () => Promise.resolve({}),
     execute: () => Promise.resolve({}),
@@ -51,6 +68,9 @@ export function getDb(): ReturnType<typeof drizzle> {
 
   // Return mock in test environment or when DATABASE_URL is not available (e.g., during build)
   if (process.env.NODE_ENV === 'test' || !process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
+      console.error('[getDb] DATABASE_URL not set — using mock DB. All queries will return empty results.');
+    }
     return createMockDb();
   }
 
