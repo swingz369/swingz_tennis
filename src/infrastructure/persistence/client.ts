@@ -23,6 +23,8 @@ export function createMockDb(): ReturnType<typeof drizzle> {
     where: () => createQuery(),
     orderBy: () => createQuery(),
     limit: () => emptyArray,
+    offset: () => createQuery(),
+    forUpdate: () => createQuery(),
     leftJoin: () => createQuery(),
     rightJoin: () => createQuery(),
     innerJoin: () => createQuery(),
@@ -40,6 +42,7 @@ export function createMockDb(): ReturnType<typeof drizzle> {
 
   return {
     select: () => createQuery(),
+    selectDistinct: () => createQuery(),
     insert: () => ({
       values: () => ({
         returning: () => emptyArray,
