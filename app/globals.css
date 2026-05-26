@@ -44,13 +44,7 @@
   }
 }
 
-@font-face {
-  font-family: 'Clash Display';
-  src: url('https://cdn.fontshare.com/wf/NHF7WW4RXLWL4LROQUKW2GKJ3S7H4U2H/ZLXISGW46GXVGYDCPTIMMHH4SJUDA6AX/ZMR6I2TV75BM6XTJHLWN4EZV4NKDURXM.woff2')
-    format('woff2');
-  font-weight: 400 900;
-  font-display: swap;
-}
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@1&display=swap');
 
 :root {
   color-scheme: light;
