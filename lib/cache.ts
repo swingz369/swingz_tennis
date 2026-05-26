@@ -1,5 +1,14 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+export const CACHE_TIMES = {
+  IMMEDIATE: 0,
+  SHORT: 1000 * 60 * 5, // 5 minutes
+  MEDIUM: 1000 * 60 * 15, // 15 minutes
+  LONG: 1000 * 60 * 30, // 30 minutes
+  VERY_LONG: 1000 * 60 * 60, // 1 hour
+  DAY: 1000 * 60 * 60 * 24, // 24 hours
+};
+
 export const STALE_TIMES = {
   IMMEDIATE: 0,
   SHORT: 1000 * 30, // 30 seconds

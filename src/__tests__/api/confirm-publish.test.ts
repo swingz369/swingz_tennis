@@ -6,7 +6,12 @@
  * audit trail) must be rolled back.
  */
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
-import type { NextRequest } from 'next/server';
+
+// Ensure DATABASE_URL is set before any dynamic import triggers db.ts module evaluation.
+// CI environments may not have DATABASE_URL, and vi.mock hoisting may not intercept
+// dynamic imports in all Vitest configurations.
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://test:test@localhost:5432/swingz_test';
+import { NextRequest } from 'next/server';
 
 // ════════════════════════════════════════════════════════════
 // TEST CONSTANTS
