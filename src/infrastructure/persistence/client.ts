@@ -41,6 +41,7 @@ function createMockDb(): ReturnType<typeof drizzle> {
       values: () => ({
         returning: () => emptyArray,
         onConflictDoNothing: () => emptyArray,
+        onConflictDoUpdate: () => makeThenable(),
       }),
     }),
     update: () => ({
