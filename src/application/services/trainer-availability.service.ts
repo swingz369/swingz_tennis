@@ -363,21 +363,15 @@ export class TrainerAvailabilityService {
   }
 
   /**
-   * Get availability conflicts for a date range
+   * Compute availability conflicts from a list of availabilities.
+   * Pure utility — does not use in-memory state.
    */
-  static async getAvailabilityConflicts(
-    startDate: string,
-    endDate: string
-  ): Promise<AvailabilityConflict[]> {
+  static getAvailabilityConflicts(availabilities: TrainerAvailability[]): AvailabilityConflict[] {
     const conflicts: AvailabilityConflict[] = [];
-
-    const dateAvailabilities = this.availabilities.filter(
-      (a) => a.date >= startDate && a.date <= endDate
-    );
 
     // Group by trainer and date
     const grouped = new Map<string, TrainerAvailability[]>();
-    for (const availability of dateAvailabilities) {
+    for (const availability of availabilities) {
       const key = `${availability.trainerId}-${availability.date}`;
       if (!grouped.has(key)) {
         grouped.set(key, []);
@@ -394,9 +388,9 @@ export class TrainerAvailabilityService {
           const a1 = group[i];
           const a2 = group[j];
 
-          if (this.hasTimeOverlap(a1, a2.startTime, a2.endTime)) {
+          if (TrainerAvailabilityService.hasTimeOverlap(a1, a2.startTime, a2.endTime)) {
             conflicts.push({
-              id: this.generateId(),
+              id: `avail-conflict-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               trainerId,
               trainerName: 'Trainer',
               date,
@@ -412,73 +406,4 @@ export class TrainerAvailabilityService {
 
     return conflicts;
   }
-
-  /**
-   * Initialize with mock data (for development)
-   */
-  static initializeMockData(): void {
-    const now = new Date();
-
-    // Create availabilities for the next 7 days
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
-
-      // Trainer 1 availability
-      this.availabilities.push({
-        id: `avail-trainer1-${i}`,
-        trainerId: 'trainer-1',
-        date: dateStr,
-        startTime: '08:00',
-        endTime: '12:00',
-        status: 'available',
-        notes: 'Morgens verfügbar',
-        createdAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-      });
-
-      this.availabilities.push({
-        id: `avail-trainer1-${i}-2`,
-        trainerId: 'trainer-1',
-        date: dateStr,
-        startTime: '14:00',
-        endTime: '18:00',
-        status: 'available',
-        notes: 'Nachmittags verfügbar',
-        createdAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-      });
-
-      // Trainer 2 availability
-      this.availabilities.push({
-        id: `avail-trainer2-${i}`,
-        trainerId: 'trainer-2',
-        date: dateStr,
-        startTime: '10:00',
-        endTime: '14:00',
-        status: 'available',
-        notes: 'Mittags verfügbar',
-        createdAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-      });
-
-      this.availabilities.push({
-        id: `avail-trainer2-${i}-2`,
-        trainerId: 'trainer-2',
-        date: dateStr,
-        startTime: '16:00',
-        endTime: '20:00',
-        status: 'available',
-        notes: 'Abends verfügbar',
-        createdAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString(),
-      });
-    }
-  }
-}
-
-// Initialize mock data
-if (process.env.NODE_ENV !== 'production') {
-  TrainerAvailabilityService.initializeMockData();
 }

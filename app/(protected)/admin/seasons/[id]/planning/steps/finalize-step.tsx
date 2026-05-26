@@ -351,7 +351,7 @@ export function FinalizeStep() {
 
   // === CONFLICTS DISPLAY ===
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28">
       {/* Summary */}
       <div className="grid gap-3 md:grid-cols-4">
         <Card>
@@ -591,51 +591,53 @@ export function FinalizeStep() {
         </CardContent>
       </Card>
 
-      {/* Confirm Button */}
-      <div className="flex items-center justify-between border-t pt-6">
-        <div className="text-sm text-muted-foreground">
-          {hasBlockingConflicts ? (
-            <span className="flex items-center gap-1 text-red-600">
-              <AlertTriangle className="h-4 w-4" />
-              Kritische Konflikte müssen zuerst gelöst werden
-            </span>
-          ) : !allWarningsAccepted ? (
-            <span className="flex items-center gap-1 text-amber-600">
-              <Info className="h-4 w-4" />
-              Bitte alle Warnungen bestätigen
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-green-600">
-              <CheckCircle className="h-4 w-4" />
-              Bereit zur Bestätigung
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button onClick={handleRunConflicts} variant="outline" size="sm" className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Erneut prüfen
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={hasBlockingConflicts || !allWarningsAccepted || isConfirming}
-            variant="brand"
-            size="lg"
-            className="gap-2"
-          >
-            {isConfirming ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Bestätige...
-              </>
+      {/* Confirm Button — sticky bottom bar */}
+      <div className="sticky bottom-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 shadow-lg rounded-t-xl px-6 py-4 z-10">
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            {hasBlockingConflicts ? (
+              <span className="flex items-center gap-1 text-red-600">
+                <AlertTriangle className="h-4 w-4" />
+                Kritische Konflikte müssen zuerst gelöst werden
+              </span>
+            ) : !allWarningsAccepted ? (
+              <span className="flex items-center gap-1 text-amber-600">
+                <Info className="h-4 w-4" />
+                Bitte alle Warnungen bestätigen
+              </span>
             ) : (
-              <>
-                <ClipboardCheck className="h-4 w-4" />
-                Planung bestätigen & veröffentlichen
-              </>
+              <span className="flex items-center gap-1 text-green-600">
+                <CheckCircle className="h-4 w-4" />
+                Bereit zur Bestätigung
+              </span>
             )}
-          </Button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button onClick={handleRunConflicts} variant="outline" size="sm" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Erneut prüfen
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              disabled={hasBlockingConflicts || !allWarningsAccepted || isConfirming}
+              variant="brand"
+              size="lg"
+              className="gap-2"
+            >
+              {isConfirming ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Bestätige...
+                </>
+              ) : (
+                <>
+                  <ClipboardCheck className="h-4 w-4" />
+                  Planung bestätigen & veröffentlichen
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

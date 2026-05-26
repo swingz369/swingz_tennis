@@ -95,20 +95,23 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
   }
 
   async findByDateRange(
-    trainerId: string,
+    trainerId: string | undefined,
     startDate: string,
     endDate: string
   ): Promise<TrainerAvailability[]> {
+    const conditions: any[] = [
+      gte(trainerAvailabilities.date, new Date(startDate)),
+      lte(trainerAvailabilities.date, new Date(endDate)),
+    ];
+
+    if (trainerId) {
+      conditions.push(eq(trainerAvailabilities.trainer_id, trainerId));
+    }
+
     const result = await db
       .select()
       .from(trainerAvailabilities)
-      .where(
-        and(
-          eq(trainerAvailabilities.trainer_id, trainerId),
-          gte(trainerAvailabilities.date, new Date(startDate)),
-          lte(trainerAvailabilities.date, new Date(endDate))
-        )
-      )
+      .where(and(...conditions))
       .orderBy(desc(trainerAvailabilities.date));
 
     return result.map((row) => this.mapToDomain(row));

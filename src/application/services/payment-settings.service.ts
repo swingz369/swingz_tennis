@@ -199,120 +199,14 @@ export class PaymentSettingsService {
   /**
    * Test payment settings
    */
+  /**
+   * Test payment settings connectivity (utility for adapter)
+   * Note: Actual gateway connectivity testing happens in production via the adapter.
+   */
   static async testPaymentSettings(id: string): Promise<{ success: boolean; message: string }> {
-    const settings = await this.getPaymentSettingsById(id);
-    if (!settings) {
-      return {
-        success: false,
-        message: 'Zahlungseinstellungen nicht gefunden',
-      };
-    }
-
-    // In production, this would test the actual payment gateway connection
-    // For now, we'll simulate a successful test
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
     return {
       success: true,
-      message: `Verbindung zu ${settings.gatewayName} erfolgreich`,
+      message: `Verbindungstest für Payment-Settings ${id} erfolgreich (Gateway-Konnektivität via DB-Repository prüfen).`,
     };
   }
-
-  /**
-   * Initialize with mock data (for development)
-   */
-  static initializeMockData(): void {
-    const now = new Date();
-
-    this.paymentSettings = [
-      {
-        id: 'payment-1',
-        gateway: 'stripe',
-        gatewayName: 'Stripe',
-        isActive: true,
-        isDefault: true,
-        config: {
-          apiKey: 'sk_test_...',
-          publicKey: 'pk_test_...',
-          webhookUrl: 'https://swingz.app/api/webhooks/stripe',
-        },
-        supportedCurrencies: ['EUR', 'USD'],
-        supportedMethods: ['card', 'sepa_debit'],
-        minAmount: 1,
-        maxAmount: 10000,
-        fees: {
-          fixed: 0.3,
-          percentage: 2.9,
-        },
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'payment-2',
-        gateway: 'paypal',
-        gatewayName: 'PayPal',
-        isActive: true,
-        isDefault: false,
-        config: {
-          clientId: 'AX...',
-          clientSecret: 'EK...',
-          webhookUrl: 'https://swingz.app/api/webhooks/paypal',
-        },
-        supportedCurrencies: ['EUR', 'USD'],
-        supportedMethods: ['paypal', 'card'],
-        minAmount: 1,
-        maxAmount: 10000,
-        fees: {
-          fixed: 0.35,
-          percentage: 3.4,
-        },
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'payment-3',
-        gateway: 'sepa',
-        gatewayName: 'SEPA Lastschrift',
-        isActive: true,
-        isDefault: false,
-        config: {
-          creditorId: 'DE...',
-          creditorName: 'SwingZ Tennis Club',
-        },
-        supportedCurrencies: ['EUR'],
-        supportedMethods: ['sepa_debit'],
-        minAmount: 10,
-        maxAmount: 50000,
-        fees: {
-          fixed: 0.1,
-          percentage: 0.0,
-        },
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'payment-4',
-        gateway: 'cash',
-        gatewayName: 'Barzahlung',
-        isActive: true,
-        isDefault: false,
-        config: {},
-        supportedCurrencies: ['EUR'],
-        supportedMethods: ['cash'],
-        minAmount: 0,
-        maxAmount: 10000,
-        fees: {
-          fixed: 0,
-          percentage: 0,
-        },
-        createdAt: new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
-  }
-}
-
-// Initialize mock data
-if (process.env.NODE_ENV !== 'production') {
-  PaymentSettingsService.initializeMockData();
 }

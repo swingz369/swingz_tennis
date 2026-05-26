@@ -28,7 +28,11 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'userId is required' }, { status: 400 });
       }
 
-      const clubId = auth.clubId;
+      const clubId =
+        auth.memberships.find(
+          (m) =>
+            m.club_id && (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
+        )?.club_id ?? null;
       if (!clubId) {
         return NextResponse.json({ error: 'No club selected' }, { status: 400 });
       }
@@ -90,7 +94,29 @@ export async function GET(_request: NextRequest) {
       // Accept optional clubId query param (e.g. for season planning wizard)
       const { searchParams } = new URL(_request.url);
       const queryClubId = searchParams.get('clubId');
-      const clubId = queryClubId || auth.clubId;
+
+      // Determine target club with membership-based access check
+      let clubId: string | null = null;
+      if (queryClubId) {
+        // Verify the user has trainer+ role in the requested club
+        const hasAccess = auth.memberships.some(
+          (m) =>
+            m.club_id === queryClubId &&
+            (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasAccess) {
+          return forbiddenResponse('Kein Zugriff auf diesen Club');
+        }
+        clubId = queryClubId;
+      } else {
+        // Find the first club the user has trainer+ access to
+        const eligibleMembership = auth.memberships.find(
+          (m) =>
+            m.club_id && (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
+        );
+        clubId = eligibleMembership?.club_id ?? null;
+      }
+
       if (!clubId) {
         return NextResponse.json({ profiles: [] });
       }
@@ -189,7 +215,7 @@ export async function GET(_request: NextRequest) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       const stack = error instanceof Error ? error.stack : '';
-      console.error('Trainer profile fetch error:', message, stack);
+      console.error('[trainer-profiles GET] Error:', message, '\nStack:', stack, '\nRaw:', error);
       return NextResponse.json({ error: `Failed to load trainers: ${message}` }, { status: 500 });
     }
   });

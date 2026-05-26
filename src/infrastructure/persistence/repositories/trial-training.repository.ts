@@ -139,6 +139,26 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     return result.map((row) => this.mapToDomain(row));
   }
 
+  async findByDateRange(
+    clubId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<TrialTraining[]> {
+    const result = await db
+      .select()
+      .from(trialTrainings)
+      .where(
+        and(
+          eq(trialTrainings.club_id, clubId),
+          sql`${trialTrainings.scheduled_date} >= ${new Date(startDate)}::date`,
+          sql`${trialTrainings.scheduled_date} <= ${new Date(endDate)}::date`
+        )
+      )
+      .orderBy(desc(trialTrainings.scheduled_date));
+
+    return result.map((row) => this.mapToDomain(row));
+  }
+
   async getStats(
     clubId: string,
     startDate?: string,

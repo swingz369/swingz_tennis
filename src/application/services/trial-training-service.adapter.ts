@@ -84,6 +84,17 @@ class TrialTrainingServiceAdapter {
   }
 
   /**
+   * Get trial trainings by date range
+   */
+  async getTrialTrainingsByDateRange(
+    clubId: string = '',
+    startDate: string,
+    endDate: string
+  ): Promise<TrialTraining[]> {
+    return this.trialTrainingRepo.findByDateRange(clubId, startDate, endDate);
+  }
+
+  /**
    * Get upcoming trial trainings
    */
   async getUpcomingTrialTrainings(clubId: string = '', days: number = 7): Promise<TrialTraining[]> {

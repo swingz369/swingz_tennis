@@ -6,16 +6,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Search, User, Calendar, MapPin, CreditCard } from 'lucide-react';
+import { Search, User, Calendar, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
 interface SearchResult {
   id: string;
-  type: 'members' | 'sessions' | 'bookings' | 'invoices' | 'courts';
+  type: 'member' | 'booking' | 'trainer' | 'club';
   title: string;
   subtitle?: string;
-  status?: string;
   url: string;
+  relevance: number;
 }
 
 export default function SearchPage() {
@@ -24,44 +24,28 @@ export default function SearchPage() {
   const [searched, setSearched] = useState(false);
 
   const handleSearch = async (query: string, _filters: any) => {
+    if (!query.trim()) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+
     setLoading(true);
     setSearched(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const params = new URLSearchParams({ q: query, limit: '20' });
+      const response = await fetch(`/api/search?${params}`);
 
-      // Mock results
-      const mockResults: SearchResult[] = [
-        {
-          id: '1',
-          type: 'members',
-          title: 'Max Mustermann',
-          subtitle: 'max.mustermann@example.com',
-          status: 'active',
-          url: '/members/1',
-        },
-        {
-          id: '2',
-          type: 'bookings',
-          title: 'Gruppen-Training Fortgeschritten',
-          subtitle: '07.05.2026, 18:00 Uhr',
-          status: 'confirmed',
-          url: '/bookings/2',
-        },
-        {
-          id: '3',
-          type: 'invoices',
-          title: 'Rechnung #INV-2026-001',
-          subtitle: '€45.00 · Fällig: 15.05.2026',
-          status: 'pending',
-          url: '/billing',
-        },
-      ];
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
 
-      setResults(query ? mockResults : []);
+      const data: SearchResult[] = await response.json();
+      setResults(data);
     } catch (error) {
       console.error('Search error:', error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -74,48 +58,27 @@ export default function SearchPage() {
 
   const getTypeIcon = (type: SearchResult['type']) => {
     switch (type) {
-      case 'members':
+      case 'member':
         return User;
-      case 'sessions':
-      case 'bookings':
+      case 'booking':
         return Calendar;
-      case 'invoices':
-        return CreditCard;
-      case 'courts':
+      case 'trainer':
+        return User;
+      case 'club':
         return MapPin;
     }
   };
 
   const getTypeLabel = (type: SearchResult['type']) => {
     switch (type) {
-      case 'members':
+      case 'member':
         return 'Mitglied';
-      case 'sessions':
-        return 'Session';
-      case 'bookings':
+      case 'booking':
         return 'Buchung';
-      case 'invoices':
-        return 'Rechnung';
-      case 'courts':
-        return 'Platz';
-    }
-  };
-
-  const getStatusBadge = (status?: string) => {
-    if (!status) return null;
-
-    switch (status) {
-      case 'active':
-      case 'confirmed':
-        return <Badge variant="success">Aktiv</Badge>;
-      case 'pending':
-        return <Badge variant="warning">Ausstehend</Badge>;
-      case 'cancelled':
-        return <Badge variant="error">Storniert</Badge>;
-      case 'completed':
-        return <Badge variant="secondary">Abgeschlossen</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+      case 'trainer':
+        return 'Trainer';
+      case 'club':
+        return 'Verein';
     }
   };
 
@@ -174,7 +137,6 @@ export default function SearchPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold">{result.title}</h3>
-                              {getStatusBadge(result.status)}
                             </div>
                             {result.subtitle && (
                               <p className="text-sm text-muted-foreground">{result.subtitle}</p>

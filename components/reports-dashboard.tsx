@@ -135,7 +135,7 @@ export default function ReportsDashboard() {
         </div>
       </div>
 
-      {/* Revenue Chart Placeholder */}
+      {/* Revenue Chart */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">

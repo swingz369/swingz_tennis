@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
         // Graceful fallback — return a placeholder analysis
         return NextResponse.json({
           analysis:
-            `Der automatisch generierte Trainingsplan wurde erstellt. ` +
-            `Eine detaillierte KI-Analyse ist nicht verfügbar, da kein KI-API-Key konfiguriert wurde. ` +
-            `Bitte überprüfe den Plan manuell auf Plausibilität.`,
+            `Der Trainingsplan wurde automatisch generiert. ` +
+            `Eine KI-gestützte Detailanalyse steht aktuell nicht zur Verfügung (kein KI-API-Key konfiguriert). ` +
+            `Bitte prüfe die Gruppenzusammensetzung, Trainerzuweisungen und Zeitslots manuell auf Plausibilität.`,
         });
       }
 

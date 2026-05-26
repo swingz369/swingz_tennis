@@ -106,18 +106,19 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json({ trialTrainings });
       }
 
-      // Date range filtering removed - not yet implemented in service
-      const allTrainings = await trialTrainingService.getAllTrialTrainings();
-
-      // Filter by date range client-side if provided
-      let filteredTrainings = allTrainings;
       if (startDate && endDate) {
-        filteredTrainings = allTrainings.filter((t) => {
-          return t.scheduledDate >= startDate && t.scheduledDate <= endDate;
-        });
+        const trialTrainings = await trialTrainingService.getTrialTrainingsByDateRange(
+          '',
+          startDate,
+          endDate
+        );
+        return NextResponse.json({ trialTrainings });
       }
 
-      return NextResponse.json({ trialTrainings: filteredTrainings });
+      // Get all trial trainings (filtered by club via service)
+      const allTrainings = await trialTrainingService.getAllTrialTrainings();
+
+      return NextResponse.json({ trialTrainings: allTrainings });
     } catch (error) {
       console.error('Trial trainings fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

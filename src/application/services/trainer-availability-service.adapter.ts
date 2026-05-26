@@ -70,8 +70,8 @@ class TrainerAvailabilityServiceAdapter {
     startDate: string,
     endDate: string
   ): Promise<AvailabilityConflict[]> {
-    // Delegates to in-memory service which has this method
-    return TrainerAvailabilityService.getAvailabilityConflicts(startDate, endDate);
+    const availabilities = await this.repo.findByDateRange(undefined, startDate, endDate);
+    return TrainerAvailabilityService.getAvailabilityConflicts(availabilities);
   }
 
   async getAvailableSlots(trainerId: string, date: string): Promise<TrainerAvailability[]> {

@@ -75,6 +75,15 @@ export interface ITrialTrainingRepository {
   search(query: string, clubId: string): Promise<TrialTraining[]>;
 
   /**
+   * Find trial trainings by date range
+   * @param clubId - Club ID for tenant isolation
+   * @param startDate - Start date (YYYY-MM-DD)
+   * @param endDate - End date (YYYY-MM-DD)
+   * @returns Array of trial trainings within the date range
+   */
+  findByDateRange(clubId: string, startDate: string, endDate: string): Promise<TrialTraining[]>;
+
+  /**
    * Get trial training statistics
    * @param clubId - Club ID for tenant isolation
    * @param startDate - Optional start date filter

@@ -48,7 +48,7 @@ export interface TrainerAvailabilityRepository {
    * Find availabilities by date range
    */
   findByDateRange(
-    trainerId: string,
+    trainerId: string | undefined,
     startDate: string,
     endDate: string
   ): Promise<TrainerAvailability[]>;

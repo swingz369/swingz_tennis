@@ -159,6 +159,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         clusteringResult: action.result,
         scheduleSlots: [],
+        maxReachedStep: 3 as WizardStep,
         isProcessing: false,
       };
 

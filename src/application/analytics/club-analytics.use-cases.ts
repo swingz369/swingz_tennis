@@ -127,10 +127,7 @@ export class GetClubAnalyticsUseCase {
     // Trends
     const trends = {
       memberGrowthByMonth: growthHistory,
-      bookingVolumeByWeek: sessions.slice(0, 12).map((_s, i) => ({
-        week: `KW${20 + i}`,
-        bookings: Math.floor(Math.random() * 50) + 30,
-      })),
+      bookingVolumeByWeek: this.computeWeeklyBookingVolume(sessions, startDate, endDate),
     };
 
     return {
@@ -150,7 +147,7 @@ export class GetClubAnalyticsUseCase {
                 growthHistory[0].count) *
               100
             : 0,
-        aiScheduleAccuracy: 0, // Not implemented in MVP - requires predicted vs actual attendance data
+        aiScheduleAccuracy: 0, // Requires predicted vs. actual attendance data — future feature
         revenue: totalHours * 25,
         bookings: {
           total: bookingStats.total,
@@ -167,5 +164,32 @@ export class GetClubAnalyticsUseCase {
 
   private getDaysBetween(start: Date, end: Date): number {
     return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  private computeWeeklyBookingVolume(
+    sessions: Session[],
+    startDate: Date,
+    endDate: Date
+  ): Array<{ week: string; bookings: number }> {
+    const weekMap = new Map<string, number>();
+
+    sessions.forEach((s) => {
+      const sessionDate = s.timeslot.getStart();
+      if (sessionDate >= startDate && sessionDate <= endDate) {
+        const week = this.getWeekLabel(sessionDate);
+        weekMap.set(week, (weekMap.get(week) || 0) + 1);
+      }
+    });
+
+    return Array.from(weekMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([week, bookings]) => ({ week, bookings }));
+  }
+
+  private getWeekLabel(date: Date): string {
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+    const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+    return `KW${weekNumber}`;
   }
 }
