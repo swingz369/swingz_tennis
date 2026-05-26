@@ -29,8 +29,8 @@ export function TrainerAvailabilityPanel() {
         setLoading(true);
         setError(null);
 
-        // Fetch trainer profiles for the club
-        const profilesRes = await fetch('/api/trainer-profiles');
+        // Fetch trainer profiles for the season's club (not session club)
+        const profilesRes = await fetch(`/api/trainer-profiles?clubId=${state.clubId}`);
         if (!profilesRes.ok) {
           throw new Error('Failed to load trainer profiles');
         }
@@ -115,8 +115,8 @@ export function TrainerAvailabilityPanel() {
     }
 
     fetchTrainers();
-    // Re-fetch when season or planning config changes
-  }, [state.seasonId, state.planningConfig.trainerUtilizationMaxPct, dispatch]);
+    // Re-fetch when season, club, or planning config changes
+  }, [state.seasonId, state.clubId, state.planningConfig.trainerUtilizationMaxPct, dispatch]);
 
   if (loading) {
     return (

@@ -6,12 +6,9 @@ import { createServiceClient } from '@/lib/supabase/service';
  * GET /api/members/[userId]/schedule-preferences?clubId=...
  * Fetches a member's general schedule preferences
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { userId } = await params;
+    const { id: userId } = await params;
     const { searchParams } = new URL(_request.url);
     const clubId = searchParams.get('clubId');
 
@@ -63,12 +60,9 @@ export async function GET(
  * PUT /api/members/[userId]/schedule-preferences
  * Creates or updates a member's general schedule preferences
  */
-export async function PUT(
-  _request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
-) {
+export async function PUT(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { userId } = await params;
+    const { id: userId } = await params;
     const body = await _request.json();
     const {
       clubId,

@@ -87,7 +87,10 @@ export async function GET(_request: NextRequest) {
     }
 
     try {
-      const clubId = auth.clubId;
+      // Accept optional clubId query param (e.g. for season planning wizard)
+      const { searchParams } = new URL(_request.url);
+      const queryClubId = searchParams.get('clubId');
+      const clubId = queryClubId || auth.clubId;
       if (!clubId) {
         return NextResponse.json({ profiles: [] });
       }
