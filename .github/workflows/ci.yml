@@ -31,6 +31,40 @@ jobs:
       - name: Check Prettier
         run: npx prettier --check .
 
+      - name: Verify pre-commit hook config
+        run: |
+          echo "🔍 Checking pre-commit hook configuration…"
+
+          # 1. Hook file must exist
+          test -f .husky/pre-commit || { echo "❌ .husky/pre-commit missing"; exit 1; }
+
+          # 2. Hook must call lint-staged
+          grep -q "lint-staged" .husky/pre-commit || { echo "❌ pre-commit hook must call lint-staged"; exit 1; }
+
+          # 3. Config file must exist
+          test -f .lintstagedrc.js || { echo "❌ .lintstagedrc.js missing"; exit 1; }
+
+          # 4. lint-staged must be installed (require directly, npx auto-downloads)
+          node -e "require('lint-staged')" 2>/dev/null || { echo "❌ lint-staged not installed (add to devDependencies)"; exit 1; }
+
+          echo "✅ Pre-commit hook configuration valid (.husky/pre-commit + .lintstagedrc.js + lint-staged)"
+
+      - name: Simulate pre-commit hook (lint-staged on diff)
+        run: |
+          # Determine diff: merge-base for PRs, HEAD~1 for pushes
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            DIFF="origin/${{ github.base_ref }}...HEAD"
+          else
+            DIFF="HEAD~1"
+            # Edge case: first commit has no parent
+            if ! git rev-parse HEAD~1 > /dev/null 2>&1; then
+              echo "⚠️  Only one commit — skipping lint-staged diff check"
+              exit 0
+            fi
+          fi
+          echo "🔍 Running lint-staged on diff: $DIFF"
+          npx lint-staged --diff="$DIFF"
+
   # ─────────────────────────────────────────
   typecheck:
     name: 🔷 TypeScript
