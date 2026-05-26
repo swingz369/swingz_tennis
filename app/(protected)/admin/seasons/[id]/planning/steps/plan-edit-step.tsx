@@ -218,7 +218,11 @@ export function PlanEditStep() {
                   </Badge>
                   <Badge
                     variant={
-                      scoreData.score >= 80 ? 'success' : scoreData.score >= 60 ? 'warning' : 'error'
+                      scoreData.score >= 80
+                        ? 'success'
+                        : scoreData.score >= 60
+                          ? 'warning'
+                          : 'error'
                     }
                   >
                     {scoreData.score >= 80

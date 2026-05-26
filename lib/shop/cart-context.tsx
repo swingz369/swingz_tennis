@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 export interface CartItem {
   productId: string;
@@ -85,21 +78,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addItem = useCallback(
-    (product: {
-      id: string;
-      name: string;
-      price: number;
-      stock: number;
-      image_url?: string;
-    }) => {
+    (product: { id: string; name: string; price: number; stock: number; image_url?: string }) => {
       setItems((prev) => {
         const existing = prev.find((i) => i.productId === product.id);
         if (existing) {
           const newQty = Math.min(existing.quantity + 1, product.stock);
           if (newQty === existing.quantity) return prev;
-          return prev.map((i) =>
-            i.productId === product.id ? { ...i, quantity: newQty } : i
-          );
+          return prev.map((i) => (i.productId === product.id ? { ...i, quantity: newQty } : i));
         }
         return [
           ...prev,
@@ -124,28 +109,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing.quantity <= 1) {
         return prev.filter((i) => i.productId !== productId);
       }
-      return prev.map((i) =>
-        i.productId === productId ? { ...i, quantity: i.quantity - 1 } : i
-      );
+      return prev.map((i) => (i.productId === productId ? { ...i, quantity: i.quantity - 1 } : i));
     });
   }, []);
 
-  const updateQuantity = useCallback(
-    (productId: string, quantity: number) => {
-      if (quantity <= 0) {
-        setItems((prev) => prev.filter((i) => i.productId !== productId));
-        return;
-      }
-      setItems((prev) =>
-        prev.map((i) => {
-          if (i.productId !== productId) return i;
-          const clamped = Math.min(quantity, i.stock);
-          return { ...i, quantity: clamped };
-        })
-      );
-    },
-    []
-  );
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      setItems((prev) => prev.filter((i) => i.productId !== productId));
+      return;
+    }
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.productId !== productId) return i;
+        const clamped = Math.min(quantity, i.stock);
+        return { ...i, quantity: clamped };
+      })
+    );
+  }, []);
 
   const clearCart = useCallback(() => {
     setItems([]);

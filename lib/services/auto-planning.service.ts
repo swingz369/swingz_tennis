@@ -572,72 +572,66 @@ export class AutoPlanningService {
 
     // Insert new plan entries
     if (slots.length > 0) {
-      await db
-        .insert(seasonPlanEntries)
-        .values(
-          slots.map((slot) => ({
-            season_id: seasonId,
-            club_id: clubId,
-            trainer_id: slot.trainer_id,
-            court_id: slot.court_id,
-            group_id: slot.group_id,
-            day_of_week: slot.day_of_week,
-            start_time: slot.start_time,
-            end_time: slot.end_time,
-            duration_minutes: slot.duration_minutes,
-            starts_from_week: 1,
-            ends_at_week: null,
-            entry_type: 'training',
-            planning_source: 'auto',
-            max_participants: 10,
-            expected_participants: slot.expected_participants,
-            preference_match_score: slot.preference_match_score.toFixed(2),
-            conflict_score: slot.conflict_score.toFixed(2),
-            optimization_score: (
-              (slot.preference_match_score + (100 - slot.conflict_score)) /
-              2
-            ).toFixed(2),
-            status: 'planned',
-            notes: null,
-            admin_notes: null,
-          }))
-        );
+      await db.insert(seasonPlanEntries).values(
+        slots.map((slot) => ({
+          season_id: seasonId,
+          club_id: clubId,
+          trainer_id: slot.trainer_id,
+          court_id: slot.court_id,
+          group_id: slot.group_id,
+          day_of_week: slot.day_of_week,
+          start_time: slot.start_time,
+          end_time: slot.end_time,
+          duration_minutes: slot.duration_minutes,
+          starts_from_week: 1,
+          ends_at_week: null,
+          entry_type: 'training',
+          planning_source: 'auto',
+          max_participants: 10,
+          expected_participants: slot.expected_participants,
+          preference_match_score: slot.preference_match_score.toFixed(2),
+          conflict_score: slot.conflict_score.toFixed(2),
+          optimization_score: (
+            (slot.preference_match_score + (100 - slot.conflict_score)) /
+            2
+          ).toFixed(2),
+          status: 'planned',
+          notes: null,
+          admin_notes: null,
+        }))
+      );
     }
 
     // Save conflicts
     if (conflicts.length > 0) {
-      await db
-        .insert(planningConflicts)
-        .values(
-          conflicts.map((conflict) => ({
-            season_id: seasonId,
-            club_id: clubId,
-            conflict_type: conflict.type,
-            severity: conflict.severity,
-            affected_plan_entry_ids: [],
-            description: conflict.description,
-            status: 'open',
-            detected_at: new Date(),
-            detection_source: 'auto_planner',
-          }))
-        );
+      await db.insert(planningConflicts).values(
+        conflicts.map((conflict) => ({
+          season_id: seasonId,
+          club_id: clubId,
+          conflict_type: conflict.type,
+          severity: conflict.severity,
+          affected_plan_entry_ids: [],
+          description: conflict.description,
+          status: 'open',
+          detected_at: new Date(),
+          detection_source: 'auto_planner',
+        }))
+      );
     }
 
     // Log to history
-    await db
-      .insert(seasonPlanningHistory)
-      .values({
-        season_id: seasonId,
-        club_id: clubId,
-        action_type: 'auto_plan_completed',
-        details: {
-          entries_created: slots.length,
-          conflicts_detected: conflicts.length,
-        },
-        entries_affected: slots.length,
-        conflicts_created: conflicts.length,
-        algorithm_metrics: metrics as unknown as Record<string, unknown>,
-      });
+    await db.insert(seasonPlanningHistory).values({
+      season_id: seasonId,
+      club_id: clubId,
+      action_type: 'auto_plan_completed',
+      details: {
+        entries_created: slots.length,
+        conflicts_detected: conflicts.length,
+      },
+      entries_affected: slots.length,
+      conflicts_created: conflicts.length,
+      algorithm_metrics: metrics as unknown as Record<string, unknown>,
+    });
 
     // Update season status
     await db

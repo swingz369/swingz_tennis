@@ -30,7 +30,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
-
       // Get all preferences
       const prefs = await db
         .select({

@@ -96,7 +96,11 @@ export function MemberProfileClient({ member }: Props) {
   };
 
   const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString('de-DE', { year: 'numeric', month: 'short', day: 'numeric' });
+    new Date(dateStr).toLocaleDateString('de-DE', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
@@ -127,7 +131,12 @@ export function MemberProfileClient({ member }: Props) {
         <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700">
           <AlertCircle className="h-4 w-4 shrink-0" />
           Bearbeitungsmodus aktiv
-          <Button variant="ghost" size="sm" className="ml-auto text-xs" onClick={() => setIsEditing(false)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-xs"
+            onClick={() => setIsEditing(false)}
+          >
             Abbrechen
           </Button>
         </div>
@@ -195,7 +204,9 @@ export function MemberProfileClient({ member }: Props) {
                     onChange={(e) => setEditForm({ ...editForm, date_of_birth: e.target.value })}
                   />
                 ) : (
-                  <div className="font-medium">{member.date_of_birth ? formatDate(member.date_of_birth) : '—'}</div>
+                  <div className="font-medium">
+                    {member.date_of_birth ? formatDate(member.date_of_birth) : '—'}
+                  </div>
                 )}
               </div>
             </div>
@@ -265,7 +276,9 @@ export function MemberProfileClient({ member }: Props) {
                 {isEditing ? (
                   <Input
                     value={editForm.emergency_contact}
-                    onChange={(e) => setEditForm({ ...editForm, emergency_contact: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, emergency_contact: e.target.value })
+                    }
                     placeholder="Max Mustermann"
                   />
                 ) : (

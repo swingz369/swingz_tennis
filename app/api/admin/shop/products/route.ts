@@ -77,10 +77,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!body.name || body.price == null) {
-      return NextResponse.json(
-        { error: 'Name und Preis sind erforderlich' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Name und Preis sind erforderlich' }, { status: 400 });
     }
 
     const productData = {
@@ -94,11 +91,7 @@ export async function POST(request: NextRequest) {
       club_id: auth.clubId,
     };
 
-    const { data, error } = await sb
-      .from('shop_products')
-      .insert(productData)
-      .select()
-      .single();
+    const { data, error } = await sb.from('shop_products').insert(productData).select().single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -122,10 +115,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
 
     if (!body.id) {
-      return NextResponse.json(
-        { error: 'Produkt-ID erforderlich' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Produkt-ID erforderlich' }, { status: 400 });
     }
 
     // Verify club ownership for non-superadmin

@@ -108,8 +108,6 @@ function buildStandardTimeSlots(
   return slots;
 }
 
-
-
 const DAY_NAMES: Array<keyof WeeklyAvailability> = [
   'monday',
   'tuesday',
@@ -250,12 +248,9 @@ export class SeasonClusteringEngine {
           dbConfig.prefer_historic_groups ?? DEFAULT_CONFIG.preferHistoricGroups,
         avoidHighFailureSlots:
           dbConfig.avoid_high_failure_slots ?? DEFAULT_CONFIG.avoidHighFailureSlots,
-        kidsGroupMaxSize:
-          dbConfig.kids_group_max_size ?? DEFAULT_CONFIG.kidsGroupMaxSize,
-        kidsGroupMinSize:
-          dbConfig.kids_group_min_size ?? DEFAULT_CONFIG.kidsGroupMinSize,
-        slotDurationMinutes:
-          dbConfig.slot_duration_minutes ?? DEFAULT_CONFIG.slotDurationMinutes,
+        kidsGroupMaxSize: dbConfig.kids_group_max_size ?? DEFAULT_CONFIG.kidsGroupMaxSize,
+        kidsGroupMinSize: dbConfig.kids_group_min_size ?? DEFAULT_CONFIG.kidsGroupMinSize,
+        slotDurationMinutes: dbConfig.slot_duration_minutes ?? DEFAULT_CONFIG.slotDurationMinutes,
       };
     }
   }
@@ -287,10 +282,7 @@ export class SeasonClusteringEngine {
       })
       .from(userClubMemberships)
       .where(
-        and(
-          eq(userClubMemberships.club_id, this.clubId),
-          eq(userClubMemberships.is_active, true)
-        )
+        and(eq(userClubMemberships.club_id, this.clubId), eq(userClubMemberships.is_active, true))
       );
     const membershipRoleMap = new Map<string, string>();
     for (const m of memberships) {
@@ -470,10 +462,7 @@ export class SeasonClusteringEngine {
   }
 
   private async getPreviousSeasonId(): Promise<string | null> {
-    const [currentSeason] = await db
-      .select()
-      .from(seasons)
-      .where(eq(seasons.id, this.seasonId));
+    const [currentSeason] = await db.select().from(seasons).where(eq(seasons.id, this.seasonId));
 
     if (!currentSeason) return null;
 
@@ -703,10 +692,8 @@ export class SeasonClusteringEngine {
     assignedMemberIds: Set<string>,
     startGroupIndex: number
   ): Promise<number> {
-    const maxSize =
-      ageGroup === 'kids' ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
-    const minSize =
-      ageGroup === 'kids' ? this.config.kidsGroupMinSize : this.config.groupMinSize;
+    const maxSize = ageGroup === 'kids' ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
+    const minSize = ageGroup === 'kids' ? this.config.kidsGroupMinSize : this.config.groupMinSize;
 
     // Group members by effective level (promoted or original)
     const levelGroups = new Map<SkillLevel, typeof cohort>();
@@ -794,7 +781,8 @@ export class SeasonClusteringEngine {
         if (existingGroup) {
           group = existingGroup;
         } else {
-          const prefix = ageGroup === 'kids' ? 'Kids' : skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1);
+          const prefix =
+            ageGroup === 'kids' ? 'Kids' : skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1);
           const groupName = `${prefix} Gruppe ${groupIndex + 1}`;
           const [newGroup] = await db
             .insert(groups)
@@ -846,9 +834,7 @@ export class SeasonClusteringEngine {
         }
 
         if (filteredSlice.length < minSize) {
-          warnings.push(
-            `Gruppe hat nur ${filteredSlice.length} Mitglieder (Minimum: ${minSize})`
-          );
+          warnings.push(`Gruppe hat nur ${filteredSlice.length} Mitglieder (Minimum: ${minSize})`);
         }
 
         // Warn about avoid conflicts that were filtered out
@@ -1299,7 +1285,6 @@ export class SeasonClusteringEngine {
   // ============================================
 
   private async saveToDatabase(result: ClusteringResult): Promise<void> {
-
     // Delete existing plan entries for this season (re-planning)
     await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, this.seasonId));
 

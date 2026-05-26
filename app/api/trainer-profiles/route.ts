@@ -149,8 +149,13 @@ export async function GET(_request: NextRequest) {
                   specializations: [],
                   experience: { years: 0, previousClubs: [], achievements: [] },
                   availability: {
-                    monday: true, tuesday: true, wednesday: true,
-                    thursday: true, friday: true, saturday: false, sunday: false,
+                    monday: true,
+                    tuesday: true,
+                    wednesday: true,
+                    thursday: true,
+                    friday: true,
+                    saturday: false,
+                    sunday: false,
                   },
                   preferredTimeSlots: [],
                   languages: ['Deutsch'],
@@ -167,9 +172,7 @@ export async function GET(_request: NextRequest) {
       }
 
       // 3. Map membership active status for reference (memberships already filtered to is_active=true)
-      const activeMembershipUserIds = new Set(
-        (memberships ?? []).map((m: any) => m.user_id)
-      );
+      const activeMembershipUserIds = new Set((memberships ?? []).map((m: any) => m.user_id));
 
       const enrichedProfiles = profiles.map((p) => {
         // If trainer is not in active memberships, mark as inactive
@@ -184,10 +187,7 @@ export async function GET(_request: NextRequest) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       const stack = error instanceof Error ? error.stack : '';
       console.error('Trainer profile fetch error:', message, stack);
-      return NextResponse.json(
-        { error: `Failed to load trainers: ${message}` },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: `Failed to load trainers: ${message}` }, { status: 500 });
     }
   });
 }

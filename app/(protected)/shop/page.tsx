@@ -26,8 +26,7 @@ function ShopContent() {
   const [cartOpen, setCartOpen] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
 
-  const { items, addItem, removeItem, updateQuantity, clearCart, cartTotal, cartCount } =
-    useCart();
+  const { items, addItem, removeItem, updateQuantity, clearCart, cartTotal, cartCount } = useCart();
 
   useEffect(() => {
     fetch('/api/shop')
@@ -48,8 +47,7 @@ function ShopContent() {
   }, []);
 
   const categories = ['all', ...new Set(products.map((p) => p.category))];
-  const filtered =
-    category === 'all' ? products : products.filter((p) => p.category === category);
+  const filtered = category === 'all' ? products : products.filter((p) => p.category === category);
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
@@ -115,11 +113,7 @@ function ShopContent() {
             variant={category === c ? 'default' : 'outline'}
             size="sm"
             onClick={() => setCategory(c)}
-            className={
-              category === c
-                ? 'bg-brand-primary hover:bg-brand-primary/90'
-                : ''
-            }
+            className={category === c ? 'bg-brand-primary hover:bg-brand-primary/90' : ''}
           >
             {c === 'all' ? 'Alle' : c}
           </Button>
@@ -275,9 +269,7 @@ function ShopContent() {
               <ShoppingCart className="h-5 w-5 text-brand-light" />
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Warenkorb</h2>
               {cartCount > 0 && (
-                <Badge className="bg-brand-light/10 text-brand-light text-xs">
-                  {cartCount}
-                </Badge>
+                <Badge className="bg-brand-light/10 text-brand-light text-xs">{cartCount}</Badge>
               )}
             </div>
             <Button
@@ -295,14 +287,8 @@ function ShopContent() {
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
                 <ShoppingCart className="h-12 w-12 text-gray-300" />
-                <p className="text-sm text-muted-foreground font-medium">
-                  Dein Warenkorb ist leer
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCartOpen(false)}
-                >
+                <p className="text-sm text-muted-foreground font-medium">Dein Warenkorb ist leer</p>
+                <Button variant="outline" size="sm" onClick={() => setCartOpen(false)}>
                   Weiter einkaufen
                 </Button>
               </div>
@@ -345,9 +331,7 @@ function ShopContent() {
                         variant="outline"
                         size="sm"
                         className="h-7 w-7 p-0"
-                        onClick={() =>
-                          updateQuantity(item.productId, item.quantity + 1)
-                        }
+                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                         disabled={item.quantity >= item.stock}
                       >
                         <Plus className="h-3 w-3" />
@@ -381,9 +365,7 @@ function ShopContent() {
                   €{cartTotal.toFixed(2)}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Versand & Zahlung im nächsten Schritt
-              </p>
+              <p className="text-xs text-muted-foreground">Versand & Zahlung im nächsten Schritt</p>
               <Button
                 onClick={handleCheckout}
                 disabled={checkingOut || cartCount === 0}

@@ -123,7 +123,6 @@ export async function PUT(req: NextRequest) {
 
     return withValidation(updateSessionsSchema, async (input) => {
       try {
-
         // Use a transaction to batch all updates together for better performance
         await db.transaction(async (tx) => {
           // Process updates in batches of 50 to avoid too many queries

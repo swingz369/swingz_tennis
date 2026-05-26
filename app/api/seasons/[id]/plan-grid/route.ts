@@ -47,7 +47,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
         console.error('plan-grid: season query failed:', msg, stack);
-        return NextResponse.json({ error: `Database error loading season: ${msg}` }, { status: 500 });
+        return NextResponse.json(
+          { error: `Database error loading season: ${msg}` },
+          { status: 500 }
+        );
       }
       if (!season) {
         return NextResponse.json({ error: 'Season not found' }, { status: 404 });
@@ -59,12 +62,17 @@ export async function GET(request: NextRequest, context: RouteContext) {
         allGroups = await db
           .select()
           .from(trainingGroups)
-          .where(and(eq(trainingGroups.club_id, season.club_id), eq(trainingGroups.is_active, true)));
+          .where(
+            and(eq(trainingGroups.club_id, season.club_id), eq(trainingGroups.is_active, true))
+          );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
         console.error('plan-grid: trainingGroups query failed:', msg, stack);
-        return NextResponse.json({ error: `Database error loading groups: ${msg}` }, { status: 500 });
+        return NextResponse.json(
+          { error: `Database error loading groups: ${msg}` },
+          { status: 500 }
+        );
       }
 
       const colorMap = new Map<string, string>();
@@ -83,7 +91,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
         console.error('plan-grid: courts query failed:', msg, stack);
-        return NextResponse.json({ error: `Database error loading courts: ${msg}` }, { status: 500 });
+        return NextResponse.json(
+          { error: `Database error loading courts: ${msg}` },
+          { status: 500 }
+        );
       }
 
       // 4) Plan entries with training-group + trainer + court details
@@ -106,7 +117,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
         console.error('plan-grid: entries query failed:', msg, stack);
-        return NextResponse.json({ error: `Database error loading plan entries: ${msg}` }, { status: 500 });
+        return NextResponse.json(
+          { error: `Database error loading plan entries: ${msg}` },
+          { status: 500 }
+        );
       }
 
       const slots = entries.map((row) => ({
@@ -144,10 +158,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const msg = error instanceof Error ? error.message : String(error);
       const stack = error instanceof Error ? error.stack : '';
       console.error('GET /api/seasons/[id]/plan-grid error:', msg, stack);
-      return NextResponse.json(
-        { error: `Failed to fetch plan grid: ${msg}` },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: `Failed to fetch plan grid: ${msg}` }, { status: 500 });
     }
   });
 }

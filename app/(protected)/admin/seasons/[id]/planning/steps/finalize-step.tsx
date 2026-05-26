@@ -129,12 +129,12 @@ export function FinalizeStep() {
       const text = await generateAIAnalysis({
         plan: planSlots,
         totalMembers: state.selectedMemberIds.length,
-        totalMembersPlanned:
-          state.clusteringResult?.metrics.totalMembers || 0,
+        totalMembersPlanned: state.clusteringResult?.metrics.totalMembers || 0,
         membersMultipleGroups: 0,
-        membersNotPlanned: state.clusteringResult?.unassignedMembers.map((m) => ({
-          name: m.memberName,
-        })) || [],
+        membersNotPlanned:
+          state.clusteringResult?.unassignedMembers.map((m) => ({
+            name: m.memberName,
+          })) || [],
         seasonStart: '',
         seasonEnd: '',
         activeWeeks: 1,
@@ -542,14 +542,12 @@ export function FinalizeStep() {
               </p>
             </div>
           ) : hasRunAiReview ? (
-            <p className="text-sm text-muted-foreground">
-              KI-Review momentan nicht verfügbar.
-            </p>
+            <p className="text-sm text-muted-foreground">KI-Review momentan nicht verfügbar.</p>
           ) : (
             <div className="text-center py-4">
               <p className="text-sm text-purple-700 mb-3">
-                Lassen Sie die KI eine Zusammenfassung und Bewertung der Planung erstellen, bevor Sie
-                bestätigen.
+                Lassen Sie die KI eine Zusammenfassung und Bewertung der Planung erstellen, bevor
+                Sie bestätigen.
               </p>
               <Button
                 onClick={handleAiReview}

@@ -45,19 +45,13 @@ export function TrainerAvailabilityPanel() {
         // For each trainer, fetch their availability slots
         const trainerData = await Promise.all(
           profiles.map(async (profile: any) => {
-            const availRes = await fetch(
-              `/api/trainer-availability?trainer_id=${profile.userId}`
-            );
-            const { availabilities } = availRes.ok
-              ? await availRes.json()
-              : { availabilities: [] };
+            const availRes = await fetch(`/api/trainer-availability?trainer_id=${profile.userId}`);
+            const { availabilities } = availRes.ok ? await availRes.json() : { availabilities: [] };
 
             const availableSlots = (availabilities || []).filter(
               (a: any) => a.status === 'available'
             );
-            const bookedSlots = (availabilities || []).filter(
-              (a: any) => a.status === 'booked'
-            );
+            const bookedSlots = (availabilities || []).filter((a: any) => a.status === 'booked');
 
             // Extract weekly days from profile availability
             const weeklyDays = Object.entries(profile.availability || {})
@@ -81,8 +75,10 @@ export function TrainerAvailabilityPanel() {
         // Dispatch trainer availability summary to wizard state
         const overallUtilization =
           trainerData.length > 0
-            ? trainerData.reduce((s, t) => s + (t.currentAssignedHours / Math.max(1, t.maxHoursPerWeek)) * 100, 0) /
-              trainerData.length
+            ? trainerData.reduce(
+                (s, t) => s + (t.currentAssignedHours / Math.max(1, t.maxHoursPerWeek)) * 100,
+                0
+              ) / trainerData.length
             : 0;
 
         dispatch({

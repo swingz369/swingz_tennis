@@ -50,7 +50,9 @@ export function ConfigStep() {
           </CardTitle>
           <CardDescription>Diese Einstellungen steuern den Clustering-Algorithmus</CardDescription>
         </CardHeader>
-        <CardContent>            <div className="grid gap-4 md:grid-cols-3">
+        <CardContent>
+          {' '}
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground flex items-center gap-1">
                 <Users className="h-3 w-3" /> Max. Gruppengröße (Erwachsene)
@@ -65,7 +67,9 @@ export function ConfigStep() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Min. Gruppengröße (Erwachsene)</Label>
+              <Label className="text-xs text-muted-foreground">
+                Min. Gruppengröße (Erwachsene)
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -124,9 +128,7 @@ export function ConfigStep() {
                 max={180}
                 step={15}
                 value={config.slotDurationMinutes}
-                onChange={(e) =>
-                  handleConfigChange('slotDurationMinutes', Number(e.target.value))
-                }
+                onChange={(e) => handleConfigChange('slotDurationMinutes', Number(e.target.value))}
                 className="h-9"
               />
             </div>
@@ -190,7 +192,6 @@ export function ConfigStep() {
               <span className="text-sm text-gray-700">Hohe Ausfallraten-Slots vermeiden</span>
             </label>
           </div>
-
           {/* Auto-Plan Options (integrated from /auto-plan page) */}
           <div className="mt-6 border-t pt-5">
             <div className="flex items-center gap-2 mb-4">

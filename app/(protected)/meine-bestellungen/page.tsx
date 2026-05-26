@@ -4,7 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Package, Clock, CheckCircle2, Truck, XCircle, ShoppingBag, Eye, X } from 'lucide-react';
+import {
+  Loader2,
+  Package,
+  Clock,
+  CheckCircle2,
+  Truck,
+  XCircle,
+  ShoppingBag,
+  Eye,
+  X,
+} from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 
 interface OrderItem {
@@ -39,10 +49,14 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30',
-  confirmed: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30',
-  shipped: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/30',
-  cancelled: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30',
+  pending:
+    'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30',
+  confirmed:
+    'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30',
+  shipped:
+    'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/30',
+  cancelled:
+    'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30',
 };
 
 const FILTER_TABS = [
@@ -62,9 +76,7 @@ export default function MeineBestellungenPage() {
   const fetchOrders = useCallback(async (status?: string) => {
     setLoading(true);
     try {
-      const url = status
-        ? `/api/shop/orders?status=${status}`
-        : '/api/shop/orders';
+      const url = status ? `/api/shop/orders?status=${status}` : '/api/shop/orders';
       const res = await fetch(url);
       const data = await res.json();
       setOrders(data.orders ?? []);
@@ -96,9 +108,7 @@ export default function MeineBestellungenPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-primary">Meine Bestellungen</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Verfolge deine Shop-Bestellungen
-        </p>
+        <p className="text-sm text-muted-foreground mt-0.5">Verfolge deine Shop-Bestellungen</p>
       </div>
 
       {/* Filter tabs */}
@@ -109,11 +119,7 @@ export default function MeineBestellungenPage() {
             variant={activeFilter === tab.key ? 'default' : 'outline'}
             size="sm"
             onClick={() => setActiveFilter(tab.key)}
-            className={
-              activeFilter === tab.key
-                ? 'bg-brand-primary hover:bg-brand-primary/90'
-                : ''
-            }
+            className={activeFilter === tab.key ? 'bg-brand-primary hover:bg-brand-primary/90' : ''}
           >
             {tab.label}
           </Button>
@@ -152,8 +158,12 @@ export default function MeineBestellungenPage() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4 min-w-0">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${STATUS_COLORS[order.status]?.split(' ').slice(1, 3).join(' ') || 'bg-gray-100 dark:bg-white/5'}`}>
-                        <StatusIcon className={`h-5 w-5 ${STATUS_COLORS[order.status]?.split(' ')[0] || 'text-gray-400'}`} />
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${STATUS_COLORS[order.status]?.split(' ').slice(1, 3).join(' ') || 'bg-gray-100 dark:bg-white/5'}`}
+                      >
+                        <StatusIcon
+                          className={`h-5 w-5 ${STATUS_COLORS[order.status]?.split(' ')[0] || 'text-gray-400'}`}
+                        />
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-sm text-gray-900 dark:text-white">
@@ -163,7 +173,9 @@ export default function MeineBestellungenPage() {
                           {formatDate(order.created_at)} · {(order.items ?? []).length} Artikel
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <Badge className={`text-[11px] px-1.5 py-0 border ${STATUS_COLORS[order.status]}`}>
+                          <Badge
+                            className={`text-[11px] px-1.5 py-0 border ${STATUS_COLORS[order.status]}`}
+                          >
                             <StatusIcon className="h-3 w-3 mr-1 inline" />
                             {STATUS_LABELS[order.status] || order.status}
                           </Badge>
@@ -231,7 +243,9 @@ export default function MeineBestellungenPage() {
 
                 {/* Status */}
                 <div className="flex items-center gap-2">
-                  <Badge className={`text-xs px-2 py-0.5 border ${STATUS_COLORS[selectedOrder.status]}`}>
+                  <Badge
+                    className={`text-xs px-2 py-0.5 border ${STATUS_COLORS[selectedOrder.status]}`}
+                  >
                     {(() => {
                       const Icon = STATUS_ICONS[selectedOrder.status] || Clock;
                       return <Icon className="h-3.5 w-3.5 mr-1 inline" />;

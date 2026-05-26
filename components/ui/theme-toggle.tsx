@@ -26,10 +26,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
     // Render a placeholder to prevent layout shift
     return (
       <div
-        className={cn(
-          'inline-flex items-center justify-center rounded-xl h-9 w-9',
-          className
-        )}
+        className={cn('inline-flex items-center justify-center rounded-xl h-9 w-9', className)}
         aria-hidden="true"
       />
     );
@@ -62,9 +59,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
         <Monitor
           className={cn(
             'absolute inset-0 transition-all duration-500',
-            theme === 'system'
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-50'
+            theme === 'system' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
           )}
           style={{ width: iconSize, height: iconSize }}
           aria-hidden="true"
@@ -73,9 +68,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
         <Sun
           className={cn(
             'absolute inset-0 transition-all duration-500',
-            theme === 'light'
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-50'
+            theme === 'light' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
           )}
           style={{ width: iconSize, height: iconSize }}
           aria-hidden="true"
@@ -84,9 +77,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
         <Moon
           className={cn(
             'absolute inset-0 transition-all duration-500',
-            theme === 'dark'
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-50'
+            theme === 'dark' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
           )}
           style={{ width: iconSize, height: iconSize }}
           aria-hidden="true"
@@ -95,9 +86,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
         <span
           className={cn(
             'absolute -top-1 -right-1 z-10 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-background transition-all duration-500',
-            theme === 'system'
-              ? 'opacity-100 scale-100'
-              : 'opacity-0 scale-0'
+            theme === 'system' ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
           )}
           aria-hidden="true"
         />

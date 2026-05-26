@@ -7,15 +7,7 @@ import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import {
-  Menu,
-  User,
-  LogOut,
-  Settings,
-  Trophy,
-  ChevronDown,
-  LayoutDashboard,
-} from 'lucide-react';
+import { Menu, User, LogOut, Settings, Trophy, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { GlobalSearch } from '@/components/layout/global-search';
 import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';

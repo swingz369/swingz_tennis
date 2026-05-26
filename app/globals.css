@@ -10,7 +10,9 @@
     background-position: right 0.75rem center;
     background-size: 1rem 1rem;
     color-scheme: light;
-    transition: border-color 150ms ease, box-shadow 150ms ease;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
     cursor: pointer;
   }
 

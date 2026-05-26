@@ -70,7 +70,9 @@ export function getDb(): ReturnType<typeof drizzle> {
   // Return mock in test environment or when DATABASE_URL is not available (e.g., during build)
   if (process.env.NODE_ENV === 'test' || !process.env.DATABASE_URL) {
     if (!process.env.DATABASE_URL && process.env.NODE_ENV !== 'test') {
-      console.error('[getDb] DATABASE_URL not set — using mock DB. All queries will return empty results.');
+      console.error(
+        '[getDb] DATABASE_URL not set — using mock DB. All queries will return empty results.'
+      );
     }
     return createMockDb();
   }

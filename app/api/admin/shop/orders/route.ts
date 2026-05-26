@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
         .eq('club_id', auth.clubId);
 
       if (!clubProducts || clubProducts.length === 0) {
-        return NextResponse.json({ orders: [], total_orders: 0, total_revenue: 0, pending_orders: 0 });
+        return NextResponse.json({
+          orders: [],
+          total_orders: 0,
+          total_revenue: 0,
+          pending_orders: 0,
+        });
       }
 
       const productIds = clubProducts.map((p: any) => p.id);

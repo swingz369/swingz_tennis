@@ -27,10 +27,7 @@ export async function POST(_request: NextRequest) {
       const { items }: { items: { productId: string; quantity: number }[] } = body;
 
       if (!items || !Array.isArray(items) || items.length === 0) {
-        return NextResponse.json(
-          { error: 'Mindestens ein Artikel erforderlich' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Mindestens ein Artikel erforderlich' }, { status: 400 });
       }
 
       const supabase = auth.supabase;
@@ -125,9 +122,7 @@ export async function POST(_request: NextRequest) {
       const baseUrl =
         process.env.NEXT_PUBLIC_SITE_URL ||
         process.env.NEXT_PUBLIC_APP_URL ||
-        (process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : _request.nextUrl.origin);
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : _request.nextUrl.origin);
 
       // Create pending order
       const { data: order, error: orderError } = await supabase

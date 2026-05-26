@@ -17,20 +17,20 @@
 
 Die Analyse betrachtet die App aus **sechs Vereins-Perspektiven** entlang des gesamten Vereinslebens:
 
-| # | Perspektive | Repräsentiert durch |
-|---|------------|-------------------|
-| 1 | **Vorstand / Admin** | Verwaltung, Finanzen, Saisonplanung, Mitglieder-CRUD |
-| 2 | **Trainer** | Stunden, Verfügbarkeit, Abrechnung, Teilnehmer-Feedback |
-| 3 | **Mitglieder** | Buchung, Trainingsplan, Rechnungen, Kommunikation |
-| 4 | **Interessenten / Neue Mitglieder** | Registrierung, Probetraining, Onboarding |
-| 5 | **Eltern (Jugendliche)** | Verwaltung minderjähriger Spieler, Familienabrechnung |
-| 6 | **Platzwart** | Platzpflege, Witterungssperren, Platzbelegung |
+| #   | Perspektive                         | Repräsentiert durch                                     |
+| --- | ----------------------------------- | ------------------------------------------------------- |
+| 1   | **Vorstand / Admin**                | Verwaltung, Finanzen, Saisonplanung, Mitglieder-CRUD    |
+| 2   | **Trainer**                         | Stunden, Verfügbarkeit, Abrechnung, Teilnehmer-Feedback |
+| 3   | **Mitglieder**                      | Buchung, Trainingsplan, Rechnungen, Kommunikation       |
+| 4   | **Interessenten / Neue Mitglieder** | Registrierung, Probetraining, Onboarding                |
+| 5   | **Eltern (Jugendliche)**            | Verwaltung minderjähriger Spieler, Familienabrechnung   |
+| 6   | **Platzwart**                       | Platzpflege, Witterungssperren, Platzbelegung           |
 
 ---
 
 ## 3. Stärken — Was ist gut gelöst?
 
-### 3.1 Trainingsplanung & Clustering-Engine 🟢 *Herausragend*
+### 3.1 Trainingsplanung & Clustering-Engine 🟢 _Herausragend_
 
 Der **9-stufige Greedy-Algorithmus** (`lib/season-planning/clustering-engine.ts`) ist das Herzstück und Alleinstellungsmerkmal:
 
@@ -43,25 +43,25 @@ Der **9-stufige Greedy-Algorithmus** (`lib/season-planning/clustering-engine.ts`
 
 Dies spart Vereinen **mehrere Tage manuelle Planungsarbeit pro Saison**.
 
-### 3.2 Buchungssystem 🟢 *Sehr gut*
+### 3.2 Buchungssystem 🟢 _Sehr gut_
 
 - **Race-Condition-sicher**: `create_booking_safe` (Supabase RPC) verhindert Doppelbuchungen
 - **Serienbuchungen**: Wöchentliche/monatliche Dauerbuchungen bis zu 52 Wochen
 - **Stornierungsregeln**: Konfigurierbare Fristen (`cancellation_hours_before`)
 - **Automatische Stunden-Erfassung**: Jede Trainer-Session erzeugt einen `hours_log`-Eintrag
 
-### 3.3 Rollen- & Sicherheitsmodell 🟢 *Vorbildlich*
+### 3.3 Rollen- & Sicherheitsmodell 🟢 _Vorbildlich_
 
-| Schutz-Ebene | Mechanismus |
-|-------------|------------|
-| Auth | Supabase Session (`withApiAuth`) |
-| Role | `verifyRole(auth, minRole)` — Hierarchie: superadmin > admin > trainer > member |
-| Rate Limit | STANDARD (30/min), STRICT (10/min), CLUSTER (5/h), CONFIRM (3/h) |
-| CSRF | Token-basiert für alle mutierenden Endpoints |
-| Club-Isolation | Non-Superadmin sieht nur eigenen Club |
-| Audit | Komplette Historisierung aller Admin-Aktionen |
+| Schutz-Ebene   | Mechanismus                                                                     |
+| -------------- | ------------------------------------------------------------------------------- |
+| Auth           | Supabase Session (`withApiAuth`)                                                |
+| Role           | `verifyRole(auth, minRole)` — Hierarchie: superadmin > admin > trainer > member |
+| Rate Limit     | STANDARD (30/min), STRICT (10/min), CLUSTER (5/h), CONFIRM (3/h)                |
+| CSRF           | Token-basiert für alle mutierenden Endpoints                                    |
+| Club-Isolation | Non-Superadmin sieht nur eigenen Club                                           |
+| Audit          | Komplette Historisierung aller Admin-Aktionen                                   |
 
-### 3.4 Finanzen & Abrechnung 🟢 *Gut durchdacht*
+### 3.4 Finanzen & Abrechnung 🟢 _Gut durchdacht_
 
 - **Automatische Monatsrechnungen**: `POST /api/billing/generate-invoices`
 - **SEPA-Lastschrift**: Vollständiger PAIN.008 XML-Export
@@ -69,7 +69,7 @@ Dies spart Vereinen **mehrere Tage manuelle Planungsarbeit pro Saison**.
 - **Zahlungs-Gateways**: Stripe, Bank-Transfer, Barzahlung (erweiterbar)
 - **Gebührenkonfiguration**: Flexible `fee_configurations` mit Staffelung nach Alter, Typ
 
-### 3.5 Trainer-Feedback & Höherstufungen 🟢 *Innovativ*
+### 3.5 Trainer-Feedback & Höherstufungen 🟢 _Innovativ_
 
 - Trainer können am Saisonende jedes Mitglied bewerten
 - `ready_for_next_level` fließt automatisch in die nächste Saison-Clustering ein
@@ -87,12 +87,14 @@ Dies spart Vereinen **mehrere Tage manuelle Planungsarbeit pro Saison**.
 Die `users`- und `members`-Entitäten setzen Einzelpersonen mit eigener E-Mail voraus. Im Tennisverein verwalten Eltern typischerweise die Buchungen/Trainings ihrer Kinder, die oft keine eigene E-Mail-Adresse haben. Es gibt keine Möglichkeit, Kinder unter einem Eltern-Account zu führen.
 
 **Auswirkungen:**
+
 - Eltern müssen separate Logins für jedes Kind verwalten
 - Keine Familien-Sammelrechnung möglich
 - Keine elterliche Kontrolle über Buchungen Minderjähriger
 - Datenschutz: Elterliche Zustimmung nicht abbildbar
 
 **Lösungsansatz:**
+
 ```sql
 -- Neue Tabelle: family_accounts
 CREATE TABLE family_accounts (
@@ -121,11 +123,13 @@ CREATE TABLE family_members (
 Es existiert kein Workflow, wenn ein Mitglied mit einem Nicht-Mitglied (Gast) spielen möchte. Gastgebühren sind nicht in der Buchungs- oder Abrechnungslogik integriert. `trialTrainings` deckt nur Probetrainings ab, nicht aber reguläre Gastspiele.
 
 **Auswirkungen:**
+
 - Vereine können Gastspieler nicht korrekt abrechnen
 - Keine Nachverfolgung von Gastspieler-Frequenz (potenzielle Mitglieder)
 - Keine automatische Gastgebühr auf Mitgliedsrechnung
 
 **Lösungsansatz:**
+
 - `bookings`-Tabelle um `is_guest_booking` und `guest_name` erweitern
 - Gastgebühren-Konfiguration in `fee_configurations` (`type: 'guest'`)
 - Automatische Abrechnung über die Rechnung des buchenden Mitglieds
@@ -140,11 +144,13 @@ Es existiert kein Workflow, wenn ein Mitglied mit einem Nicht-Mitglied (Gast) sp
 Es gibt keine vereinsweiten Benachrichtigungen außerhalb von Transaktions-E-Mails (Buchungsbestätigung, Saisonplan, Rechnung). Es gibt keine Ankündigungen, Newsletter, Push-Nachrichten für Platzsperrungen oder Event-Einladungen.
 
 **Auswirkungen:**
+
 - Keine zentrale Kommunikationsplattform für den Verein
 - Witterungsbedingte Platzsperrungen erreichen Mitglieder nicht rechtzeitig
 - Kein Newsfeed oder Ankündigungssystem ersichtlich
 
 **Lösungsansatz:**
+
 - Vorhandene `notifications`-Tabelle ausbauen
 - `POST /api/notifications/broadcast` für Massen-Benachrichtigungen
 - E-Mail-Templates für verschiedene Anlässe
@@ -162,6 +168,7 @@ Es gibt keine vereinsweiten Benachrichtigungen außerhalb von Transaktions-E-Mai
 Es gibt keine dedizierte Platzwart-Rolle. Kurzfristige Sitz-bedingte Sperrungen (Regen, Platzpflege) sind nicht abbildbar. Plätze kennen nur `is_active` (Dauerzustand), keine temporären Sperrzeiten.
 
 **Lösungsansatz:**
+
 - Neue Rolle `court_manager` oder Delegation an Trainer
 - `court_blockouts`-Tabelle mit Start/Ende, Grund (`rain`, `maintenance`, `tournament`)
 - Massen-Stornierung betroffener Sessions mit automatischer E-Mail
@@ -177,6 +184,7 @@ Es gibt keine dedizierte Platzwart-Rolle. Kurzfristige Sitz-bedingte Sperrungen 
 `is_active` ist binär. Im echten Vereinsleben gibt es medizinische Pausen, passive Mitgliedschaften, Auslandssemester etc. Das Billing unterscheidet diese Fälle nicht.
 
 **Lösungsansatz:**
+
 - `membershipStatus` um Werte wie `medical_leave`, `passive`, `sabbatical` erweitern
 - Billing-Engine: automatisches Pausieren/Aussetzen bei bestimmten Status
 - Wiedereintritts-Workflow nach Pause
@@ -191,6 +199,7 @@ Es gibt keine dedizierte Platzwart-Rolle. Kurzfristige Sitz-bedingte Sperrungen 
 `trainer_billings` kennt nur Stunden × Stundensatz. In der Praxis fallen Fahrtkosten, Turnierbetreuungspauschalen oder Materialkosten an, die separat abgerechnet werden müssen.
 
 **Lösungsansatz:**
+
 - `billingLineItems` um `expense_type`-Feld erweitern (`travel`, `tournament`, `material`)
 - Spesenabrechnung im Trainer-Billing-Workflow
 
@@ -204,6 +213,7 @@ Es gibt keine dedizierte Platzwart-Rolle. Kurzfristige Sitz-bedingte Sperrungen 
 Gemäß SEPA-Regularien muss der Einzug dem Zahler vorab angekündigt werden (meist 14 Tage). Der aktuelle Workflow zeigt nur die PAIN.008-XML-Generierung, keine automatisierte Vorabankündigung.
 
 **Lösungsansatz:**
+
 - Trigger beim Invoice-Generate: Plane Pre-Notification-E-Mail X Tage vor Fälligkeit
 - Checkbox im Billing-UI: „Pre-Notification heute versenden"
 - Compliance: Rechtssichere Vorlagen mit Widerspruchsfrist
@@ -248,12 +258,12 @@ Es gibt `POST /api/ai/matchmaking` — dies könnte zu einem starken Differenzie
 
 ### 5.1 DB-Schema-Konsistenz
 
-| Tabelle | Problem |
-|---------|---------|
-| `user_club_memberships` | Compound Primary Key `(user_id, club_id)` definiert — aber `id`-Spalte ist trotzdem vorhanden und als PK markiert. Das `pk`-Constraint in Drizzle ist evtl. nur ein Index. |
-| `club_members` vs. `user_club_memberships` | Zwei separate Tabellen mit ähnlicher Funktion. Sollte konsolidiert werden. |
-| `trainers` | Kein `club_id`-Feld, nur N:M über `trainer_club`. Verkompliziert Query-Logik. |
-| `sepa_mandates` | Verwendet CamelCase (`clubId`, `memberId`) statt Snake_Case wie die restlichen Tabellen. |
+| Tabelle                                    | Problem                                                                                                                                                                    |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_club_memberships`                    | Compound Primary Key `(user_id, club_id)` definiert — aber `id`-Spalte ist trotzdem vorhanden und als PK markiert. Das `pk`-Constraint in Drizzle ist evtl. nur ein Index. |
+| `club_members` vs. `user_club_memberships` | Zwei separate Tabellen mit ähnlicher Funktion. Sollte konsolidiert werden.                                                                                                 |
+| `trainers`                                 | Kein `club_id`-Feld, nur N:M über `trainer_club`. Verkompliziert Query-Logik.                                                                                              |
+| `sepa_mandates`                            | Verwendet CamelCase (`clubId`, `memberId`) statt Snake_Case wie die restlichen Tabellen.                                                                                   |
 
 ### 5.2 Soft-Delete DSGVO-Konformität
 
@@ -282,36 +292,39 @@ Es gibt `POST /api/ai/matchmaking` — dies könnte zu einem starken Differenzie
 
 ## 6. Perspektiven-Matrix: Wer kann was?
 
-| Aktion | Member | Trainer | Admin | Superadmin |
-|--------|:------:|:-------:|:-----:|:----------:|
-| Eigene Buchungen verwalten | ✅ | ✅ | ✅ | ✅ |
-| Platz buchen | ✅ | ✅ | ✅ | ✅ |
-| Trainingsplan einsehen | ✅ | ✅ | ✅ | ✅ |
-| Eigene Rechnungen sehen | ✅ | ✅ | ✅ | ✅ |
-| Stunden erfassen | ❌ | ✅ | ✅ | ✅ |
-| Rechnungen für andere erstellen | ❌ | ❌ | ✅ | ✅ |
-| Saison planen (Wizard) | ❌ | ❌ | ✅ | ✅ |
-| SEPA-Lastschrift ausführen | ❌ | ❌ | ❌ | ✅ |
-| Kinder/Familie verwalten | ❌ | ❌ | ❌ | ❌ |
-| Platz sperren (Witterung) | ❌ | ❌ | ❌ | ❌ |
-| Gastspieler anmelden | ❌ | ❌ | ❌ | ❌ |
+| Aktion                          | Member | Trainer | Admin | Superadmin |
+| ------------------------------- | :----: | :-----: | :---: | :--------: |
+| Eigene Buchungen verwalten      |   ✅   |   ✅    |  ✅   |     ✅     |
+| Platz buchen                    |   ✅   |   ✅    |  ✅   |     ✅     |
+| Trainingsplan einsehen          |   ✅   |   ✅    |  ✅   |     ✅     |
+| Eigene Rechnungen sehen         |   ✅   |   ✅    |  ✅   |     ✅     |
+| Stunden erfassen                |   ❌   |   ✅    |  ✅   |     ✅     |
+| Rechnungen für andere erstellen |   ❌   |   ❌    |  ✅   |     ✅     |
+| Saison planen (Wizard)          |   ❌   |   ❌    |  ✅   |     ✅     |
+| SEPA-Lastschrift ausführen      |   ❌   |   ❌    |  ❌   |     ✅     |
+| Kinder/Familie verwalten        |   ❌   |   ❌    |  ❌   |     ❌     |
+| Platz sperren (Witterung)       |   ❌   |   ❌    |  ❌   |     ❌     |
+| Gastspieler anmelden            |   ❌   |   ❌    |  ❌   |     ❌     |
 
 ---
 
 ## 7. Roadmap-Empfehlung
 
 ### Q2 2026 — Foundation (3 Monate)
+
 1. **Familien- & Elternfunktionen** — Account-Verknüpfung, Kinder-Accounts, Eltern-Berechtigung
 2. **Platzwart-Features** — Witterungssperren, Push-Benachrichtigungen, temporäre Court-Blockaden
 3. **Kommunikations-Modul** — Vereinsweite Ankündigungen, E-Mail-Newsletter, Push-Nachrichten
 
 ### Q3 2026 — Maturity (3 Monate)
+
 4. **Gastspieler-Management** — Buchung, Abrechnung, Conversion-Tracking
 5. **Flexible Mitgliedschaften** — Pausierung, Medizinische Pause, Passive Mitgliedschaft
 6. **SEPA Pre-Notification** — Rechtssichere Vorabankündigung, automatisierter Versand
 7. **Trainer-Spesen** — Fahrtkosten, Turnierpauschalen, Material
 
 ### Q4 2026 — Excellence (3 Monate)
+
 8. **Turniermanagement ausbauen** — Auslosung, Platzsperrungen, Ergebnis-Erfassung
 9. **Gamification** — Challenges, Abzeichen, Ranglisten
 10. **Matchmaking AI** — Spielpartner-Vermittlung auf Basis von Niveau & Präferenzen
@@ -329,4 +342,4 @@ Mit der in der Roadmap vorgeschlagenen Priorisierung kann SwingZ innerhalb eines
 
 ---
 
-*Analyse erstellt am 21. Mai 2026 · Grundlage: Codebase-Analyse (Schema, API-Routen, Workflows, Pages, Domain-Modell)*
+_Analyse erstellt am 21. Mai 2026 · Grundlage: Codebase-Analyse (Schema, API-Routen, Workflows, Pages, Domain-Modell)_

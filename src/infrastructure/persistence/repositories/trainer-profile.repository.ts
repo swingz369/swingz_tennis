@@ -50,7 +50,9 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
       };
 
       if (!input.clubId) {
-        throw new Error('clubId is required to create a trainer profile (club_id is NOT NULL in schema)');
+        throw new Error(
+          'clubId is required to create a trainer profile (club_id is NOT NULL in schema)'
+        );
       }
 
       // Ensure a trainers record exists (trainers.id must match users.id for FK compatibility)
@@ -399,11 +401,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
    * Normally this equals userId, but if an email-duplicate record exists with a different id,
    * we return that id so that availability queries still work.
    */
-  private async ensureTrainersRecord(
-    userId: string,
-    email: string,
-    name: string
-  ): Promise<string> {
+  private async ensureTrainersRecord(userId: string, email: string, name: string): Promise<string> {
     try {
       const trainerEmail = email || `${userId}@trainer.swingz.local`;
       const trainerName = name || 'Trainer';

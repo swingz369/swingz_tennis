@@ -69,7 +69,9 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
       statusFilter === 'all' || (statusFilter === 'active' ? member.is_active : !member.is_active);
     const matchesPlanning =
       planningFilter === 'all' ||
-      (planningFilter === 'included' ? member.include_in_planning !== false : member.include_in_planning === false);
+      (planningFilter === 'included'
+        ? member.include_in_planning !== false
+        : member.include_in_planning === false);
     return matchesSearch && matchesRole && matchesStatus && matchesPlanning;
   });
 

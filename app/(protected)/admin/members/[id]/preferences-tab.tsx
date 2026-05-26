@@ -13,14 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import {
-  Clock,
-  Target,
-  Users,
-  Save,
-  Loader2,
-  CheckCircle2,
-} from 'lucide-react';
+import { Clock, Target, Users, Save, Loader2, CheckCircle2 } from 'lucide-react';
 
 type DaySchedule = Array<{ start: string; end: string }>;
 
@@ -95,22 +88,22 @@ export function PreferencesTab({ userId, clubId }: Props) {
   const fetchPrefs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `/api/members/${userId}/schedule-preferences?clubId=${clubId}`
-      );
+      const res = await fetch(`/api/members/${userId}/schedule-preferences?clubId=${clubId}`);
       if (res.ok) {
         const data = await res.json();
-        setPrefs(data.preferences ?? {
-          preferred_level: null,
-          preferred_age_group: null,
-          weekly_availability: emptyAvailability(),
-          wish_partner_ids: [],
-          preferred_trainer_ids: [],
-          preferred_court_ids: [],
-          max_sessions_per_week: null,
-          special_requests: null,
-          notes: null,
-        });
+        setPrefs(
+          data.preferences ?? {
+            preferred_level: null,
+            preferred_age_group: null,
+            weekly_availability: emptyAvailability(),
+            wish_partner_ids: [],
+            preferred_trainer_ids: [],
+            preferred_court_ids: [],
+            max_sessions_per_week: null,
+            special_requests: null,
+            notes: null,
+          }
+        );
       }
     } catch (err) {
       console.error('Failed to fetch schedule preferences:', err);
@@ -154,10 +147,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
       ...prev,
       weekly_availability: {
         ...prev.weekly_availability,
-        [day]: [
-          ...prev.weekly_availability[day],
-          { start: '09:00', end: '10:00' },
-        ],
+        [day]: [...prev.weekly_availability[day], { start: '09:00', end: '10:00' }],
       },
     }));
   };
@@ -348,9 +338,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
         </CardHeader>
         <CardContent>
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">
-              Maximale Trainingseinheiten pro Woche
-            </Label>
+            <Label className="text-xs text-gray-500">Maximale Trainingseinheiten pro Woche</Label>
             <Select
               value={String(prefs.max_sessions_per_week || '')}
               onValueChange={(v) =>

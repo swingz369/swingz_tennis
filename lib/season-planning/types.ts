@@ -350,19 +350,19 @@ export interface TrainerAvailabilitySummary {
 export interface RunClusteringRequest {
   seasonId: string;
   config?: Partial<{
-  maxNiveauSpanBeginner: number;
-  maxNiveauSpanAdvanced: number;
-  trainerUtilizationMaxPct: number;
-  groupMaxSize: number;
-  groupMinSize: number;
-  kidsGroupMaxSize: number;
-  kidsGroupMinSize: number;
-  slotDurationMinutes: number;
-  provenGroupThreshold: number;
-  slotFailureThreshold: number;
-  waitlistPriorityRule: string;
-  preferHistoricGroups: boolean;
-  avoidHighFailureSlots: boolean;
+    maxNiveauSpanBeginner: number;
+    maxNiveauSpanAdvanced: number;
+    trainerUtilizationMaxPct: number;
+    groupMaxSize: number;
+    groupMinSize: number;
+    kidsGroupMaxSize: number;
+    kidsGroupMinSize: number;
+    slotDurationMinutes: number;
+    provenGroupThreshold: number;
+    slotFailureThreshold: number;
+    waitlistPriorityRule: string;
+    preferHistoricGroups: boolean;
+    avoidHighFailureSlots: boolean;
   }>;
   dryRun?: boolean;
 }

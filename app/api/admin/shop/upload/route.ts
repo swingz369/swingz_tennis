@@ -103,9 +103,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const { data: urlData } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(storagePath);
+      const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(storagePath);
 
       return NextResponse.json({
         url: urlData.publicUrl,
