@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "postbuild": "npx drizzle-kit migrate",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

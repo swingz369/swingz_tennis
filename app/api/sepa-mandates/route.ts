@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(request.url);
       const memberId = searchParams.get('memberId');
       const mandateId = searchParams.get('mandateId');
+      const active = searchParams.get('active');
 
       if (mandateId) {
         const mandate = await SEPAMandateService.getMandateById(mandateId);
@@ -85,6 +86,16 @@ export async function GET(request: NextRequest) {
           return NextResponse.json({ error: 'Mandate not found' }, { status: 404 });
         }
         return NextResponse.json({ mandate });
+      }
+
+      // Support ?active=true — returns active mandate for the given member or the authenticated user
+      if (active === 'true') {
+        const targetMemberId = memberId || auth.user.id;
+        const activeMandate = await SEPAMandateService.getActiveMandateForMember(targetMemberId);
+        if (!activeMandate) {
+          return NextResponse.json({ mandate: null, active: false });
+        }
+        return NextResponse.json({ mandate: activeMandate, active: true });
       }
 
       if (memberId) {

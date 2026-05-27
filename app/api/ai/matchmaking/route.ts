@@ -1,3 +1,4 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -17,7 +18,7 @@ interface MatchCandidate {
  * KI Matchmaking API v2
  * Multi-dimensional matching: Level + Gruppen + gemeinsame Sessions
  */
-export async function GET() {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
