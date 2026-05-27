@@ -15,10 +15,19 @@ if (!connectionString) {
 }
 
 // Create postgres.js client
+// Vercel serverless-compatible configuration:
+// - max: 1 (single connection per invocation)
+// - prepare: false (required for Supabase PgBouncer / Supavisor poolers)
+// - ssl: required for Supabase cloud connections
+// - connect_timeout: 30s to handle cold starts
+const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
 const client = postgres(connectionString, {
-  max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
+  max: 1,
+  idle_timeout: 0,
+  connect_timeout: 30,
+  max_lifetime: 60 * 5, // 5 minutes — shorter than typical PG server timeout, prevents stale connections on warm starts
+  prepare: false,
+  ssl: isLocal ? false : { rejectUnauthorized: false },
 });
 
 // Create Drizzle instance with schema
