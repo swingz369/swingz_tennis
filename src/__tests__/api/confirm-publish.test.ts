@@ -796,6 +796,189 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
   });
 
   // ──────────────────────────────────────────────────────────
+  // NaN-SAFE DATE HANDLING
+  // ──────────────────────────────────────────────────────────
+  // The confirm route must not crash with "Invalid time value" when
+  // season.year, start_date, or end_date are NaN/missing/broken.
+  // These tests exercise the fallback paths added in the NaN-safe fix.
+  // ──────────────────────────────────────────────────────────
+
+  describe('NaN-safe date handling', () => {
+    it('publishes successfully when season.year is NaN (falls back to current year)', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, year: NaN }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [], // triggers schedule insert with fallback year
+        newScheduleId: 'schedule-nan-year',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully when season.year is null/undefined', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, year: null }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-null-year',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully when season.start_date is null (defaults to now)', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, start_date: null, end_date: null }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-no-start',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully when season.start_date is an invalid string (NaN fallback)', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, start_date: 'not-a-valid-date!!', end_date: null }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-bad-start',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully when season.end_date is null (defaults to now + 90 days)', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, end_date: null }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-no-end',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully when season.end_date is an invalid string (NaN fallback)', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, end_date: 'garbage-date-string' }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-bad-end',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully when ALL date fields are broken simultaneously', async () => {
+      resetConfig({
+        season: [
+          {
+            ...DEFAULT_SEASON,
+            year: NaN,
+            start_date: null,
+            end_date: 'not-a-valid-date',
+          },
+        ],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-all-broken',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      // With default dates (now → now+90d), entries with 16 weeks produce
+      // ~13 sessions (13 weeks × 1 entry). The key assertion is no 500 crash.
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully when season.year is a string (e.g. stored as varchar)', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, year: '2025' as any }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-string-year',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('publishes successfully with NaN year AND existing schedule (find path, not insert)', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, year: NaN }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [DEFAULT_SCHEDULE], // existing schedule — exercises the find-branch
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.publishedSessions).toBeGreaterThan(0);
+    });
+
+    it('does NOT crash with "Invalid time value" when start_date produces NaN', async () => {
+      resetConfig({
+        season: [{ ...DEFAULT_SEASON, start_date: 'definitely-not-a-date', end_date: null }],
+        entries: [DEFAULT_ENTRY],
+        schedule: [],
+        newScheduleId: 'schedule-invalid-time',
+      });
+      mockGetDb = vi.fn(() => buildDb());
+
+      const res = await POST(buildRequest(), ctx());
+      const body = await res.json();
+
+      // Must not return a 500 "Invalid time value" error
+      if (res.status === 500) {
+        expect(body.error).not.toContain('Invalid time value');
+      }
+      // Should succeed gracefully
+      expect(res.status).toBe(200);
+      expect(body.success).toBe(true);
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────
   // HOLIDAY MARKING
   // ──────────────────────────────────────────────────────────
 

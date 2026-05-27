@@ -103,7 +103,7 @@ function PlanEntryCard({
 }) {
   return (
     <Link
-      href="/admin/season-plan"
+      href="/admin/seasons"
       className="block p-1 rounded text-[11px] text-white hover:opacity-90 transition-opacity cursor-pointer"
       style={{ backgroundColor: entry.group_color }}
       title={`${entry.group_name} · ${entry.trainer_name} · ${entry.start_time}–${entry.end_time}`}

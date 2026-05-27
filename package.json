@@ -9,6 +9,8 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:proxy": "npx tsx scripts/anthropic-openai-proxy.ts",
+    "dev:with-proxy": "npx tsx scripts/anthropic-openai-proxy.ts & next dev --turbopack",
     "build": "next build",
     "postbuild": "npx drizzle-kit migrate",
     "start": "next start",

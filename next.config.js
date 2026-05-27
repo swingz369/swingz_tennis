@@ -154,6 +154,16 @@ const nextConfig = {
       },
     ];
   },
+  // Redirects
+  async redirects() {
+    return [
+      {
+        source: '/admin/season-plan',
+        destination: '/admin/seasons',
+        permanent: true,
+      },
+    ];
+  },
   // Code splitting optimizations
   webpack: (config, { dev, isServer }) => {
     // Exclude Supabase Edge Functions from Next.js build

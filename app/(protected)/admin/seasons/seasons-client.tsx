@@ -12,6 +12,7 @@ import {
   CheckCircle,
   TrendingUp,
   CalendarPlus,
+  LayoutGrid,
 } from 'lucide-react';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
 
@@ -193,6 +194,23 @@ export function SeasonsClient({ initialSeasons }: SeasonsClientProps) {
                     <span className="font-medium">{season.groups_covered}</span>
                   </div>
                 </div>
+
+                {['published', 'active', 'completed', 'archived'].includes(
+                  season.planning_status
+                ) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/admin/season-plan/${season.id}`);
+                    }}
+                  >
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    Stundenplan
+                  </Button>
+                )}
 
                 {season.open_conflicts > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-2 text-sm">

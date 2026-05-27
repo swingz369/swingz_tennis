@@ -221,7 +221,6 @@ export function Sidebar({
           subItems: [
             { name: 'Platz-Kalender', href: '/admin/courts' },
             { name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' },
-            { name: 'Saison-Stundenplan', href: '/admin/season-plan' },
             { name: 'Plätze verwalten', href: '/admin/courts/manage' },
           ],
         },

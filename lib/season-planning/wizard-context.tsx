@@ -291,6 +291,7 @@ export function WizardProvider({
         type: 'SET_ERROR',
         error: err instanceof Error ? err.message : 'Konfliktprüfung fehlgeschlagen',
       });
+      throw err;
     }
   }, [state.seasonId]);
 

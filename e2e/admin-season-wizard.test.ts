@@ -28,7 +28,7 @@ const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL!;
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD!;
 
 // ═══ Timeouts ═══
-const TEST_TIMEOUT = 180_000; // 3 min per phase
+const TEST_TIMEOUT = 300_000; // 5 min per phase (Gemini free tier needs more time per aiAct)
 const POLL_INTERVAL = 5_000; // 5s between aiQuery polls
 const MAX_POLLS = 24; // max 2 min of polling (24 × 5s)
 

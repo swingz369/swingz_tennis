@@ -123,3 +123,4 @@ tramp
 # Auto-generated
 next-env.d.ts
 tsconfig.tsbuildinfo
+midscene_run/

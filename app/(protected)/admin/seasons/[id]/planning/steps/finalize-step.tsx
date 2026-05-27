@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,12 @@ export function FinalizeStep() {
     setHasRunCheck(true);
     try {
       await detectConflicts();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Server-Fehler bei der Konfliktprüfung';
+      toast.error('Konfliktprüfung fehlgeschlagen', {
+        description: message,
+        duration: 8000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -77,11 +84,18 @@ export function FinalizeStep() {
         headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ conflictId, action: 'resolve', notes: 'Manuell gelöst' }),
       });
-      if (!res.ok) throw new Error('Fehler beim Lösen');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Server-Fehler (${res.status})`);
+      }
       // Optimistic update handled by re-fetch
       await detectConflicts();
-    } catch {
-      // handled silently
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Lösen';
+      toast.error('Konflikt konnte nicht gelöst werden', {
+        description: message,
+        duration: 6000,
+      });
     } finally {
       setResolvingId(null);
     }
@@ -95,10 +109,17 @@ export function FinalizeStep() {
         headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ conflictId, action: 'ignore', notes: 'Bewusst ignoriert' }),
       });
-      if (!res.ok) throw new Error('Fehler beim Ignorieren');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Server-Fehler (${res.status})`);
+      }
       await detectConflicts();
-    } catch {
-      // handled silently
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Ignorieren';
+      toast.error('Konflikt konnte nicht ignoriert werden', {
+        description: message,
+        duration: 6000,
+      });
     } finally {
       setResolvingId(null);
     }
@@ -153,8 +174,12 @@ export function FinalizeStep() {
     setIsConfirming(true);
     try {
       await confirmPlan();
-    } catch {
-      // handled in context
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Server-Fehler bei der Bestätigung';
+      toast.error('Bestätigung fehlgeschlagen', {
+        description: message,
+        duration: 8000,
+      });
     } finally {
       setIsConfirming(false);
     }
