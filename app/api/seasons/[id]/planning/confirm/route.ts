@@ -145,12 +145,27 @@ export async function POST(request: NextRequest, context: RouteContext) {
           const publishedIds: string[] = [];
 
           // 1. Find or create a schedule for this season (only if we have entries)
-          const seasonYear = new Date(season.start_date).getFullYear();
+          // Use season.year (integer) which is more reliable than parsing start_date
+          const seasonYear =
+            typeof season.year === 'number' && !Number.isNaN(season.year)
+              ? season.year
+              : new Date().getFullYear();
           let scheduleId: string | null = null;
 
-          // 2. Compute season length in weeks
-          const seasonStart = new Date(season.start_date);
-          const seasonEnd = new Date(season.end_date);
+          // 2. Compute season length in weeks with safe date handling
+          let seasonStart = season.start_date ? new Date(season.start_date) : new Date();
+          let seasonEnd = season.end_date
+            ? new Date(season.end_date)
+            : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+
+          // If dates are invalid (NaN), replace with sensible defaults
+          if (isNaN(seasonStart.getTime())) {
+            seasonStart = new Date();
+          }
+          if (isNaN(seasonEnd.getTime())) {
+            seasonEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+          }
+
           const seasonLengthDays = Math.ceil(
             (seasonEnd.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24)
           );
@@ -179,8 +194,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
                     club_id: season.club_id,
                     season_type: 'summer',
                     season_year: seasonYear,
-                    season_start_date: new Date(season.start_date),
-                    season_end_date: new Date(season.end_date),
+                    season_start_date: seasonStart,
+                    season_end_date: seasonEnd,
                     is_active: true,
                   })
                   .returning({ id: schedules.id });

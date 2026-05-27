@@ -337,6 +337,14 @@ export class TrialTrainingService {
         .includes(lowerQuery)
     );
   }
+
+  /**
+   * Reset and optionally seed the in-memory training store.
+   * Only used for testing; production code uses the DB-backed adapter.
+   */
+  static reset(data?: TrialTraining[]): void {
+    this.trainings = data ?? [];
+  }
 }
 
 // NOTE: initializeMockData() removed — API routes now use the DB-backed adapter
