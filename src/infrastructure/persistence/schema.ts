@@ -1025,6 +1025,7 @@ export const hoursLogs = pgTable(
     notes: text('notes'),
     approved_by: varchar('approved_by', { length: 100 }),
     approved_at: timestamp('approved_at', { withTimezone: true }),
+    rejection_reason: text('rejection_reason'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

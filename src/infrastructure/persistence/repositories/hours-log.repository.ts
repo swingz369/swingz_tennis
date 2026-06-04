@@ -97,6 +97,7 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
       if (input.notes !== undefined) updateData.notes = input.notes;
       if (input.approvedBy !== undefined) updateData.approved_by = input.approvedBy;
       if (input.approvedAt !== undefined) updateData.approved_at = new Date(input.approvedAt);
+      if (input.rejectionReason !== undefined) updateData.rejection_reason = input.rejectionReason;
 
       // Recalculate duration if times changed
       if (input.startTime || input.endTime) {
@@ -129,11 +130,12 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
     });
   }
 
-  async reject(id: string, approvedBy: string): Promise<HoursLog | null> {
+  async reject(id: string, approvedBy: string, reason?: string): Promise<HoursLog | null> {
     return this.update(id, {
       status: 'rejected',
       approvedBy,
       approvedAt: new Date().toISOString(),
+      rejectionReason: reason,
     });
   }
 
@@ -227,6 +229,7 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
       notes: row.notes ?? undefined,
       approvedBy: row.approved_by ?? undefined,
       approvedAt: row.approved_at?.toISOString(),
+      rejectionReason: row.rejection_reason ?? undefined,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),
     };

@@ -66,7 +66,7 @@ export interface HoursLogRepository {
   /**
    * Reject a hours log
    */
-  reject(id: string, approvedBy: string): Promise<HoursLog | null>;
+  reject(id: string, approvedBy: string, reason?: string): Promise<HoursLog | null>;
 
   /**
    * Delete a hours log

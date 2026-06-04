@@ -63,8 +63,8 @@ class HoursLogServiceAdapter {
     return this.hoursLogRepo.approve(id, approvedBy);
   }
 
-  async rejectHoursLog(id: string, approvedBy: string): Promise<HoursLog | null> {
-    return this.hoursLogRepo.reject(id, approvedBy);
+  async rejectHoursLog(id: string, approvedBy: string, reason?: string): Promise<HoursLog | null> {
+    return this.hoursLogRepo.reject(id, approvedBy, reason);
   }
 
   async deleteHoursLog(id: string): Promise<boolean> {

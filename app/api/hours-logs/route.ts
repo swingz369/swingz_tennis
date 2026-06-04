@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest) {
       let query = supabase
         .from('hours_logs')
         .select(
-          'id, trainer_id, trainer_name, date, start_time, end_time, duration, session_id, type, status, notes, approved_by, approved_at, created_at'
+          'id, trainer_id, trainer_name, date, start_time, end_time, duration, session_id, type, status, notes, rejection_reason, approved_by, approved_at, created_at'
         )
         .order('date', { ascending: false });
 
@@ -97,6 +97,7 @@ export async function GET(_request: NextRequest) {
         session_id: log.session_id,
         description: log.notes,
         status: log.status,
+        rejection_reason: log.rejection_reason ?? null,
         created_at: log.created_at,
         approved_by: log.approved_by,
         approved_at: log.approved_at,

@@ -12,6 +12,7 @@ export interface HoursLog {
   notes?: string;
   approvedBy?: string;
   approvedAt?: string;
+  rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,6 +52,7 @@ export interface UpdateHoursLogInput {
   notes?: string;
   approvedBy?: string;
   approvedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface CreateAttendanceRecordInput {

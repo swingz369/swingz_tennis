@@ -32,7 +32,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      const hoursLog = await hoursLogService.rejectHoursLog(id, auth.user.id);
+      const hoursLog = await hoursLogService.rejectHoursLog(id, auth.user.id, reason);
 
       return NextResponse.json({
         success: true,
