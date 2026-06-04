@@ -1,7 +1,4 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { requireAuth } from '@/lib/auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { requireAdminClub } from '@/lib/admin-context';
 import { AnalyticsClient } from './analytics-client';
 import { ClubSelector } from './club-selector';
 import type { AnalyticsData } from './analytics-client';
@@ -13,39 +10,16 @@ export default async function AnalyticsPage({
 }: {
   searchParams: Promise<{ clubId?: string }>;
 }) {
-  const { supabase, user } = await requireAuth();
+  const { supabase, isSuperadmin, clubId: defaultClubId } = await requireAdminClub();
 
-  // Get all active club memberships
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
-
-  const isSuperadmin = memberships?.some((m: any) => m.role === 'superadmin');
-  const isAdmin = memberships?.some((m: any) => m.role === 'admin');
-
-  if (!isSuperadmin && !isAdmin) {
-    redirect('/bookings');
-  }
-
-  // Build clubs list
+  // Build clubs list — superadmins can see all clubs
   let clubIds: string[] = [];
 
   if (isSuperadmin) {
-    const cookieStore = await cookies();
-    const selectedClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
-    if (selectedClubId) {
-      clubIds = [selectedClubId];
-    } else {
-      // Get all clubs for superadmin
-      const { data: allClubs } = await supabase.from('clubs').select('id').eq('status', 'active');
-      clubIds = (allClubs ?? []).map((c: any) => c.id);
-    }
+    const { data: allClubs } = await supabase.from('clubs').select('id').limit(100);
+    clubIds = (allClubs ?? []).map((c: any) => c.id);
   } else {
-    clubIds = (memberships ?? [])
-      .filter((m: any) => m.role === 'admin' && m.club_id)
-      .map((m: any) => m.club_id);
+    clubIds = [defaultClubId];
   }
 
   if (clubIds.length === 0) {

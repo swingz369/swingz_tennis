@@ -33,6 +33,8 @@ import {
   Link as LinkIcon,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import type { PaginationMeta } from '@/lib/pagination';
 
 interface Product {
   id: string;
@@ -135,6 +137,9 @@ export default function AdminShopPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsPagination, setProductsPagination] = useState<PaginationMeta | null>(null);
+  const PRODUCTS_PER_PAGE = 20;
 
   // ── Image upload state ──
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -154,12 +159,16 @@ export default function AdminShopPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState('');
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersPagination, setOrdersPagination] = useState<PaginationMeta | null>(null);
+  const ORDERS_PER_PAGE = 10;
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (page: number = 1) => {
     try {
-      const res = await fetch('/api/admin/shop/products');
+      const res = await fetch(`/api/admin/shop/products?page=${page}&limit=${PRODUCTS_PER_PAGE}`);
       const data = await res.json();
       setProducts(data.products ?? []);
+      setProductsPagination(data.pagination ?? null);
     } catch (err) {
       console.error('Failed to fetch products:', err);
     } finally {
@@ -167,13 +176,14 @@ export default function AdminShopPage() {
     }
   }, []);
 
-  const fetchOrders = useCallback(async (statusFilter?: string) => {
+  const fetchOrders = useCallback(async (statusFilter?: string, page: number = 1) => {
     setOrdersLoading(true);
     try {
-      const url = statusFilter
-        ? `/api/admin/shop/orders?status=${statusFilter}`
-        : '/api/admin/shop/orders';
-      const res = await fetch(url);
+      const params = new URLSearchParams();
+      if (statusFilter) params.set('status', statusFilter);
+      params.set('page', String(page));
+      params.set('limit', String(ORDERS_PER_PAGE));
+      const res = await fetch(`/api/admin/shop/orders?${params}`);
       const data = await res.json();
       setOrders(data.orders ?? []);
       setOrderStats({
@@ -181,6 +191,7 @@ export default function AdminShopPage() {
         total_revenue: data.total_revenue ?? 0,
         pending_orders: data.pending_orders ?? 0,
       });
+      setOrdersPagination(data.pagination ?? null);
     } catch (err) {
       if (process.env.NODE_ENV !== 'production') {
         console.error('Shop orders fetch failed:', err);
@@ -191,13 +202,17 @@ export default function AdminShopPage() {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-    fetchOrders();
-  }, [fetchProducts, fetchOrders]);
+    fetchProducts(productsPage);
+  }, [fetchProducts, productsPage]);
+
+  useEffect(() => {
+    fetchOrders(orderStatusFilter, ordersPage);
+  }, [fetchOrders, orderStatusFilter, ordersPage]);
 
   const handleStatusFilterChange = (status: string) => {
     setOrderStatusFilter(status);
-    fetchOrders(status);
+    setOrdersPage(1);
+    // fetchOrders will be triggered by the useEffect
   };
 
   const handleAdvanceStatus = async (orderId: string, newStatus: string) => {
@@ -213,7 +228,7 @@ export default function AdminShopPage() {
         throw new Error(err.error || 'Fehler beim Aktualisieren');
       }
       toast.success(`Bestellung auf „${STATUS_LABELS[newStatus]}“ gesetzt`);
-      fetchOrders(orderStatusFilter);
+      fetchOrders(orderStatusFilter, ordersPage);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -339,7 +354,7 @@ export default function AdminShopPage() {
       toast.success(editId ? 'Produkt aktualisiert' : 'Produkt erstellt');
       setShowForm(false);
       setEditId(null);
-      fetchProducts();
+      fetchProducts(productsPage);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -360,12 +375,19 @@ export default function AdminShopPage() {
       }
       toast.success('Produkt gelöscht');
       setDeleteId(null);
-      fetchProducts();
+      // Reset to page 1 if we deleted the last item on this page
+      if (products.length === 1 && productsPage > 1) {
+        setProductsPage(productsPage - 1);
+      } else {
+        fetchProducts(productsPage);
+      }
     } catch (err: any) {
       toast.error(err.message);
     }
   };
 
+  // With server-side pagination, all returned products are the current page
+  // Separate active/inactive for display grouping
   const activeProducts = products.filter((p) => p.is_active);
   const inactiveProducts = products.filter((p) => !p.is_active);
 
@@ -402,7 +424,7 @@ export default function AdminShopPage() {
         {[
           {
             label: 'Produkte',
-            value: products.length,
+            value: productsPagination?.totalCount ?? products.length,
             icon: Package,
             color: 'text-blue-600 dark:text-blue-400',
             bg: 'bg-blue-50 dark:bg-blue-900/30',
@@ -759,6 +781,9 @@ export default function AdminShopPage() {
                       <IconBox icon={Eye} size="xs" variant="light" /> Aktive Produkte
                       <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
                         {activeProducts.length}
+                        {productsPagination && productsPagination.totalPages > 1
+                          ? ` (Seite ${productsPagination.page})`
+                          : ''}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
@@ -915,6 +940,11 @@ export default function AdminShopPage() {
             </>
           )}
 
+          {/* Products Pagination */}
+          {productsPagination && (
+            <PaginationNav meta={productsPagination} compact onPageChange={setProductsPage} />
+          )}
+
           {/* Delete confirmation */}
           {deleteId && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -1009,7 +1039,7 @@ export default function AdminShopPage() {
                   <IconBox icon={ClipboardList} size="xs" variant="light" />
                   {orderStatusFilter ? STATUS_LABELS[orderStatusFilter] : 'Alle'} Bestellungen
                   <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
-                    {orders.length}
+                    {ordersPagination?.totalCount ?? orders.length}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -1157,6 +1187,11 @@ export default function AdminShopPage() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Orders Pagination */}
+          {ordersPagination && (
+            <PaginationNav meta={ordersPagination} compact onPageChange={setOrdersPage} />
           )}
         </TabsContent>
       </Tabs>

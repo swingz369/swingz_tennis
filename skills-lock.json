@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "code-review-analysis": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/code-review-analysis/SKILL.md",
+      "computedHash": "8b202d0882735add2bbadaa0f20a3f6abe2c50c4ada94396bcaa3e26efa3dfb8"
+    },
+    "code-reviewer": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-reviewer/SKILL.md",
+      "computedHash": "b33d78bb544b6c163c32b9c02c80b143b753f3a91b9d8fdcfe8e4f9ec93ab34b"
+    },
+    "react-nextjs-development": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-nextjs-development/SKILL.md",
+      "computedHash": "f6fccc099580762dc1ffe48d8462c9183f14225a6dd28679cb56a0e5b011669a"
+    },
+    "stripe-best-practices": {
+      "source": "stripe/ai",
+      "sourceType": "github",
+      "skillPath": "skills/stripe-best-practices/SKILL.md",
+      "computedHash": "966d0ce005fb82e1a63ead1ec8c5546a9088c0d8f103f88c382c4cda810857cc"
+    },
+    "tailwind-design-system": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "skillPath": "plugins/developer-kit-typescript/skills/tailwind-design-system/SKILL.md",
+      "computedHash": "fccc3f5d3e026ddc6a4dd41d57808ba5c9636ecff6eff0368fa4619aa89993c6"
+    },
+    "ui-ux-pro-max": {
+      "source": "nexu-io/open-design",
+      "sourceType": "github",
+      "skillPath": "skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "13887b516bebbd2e97885435ea022b2aec36cc77224f639d098a47f2723865cb"
+    }
+  }
+}

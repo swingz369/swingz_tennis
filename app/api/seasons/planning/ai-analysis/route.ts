@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { AI_PROMPTS } from '@/lib/ai-prompts';
 
 const env = process.env;
 
@@ -60,8 +61,7 @@ export async function POST(request: NextRequest) {
           messages: [
             {
               role: 'system',
-              content:
-                'Du bist ein Tennistrainer und analysierst einen automatisch generierten Trainingsplan. Antworte auf Deutsch mit maximal 150 Wörtern. Sei konstruktiv, präzise und hilfreich.',
+              content: AI_PROMPTS.PLAN_ANALYSIS,
             },
             { role: 'user', content: prompt },
           ],

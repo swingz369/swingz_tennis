@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Plus, Trophy, Calendar, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,8 @@ import {
   STATUS_VARIANTS,
   FORMAT_LABELS_SHORT as FORMAT_LABELS,
 } from '@/src/constants/tournaments';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import type { PaginationMeta } from '@/lib/pagination';
 
 interface Tournament {
   id: string;
@@ -28,9 +31,11 @@ interface Tournament {
 
 interface TournamentsClientProps {
   initialTournaments: Tournament[];
+  pagination?: PaginationMeta;
 }
 
-export function TournamentsClient({ initialTournaments }: TournamentsClientProps) {
+export function TournamentsClient({ initialTournaments, pagination }: TournamentsClientProps) {
+  const router = useRouter();
   const tournaments = initialTournaments;
 
   return (
@@ -98,6 +103,15 @@ export function TournamentsClient({ initialTournaments }: TournamentsClientProps
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && (
+        <PaginationNav
+          meta={pagination}
+          compact
+          onPageChange={(p) => router.push(`/admin/tournaments?page=${p}`)}
+        />
       )}
     </div>
   );

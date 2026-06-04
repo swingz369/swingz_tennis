@@ -229,6 +229,7 @@ export function Sidebar({
           icon: DollarSign,
           subItems: [
             { name: 'Abrechnung', href: '/admin/billing' },
+            { name: 'Preiskategorien', href: '/admin/billing/categories' },
             { name: 'Analytics', href: '/admin/analytics' },
             { name: 'Berichte', href: '/admin/reports' },
             { name: 'Vereinseinstellungen', href: '/admin/settings' },

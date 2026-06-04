@@ -64,8 +64,14 @@ const PUBLIC_ROUTES = [
   '/landing', // Also available at /landing
   '/about',
   '/contact',
+  '/apply',
+  '/offline',
+  '/sepa-mandate',
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/csrf-token', // Must be public for registration & public forms
+  '/api/health', // Must be public for uptime monitoring
+  '/api/public', // Public API endpoints (register, trial-training)
 ];
 
 export async function proxy(request: NextRequest) {

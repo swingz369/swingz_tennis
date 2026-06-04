@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,8 +23,6 @@ import {
   UserPlus,
   CheckSquare,
   Square,
-  ChevronLeft,
-  ChevronRight,
   LayoutGrid,
   List,
 } from 'lucide-react';
@@ -31,15 +30,30 @@ import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
 import { csrfHeaders } from '@/lib/csrf-client';
 import type { Member } from './member.types';
+import type { PaginationMeta } from '@/lib/pagination';
+import { PaginationNav } from '@/components/ui/pagination-nav';
 
 interface MembersClientProps {
   initialMembers: Member[];
   clubId: string;
+  pagination: PaginationMeta;
 }
 
-export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
+export function MembersClient({ initialMembers, clubId, pagination }: MembersClientProps) {
+  const buildPageUrl = (p: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(p));
+    return `?${params.toString()}`;
+  };
   const [members, setMembers] = useState<Member[]>(initialMembers);
-  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') ?? '');
+
+  // Sync searchQuery when URL params change (e.g. back/forward navigation)
+  useEffect(() => {
+    setSearchQuery(searchParams.get('search') ?? '');
+  }, [searchParams]);
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
@@ -49,21 +63,11 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
     role: 'member' as 'member' | 'trainer' | 'admin',
   });
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [pageSize, setPageSize] = useState(25);
-  const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [planningFilter, setPlanningFilter] = useState<string>('all'); // 'all' | 'included' | 'excluded'
 
-  // Reset page when filters or search change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, roleFilter, statusFilter, planningFilter]);
-
-  // Filter members
+  // Filter members (client-side for role/status/planning; search is server-side)
   const filteredMembers = members.filter((member) => {
-    const matchesSearch =
-      member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || member.role === roleFilter;
     const matchesStatus =
       statusFilter === 'all' || (statusFilter === 'active' ? member.is_active : !member.is_active);
@@ -72,13 +76,11 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
       (planningFilter === 'included'
         ? member.include_in_planning !== false
         : member.include_in_planning === false);
-    return matchesSearch && matchesRole && matchesStatus && matchesPlanning;
+    return matchesRole && matchesStatus && matchesPlanning;
   });
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / pageSize));
-  const safePage = Math.min(currentPage, totalPages);
-  const paginatedMembers = filteredMembers.slice((safePage - 1) * pageSize, safePage * pageSize);
+  // Paginated display (client-side within current page)
+  const paginatedMembers = filteredMembers;
 
   const handleTogglePlanning = async (memberId: string, currentValue: boolean) => {
     try {
@@ -243,6 +245,19 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
             placeholder="Suche nach Name oder E-Mail..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('page', '1');
+                if (searchQuery) {
+                  params.set('search', searchQuery);
+                } else {
+                  params.delete('search');
+                }
+                router.push(`?${params.toString()}`);
+              }
+            }}
             className="pl-10"
           />
         </div>
@@ -553,69 +568,14 @@ export function MembersClient({ initialMembers, clubId }: MembersClientProps) {
         </div>
       )}
 
-      {/* Pagination */}
-      {filteredMembers.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>Zeige</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(v) => {
-                setPageSize(Number(v));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[80px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-            <span>von {filteredMembers.length}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              disabled={safePage <= 1}
-              aria-label="Vorherige Seite"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="px-3 text-sm text-gray-600 dark:text-gray-400 min-w-[80px] text-center">
-              Seite {safePage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              disabled={safePage >= totalPages}
-              aria-label="Nächste Seite"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {/* Server-side Pagination */}
+      {pagination.totalCount > 0 && (
+        <PaginationNav meta={pagination} buildUrl={buildPageUrl} compact />
       )}
 
       {/* Stats */}
       <div className="text-sm text-gray-500 dark:text-gray-400">
-        {filteredMembers.length > 0
-          ? `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, filteredMembers.length)} von ${filteredMembers.length}`
-          : `0 von ${members.length}`}{' '}
-        Mitgliedern
-        {(() => {
-          const planned = members.filter(
-            (m) => m.include_in_planning !== false && m.role === 'member'
-          ).length;
-          return planned > 0 ? ` · ${planned} für Saisonplanung` : '';
-        })()}
+        {pagination.totalCount > 0 ? `${pagination.totalCount} Mitglieder` : '0 Mitglieder'}
       </div>
 
       {/* Invite Dialog */}

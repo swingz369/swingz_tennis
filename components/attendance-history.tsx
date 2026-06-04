@@ -4,17 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IconBox } from '@/components/ui/icon-box';
-import {
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Calendar,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Clock, Calendar, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import { buildPaginationMeta } from '@/lib/pagination';
+import type { PaginationMeta } from '@/lib/pagination';
 
 interface AttendanceRecord {
   id: string;
@@ -35,7 +29,7 @@ export default function AttendanceHistory() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'attended' | 'missed'>('all');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const pageSize = 15;
 
   const fetchRecords = useCallback(async () => {
@@ -47,7 +41,7 @@ export default function AttendanceHistory() {
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
       setRecords(data.records || []);
-      setTotalPages(Math.ceil((data.total || 0) / pageSize));
+      setPagination(buildPaginationMeta(page, pageSize, data.total ?? 0));
     } catch (err: any) {
       if (err.name !== 'AbortError') setError(err.message);
     } finally {
@@ -198,29 +192,7 @@ export default function AttendanceHistory() {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Seite {page} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+      {pagination && <PaginationNav meta={pagination} compact onPageChange={setPage} />}
     </div>
   );
 }

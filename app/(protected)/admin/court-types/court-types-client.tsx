@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
@@ -46,8 +46,11 @@ import {
   Lightbulb,
   DollarSign,
   Sun,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import type { PaginationMeta } from '@/lib/pagination';
 
 export interface CourtType {
   id: string;
@@ -64,8 +67,13 @@ export interface CourtType {
   updated_at?: string;
 }
 
+const TYPES_PER_PAGE = 20;
+
 export function CourtTypesClient() {
   const [courtTypes, setCourtTypes] = useState<CourtType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -83,24 +91,28 @@ export function CourtTypesClient() {
     is_active: true,
   });
 
-  // Load court types
-  const loadCourtTypes = async () => {
+  // Load court types with server-side pagination
+  const loadCourtTypes = useCallback(async (p: number = 1) => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/court-types');
+      const res = await fetch(`/api/court-types?page=${p}&limit=${TYPES_PER_PAGE}`);
       if (!res.ok) {
         throw new Error('Failed to load court types');
       }
       const data = await res.json();
-      setCourtTypes(Array.isArray(data) ? data : []);
+      setCourtTypes(data.courtTypes ?? []);
+      setPagination(data.pagination ?? null);
     } catch (error) {
       console.error('Failed to load court types:', error);
       toast.error('Fehler beim Laden der Platz-Typen');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  useState(() => {
-    loadCourtTypes();
-  });
+  useEffect(() => {
+    loadCourtTypes(page);
+  }, [loadCourtTypes, page]);
 
   const resetForm = () => {
     setFormData({
@@ -134,7 +146,7 @@ export function CourtTypesClient() {
       toast.success('Platz-Typ erfolgreich erstellt');
       setShowCreateDialog(false);
       resetForm();
-      loadCourtTypes();
+      loadCourtTypes(page);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Erstellen';
       toast.error(message);
@@ -179,7 +191,7 @@ export function CourtTypesClient() {
       setShowEditDialog(false);
       setSelectedType(null);
       resetForm();
-      loadCourtTypes();
+      loadCourtTypes(page);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Aktualisieren';
       toast.error(message);
@@ -204,7 +216,11 @@ export function CourtTypesClient() {
       toast.success('Platz-Typ deaktiviert');
       setShowDeleteDialog(false);
       setSelectedType(null);
-      loadCourtTypes();
+      if (courtTypes.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        loadCourtTypes(page);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Löschen';
       toast.error(message);
@@ -401,7 +417,13 @@ export function CourtTypesClient() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {courtTypes.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-brand-light mx-auto" />
+                  </TableCell>
+                </TableRow>
+              ) : courtTypes.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                     Keine Platz-Typen gefunden
@@ -482,6 +504,9 @@ export function CourtTypesClient() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {pagination && <PaginationNav meta={pagination} compact onPageChange={setPage} />}
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>

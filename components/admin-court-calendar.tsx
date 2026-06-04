@@ -47,6 +47,7 @@ import {
 
 interface AdminCourtCalendarProps {
   onBookCourt?: (courtId: string, date: Date, startTime: string, endTime: string) => void;
+  initialClubId?: string;
 }
 
 const ADMIN_LEGEND_ITEMS = [
@@ -116,7 +117,10 @@ function PlanEntryCard({
   );
 }
 
-export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminCourtCalendarProps) {
+export default function AdminCourtCalendar({
+  onBookCourt: _onBookCourt,
+  initialClubId,
+}: AdminCourtCalendarProps) {
   const router = useRouter();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -127,7 +131,7 @@ export default function AdminCourtCalendar({ onBookCourt: _onBookCourt }: AdminC
   const { data: clubData } = useUserClub();
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles();
 
-  const clubId = clubData?.clubId ?? null;
+  const clubId = clubData?.clubId ?? initialClubId ?? null;
 
   const isAdmin = userRoles.some((r) => r === 'admin' || r === 'superadmin');
 

@@ -4,8 +4,9 @@ import { courtService } from '@/lib/booking/court.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { CreateCourtTypeSchema } from '@/lib/types/court-booking';
+import { buildPaginationMeta } from '@/lib/pagination';
 
-// GET /api/court-types – Alle Platz-Typen abrufen
+// GET /api/court-types – Alle Platz-Typen abrufen (mit serverseitiger Pagination)
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
@@ -16,9 +17,20 @@ export async function GET(req: NextRequest) {
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10) || 20));
+
     try {
-      const courtTypes = await courtService.getAllCourtTypes();
-      return NextResponse.json({ courtTypes });
+      // Admins see all (active + inactive), members see only active
+      const result =
+        auth.role === 'admin' || auth.role === 'superadmin'
+          ? await courtService.getAllCourtTypesPaginated(page, limit)
+          : await courtService.getCourtTypesPaginated(page, limit);
+
+      const pagination = buildPaginationMeta(page, limit, result.count);
+
+      return NextResponse.json({ courtTypes: result.data, pagination });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error fetching court types:', message);

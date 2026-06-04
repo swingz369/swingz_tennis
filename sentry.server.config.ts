@@ -24,13 +24,7 @@ Sentry.init({
   ],
 
   // Scrub sensitive data before sending
-  beforeSend(event, hint) {
-    // Log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Sentry Server] Event:', event);
-      console.log('[Sentry Server] Hint:', hint);
-    }
-
+  beforeSend(event) {
     // Remove database URLs (contain passwords)
     if (event.extra) {
       if (event.extra.DATABASE_URL) {

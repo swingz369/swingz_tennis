@@ -33,7 +33,18 @@ export default function TrainerAvailabilityManager() {
   const fetchSlots = useCallback(async () => {
     try {
       const res = await fetch('/api/trainer/availability');
-      if (!res.ok) throw new Error('Fehler beim Laden');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        // Gracefully handle missing trainer profile
+        if (res.status === 403 || res.status === 404) {
+          setMessage(
+            errData.error ?? 'Kein Trainer-Profil gefunden. Bitte wende dich an den Administrator.'
+          );
+          setLoading(false);
+          return;
+        }
+        throw new Error(errData.error ?? 'Fehler beim Laden');
+      }
       const data = await res.json();
       setSlots(data.slots || []);
     } catch (err: any) {

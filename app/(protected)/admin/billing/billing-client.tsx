@@ -35,6 +35,9 @@ import { toast } from 'sonner';
 import { CreditCard, DollarSign, Plus, Eye, FileText, Loader2, Trash2, Send } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import { buildPageUrl } from '@/lib/pagination';
+import type { PaginationMeta } from '@/lib/pagination';
 
 export type Subscription = {
   id: string;
@@ -115,6 +118,8 @@ interface BillingClientProps {
   initialInvoices: Invoice[];
   members: { id: string; name: string; email: string }[];
   clubId?: string | null;
+  invoicePagination?: PaginationMeta;
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
 // Demo members for the subscription assignment dialog
@@ -152,6 +157,8 @@ export default function BillingClient({
   initialInvoices,
   members,
   clubId,
+  invoicePagination,
+  searchParams,
 }: BillingClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'subscriptions' | 'invoices'>('subscriptions');
@@ -191,9 +198,13 @@ export default function BillingClient({
 
   useEffect(() => {
     if (!clubId || activeTab !== 'invoices') return;
+    // Skip re-fetch when no type filter is active — use server-paginated initial data
+    if (invoiceTypeFilter === 'all') {
+      setInvoices(initialInvoices);
+      return;
+    }
     setLoadingInvoices(true);
-    const params = new URLSearchParams({ clubId });
-    if (invoiceTypeFilter !== 'all') params.set('type', invoiceTypeFilter);
+    const params = new URLSearchParams({ clubId, type: invoiceTypeFilter });
     fetch(`/api/billing/invoices?${params.toString()}`)
       .then((r) => r.json())
       .then((json) => {
@@ -219,7 +230,7 @@ export default function BillingClient({
       })
       .catch(() => toast.error('Fehler beim Laden der Rechnungen'))
       .finally(() => setLoadingInvoices(false));
-  }, [clubId, activeTab, invoiceTypeFilter]);
+  }, [clubId, activeTab, invoiceTypeFilter, initialInvoices]);
 
   const handleSendInvoice = async (invoiceId: string) => {
     try {
@@ -628,6 +639,20 @@ export default function BillingClient({
           </CardContent>
         </Card>
       )}
+
+      {/* Invoice Pagination (only when no type filter — filtered data comes from unpaginated API) */}
+      {activeTab === 'invoices' &&
+        invoiceTypeFilter === 'all' &&
+        invoicePagination &&
+        invoicePagination.totalPages > 1 &&
+        searchParams && (
+          <PaginationNav
+            meta={invoicePagination}
+            buildUrl={(p) => `?${buildPageUrl(searchParams, p)}`}
+            compact
+            className="mt-2"
+          />
+        )}
 
       {/* Adhoc Invoice Dialog */}
       <Dialog open={showAdhocDialog} onOpenChange={setShowAdhocDialog}>

@@ -28,8 +28,8 @@ const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD!;
 const MEMBER_EMAIL = process.env.TEST_MEMBER_EMAIL!;
 const MEMBER_PASSWORD = process.env.TEST_MEMBER_PASSWORD!;
 
-// ═══ Test timeout: 2 min (AI operations are slow) ═══
-const TEST_TIMEOUT = 120_000;
+// ═══ Test timeout: 5 min (Gemini free tier needs more time per aiAct/aiQuery) ═══
+const TEST_TIMEOUT = 300_000;
 
 describe('Member Lifecycle E2E', () => {
   let adminCtx: WebTestContext;

@@ -4,25 +4,11 @@ const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
 
 /**
  * Perform real Supabase API login for the given credentials.
- * @param extraCookieHeader Optional cookie string to send ONLY with the login request
- *                          (not stored in browser context). Used to pass swingz_test_mode
- *                          for rate limit bypass without affecting middleware behavior.
  * @returns the role-appropriate target URL
  */
-async function doLogin(
-  page: Page,
-  email: string,
-  password: string,
-  extraCookieHeader?: string
-): Promise<string> {
-  const headers: Record<string, string> = {};
-  if (extraCookieHeader) {
-    headers['Cookie'] = extraCookieHeader;
-  }
-
+async function doLogin(page: Page, email: string, password: string): Promise<string> {
   const loginRes = await page.request.post(`${BASE_URL}/api/auth/login`, {
     data: { email, password },
-    headers,
   });
   if (!loginRes.ok()) {
     throw new Error(`Login failed (${loginRes.status()}): ${await loginRes.text()}`);
@@ -37,23 +23,19 @@ async function doLogin(
 }
 
 /**
- * Real API login with swingz_test_mode sent only as a header on the login request
- * (not stored in browser context) to bypass rate limiting without affecting middleware behavior.
+ * Real API login for the given credentials.
  */
 export async function loginAs(page: Page, email: string, password: string): Promise<void> {
-  const targetUrl = await doLogin(page, email, password, 'swingz_test_mode=true');
+  const targetUrl = await doLogin(page, email, password);
   await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 }
 
 /**
- * Real API login that sends swingz_test_mode ONLY in the POST request header
- * (not stored in browser context).
- * - Rate limiting is bypassed for the login call
- * - Middleware role checks remain ACTIVE for subsequent navigations
+ * Real API login — same as loginAs.
  * Use this for role-based access control tests.
  */
 export async function loginAsRoleAware(page: Page, email: string, password: string): Promise<void> {
-  const targetUrl = await doLogin(page, email, password, 'swingz_test_mode=true');
+  const targetUrl = await doLogin(page, email, password);
   await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 }
 

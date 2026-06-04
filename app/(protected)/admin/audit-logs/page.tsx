@@ -1,7 +1,8 @@
-import { requireAuth } from '@/lib/auth';
+import { requireAdminClub } from '@/lib/admin-context';
+import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { AuditLogsPagination } from './audit-logs-pagination';
 import {
   Clock,
   ShieldAlert,
@@ -11,7 +12,6 @@ import {
   LogOut,
   AlertTriangle,
 } from 'lucide-react';
-import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 
 export const dynamic = 'force-dynamic';
@@ -40,44 +40,28 @@ const actionLabels: Record<string, string> = {
   billing_generated: 'Abrechnung erstellt',
 };
 
-export default async function AuditLogsPage() {
-  const { supabase, user } = await requireAuth();
+export default async function AuditLogsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { supabase, clubId } = await requireAdminClub();
+  const params = await searchParams;
+  const { page, offset, limit } = getPagination(params, 50);
 
-  // Get club_id from cookie or membership
-  const cookieStore = await cookies();
-  let clubId: string | undefined = cookieStore.get('club_id')?.value;
-
-  if (!clubId) {
-    const { data: membership } = await supabase
-      .from('user_club_memberships')
-      .select('club_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    clubId = membership?.club_id ?? undefined;
-  }
-
-  if (!clubId) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">Kein Verein ausgewählt.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Fetch audit logs
+  // Fetch paginated audit logs + total count
   const sb = supabase as any;
-  const { data: auditLogs } = await sb
-    .from('audit_logs')
-    .select('*')
-    .eq('club_id', clubId)
-    .order('created_at', { ascending: false })
-    .limit(100);
+  const [{ data: auditLogs }, { count }] = await Promise.all([
+    sb
+      .from('audit_logs')
+      .select('*')
+      .eq('club_id', clubId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1),
+    sb.from('audit_logs').select('id', { count: 'exact', head: true }).eq('club_id', clubId),
+  ]);
+
+  const pagination = buildPaginationMeta(page, limit, count);
 
   return (
     <div className="p-6 space-y-6">
@@ -89,7 +73,7 @@ export default async function AuditLogsPage() {
           </p>
         </div>
         <Badge variant="outline" className="text-xs font-mono">
-          {auditLogs?.length ?? 0} Einträge
+          {pagination.totalCount} Einträge
         </Badge>
       </div>
 
@@ -101,64 +85,64 @@ export default async function AuditLogsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <ScrollArea className="h-[600px]">
-            {!auditLogs || auditLogs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <ShieldAlert className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <p className="text-sm text-muted-foreground">Keine Audit-Logs vorhanden.</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">
-                  Sobald sicherheitsrelevante Aktionen durchgeführt werden, erscheinen sie hier.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border/50">
-                {auditLogs.map((log: Record<string, unknown>) => (
-                  <div
-                    key={String(log.id)}
-                    className="flex items-start gap-4 px-6 py-4 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      {actionIcons[String(log.action)] ?? (
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                      )}
+          {!auditLogs || auditLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <ShieldAlert className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-sm text-muted-foreground">Keine Audit-Logs vorhanden.</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Sobald sicherheitsrelevante Aktionen durchgeführt werden, erscheinen sie hier.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border/50">
+              {auditLogs.map((log: Record<string, unknown>) => (
+                <div
+                  key={String(log.id)}
+                  className="flex items-start gap-4 px-6 py-4 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="mt-0.5 shrink-0">
+                    {actionIcons[String(log.action)] ?? (
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-foreground">
+                        {actionLabels[String(log.action)] ?? String(log.action)}
+                      </span>
+                      <Badge variant="secondary" className="text-[10px] font-mono">
+                        {String(log.action)}
+                      </Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-foreground">
-                          {actionLabels[String(log.action)] ?? String(log.action)}
-                        </span>
-                        <Badge variant="secondary" className="text-[10px] font-mono">
-                          {String(log.action)}
-                        </Badge>
-                      </div>
-                      {log.metadata != null && typeof log.metadata === 'object' && (
-                        <p className="text-xs text-muted-foreground/70 mt-1 font-mono truncate">
-                          {JSON.stringify(log.metadata)}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1">
-                          <UserCheck className="h-3 w-3" />
-                          {String(log.performed_by_name ?? log.performed_by ?? 'System')}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground/60">
-                          {new Date(String(log.created_at)).toLocaleString('de-DE', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
+                    {log.metadata != null && typeof log.metadata === 'object' && (
+                      <p className="text-xs text-muted-foreground/70 mt-1 font-mono truncate">
+                        {JSON.stringify(log.metadata)}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1">
+                        <UserCheck className="h-3 w-3" />
+                        {String(log.performed_by_name ?? log.performed_by ?? 'System')}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground/60">
+                        {new Date(String(log.created_at)).toLocaleString('de-DE', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <AuditLogsPagination pagination={pagination} />
     </div>
   );
 }

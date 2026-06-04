@@ -1,38 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import type { PaginationMeta } from '@/lib/pagination';
+import type { Club, ClubsResponse } from '@/lib/clubs';
 
-interface Club {
-  id: string;
-  name: string;
-  maxMembers: number;
-  status: string;
-  memberCount: number;
-}
+const CLUBS_PER_PAGE = 20;
 
 export default function ClubsAdminPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [showDialog, setShowDialog] = useState(false);
-  const [newClub, setNewClub] = useState({ name: '', maxMembers: 500, openingHours: {} });
+  const [newClub, setNewClub] = useState({ name: '', maxMembers: 500 });
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchClubs();
-  }, []);
-
-  const fetchClubs = async () => {
+  const fetchClubs = useCallback(async (p: number = 1) => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/clubs');
+      const res = await fetch(`/api/clubs?page=${p}&limit=${CLUBS_PER_PAGE}`);
       if (!res.ok) {
         throw new Error(`Failed to fetch clubs: ${res.status}`);
       }
-      const data = await res.json();
-      setClubs(Array.isArray(data) ? data : []);
+      const data: ClubsResponse = await res.json();
+      setClubs(data.clubs ?? []);
+      setPagination(data.pagination ?? null);
     } catch (err) {
       console.error('Failed to fetch clubs:', err);
       setClubs([]);
@@ -40,7 +38,11 @@ export default function ClubsAdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchClubs(page);
+  }, [fetchClubs, page]);
 
   const handleCreateClub = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,23 +51,12 @@ export default function ClubsAdminPage() {
       const res = await fetch('/api/clubs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newClub,
-          openingHours: {
-            monday: { open: '09:00', close: '22:00' },
-            tuesday: { open: '09:00', close: '22:00' },
-            wednesday: { open: '09:00', close: '22:00' },
-            thursday: { open: '09:00', close: '22:00' },
-            friday: { open: '09:00', close: '22:00' },
-            saturday: { open: '09:00', close: '22:00' },
-            sunday: { open: '09:00', close: '22:00' },
-          },
-        }),
+        body: JSON.stringify(newClub),
       });
       if (res.ok) {
         setShowDialog(false);
-        setNewClub({ name: '', maxMembers: 500, openingHours: {} });
-        fetchClubs();
+        setNewClub({ name: '', maxMembers: 500 });
+        fetchClubs(page);
       } else {
         const errorData = await res.json().catch(() => ({}));
         const errorMessage = errorData.error || `Fehler ${res.status}: ${res.statusText}`;
@@ -77,7 +68,13 @@ export default function ClubsAdminPage() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[30vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -128,21 +125,32 @@ export default function ClubsAdminPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clubs.map((club) => (
-          <Card key={club.id}>
-            <CardHeader>
-              <CardTitle>{club.name}</CardTitle>
-              <CardDescription>Status: {club.status}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">
-                Mitglieder: {club.memberCount} / {club.maxMembers}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {clubs.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <p className="text-muted-foreground">Keine Vereine gefunden.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {clubs.map((club) => (
+            <Card key={club.id}>
+              <CardHeader>
+                <CardTitle>{club.name}</CardTitle>
+                <CardDescription>Status: {club.status}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">
+                  Mitglieder: {club.memberCount} / {club.maxMembers}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && <PaginationNav meta={pagination} compact onPageChange={setPage} />}
     </div>
   );
 }

@@ -13,6 +13,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FileText, User, Clock, Search, Download, RefreshCw } from 'lucide-react';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import { buildPaginationMeta } from '@/lib/pagination';
+import type { PaginationMeta } from '@/lib/pagination';
 import { formatDistanceToNow, format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -40,7 +43,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
   const [filterAction, setFilterAction] = useState<string>('all');
   const [filterEntity, setFilterEntity] = useState<string>('all');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
 
   const ITEMS_PER_PAGE = 50;
 
@@ -61,7 +64,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
 
       const data = await response.json();
       setLogs(data.logs || []);
-      setTotalPages(Math.ceil((data.total || 0) / ITEMS_PER_PAGE));
+      setPagination(buildPaginationMeta(page, ITEMS_PER_PAGE, data.total ?? 0));
     } catch (_error) {
       console.error('Error fetching audit logs:', _error);
       toast.error('Failed to load audit logs');
@@ -268,29 +271,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       </Card>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-gray-600">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+      {pagination && <PaginationNav meta={pagination} compact onPageChange={setPage} />}
     </div>
   );
 }

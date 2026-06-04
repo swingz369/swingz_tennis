@@ -1,47 +1,57 @@
-import { redirect } from 'next/navigation';
-import { requireAuth } from '@/lib/auth';
-import { cookies } from 'next/headers';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { requireAdminClub } from '@/lib/admin-context';
+import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { MembersClient } from './members-client';
 import type { Member } from './member.types';
 
 export const dynamic = 'force-dynamic';
 
-export default async function MembersPage() {
-  const { supabase, user } = await requireAuth();
+export default async function MembersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { supabase, clubId } = await requireAdminClub();
+  const params = await searchParams;
+  const { page, offset, limit, search } = getPagination(params, 25);
 
-  // Get user's memberships to determine role
-  const { data: myMemberships } = await supabase
-    .from('user_club_memberships')
-    .select('club_id, role')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
-
-  const isSuperAdmin = (myMemberships ?? []).some((m: any) => m.role === 'superadmin');
-  const isAdmin = (myMemberships ?? []).some((m: any) => m.role === 'admin');
-
-  if (!isSuperAdmin && !isAdmin) {
-    redirect('/dashboard');
-  }
-
-  // Determine active club
-  let clubId: string | null = null;
-
-  if (isSuperAdmin) {
-    const cookieStore = await cookies();
-    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
-    if (!clubId) redirect('/select-admin-club');
-  } else {
-    const adminMembership = (myMemberships ?? []).find((m: any) => m.role === 'admin');
-    clubId = adminMembership?.club_id || null;
-    if (!clubId) redirect('/dashboard');
-  }
-
-  // Fetch all memberships for this club (include_in_planning not in generated types)
-  const { data: clubMemberships, error } = await (supabase.from('user_club_memberships') as any)
+  // Build query with optional server-side search
+  let query = (supabase.from('user_club_memberships') as any)
     .select('id, user_id, role, is_active, joined_at, include_in_planning')
-    .eq('club_id', clubId)
-    .order('joined_at', { ascending: false });
+    .eq('club_id', clubId);
+
+  // Build count query with same filters
+  let countQuery = (supabase.from('user_club_memberships') as any)
+    .select('id', { count: 'exact', head: true })
+    .eq('club_id', clubId);
+
+  // Apply same search filter to both data + count queries
+  if (search) {
+    const { data: matchingUsers } = await supabase
+      .from('users')
+      .select('id')
+      .or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
+      .limit(500);
+    const matchIds = (matchingUsers ?? []).map((u: { id: string }) => u.id);
+    if (matchIds.length > 0) {
+      query = query.in('user_id', matchIds);
+      countQuery = countQuery.in('user_id', matchIds);
+    } else {
+      // No matches — return empty
+      return (
+        <MembersClient
+          initialMembers={[]}
+          clubId={clubId}
+          pagination={buildPaginationMeta(page, limit, 0)}
+        />
+      );
+    }
+  }
+
+  // Fetch paginated memberships + count
+  const [{ data: clubMemberships, error }, { count }] = await Promise.all([
+    query.order('joined_at', { ascending: false }).range(offset, offset + limit - 1),
+    countQuery,
+  ]);
 
   if (error) {
     return (
@@ -97,5 +107,7 @@ export default async function MembersPage() {
     };
   });
 
-  return <MembersClient initialMembers={initialMembers} clubId={clubId} />;
+  const pagination = buildPaginationMeta(page, limit, count);
+
+  return <MembersClient initialMembers={initialMembers} clubId={clubId} pagination={pagination} />;
 }

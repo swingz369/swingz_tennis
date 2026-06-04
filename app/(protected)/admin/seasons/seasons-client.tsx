@@ -15,12 +15,15 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
+import { PaginationNav } from '@/components/ui/pagination-nav';
+import type { PaginationMeta } from '@/lib/pagination';
 
 interface SeasonsClientProps {
   initialSeasons: SeasonWithStats[];
+  pagination?: PaginationMeta;
 }
 
-export function SeasonsClient({ initialSeasons }: SeasonsClientProps) {
+export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps) {
   const router = useRouter();
   const seasons = initialSeasons;
 
@@ -224,6 +227,15 @@ export function SeasonsClient({ initialSeasons }: SeasonsClientProps) {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && (
+        <PaginationNav
+          meta={pagination}
+          compact
+          onPageChange={(p) => router.push(`/admin/seasons?page=${p}`)}
+        />
       )}
     </div>
   );

@@ -58,7 +58,17 @@ export default function TrainerPage() {
       const res = await fetch('/api/trainer/me', {
         signal: AbortSignal.timeout(10_000),
       });
-      if (!res.ok) throw new Error('Fehler beim Laden der Trainer-Daten');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        // Gracefully handle missing trainer profile (admin accessing trainer page)
+        if (res.status === 403 || res.status === 404) {
+          setError(
+            errData.error ?? 'Kein Trainer-Profil gefunden. Bitte wende dich an den Administrator.'
+          );
+          return;
+        }
+        throw new Error(errData.error ?? 'Fehler beim Laden der Trainer-Daten');
+      }
       const data = await res.json();
       setSessions(data.sessions ?? []);
       const statsData = data.stats ?? data;

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { buildPaginationMeta } from '@/lib/pagination';
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -18,6 +19,15 @@ export async function GET(req: NextRequest) {
       // Use Supabase directly instead of repository to avoid domain layer issues
       const supabase = await createClient();
 
+      // Pagination params
+      const url = new URL(req.url);
+      const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10) || 1);
+      const limit = Math.min(
+        100,
+        Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10) || 20)
+      );
+      const offset = (page - 1) * limit;
+
       // CRITICAL: Scope clubs based on user role
       // - Superadmin: sees ALL clubs
       // - Admin/Trainer/Member: sees only their own club(s)
@@ -28,6 +38,8 @@ export async function GET(req: NextRequest) {
         .select('id, name, status, max_members, created_at')
         .order('created_at', { ascending: false });
 
+      let countQuery = supabase.from('clubs').select('id', { count: 'exact', head: true });
+
       if (!isSuperadmin) {
         // Filter to clubs where user has membership
         const userClubIds = auth.memberships
@@ -35,11 +47,15 @@ export async function GET(req: NextRequest) {
           .filter((id): id is string => id !== null);
         console.log('[API /clubs] Non-superadmin user, filtering to clubs:', userClubIds);
         clubsQuery = clubsQuery.in('id', userClubIds);
+        countQuery = countQuery.in('id', userClubIds);
       } else {
         console.log('[API /clubs] Superadmin user, returning all clubs');
       }
 
-      const { data: clubs, error } = await clubsQuery;
+      const [{ data: clubs, error }, { count }] = await Promise.all([
+        clubsQuery.range(offset, offset + limit - 1),
+        countQuery,
+      ]);
 
       if (error) {
         console.error('[API /clubs] Database error:', error);
@@ -66,15 +82,18 @@ export async function GET(req: NextRequest) {
 
       console.log('[API /clubs] Returning', clubs?.length || 0, 'clubs for user role:', auth.role);
 
-      return NextResponse.json(
-        (clubs || []).map((c) => ({
+      const pagination = buildPaginationMeta(page, limit, count);
+
+      return NextResponse.json({
+        clubs: (clubs || []).map((c) => ({
           id: c.id,
           name: c.name,
           status: c.status || 'active',
           memberCount: memberCounts[c.id] || 0,
           maxMembers: c.max_members || 100,
-        }))
-      );
+        })),
+        pagination,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('[API /clubs] Error listing clubs:', error);

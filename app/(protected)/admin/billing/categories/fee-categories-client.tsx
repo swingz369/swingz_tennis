@@ -17,12 +17,11 @@ interface FeeConfig {
   type: string;
   amount: number;
   billing_cycle: string;
-  billing_unit_count: number;
   is_active: boolean;
 }
 
 export default function FeeCategoriesClient({
-  clubId,
+  clubId: _clubId,
   initialCategories,
 }: {
   clubId: string;
@@ -34,20 +33,41 @@ export default function FeeCategoriesClient({
     name: '',
     type: 'training',
     amount: 0,
-    billing_unit_count: 1,
   });
 
   const handleCreate = async () => {
-    const res = await fetch('/api/admin/fee-categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, club_id: clubId }),
-    });
-    if (res.ok) {
-      const { data } = await res.json();
-      setCategories((prev) => [...prev, data]);
-      setCreating(false);
-      setForm({ name: '', type: 'training', amount: 0, billing_unit_count: 1 });
+    try {
+      const res = await fetch('/api/fee-configurations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          type: form.type,
+          amount: form.amount,
+          billingCycle: 'one_time',
+        }),
+      });
+      if (res.ok) {
+        const { feeConfiguration } = await res.json();
+        // Map the FeeConfiguration entity to the local FeeConfig shape
+        const mapped: FeeConfig = {
+          id: feeConfiguration.id,
+          name: feeConfiguration.name,
+          type: feeConfiguration.type,
+          amount: feeConfiguration.amount,
+          billing_cycle: feeConfiguration.billingCycle,
+
+          is_active: feeConfiguration.isActive ?? true,
+        };
+        setCategories((prev) => [...prev, mapped]);
+        setCreating(false);
+        setForm({ name: '', type: 'training', amount: 0 });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.error('Fee config creation failed:', err);
+      }
+    } catch (e) {
+      console.error('Fee config creation error:', e);
     }
   };
 
@@ -81,14 +101,6 @@ export default function FeeCategoriesClient({
               value={form.amount}
               onChange={(e) => setForm((p) => ({ ...p, amount: parseFloat(e.target.value) || 0 }))}
             />
-            <Input
-              type="number"
-              placeholder="Abrechnungseinheiten pro Session"
-              value={form.billing_unit_count}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, billing_unit_count: parseInt(e.target.value) || 1 }))
-              }
-            />
             <div className="flex gap-2">
               <Button onClick={handleCreate}>Speichern</Button>
               <Button variant="outline" onClick={() => setCreating(false)}>
@@ -114,7 +126,7 @@ export default function FeeCategoriesClient({
                     <p className="text-sm font-medium">{cat.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {cat.type === 'training' ? 'Training' : 'Mitgliedschaft'} ·{' '}
-                      {cat.amount.toFixed(2)} € · {cat.billing_unit_count} Einheit(en)
+                      {cat.amount.toFixed(2)} €
                     </p>
                   </div>
                   <span

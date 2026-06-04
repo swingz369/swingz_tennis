@@ -5,20 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-interface Club {
-  id: string;
-  name: string;
-  maxMembers: number;
-  status: string;
-  memberCount: number;
-}
+import type { Club } from '@/lib/clubs';
+import { parseClubsResponse } from '@/lib/clubs';
 
 export default function ClubsAdminPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
-  const [newClub, setNewClub] = useState({ name: '', maxMembers: 500, openingHours: {} });
+  const [newClub, setNewClub] = useState({ name: '', maxMembers: 500 });
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,7 +26,7 @@ export default function ClubsAdminPage() {
         throw new Error(`Failed to fetch clubs: ${res.status}`);
       }
       const data = await res.json();
-      setClubs(Array.isArray(data) ? data : []);
+      setClubs(parseClubsResponse(data));
     } catch (err) {
       console.error('Failed to fetch clubs:', err);
       setClubs([]);
@@ -49,22 +43,11 @@ export default function ClubsAdminPage() {
       const res = await fetch('/api/clubs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newClub,
-          openingHours: {
-            monday: { open: '09:00', close: '22:00' },
-            tuesday: { open: '09:00', close: '22:00' },
-            wednesday: { open: '09:00', close: '22:00' },
-            thursday: { open: '09:00', close: '22:00' },
-            friday: { open: '09:00', close: '22:00' },
-            saturday: { open: '09:00', close: '22:00' },
-            sunday: { open: '09:00', close: '22:00' },
-          },
-        }),
+        body: JSON.stringify(newClub),
       });
       if (res.ok) {
         setShowDialog(false);
-        setNewClub({ name: '', maxMembers: 500, openingHours: {} });
+        setNewClub({ name: '', maxMembers: 500 });
         fetchClubs();
       } else {
         const errorData = await res.json().catch(() => ({}));

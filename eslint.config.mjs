@@ -1,6 +1,7 @@
 import { FlatCompat } from '@eslint/eslintrc';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import paginationNavRule from './eslint-rules/pagination-nav-mutually-exclusive-props.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -105,6 +106,20 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'off',
       'jsx-a11y/alt-text': 'off',
       'jsx-a11y/label-has-associated-control': 'off',
+    },
+  },
+  // ═══ Custom project rules ═══
+  {
+    files: ['**/*.{tsx,jsx}'],
+    plugins: {
+      'swingz': {
+        rules: {
+          'pagination-nav-mutually-exclusive-props': paginationNavRule,
+        },
+      },
+    },
+    rules: {
+      'swingz/pagination-nav-mutually-exclusive-props': 'error',
     },
   },
 ];

@@ -1,7 +1,5 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { requireAuth } from '@/lib/auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { requireAdminClub } from '@/lib/admin-context';
+import { formatTime, formatRelativeTime } from '@/lib/format';
 import Link from 'next/link';
 import {
   Users,
@@ -27,37 +25,22 @@ import { Badge } from '@/components/ui/badge';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
-  const { supabase, user } = await requireAuth();
-
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('role, club_id')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
-
-  const roles = (memberships ?? []).map((m: any) => m.role as string);
-  const isSuperadmin = roles.includes('superadmin');
-
-  let clubId: string | null = null;
-
-  if (isSuperadmin) {
-    const cookieStore = await cookies();
-    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
-    if (!clubId) redirect('/select-admin-club');
-  } else {
-    const adminMembership = (memberships ?? []).find((m: any) => m.role === 'admin');
-    clubId = adminMembership?.club_id || null;
-    if (!clubId) redirect('/member');
-  }
+  const { supabase, user, clubId, isSuperadmin } = await requireAdminClub();
 
   // Club info
   const { data: club } = await supabase
     .from('clubs')
     .select('id, name, status')
     .eq('id', clubId)
-    .single();
+    .maybeSingle();
 
-  if (!club) redirect(isSuperadmin ? '/select-admin-club' : '/member');
+  if (!club) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-gray-500">Verein nicht gefunden.</p>
+      </div>
+    );
+  }
 
   // Profile
   const { data: profile } = await supabase
@@ -151,9 +134,6 @@ export default async function AdminPage() {
     0
   );
 
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-
   // Merge recent activity
   type ActivityItem = {
     id: string;
@@ -187,15 +167,6 @@ export default async function AdminPage() {
   ]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 5);
-
-  const formatRelative = (iso: string) => {
-    const diff = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `vor ${mins} Min.`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `vor ${hrs} Std.`;
-    return `vor ${Math.floor(hrs / 24)} Tagen`;
-  };
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -446,7 +417,7 @@ export default async function AdminPage() {
                         {item.name}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500">
-                        {item.sub} · {formatRelative(item.created_at)}
+                        {item.sub} · {formatRelativeTime(item.created_at)}
                       </p>
                     </div>
                     <div

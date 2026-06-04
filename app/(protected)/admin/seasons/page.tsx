@@ -1,61 +1,55 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/infrastructure/external/supabase/server';
-import { cookies } from 'next/headers';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { requireAdminClub } from '@/lib/admin-context';
+import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { SeasonsClient } from './seasons-client';
+import type { PaginationMeta } from '@/lib/pagination';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SeasonsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+export default async function SeasonsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { supabase, clubId } = await requireAdminClub();
+  const resolvedParams = await searchParams;
+  const { page, offset, limit } = getPagination(resolvedParams, 12);
 
-  // Get club memberships
-  const { data: memberships } = await supabase
-    .from('user_club_memberships')
-    .select('club_id, role')
-    .eq('user_id', user.id)
-    .eq('is_active', true);
-
-  if (!memberships || memberships.length === 0) {
-    redirect('/dashboard');
-  }
-
-  // Determine effective clubId
-  const isSuperadmin = memberships.some((m: { role: string }) => m.role === 'superadmin');
-  let clubId: string;
-  if (isSuperadmin) {
-    const cookieStore = await cookies();
-    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || memberships[0].club_id!;
-    if (!clubId) redirect('/select-admin-club');
-  } else {
-    const adminMembership = memberships.find((m: any) => m.role === 'admin');
-    clubId = adminMembership?.club_id ?? '';
-    if (!clubId) redirect('/member');
-  }
-
-  // Fetch seasons with explicit field selection
+  // Fetch ALL season IDs for club-wide stats (unpaginated)
+  // Then fetch paginated seasons for display
   let seasons: Parameters<typeof SeasonsClient>[0]['initialSeasons'] = [];
+  let pagination: PaginationMeta = buildPaginationMeta(page, limit, 0);
   try {
-    const { data: seasonsData, error: seasonsError } = await supabase
+    // 1) Lightweight query: all season IDs for this club (for stats)
+    const { data: allSeasonRows } = await supabase
+      .from('seasons')
+      .select('id')
+      .eq('club_id', clubId)
+      .order('created_at', { ascending: false });
+    const allSeasonIds = (allSeasonRows || []).map((s: any) => s.id as string);
+
+    // 2) Paginated query for display
+    const {
+      data: seasonsData,
+      error: seasonsError,
+      count,
+    } = await supabase
       .from('seasons')
       .select(
         'id, name, season_type, year, start_date, end_date, planning_status, is_active, ' +
-          'preferences_deadline, description, notes, created_at, club_id'
+          'preferences_deadline, description, notes, created_at, club_id',
+        { count: 'exact' }
       )
       .eq('club_id', clubId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (seasonsError) {
       console.error('[SeasonsPage] Query error:', seasonsError);
     }
 
-    const seasonIds = (seasonsData || []).map((s: any) => s.id);
+    pagination = buildPaginationMeta(page, limit, count);
 
-    // Fetch real stats from related tables
+    // Fetch real stats from related tables (scoped to ALL seasons for club-wide KPIs)
     let prefsData: any[] = [];
     let entriesData: any[] = [];
     let conflictsData: any[] = [];
@@ -71,25 +65,25 @@ export default async function SeasonsPage() {
       .eq('is_active', true);
     trainerCount = trainersInClub ?? 0;
 
-    if (seasonIds.length > 0) {
+    if (allSeasonIds.length > 0) {
       const [prefsRes, entriesRes, conflictsRes, groupsRes] = await Promise.all([
         supabase
           .from('user_training_preferences')
           .select('season_id, is_submitted')
-          .in('season_id', seasonIds),
+          .in('season_id', allSeasonIds),
         supabase
           .from('season_plan_entries')
           .select('season_id, group_id')
-          .in('season_id', seasonIds),
+          .in('season_id', allSeasonIds),
         supabase
           .from('planning_conflicts')
           .select('season_id, status')
-          .in('season_id', seasonIds)
+          .in('season_id', allSeasonIds)
           .eq('status', 'open'),
         supabase
           .from('season_plan_entries')
           .select('season_id, group_id')
-          .in('season_id', seasonIds)
+          .in('season_id', allSeasonIds)
           .not('group_id', 'is', null),
       ]);
 
@@ -156,5 +150,5 @@ export default async function SeasonsPage() {
     console.error('[SeasonsPage] Unexpected error:', err);
   }
 
-  return <SeasonsClient initialSeasons={seasons} />;
+  return <SeasonsClient initialSeasons={seasons} pagination={pagination} />;
 }

@@ -13,6 +13,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { env } from '@/lib/env';
+import { AI_PROMPTS } from '@/lib/ai-prompts';
 
 // =============================================================================
 // Types
@@ -60,20 +61,9 @@ interface PlanningData {
 // System Prompt (consistent across models)
 // =============================================================================
 
-const SYSTEM_PROMPT = `You are an expert sports training scheduler for a tennis club management platform called SwingZ.
-Your task is to generate optimal weekly training schedules that maximize court utilization, respect trainer availability, and match member skill levels.
-
-**Scheduling Rules:**
-1. Group members by skill level (beginner, intermediate, advanced, professional)
-2. Assign trainers whose specialization matches the group's skill level
-3. Never double-book a court (two sessions cannot overlap on the same court)
-4. Never double-book a trainer (a trainer cannot be in two places at once)
-5. Respect all availability constraints (only schedule when both trainer and members are available)
-6. Standard session duration is 90 minutes
-7. Place no more than 12 participants per session unless a court has higher capacity
-8. Distribute sessions evenly across available days
-9. Leave 15-minute gaps between sessions on the same court
-10. Never overload a trainer: max 40 hours per week per trainer
+const SYSTEM_PROMPT =
+  AI_PROMPTS.SCHEDULE_GENERATION +
+  `
 
 **Output Format:** You MUST respond with a valid JSON object starting with '{' on the very first line — no markdown, no explanation outside JSON:
 {
@@ -90,9 +80,7 @@ Your task is to generate optimal weekly training schedules that maximize court u
   ],
   "reasoning": "Detailed explanation of your scheduling strategy and tradeoffs made (IN GERMAN)",
   "warnings": ["Any potential issues or suggestions for improvement (IN GERMAN)"]
-}
-
-**Wichtig:** Antworte mit einem JSON-Objekt das mit '{' beginnt. "reasoning" und "warnings" MÜSSEN auf Deutsch sein. Kein Markdown, kein Text außerhalb des JSON.`;
+}`;
 
 // =============================================================================
 // Cache for generated schedules (avoids redundant API calls)

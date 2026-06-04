@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { buildPaginationMeta } from '@/lib/pagination';
 
 const STORAGE_BUCKET = 'swingz-files';
 
@@ -40,25 +41,39 @@ export async function GET(request: NextRequest) {
     }
 
     const sb = auth.supabase as any;
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10) || 50));
+    const offset = (page - 1) * limit;
 
-    let query = sb
-      .from('shop_products')
-      .select('*')
-      .order('category', { ascending: true })
-      .order('created_at', { ascending: false });
-
-    // Club-scope for non-superadmin
+    // Build base query with club scope
+    let baseQuery = sb.from('shop_products').select('*', { count: 'exact' });
     if (auth.role !== 'superadmin' && auth.clubId) {
-      query = query.eq('club_id', auth.clubId);
+      baseQuery = baseQuery.eq('club_id', auth.clubId);
     }
 
-    const { data, error } = await query;
+    // Build count query with same club scope as data query
+    let countQuery = sb.from('shop_products').select('id', { count: 'exact', head: true });
+    if (auth.role !== 'superadmin' && auth.clubId) {
+      countQuery = countQuery.eq('club_id', auth.clubId);
+    }
+
+    // Fetch paginated data + count in parallel
+    const [{ data, error }, { count }] = await Promise.all([
+      baseQuery
+        .order('category', { ascending: true })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1),
+      countQuery,
+    ]);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ products: data ?? [] });
+    const pagination = buildPaginationMeta(page, limit, count);
+
+    return NextResponse.json({ products: data ?? [], pagination });
   });
 }
 

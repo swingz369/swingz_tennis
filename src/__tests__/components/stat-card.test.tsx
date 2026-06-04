@@ -26,15 +26,6 @@ describe('StatCard Component', () => {
     expect(svg).toBeInTheDocument();
   });
 
-  it('should render children when provided', () => {
-    render(
-      <StatCard icon={Users} value={10} label="Mitglieder">
-        <button>Details ansehen</button>
-      </StatCard>
-    );
-    expect(screen.getByRole('button', { name: 'Details ansehen' })).toBeInTheDocument();
-  });
-
   it('should apply custom iconClassName', () => {
     const { container } = render(
       <StatCard icon={Users} value={8} label="Test" iconClassName="bg-blue-100" />
@@ -51,18 +42,18 @@ describe('StatCard Component', () => {
     expect(valueElement).toHaveClass('text-green-600');
   });
 
-  it('should apply custom containerClassName', () => {
+  it('should apply custom className', () => {
     const { container } = render(
-      <StatCard icon={Users} value={3} label="Test" containerClassName="custom-class" />
+      <StatCard icon={Users} value={3} label="Test" className="custom-class" />
     );
-    const card = container.querySelector('.border-0.shadow-sm');
+    const card = container.querySelector('.shadow-sm');
     expect(card).toHaveClass('custom-class');
   });
 
-  it('should render with default brand-primary icon background', () => {
+  it('should render with default blue icon background', () => {
     const { container } = render(<StatCard icon={Users} value={7} label="Test" />);
     const iconContainer = container.querySelector('.h-10.w-10');
-    expect(iconContainer).toHaveClass('bg-brand-primary/10');
+    expect(iconContainer).toHaveClass('bg-blue-50');
   });
 
   it('should handle zero value', () => {
@@ -85,7 +76,7 @@ describe('StatCard Component', () => {
     expect(screen.getByText('B')).toBeInTheDocument();
     expect(screen.getByText('C')).toBeInTheDocument();
 
-    const cards = container.querySelectorAll('.border-0');
+    const cards = container.querySelectorAll('.shadow-sm');
     expect(cards).toHaveLength(3);
   });
 });

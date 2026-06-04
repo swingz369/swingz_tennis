@@ -126,6 +126,54 @@ export class CourtService {
     return data || [];
   }
 
+  /** Paginated: active court types only (for members) */
+  async getCourtTypesPaginated(
+    page: number,
+    limit: number
+  ): Promise<{ data: CourtType[]; count: number }> {
+    const offset = (page - 1) * limit;
+    const [{ data, error }, { count }] = await Promise.all([
+      supabase
+        .from('court_types')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+        .range(offset, offset + limit - 1),
+      supabase
+        .from('court_types')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true),
+    ]);
+
+    if (error) {
+      throw new Error(`Failed to get court types: ${error.message}`);
+    }
+
+    return { data: data || [], count: count ?? 0 };
+  }
+
+  /** Paginated: all court types including inactive (for admins) */
+  async getAllCourtTypesPaginated(
+    page: number,
+    limit: number
+  ): Promise<{ data: CourtType[]; count: number }> {
+    const offset = (page - 1) * limit;
+    const [{ data, error }, { count }] = await Promise.all([
+      supabase
+        .from('court_types')
+        .select('*')
+        .order('name', { ascending: true })
+        .range(offset, offset + limit - 1),
+      supabase.from('court_types').select('id', { count: 'exact', head: true }),
+    ]);
+
+    if (error) {
+      throw new Error(`Failed to get court types: ${error.message}`);
+    }
+
+    return { data: data || [], count: count ?? 0 };
+  }
+
   async createCourtType(data: {
     name: string;
     description?: string;

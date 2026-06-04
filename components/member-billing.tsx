@@ -201,7 +201,10 @@ export default function MemberBilling() {
 
   const monthlyTotal = calculateMonthlyTotal();
 
-  if (isLoading || invoicesLoading) {
+  // Show loading only while actively fetching, not when queries are disabled (clubId/memberId null)
+  const isActivelyLoading = (isLoading && !!clubId) || (invoicesLoading && !!memberId);
+
+  if (isActivelyLoading) {
     return (
       <div className="p-6">
         <div className="text-center py-12 text-gray-500">Laden...</div>

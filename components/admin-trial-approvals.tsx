@@ -76,10 +76,14 @@ export default function AdminTrialApprovals() {
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const url =
         filter === 'all' ? '/api/trial-trainings' : `/api/trial-trainings?status=${filter}`;
       const res = await fetch(url, { credentials: 'include' });
-      if (!res.ok) throw new Error('Fehler beim Laden');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error ?? 'Fehler beim Laden der Probetrainings');
+      }
       const data = await res.json();
       setRequests(data.trialTrainings || []);
     } catch (err: any) {

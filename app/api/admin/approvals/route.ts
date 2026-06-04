@@ -2,6 +2,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
+import { EmailService } from '@/src/application/services/email.service';
+import { EmailService as InfraEmailService } from '@/src/infrastructure/email/email.service';
 import crypto from 'crypto';
 
 /**
@@ -140,19 +142,28 @@ export async function PATCH(request: NextRequest) {
           );
         }
 
-        // 4. Send onboarding email (existing flow)
+        // 4. Send onboarding email directly (avoids internal fetch auth issue)
         try {
-          await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/emails/onboarding`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: registration.email,
-              firstName: registration.first_name,
-              clubId: registration.club_id || auth.clubId,
-            }),
+          const regClubId = registration.club_id || auth.clubId || '';
+          const { data: settingRows } = await auth.supabase
+            .from('system_settings')
+            .select('key, value')
+            .eq('club_id', regClubId)
+            .in('key', ['club_name']);
+          const clubName =
+            settingRows?.find((r: { key: string }) => r.key === 'club_name')?.value || 'SWINGZ';
+
+          const template = EmailService.generateMembershipApprovalEmail({
+            recipientName: registration.first_name || 'Mitglied',
+            recipientEmail: registration.email,
+            clubName,
+            memberType: 'member',
           });
+
+          const infraEmail = new InfraEmailService();
+          await infraEmail.sendEmail({ to: registration.email, ...template });
         } catch (e) {
-          console.error('Onboarding email trigger failed:', e);
+          console.error('Onboarding email failed:', e);
           warning =
             'Mitglied genehmigt und Account erstellt, aber Willkommens-Mail konnte nicht gesendet werden.';
         }

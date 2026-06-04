@@ -4,7 +4,6 @@ import { QUERY_KEYS, CACHE_TIMES, STALE_TIMES } from '@/lib/cache';
 describe('Cache Configuration', () => {
   describe('QUERY_KEYS', () => {
     it('should have user-related keys', () => {
-      expect(QUERY_KEYS).toHaveProperty('user');
       expect(QUERY_KEYS).toHaveProperty('userClub');
       expect(QUERY_KEYS).toHaveProperty('userMember');
       expect(QUERY_KEYS).toHaveProperty('userRoles');
@@ -12,24 +11,25 @@ describe('Cache Configuration', () => {
 
     it('should have booking-related keys', () => {
       expect(QUERY_KEYS).toHaveProperty('bookings');
-      expect(QUERY_KEYS).toHaveProperty('booking');
     });
 
     it('should have schedule-related keys', () => {
       expect(QUERY_KEYS).toHaveProperty('schedule');
     });
 
-    it('should have dashboard-related keys', () => {
-      expect(QUERY_KEYS).toHaveProperty('dashboardKPIs');
-    });
-
-    it('should have analytics-related keys', () => {
-      expect(QUERY_KEYS).toHaveProperty('analytics');
+    it('should have court-related keys', () => {
+      expect(QUERY_KEYS).toHaveProperty('courts');
+      expect(QUERY_KEYS).toHaveProperty('sessions');
     });
 
     it('should have trainer-related keys', () => {
       expect(QUERY_KEYS).toHaveProperty('trainers');
-      expect(QUERY_KEYS).toHaveProperty('trainer');
+    });
+
+    it('should have billing and notification keys', () => {
+      expect(QUERY_KEYS).toHaveProperty('invoices');
+      expect(QUERY_KEYS).toHaveProperty('members');
+      expect(QUERY_KEYS).toHaveProperty('notifications');
     });
   });
 

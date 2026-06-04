@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Calendar, Clock, User, Plus, Pencil, Trash2 } from 'lucide-react';
+import { parseClubsResponse } from '@/lib/clubs';
 
 type Session = {
   id: string;
@@ -91,7 +92,7 @@ export default function SchedulesPage() {
       const clubsRes = await fetch('/api/clubs');
       if (clubsRes.ok) {
         const clubsData = await clubsRes.json();
-        const clubsList = Array.isArray(clubsData) ? clubsData : [];
+        const clubsList = parseClubsResponse(clubsData);
         setClubs(clubsList);
 
         // Auto-select first club so sessions load immediately
