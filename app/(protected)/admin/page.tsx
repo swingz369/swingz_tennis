@@ -91,17 +91,20 @@ export default async function AdminPage() {
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
       .eq('is_active', false),
+    // Today's session count (filtered via schedules → club_id)
     supabase
       .from('sessions')
-      .select('id', { count: 'exact', head: true })
+      .select('id, schedules!inner(club_id)', { count: 'exact', head: true })
+      .eq('schedules.club_id', clubId)
       .gte('timeslot_start', todayStart.toISOString())
       .lte('timeslot_start', todayEnd.toISOString()),
-    // Today's sessions with court + trainer info
+    // Today's sessions with court + trainer info (filtered via schedules → club_id)
     supabase
       .from('sessions')
       .select(
-        `id, timeslot_start, timeslot_end, courts(name), user_club_memberships(users(full_name))`
+        `id, timeslot_start, timeslot_end, courts(name), schedules!inner(club_id), user_club_memberships(users(full_name))`
       )
+      .eq('schedules.club_id', clubId)
       .gte('timeslot_start', todayStart.toISOString())
       .lte('timeslot_start', todayEnd.toISOString())
       .order('timeslot_start', { ascending: true })
@@ -114,16 +117,18 @@ export default async function AdminPage() {
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(3),
-    // Recent bookings
+    // Recent bookings (filtered by club_id)
     supabase
       .from('bookings')
       .select('id, created_at, session_start_time, users(full_name)')
+      .eq('club_id', clubId)
       .order('created_at', { ascending: false })
       .limit(3),
-    // Monthly revenue from paid invoices
+    // Monthly revenue from paid invoices (filtered by club_id)
     supabase
       .from('invoices')
       .select('amount')
+      .eq('club_id', clubId)
       .eq('status', 'paid')
       .gte('created_at', monthStart.toISOString())
       .lte('created_at', monthEnd.toISOString()),
