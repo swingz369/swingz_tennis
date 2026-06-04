@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import {} from '@/components/ui/dialog';
+
 import {
   Select,
   SelectContent,
@@ -44,6 +44,7 @@ import {
   X,
   RefreshCw,
   XCircle,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -127,6 +128,12 @@ export default function TrainerProfileManagement() {
   const [inviteLoading, setInviteLoading] = useState(false);
   const [availabilitySlots, setAvailabilitySlots] = useState<TrainerAvailabilitySlot[]>([]);
   const [availLoading, setAvailLoading] = useState(false);
+  const [slotDialogOpen, setSlotDialogOpen] = useState(false);
+  const [slotDate, setSlotDate] = useState('');
+  const [slotStartTime, setSlotStartTime] = useState('08:00');
+  const [slotEndTime, setSlotEndTime] = useState('17:00');
+  const [slotNotes, setSlotNotes] = useState('');
+  const [slotSaving, setSlotSaving] = useState(false);
 
   useEffect(() => {
     loadTrainers();
@@ -299,6 +306,88 @@ export default function TrainerProfileManagement() {
   const handleCloseDetail = () => {
     setSelectedTrainer(null);
     setIsEditing(false);
+  };
+
+  // Toggle weekly availability day for the selected trainer
+  const handleToggleDay = async (day: keyof TrainerProfile['availability']) => {
+    if (!selectedTrainer) return;
+    const newAvailability = {
+      ...selectedTrainer.availability,
+      [day]: !selectedTrainer.availability[day],
+    };
+    try {
+      const response = await fetch(`/api/trainer-profiles/${selectedTrainer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ availability: newAvailability }),
+      });
+      if (!response.ok) throw new Error('Failed to update availability');
+      const data = await response.json();
+      setSelectedTrainer(data.trainerProfile);
+      setTrainers((prev) =>
+        prev.map((t) => (t.id === selectedTrainer.id ? data.trainerProfile : t))
+      );
+      toast.success(
+        `${day.charAt(0).toUpperCase() + day.slice(1)} ${newAvailability[day] ? 'aktiviert' : 'deaktiviert'}`
+      );
+    } catch {
+      toast.error('Fehler beim Aktualisieren der Verfügbarkeit');
+    }
+  };
+
+  // Add a concrete availability slot
+  const handleAddSlot = async () => {
+    if (!selectedTrainer || !slotDate || !slotStartTime || !slotEndTime) {
+      toast.error('Bitte alle Pflichtfelder ausfüllen');
+      return;
+    }
+    if (slotStartTime >= slotEndTime) {
+      toast.error('Startzeit muss vor Endzeit liegen');
+      return;
+    }
+    setSlotSaving(true);
+    try {
+      const res = await fetch('/api/trainer-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trainer_id: selectedTrainer.userId,
+          date: slotDate,
+          start_time: slotStartTime,
+          end_time: slotEndTime,
+          status: 'available',
+          notes: slotNotes || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Speichern');
+      }
+      toast.success('Verfügbarkeit hinzugefügt');
+      setSlotDialogOpen(false);
+      setSlotDate('');
+      setSlotStartTime('08:00');
+      setSlotEndTime('17:00');
+      setSlotNotes('');
+      loadAvailabilitySlots(selectedTrainer.userId);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern');
+    } finally {
+      setSlotSaving(false);
+    }
+  };
+
+  // Delete a concrete availability slot
+  const handleDeleteSlot = async (slotId: string) => {
+    if (!selectedTrainer) return;
+    try {
+      const res = await fetch(`/api/trainer-availability?id=${slotId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Fehler beim Löschen');
+      toast.success('Verfügbarkeit gelöscht');
+      loadAvailabilitySlots(selectedTrainer.userId);
+    } catch {
+      toast.error('Fehler beim Löschen der Verfügbarkeit');
+    }
   };
 
   // Design-system conform variant mappers
@@ -1025,38 +1114,46 @@ export default function TrainerProfileManagement() {
 
                   {/* ── Availability Tab ─────────────────────────────────────── */}
                   <TabsContent value="availability" className="space-y-6 animate-in">
-                    {/* Reguläre Wochenverfügbarkeit */}
+                    {/* Reguläre Wochenverfügbarkeit — now interactive */}
                     <div>
-                      <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                        <Calendar className="h-4 w-4 text-brandPrimary" />
-                        Reguläre Wochenverfügbarkeit
-                      </h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold flex items-center gap-2 text-base">
+                          <Calendar className="h-4 w-4 text-brandPrimary" />
+                          Reguläre Wochenverfügbarkeit
+                        </h3>
+                        <span className="text-xs text-gray-400">Klicken zum Umschalten</span>
+                      </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                        {availabilityDays.map((day) => (
-                          <div
-                            key={day}
-                            className={`p-3 rounded-xl text-center transition-all duration-200 ${
-                              selectedTrainer.availability[day]
-                                ? 'bg-brandPrimary/10 border border-brandPrimary/20 text-brandPrimary'
-                                : 'bg-gray-100 dark:bg-white/5 text-gray-400 border border-transparent'
-                            }`}
-                          >
-                            <div className="text-xs font-semibold uppercase tracking-wider mb-1.5">
-                              {day.slice(0, 2)}
-                            </div>
-                            <div className="flex justify-center">
-                              {selectedTrainer.availability[day] ? (
-                                <CheckCircle className="h-5 w-5" />
-                              ) : (
-                                <div className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-gray-600 border-dashed" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                        {availabilityDays.map((day) => {
+                          const isActive = selectedTrainer.availability[day];
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              onClick={() => handleToggleDay(day)}
+                              className={`p-3 rounded-xl text-center transition-all duration-200 cursor-pointer hover:scale-105 ${
+                                isActive
+                                  ? 'bg-brandPrimary/10 border-2 border-brandPrimary/30 text-brandPrimary shadow-sm'
+                                  : 'bg-gray-100 dark:bg-white/5 text-gray-400 border-2 border-transparent hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="text-xs font-semibold uppercase tracking-wider mb-1.5">
+                                {day.slice(0, 2)}
+                              </div>
+                              <div className="flex justify-center">
+                                {isActive ? (
+                                  <CheckCircle className="h-5 w-5" />
+                                ) : (
+                                  <div className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-gray-600 border-dashed" />
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    {/* Konkrete Verfügbarkeitsslots (aus trainer_availabilities) */}
+                    {/* Konkrete Verfügbarkeitsslots — now with add + delete */}
                     <Card variant="flat">
                       <CardContent className="p-5">
                         <div className="flex items-center justify-between mb-3">
@@ -1064,17 +1161,28 @@ export default function TrainerProfileManagement() {
                             <Clock className="h-4 w-4 text-brandAccent" />
                             Konkrete Verfügbarkeiten
                           </h3>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => loadAvailabilitySlots(selectedTrainer.userId)}
-                            disabled={availLoading}
-                          >
-                            <RefreshCw
-                              className={`h-4 w-4 ${availLoading ? 'animate-spin' : ''}`}
-                            />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => loadAvailabilitySlots(selectedTrainer.userId)}
+                              disabled={availLoading}
+                            >
+                              <RefreshCw
+                                className={`h-4 w-4 ${availLoading ? 'animate-spin' : ''}`}
+                              />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSlotDialogOpen(true)}
+                              className="gap-1.5"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              Slot hinzufügen
+                            </Button>
+                          </div>
                         </div>
                         {availLoading ? (
                           <div className="space-y-2">
@@ -1111,10 +1219,20 @@ export default function TrainerProfileManagement() {
                                     {format(parseISO(slot.date), 'dd. MMM yyyy', { locale: de })}
                                   </p>
                                   <p className="text-xs text-gray-500">
-                                    {slot.startTime} – {slot.endTime}
+                                    {slot.startTime} - {slot.endTime}
                                     <span className="ml-2 capitalize">({slot.status})</span>
                                   </p>
                                 </div>
+                                {slot.status !== 'booked' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 shrink-0"
+                                    onClick={() => handleDeleteSlot(slot.id)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
+                                  </Button>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -1123,12 +1241,88 @@ export default function TrainerProfileManagement() {
                             Keine konkreten Verfügbarkeiten eingetragen.
                             <br />
                             <span className="text-xs">
-                              Trainer kann seine Verfügbarkeiten im Trainer-Portal eintragen.
+                              Klicke auf &quot;Slot hinzufügen&quot; um eine Verfügbarkeit zu
+                              erstellen.
                             </span>
                           </p>
                         )}
                       </CardContent>
                     </Card>
+
+                    {/* Add Slot Dialog (overlay) */}
+                    {slotDialogOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold">Neue Verfügbarkeit</h3>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setSlotDialogOpen(false)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <Label>Datum</Label>
+                              <Input
+                                type="date"
+                                value={slotDate}
+                                onChange={(e) => setSlotDate(e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label>Startzeit</Label>
+                                <Input
+                                  type="time"
+                                  value={slotStartTime}
+                                  onChange={(e) => setSlotStartTime(e.target.value)}
+                                  className="mt-1"
+                                />
+                              </div>
+                              <div>
+                                <Label>Endzeit</Label>
+                                <Input
+                                  type="time"
+                                  value={slotEndTime}
+                                  onChange={(e) => setSlotEndTime(e.target.value)}
+                                  className="mt-1"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label>Notizen (optional)</Label>
+                              <Input
+                                value={slotNotes}
+                                onChange={(e) => setSlotNotes(e.target.value)}
+                                placeholder="z.B. Nur Anfängertraining"
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => setSlotDialogOpen(false)}
+                            >
+                              Abbrechen
+                            </Button>
+                            <Button
+                              className="flex-1"
+                              onClick={handleAddSlot}
+                              disabled={slotSaving || !slotDate}
+                            >
+                              {slotSaving ? 'Speichern...' : 'Hinzufügen'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Bevorzugte Arbeitszeiten */}
                     <Card variant="flat">
