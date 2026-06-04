@@ -56,6 +56,7 @@ export function MobileBottomNav({
       { name: 'Mitglieder', href: '/admin/members', icon: Users },
       { name: 'Saison', href: '/admin/seasons', icon: Calendar },
       { name: 'Finanzen', href: '/admin/billing', icon: CreditCard },
+      { name: 'Profil', href: '/profile', icon: User },
     ];
   } else if (isTrainer) {
     // Trainer: 5 tabs (reduced from 7 — Gamification + Stunden accessible via dashboard)

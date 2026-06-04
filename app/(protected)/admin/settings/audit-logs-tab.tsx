@@ -70,7 +70,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
   }, [fetchLogs, page]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       <div>
         <h2 className="text-lg font-bold text-brand-primary">Audit-Logs</h2>
         <p className="text-sm text-gray-500">Sicherheitsrelevante Aktivitäten im Verein</p>
