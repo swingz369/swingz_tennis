@@ -232,24 +232,28 @@ export default function BillingClient({
       .finally(() => setLoadingInvoices(false));
   }, [clubId, activeTab, invoiceTypeFilter, initialInvoices]);
 
+  const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+
   const handleSendInvoice = async (invoiceId: string) => {
+    setSendingInvoiceId(invoiceId);
     try {
-      const res = await fetch(`/api/billing/invoices/${invoiceId}`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/billing/invoices/${invoiceId}/send-email`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'sent' }),
       });
+      const data = await res.json();
       if (res.ok) {
-        toast.success('Rechnung versendet');
+        toast.success(data.message || 'Rechnung per E-Mail versendet');
         setInvoices((prev) =>
           prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: 'sent' } : inv))
         );
       } else {
-        const err = await res.json();
-        toast.error(`Fehler: ${err.error || 'Unbekannt'}`);
+        toast.error(`Fehler: ${data.error || 'Unbekannt'}`);
       }
     } catch {
-      toast.error('Netzwerkfehler');
+      toast.error('Netzwerkfehler beim E-Mail-Versand');
+    } finally {
+      setSendingInvoiceId(null);
     }
   };
 
@@ -620,16 +624,31 @@ export default function BillingClient({
                           : '-'}
                       </TableCell>
                       <TableCell className="text-right">
-                        {invoice.status === 'draft' && (
+                        <div className="flex gap-1 justify-end">
+                          {(invoice.status === 'draft' || invoice.status === 'open') && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSendInvoice(invoice.id)}
+                              disabled={sendingInvoiceId === invoice.id}
+                            >
+                              {sendingInvoiceId === invoice.id ? (
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              ) : (
+                                <Send className="h-3 w-3 mr-1" />
+                              )}
+                              Per E-Mail senden
+                            </Button>
+                          )}
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleSendInvoice(invoice.id)}
+                            variant="ghost"
+                            onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
+                            title="PDF herunterladen"
                           >
-                            <Send className="h-3 w-3 mr-1" />
-                            Versenden
+                            <FileText className="h-3 w-3" />
                           </Button>
-                        )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

@@ -187,6 +187,10 @@ export class InvoiceService {
       updateData.paid_at = new Date().toISOString();
     }
 
+    if (status === 'sent') {
+      updateData.sent_at = new Date().toISOString();
+    }
+
     const { data, error } = await supabase
       .from('invoices')
       .update(updateData)
