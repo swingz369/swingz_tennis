@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
@@ -11,8 +12,7 @@ interface ErrorProps {
 
 export default function BookingsError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // In Produktion: Sentry.captureException(error)
-    console.error('Bookings page error:', error);
+    Sentry.captureException(error, { tags: { page: 'bookings' } });
   }, [error]);
 
   return (

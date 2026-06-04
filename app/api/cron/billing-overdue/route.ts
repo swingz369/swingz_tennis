@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { createServiceClient } from '@/lib/supabase/service';
 import { dunningService } from '@/lib/billing/dunning.service';
 import { createLogger } from '@/lib/logger';
@@ -15,6 +16,12 @@ export async function GET(request: NextRequest) {
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Sentry cron monitoring: start check-in
+  const checkInId = Sentry.captureCheckIn({
+    monitorSlug: 'billing-overdue',
+    status: 'in_progress',
+  });
 
   try {
     const supabase = createServiceClient();
@@ -42,6 +49,9 @@ export async function GET(request: NextRequest) {
       log.warn(`Dunning errors for ${dunningErrors.length} clubs`);
     }
 
+    // Sentry cron monitoring: mark as OK
+    Sentry.captureCheckIn({ checkInId, monitorSlug: 'billing-overdue', status: 'ok' });
+
     return NextResponse.json({
       success: true,
       overdueMarked: updated?.length ?? 0,
@@ -49,6 +59,11 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     log.error('Billing overdue cron failed', { error });
+
+    // Sentry cron monitoring: mark as error
+    Sentry.captureCheckIn({ checkInId, monitorSlug: 'billing-overdue', status: 'error' });
+    Sentry.captureException(error, { tags: { cron: 'billing-overdue' } });
+
     return NextResponse.json({ error: 'Cron job failed' }, { status: 500 });
   }
 }
