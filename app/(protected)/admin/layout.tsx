@@ -14,7 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .from('user_club_memberships')
     .select('id, role, club_id, is_active')
     .eq('user_id', user.id)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .order('club_id');
 
   if (error || !memberships || memberships.length === 0) {
     redirect('/login?error=no_memberships');
@@ -41,8 +42,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Onboarding check for non-superadmin admins only
   // (superadmin always has access regardless of setup state)
   if (!isSuperadmin && isAdmin) {
-    const adminMembership = memberships.find((m: any) => m.role === 'admin');
-    const clubId = adminMembership?.club_id;
+    const cookieStore = await cookies();
+    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
+    const adminMemberships = memberships.filter((m: any) => m.role === 'admin');
+    const clubId =
+      cookieClubId && adminMemberships.some((m: any) => m.club_id === cookieClubId)
+        ? cookieClubId
+        : adminMemberships[0]?.club_id;
 
     if (clubId) {
       const { data: clubData } = await supabase

@@ -51,12 +51,13 @@ export interface TrainerContext {
 export async function requireAdminClub(): Promise<AdminContext> {
   const { supabase, user } = await requireAuth();
 
-  // Fetch memberships
+  // Fetch memberships (deterministic order: superadmin > admin > trainer > member)
   const { data: memberships } = await supabase
     .from('user_club_memberships')
     .select('role, club_id')
     .eq('user_id', user.id)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .order('club_id');
 
   const roles = (memberships ?? []).map((m: { role: string }) => m.role);
   const role = getHighestRole(roles);
@@ -75,10 +76,18 @@ export async function requireAdminClub(): Promise<AdminContext> {
     clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
     if (!clubId) redirect('/select-admin-club');
   } else {
-    const adminMembership = (memberships ?? []).find(
+    // For admins: prefer cookie-selected club if admin has access,
+    // otherwise fall back to first admin membership (deterministic via ORDER BY)
+    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
+    const adminMemberships = (memberships ?? []).filter(
       (m: { role: string; club_id: string | null }) => m.role === 'admin'
     );
-    clubId = adminMembership?.club_id || null;
+
+    if (cookieClubId && adminMemberships.some((m) => m.club_id === cookieClubId)) {
+      clubId = cookieClubId;
+    } else if (adminMemberships.length > 0) {
+      clubId = adminMemberships[0].club_id || null;
+    }
     if (!clubId) redirect('/dashboard');
   }
 

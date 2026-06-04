@@ -66,7 +66,8 @@ async function buildAuthContext(
     .from('user_club_memberships')
     .select('club_id, role')
     .eq('user_id', user.id)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .order('club_id');
 
   const memberships: Array<{ club_id: string | null; role: string }> = membershipsData ?? [];
 
@@ -78,12 +79,12 @@ async function buildAuthContext(
   const effectiveRole = getHighestRole(memberships.map((m) => m.role));
   const effectiveMembership = memberships.find((m) => m.role === effectiveRole) || memberships[0];
 
-  // Superadmin: no club by default — can select one via cookie for admin actions
+  // Superadmin/Admin: can select club via cookie
   let selectedClubId: string | undefined;
   let effectiveClubId: string | null = null;
 
+  const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
   if (effectiveRole === 'superadmin') {
-    const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
     if (cookieValue) {
       const { data: clubCheck } = await supabase
         .from('clubs')
@@ -94,6 +95,16 @@ async function buildAuthContext(
         selectedClubId = cookieValue;
         effectiveClubId = cookieValue;
       }
+    }
+  } else if (effectiveRole === 'admin') {
+    // Admin: prefer cookie-selected club if admin has access,
+    // otherwise fall back to first admin membership
+    const adminMemberships = memberships.filter((m) => m.role === 'admin');
+    if (cookieValue && adminMemberships.some((m) => m.club_id === cookieValue)) {
+      selectedClubId = cookieValue;
+      effectiveClubId = cookieValue;
+    } else {
+      effectiveClubId = effectiveMembership.club_id ?? null;
     }
   } else {
     // effectiveClubId comes from the membership that granted the effective role
