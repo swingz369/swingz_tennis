@@ -15,14 +15,17 @@ export default async function MembersPage({
   const { page, offset, limit, search } = getPagination(params, 25);
 
   // Build query with optional server-side search
+  // Exclude trainers from the member list — they have their own admin page at /admin/trainers
   let query = (supabase.from('user_club_memberships') as any)
     .select('id, user_id, role, is_active, joined_at, include_in_planning')
-    .eq('club_id', clubId);
+    .eq('club_id', clubId)
+    .neq('role', 'trainer');
 
   // Build count query with same filters
   let countQuery = (supabase.from('user_club_memberships') as any)
     .select('id', { count: 'exact', head: true })
-    .eq('club_id', clubId);
+    .eq('club_id', clubId)
+    .neq('role', 'trainer');
 
   // Apply same search filter to both data + count queries
   if (search) {

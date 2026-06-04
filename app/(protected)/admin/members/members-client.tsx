@@ -268,7 +268,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
           <SelectContent>
             <SelectItem value="all">Alle Rollen</SelectItem>
             <SelectItem value="member">Mitglied</SelectItem>
-            <SelectItem value="trainer">Trainer</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
           </SelectContent>
         </Select>

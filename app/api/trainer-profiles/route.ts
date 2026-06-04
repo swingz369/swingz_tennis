@@ -123,12 +123,67 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json({ profiles: [] });
       }
 
-      // 1. Query real trainer_profiles for this club (with retry for transient DB errors)
-      let profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
+      // Create service client early — used for both Drizzle fallback and membership queries
+      const serviceClient = createServiceClient();
+
+      // 1. Query real trainer_profiles for this club
+      //    Try Drizzle first; fall back to Supabase service client if Drizzle fails (stale socket)
+      let profiles: TrainerProfile[];
+      try {
+        profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
+      } catch (drizzleErr) {
+        console.warn(
+          '[trainer-profiles GET] Drizzle query failed, falling back to service client:',
+          drizzleErr instanceof Error ? drizzleErr.message : drizzleErr
+        );
+        const { data: fallbackRows, error: fallbackError } = await serviceClient
+          .from('trainer_profiles')
+          .select('*')
+          .eq('club_id', clubId)
+          .order('created_at', { ascending: false });
+        if (fallbackError) {
+          console.error(
+            '[trainer-profiles GET] Service client fallback also failed:',
+            fallbackError.message
+          );
+          profiles = [];
+        } else {
+          profiles = (fallbackRows ?? []).map((row: any) => ({
+            id: row.id,
+            userId: row.user_id,
+            firstName: row.first_name,
+            lastName: row.last_name,
+            email: row.email,
+            phone: row.phone,
+            dateOfBirth: row.dateOfBirth ?? row.date_of_birth ?? '1990-01-01',
+            bio: row.bio ?? undefined,
+            profileImageUrl: row.profileImageUrl ?? row.profile_image_url ?? undefined,
+            qualifications: row.qualifications ?? [],
+            specializations: row.specializations ?? [],
+            experience: row.experience ?? { years: 0, previousClubs: [], achievements: [] },
+            status: row.status ?? 'active',
+            hourlyRate: row.hourlyRate ?? row.hourly_rate ?? undefined,
+            availability: row.availability ?? {
+              monday: true,
+              tuesday: true,
+              wednesday: true,
+              thursday: true,
+              friday: true,
+              saturday: false,
+              sunday: false,
+            },
+            preferredTimeSlots: row.preferredTimeSlots ?? row.preferred_time_slots ?? [],
+            languages: row.languages ?? ['Deutsch'],
+            emergencyContact: row.emergencyContact ??
+              row.emergency_contact ?? { name: '', phone: '', relationship: '' },
+            createdAt: row.created_at ?? new Date().toISOString(),
+            updatedAt: row.updated_at ?? new Date().toISOString(),
+          }));
+        }
+      }
 
       // 2. Check for trainers in memberships that have no profile yet
-      // Use service client to bypass RLS (membership queries may be restricted)
-      const serviceClient = createServiceClient();
+      // Service client bypasses RLS (membership queries may be restricted)
       const { data: memberships, error: membershipError } = await serviceClient
         .from('user_club_memberships')
         .select('user_id, created_at, is_active')
