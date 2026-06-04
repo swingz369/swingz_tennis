@@ -1,6 +1,6 @@
-import { eq, inArray, sql } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { trainers, trainerClubs } from '../schema';
+import { trainers, trainerClubs, userClubMemberships } from '../schema';
 import type { Trainer } from '@/domain/entities/club';
 import { TrainerId, ClubId } from '@/domain/value-objects';
 import type { TrainerRepository } from '@/domain/repositories/trainer-repository.interface';
@@ -26,13 +26,36 @@ export class DrizzleTrainerRepository implements TrainerRepository {
   }
 
   async findByClub(clubId: ClubId): Promise<Trainer[]> {
-    const trainerClubsList = await db
+    // Primary source: trainer_clubs join
+    let trainerClubsList = await db
       .select()
       .from(trainerClubs)
       .where(eq(trainerClubs.club_id, clubId.getValue()));
-    const trainerIds = trainerClubsList.map(
-      (tc: typeof trainerClubs.$inferSelect) => tc.trainer_id
-    );
+
+    let trainerIds = trainerClubsList.map((tc: typeof trainerClubs.$inferSelect) => tc.trainer_id);
+
+    // Fallback: user_club_memberships with role='trainer'
+    if (trainerIds.length === 0) {
+      const membershipTrainers = await db
+        .select({ trainer_id: trainers.id, club_id: userClubMemberships.club_id })
+        .from(userClubMemberships)
+        .innerJoin(trainers, eq(userClubMemberships.user_id, trainers.user_id))
+        .where(
+          and(
+            eq(userClubMemberships.club_id, clubId.getValue()),
+            eq(userClubMemberships.role, 'trainer'),
+            eq(userClubMemberships.is_active, true),
+            eq(trainers.is_active, true)
+          )
+        );
+      trainerIds = membershipTrainers.map((t) => t.trainer_id);
+      trainerClubsList = membershipTrainers.map((t) => ({
+        trainer_id: t.trainer_id,
+        club_id: t.club_id,
+        created_at: new Date(),
+      })) as typeof trainerClubsList;
+    }
+
     if (trainerIds.length === 0) return [];
     const trainersData = await db.select().from(trainers).where(inArray(trainers.id, trainerIds));
     return trainersData.map((trainer: typeof trainers.$inferSelect) => {

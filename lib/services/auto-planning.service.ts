@@ -13,6 +13,7 @@ import {
   groups,
   trainers,
   trainerClubs,
+  userClubMemberships,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import type { InferSelectModel } from 'drizzle-orm';
@@ -99,11 +100,28 @@ export class AutoPlanningService {
       );
 
     // Fetch all active trainers for the club (including those without submitted prefs)
-    const clubTrainers = await db
+    // Primary source: trainer_clubs join
+    let clubTrainers = await db
       .select({ trainer: trainers })
       .from(trainers)
       .innerJoin(trainerClubs, eq(trainers.id, trainerClubs.trainer_id))
       .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainers.is_active, true)));
+
+    // Fallback: user_club_memberships with role='trainer'
+    if (clubTrainers.length === 0) {
+      clubTrainers = await db
+        .select({ trainer: trainers })
+        .from(userClubMemberships)
+        .innerJoin(trainers, eq(userClubMemberships.user_id, trainers.user_id))
+        .where(
+          and(
+            eq(userClubMemberships.club_id, season.club_id),
+            eq(userClubMemberships.role, 'trainer'),
+            eq(userClubMemberships.is_active, true),
+            eq(trainers.is_active, true)
+          )
+        );
+    }
 
     // Separate trainers and members
     const trainerPrefs: TrainerPreference[] = [];
@@ -247,11 +265,28 @@ export class AutoPlanningService {
     }
 
     // Fetch all active trainers for the club (including those without submitted prefs)
-    const clubTrainers = await db
+    // Primary source: trainer_clubs join
+    let clubTrainers = await db
       .select({ trainer: trainers })
       .from(trainers)
       .innerJoin(trainerClubs, eq(trainers.id, trainerClubs.trainer_id))
       .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainers.is_active, true)));
+
+    // Fallback: user_club_memberships with role='trainer'
+    if (clubTrainers.length === 0) {
+      clubTrainers = await db
+        .select({ trainer: trainers })
+        .from(userClubMemberships)
+        .innerJoin(trainers, eq(userClubMemberships.user_id, trainers.user_id))
+        .where(
+          and(
+            eq(userClubMemberships.club_id, season.club_id),
+            eq(userClubMemberships.role, 'trainer'),
+            eq(userClubMemberships.is_active, true),
+            eq(trainers.is_active, true)
+          )
+        );
+    }
 
     const submittedTrainerIds = new Set<string>();
     const aiTrainers = allPreferences

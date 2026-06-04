@@ -11,6 +11,7 @@ import {
   users,
   trainers as trainersTable,
   trainerClubs,
+  userClubMemberships,
   userTrainingPreferences,
   seasonPlanEntries,
 } from '@/src/infrastructure/persistence/schema';
@@ -55,11 +56,30 @@ export async function GET(request: NextRequest, context: RouteContext) {
         );
 
       // Get ALL active club trainers (to cover trainers without submitted preferences)
-      const clubTrainers = await db
+      // Primary source: trainer_clubs join
+      let clubTrainers = await db
         .select({ trainer: trainersTable })
         .from(trainersTable)
         .innerJoin(trainerClubs, eq(trainersTable.id, trainerClubs.trainer_id))
         .where(and(eq(trainerClubs.club_id, season.club_id), eq(trainersTable.is_active, true)));
+
+      // Fallback: user_club_memberships with role='trainer' (for clubs that use
+      // memberships instead of trainer_clubs)
+      if (clubTrainers.length === 0) {
+        const membershipTrainers = await db
+          .select({ trainer: trainersTable })
+          .from(userClubMemberships)
+          .innerJoin(trainersTable, eq(userClubMemberships.user_id, trainersTable.user_id))
+          .where(
+            and(
+              eq(userClubMemberships.club_id, season.club_id),
+              eq(userClubMemberships.role, 'trainer'),
+              eq(userClubMemberships.is_active, true),
+              eq(trainersTable.is_active, true)
+            )
+          );
+        clubTrainers = membershipTrainers;
+      }
 
       // Get existing plan entries for utilization calculation
       const existingEntries = await db
