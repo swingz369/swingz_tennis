@@ -163,6 +163,21 @@ export default function OnboardingPage() {
     start_date: '',
     end_date: '',
   });
+  const [seasonAutoFilled, setSeasonAutoFilled] = useState(false);
+
+  // Auto-fill season name + dates when entering Step 10 for the first time
+  useEffect(() => {
+    if (step === 10 && !seasonAutoFilled) {
+      const yr = seasonForm.year;
+      const type = seasonForm.season_type;
+      const typeName = type === 'summer' ? 'Sommer' : 'Winter';
+      const name = type === 'winter' ? `${typeName} ${yr}/${yr + 1}` : `${typeName} ${yr}`;
+      const startDate = type === 'summer' ? `${yr}-04-01` : `${yr}-10-01`;
+      const endDate = type === 'summer' ? `${yr}-09-30` : `${yr + 1}-03-31`;
+      setSeasonForm((f) => ({ ...f, name, start_date: startDate, end_date: endDate }));
+      setSeasonAutoFilled(true);
+    }
+  }, [step, seasonAutoFilled, seasonForm.year, seasonForm.season_type]);
 
   // Step 7 – Invitations
   const [trainerForm, setTrainerForm] = useState({ name: '', email: '' });
