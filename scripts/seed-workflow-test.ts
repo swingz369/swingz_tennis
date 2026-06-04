@@ -31,6 +31,25 @@ async function seed() {
     const clubId: string = club.id;
     console.log(`🏟️  Using club: ${club.name} (${clubId})`);
 
+    // ── 1b. Ensure admin user has 'admin' role ──────────────────────
+    const { data: { users: adminUsers } } = await supabaseAdmin.auth.admin.listUsers({ email: 'admin@swingz.com' });
+    if (adminUsers && adminUsers.length > 0) {
+      const adminUserId = adminUsers[0].id;
+      const { rows: adminMembership } = await client.query(
+        'SELECT role FROM user_club_memberships WHERE user_id = $1 AND club_id = $2',
+        [adminUserId, clubId]
+      );
+      if (adminMembership.length > 0 && adminMembership[0].role !== 'admin') {
+        await client.query(
+          "UPDATE user_club_memberships SET role = 'admin' WHERE user_id = $1 AND club_id = $2",
+          [adminUserId, clubId]
+        );
+        console.log(`🔑 Fixed admin role: ${adminMembership[0].role} → admin`);
+      } else if (adminMembership.length > 0) {
+        console.log('🔑 Admin role verified: admin ✓');
+      }
+    }
+
     // ── 2. Fee Configuration (Beitragskategorie) ───────────────────────
     const existingFee = await client.query(
       'SELECT id FROM fee_configurations WHERE club_id = $1 AND name = $2',
