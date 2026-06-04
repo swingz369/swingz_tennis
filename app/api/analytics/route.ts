@@ -25,12 +25,15 @@ export async function GET(_request: NextRequest) {
     }
 
     const { searchParams } = new URL(_request.url);
-    const clubId = searchParams.get('clubId');
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const clubId = searchParams.get('clubId') || auth.clubId;
+    const now = new Date();
+    const startDate =
+      searchParams.get('startDate') ||
+      new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).toISOString().split('T')[0];
+    const endDate = searchParams.get('endDate') || now.toISOString().split('T')[0];
 
-    if (!clubId || !startDate || !endDate) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    if (!clubId) {
+      return NextResponse.json({ error: 'Missing required parameter: clubId' }, { status: 400 });
     }
 
     try {

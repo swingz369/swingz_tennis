@@ -16,7 +16,30 @@ export async function POST(_request: NextRequest) {
 
     const event = constructStripeEvent(body, signature);
 
-    console.log(`Received Stripe event: ${event.type}`);
+    // ── Idempotency: atomic check-and-record (race-condition safe) ──
+    const supabase = await createAdminClient();
+    try {
+      // Cast needed until stripe_events table is in generated Supabase types
+      const { data: isNew } = await (supabase as any)
+        .rpc('check_and_record_stripe_event', {
+          p_event_id: event.id,
+          p_event_type: event.type,
+        })
+        .maybeSingle();
+
+      if (isNew === false) {
+        console.log(`[Stripe Webhook] Event ${event.id} already processed — skipping`);
+        return NextResponse.json({ received: true, deduplicated: true });
+      }
+    } catch (idempotencyError) {
+      // Graceful degradation: if stripe_events table/RPC doesn't exist yet, continue processing
+      console.warn(
+        '[Stripe Webhook] Idempotency check unavailable, processing anyway:',
+        idempotencyError
+      );
+    }
+
+    console.log(`Received Stripe event: ${event.type} (${event.id})`);
 
     switch (event.type) {
       case 'checkout.session.completed': {

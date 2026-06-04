@@ -93,22 +93,27 @@ export async function GET(_request: NextRequest) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
 
+      const clubId = auth.clubId ?? '';
+
       if (email) {
-        const trialTrainings =
-          await trialTrainingService.getTrialTrainingsByParticipantEmail(email);
+        const trialTrainings = await trialTrainingService.getTrialTrainingsByParticipantEmail(
+          email,
+          clubId
+        );
         return NextResponse.json({ trialTrainings });
       }
 
       if (status) {
         const trialTrainings = await trialTrainingService.getTrialTrainingsByStatus(
-          status as 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted' | 'requested'
+          status as 'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'converted' | 'requested',
+          clubId
         );
         return NextResponse.json({ trialTrainings });
       }
 
       if (startDate && endDate) {
         const trialTrainings = await trialTrainingService.getTrialTrainingsByDateRange(
-          '',
+          clubId,
           startDate,
           endDate
         );
@@ -116,7 +121,7 @@ export async function GET(_request: NextRequest) {
       }
 
       // Get all trial trainings (filtered by club via service)
-      const allTrainings = await trialTrainingService.getAllTrialTrainings();
+      const allTrainings = await trialTrainingService.getAllTrialTrainings(clubId);
 
       return NextResponse.json({ trialTrainings: allTrainings });
     } catch (error) {

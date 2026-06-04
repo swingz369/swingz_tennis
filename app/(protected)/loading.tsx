@@ -1,28 +1,17 @@
-import { Skeleton } from '@/components/ui/skeleton';
+'use client';
 
-export default function ProtectedLoading() {
+import { Loader2 } from 'lucide-react';
+
+/**
+ * Reusable loading skeleton for protected admin/member pages.
+ * Renders a centered spinner with optional message.
+ */
+export default function Loading() {
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header skeleton */}
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-4 w-96" />
-      </div>
-
-      {/* Content grid skeleton */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Skeleton className="h-40 rounded-xl" />
-        <Skeleton className="h-40 rounded-xl" />
-        <Skeleton className="h-40 rounded-xl" />
-      </div>
-
-      {/* Table skeleton */}
-      <div className="space-y-3">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
-        <Skeleton className="h-16 w-full" />
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
+        <p className="text-sm text-muted-foreground">Wird geladen…</p>
       </div>
     </div>
   );

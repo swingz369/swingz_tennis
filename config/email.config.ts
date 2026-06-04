@@ -9,11 +9,11 @@ export const emailConfig = {
 
   // Club information for emails
   club: {
-    name: 'SwingZ Tennis Club',
-    address: 'Tennisstraße 123, 12345 Tennisstadt',
-    phone: '+49 123 456 7890',
-    email: 'info@swingz.app',
-    website: 'https://swingz.app',
+    name: process.env.CLUB_NAME || 'SwingZ Tennis Club',
+    address: process.env.CLUB_ADDRESS || '',
+    phone: process.env.CLUB_PHONE || '',
+    email: process.env.CLUB_EMAIL || 'info@swingz.app',
+    website: process.env.NEXT_PUBLIC_APP_URL || 'https://swingz.app',
   },
 
   // Email templates configuration

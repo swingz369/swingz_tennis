@@ -95,8 +95,9 @@ export default function ContactPage() {
                     <div>
                       <p className="font-medium text-gray-900">Adresse</p>
                       <p className="text-gray-600">SWINGZ GmbH</p>
-                      <p className="text-gray-600">Musterstraße 123</p>
-                      <p className="text-gray-600">12345 Berlin</p>
+                      <p className="text-gray-600">
+                        {process.env.NEXT_PUBLIC_CLUB_ADDRESS || 'Adresse auf Anfrage'}
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -159,6 +159,20 @@ export class WaitlistService {
             expires_at: expiresAt.toISOString(),
           });
 
+          // Send notification to the user
+          try {
+            await supabase.from('notifications').insert({
+              user_id: entry.user_id,
+              club_id: entry.club_id,
+              title: 'Platz verfügbar!',
+              message: `Ein Platz ist frei geworden. Bitte bestätige deine Buchung innerhalb von 24 Stunden.`,
+              type: 'waitlist',
+              action_url: '/my-bookings',
+            });
+          } catch (notifError) {
+            console.error('[Waitlist] Failed to send notification:', notifError);
+          }
+
           processed.push(updated);
         }
       }

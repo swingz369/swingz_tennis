@@ -28,14 +28,31 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         return forbiddenResponse('Access denied - you can only view your own invoices');
       }
 
+      // Fetch club info for PDF header
+      const clubId = auth.clubId;
+      let clubData: {
+        name?: string | null;
+        address?: string | null;
+        email?: string | null;
+        phone?: string | null;
+      } | null = null;
+      if (clubId) {
+        const { data } = await auth.supabase
+          .from('clubs')
+          .select('name, address, email, phone')
+          .eq('id', clubId)
+          .maybeSingle();
+        clubData = data;
+      }
+
       const pdfBuffer = await generateInvoicePDF({
         invoice,
-        clubName: 'SWINGZ Tennis Club',
-        clubAddress: 'Musterstraße 123, 12345 Musterstadt',
-        clubEmail: 'info@swingz.de',
-        clubPhone: '+49 123 456789',
+        clubName: clubData?.name || 'SWINGZ Tennis Club',
+        clubAddress: clubData?.address || '',
+        clubEmail: clubData?.email || 'info@swingz.app',
+        clubPhone: clubData?.phone || '',
         memberName: auth.user.user_metadata?.full_name || 'Mitglied',
-        memberAddress: 'Mitgliedadresse',
+        memberAddress: '',
         memberEmail: auth.user.email || '',
       });
 
