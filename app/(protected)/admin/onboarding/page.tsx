@@ -40,6 +40,10 @@ import {
   Calendar,
   Copy,
   Palette,
+  Receipt,
+  CalendarDays,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 type ClubData = {
@@ -55,7 +59,7 @@ type ClubData = {
   founding_date?: string | null;
 };
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 11;
 
 const STEPS = [
   { label: 'Start', icon: Sparkles },
@@ -63,9 +67,11 @@ const STEPS = [
   { label: 'Öffnungszeiten', icon: Clock },
   { label: 'Platz', icon: MapPin },
   { label: 'Preise', icon: Euro },
+  { label: 'Beiträge', icon: Receipt },
   { label: 'Buchung', icon: CalendarRange },
   { label: 'Einladungen', icon: Users },
   { label: 'E-Mail', icon: Mail },
+  { label: 'Saison', icon: CalendarDays },
   { label: 'Fertig', icon: PartyPopper },
 ];
 
@@ -90,6 +96,13 @@ const DEFAULT_OPENING_HOURS: OpeningHours = {
   saturday: { open: '08:00', close: '22:00' },
   sunday: { open: '08:00', close: '22:00' },
 };
+
+interface FeeCategory {
+  name: string;
+  type: string;
+  amount: string;
+  billing_cycle: string;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -133,6 +146,22 @@ export default function OnboardingPage() {
     max_booking_duration_minutes: 90,
     advance_booking_days: 14,
     max_bookings_per_week: 3,
+  });
+
+  // Step 6 – Fee categories (Beiträge)
+  const [feeCategoriesSaved, setFeeCategoriesSaved] = useState(false);
+  const [feeCategories, setFeeCategories] = useState<FeeCategory[]>([
+    { name: 'Jahresmitgliedschaft', type: 'membership', amount: '240', billing_cycle: 'yearly' },
+    { name: 'Training Einzelstunde', type: 'training', amount: '25', billing_cycle: 'one_time' },
+  ]);
+
+  // Step 10 – Season creation
+  const [seasonForm, setSeasonForm] = useState({
+    name: '',
+    season_type: 'summer' as 'summer' | 'winter',
+    year: new Date().getFullYear(),
+    start_date: '',
+    end_date: '',
   });
 
   // Step 7 – Invitations
@@ -374,6 +403,74 @@ export default function OnboardingPage() {
     }
   }, [club?.id, rulesForm]);
 
+  const saveFeeCategories = useCallback(async (): Promise<boolean> => {
+    if (!club?.id || feeCategoriesSaved) return true;
+    setLoading(true);
+    try {
+      let created = 0;
+      for (const cat of feeCategories) {
+        if (!cat.name.trim() || !cat.amount) continue;
+        const res = await fetch('/api/admin/fee-categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+          body: JSON.stringify({
+            club_id: club.id,
+            name: cat.name,
+            type: cat.type,
+            amount: parseFloat(cat.amount),
+            billing_cycle: cat.billing_cycle,
+            is_active: true,
+          }),
+        });
+        if (res.ok) created++;
+      }
+      if (created > 0) {
+        toast.success(`${created} Beitragskategorie(n) erstellt`);
+        setFeeCategoriesSaved(true);
+      }
+      return true;
+    } catch {
+      toast.error('Netzwerkfehler');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [club?.id, feeCategories, feeCategoriesSaved]);
+
+  const createFirstSeason = useCallback(async (): Promise<boolean> => {
+    if (!club?.id || !seasonForm.name.trim()) {
+      if (!seasonForm.name.trim()) toast.error('Bitte gib einen Saison-Namen ein');
+      return false;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/seasons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({
+          club_id: club.id,
+          name: seasonForm.name,
+          season_type: seasonForm.season_type,
+          year: seasonForm.year,
+          start_date: seasonForm.start_date,
+          end_date: seasonForm.end_date,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? 'Fehler beim Erstellen der Saison');
+        return false;
+      }
+      toast.success('Saison erstellt!');
+      return true;
+    } catch {
+      toast.error('Netzwerkfehler');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [club?.id, seasonForm]);
+
   const saveTrainerInvite = useCallback(async (): Promise<boolean> => {
     if (!trainerForm.email.trim()) return true;
     setLoading(true);
@@ -505,23 +602,33 @@ export default function OnboardingPage() {
         break;
       }
       case 6: {
-        const ok = await saveBookingRules();
+        const ok = await saveFeeCategories();
         if (!ok) return;
         break;
       }
       case 7: {
+        const ok = await saveBookingRules();
+        if (!ok) return;
+        break;
+      }
+      case 8: {
         const ok1 = await saveTrainerInvite();
         if (!ok1) return;
         const ok2 = await saveMemberInvite();
         if (!ok2) return;
         break;
       }
-      case 8: {
+      case 9: {
         const ok = await saveEmailSettings();
         if (!ok) return;
         break;
       }
-      case 9: {
+      case 10: {
+        const ok = await createFirstSeason();
+        if (!ok) return;
+        break;
+      }
+      case 11: {
         const ok = await markSetupComplete();
         if (!ok) return;
         router.push('/admin');
@@ -994,8 +1101,129 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 6 – Booking rules
+      // Step 6 – Fee categories (Beiträge)
       case 6:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Beitragskategorien</h2>
+              <p className="text-gray-500 text-sm mt-1">
+                Lege die Mitgliedsbeiträge und Trainingsgebühren fest. Diese werden für die
+                automatische Rechnungsstellung bei Genehmigung und Saisonveröffentlichung verwendet.
+              </p>
+            </div>
+            <Card className="bg-green-50/50 border-green-200">
+              <CardContent className="pt-4 text-sm text-green-800">
+                Wir haben zwei häufige Kategorien vorbereitet. Passe die Beträge an oder füge
+                weitere hinzu.
+              </CardContent>
+            </Card>
+            <div className="space-y-4">
+              {feeCategories.map((cat, idx) => (
+                <div
+                  key={idx}
+                  className="grid grid-cols-[1fr_120px_100px_120px_36px] gap-2 items-end"
+                >
+                  <div>
+                    <Label className="text-xs text-gray-400">Name</Label>
+                    <Input
+                      value={cat.name}
+                      onChange={(e) => {
+                        const updated = [...feeCategories];
+                        updated[idx] = { ...updated[idx], name: e.target.value };
+                        setFeeCategories(updated);
+                      }}
+                      placeholder="z.B. Jahresmitgliedschaft"
+                      className="mt-0.5"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-400">Typ</Label>
+                    <Select
+                      value={cat.type}
+                      onValueChange={(v) => {
+                        const updated = [...feeCategories];
+                        updated[idx] = { ...updated[idx], type: v };
+                        setFeeCategories(updated);
+                      }}
+                    >
+                      <SelectTrigger className="mt-0.5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="membership">Mitglied</SelectItem>
+                        <SelectItem value="training">Training</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-400">Betrag (€)</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={5}
+                      value={cat.amount}
+                      onChange={(e) => {
+                        const updated = [...feeCategories];
+                        updated[idx] = { ...updated[idx], amount: e.target.value };
+                        setFeeCategories(updated);
+                      }}
+                      className="mt-0.5"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-400">Zyklus</Label>
+                    <Select
+                      value={cat.billing_cycle}
+                      onValueChange={(v) => {
+                        const updated = [...feeCategories];
+                        updated[idx] = { ...updated[idx], billing_cycle: v };
+                        setFeeCategories(updated);
+                      }}
+                    >
+                      <SelectTrigger className="mt-0.5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yearly">Jährlich</SelectItem>
+                        <SelectItem value="monthly">Monatlich</SelectItem>
+                        <SelectItem value="one_time">Einmalig</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFeeCategories((prev) => prev.filter((_, i) => i !== idx))}
+                    disabled={feeCategories.length <= 1}
+                    className="mb-0.5"
+                  >
+                    <Trash2 className="h-4 w-4 text-red-400" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setFeeCategories((prev) => [
+                    ...prev,
+                    { name: '', type: 'training', amount: '', billing_cycle: 'one_time' },
+                  ])
+                }
+                className="gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Weitere Kategorie
+              </Button>
+            </div>
+          </div>
+        );
+
+      // Step 7 – Booking rules
+      case 7:
         return (
           <div className="space-y-6">
             <div>
@@ -1071,8 +1299,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 7 – Invitations
-      case 7:
+      // Step 8 – Invitations
+      case 8:
         return (
           <div className="space-y-6">
             <div>
@@ -1160,8 +1388,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 8 – E-Mail & Language
-      case 8:
+      // Step 9 – E-Mail & Language
+      case 9:
         return (
           <div className="space-y-6">
             <div>
@@ -1218,8 +1446,124 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 9 – Complete
-      case 9:
+      // Step 10 – Saison
+      case 10:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Erste Saison anlegen</h2>
+              <p className="text-gray-500 text-sm mt-1">
+                Erstelle deine erste Trainings-Saison. Danach kannst du im Saisonplanungs-Wizard
+                Trainergruppen zuweisen und den Stundenplan erstellen.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="seasonType">Saison-Typ</Label>
+                  <Select
+                    value={seasonForm.season_type}
+                    onValueChange={(v: 'summer' | 'winter') => {
+                      setSeasonForm((f) => ({ ...f, season_type: v }));
+                      const type = v === 'summer' ? 'Sommer' : 'Winter';
+                      const yr = seasonForm.year;
+                      const name = v === 'winter' ? `${type} ${yr}/${yr + 1}` : `${type} ${yr}`;
+                      setSeasonForm((f) => ({ ...f, season_type: v, name }));
+                    }}
+                  >
+                    <SelectTrigger id="seasonType" className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="summer">☀️ Sommer</SelectItem>
+                      <SelectItem value="winter">❄️ Winter</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="seasonYear">Jahr</Label>
+                  <Input
+                    id="seasonYear"
+                    type="number"
+                    min={2024}
+                    max={2030}
+                    value={seasonForm.year}
+                    onChange={(e) => {
+                      const yr = parseInt(e.target.value);
+                      const type = seasonForm.season_type === 'summer' ? 'Sommer' : 'Winter';
+                      const name =
+                        seasonForm.season_type === 'winter'
+                          ? `${type} ${yr}/${yr + 1}`
+                          : `${type} ${yr}`;
+                      setSeasonForm((f) => ({ ...f, year: yr, name }));
+                    }}
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="seasonName">Saison-Name</Label>
+                <Input
+                  id="seasonName"
+                  value={seasonForm.name}
+                  onChange={(e) => setSeasonForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="z.B. Sommer 2026"
+                  className="mt-1.5"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="seasonStart">Startdatum</Label>
+                  <Input
+                    id="seasonStart"
+                    type="date"
+                    value={seasonForm.start_date}
+                    onChange={(e) => setSeasonForm((f) => ({ ...f, start_date: e.target.value }))}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="seasonEnd">Enddatum</Label>
+                  <Input
+                    id="seasonEnd"
+                    type="date"
+                    value={seasonForm.end_date}
+                    onChange={(e) => setSeasonForm((f) => ({ ...f, end_date: e.target.value }))}
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const yr = seasonForm.year;
+                  if (seasonForm.season_type === 'summer') {
+                    setSeasonForm((f) => ({
+                      ...f,
+                      start_date: `${yr}-04-01`,
+                      end_date: `${yr}-09-30`,
+                    }));
+                  } else {
+                    setSeasonForm((f) => ({
+                      ...f,
+                      start_date: `${yr}-10-01`,
+                      end_date: `${yr + 1}-03-31`,
+                    }));
+                  }
+                }}
+                className="gap-1.5"
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                Standard-Zeitraum einfügen
+              </Button>
+            </div>
+          </div>
+        );
+
+      // Step 11 – Complete
+      case 11:
         return (
           <div className="text-center space-y-8 py-6">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-brand-primary/10 rounded-full">
@@ -1264,10 +1608,10 @@ export default function OnboardingPage() {
     }
   };
 
-  // Optional steps: Place, Opening hours, Invitations, Email settings
-  const isOptionalStep = step === 4 || step === 7 || step === 8;
+  // Optional steps: Place, Fee categories, Invitations, Email settings, Season
+  const isOptionalStep = step === 4 || step === 6 || step === 8 || step === 9 || step === 10;
   // Steps where next triggers save
-  const savesOnNext = step >= 2 && step <= 8;
+  const savesOnNext = step >= 2 && step <= 10;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-brand-primary/5 flex items-center justify-center p-4">
@@ -1286,7 +1630,7 @@ export default function OnboardingPage() {
                 {renderStepContent()}
               </div>
               {/* Navigation */}
-              {step > 1 && step < 9 && (
+              {step > 1 && step < 11 && (
                 <div className="flex items-center justify-between pt-6 mt-6 border-t">
                   <Button
                     variant="ghost"
