@@ -85,18 +85,18 @@ In dieser Session wurden folgende Probleme behoben:
 
 ### P2 — Architektur/Integrität
 
-| #     | Problem                        | Status                                        |
-| ----- | ------------------------------ | --------------------------------------------- |
-| P2-1  | Buchung → Billing Pipeline     | 🟡 TEILWEISE                                  |
-| P2-2  | Stunden → Billing Pipeline     | 🟡 TEILWEISE                                  |
-| P2-3  | Overdue-Status nie automatisch | ✅ **BEHOBEN** — pg_cron-Job (3 AM täglich)   |
-| P2-4  | Invoice-Nummern Race-Condition | 🟡 TEILWEISE                                  |
-| P2-5  | Invoice-Typ hardcoded 'other'  | ✅ BEHOBEN                                    |
-| P2-6  | Sentry in devDependencies      | ✅ BEHOBEN                                    |
-| P2-7  | Node-Version-Mismatch          | ✅ **BEHOBEN** — .nvmrc=24, CI=24, konsistent |
-| P2-8  | CI-YAML-Einrückungsfehler      | ✅ **BEHOBEN** — CI-YAML validiert            |
-| P2-9  | SEPA-Env-Vars undokumentiert   | ✅ BEHOBEN                                    |
-| P2-10 | unsafe-eval in CSP             | ✅ BEHOBEN                                    |
+| #     | Problem                        | Status                                                                                     |
+| ----- | ------------------------------ | ------------------------------------------------------------------------------------------ |
+| P2-1  | Buchung → Billing Pipeline     | 🟡 TEILWEISE                                                                               |
+| P2-2  | Stunden → Billing Pipeline     | 🟡 TEILWEISE                                                                               |
+| P2-3  | Overdue-Status nie automatisch | ✅ **BEHOBEN** — pg_cron-Job (3 AM täglich)                                                |
+| P2-4  | Invoice-Nummern Race-Condition | 🟡 TEILWEISE                                                                               |
+| P2-5  | Invoice-Typ hardcoded 'other'  | ✅ BEHOBEN                                                                                 |
+| P2-6  | Sentry in devDependencies      | ✅ BEHOBEN                                                                                 |
+| P2-7  | Node-Version-Mismatch          | ✅ **BEHOBEN** — .nvmrc=24, CI=24, package.json engines=24, kein Dockerfile nötig (Vercel) |
+| P2-8  | CI-YAML-Einrückungsfehler      | ✅ **BEHOBEN** — YAML-Validierung bestanden, keine Einrückungsfehler                       |
+| P2-9  | SEPA-Env-Vars undokumentiert   | ✅ BEHOBEN                                                                                 |
+| P2-10 | unsafe-eval in CSP             | ✅ BEHOBEN                                                                                 |
 
 ### P3 — UX / Technische Schulden
 

@@ -73,6 +73,7 @@ export default async function AdminPage() {
     { data: recentMembers },
     { data: recentBookings },
     { data: paidInvoices },
+    { count: totalInvoiceCount },
   ] = await Promise.all([
     supabase
       .from('user_club_memberships')
@@ -126,6 +127,8 @@ export default async function AdminPage() {
       .eq('status', 'paid')
       .gte('created_at', monthStart.toISOString())
       .lte('created_at', monthEnd.toISOString()),
+    // Total invoice count for billing alert
+    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId),
   ]);
 
   // Calculate monthly revenue
@@ -170,6 +173,29 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
+      {/* Alert Banner — empty billing */}
+      {(totalInvoiceCount ?? 0) === 0 && (
+        <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 border border-blue-200 dark:border-blue-700/50 px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <IconBox icon={CreditCard} size="sm" variant="blue" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                Noch keine Rechnungen erstellt
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 truncate">
+                Erstellen Sie Monatsrechnungen für Ihre {memberCount ?? 0} aktiven Mitglieder
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/billing"
+            className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Rechnungen erstellen <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
+
       {/* Alert Banner — pending approvals */}
       {(pendingApprovals ?? 0) > 0 && (
         <div className="rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 border border-orange-200 dark:border-orange-700/50 px-4 py-3 flex items-center justify-between gap-4">

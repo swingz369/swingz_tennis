@@ -35,6 +35,7 @@ export function FinalizeStep() {
   const { state, confirmPlan, detectConflicts } = useWizard();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isGeneratingInvoices, setIsGeneratingInvoices] = useState(false);
   const [hasRunCheck, setHasRunCheck] = useState(false);
 
   // Reset hasRunCheck when the plan changes (user went back to step 2)
@@ -273,7 +274,7 @@ export function FinalizeStep() {
           </Card>
         )}
 
-        {/* Billing Call-to-Action */}
+        {/* Billing Call-to-Action — auto-generate invoices for season participants */}
         <Card className="border-blue-200 bg-blue-50/30">
           <CardContent className="py-6">
             <div className="flex items-start gap-4">
@@ -283,16 +284,50 @@ export function FinalizeStep() {
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-blue-900">Rechnungen generieren</h3>
                 <p className="text-xs text-blue-700 mt-1">
-                  Für die {state.selectedMemberIds.length} Mitglieder dieser Saison können nun
-                  Rechnungen erstellt werden.
+                  Erstelle Monatsrechnungen für alle aktiven Mitglieder des Vereins. Die
+                  Saisonplanung ist abgeschlossen.
                 </p>
-                <Link
-                  href={`/admin/seasons/${state.seasonId}`}
-                  className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                >
-                  Zur Rechnungsverwaltung
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Link>
+                <div className="flex items-center gap-3 mt-3">
+                  <Button
+                    size="sm"
+                    className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={isGeneratingInvoices}
+                    onClick={async () => {
+                      setIsGeneratingInvoices(true);
+                      try {
+                        const res = await fetch('/api/billing/generate-invoices', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({}),
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          toast.success(data.message ?? 'Rechnungen erstellt');
+                        } else {
+                          toast.error(data.error ?? 'Fehler');
+                        }
+                      } catch {
+                        toast.error('Netzwerkfehler');
+                      } finally {
+                        setIsGeneratingInvoices(false);
+                      }
+                    }}
+                  >
+                    {isGeneratingInvoices ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <FileText className="h-3.5 w-3.5" />
+                    )}
+                    Rechnungen jetzt generieren
+                  </Button>
+                  <Link
+                    href="/admin/billing"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    Zur Abrechnung
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           </CardContent>

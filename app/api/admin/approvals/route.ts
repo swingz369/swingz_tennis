@@ -72,6 +72,7 @@ export async function PATCH(request: NextRequest) {
         .single();
 
       let warning: string | undefined;
+      let newUserId: string | undefined;
       if (registration) {
         // 1. Create Supabase Auth user via Admin API
         try {
@@ -96,6 +97,8 @@ export async function PATCH(request: NextRequest) {
               { status: 500 }
             );
           }
+
+          newUserId = authUser.user.id;
 
           // 2. Insert into users table (requires admin client — bypasses RLS for provisioning)
           const { error: userInsertError } = await (adminClient as any).from('users').insert({
@@ -142,7 +145,54 @@ export async function PATCH(request: NextRequest) {
           );
         }
 
-        // 4. Send onboarding email directly (avoids internal fetch auth issue)
+        // 4. Auto-generate first invoice for the new member (if fee config exists)
+        try {
+          const invoiceClubId = registration.club_id || auth.clubId || '';
+          if (invoiceClubId) {
+            const { data: feeConfig } = await auth.supabase
+              .from('fee_configurations')
+              .select('amount, currency')
+              .eq('club_id', invoiceClubId)
+              .eq('type', 'membership')
+              .eq('is_active', true)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            const feeAmount = feeConfig ? Number(feeConfig.amount) : 0;
+
+            // Only create invoice if a fee configuration exists with amount > 0
+            if (feeAmount > 0) {
+              const { billingEngine } = await import('@/lib/billing-engine');
+              const now = new Date();
+              const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+              const dueDateStr = dueDate.toISOString().slice(0, 10);
+
+              await billingEngine.createInvoice({
+                club_id: invoiceClubId,
+                member_id: newUserId,
+                due_date: dueDateStr,
+                items: [
+                  {
+                    description: `Mitgliedsbeitrag ${now.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}`,
+                    quantity: 1,
+                    unit_price: feeAmount,
+                    tax_rate: 0,
+                    item_type: 'membership_fee',
+                  },
+                ],
+                notes: 'Automatisch erstellt bei Mitgliedsantritt',
+              });
+            } else {
+              console.log('[Approval] No fee configuration found — skipping auto-invoice');
+            }
+          }
+        } catch (invoiceError) {
+          // Don't fail the approval if invoice creation fails
+          console.error('Auto-invoice creation failed:', invoiceError);
+        }
+
+        // 5. Send onboarding email directly (avoids internal fetch auth issue)
         try {
           const regClubId = registration.club_id || auth.clubId || '';
           const { data: settingRows } = await auth.supabase
