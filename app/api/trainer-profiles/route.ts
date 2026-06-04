@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createServiceClient } from '@/lib/supabase/service';
 
 /**
  * POST /api/trainer-profiles
@@ -125,7 +126,9 @@ export async function GET(_request: NextRequest) {
       let profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
 
       // 2. Check for trainers in memberships that have no profile yet
-      const { data: memberships } = await auth.supabase
+      // Use service client to bypass RLS (membership queries may be restricted)
+      const serviceClient = createServiceClient();
+      const { data: memberships } = await serviceClient
         .from('user_club_memberships')
         .select('user_id, created_at, is_active')
         .eq('club_id', clubId)
@@ -140,7 +143,7 @@ export async function GET(_request: NextRequest) {
 
         if (missingUserIds.length > 0) {
           // Fetch user details for missing profiles
-          const { data: users } = await auth.supabase
+          const { data: users } = await serviceClient
             .from('users')
             .select('id, full_name, email, phone')
             .in('id', missingUserIds);
