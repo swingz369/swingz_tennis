@@ -20,7 +20,11 @@ import { eq, and, inArray } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
-import type { ConfirmPlanRequest, GroupAssignment } from '@/lib/season-planning/types';
+import type {
+  ConfirmPlanRequest,
+  ConfirmPlanResponse,
+  GroupAssignment,
+} from '@/lib/season-planning/types';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -464,7 +468,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           }
         }
 
-        const response = {
+        const response: ConfirmPlanResponse & { invoicesCreated: number } = {
           success: true,
           publishedSessions: publishedCount,
           publishedSessionIds: publishedIds,

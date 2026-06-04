@@ -32,7 +32,9 @@ async function seed() {
     console.log(`🏟️  Using club: ${club.name} (${clubId})`);
 
     // ── 1b. Ensure admin user has 'admin' role ──────────────────────
-    const { data: { users: adminUsers } } = await supabaseAdmin.auth.admin.listUsers({ email: 'admin@swingz.com' });
+    const {
+      data: { users: adminUsers },
+    } = await supabaseAdmin.auth.admin.listUsers({ email: 'admin@swingz.com' });
     if (adminUsers && adminUsers.length > 0) {
       const adminUserId = adminUsers[0].id;
       const { rows: adminMembership } = await client.query(
@@ -89,14 +91,18 @@ async function seed() {
 
     for (const m of members) {
       // Check if auth user exists
-      const { data: { users } } = await supabaseAdmin.auth.admin.listUsers({ email: m.email });
+      const {
+        data: { users },
+      } = await supabaseAdmin.auth.admin.listUsers({ email: m.email });
       let userId: string;
 
       if (users && users.length > 0) {
         userId = users[0].id;
         console.log(`👤 User ${m.email} already exists (${userId.slice(0, 8)}…)`);
       } else {
-        const { data: { user } } = await supabaseAdmin.auth.admin.createUser({
+        const {
+          data: { user },
+        } = await supabaseAdmin.auth.admin.createUser({
           email: m.email,
           password: TEST_PASSWORD,
           email_confirm: true,
@@ -237,11 +243,13 @@ async function seed() {
     console.log(`  ⏳ Pending approval: Clara Fischer`);
     console.log(`  📅 Season: ${seasonName} (draft)`);
     console.log(`\n  🔑 Login credentials for pending member:`);
-    console.log(`     Email: test.pending@swingz.test`);
+    console.log(`     Email: clara.fischer@swingz-verein.de`);
     console.log(`     Password: ${TEST_PASSWORD}`);
     console.log('\n  Test the workflow:');
     console.log('  1. Login as admin → Dashboard should show "1 ausstehende Genehmigung"');
-    console.log('  2. Go to Genehmigungen → Approve Clara Fischer');
+    console.log(
+      '  2. Go to Genehmigungen → Approve Clara Fischer (clara.fischer@swingz-verein.de)'
+    );
     console.log('  3. Check Billing → Should auto-create invoice (if fee config exists)');
     console.log('  4. Go to Saisonplanung → Plan Sommer 2026');
     console.log('  5. After planning → "Rechnungen generieren" button');
