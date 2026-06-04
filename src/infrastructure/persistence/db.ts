@@ -23,8 +23,8 @@ if (!connectionString) {
 const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
 const client = postgres(connectionString, {
   max: 1,
-  idle_timeout: 0,
-  connect_timeout: 30,
+  idle_timeout: 30, // 30s — release idle connections to avoid stale socket errors
+  connect_timeout: 15,
   max_lifetime: 60 * 5, // 5 minutes — shorter than typical PG server timeout, prevents stale connections on warm starts
   prepare: false,
   ssl: isLocal ? false : { rejectUnauthorized: false },

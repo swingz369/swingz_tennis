@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
+import type { TrainerProfile } from '@/domain/entities/trainer.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
@@ -59,7 +60,7 @@ export async function POST(_request: NextRequest) {
         firstName: nameParts[0] || firstName || '',
         lastName: nameParts.slice(1).join(' ') || lastName || '',
         email: userData?.email || email || '',
-        phone: userData?.phone || phone || '',
+        phone: userData?.phone || phone || 'N/A', // Fallback: phone validation requires min 5 chars
         dateOfBirth: dateOfBirth || '1990-01-01',
       });
 
@@ -122,18 +123,22 @@ export async function GET(_request: NextRequest) {
         return NextResponse.json({ profiles: [] });
       }
 
-      // 1. Query real trainer_profiles for this club
+      // 1. Query real trainer_profiles for this club (with retry for transient DB errors)
       let profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
 
       // 2. Check for trainers in memberships that have no profile yet
       // Use service client to bypass RLS (membership queries may be restricted)
       const serviceClient = createServiceClient();
-      const { data: memberships } = await serviceClient
+      const { data: memberships, error: membershipError } = await serviceClient
         .from('user_club_memberships')
         .select('user_id, created_at, is_active')
         .eq('club_id', clubId)
         .eq('role', 'trainer')
         .eq('is_active', true);
+
+      if (membershipError) {
+        console.error('[trainer-profiles GET] Membership query error:', membershipError.message);
+      }
 
       if (memberships && memberships.length > 0) {
         const existingUserIds = new Set(profiles.map((p) => p.userId));
@@ -150,26 +155,47 @@ export async function GET(_request: NextRequest) {
 
           const usersMap = new Map((users ?? []).map((u: any) => [u.id, u]));
 
-          // Auto-create missing profiles
-          const newProfiles = await Promise.all(
-            missingUserIds.map(async (userId: string) => {
-              const user = usersMap.get(userId) as any;
-              const nameParts = (user?.full_name || '').split(' ');
+          // Auto-create missing profiles (with retry on transient errors)
+          const newProfiles: TrainerProfile[] = [];
+          for (const userId of missingUserIds) {
+            const user = usersMap.get(userId) as any;
+            const nameParts = (user?.full_name || '').split(' ');
 
+            let created: TrainerProfile | null = null;
+            for (let attempt = 0; attempt < 2; attempt++) {
               try {
-                return await trainerProfileService.createTrainerProfile({
+                created = await trainerProfileService.createTrainerProfile({
                   userId,
                   clubId: clubId,
                   firstName: nameParts[0] || '',
                   lastName: nameParts.slice(1).join(' ') || '',
                   email: user?.email || '',
-                  phone: user?.phone || '',
+                  phone: user?.phone || '000-0000000', // Fallback: phone validation requires min 5 chars
                   dateOfBirth: '1990-01-01',
                 });
-              } catch {
-                // If creation fails (e.g. no club context in Drizzle), build stub for UI
-                return {
-                  id: userId,
+                break; // success
+              } catch (createErr) {
+                console.warn(
+                  `[trainer-profiles GET] Auto-create attempt ${attempt + 1} failed for userId=${userId}:`,
+                  createErr instanceof Error ? createErr.message : createErr
+                );
+                if (attempt === 0) {
+                  // Wait briefly before retry (DB connection may be recovering)
+                  await new Promise((r) => setTimeout(r, 500));
+                }
+              }
+            }
+
+            if (created) {
+              newProfiles.push(created);
+            } else {
+              // Only show stubs for transient DB errors, NOT for ghost memberships (FK violation)
+              // Ghost memberships (user_id not in users table) are data issues that should not
+              // create phantom trainers in the UI.
+              const isGhost = missingUserIds.includes(userId) && !user;
+              if (!isGhost) {
+                newProfiles.push({
+                  id: `stub-${userId}`,
                   userId,
                   firstName: nameParts[0] || '',
                   lastName: nameParts.slice(1).join(' ') || '',
@@ -194,10 +220,14 @@ export async function GET(_request: NextRequest) {
                   emergencyContact: { name: '', phone: '', relationship: '' },
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
-                };
+                });
+              } else {
+                console.warn(
+                  `[trainer-profiles GET] Skipping ghost membership userId=${userId} (user not in users table)`
+                );
               }
-            })
-          );
+            }
+          }
 
           profiles = [...profiles, ...newProfiles];
         }

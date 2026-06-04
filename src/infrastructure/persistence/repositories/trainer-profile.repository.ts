@@ -97,6 +97,19 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       return this.mapToEntity(profile);
     } catch (error) {
+      // Handle duplicate key (23505) gracefully — profile already exists, return it
+      const pgCode = (error as any)?.cause?.code || (error as any)?.code;
+      if (pgCode === '23505') {
+        const existing = await this.findByUserId(input.userId);
+        if (existing) return existing;
+      }
+      // Handle FK violation (23503) — user doesn't exist in users table (ghost membership)
+      if (pgCode === '23503') {
+        console.warn(
+          `[TrainerProfileRepository] Skipping profile creation for userId=${input.userId}: user does not exist in users table (ghost membership)`
+        );
+        throw new Error(`User ${input.userId} does not exist in users table`);
+      }
       console.error('Error creating trainer profile:', error);
       throw new Error(
         `Failed to create trainer profile: ${error instanceof Error ? error.message : 'Unknown error'}`
