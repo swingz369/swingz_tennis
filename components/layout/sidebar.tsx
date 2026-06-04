@@ -205,43 +205,38 @@ export function Sidebar({
             : undefined,
         },
         {
-          label: 'Training',
+          label: 'Training & Saison',
           icon: GraduationCap,
           subItems: [
             { name: 'Saisonplanung', href: '/admin/seasons' },
             { name: 'Trainer & Stunden', href: '/admin/trainers' },
-            { name: 'Stundennachweise', href: '/admin/hours-logs' },
             { name: 'Probetrainings', href: '/admin/trial-training' },
             { name: 'Turniere', href: '/admin/tournaments' },
           ],
         },
         {
-          label: 'Plätze & Buchungen',
+          label: 'Plätze',
           icon: MapPin,
           subItems: [
-            { name: 'Platz-Kalender', href: '/admin/courts' },
+            { name: 'Platz-Kalender & Verwaltung', href: '/admin/courts' },
             { name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' },
-            { name: 'Plätze verwalten', href: '/admin/courts/manage' },
           ],
         },
         {
           label: 'Finanzen',
           icon: DollarSign,
           subItems: [
-            { name: 'Abrechnung', href: '/admin/billing' },
-            { name: 'Preiskategorien', href: '/admin/billing/categories' },
-            { name: 'Analytics', href: '/admin/analytics' },
-            { name: 'Berichte', href: '/admin/reports' },
-            { name: 'Vereinseinstellungen', href: '/admin/settings' },
+            { name: 'Abrechnung & Kategorien', href: '/admin/billing' },
+            { name: 'Analytics & Berichte', href: '/admin/analytics' },
           ],
         },
         {
-          label: 'Service & Kommunikation',
-          icon: Newspaper,
+          label: 'Einstellungen',
+          icon: Settings,
           subItems: [
-            { name: 'News & Kommunikation', href: '/news' },
-            { name: 'Shop', href: '/shop' },
+            { name: 'Vereinseinstellungen', href: '/admin/settings' },
             { name: 'Shop verwalten', href: '/admin/shop' },
+            { name: 'Audit-Logs', href: '/admin/audit-logs' },
           ],
         },
       ];

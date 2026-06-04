@@ -1,5 +1,6 @@
 import { requireAdminClub } from '@/lib/admin-context';
 import { AnalyticsClient } from './analytics-client';
+import { AnalyticsTabsClient } from './analytics-tabs-client';
 import { ClubSelector } from './club-selector';
 import type { AnalyticsData } from './analytics-client';
 
@@ -167,17 +168,19 @@ export default async function AnalyticsPage({
     };
 
     return (
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-primary">Vereinsanalyse</h1>
-            <p className="text-gray-500">{clubs.find((c) => c.id === effectiveClubId)?.name}</p>
+      <AnalyticsTabsClient>
+        <div className="p-6 space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-brand-primary">Vereinsanalyse</h1>
+              <p className="text-gray-500">{clubs.find((c) => c.id === effectiveClubId)?.name}</p>
+            </div>
+            {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
           </div>
-          {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
-        </div>
 
-        <AnalyticsClient data={analyticsData} />
-      </div>
+          <AnalyticsClient data={analyticsData} />
+        </div>
+      </AnalyticsTabsClient>
     );
   } catch (error) {
     console.error('Error loading analytics:', error);

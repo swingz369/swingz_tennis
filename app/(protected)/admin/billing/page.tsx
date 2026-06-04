@@ -2,6 +2,7 @@ import dynamicImport from 'next/dynamic';
 import { requireAdminClub } from '@/lib/admin-context';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BillingCategoriesTabs } from './billing-tabs-wrapper';
 import type { Subscription, Invoice } from './billing-client';
 
 const BillingClient = dynamicImport(() => import('./billing-client'), {
@@ -20,6 +21,26 @@ export default async function BillingPage({
   const { supabase, clubId } = await requireAdminClub();
   const params = await searchParams;
   const { page, offset, limit } = getPagination(params, 25);
+
+  // --- Fetch fee categories (for Kategorien tab) ---
+  let feeCategories: Array<{
+    id: string;
+    name: string;
+    type: string;
+    amount: number;
+    billing_cycle: string;
+    is_active: boolean;
+  }> = [];
+  try {
+    const { data } = await supabase
+      .from('fee_configurations')
+      .select('id, name, type, amount, billing_cycle, is_active')
+      .eq('club_id', clubId)
+      .order('name');
+    feeCategories = data ?? [];
+  } catch {
+    // Table may not exist or RLS may block
+  }
 
   // --- Fetch subscriptions + members ---
   const { data: clubMemberships } = await supabase
@@ -114,13 +135,15 @@ export default async function BillingPage({
   });
 
   return (
-    <BillingClient
-      initialSubscriptions={subscriptions}
-      initialInvoices={invoices}
-      members={members}
-      clubId={clubId}
-      invoicePagination={invoicePagination}
-      searchParams={params}
-    />
+    <BillingCategoriesTabs initialCategories={feeCategories}>
+      <BillingClient
+        initialSubscriptions={subscriptions}
+        initialInvoices={invoices}
+        members={members}
+        clubId={clubId}
+        invoicePagination={invoicePagination}
+        searchParams={params}
+      />
+    </BillingCategoriesTabs>
   );
 }

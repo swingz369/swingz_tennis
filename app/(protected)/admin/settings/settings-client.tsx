@@ -217,11 +217,11 @@ export default function SettingsClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Einstellungen</h1>
-        <p className="text-gray-500">Vereins- und Systemkonfiguration</p>
+        <h1 className="text-2xl font-bold text-brand-primary">Vereinseinstellungen</h1>
+        <p className="text-gray-500">Grundlegende Konfiguration deines Vereins</p>
       </div>
 
       {/* Tabs */}

@@ -1,8 +1,13 @@
 import { requireAdminClub } from '@/lib/admin-context';
 import SettingsClient from './settings-client';
+import { SettingsTabsWrapper } from './settings-tabs-wrapper';
 
 export default async function SettingsPage() {
-  await requireAdminClub();
+  const { clubId } = await requireAdminClub();
 
-  return <SettingsClient />;
+  return (
+    <SettingsTabsWrapper clubId={clubId}>
+      <SettingsClient />
+    </SettingsTabsWrapper>
+  );
 }

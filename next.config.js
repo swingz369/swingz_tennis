@@ -157,9 +157,50 @@ const nextConfig = {
   // Redirects
   async redirects() {
     return [
+      // Navigation consolidation: old routes → new merged pages
       {
         source: '/admin/season-plan',
         destination: '/admin/seasons',
+        permanent: true,
+      },
+      {
+        source: '/admin/season-plan/:seasonId',
+        destination: '/admin/seasons/:seasonId/planning',
+        permanent: true,
+      },
+      {
+        source: '/admin/schedules',
+        destination: '/admin/seasons',
+        permanent: true,
+      },
+      {
+        source: '/admin/courts/manage',
+        destination: '/admin/courts',
+        permanent: true,
+      },
+      {
+        source: '/admin/billing/categories',
+        destination: '/admin/billing',
+        permanent: true,
+      },
+      {
+        source: '/admin/reports',
+        destination: '/admin/analytics',
+        permanent: true,
+      },
+      {
+        source: '/admin/branding',
+        destination: '/admin/settings',
+        permanent: true,
+      },
+      {
+        source: '/admin/court-types',
+        destination: '/admin/settings',
+        permanent: true,
+      },
+      {
+        source: '/admin/hours-logs',
+        destination: '/admin/trainers',
         permanent: true,
       },
     ];
