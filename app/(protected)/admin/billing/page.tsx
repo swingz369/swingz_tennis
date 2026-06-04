@@ -135,7 +135,7 @@ export default async function BillingPage({
   });
 
   return (
-    <BillingCategoriesTabs initialCategories={feeCategories}>
+    <BillingCategoriesTabs initialCategories={feeCategories} clubId={clubId}>
       <BillingClient
         initialSubscriptions={subscriptions}
         initialInvoices={invoices}
