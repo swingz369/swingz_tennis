@@ -82,9 +82,9 @@ async function seed() {
 
     // ── 3. Members (2 aktiv + 1 ausstehend) ────────────────────────────
     const members = [
-      { email: 'test.member1@swingz.test', name: 'Anna Müller', active: true },
-      { email: 'test.member2@swingz.test', name: 'Ben Schmidt', active: true },
-      { email: 'test.pending@swingz.test', name: 'Clara Fischer', active: false },
+      { email: 'anna.mueller@example.com', name: 'Anna Müller', active: true },
+      { email: 'ben.schmidt@example.com', name: 'Ben Schmidt', active: true },
+      { email: 'clara.fischer@example.com', name: 'Clara Fischer', active: false },
     ];
 
     for (const m of members) {
