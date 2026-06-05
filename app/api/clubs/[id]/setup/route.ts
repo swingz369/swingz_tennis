@@ -54,6 +54,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
     }
 
+    // Convert empty strings for date/timestamp columns to null
+    // (PostgreSQL rejects '' for date/timestamp types)
+    for (const key of ['founding_date', 'setup_completed_at']) {
+      if (updates[key] === '') updates[key] = null;
+    }
+
     updates.updated_at = new Date().toISOString();
 
     const { error } = await auth.supabase
