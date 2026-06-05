@@ -47,6 +47,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface TrainerAvailabilitySlot {
   id: string;
@@ -168,7 +169,7 @@ export default function TrainerProfileManagement() {
   const loadTrainers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/trainer-profiles');
+      const response = await apiFetch('/api/trainer-profiles');
       if (!response.ok) {
         throw new Error('Failed to load trainers');
       }
@@ -189,9 +190,8 @@ export default function TrainerProfileManagement() {
     }
     setInviteLoading(true);
     try {
-      const res = await fetch('/api/members/invite', {
+      const res = await apiFetch('/api/members/invite', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: inviteEmail,
           full_name: inviteName || undefined,
@@ -221,9 +221,8 @@ export default function TrainerProfileManagement() {
     if (!selectedTrainer) return;
 
     try {
-      const response = await fetch(`/api/trainer-profiles/${selectedTrainer.id}`, {
+      const response = await apiFetch(`/api/trainer-profiles/${selectedTrainer.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
       });
 
@@ -248,9 +247,8 @@ export default function TrainerProfileManagement() {
 
   const handleStatusChange = async (trainerId: string, newStatus: TrainerProfile['status']) => {
     try {
-      const response = await fetch(`/api/trainer-profiles/${trainerId}`, {
+      const response = await apiFetch(`/api/trainer-profiles/${trainerId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -277,11 +275,10 @@ export default function TrainerProfileManagement() {
     if (!selectedTrainer) return;
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/trainer-profiles/${selectedTrainer.id}/qualifications/${qualificationId}/verify`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ verifiedBy: 'Admin' }),
         }
       );
@@ -317,9 +314,8 @@ export default function TrainerProfileManagement() {
       [day]: !selectedTrainer.availability[day],
     };
     try {
-      const response = await fetch(`/api/trainer-profiles/${selectedTrainer.id}`, {
+      const response = await apiFetch(`/api/trainer-profiles/${selectedTrainer.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ availability: newAvailability }),
       });
       if (!response.ok) throw new Error('Failed to update availability');
@@ -348,9 +344,8 @@ export default function TrainerProfileManagement() {
     }
     setSlotSaving(true);
     try {
-      const res = await fetch('/api/trainer-availability', {
+      const res = await apiFetch('/api/trainer-availability', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           trainer_id: selectedTrainer.userId,
           date: slotDate,
@@ -382,7 +377,7 @@ export default function TrainerProfileManagement() {
   const handleDeleteSlot = async (slotId: string) => {
     if (!selectedTrainer) return;
     try {
-      const res = await fetch(`/api/trainer-availability?id=${slotId}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/trainer-availability?id=${slotId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Fehler beim Löschen');
       toast.success('Verfügbarkeit gelöscht');
       loadAvailabilitySlots(selectedTrainer.userId);
