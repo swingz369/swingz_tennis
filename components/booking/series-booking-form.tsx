@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Repeat, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface SeriesBookingFormProps {
   clubId: string;
@@ -134,7 +135,7 @@ export default function SeriesBookingForm({
     setIsValidating(true);
 
     try {
-      const response = await fetch('/api/bookings/validate-series', {
+      const response = await apiFetch('/api/bookings/validate-series', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -188,7 +189,7 @@ export default function SeriesBookingForm({
     setIsCreating(true);
 
     try {
-      const response = await fetch('/api/bookings/series', {
+      const response = await apiFetch('/api/bookings/series', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

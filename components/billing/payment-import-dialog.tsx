@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 import { Upload, Download, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { generatePaymentCsvTemplate } from '@/lib/csv/payment-import';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface ImportResult {
   success: boolean;
@@ -42,7 +43,7 @@ export default function PaymentImportDialog() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/billing/payments/import', {
+      const response = await apiFetch('/api/billing/payments/import', {
         method: 'POST',
         body: formData,
       });

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft, Save, Trash2, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Season {
   id: string;
@@ -57,7 +58,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/api/seasons/${id}`);
+        const res = await apiFetch(`/api/seasons/${id}`);
         if (!res.ok) throw new Error('Season nicht gefunden');
         const data = await res.json();
         const s: Season = data.season;
@@ -97,12 +98,9 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
     setLoading(true);
     try {
       const csrf = getCsrfToken();
-      const res = await fetch(`/api/seasons/${id}`, {
+      const res = await apiFetch(`/api/seasons/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrf ? { 'x-csrf-token': csrf } : {}),
-        },
+        headers: { ...(csrf ? { 'x-csrf-token': csrf } : {}) },
         body: JSON.stringify(formData),
       });
       if (!res.ok) {
@@ -126,7 +124,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
     setDeleting(true);
     try {
       const csrf = getCsrfToken();
-      const res = await fetch(`/api/seasons/${id}`, {
+      const res = await apiFetch(`/api/seasons/${id}`, {
         method: 'DELETE',
         headers: csrf ? { 'x-csrf-token': csrf } : {},
       });

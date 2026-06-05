@@ -9,6 +9,7 @@ import { useSessionRsvps } from '@/hooks/use-rsvp';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { de } from '@/lib/locale';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface TrainerRsvpListProps {
   sessions: Array<{
@@ -46,7 +47,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
     setCheckingIn(true);
     try {
       const today = new Date().toISOString();
-      const res = await fetch('/api/attendance-records', {
+      const res = await apiFetch('/api/attendance-records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { de } from '@/lib/locale';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Court {
   id: string;
@@ -45,7 +46,7 @@ export function CourtBookings({ clubId }: Props) {
       setLoading(true);
       try {
         const url = clubId ? `/api/courts?clubId=${clubId}` : '/api/courts';
-        const res = await fetch(url, { credentials: 'include' });
+        const res = await apiFetch(url, { credentials: 'include' });
         if (!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
         setCourts(data.courts ?? data ?? []);
@@ -65,7 +66,7 @@ export function CourtBookings({ clubId }: Props) {
       await Promise.all(
         courts.map(async (court) => {
           try {
-            const res = await fetch(
+            const res = await apiFetch(
               `/api/courts/${court.id}/schedule?start_date=${dateStr}&end_date=${dateStr}`,
               { credentials: 'include' }
             );
@@ -89,7 +90,7 @@ export function CourtBookings({ clubId }: Props) {
       const endMin = m === 30 ? '00' : '30';
       const endTime = `${dateStr}T${String(endHour).padStart(2, '0')}:${endMin}:00`;
 
-      const res = await fetch('/api/bookings/court', {
+      const res = await apiFetch('/api/bookings/court', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -99,7 +100,7 @@ export function CourtBookings({ clubId }: Props) {
       if (!res.ok) throw new Error(data.error || 'Buchung fehlgeschlagen');
       toast.success('Platz erfolgreich gebucht!');
       // Refresh schedule for this court
-      const schedRes = await fetch(
+      const schedRes = await apiFetch(
         `/api/courts/${courtId}/schedule?start_date=${dateStr}&end_date=${dateStr}`,
         { credentials: 'include' }
       );

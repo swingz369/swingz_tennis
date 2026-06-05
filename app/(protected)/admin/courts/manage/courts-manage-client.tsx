@@ -51,6 +51,7 @@ import {
 } from '@/components/ui/select';
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 import type { Court } from '@/lib/types/court-booking';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface CourtsManageClientProps {
   initialCourts: Court[];
@@ -111,7 +112,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/courts', {
+      const res = await apiFetch('/api/courts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -169,7 +170,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
     if (!selectedCourt) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/courts/${selectedCourt.id}`, {
+      const res = await apiFetch(`/api/courts/${selectedCourt.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,7 +208,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
   const handleToggleActive = async (court: Court) => {
     setTogglingId(court.id);
     try {
-      const res = await fetch(`/api/courts/${court.id}`, {
+      const res = await apiFetch(`/api/courts/${court.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !court.is_active }),
@@ -234,7 +235,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
     if (!selectedCourt) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/courts/${selectedCourt.id}`, {
+      const res = await apiFetch(`/api/courts/${selectedCourt.id}`, {
         method: 'DELETE',
       });
 

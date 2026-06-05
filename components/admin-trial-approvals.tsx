@@ -19,6 +19,7 @@ import {
   ChevronDown,
   AlertCircle,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 interface TrialParticipant {
   id: string;
   firstName: string;
@@ -79,7 +80,7 @@ export default function AdminTrialApprovals() {
       setError(null);
       const url =
         filter === 'all' ? '/api/trial-trainings' : `/api/trial-trainings?status=${filter}`;
-      const res = await fetch(url, { credentials: 'include' });
+      const res = await apiFetch(url, { credentials: 'include' });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error ?? 'Fehler beim Laden der Probetrainings');
@@ -95,7 +96,7 @@ export default function AdminTrialApprovals() {
 
   const fetchTrainers = useCallback(async () => {
     try {
-      const res = await fetch('/api/trainer-profiles', { credentials: 'include' });
+      const res = await apiFetch('/api/trainer-profiles', { credentials: 'include' });
       if (!res.ok) return;
       const data = await res.json();
       setTrainers(
@@ -110,7 +111,7 @@ export default function AdminTrialApprovals() {
 
   const fetchCourts = useCallback(async () => {
     try {
-      const res = await fetch('/api/courts', { credentials: 'include' });
+      const res = await apiFetch('/api/courts', { credentials: 'include' });
       if (!res.ok) return;
       const data = await res.json();
       setCourts(
@@ -137,7 +138,7 @@ export default function AdminTrialApprovals() {
         (t) => t.id === selectedTrainerId || t.userId === selectedTrainerId
       );
       const court = courts.find((c) => c.id === selectedCourtId);
-      const res = await fetch(`/api/trial-trainings/${approveId}`, {
+      const res = await apiFetch(`/api/trial-trainings/${approveId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -182,7 +183,7 @@ export default function AdminTrialApprovals() {
     if (!rejectionReason.trim()) return;
     setProcessing(true);
     try {
-      const res = await fetch(`/api/trial-trainings/${id}`, {
+      const res = await apiFetch(`/api/trial-trainings/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

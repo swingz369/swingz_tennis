@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface ApiBooking {
   id: string;
@@ -62,7 +63,7 @@ export function MyBookings() {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch('/api/bookings', { credentials: 'include' });
+        const res = await apiFetch('/api/bookings', { credentials: 'include' });
         if (!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
         setBookings((data.bookings ?? []).map(toDisplay));
@@ -78,7 +79,7 @@ export function MyBookings() {
   const handleCancel = async (id: string) => {
     setCancelling(id);
     try {
-      const res = await fetch(`/api/bookings/${id}`, {
+      const res = await apiFetch(`/api/bookings/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });

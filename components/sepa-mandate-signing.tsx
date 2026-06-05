@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileText, Download, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface SEPAMandateFormData {
   accountHolder: string;
@@ -151,7 +152,7 @@ export default function SEPAMandateSigning() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/sepa-mandates', {
+      const res = await apiFetch('/api/sepa-mandates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

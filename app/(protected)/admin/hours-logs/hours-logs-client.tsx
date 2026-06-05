@@ -26,6 +26,7 @@ import {
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { csrfHeaders } from '@/lib/csrf-client';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface HoursLog {
   id: string;
@@ -65,7 +66,7 @@ export default function HoursLogsClient() {
         params.set('endDate', end.toISOString().substring(0, 10));
       }
 
-      const response = await fetch(`/api/hours-logs?${params.toString()}`);
+      const response = await apiFetch(`/api/hours-logs?${params.toString()}`);
       if (!response.ok) throw new Error('Fehler beim Laden');
       const data = await response.json();
       setLogs(data.hoursLogs || []);
@@ -84,9 +85,9 @@ export default function HoursLogsClient() {
   const handleApprove = async (id: string) => {
     setActionLoading(id);
     try {
-      const res = await fetch(`/api/hours-logs/${id}/approve`, {
+      const res = await apiFetch(`/api/hours-logs/${id}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
       });
       if (!res.ok) {
         const err = await res.json();
@@ -108,9 +109,9 @@ export default function HoursLogsClient() {
     }
     setActionLoading(rejectId);
     try {
-      const res = await fetch(`/api/hours-logs/${rejectId}/reject`, {
+      const res = await apiFetch(`/api/hours-logs/${rejectId}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({ reason: rejectReason }),
       });
       if (!res.ok) {
@@ -132,7 +133,7 @@ export default function HoursLogsClient() {
     if (!deleteId) return;
     setActionLoading(deleteId);
     try {
-      const res = await fetch(`/api/hours-logs/${deleteId}`, {
+      const res = await apiFetch(`/api/hours-logs/${deleteId}`, {
         method: 'DELETE',
         headers: { ...csrfHeaders() },
       });

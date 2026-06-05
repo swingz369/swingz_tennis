@@ -18,14 +18,16 @@ import { csrfHeaders } from './csrf-client';
 /**
  * Wrapper around fetch that automatically adds:
  * - CSRF token header for state-changing methods
- * - Content-Type: application/json when body is a string
+ * - Content-Type: application/json when body is a string (NOT for FormData)
  */
 export async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const method = (options.method ?? 'GET').toUpperCase();
   const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
 
   const headers: Record<string, string> = {
-    ...(isMutation ? { 'Content-Type': 'application/json' } : {}),
+    // Skip Content-Type for FormData — browser sets multipart/form-data with boundary
+    ...(isMutation && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(isMutation ? csrfHeaders() : {}),
     ...((options.headers as Record<string, string>) ?? {}),
   };

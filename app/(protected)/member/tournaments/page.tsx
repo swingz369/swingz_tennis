@@ -13,6 +13,7 @@ import {
   FORMAT_LABELS,
   CATEGORY_LABELS,
 } from '@/src/constants/tournaments';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Tournament {
   id: string;
@@ -46,12 +47,12 @@ export default function MemberTournamentsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/tournaments');
+      const res = await apiFetch('/api/tournaments');
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
 
       // Also fetch my registrations
-      const regRes = await fetch('/api/tournaments/my-registrations').catch(() => null);
+      const regRes = await apiFetch('/api/tournaments/my-registrations').catch(() => null);
       const regData = regRes?.ok ? await regRes.json() : { registrations: [] };
       const myRegs: Record<string, { id: string; status: string }> = {};
       (regData.registrations ?? []).forEach((r: any) => {
@@ -79,7 +80,7 @@ export default function MemberTournamentsPage() {
     setRegisterLoading(true);
     setRegisterError(null);
     try {
-      const res = await fetch(`/api/tournaments/${confirmTournament.id}/register`, {
+      const res = await apiFetch(`/api/tournaments/${confirmTournament.id}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });

@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { PreferencesTab } from './preferences-tab';
 import type { Member } from '../member.types';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Props {
   initialMember: Member;
@@ -90,7 +91,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/bookings?memberId=${member.id}&clubId=${clubId}`);
+      const res = await apiFetch(`/api/bookings?memberId=${member.id}&clubId=${clubId}`);
       if (res.ok) {
         const data = await res.json();
         setBookings(Array.isArray(data) ? data : []);
@@ -108,7 +109,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
   const handleRoleChange = async (newRole: Member['role']) => {
     try {
-      const res = await fetch(`/api/members/${member.id}`, {
+      const res = await apiFetch(`/api/members/${member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
@@ -129,7 +130,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
   const handleToggleActive = async () => {
     try {
-      const res = await fetch(`/api/members/${member.id}`, {
+      const res = await apiFetch(`/api/members/${member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !member.is_active }),
@@ -150,7 +151,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
   const handleSaveProfile = async () => {
     try {
-      const res = await fetch(`/api/members/${member.id}`, {
+      const res = await apiFetch(`/api/members/${member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Trophy, Sparkles, ArrowRight, Eye, EyeOff, Shield, CheckCircle2 } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

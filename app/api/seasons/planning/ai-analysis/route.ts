@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { AI_PROMPTS } from '@/lib/ai-prompts';
+import { apiFetch } from '@/lib/api-fetch';
 
 const env = process.env;
 
@@ -44,10 +45,9 @@ export async function POST(request: NextRequest) {
         ? env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet'
         : env.OPENAI_MODEL || 'gpt-4o-mini';
 
-      const response = await fetch(apiUrl, {
+      const response = await apiFetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${aiKey}`,
           ...(isOpenRouter
             ? {

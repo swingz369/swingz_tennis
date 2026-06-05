@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
+import { apiFetch } from '@/lib/api-fetch';
 
 function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId: string }) {
   const [installmentCount, setInstallmentCount] = useState(1);
@@ -59,7 +60,7 @@ function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId
     setGenerating(true);
     setResult(null);
     try {
-      const res = await fetch('/api/billing/generate-season-invoices', {
+      const res = await apiFetch('/api/billing/generate-season-invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,7 +186,7 @@ function GroupChangeDialog({
     setLoading(true);
     setErr(null);
     try {
-      const res = await fetch('/api/billing/group-change', {
+      const res = await apiFetch('/api/billing/group-change', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -289,7 +290,7 @@ function GroupMembersPanel({ seasonId, clubId }: { seasonId: string; clubId: str
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/api/seasons/${seasonId}/groups?clubId=${clubId}`);
+        const res = await apiFetch(`/api/seasons/${seasonId}/groups?clubId=${clubId}`);
         if (res.ok) {
           const data = await res.json();
           setGroups(data.groups ?? []);
@@ -361,7 +362,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const fetchSeason = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/seasons/${id}`);
+      const response = await apiFetch(`/api/seasons/${id}`);
 
       if (!response.ok) {
         throw new Error('Fehler beim Laden der Season');
@@ -382,9 +383,9 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
   const handleOpenPreferences = async () => {
     try {
-      const response = await fetch(`/api/seasons/${id}`, {
+      const response = await apiFetch(`/api/seasons/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           planning_status: 'collecting_preferences',
           preferences_open: true,
@@ -406,9 +407,9 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const confirmPublish = async () => {
     setPublishConfirmOpen(false);
     try {
-      const response = await fetch(`/api/seasons/${id}`, {
+      const response = await apiFetch(`/api/seasons/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({ planning_status: 'published' }),
       });
 
@@ -424,9 +425,9 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     setDeleteConfirmOpen(false);
     setDeleting(true);
     try {
-      const response = await fetch(`/api/seasons/${id}`, {
+      const response = await apiFetch(`/api/seasons/${id}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
       });
 
       if (!response.ok) {

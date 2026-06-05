@@ -36,6 +36,7 @@ import {
 } from '@/src/constants/tournaments';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { apiFetch } from '@/lib/api-fetch';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -123,7 +124,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const fetchTournament = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/tournaments/${id}`);
+      const res = await apiFetch(`/api/tournaments/${id}`);
       if (!res.ok) {
         if (res.status === 404) throw new Error('Turnier nicht gefunden');
         throw new Error('Fehler beim Laden');
@@ -144,7 +145,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const handleStatusChange = async (newStatus: string) => {
     setStatusUpdating(true);
     try {
-      const res = await fetch(`/api/tournaments/${id}`, {
+      const res = await apiFetch(`/api/tournaments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -160,7 +161,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/tournaments/${id}`, {
+      const res = await apiFetch(`/api/tournaments/${id}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Fehler beim Löschen');

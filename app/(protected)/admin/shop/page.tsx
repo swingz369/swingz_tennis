@@ -33,6 +33,7 @@ import {
   Link as LinkIcon,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
+import { apiFetch } from '@/lib/api-fetch';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
 
@@ -218,9 +219,8 @@ export default function AdminShopPage() {
   const handleAdvanceStatus = async (orderId: string, newStatus: string) => {
     setUpdatingOrderId(orderId);
     try {
-      const res = await fetch(`/api/admin/shop/orders/${orderId}`, {
+      const res = await apiFetch(`/api/admin/shop/orders/${orderId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
       if (!res.ok) {
@@ -299,7 +299,7 @@ export default function AdminShopPage() {
       const fd = new FormData();
       fd.append('file', imageFile);
 
-      const res = await fetch('/api/admin/shop/upload', {
+      const res = await apiFetch('/api/admin/shop/upload', {
         method: 'POST',
         body: fd,
       });
@@ -340,7 +340,7 @@ export default function AdminShopPage() {
         ? { ...form, id: editId, image_url: imageUrl || null }
         : { ...form, image_url: imageUrl || null };
 
-      const res = await fetch('/api/admin/shop/products', {
+      const res = await apiFetch('/api/admin/shop/products', {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -366,7 +366,7 @@ export default function AdminShopPage() {
     if (!deleteId) return;
 
     try {
-      const res = await fetch(`/api/admin/shop/products?id=${deleteId}`, {
+      const res = await apiFetch(`/api/admin/shop/products?id=${deleteId}`, {
         method: 'DELETE',
       });
       if (!res.ok) {

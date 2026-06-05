@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Mail, Loader2, CheckCircle, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface FormData {
   firstName: string;
@@ -102,7 +103,7 @@ export default function PublicRegistrationForm({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/public/register', {
+      const res = await apiFetch('/api/public/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, clubId }),

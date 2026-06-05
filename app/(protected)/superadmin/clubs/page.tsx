@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Club } from '@/lib/clubs';
 import { parseClubsResponse } from '@/lib/clubs';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function ClubsAdminPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -21,7 +22,7 @@ export default function ClubsAdminPage() {
 
   const fetchClubs = async () => {
     try {
-      const res = await fetch('/api/clubs');
+      const res = await apiFetch('/api/clubs');
       if (!res.ok) {
         throw new Error(`Failed to fetch clubs: ${res.status}`);
       }
@@ -40,7 +41,7 @@ export default function ClubsAdminPage() {
     e.preventDefault();
     setError(null);
     try {
-      const res = await fetch('/api/clubs', {
+      const res = await apiFetch('/api/clubs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newClub),

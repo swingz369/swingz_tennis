@@ -17,6 +17,7 @@ import {
 import { ArrowLeft, Save, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub } from '@/hooks/use-user-data';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function NewSeasonPage() {
   const router = useRouter();
@@ -55,12 +56,9 @@ export default function NewSeasonPage() {
         .find((c) => c.startsWith('csrf-token='))
         ?.split('=')[1];
 
-      const response = await fetch('/api/seasons', {
+      const response = await apiFetch('/api/seasons', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
-        },
+        headers: { ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
         body: JSON.stringify({
           ...formData,
           club_id: clubId,

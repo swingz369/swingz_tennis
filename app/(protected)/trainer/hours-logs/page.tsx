@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Clock, CheckCircle, XCircle, Plus, Calendar, Filter, Hourglass } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface HoursLog {
   id: string;
@@ -69,7 +70,7 @@ export default function TrainerHoursLogsPage() {
         params.set('endDate', end.toISOString().substring(0, 10));
       }
 
-      const response = await fetch(`/api/hours-logs?${params.toString()}`);
+      const response = await apiFetch(`/api/hours-logs?${params.toString()}`);
       if (!response.ok) throw new Error('Fehler beim Laden');
 
       const data = await response.json();
@@ -100,7 +101,7 @@ export default function TrainerHoursLogsPage() {
 
     setSubmitting(true);
     try {
-      const response = await fetch('/api/hours-logs', {
+      const response = await apiFetch('/api/hours-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

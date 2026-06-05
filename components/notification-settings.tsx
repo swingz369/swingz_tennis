@@ -25,6 +25,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface Notification {
   id: string;
@@ -65,7 +66,7 @@ export default function NotificationSettings() {
 
     async function fetchNotifications() {
       try {
-        const res = await fetch('/api/user/notifications', {
+        const res = await apiFetch('/api/user/notifications', {
           signal: abortController.signal,
         });
         if (res.ok) {
@@ -98,7 +99,7 @@ export default function NotificationSettings() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await fetch(`/api/user/notifications/${id}`, { method: 'PATCH' });
+      await apiFetch(`/api/user/notifications/${id}`, { method: 'PATCH' });
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
       toast.success('Benachrichtigung als gelesen markiert');
     } catch (err) {
@@ -108,7 +109,7 @@ export default function NotificationSettings() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await fetch('/api/user/notifications/mark-all-read', { method: 'POST' });
+      await apiFetch('/api/user/notifications/mark-all-read', { method: 'POST' });
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       toast.success('Alle Benachrichtigungen als gelesen markiert');
     } catch (err) {
@@ -118,7 +119,7 @@ export default function NotificationSettings() {
 
   const handleDeleteNotification = async (id: string) => {
     try {
-      await fetch(`/api/user/notifications/${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/user/notifications/${id}`, { method: 'DELETE' });
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       toast.success('Benachrichtigung gelöscht');
     } catch (err) {
@@ -129,7 +130,7 @@ export default function NotificationSettings() {
   const handleClearAll = async () => {
     await Promise.all(
       notifications.map((n) =>
-        fetch(`/api/user/notifications/${n.id}`, { method: 'DELETE' }).catch(() => {})
+        apiFetch(`/api/user/notifications/${n.id}`, { method: 'DELETE' }).catch(() => {})
       )
     );
     setNotifications([]);

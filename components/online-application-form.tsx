@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { User, MapPin, Calendar, Send, Info, FileText, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface ApplicationFormData {
   // Personal Information
@@ -132,7 +133,7 @@ export default function OnlineApplicationForm() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/applications', {
+      const res = await apiFetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

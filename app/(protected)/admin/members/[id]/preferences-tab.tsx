@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Clock, Target, Users, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 type DaySchedule = Array<{ start: string; end: string }>;
 
@@ -88,7 +89,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
   const fetchPrefs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/members/${userId}/schedule-preferences?clubId=${clubId}`);
+      const res = await apiFetch(`/api/members/${userId}/schedule-preferences?clubId=${clubId}`);
       if (res.ok) {
         const data = await res.json();
         setPrefs(
@@ -119,7 +120,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const res = await fetch(`/api/members/${userId}/schedule-preferences`, {
+      const res = await apiFetch(`/api/members/${userId}/schedule-preferences`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

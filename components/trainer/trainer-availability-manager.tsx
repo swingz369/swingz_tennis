@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Trash2, Clock, Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface TrainerAvailabilityManagerProps {
   trainerId: string;
@@ -94,7 +95,7 @@ export default function TrainerAvailabilityManager({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/trainer-availability', {
+      const response = await apiFetch('/api/trainer-availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -133,7 +134,7 @@ export default function TrainerAvailabilityManager({
 
   const handleDeleteAvailability = async (id: string) => {
     try {
-      const response = await fetch(`/api/trainer-availability?id=${id}`, {
+      const response = await apiFetch(`/api/trainer-availability?id=${id}`, {
         method: 'DELETE',
       });
 
@@ -163,7 +164,7 @@ export default function TrainerAvailabilityManager({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/trainer-absences', {
+      const response = await apiFetch('/api/trainer-absences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

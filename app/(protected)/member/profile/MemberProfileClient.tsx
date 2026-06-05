@@ -19,6 +19,7 @@ import {
   Edit,
   AlertCircle,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Member {
   id: string;
@@ -71,7 +72,7 @@ export function MemberProfileClient({ member }: Props) {
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`/api/members/${member.id}`, {
+      const res = await apiFetch(`/api/members/${member.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -51,6 +51,7 @@ import {
 import { toast } from 'sonner';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface CourtType {
   id: string;
@@ -95,7 +96,7 @@ export function CourtTypesClient() {
   const loadCourtTypes = useCallback(async (p: number = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/court-types?page=${p}&limit=${TYPES_PER_PAGE}`);
+      const res = await apiFetch(`/api/court-types?page=${p}&limit=${TYPES_PER_PAGE}`);
       if (!res.ok) {
         throw new Error('Failed to load court types');
       }
@@ -132,7 +133,7 @@ export function CourtTypesClient() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/court-types', {
+      const res = await apiFetch('/api/court-types', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -176,7 +177,7 @@ export function CourtTypesClient() {
     if (!selectedType) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/court-types/${selectedType.id}`, {
+      const res = await apiFetch(`/api/court-types/${selectedType.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -204,7 +205,7 @@ export function CourtTypesClient() {
     if (!selectedType) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/court-types/${selectedType.id}`, {
+      const res = await apiFetch(`/api/court-types/${selectedType.id}`, {
         method: 'DELETE',
       });
 

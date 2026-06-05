@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { User, Save, Camera, Shield, Bell, CreditCard, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserMember } from '@/hooks/use-user-data';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function MemberProfile() {
   const { data: memberData, isLoading } = useUserMember();
@@ -54,7 +55,7 @@ export default function MemberProfile() {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch('/api/sepa-mandates?active=true', { signal: ac.signal })
+    apiFetch('/api/sepa-mandates?active=true', { signal: ac.signal })
       .then((res) => res.json())
       .then((data) => {
         const mandates = data?.mandates || data || [];
@@ -80,7 +81,7 @@ export default function MemberProfile() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/user/member', {
+      const response = await apiFetch('/api/user/member', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

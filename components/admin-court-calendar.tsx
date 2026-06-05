@@ -44,6 +44,7 @@ import {
   CourtRowHeader,
   CourtCalendarLegend,
 } from '@/components/court-calendar-shared';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface AdminCourtCalendarProps {
   onBookCourt?: (courtId: string, date: Date, startTime: string, endTime: string) => void;
@@ -147,7 +148,7 @@ export default function AdminCourtCalendar({
     if (!clubId) return;
     const fetchActiveSeason = async () => {
       try {
-        const res = await fetch(`/api/seasons?clubId=${clubId}`);
+        const res = await apiFetch(`/api/seasons?clubId=${clubId}`);
         if (res.ok) {
           const data = await res.json();
           const seasons = data.seasons ?? [];
@@ -281,7 +282,7 @@ export default function AdminCourtCalendar({
       const endTimeStr = `${String(newEndDate.getHours()).padStart(2, '0')}:${String(newEndDate.getMinutes()).padStart(2, '0')}`;
 
       try {
-        const response = await fetch(`/api/sessions/${activeId}`, {
+        const response = await apiFetch(`/api/sessions/${activeId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

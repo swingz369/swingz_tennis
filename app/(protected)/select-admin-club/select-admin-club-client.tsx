@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { IconBox } from '@/components/ui/icon-box';
 import { cn } from '@/lib/utils';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Club {
   id: string;
@@ -39,7 +40,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
   const handleSelect = async (clubId: string) => {
     setSelecting(clubId);
     try {
-      const res = await fetch('/api/admin/switch-club', {
+      const res = await apiFetch('/api/admin/switch-club', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clubId }),

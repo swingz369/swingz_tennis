@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface FeeConfig {
   id: string;
@@ -37,7 +38,7 @@ export default function FeeCategoriesClient({
 
   const handleCreate = async () => {
     try {
-      const res = await fetch('/api/fee-configurations', {
+      const res = await apiFetch('/api/fee-configurations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

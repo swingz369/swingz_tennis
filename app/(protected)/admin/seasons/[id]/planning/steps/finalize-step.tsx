@@ -30,6 +30,7 @@ import {
   Brain,
 } from 'lucide-react';
 import type { ConflictDetectionResult, ConflictSeverityLevel } from '@/lib/season-planning/types';
+import { apiFetch } from '@/lib/api-fetch';
 
 export function FinalizeStep() {
   const { state, confirmPlan, detectConflicts } = useWizard();
@@ -80,9 +81,9 @@ export function FinalizeStep() {
   const handleResolve = async (conflictId: string) => {
     setResolvingId(conflictId);
     try {
-      const res = await fetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
+      const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({ conflictId, action: 'resolve', notes: 'Manuell gelöst' }),
       });
       if (!res.ok) {
@@ -105,9 +106,9 @@ export function FinalizeStep() {
   const handleIgnore = async (conflictId: string) => {
     setResolvingId(conflictId);
     try {
-      const res = await fetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
+      const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({ conflictId, action: 'ignore', notes: 'Bewusst ignoriert' }),
       });
       if (!res.ok) {
@@ -295,7 +296,7 @@ export function FinalizeStep() {
                     onClick={async () => {
                       setIsGeneratingInvoices(true);
                       try {
-                        const res = await fetch('/api/billing/generate-invoices', {
+                        const res = await apiFetch('/api/billing/generate-invoices', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({}),

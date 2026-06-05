@@ -38,6 +38,7 @@ import PaymentImportDialog from '@/components/billing/payment-import-dialog';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPageUrl } from '@/lib/pagination';
 import type { PaginationMeta } from '@/lib/pagination';
+import { apiFetch } from '@/lib/api-fetch';
 
 export type Subscription = {
   id: string;
@@ -205,7 +206,7 @@ export default function BillingClient({
     }
     setLoadingInvoices(true);
     const params = new URLSearchParams({ clubId, type: invoiceTypeFilter });
-    fetch(`/api/billing/invoices?${params.toString()}`)
+    apiFetch(`/api/billing/invoices?${params.toString()}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
@@ -237,7 +238,7 @@ export default function BillingClient({
   const handleSendInvoice = async (invoiceId: string) => {
     setSendingInvoiceId(invoiceId);
     try {
-      const res = await fetch(`/api/billing/invoices/${invoiceId}/send-email`, {
+      const res = await apiFetch(`/api/billing/invoices/${invoiceId}/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -264,7 +265,7 @@ export default function BillingClient({
     }
     setSubmittingAdhoc(true);
     try {
-      const res = await fetch('/api/billing/invoices', {
+      const res = await apiFetch('/api/billing/invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -302,7 +303,7 @@ export default function BillingClient({
   const handleAssignPlan = async () => {
     if (!selectedMember) return;
     try {
-      const res = await fetch('/api/admin/billing/subscriptions', {
+      const res = await apiFetch('/api/admin/billing/subscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -329,7 +330,7 @@ export default function BillingClient({
   const handleGenerateInvoices = async () => {
     setGeneratingInvoices(true);
     try {
-      const res = await fetch('/api/billing/generate-invoices', {
+      const res = await apiFetch('/api/billing/generate-invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),

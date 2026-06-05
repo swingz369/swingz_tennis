@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { apiFetch } from '@/lib/api-fetch';
 
 // Type guard: validates URL format and protocol
 function isValidUrl(url: string | undefined): url is string {
@@ -93,7 +94,7 @@ async function handleBookingCreated(booking: Record<string, unknown>) {
   const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
   if (isValidUrl(zapierUrl)) {
     try {
-      await fetch(zapierUrl, {
+      await apiFetch(zapierUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,7 +120,7 @@ async function handleBookingUpdated(booking: Record<string, unknown>) {
   const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
   if (isValidUrl(zapierUrl)) {
     try {
-      await fetch(zapierUrl, {
+      await apiFetch(zapierUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -146,7 +147,7 @@ async function handleBookingCancelled(booking: Record<string, unknown>) {
   const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
   if (isValidUrl(zapierUrl)) {
     try {
-      await fetch(zapierUrl, {
+      await apiFetch(zapierUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

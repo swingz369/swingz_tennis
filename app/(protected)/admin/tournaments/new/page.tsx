@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function NewTournamentPage() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function NewTournamentPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/tournaments', {
+      const res = await apiFetch('/api/tournaments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

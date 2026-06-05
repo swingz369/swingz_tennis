@@ -26,6 +26,7 @@ import {
   Phone,
   Info,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 const EXPERIENCE_LEVELS = [
   { value: 'beginner', label: 'Anfänger (noch nie gespielt)' },
@@ -104,7 +105,7 @@ export default function PublicTrialBooking({
     setError(null);
 
     try {
-      const res = await fetch('/api/public/trial-training', {
+      const res = await apiFetch('/api/public/trial-training', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

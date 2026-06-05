@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDistanceToNow } from 'date-fns';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Feedback {
   id: string;
@@ -52,7 +53,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
   const fetchFeedback = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/feedback?limit=100&visibleOnly=false`);
+      const response = await apiFetch(`/api/feedback?limit=100&visibleOnly=false`);
       if (!response.ok) throw new Error('Failed to fetch feedback');
 
       const data = await response.json();
@@ -67,7 +68,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
 
   const handleVisibilityToggle = async (id: string, currentVisibility: boolean) => {
     try {
-      const response = await fetch(`/api/feedback/${id}`, {
+      const response = await apiFetch(`/api/feedback/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_visible: !currentVisibility }),
@@ -87,7 +88,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
 
   const handleFlagToggle = async (id: string, currentFlagged: boolean, reason?: string) => {
     try {
-      const response = await fetch(`/api/feedback/${id}`, {
+      const response = await apiFetch(`/api/feedback/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -116,7 +117,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
     const id = deleteConfirmId;
     if (!id) return;
     try {
-      const response = await fetch(`/api/feedback/${id}`, { method: 'DELETE' });
+      const response = await apiFetch(`/api/feedback/${id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete feedback');
       setFeedback((prev) => prev.filter((f) => f.id !== id));
       toast.success('Feedback deleted');
@@ -145,9 +146,9 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
     try {
       const promises = Array.from(selectedIds).map((id) => {
         if (action === 'delete') {
-          return fetch(`/api/feedback/${id}`, { method: 'DELETE' });
+          return apiFetch(`/api/feedback/${id}`, { method: 'DELETE' });
         } else {
-          return fetch(`/api/feedback/${id}`, {
+          return apiFetch(`/api/feedback/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ is_visible: action === 'show' }),

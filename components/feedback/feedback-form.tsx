@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StarRating from './star-rating';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface FeedbackFormProps {
   trainerId: string;
@@ -36,11 +37,9 @@ export default function FeedbackForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/feedback', {
+      const response = await apiFetch('/api/feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {},
         body: JSON.stringify({
           trainer_id: trainerId,
           session_id: sessionId,

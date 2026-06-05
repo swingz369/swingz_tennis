@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Trainer {
   id: string;
@@ -81,7 +82,7 @@ export default function MemberTrainerBookingPage() {
       setErrorTrainers(null);
       try {
         // Use trainer-profiles to get list
-        const res = await fetch('/api/trainers');
+        const res = await apiFetch('/api/trainers');
         if (!res.ok) throw new Error('Fehler beim Laden der Trainer');
         const data = await res.json();
         const trainerList: Trainer[] = (data.trainers ?? data.members ?? []).map((t: any) => ({
@@ -105,7 +106,7 @@ export default function MemberTrainerBookingPage() {
     if (!selectedTrainer) return;
     setLoadingSlots(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/trainer/availability?trainerId=${selectedTrainer.id}&from=${weekFrom}T00:00:00Z&to=${weekTo}T23:59:59Z`
       );
       if (!res.ok) throw new Error('Fehler beim Laden');
@@ -127,7 +128,7 @@ export default function MemberTrainerBookingPage() {
     setBookingLoading(true);
     setBookingError(null);
     try {
-      const res = await fetch('/api/trainer/book', {
+      const res = await apiFetch('/api/trainer/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

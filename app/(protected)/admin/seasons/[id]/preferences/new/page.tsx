@@ -16,6 +16,7 @@ import {
 import { ArrowLeft, Save, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import type { WeeklyAvailability, TimeSlot } from '@/lib/types/season-planning';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface PreferenceFormPageProps {
   params: {
@@ -49,7 +50,7 @@ export default function PreferenceFormPage({ params }: PreferenceFormPageProps) 
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/seasons/${params.id}/preferences`, {
+      const response = await apiFetch(`/api/seasons/${params.id}/preferences`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

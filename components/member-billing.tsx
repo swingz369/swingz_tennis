@@ -19,6 +19,7 @@ import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice } from '@/lib/invoice-pdf';
+import { apiFetch } from '@/lib/api-fetch';
 
 export default function MemberBilling() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -37,7 +38,7 @@ export default function MemberBilling() {
   useEffect(() => {
     if (!memberId) return;
     setInvoicesLoading(true);
-    fetch(`/api/billing/invoices/overview?memberId=${encodeURIComponent(memberId)}`, {
+    apiFetch(`/api/billing/invoices/overview?memberId=${encodeURIComponent(memberId)}`, {
       credentials: 'include',
     })
       .then((res) => {
@@ -118,7 +119,7 @@ export default function MemberBilling() {
         })),
       };
 
-      const res = await fetch('/api/billing/invoices/create', {
+      const res = await apiFetch('/api/billing/invoices/create', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -156,7 +157,7 @@ export default function MemberBilling() {
 
   const handleDownloadInvoice = async (invoice: Invoice) => {
     try {
-      const res = await fetch(`/api/invoices/${invoice.id}/pdf`, {
+      const res = await apiFetch(`/api/invoices/${invoice.id}/pdf`, {
         credentials: 'include',
       });
       if (!res.ok) {

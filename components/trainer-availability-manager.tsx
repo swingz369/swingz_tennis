@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Calendar, Clock, Plus, Trash2, Save } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface AvailabilitySlot {
   id?: string;
@@ -32,7 +33,7 @@ export default function TrainerAvailabilityManager() {
 
   const fetchSlots = useCallback(async () => {
     try {
-      const res = await fetch('/api/trainer/availability');
+      const res = await apiFetch('/api/trainer/availability');
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         // Gracefully handle missing trainer profile
@@ -83,7 +84,7 @@ export default function TrainerAvailabilityManager() {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch('/api/trainer/availability', {
+      const res = await apiFetch('/api/trainer/availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slots }),

@@ -25,6 +25,7 @@ import {
   ArrowLeftRight,
   BarChart3,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 const TOTAL_STEPS = 4;
 
@@ -47,7 +48,7 @@ export default function SuperadminOnboardingPage() {
   const markSetupComplete = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     try {
-      const res = await fetch('/api/users/superadmin-setup', {
+      const res = await apiFetch('/api/users/superadmin-setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -89,7 +90,7 @@ export default function SuperadminOnboardingPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/clubs', {
+      const res = await apiFetch('/api/clubs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,7 +118,7 @@ export default function SuperadminOnboardingPage() {
     setLoading(true);
     try {
       // Set the admin club cookie and redirect
-      const res = await fetch('/api/admin/switch-club', {
+      const res = await apiFetch('/api/admin/switch-club', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clubId: createdClubId }),

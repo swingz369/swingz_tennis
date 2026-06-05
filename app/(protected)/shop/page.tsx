@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { Loader2, ShoppingCart, Package, Plus, Minus, X, Trash2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { CartProvider, useCart } from '@/lib/shop/cart-context';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Product {
   id: string;
@@ -29,7 +30,7 @@ function ShopContent() {
   const { items, addItem, removeItem, updateQuantity, clearCart, cartTotal, cartCount } = useCart();
 
   useEffect(() => {
-    fetch('/api/shop')
+    apiFetch('/api/shop')
       .then((r) => r.json())
       .then((data) => setProducts(data.products || []))
       .catch(() => toast.error('Produkte konnten nicht geladen werden'))
@@ -53,7 +54,7 @@ function ShopContent() {
     if (items.length === 0) return;
     setCheckingOut(true);
     try {
-      const res = await fetch('/api/shop/checkout', {
+      const res = await apiFetch('/api/shop/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

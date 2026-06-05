@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Palette, Image as ImageIcon, Globe } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface BrandingData {
   primaryColor: string;
@@ -32,7 +33,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
 
   const fetchBranding = useCallback(async () => {
     try {
-      const res = await fetch(`/api/branding?clubId=${clubId}`);
+      const res = await apiFetch(`/api/branding?clubId=${clubId}`);
       if (res.ok) {
         const data = await res.json();
         setBranding({
@@ -56,12 +57,9 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
   const saveBranding = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/branding', {
+      const res = await apiFetch('/api/branding', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-club-id': clubId,
-        },
+        headers: { 'x-club-id': clubId },
         body: JSON.stringify({
           brand: {
             primaryColor: branding.primaryColor,

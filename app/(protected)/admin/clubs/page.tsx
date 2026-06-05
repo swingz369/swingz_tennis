@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
 import type { Club, ClubsResponse } from '@/lib/clubs';
+import { apiFetch } from '@/lib/api-fetch';
 
 const CLUBS_PER_PAGE = 20;
 
@@ -24,7 +25,7 @@ export default function ClubsAdminPage() {
   const fetchClubs = useCallback(async (p: number = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/clubs?page=${p}&limit=${CLUBS_PER_PAGE}`);
+      const res = await apiFetch(`/api/clubs?page=${p}&limit=${CLUBS_PER_PAGE}`);
       if (!res.ok) {
         throw new Error(`Failed to fetch clubs: ${res.status}`);
       }
@@ -48,7 +49,7 @@ export default function ClubsAdminPage() {
     e.preventDefault();
     setError(null);
     try {
-      const res = await fetch('/api/clubs', {
+      const res = await apiFetch('/api/clubs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newClub),

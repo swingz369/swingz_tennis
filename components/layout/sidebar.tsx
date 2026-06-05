@@ -28,6 +28,7 @@ import {
   DollarSign,
   Shield,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Club {
   id: string;
@@ -142,7 +143,7 @@ export function Sidebar({
 
     // Fetch pending approval count (admin only)
     if (isAdmin) {
-      fetch('/api/admin/approvals/count', { signal: abortController.signal })
+      apiFetch('/api/admin/approvals/count', { signal: abortController.signal })
         .then((res) => res.json())
         .then((data) => setApprovalCount(data?.count ?? 0))
         .catch(() => {});
@@ -154,7 +155,7 @@ export function Sidebar({
   const handleSwitchClub = async (clubId: string) => {
     setClubSwitcherOpen(false);
     try {
-      const response = await fetch('/api/admin/switch-club', {
+      const response = await apiFetch('/api/admin/switch-club', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clubId }),

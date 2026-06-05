@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Mail, Phone, MapPin, CheckCircle, Loader2, Sparkles, Clock } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Registration {
   id: string;
@@ -37,7 +38,7 @@ export default function AdminApprovals() {
 
   const fetchRequests = async () => {
     try {
-      const res = await fetch('/api/admin/approvals');
+      const res = await apiFetch('/api/admin/approvals');
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
       setRequests(data.requests || []);
@@ -55,7 +56,7 @@ export default function AdminApprovals() {
   const handleApprove = async (id: string) => {
     setProcessing(true);
     try {
-      const res = await fetch('/api/admin/approvals', {
+      const res = await apiFetch('/api/admin/approvals', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status: 'approved' }),
@@ -74,7 +75,7 @@ export default function AdminApprovals() {
     if (!rejectionReason.trim()) return;
     setProcessing(true);
     try {
-      const res = await fetch('/api/admin/approvals', {
+      const res = await apiFetch('/api/admin/approvals', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status: 'rejected', rejectionReason }),

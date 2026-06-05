@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
 import { addDays } from 'date-fns';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface InvoiceItem {
   description: string;
@@ -111,7 +112,7 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
 
     setLoading(true);
     try {
-      const response = await fetch('/api/billing/invoices/create', {
+      const response = await apiFetch('/api/billing/invoices/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

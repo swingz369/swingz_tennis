@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Settings, Building2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 type OpeningHours = {
   monday: { open: string; close: string };
@@ -109,7 +110,7 @@ export default function SettingsClient() {
   const fetchSettings = async () => {
     try {
       // Fetch user club
-      const clubRes = await fetch('/api/user/club');
+      const clubRes = await apiFetch('/api/user/club');
       if (clubRes.ok) {
         const clubData = await clubRes.json();
         setClubSettings((prev) => ({
@@ -133,7 +134,7 @@ export default function SettingsClient() {
 
       // Check if user is superadmin (via roles API)
       try {
-        const rolesRes = await fetch('/api/user/roles');
+        const rolesRes = await apiFetch('/api/user/roles');
         if (rolesRes.ok) {
           const { roles } = await rolesRes.json();
           if (roles?.includes('superadmin')) {
@@ -154,7 +155,7 @@ export default function SettingsClient() {
   const handleSaveClubSettings = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/clubs/${clubSettings.id}`, {
+      const res = await apiFetch(`/api/clubs/${clubSettings.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -188,7 +189,7 @@ export default function SettingsClient() {
   const handleSaveSystemSettings = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/system/settings`, {
+      const res = await apiFetch(`/api/admin/system/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(systemSettings),

@@ -32,6 +32,7 @@ import { csrfHeaders } from '@/lib/csrf-client';
 import type { Member } from './member.types';
 import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface MembersClientProps {
   initialMembers: Member[];
@@ -84,9 +85,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
   const handleTogglePlanning = async (memberId: string, currentValue: boolean) => {
     try {
-      const res = await fetch(`/api/members/${memberId}`, {
+      const res = await apiFetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({ include_in_planning: !currentValue }),
       });
 
@@ -111,9 +112,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
   const handleToggleActive = async (memberId: string, currentActive: boolean) => {
     try {
-      const res = await fetch(`/api/members/${memberId}`, {
+      const res = await apiFetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({ is_active: !currentActive }),
       });
 
@@ -157,9 +158,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     e.preventDefault();
     setInviteLoading(true);
     try {
-      const res = await fetch('/api/members/invite', {
+      const res = await apiFetch('/api/members/invite', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           ...inviteForm,
           club_id: clubId,
@@ -198,9 +199,9 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
   const handleRoleChange = async (memberId: string, newRole: string) => {
     try {
-      const res = await fetch(`/api/members/${memberId}`, {
+      const res = await apiFetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        headers: { ...csrfHeaders() },
         body: JSON.stringify({ role: newRole }),
       });
 
