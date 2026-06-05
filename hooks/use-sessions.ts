@@ -13,6 +13,7 @@ export interface Session {
   groupNames?: string[];
   maxParticipants: number;
   notes?: string;
+  sessionType?: 'training' | 'walk_in' | 'event' | 'maintenance';
   bookedByUser?: boolean;
   bookingId?: string;
   bookingStatus?: 'pending' | 'confirmed' | 'cancelled' | 'no_show';

@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
           trainer_id,
           court_id,
           week_number,
+          session_type,
+          notes,
           schedules!inner(club_id),
           courts(name)
         `
@@ -118,6 +120,9 @@ export async function GET(req: NextRequest) {
           courtName: court?.name ?? 'Platz',
           maxParticipants: s.max_participants ?? 4,
           week: s.week_number?.toString() ?? '1',
+          sessionType: s.session_type ?? 'training',
+          notes: s.notes ?? null,
+          courtId: s.court_id,
           bookedByUser: !!booking,
           bookingId: booking?.bookingId ?? null,
           bookingStatus: booking?.status ?? null,

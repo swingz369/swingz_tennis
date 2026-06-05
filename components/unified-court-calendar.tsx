@@ -36,9 +36,22 @@ import {
   ChevronLeft,
   ChevronRight,
   Lock,
+  Unlock,
+  Wrench,
+  PartyPopper,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
 import {
@@ -169,6 +182,16 @@ export default function UnifiedCourtCalendar({
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draggedSession, setDraggedSession] = useState<Session | null>(null);
+
+  // ── Block dialog state ──
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blockCourtId, setBlockCourtId] = useState<string>('');
+  const [blockDate, setBlockDate] = useState<Date>(new Date());
+  const [blockTimeSlot, setBlockTimeSlot] = useState<string>('');
+  const [blockType, setBlockType] = useState<'event' | 'maintenance'>('event');
+  const [blockReason, setBlockReason] = useState('');
+  const [blockLoading, setBlockLoading] = useState(false);
+  const [blockDuration, setBlockDuration] = useState(1); // hours
 
   // ── User context ──
   const { data: clubData } = useUserClub();
@@ -309,6 +332,90 @@ export default function UnifiedCourtCalendar({
       cancelBooking.mutate({ bookingId, sessionId, clubId });
     },
     [clubId, cancelBooking]
+  );
+
+  // ── Slot blocking (admin) ──
+  const openBlockDialog = useCallback((courtId: string, date: Date, timeSlot: string) => {
+    setBlockCourtId(courtId);
+    setBlockDate(date);
+    setBlockTimeSlot(timeSlot);
+    setBlockType('event');
+    setBlockReason('');
+    setBlockDuration(1);
+    setBlockDialogOpen(true);
+  }, []);
+
+  const handleBlockSlot = useCallback(async () => {
+    if (!clubId) return;
+    const [h, m] = blockTimeSlot.split(':').map(Number);
+    if (h + blockDuration > 23) {
+      toast.error('Sperrung endet nach 23:00 Uhr — bitte kürzere Dauer wählen');
+      return;
+    }
+    setBlockLoading(true);
+    try {
+      const dateStr = format(blockDate, 'yyyy-MM-dd');
+      const endH = h + blockDuration;
+      const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+      const res = await apiFetch('/api/sessions/block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courtId: blockCourtId,
+          date: dateStr,
+          startTime: blockTimeSlot,
+          endTime,
+          clubId,
+          blockType,
+          reason: blockReason || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? 'Sperrung fehlgeschlagen');
+        return;
+      }
+      const blockLabel = blockType === 'event' ? 'Veranstaltung' : 'Wartung';
+      toast.success(`${blockLabel}-Sperre gesetzt`);
+      setBlockDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    } catch {
+      toast.error('Netzwerkfehler beim Sperren');
+    } finally {
+      setBlockLoading(false);
+    }
+  }, [
+    clubId,
+    blockCourtId,
+    blockDate,
+    blockTimeSlot,
+    blockType,
+    blockReason,
+    blockDuration,
+    queryClient,
+  ]);
+
+  const handleUnblockSlot = useCallback(
+    async (sessionId: string) => {
+      const confirmed = window.confirm('Sperrung aufheben? Der Platz wird wieder freigegeben.');
+      if (!confirmed) return;
+      try {
+        const res = await apiFetch(`/api/sessions/${sessionId}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          toast.error(err.error ?? 'Sperrung konnte nicht aufgehoben werden');
+          return;
+        }
+        toast.success('Sperrung aufgehoben');
+        void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      } catch {
+        toast.error('Netzwerkfehler beim Entsperren');
+      }
+    },
+    [queryClient]
   );
 
   // ── Drag & Drop (admin) ──
@@ -454,26 +561,71 @@ export default function UnifiedCourtCalendar({
                             <div
                               key={timeSlot}
                               id={isAdmin ? dropTargetId : undefined}
-                              className={`h-6 rounded text-[11px] flex items-center justify-center transition-colors ${SLOT_STATUS_STYLES[status]}`}
-                              role={!isAdmin && status === 'available' ? 'button' : undefined}
-                              tabIndex={!isAdmin && status === 'available' ? 0 : -1}
+                              className={`h-6 rounded text-[11px] flex items-center justify-center transition-colors ${
+                                status === 'blocked' && isAdmin
+                                  ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-pointer hover:bg-gray-300'
+                                  : SLOT_STATUS_STYLES[status]
+                              }`}
+                              role={
+                                !isAdmin && status === 'available'
+                                  ? 'button'
+                                  : isAdmin && (status === 'available' || status === 'blocked')
+                                    ? 'button'
+                                    : undefined
+                              }
+                              tabIndex={
+                                (!isAdmin && status === 'available') ||
+                                (isAdmin && (status === 'available' || status === 'blocked'))
+                                  ? 0
+                                  : -1
+                              }
                               onClick={
                                 !isAdmin && status === 'available'
                                   ? () => handleBookSlot(court.id, day, timeSlot)
-                                  : undefined
+                                  : isAdmin && status === 'available'
+                                    ? () => openBlockDialog(court.id, day, timeSlot)
+                                    : isAdmin && status === 'blocked' && session
+                                      ? () => handleUnblockSlot(session.id)
+                                      : undefined
                               }
                               onKeyDown={(e) => {
-                                if (
-                                  !isAdmin &&
-                                  status === 'available' &&
-                                  (e.key === 'Enter' || e.key === ' ')
-                                ) {
+                                if (e.key === 'Enter' || e.key === ' ') {
                                   e.preventDefault();
-                                  handleBookSlot(court.id, day, timeSlot);
+                                  if (!isAdmin && status === 'available') {
+                                    handleBookSlot(court.id, day, timeSlot);
+                                  } else if (isAdmin && status === 'available') {
+                                    openBlockDialog(court.id, day, timeSlot);
+                                  } else if (isAdmin && status === 'blocked' && session) {
+                                    handleUnblockSlot(session.id);
+                                  }
                                 }
                               }}
                             >
-                              {session ? (
+                              {status === 'blocked' && session ? (
+                                isAdmin ? (
+                                  <div className="flex items-center gap-1 w-full justify-between px-1">
+                                    <div className="flex items-center gap-0.5">
+                                      {session.sessionType === 'maintenance' ? (
+                                        <Wrench className="h-2.5 w-2.5 text-gray-500" />
+                                      ) : (
+                                        <PartyPopper className="h-2.5 w-2.5 text-gray-500" />
+                                      )}
+                                      <span className="truncate text-[10px]">
+                                        {session.notes?.substring(0, 10) ||
+                                          (session.sessionType === 'maintenance'
+                                            ? 'Wartung'
+                                            : 'Event')}
+                                      </span>
+                                    </div>
+                                    <Unlock className="h-2.5 w-2.5 text-gray-400 hover:text-gray-700" />
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-0.5 px-1">
+                                    <Lock className="h-2.5 w-2.5 text-gray-400" />
+                                    <span className="text-[10px]">Gesperrt</span>
+                                  </div>
+                                )
+                              ) : session ? (
                                 isAdmin ? (
                                   <DraggableSessionCard
                                     session={session}
@@ -584,23 +736,29 @@ export default function UnifiedCourtCalendar({
                       <div
                         key={timeSlot}
                         className={`p-4 flex items-center justify-between transition-colors ${
-                          !isAdmin && status === 'available' ? 'hover:bg-muted cursor-pointer' : ''
+                          !isAdmin && status === 'available'
+                            ? 'hover:bg-muted cursor-pointer'
+                            : isAdmin && status === 'available'
+                              ? 'hover:bg-green-50 cursor-pointer'
+                              : ''
                         }`}
-                        role={!isAdmin && status === 'available' ? 'button' : undefined}
-                        tabIndex={!isAdmin && status === 'available' ? 0 : -1}
+                        role={status === 'available' ? 'button' : undefined}
+                        tabIndex={status === 'available' ? 0 : -1}
                         onClick={
                           !isAdmin && status === 'available'
                             ? () => handleBookSlot(court.id, selectedDate, timeSlot)
-                            : undefined
+                            : isAdmin && status === 'available'
+                              ? () => openBlockDialog(court.id, selectedDate, timeSlot)
+                              : undefined
                         }
                         onKeyDown={(e) => {
-                          if (
-                            !isAdmin &&
-                            status === 'available' &&
-                            (e.key === 'Enter' || e.key === ' ')
-                          ) {
+                          if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            handleBookSlot(court.id, selectedDate, timeSlot);
+                            if (!isAdmin && status === 'available') {
+                              handleBookSlot(court.id, selectedDate, timeSlot);
+                            } else if (isAdmin && status === 'available') {
+                              openBlockDialog(court.id, selectedDate, timeSlot);
+                            }
                           }
                         }}
                       >
@@ -609,7 +767,67 @@ export default function UnifiedCourtCalendar({
                             <div className="font-medium text-sm">{timeSlot}</div>
                           </div>
 
-                          {session ? (
+                          {session && status === 'blocked' ? (
+                            <div className="flex-1">
+                              <div
+                                className={`p-3 rounded-lg border ${
+                                  isAdmin ? 'cursor-pointer hover:bg-gray-100' : ''
+                                } bg-gray-100 border-gray-300`}
+                                onClick={
+                                  isAdmin
+                                    ? (e) => {
+                                        e.stopPropagation();
+                                        handleUnblockSlot(session.id);
+                                      }
+                                    : undefined
+                                }
+                                role={isAdmin ? 'button' : undefined}
+                                tabIndex={isAdmin ? 0 : -1}
+                                onKeyDown={
+                                  isAdmin
+                                    ? (e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                          e.preventDefault();
+                                          handleUnblockSlot(session.id);
+                                        }
+                                      }
+                                    : undefined
+                                }
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      {session.sessionType === 'maintenance' ? (
+                                        <Wrench className="h-4 w-4 text-gray-500" />
+                                      ) : (
+                                        <PartyPopper className="h-4 w-4 text-gray-500" />
+                                      )}
+                                      <span className="font-medium text-gray-600">
+                                        {session.notes ||
+                                          (session.sessionType === 'maintenance'
+                                            ? 'Wartung'
+                                            : 'Veranstaltung')}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                      <div className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        <span>
+                                          {session.startTime} - {session.endTime}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {isAdmin && (
+                                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                                      <Unlock className="h-4 w-4" />
+                                      <span>Entsperren</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ) : session ? (
                             <div className="flex-1">
                               <div
                                 className={`p-3 rounded-lg border ${
@@ -738,9 +956,17 @@ export default function UnifiedCourtCalendar({
           ICS
         </Button>
 
-        {/* Admin: block slot button placeholder */}
+        {/* Admin: block slot — click a slot in the calendar first, or use this button with defaults */}
         {isAdmin && (
-          <Button variant="outline" size="sm" className="gap-1.5" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              const d = viewMode === 'daily' ? selectedDate : new Date();
+              openBlockDialog(courts[0]?.id ?? '', d, '10:00');
+            }}
+          >
             <Lock className="h-4 w-4" />
             Sperren
           </Button>
@@ -753,24 +979,113 @@ export default function UnifiedCourtCalendar({
     </div>
   );
 
+  // ── Block Slot Dialog ──
+  const blockDialog = (
+    <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Platz sperren
+          </DialogTitle>
+          <DialogDescription>
+            Sperrt den Platz {blockCourtId && courts.find((c) => c.id === blockCourtId)?.name} am{' '}
+            {format(blockDate, 'dd.MM.yyyy', { locale: de })} um {blockTimeSlot} Uhr.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label htmlFor="block-type">Sperrtyp</Label>
+            <div className="flex gap-2">
+              <Button
+                variant={blockType === 'event' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBlockType('event')}
+                className="gap-1.5"
+              >
+                <PartyPopper className="h-4 w-4" />
+                Veranstaltung
+              </Button>
+              <Button
+                variant={blockType === 'maintenance' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBlockType('maintenance')}
+                className="gap-1.5"
+              >
+                <Wrench className="h-4 w-4" />
+                Wartung
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="block-duration">Dauer (Stunden)</Label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((h) => (
+                <Button
+                  key={h}
+                  variant={blockDuration === h ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setBlockDuration(h)}
+                >
+                  {h}h
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="block-reason">Grund (optional)</Label>
+            <Input
+              id="block-reason"
+              placeholder={
+                blockType === 'event' ? 'z.B. Firmenevent, Turnier...' : 'z.B. Platzreparatur...'
+              }
+              value={blockReason}
+              onChange={(e) => setBlockReason(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
+            Abbrechen
+          </Button>
+          <Button onClick={handleBlockSlot} disabled={blockLoading}>
+            {blockLoading ? 'Sperre wird gesetzt...' : 'Platz sperren'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   // Wrap with DndContext for admins
   if (isAdmin) {
     return (
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        {content}
-        <DragOverlay>
-          {activeId && draggedSession ? (
-            <DraggableSessionCard session={draggedSession} isDragging />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      <>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          {content}
+          <DragOverlay>
+            {activeId && draggedSession ? (
+              <DraggableSessionCard session={draggedSession} isDragging />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+        {blockDialog}
+      </>
     );
   }
 
-  return content;
+  return (
+    <>
+      {content}
+      {blockDialog}
+    </>
+  );
 }

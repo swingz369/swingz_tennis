@@ -90,6 +90,10 @@ export function getSlotStatus(
 ): { status: SlotStatus; session?: Session } {
   const session = getSessionForSlot(courtId, date, timeSlot, sessions);
   if (session) {
+    // Blocked sessions (event/maintenance) take visual priority
+    if (session.sessionType === 'event' || session.sessionType === 'maintenance') {
+      return { status: 'blocked', session };
+    }
     return { status: session.bookedByUser ? 'booked' : 'session', session };
   }
 
