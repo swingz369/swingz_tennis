@@ -120,6 +120,7 @@ export const CreateInvoiceSchema = z.object({
   club_id: z.string().uuid(),
   member_id: z.string().uuid().nullable().optional(),
   due_date: z.string(),
+  type: z.string().optional(),
   items: z.array(
     z.object({
       description: z.string().min(1),

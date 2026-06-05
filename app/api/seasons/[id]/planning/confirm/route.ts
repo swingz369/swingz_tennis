@@ -330,87 +330,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
           }
         }
 
-        // ---- Auto-generate invoices for season participants ----
+        // ---- Auto-generate detailed invoices for season participants ----
         let invoicesCreated = 0;
         if (publishedIds.length > 0) {
           try {
-            const { billingEngine } = await import('@/lib/billing-engine');
-
-            // Collect unique member IDs from published entries
-            const participantIds = new Set<string>();
-            for (const entry of entries) {
-              const ids = (entry.expected_participants as string[]) || [];
-              for (const mid of ids) participantIds.add(mid);
-            }
-
-            if (participantIds.size > 0 && season.club_id) {
-              // Get the club's active training fee configuration
-              const { data: feeConfig } = await auth.supabase
-                .from('fee_configurations')
-                .select('id, amount, currency, name')
-                .eq('club_id', season.club_id)
-                .eq('type', 'training')
-                .eq('is_active', true)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-              if (feeConfig && Number(feeConfig.amount) > 0) {
-                const feeAmount = Number(feeConfig.amount);
-                const seasonName = season.name || `Saison ${season.year}`;
-
-                // Check for existing season invoices to avoid duplicates
-                const { data: existingInvoices } = await auth.supabase
-                  .from('invoices')
-                  .select('member_id')
-                  .eq('club_id', season.club_id)
-                  .eq('type', 'season')
-                  .eq('notes', `Saisonbeitrag ${seasonName}`);
-
-                const alreadyInvoiced = new Set(
-                  (existingInvoices ?? [])
-                    .map((inv: { member_id: string | null }) => inv.member_id)
-                    .filter(Boolean)
-                );
-
-                const dueDate = new Date();
-                dueDate.setDate(dueDate.getDate() + 30);
-                const dueDateStr = dueDate.toISOString().slice(0, 10);
-
-                for (const memberId of participantIds) {
-                  if (alreadyInvoiced.has(memberId)) continue;
-                  try {
-                    await billingEngine.createInvoice({
-                      club_id: season.club_id,
-                      member_id: memberId,
-                      due_date: dueDateStr,
-                      items: [
-                        {
-                          description: `Saisonbeitrag ${seasonName}`,
-                          quantity: 1,
-                          unit_price: feeAmount,
-                          tax_rate: 0,
-                          item_type: 'season_fee',
-                        },
-                      ],
-                      notes: `Saisonbeitrag ${seasonName}`,
-                    });
-                    invoicesCreated++;
-                  } catch (invErr) {
-                    console.error(
-                      `[Confirm] Failed to create invoice for member ${memberId}:`,
-                      invErr
-                    );
-                  }
-                }
-
-                console.log(
-                  `[Confirm] Created ${invoicesCreated} season invoices for ${participantIds.size} participants`
-                );
-              } else {
-                console.log('[Confirm] No training fee config found — skipping season invoices');
-              }
-            }
+            const { seasonBillingService } = await import('@/lib/billing/season-billing.service');
+            const result = await seasonBillingService.generateInvoices(seasonId);
+            invoicesCreated = result.created.length;
+            console.log(
+              `[Confirm] Created ${invoicesCreated} season invoices, ${result.skipped.length} skipped (already invoiced)`
+            );
           } catch (invoiceError) {
             console.error('[Confirm] Season invoice generation failed:', invoiceError);
           }
