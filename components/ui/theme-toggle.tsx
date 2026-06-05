@@ -22,71 +22,70 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    // Render a placeholder to prevent layout shift
-    return (
-      <div
-        className={cn('inline-flex items-center justify-center rounded-xl h-9 w-9', className)}
-        aria-hidden="true"
-      />
-    );
-  }
-
-  // 3-way cycle: system → light → dark → system
+  // Always render a <button> to avoid SSR/client element mismatch (hydration).
+  // Before mounting, the button is non-interactive and shows no icons.
   const nextTheme = theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system';
-
   const label = theme === 'system' ? 'System' : theme === 'dark' ? 'Dunkel' : 'Hell';
 
   return (
     <button
       type="button"
-      onClick={() => setTheme(nextTheme)}
+      suppressHydrationWarning
+      onClick={mounted ? () => setTheme(nextTheme) : undefined}
+      disabled={!mounted}
       className={cn(
         'relative inline-flex items-center justify-center gap-2 rounded-xl h-9 w-9 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-background/10 transition-colors',
         showLabel && 'w-auto px-3',
+        !mounted && 'pointer-events-none',
         className
       )}
       aria-label={
-        theme === 'system'
-          ? 'Zum hellen Design wechseln'
-          : theme === 'light'
-            ? 'Zum dunklen Design wechseln'
-            : 'Zum System-Design wechseln'
+        !mounted
+          ? undefined
+          : theme === 'system'
+            ? 'Zum hellen Design wechseln'
+            : theme === 'light'
+              ? 'Zum dunklen Design wechseln'
+              : 'Zum System-Design wechseln'
       }
     >
       <div className="relative" style={{ width: iconSize, height: iconSize }}>
         {/* System (monitor) icon */}
         <Monitor
+          suppressHydrationWarning
           className={cn(
             'absolute inset-0 transition-all duration-500',
-            theme === 'system' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+            !mounted || theme === 'system' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
           )}
           style={{ width: iconSize, height: iconSize }}
           aria-hidden="true"
         />
         {/* Light (sun) icon */}
         <Sun
+          suppressHydrationWarning
           className={cn(
             'absolute inset-0 transition-all duration-500',
-            theme === 'light' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+            mounted && theme === 'light' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
           )}
           style={{ width: iconSize, height: iconSize }}
           aria-hidden="true"
         />
         {/* Dark (moon) icon */}
         <Moon
+          suppressHydrationWarning
           className={cn(
             'absolute inset-0 transition-all duration-500',
-            theme === 'dark' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+            mounted && theme === 'dark' ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
           )}
           style={{ width: iconSize, height: iconSize }}
           aria-hidden="true"
         />
         {/* System-mode indicator dot */}
         <span
+          suppressHydrationWarning
           className={cn(
             'absolute -top-1 -right-1 z-10 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-background transition-all duration-500',
-            theme === 'system' ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
+            mounted && theme === 'system' ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
           )}
           aria-hidden="true"
         />
