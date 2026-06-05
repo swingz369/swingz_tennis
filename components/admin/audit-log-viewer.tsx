@@ -18,6 +18,7 @@ import { buildPaginationMeta } from '@/lib/pagination';
 import type { PaginationMeta } from '@/lib/pagination';
 import { formatDistanceToNow, format } from 'date-fns';
 import { toast } from 'sonner';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface AuditLog {
   id: string;
@@ -59,7 +60,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
         params.append('club_id', clubId);
       }
 
-      const response = await fetch(`/api/audit-logs?${params}`);
+      const response = await apiFetch(`/api/audit-logs?${params}`);
       if (!response.ok) throw new Error('Failed to fetch audit logs');
 
       const data = await response.json();
@@ -84,7 +85,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       if (filterAction !== 'all') params.append('action', filterAction);
       if (filterEntity !== 'all') params.append('entity_type', filterEntity);
 
-      const response = await fetch(`/api/audit-logs/export?${params}`);
+      const response = await apiFetch(`/api/audit-logs/export?${params}`);
       if (!response.ok) throw new Error('Failed to export logs');
 
       const blob = await response.blob();

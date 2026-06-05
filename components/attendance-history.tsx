@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPaginationMeta } from '@/lib/pagination';
 import type { PaginationMeta } from '@/lib/pagination';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface AttendanceRecord {
   id: string;
@@ -35,7 +36,7 @@ export default function AttendanceHistory() {
   const fetchRecords = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/attendance-records?page=${page}&pageSize=${pageSize}&filter=${filter}`
       );
       if (!res.ok) throw new Error('Fehler beim Laden');

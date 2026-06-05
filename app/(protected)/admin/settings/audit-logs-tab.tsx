@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
+import { apiFetch } from '@/lib/api-fetch';
 
 const actionIcons: Record<string, React.ReactNode> = {
   user_created: <UserCheck className="h-4 w-4 text-green-500" />,
@@ -50,7 +51,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
     async (p: number) => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/admin/audit-logs?page=${p}&limit=20&clubId=${clubId}`);
+        const res = await apiFetch(`/api/admin/audit-logs?page=${p}&limit=20&clubId=${clubId}`);
         if (res.ok) {
           const data = await res.json();
           setLogs(data.logs ?? []);

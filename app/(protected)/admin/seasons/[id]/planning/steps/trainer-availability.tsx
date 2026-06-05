@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import { Users, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface TrainerAvailabilityData {
   trainerId: string;
@@ -30,7 +31,7 @@ export function TrainerAvailabilityPanel() {
         setError(null);
 
         // Fetch trainer profiles for the season's club (not session club)
-        const profilesRes = await fetch(`/api/trainer-profiles?clubId=${state.clubId}`);
+        const profilesRes = await apiFetch(`/api/trainer-profiles?clubId=${state.clubId}`);
         if (!profilesRes.ok) {
           throw new Error('Failed to load trainer profiles');
         }
@@ -45,7 +46,9 @@ export function TrainerAvailabilityPanel() {
         // For each trainer, fetch their availability slots
         const trainerData = await Promise.all(
           profiles.map(async (profile: any) => {
-            const availRes = await fetch(`/api/trainer-availability?trainer_id=${profile.userId}`);
+            const availRes = await apiFetch(
+              `/api/trainer-availability?trainer_id=${profile.userId}`
+            );
             const { availabilities } = availRes.ok ? await availRes.json() : { availabilities: [] };
 
             const availableSlots = (availabilities || []).filter(

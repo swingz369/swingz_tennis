@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface OrderItem {
   product_id: string;
@@ -77,7 +78,7 @@ export default function MeineBestellungenPage() {
     setLoading(true);
     try {
       const url = status ? `/api/shop/orders?status=${status}` : '/api/shop/orders';
-      const res = await fetch(url);
+      const res = await apiFetch(url);
       const data = await res.json();
       setOrders(data.orders ?? []);
     } catch (err) {

@@ -21,6 +21,7 @@ import {
   AlertCircle,
   Sparkles,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface MatchCandidate {
   userId: string;
@@ -84,7 +85,7 @@ export function MatchmakingPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/ai/matchmaking');
+      const res = await apiFetch('/api/ai/matchmaking');
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Fehler beim Laden' }));
         throw new Error(err.error || `HTTP ${res.status}`);

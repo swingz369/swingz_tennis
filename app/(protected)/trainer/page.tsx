@@ -19,6 +19,7 @@ import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrainerRsvpList } from '@/components/trainer-rsvp-list';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface Session {
   id: string;
@@ -55,7 +56,7 @@ export default function TrainerPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/trainer/me', {
+      const res = await apiFetch('/api/trainer/me', {
         signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) {

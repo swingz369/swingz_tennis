@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { apiFetch } from '@/lib/api-fetch';
 
 /**
  * Enhanced NotificationBell with dropdown panel.
@@ -66,7 +67,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
     const fetchCount = async () => {
       try {
-        const res = await fetch('/api/user/notifications/count');
+        const res = await apiFetch('/api/user/notifications/count');
         if (res.ok) {
           const { count } = await res.json();
           setUnreadCount(count ?? 0);
@@ -86,7 +87,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     if (!userId) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/user/notifications?limit=5');
+      const res = await apiFetch('/api/user/notifications?limit=5');
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.notifications ?? []);

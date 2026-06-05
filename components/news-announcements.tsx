@@ -23,6 +23,7 @@ import {
   CheckCircle,
   Loader2,
 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 export interface NewsItem {
   id: string;
@@ -49,7 +50,7 @@ export default function NewsAnnouncements() {
 
     async function fetchNews() {
       try {
-        const res = await fetch('/api/news', {
+        const res = await apiFetch('/api/news', {
           signal: abortController.signal,
         });
         if (res.ok) {

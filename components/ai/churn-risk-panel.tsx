@@ -19,6 +19,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { AnimatedCounter } from '@/components/animations';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface AtRiskMember {
   userId: string;
@@ -53,7 +54,7 @@ export function ChurnRiskPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/ai/churn-prediction');
+      const res = await apiFetch('/api/ai/churn-prediction');
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Fehler beim Laden' }));
         throw new Error(err.error || `HTTP ${res.status}`);

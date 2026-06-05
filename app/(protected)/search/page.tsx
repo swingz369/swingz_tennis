@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Search, User, Calendar, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface SearchResult {
   id: string;
@@ -35,7 +36,7 @@ export default function SearchPage() {
 
     try {
       const params = new URLSearchParams({ q: query, limit: '20' });
-      const response = await fetch(`/api/search?${params}`);
+      const response = await apiFetch(`/api/search?${params}`);
 
       if (!response.ok) {
         throw new Error('Search failed');

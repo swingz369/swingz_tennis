@@ -154,7 +154,7 @@ export default function TrainerProfileManagement() {
   const loadAvailabilitySlots = async (trainerId: string) => {
     setAvailLoading(true);
     try {
-      const res = await fetch(`/api/trainer-availability?trainer_id=${trainerId}`);
+      const res = await apiFetch(`/api/trainer-availability?trainer_id=${trainerId}`);
       if (res.ok) {
         const data = await res.json();
         setAvailabilitySlots(data.availabilities || []);

@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
-import { csrfHeaders } from '@/lib/csrf-client';
 import type { Member } from './member.types';
 import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
@@ -87,7 +86,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     try {
       const res = await apiFetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({ include_in_planning: !currentValue }),
       });
 
@@ -114,7 +112,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     try {
       const res = await apiFetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({ is_active: !currentActive }),
       });
 
@@ -160,7 +157,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     try {
       const res = await apiFetch('/api/members/invite', {
         method: 'POST',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           ...inviteForm,
           club_id: clubId,
@@ -201,7 +197,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     try {
       const res = await apiFetch(`/api/members/${memberId}`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({ role: newRole }),
       });
 

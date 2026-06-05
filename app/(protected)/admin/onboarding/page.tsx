@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { csrfHeaders } from '@/lib/csrf-client';
 import {
   CheckCircle2,
   ChevronRight,
@@ -271,7 +270,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch(`/api/clubs/${club.id}/setup`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify(clubForm),
       });
       if (!res.ok) {
@@ -318,7 +316,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch(`/api/clubs/${club.id}/setup`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({ opening_hours: openingHours }),
       });
       if (!res.ok) {
@@ -342,7 +339,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch('/api/courts', {
         method: 'POST',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           name: courtForm.name,
           surface: courtForm.surface,
@@ -369,7 +365,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch(`/api/clubs/${club.id}/setup`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           default_hourly_rate: parseFloat(priceForm.default_hourly_rate) || 15,
           default_session_duration_minutes:
@@ -398,7 +393,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch('/api/booking-rules', {
         method: 'POST',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify(rulesForm),
       });
       if (!res.ok) {
@@ -424,7 +418,6 @@ export default function OnboardingPage() {
         if (!cat.name.trim() || !cat.amount) continue;
         const res = await apiFetch('/api/admin/fee-categories', {
           method: 'POST',
-          headers: { ...csrfHeaders() },
           body: JSON.stringify({
             club_id: club.id,
             name: cat.name,
@@ -458,7 +451,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch('/api/seasons', {
         method: 'POST',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           club_id: club.id,
           name: seasonForm.name,
@@ -489,7 +481,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch('/api/members/invite', {
         method: 'POST',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           email: trainerForm.email,
           full_name: trainerForm.name,
@@ -517,7 +508,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch('/api/members/invite', {
         method: 'POST',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({
           email: memberForm.email,
           full_name: memberForm.name,
@@ -550,7 +540,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch(`/api/clubs/${club.id}/onboarding-settings`, {
         method: 'POST',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify(emailSettings),
       });
       if (!res.ok) {
@@ -573,7 +562,6 @@ export default function OnboardingPage() {
     try {
       const res = await apiFetch(`/api/clubs/${club.id}/setup`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({ setup_completed_at: new Date().toISOString() }),
       });
       if (!res.ok) {

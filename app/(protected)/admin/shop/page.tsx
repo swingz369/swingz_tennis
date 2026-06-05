@@ -166,7 +166,9 @@ export default function AdminShopPage() {
 
   const fetchProducts = useCallback(async (page: number = 1) => {
     try {
-      const res = await fetch(`/api/admin/shop/products?page=${page}&limit=${PRODUCTS_PER_PAGE}`);
+      const res = await apiFetch(
+        `/api/admin/shop/products?page=${page}&limit=${PRODUCTS_PER_PAGE}`
+      );
       const data = await res.json();
       setProducts(data.products ?? []);
       setProductsPagination(data.pagination ?? null);
@@ -184,7 +186,7 @@ export default function AdminShopPage() {
       if (statusFilter) params.set('status', statusFilter);
       params.set('page', String(page));
       params.set('limit', String(ORDERS_PER_PAGE));
-      const res = await fetch(`/api/admin/shop/orders?${params}`);
+      const res = await apiFetch(`/api/admin/shop/orders?${params}`);
       const data = await res.json();
       setOrders(data.orders ?? []);
       setOrderStats({

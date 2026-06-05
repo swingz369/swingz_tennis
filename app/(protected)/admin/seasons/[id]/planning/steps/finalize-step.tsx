@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { csrfHeaders } from '@/lib/csrf-client';
 import { useWizard } from '@/lib/season-planning/wizard-context';
 import { generateAIAnalysis } from '@/lib/season-planning/ai-analysis';
 import {
@@ -83,7 +82,6 @@ export function FinalizeStep() {
     try {
       const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({ conflictId, action: 'resolve', notes: 'Manuell gelöst' }),
       });
       if (!res.ok) {
@@ -108,7 +106,6 @@ export function FinalizeStep() {
     try {
       const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
         method: 'PATCH',
-        headers: { ...csrfHeaders() },
         body: JSON.stringify({ conflictId, action: 'ignore', notes: 'Bewusst ignoriert' }),
       });
       if (!res.ok) {

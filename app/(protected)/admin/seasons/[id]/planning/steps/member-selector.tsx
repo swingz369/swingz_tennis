@@ -17,6 +17,7 @@ import {
   Input,
   Checkbox,
 } from '@/components/ui';
+import { apiFetch } from '@/lib/api-fetch';
 
 interface MemberRow {
   id: string;
@@ -50,7 +51,7 @@ export function MemberSelector() {
   const fetchMembers = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/seasons/${state.seasonId}/planning/members`);
+      const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/members`);
       if (!res.ok) throw new Error('Fehler beim Laden der Mitglieder');
       const data = await res.json();
 
