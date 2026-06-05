@@ -10,22 +10,24 @@ export default async function MembersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { supabase, clubId } = await requireAdminClub();
+  const { supabase, clubId, isSuperadmin } = await requireAdminClub();
   const params = await searchParams;
   const { page, offset, limit, search } = getPagination(params, 25);
 
   // Build query with optional server-side search
   // Exclude trainers from the member list — they have their own admin page at /admin/trainers
+  // Exclude superadmins — they are platform-level and should not appear in club member lists
+  const excludedRoles = isSuperadmin ? ['trainer'] : ['trainer', 'superadmin'];
   let query = (supabase.from('user_club_memberships') as any)
     .select('id, user_id, role, is_active, joined_at, include_in_planning')
     .eq('club_id', clubId)
-    .neq('role', 'trainer');
+    .not('role', 'in', `(${excludedRoles.join(',')})`);
 
   // Build count query with same filters
   let countQuery = (supabase.from('user_club_memberships') as any)
     .select('id', { count: 'exact', head: true })
     .eq('club_id', clubId)
-    .neq('role', 'trainer');
+    .not('role', 'in', `(${excludedRoles.join(',')})`);
 
   // Apply same search filter to both data + count queries
   if (search) {

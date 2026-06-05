@@ -309,7 +309,6 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                     <SelectItem value="member">Mitglied</SelectItem>
                     <SelectItem value="trainer">Trainer</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="superadmin">Superadmin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
