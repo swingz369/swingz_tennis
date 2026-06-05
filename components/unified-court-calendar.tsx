@@ -37,6 +37,7 @@ import {
   ChevronRight,
   Lock,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import { useCourts } from '@/hooks/use-courts';
@@ -254,6 +255,32 @@ export default function UnifiedCourtCalendar({
     [planSlots]
   );
 
+  // ── Direct booking (walk-in) ──
+  const queryClient = useQueryClient();
+  const directBookSlot = useCallback(
+    async (courtId: string, date: string, startTime: string, endTime: string) => {
+      if (!clubId) return;
+      try {
+        const res = await apiFetch('/api/bookings/direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courtId, date, startTime, endTime, clubId }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          toast.error(err.error ?? 'Direktbuchung fehlgeschlagen');
+          return;
+        }
+        toast.success('Platz gebucht!');
+        // Invalidate sessions to refresh the calendar without a full reload
+        void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      } catch {
+        toast.error('Netzwerkfehler bei der Direktbuchung');
+      }
+    },
+    [clubId, queryClient]
+  );
+
   // ── Booking actions ──
   const handleBookSlot = useCallback(
     (courtId: string, date: Date, timeSlot: string) => {
@@ -265,10 +292,15 @@ export default function UnifiedCourtCalendar({
       if (session) {
         createBooking.mutate({ memberId, sessionId: session.id, clubId });
       } else {
-        toast.info('Direktbuchung wird demnächst verfügbar sein');
+        // Direct booking — create ad-hoc walk-in session + booking
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const [h, m] = timeSlot.split(':').map(Number);
+        const endH = h + 1;
+        const endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        directBookSlot(courtId, dateStr, timeSlot, endTime);
       }
     },
-    [memberId, clubId, sessions, createBooking]
+    [memberId, clubId, sessions, createBooking, directBookSlot]
   );
 
   const handleCancelBooking = useCallback(
