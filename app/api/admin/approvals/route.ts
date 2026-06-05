@@ -77,47 +77,90 @@ export async function PATCH(request: NextRequest) {
         // 1. Create Supabase Auth user via Admin API
         try {
           const adminClient = await createAdminClient();
-          const tempPassword = crypto.randomBytes(24).toString('base64url');
 
-          const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
-            email: registration.email,
-            password: tempPassword,
-            email_confirm: true,
-            user_metadata: {
-              first_name: registration.first_name,
-              last_name: registration.last_name,
-              phone: registration.phone,
-            },
-          });
+          // Check if auth user already exists (idempotent retry support)
+          const { data: existingAuthUsers } = await adminClient.auth.admin.listUsers();
+          const existingAuthUser = existingAuthUsers?.users.find(
+            (u) => u.email?.toLowerCase() === registration.email.toLowerCase()
+          );
 
-          if (createError || !authUser?.user) {
-            console.error('Failed to create Auth user:', createError);
-            return NextResponse.json(
-              { error: 'Mitglied genehmigt, aber Account-Erstellung fehlgeschlagen' },
-              { status: 500 }
-            );
+          if (existingAuthUser) {
+            // Auth user already exists — reuse it
+            newUserId = existingAuthUser.id;
+            console.log('[Approval] Auth user already exists, reusing:', newUserId);
+          } else {
+            // Create new auth user
+            const tempPassword = crypto.randomBytes(24).toString('base64url');
+
+            const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
+              email: registration.email,
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                first_name: registration.first_name,
+                last_name: registration.last_name,
+                phone: registration.phone,
+              },
+            });
+
+            if (createError || !authUser?.user) {
+              console.error('Failed to create Auth user:', createError);
+              return NextResponse.json(
+                { error: 'Mitglied genehmigt, aber Account-Erstellung fehlgeschlagen' },
+                { status: 500 }
+              );
+            }
+
+            newUserId = authUser.user.id;
           }
 
-          newUserId = authUser.user.id;
+          // 2. Insert into users table (idempotent — skip if already exists)
+          const { data: existingPublicUser } = await (adminClient as any)
+            .from('users')
+            .select('id')
+            .eq('id', newUserId)
+            .maybeSingle();
 
-          // 2. Insert into users table (requires admin client — bypasses RLS for provisioning)
-          const { error: userInsertError } = await (adminClient as any).from('users').insert({
-            id: authUser.user.id,
-            email: registration.email,
-            first_name: registration.first_name,
-            last_name: registration.last_name,
-            phone: registration.phone,
-            playing_level: registration.playing_level,
-            created_at: new Date().toISOString(),
-          });
+          if (!existingPublicUser) {
+            // Check if a ghost profile exists by email (public.users without auth.users)
+            const { data: ghostProfile } = await (adminClient as any)
+              .from('users')
+              .select('id')
+              .eq('email', registration.email)
+              .maybeSingle();
 
-          if (userInsertError) {
-            console.error('Failed to insert user — cleaning up Auth user:', userInsertError);
-            await adminClient.auth.admin.deleteUser(authUser.user.id);
-            return NextResponse.json(
-              { error: 'Mitglied genehmigt, aber Profil-Erstellung fehlgeschlagen' },
-              { status: 500 }
-            );
+            if (ghostProfile) {
+              // Ghost profile has a different ID than the auth user.
+              // Migrate memberships to the auth user's ID, then delete the ghost.
+              console.log(
+                '[Approval] Ghost profile found (id=' +
+                  ghostProfile.id +
+                  '), migrating to auth user id=' +
+                  newUserId
+              );
+              await (adminClient as any)
+                .from('user_club_memberships')
+                .update({ user_id: newUserId })
+                .eq('user_id', ghostProfile.id);
+              await (adminClient as any).from('users').delete().eq('id', ghostProfile.id);
+            }
+
+            // Create the public.users entry with the auth user's ID
+            const { error: userInsertError } = await (adminClient as any).from('users').insert({
+              id: newUserId,
+              email: registration.email,
+              full_name: `${registration.first_name || ''} ${registration.last_name || ''}`.trim(),
+              phone: registration.phone,
+              created_at: new Date().toISOString(),
+            });
+
+            if (userInsertError) {
+              console.error('Failed to insert user:', userInsertError);
+              return NextResponse.json(
+                { error: 'Mitglied genehmigt, aber Profil-Erstellung fehlgeschlagen' },
+                { status: 500 }
+              );
+            }
           }
 
           // 3. Insert into user_club_memberships (requires admin client — bypasses RLS for provisioning)
@@ -126,7 +169,7 @@ export async function PATCH(request: NextRequest) {
             const { error: membershipError } = await (adminClient as any)
               .from('user_club_memberships')
               .insert({
-                user_id: authUser.user.id,
+                user_id: newUserId,
                 club_id: clubId,
                 role: 'member',
                 is_active: true,
