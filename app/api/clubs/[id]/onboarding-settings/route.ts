@@ -7,6 +7,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createServiceClient } from '@/lib/supabase/service';
 
 const ALLOWED_KEYS = ['language', 'email_from_name', 'email_from_address'] as const;
 
@@ -61,7 +62,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ success: true, message: 'No settings to save' });
     }
 
-    const { error } = await auth.supabase
+    // Use service client to bypass RLS (auth already verified above).
+    // The system_settings RLS policies reference the club_members table,
+    // but memberships are stored in user_club_memberships, causing INSERT failures.
+    const serviceClient = createServiceClient();
+    const { error } = await serviceClient
       .from('system_settings')
       .upsert(rows, { onConflict: 'club_id, key' });
 
