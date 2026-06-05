@@ -96,18 +96,8 @@ async function buildAuthContext(
         effectiveClubId = cookieValue;
       }
     }
-  } else if (effectiveRole === 'admin') {
-    // Admin: prefer cookie-selected club if admin has access,
-    // otherwise fall back to first admin membership
-    const adminMemberships = memberships.filter((m) => m.role === 'admin');
-    if (cookieValue && adminMemberships.some((m) => m.club_id === cookieValue)) {
-      selectedClubId = cookieValue;
-      effectiveClubId = cookieValue;
-    } else {
-      effectiveClubId = effectiveMembership.club_id ?? null;
-    }
   } else {
-    // effectiveClubId comes from the membership that granted the effective role
+    // Admin always sees their own club (no ClubSwitcher — only superadmin has that)
     effectiveClubId = effectiveMembership.club_id ?? null;
   }
 
