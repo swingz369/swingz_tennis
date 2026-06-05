@@ -24,10 +24,12 @@ export default async function PlanningWizardPage({ params }: { params: Promise<{
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-foreground dark:text-white">
             Saison nicht gefunden
           </h2>
-          <p className="text-sm text-gray-500 mt-2">Die angeforderte Saison existiert nicht.</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Die angeforderte Saison existiert nicht.
+          </p>
         </div>
       </div>
     );

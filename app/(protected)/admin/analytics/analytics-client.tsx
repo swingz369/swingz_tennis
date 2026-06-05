@@ -39,7 +39,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
   if (!data) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Keine Vereine gefunden.</div>
+        <div className="text-center py-12 text-muted-foreground">Keine Vereine gefunden.</div>
       </div>
     );
   }
@@ -80,7 +80,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
       <ScrollReveal>
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Analytics</h1>
-          <p className="text-gray-500">Vereinsstatistiken und Leistungskennzahlen</p>
+          <p className="text-muted-foreground">Vereinsstatistiken und Leistungskennzahlen</p>
         </div>
       </ScrollReveal>
 
@@ -94,8 +94,8 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-1 tabular-nums">
+                  <p className="text-sm font-medium text-muted-foreground">{kpi.title}</p>
+                  <p className="text-3xl font-bold text-foreground mt-1 tabular-nums">
                     {kpi.prefix && <span>{kpi.prefix}</span>}
                     <AnimatedCounter value={kpi.value} duration={1500} />
                   </p>
@@ -116,7 +116,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {/* Bookings Over Time (Line) */}
         <ScrollReveal delay={100}>
           <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Buchungen im Zeitverlauf</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Buchungen im Zeitverlauf</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data.bookingsOverTime}>
@@ -150,7 +150,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {/* Revenue by Club (Pie) */}
         <ScrollReveal delay={150}>
           <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Umsatz nach Verein</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Umsatz nach Verein</h3>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -185,7 +185,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {/* Sessions per Trainer (Bar) */}
         <ScrollReveal delay={200}>
           <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Sessions pro Trainer</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Sessions pro Trainer</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.sessionsPerTrainer} layout="vertical">
@@ -226,7 +226,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {/* Court Utilization (Bar) */}
         <ScrollReveal delay={250}>
           <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Platzauslastung</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Platzauslastung</h3>
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.capacityUtilization} layout="vertical">
@@ -279,7 +279,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">KI Insights</h3>
-                <p className="text-xs text-gray-500">Automatische Analysen</p>
+                <p className="text-xs text-muted-foreground">Automatische Analysen</p>
               </div>
             </div>
             <div className="space-y-3">

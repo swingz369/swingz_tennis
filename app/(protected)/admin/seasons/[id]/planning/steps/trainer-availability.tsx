@@ -207,7 +207,7 @@ export function TrainerAvailabilityPanel() {
                   </div>
                   <div className="min-w-0">
                     <p className="font-medium truncate">{trainer.trainerName}</p>
-                    <p className="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
+                    <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
                       {trainer.weeklyDays.length > 0 ? (
                         <span>{trainer.weeklyDays.length} Tage/Woche</span>
                       ) : (
@@ -231,13 +231,13 @@ export function TrainerAvailabilityPanel() {
         </div>
 
         {/* Summary stats */}
-        <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-border dark:border-border">
           <div className="text-center">
-            <p className="text-xs text-gray-500">Gesamt-Trainer</p>
+            <p className="text-xs text-muted-foreground">Gesamt-Trainer</p>
             <p className="text-lg font-bold text-brand-primary">{trainers.length}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500">Freie Slots gesamt</p>
+            <p className="text-xs text-muted-foreground">Freie Slots gesamt</p>
             <p className="text-lg font-bold text-brand-primary">
               {trainers.reduce((s, t) => s + t.availableSlots, 0)}
             </p>

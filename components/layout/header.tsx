@@ -68,7 +68,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-white/70 dark:bg-brand-950/70 backdrop-blur-2xl border-b border-gray-200/60 dark:border-white/[0.06] supports-[backdrop-filter]:bg-white/60 supports-[backdrop-filter]:dark:bg-brand-950/60"
+      className="sticky top-0 z-50 w-full bg-background/70 dark:bg-brand-950/70 backdrop-blur-2xl border-b border-border/60 dark:border-white/[0.06] supports-[backdrop-filter]:bg-background/60 supports-[backdrop-filter]:dark:bg-brand-950/60"
       role="banner"
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -85,7 +85,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             />
             <IconBox icon={Trophy} size="md" variant="gradient-primary" />
           </div>
-          <span className="hidden sm:inline text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <span className="hidden sm:inline text-xl font-bold tracking-tight text-foreground dark:text-white">
             SWINGZ
           </span>
         </Link>
@@ -111,7 +111,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <div className="hidden md:block relative" ref={menuRef}>
             <Button
               variant="ghost"
-              className="relative h-9 gap-2.5 pl-2 pr-3 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 rounded-xl transition-all duration-200"
+              className="relative h-9 gap-2.5 pl-2 pr-3 hover:bg-muted dark:hover:bg-background/10 text-foreground dark:text-gray-200 rounded-xl transition-all duration-200"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               aria-expanded={userMenuOpen}
               aria-haspopup="menu"
@@ -126,14 +126,14 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 {user?.name?.split(' ')[0] || 'User'}
               </span>
               <ChevronDown
-                className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-300 ${userMenuOpen ? 'rotate-180' : ''}`}
+                className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-300 ${userMenuOpen ? 'rotate-180' : ''}`}
                 aria-hidden="true"
               />
             </Button>
 
             {/* Dropdown menu with enter animation */}
             <div
-              className={`absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white dark:bg-surface-dark py-2 shadow-2xl ring-1 ring-gray-200/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
+              className={`absolute right-0 top-full mt-2 w-64 rounded-2xl bg-background dark:bg-surface-dark py-2 shadow-2xl ring-1 ring-ring/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
                 userMenuOpen
                   ? 'opacity-100 scale-100 translate-y-0'
                   : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
@@ -142,11 +142,11 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               aria-label="Benutzermenü"
             >
               {/* User info */}
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/10" role="none">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+              <div className="px-4 py-3 border-b border-border dark:border-white/10" role="none">
+                <p className="text-sm font-semibold text-foreground dark:text-white">
                   {user?.name || 'User'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
                   {user?.email || 'user@example.com'}
                 </p>
                 {user?.roles && user.roles.length > 0 && (
@@ -161,10 +161,10 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 <Link
                   href={dashboardLink}
                   onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-background/5 transition-colors"
                   role="menuitem"
                 >
-                  <LayoutDashboard className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                  <LayoutDashboard className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   Dashboard
                 </Link>
                 <Link
@@ -172,27 +172,27 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   onClick={() => {
                     setUserMenuOpen(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-background/5 transition-colors"
                   role="menuitem"
                 >
-                  <User className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                  <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   Profil
                 </Link>
                 {isAdmin && (
                   <Link
                     href="/admin/settings"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-background/5 transition-colors"
                     role="menuitem"
                   >
-                    <Settings className="h-4 w-4 text-gray-400" aria-hidden="true" />
+                    <Settings className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     Einstellungen
                   </Link>
                 )}
               </div>
 
               {/* Sign out */}
-              <div className="border-t border-gray-100 dark:border-white/10 pt-1" role="none">
+              <div className="border-t border-border dark:border-white/10 pt-1" role="none">
                 <button
                   onClick={handleSignOut}
                   disabled={isLoggingOut}
@@ -210,7 +210,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-9 w-9 text-gray-700 dark:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-white/10"
+            className="md:hidden h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
             onClick={onMenuClick}
             aria-label="Menü öffnen"
           >

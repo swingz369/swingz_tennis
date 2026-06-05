@@ -241,7 +241,7 @@ export function MemberSelector() {
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   filterLevel === level
                     ? 'bg-brand-primary text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400'
+                    : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-muted-foreground'
                 }`}
               >
                 {level === 'all' ? 'Alle' : level}
@@ -253,7 +253,7 @@ export function MemberSelector() {
           variant="ghost"
           size="sm"
           onClick={() => setShowExcluded(!showExcluded)}
-          className={`text-xs ${showExcluded ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+          className={`text-xs ${showExcluded ? 'bg-muted dark:bg-muted' : ''}`}
         >
           {showExcluded ? 'Zeige alle' : 'Nur eingeplante'}
         </Button>
@@ -268,11 +268,11 @@ export function MemberSelector() {
       </div>
 
       {/* Members Table */}
-      <div className="rounded-lg border bg-white dark:bg-surface-dark overflow-hidden">
+      <div className="rounded-lg border bg-background dark:bg-surface-dark overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
+              <tr className="border-b bg-muted dark:bg-muted/50">
                 <th className="w-10 px-4 py-3 text-left"></th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                   Name
@@ -300,7 +300,7 @@ export function MemberSelector() {
                 return (
                   <tr
                     key={member.id}
-                    className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/30 ${
+                    className={`transition-colors hover:bg-muted dark:hover:bg-gray-800/30 ${
                       isSelected ? 'bg-brand-light/5' : ''
                     }`}
                   >
@@ -312,7 +312,7 @@ export function MemberSelector() {
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-sm font-medium text-foreground dark:text-white">
                           {member.name}
                         </p>
                         <p className="text-xs text-muted-foreground">{member.email}</p>
@@ -354,7 +354,7 @@ export function MemberSelector() {
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {member.includeInPlanning === false && (
-                          <Badge className="text-xs bg-gray-50 text-gray-500 border-gray-200 flex items-center gap-1">
+                          <Badge className="text-xs bg-muted text-muted-foreground border-border flex items-center gap-1">
                             <AlertCircle className="h-3 w-3" />
                             Ausgeschlossen
                           </Badge>

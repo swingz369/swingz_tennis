@@ -58,8 +58,10 @@ function StatCard({
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
+                {title}
+              </p>
+              <p className="text-3xl font-bold text-foreground dark:text-white">
                 {typeof value === 'number' ? (
                   <AnimatedCounter value={value} />
                 ) : (
@@ -113,7 +115,7 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
           <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex items-start justify-between">
@@ -122,7 +124,7 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
                 <h1 className="text-3xl font-bold">Plattform Dashboard</h1>
                 <p className="text-white/70 mt-2">Übersicht aller Vereine und Kennzahlen</p>
               </div>
-              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm px-4 py-2.5">
+              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
                 <Award className="h-5 w-5 text-brand-accent" />
                 <span className="text-sm font-medium">{safeData.totalClubs} Vereine</span>
               </div>
@@ -171,9 +173,9 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
       <ScrollReveal delay={200}>
         <Card
           variant="bordered"
-          className="overflow-hidden border-0 shadow-sm bg-white dark:bg-white/5 backdrop-blur-sm"
+          className="overflow-hidden border-0 shadow-sm bg-background dark:bg-card/5 backdrop-blur-sm"
         >
-          <CardHeader className="border-b border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+          <CardHeader className="border-b border-border dark:border-white/10 bg-muted/50 dark:bg-card/[0.02]">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-brand-primary to-brand-dark text-white shadow-sm">
@@ -193,11 +195,11 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-gray-100 dark:divide-white/10">
+            <div className="divide-y divide-border dark:divide-white/10">
               {safeData.clubs.map((club) => (
                 <div
                   key={club.id}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/80 dark:hover:bg-white/[0.03] transition-all duration-200 group cursor-pointer"
+                  className="flex items-center justify-between px-6 py-4 hover:bg-muted/80 dark:hover:bg-background/[0.03] transition-all duration-200 group cursor-pointer"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -213,17 +215,17 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
                       <Building2 className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
+                      <p className="font-medium text-foreground dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
                         {club.name}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
                         <span className="tabular-nums">{club.members}</span> Mitglieder ·{' '}
                         <span className="tabular-nums">{club.trainers}</span> Trainer
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex items-center gap-4 text-xs text-gray-400">
+                    <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
                       <span>€{club.revenue.toLocaleString()}</span>
                     </div>
                     <Button
@@ -245,13 +247,13 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
 
             {safeData.clubs.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <div className="h-16 w-16 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
-                  <Building2 className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+                <div className="h-16 w-16 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mb-4">
+                  <Building2 className="h-8 w-8 text-muted-foreground/50 dark:text-muted-foreground" />
                 </div>
-                <p className="font-medium text-gray-500 dark:text-gray-400 mb-1">
+                <p className="font-medium text-muted-foreground dark:text-muted-foreground mb-1">
                   Keine Vereine vorhanden
                 </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">
                   Erstelle den ersten Verein, um zu starten
                 </p>
                 <Button

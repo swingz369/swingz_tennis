@@ -46,7 +46,7 @@ export default async function ClubBillingPage({ params }: { params: Promise<{ cl
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg font-medium text-gray-500">Verein nicht gefunden</p>
+          <p className="text-lg font-medium text-muted-foreground">Verein nicht gefunden</p>
         </div>
       </div>
     );
@@ -147,7 +147,7 @@ export default async function ClubBillingPage({ params }: { params: Promise<{ cl
       {/* Club context header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark px-6 py-4 text-white">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-white/10 backdrop-blur-sm">
+          <div className="p-2 rounded-xl bg-background/10 backdrop-blur-sm">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"

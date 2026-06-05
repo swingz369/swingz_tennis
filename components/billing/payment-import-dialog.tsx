@@ -136,12 +136,12 @@ export default function PaymentImportDialog() {
               id="payment-csv-upload"
             />
             <label htmlFor="payment-csv-upload">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-sm text-gray-600 mb-2">
+              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mb-2">
                   Klicken Sie, um eine CSV-Datei auszuwählen
                 </p>
-                <p className="text-xs text-gray-500">Nur CSV-Dateien werden akzeptiert</p>
+                <p className="text-xs text-muted-foreground">Nur CSV-Dateien werden akzeptiert</p>
               </div>
             </label>
           </div>
@@ -158,17 +158,17 @@ export default function PaymentImportDialog() {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-600">{result.imported}</div>
-                      <div className="text-sm text-gray-600">Erfolgreich</div>
+                      <div className="text-sm text-muted-foreground">Erfolgreich</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-red-600">{result.failed}</div>
-                      <div className="text-sm text-gray-600">Fehlgeschlagen</div>
+                      <div className="text-sm text-muted-foreground">Fehlgeschlagen</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-yellow-600">
                         {result.invalid.length}
                       </div>
-                      <div className="text-sm text-gray-600">Ungültig</div>
+                      <div className="text-sm text-muted-foreground">Ungültig</div>
                     </div>
                   </div>
 
@@ -185,7 +185,7 @@ export default function PaymentImportDialog() {
                             <div className="font-medium">
                               {item.record.memberEmail || item.record.memberId || 'Unbekannt'}
                             </div>
-                            <div className="text-gray-600">{item.errors.join(', ')}</div>
+                            <div className="text-muted-foreground">{item.errors.join(', ')}</div>
                           </div>
                         ))}
                       </div>
@@ -205,7 +205,7 @@ export default function PaymentImportDialog() {
                             <div className="font-medium">
                               {item.record.memberEmail || item.record.memberId || 'Unbekannt'}
                             </div>
-                            <div className="text-gray-600">{item.error}</div>
+                            <div className="text-muted-foreground">{item.error}</div>
                           </div>
                         ))}
                       </div>

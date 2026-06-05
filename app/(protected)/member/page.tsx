@@ -118,10 +118,12 @@ export default async function MemberPage() {
       {/* ── Greeting ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">
+          <h1 className="text-2xl font-extrabold text-foreground">
             Hallo, {firstName}! <span className="animate-float inline-block">👋</span>
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{club?.name ?? 'Mein Verein'} · Mitglied</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {club?.name ?? 'Mein Verein'} · Mitglied
+          </p>
         </div>
         <Link href="/profile">
           <div className="h-11 w-11 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold shadow-md hover:shadow-lg transition-shadow">
@@ -137,7 +139,7 @@ export default async function MemberPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-background/20">
                     <Zap className="h-4 w-4 text-white" />
                   </div>
                   <p className="text-xs font-semibold text-white/75 uppercase tracking-wider">
@@ -145,7 +147,7 @@ export default async function MemberPage() {
                   </p>
                 </div>
                 {isToday(nextSession.timeslot_start) && (
-                  <span className="text-[11px] font-bold bg-white/25 text-white px-3 py-1 rounded-full animate-pulse-glow">
+                  <span className="text-[11px] font-bold bg-background/25 text-white px-3 py-1 rounded-full animate-pulse-glow">
                     HEUTE
                   </span>
                 )}
@@ -171,8 +173,10 @@ export default async function MemberPage() {
                 <Sparkles className="h-6 w-6 text-brand-primary" />
               </div>
               <div>
-                <p className="text-lg font-bold text-gray-900">Bereit für dein erstes Training?</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-lg font-bold text-foreground">
+                  Bereit für dein erstes Training?
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
                   Buche jetzt deine erste Session und starte durch.
                 </p>
                 <Link
@@ -202,9 +206,9 @@ export default async function MemberPage() {
                   </span>
                 )}
               </div>
-              <p className="text-3xl font-extrabold text-gray-900 tabular-nums">{bookingCount}</p>
-              <p className="text-xs font-medium text-gray-500 mt-1">Buchungen</p>
-              <p className="text-[11px] text-gray-400">bevorstehend</p>
+              <p className="text-3xl font-extrabold text-foreground tabular-nums">{bookingCount}</p>
+              <p className="text-xs font-medium text-muted-foreground mt-1">Buchungen</p>
+              <p className="text-[11px] text-muted-foreground">bevorstehend</p>
             </CardContent>
           </Card>
         </Link>
@@ -216,7 +220,7 @@ export default async function MemberPage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${invoiceCount > 0 ? 'bg-red-100 text-red-500' : 'bg-gray-200 text-gray-400'}`}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${invoiceCount > 0 ? 'bg-red-100 text-red-500' : 'bg-muted text-muted-foreground'}`}
                 >
                   <CreditCard className="h-5 w-5" />
                 </div>
@@ -227,12 +231,12 @@ export default async function MemberPage() {
                 )}
               </div>
               <p
-                className={`text-3xl font-extrabold tabular-nums ${invoiceCount > 0 ? 'text-red-600' : 'text-gray-900'}`}
+                className={`text-3xl font-extrabold tabular-nums ${invoiceCount > 0 ? 'text-red-600' : 'text-foreground'}`}
               >
                 {invoiceCount}
               </p>
-              <p className="text-xs font-medium text-gray-500 mt-1">Rechnungen</p>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-xs font-medium text-muted-foreground mt-1">Rechnungen</p>
+              <p className="text-[11px] text-muted-foreground">
                 {invoiceCount > 0 ? 'zu bezahlen' : 'offen'}
               </p>
             </CardContent>
@@ -247,14 +251,14 @@ export default async function MemberPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl ${notifCount > 0 ? 'bg-blue-100 text-blue-500' : 'bg-gray-200 text-gray-400'}`}
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl ${notifCount > 0 ? 'bg-blue-100 text-blue-500' : 'bg-muted text-muted-foreground'}`}
                   >
                     <Bell className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-500">Benachrichtigungen</p>
+                    <p className="text-xs font-medium text-muted-foreground">Benachrichtigungen</p>
                     <p
-                      className={`text-2xl font-extrabold tabular-nums ${notifCount > 0 ? 'text-blue-600' : 'text-gray-900'}`}
+                      className={`text-2xl font-extrabold tabular-nums ${notifCount > 0 ? 'text-blue-600' : 'text-foreground'}`}
                     >
                       {notifCount}
                     </p>
@@ -265,7 +269,7 @@ export default async function MemberPage() {
                     Ansehen <ChevronRight className="h-3.5 w-3.5" />
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400">keine ungelesenen</p>
+                  <p className="text-xs text-muted-foreground">keine ungelesenen</p>
                 )}
               </div>
             </CardContent>
@@ -295,14 +299,14 @@ export default async function MemberPage() {
               return (
                 <div
                   key={b.id}
-                  className="flex items-center gap-3 py-3 group hover:bg-gray-50/50 -mx-2 px-2 rounded-xl transition-colors"
+                  className="flex items-center gap-3 py-3 group hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
                 >
                   <IconBox icon={MapPin} size="md" variant="green" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate text-gray-900">
+                    <p className="text-sm font-semibold truncate text-foreground">
                       {court?.name ?? 'Platz'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {formatDate(b.session_start_time)} · {formatTime(b.session_start_time)}
                     </p>
                   </div>
@@ -336,14 +340,14 @@ export default async function MemberPage() {
               return (
                 <div
                   key={s.id}
-                  className="flex items-center gap-3 py-3 hover:bg-gray-50/50 -mx-2 px-2 rounded-xl transition-colors"
+                  className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
                 >
                   <IconBox icon={Clock} size="md" variant="light" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate text-gray-900">
+                    <p className="text-sm font-semibold truncate text-foreground">
                       {court?.name ?? 'Training'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {formatDate(s.timeslot_start)} · {formatTime(s.timeslot_start)}–
                       {formatTime(s.timeslot_end)}
                     </p>
@@ -357,7 +361,7 @@ export default async function MemberPage() {
 
       {/* ── Quick Actions ── */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3 px-1">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">
           Schnellzugriff
         </p>
         <div className="grid grid-cols-3 gap-2.5">
@@ -420,14 +424,14 @@ export default async function MemberPage() {
             <Link
               key={action.href}
               href={action.href}
-              className="flex flex-col items-center gap-2 p-3.5 rounded-2xl bg-white border border-gray-100 hover:border-brand-light/30 hover:shadow-elegant transition-all active:scale-95 group"
+              className="flex flex-col items-center gap-2 p-3.5 rounded-2xl bg-background border border-border hover:border-brand-light/30 hover:shadow-elegant transition-all active:scale-95 group"
             >
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-xl border ${action.color} group-hover:scale-110 transition-transform duration-300`}
               >
                 <action.icon className="h-5 w-5" />
               </div>
-              <span className="text-[11px] font-semibold text-center leading-tight text-gray-600 group-hover:text-gray-900 transition-colors">
+              <span className="text-[11px] font-semibold text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
                 {action.label}
               </span>
             </Link>

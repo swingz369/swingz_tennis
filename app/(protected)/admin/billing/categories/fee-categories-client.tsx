@@ -132,7 +132,9 @@ export default function FeeCategoriesClient({
                   </div>
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full ${
-                      cat.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      cat.is_active
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {cat.is_active ? 'Aktiv' : 'Inaktiv'}

@@ -72,7 +72,7 @@ export default function StarRating({
                 ${
                   value <= displayRating
                     ? 'fill-yellow-400 text-yellow-400'
-                    : 'fill-none text-gray-300'
+                    : 'fill-none text-muted-foreground/50'
                 }
                 transition-colors
               `}
@@ -81,10 +81,12 @@ export default function StarRating({
         ))}
       </div>
 
-      {showCount && count > 0 && <span className="text-sm text-gray-500 ml-1">({count})</span>}
+      {showCount && count > 0 && (
+        <span className="text-sm text-muted-foreground ml-1">({count})</span>
+      )}
 
       {!readonly && !showCount && (
-        <span className="text-sm text-gray-600 ml-2">
+        <span className="text-sm text-muted-foreground ml-2">
           {rating > 0 ? `${rating}/5` : 'Select rating'}
         </span>
       )}

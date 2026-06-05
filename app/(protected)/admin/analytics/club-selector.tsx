@@ -31,7 +31,7 @@ export function ClubSelector({ clubs, selectedClubId }: ClubSelectorProps) {
 
   return (
     <div className="mb-4">
-      <label htmlFor="club-selector" className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor="club-selector" className="block text-sm font-medium text-foreground mb-1">
         Verein auswählen
       </label>
       <Select value={selectedClubId} onValueChange={handleChange}>

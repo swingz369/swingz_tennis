@@ -140,7 +140,7 @@ function WizardContent({
           <div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">{seasonType === 'summer' ? '☀️' : '❄️'}</span>
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">
                 {seasonName}
               </h1>
               <Badge variant="secondary" className="text-xs">
@@ -173,8 +173,8 @@ function WizardContent({
                     : isCompleted
                       ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                       : isClickable
-                        ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'
-                        : 'bg-gray-50 text-gray-400 cursor-not-allowed dark:bg-gray-800/50'
+                        ? 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-foreground'
+                        : 'bg-muted text-muted-foreground cursor-not-allowed dark:bg-muted/50'
                 }
               `}
             >
@@ -190,7 +190,7 @@ function WizardContent({
       </nav>
 
       {/* Step Progress Bar */}
-      <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-muted dark:bg-muted overflow-hidden">
         <div
           className="h-full rounded-full bg-brand-primary transition-all duration-500"
           style={{ width: `${(currentStep / 3) * 100}%` }}

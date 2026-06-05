@@ -86,14 +86,14 @@ export default function SchedulerPage() {
       >
         <div className="flex items-start justify-between gap-1">
           <div className="flex items-center gap-1">
-            {canDrag && <GripVertical className="h-3 w-3 text-gray-400" />}
+            {canDrag && <GripVertical className="h-3 w-3 text-muted-foreground" />}
             <div className="font-medium truncate">
               {session.trainerName?.substring(0, 8) || 'Trainer'}
             </div>
           </div>
           {session.bookedByUser && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
         </div>
-        <div className="flex items-center gap-1 text-[11px] text-gray-600">
+        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
           <Clock className="h-3 w-3" />
           <span>
             {session.startTime} - {session.endTime}
@@ -123,8 +123,8 @@ export default function SchedulerPage() {
     return (
       <div
         ref={setNodeRef}
-        className={`min-h-[60px] border-r border-gray-200 last:border-r-0 p-2 transition-colors ${
-          isOver ? 'bg-brand-light/10' : 'hover:bg-gray-50'
+        className={`min-h-[60px] border-r border-border last:border-r-0 p-2 transition-colors ${
+          isOver ? 'bg-brand-light/10' : 'hover:bg-muted'
         }`}
       >
         {sessions.map((session) => (
@@ -203,7 +203,7 @@ export default function SchedulerPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Stundenplan</h1>
-          <p className="text-gray-500">Club: Demo Club – Drag & Drop zum Verschieben</p>
+          <p className="text-muted-foreground">Club: Demo Club – Drag & Drop zum Verschieben</p>
         </div>
         <Button
           onClick={handleOptimize}
@@ -227,14 +227,14 @@ export default function SchedulerPage() {
         <Card variant="elevated" padding="none" className="overflow-x-auto">
           <div className="min-w-[768px]">
             {/* Header row with days */}
-            <div className="grid grid-cols-8 border-b border-gray-200 bg-gray-50">
-              <div className="p-3 text-sm font-medium text-gray-500 border-r border-gray-200">
+            <div className="grid grid-cols-8 border-b border-border bg-muted">
+              <div className="p-3 text-sm font-medium text-muted-foreground border-r border-border">
                 Uhrzeit
               </div>
               {DAYS.map((day) => (
                 <div
                   key={day}
-                  className="p-3 text-sm font-semibold text-center text-brand-primary border-r border-gray-200 last:border-r-0"
+                  className="p-3 text-sm font-semibold text-center text-brand-primary border-r border-border last:border-r-0"
                 >
                   {day}
                 </div>
@@ -243,8 +243,8 @@ export default function SchedulerPage() {
 
             {/* Time slots rows */}
             {TIME_SLOTS.map((time) => (
-              <div key={time} className="grid grid-cols-8 border-b border-gray-200 last:border-b-0">
-                <div className="p-2 text-sm text-gray-500 border-r border-gray-200 text-center bg-gray-50">
+              <div key={time} className="grid grid-cols-8 border-b border-border last:border-b-0">
+                <div className="p-2 text-sm text-muted-foreground border-r border-border text-center bg-muted">
                   {time}
                 </div>
                 {DAYS.map((_, dayIdx) => {
@@ -294,8 +294,8 @@ function SessionCard({
   dragging?: boolean;
 }) {
   const timeDisplay = `${session.startTime} – ${session.endTime}`;
-  const bgColor = 'bg-white border-l-4 border-l-brand-light shadow-sm';
-  const dragHandle = <GripVertical size={14} className="text-gray-400" />;
+  const bgColor = 'bg-background border-l-4 border-l-brand-light shadow-sm';
+  const dragHandle = <GripVertical size={14} className="text-muted-foreground" />;
 
   if (compact || dragging) {
     return (
@@ -309,11 +309,11 @@ function SessionCard({
             <div className="text-xs font-semibold text-brand-primary truncate">
               {session.groupNames?.[0] || 'Gruppe'}
             </div>
-            <div className="text-[11px] text-gray-500 truncate">
+            <div className="text-[11px] text-muted-foreground truncate">
               {session.trainerName || session.trainerId.slice(0, 6)}
             </div>
           </div>
-          <div className="flex items-center gap-1 text-gray-400">{dragHandle}</div>
+          <div className="flex items-center gap-1 text-muted-foreground">{dragHandle}</div>
         </div>
       </div>
     );
@@ -333,15 +333,17 @@ function SessionCard({
         </Badge>
       </div>
       <div className="space-y-2 text-sm">
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Clock size={14} />
           <span>{timeDisplay}</span>
         </div>
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <User size={14} />
           <span>{session.trainerName || session.trainerId}</span>
         </div>
-        {session.notes && <div className="text-xs text-gray-500 italic mt-2">{session.notes}</div>}
+        {session.notes && (
+          <div className="text-xs text-muted-foreground italic mt-2">{session.notes}</div>
+        )}
       </div>
       <div className="mt-3 flex flex-wrap gap-1">
         {session.groupNames?.slice(1).map((name) => (

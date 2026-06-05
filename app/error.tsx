@@ -35,11 +35,11 @@ export default function GlobalError({
   return (
     <html lang="de">
       <body>
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="flex min-h-screen items-center justify-center bg-muted px-4 dark:bg-background">
           <div className="w-full max-w-md text-center">
             <div className="mb-8">
               <svg
-                className="mx-auto h-16 w-16 text-red-500"
+                className="mx-auto h-16 w-16 text-destructive"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -53,42 +53,42 @@ export default function GlobalError({
               </svg>
             </div>
 
-            <h1 className="mb-4 text-4xl font-bold text-gray-900">Etwas ist schiefgelaufen</h1>
+            <h1 className="mb-4 text-4xl font-bold text-foreground">Etwas ist schiefgelaufen</h1>
 
-            <p className="mb-8 text-lg text-gray-600">
+            <p className="mb-8 text-lg text-muted-foreground">
               Ein unerwarteter Fehler ist aufgetreten. Unser Team wurde automatisch benachrichtigt
               und kümmert sich um das Problem.
             </p>
 
             {error.digest && (
-              <p className="mb-8 text-sm text-gray-500">
+              <p className="mb-8 text-sm text-muted-foreground">
                 Fehler-ID:{' '}
-                <code className="rounded bg-gray-100 px-2 py-1 font-mono">{error.digest}</code>
+                <code className="rounded-xl bg-muted px-2 py-1 font-mono">{error.digest}</code>
               </p>
             )}
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <button
                 onClick={reset}
-                className="inline-flex items-center justify-center rounded-md bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-xl bg-brand-primary px-6 py-3 text-base font-medium text-white hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
               >
                 Erneut versuchen
               </button>
 
               <button
                 onClick={() => (window.location.href = '/')}
-                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-6 py-3 text-base font-medium text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
               >
                 Zur Startseite
               </button>
             </div>
 
             {process.env.NODE_ENV === 'development' && (
-              <details className="mt-8 rounded-lg border border-red-200 bg-red-50 p-4 text-left">
-                <summary className="cursor-pointer font-semibold text-red-800">
+              <details className="mt-8 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-left">
+                <summary className="cursor-pointer font-semibold text-destructive">
                   Entwickler-Details anzeigen
                 </summary>
-                <pre className="mt-4 overflow-auto text-xs text-red-900">
+                <pre className="mt-4 overflow-auto text-xs text-destructive">
                   {error.message}
                   {'\n\n'}
                   {error.stack}

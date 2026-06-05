@@ -182,7 +182,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-12 justify-center text-gray-500">
+      <div className="flex items-center gap-2 py-12 justify-center text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
         <span>Lade Präferenzen...</span>
       </div>
@@ -207,7 +207,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs text-gray-500">Bevorzugtes Level</Label>
+              <Label className="text-xs text-muted-foreground">Bevorzugtes Level</Label>
               <Select
                 value={prefs.preferred_level || ''}
                 onValueChange={(v) => setPrefs({ ...prefs, preferred_level: v || null })}
@@ -223,7 +223,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-gray-500">Altersgruppe</Label>
+              <Label className="text-xs text-muted-foreground">Altersgruppe</Label>
               <Select
                 value={prefs.preferred_age_group || ''}
                 onValueChange={(v) => setPrefs({ ...prefs, preferred_age_group: v || null })}
@@ -275,7 +275,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
                   </Button>
                 </div>
                 {slots.length === 0 ? (
-                  <p className="text-xs text-gray-400 pl-2">Keine Verfügbarkeit</p>
+                  <p className="text-xs text-muted-foreground pl-2">Keine Verfügbarkeit</p>
                 ) : (
                   <div className="space-y-1.5">
                     {slots.map((slot, idx) => (
@@ -295,7 +295,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
                             ))}
                           </SelectContent>
                         </Select>
-                        <span className="text-gray-400 text-sm">–</span>
+                        <span className="text-muted-foreground text-sm">–</span>
                         <Select
                           value={slot.end}
                           onValueChange={(v) => updateTimeSlot(key, idx, 'end', v)}
@@ -339,7 +339,9 @@ export function PreferencesTab({ userId, clubId }: Props) {
         </CardHeader>
         <CardContent>
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Maximale Trainingseinheiten pro Woche</Label>
+            <Label className="text-xs text-muted-foreground">
+              Maximale Trainingseinheiten pro Woche
+            </Label>
             <Select
               value={String(prefs.max_sessions_per_week || '')}
               onValueChange={(v) =>
@@ -372,7 +374,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Besondere Wünsche</Label>
+            <Label className="text-xs text-muted-foreground">Besondere Wünsche</Label>
             <Textarea
               value={prefs.special_requests || ''}
               onChange={(e) => setPrefs({ ...prefs, special_requests: e.target.value || null })}
@@ -382,7 +384,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Interne Notizen (nur Admin)</Label>
+            <Label className="text-xs text-muted-foreground">Interne Notizen (nur Admin)</Label>
             <Textarea
               value={prefs.notes || ''}
               onChange={(e) => setPrefs({ ...prefs, notes: e.target.value || null })}

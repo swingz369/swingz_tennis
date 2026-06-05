@@ -83,7 +83,7 @@ export function MobileBottomNav({
   return (
     <nav
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-40 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-gray-200/60 dark:border-white/[0.06] safe-area-pb',
+        'fixed bottom-0 left-0 right-0 z-40 bg-background/80 dark:bg-surface-dark/80 backdrop-blur-xl border-t border-border/60 dark:border-white/[0.06] safe-area-pb',
         !persistent && 'md:hidden',
         className
       )}
@@ -119,7 +119,7 @@ export function MobileBottomNav({
                 'group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1',
                 isActive
                   ? 'text-brand-light dark:text-brand-light bg-brand-light/10 dark:bg-brand-light/20'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-white/[0.03]'
+                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted/50 dark:hover:bg-background/[0.03]'
               )}
               aria-current={isActive ? 'page' : undefined}
               aria-label={`${item.name}${isActive ? ' (aktuelle Seite)' : ''}`}
@@ -148,7 +148,7 @@ export function MobileBottomNav({
         {(isSuperAdmin || isAdmin) && onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-white/[0.03]"
+            className="group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted/50 dark:hover:bg-background/[0.03]"
             aria-label="Hauptmenü öffnen"
           >
             <Menu

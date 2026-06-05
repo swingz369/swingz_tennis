@@ -128,10 +128,10 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
             <CalendarPlus className="h-10 w-10 text-brand-light" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-xl font-semibold text-foreground dark:text-white">
             Noch keine Spielzeit
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 max-w-xs">
             Erstelle deine erste Spielzeit um die Trainingsplanung zu starten
           </p>
           <Button

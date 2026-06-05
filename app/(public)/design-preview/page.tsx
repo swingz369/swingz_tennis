@@ -109,10 +109,10 @@ function Section({
   return (
     <section className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-2xl font-bold font-display text-gray-900 dark:text-white">{title}</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        <h2 className="text-2xl font-bold font-display text-foreground dark:text-white">{title}</h2>
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground">{description}</p>
       </div>
-      <div className="border border-gray-100 dark:border-white/[0.06] rounded-2xl bg-white dark:bg-surface-dark/50 p-6">
+      <div className="border border-border dark:border-white/[0.06] rounded-2xl bg-background dark:bg-surface-dark/50 p-6">
         {children}
       </div>
     </section>
@@ -123,12 +123,12 @@ function ColorSwatch({ color }: { color: (typeof brandColors)[0] }) {
   return (
     <div className="space-y-2">
       <div
-        className="h-24 w-full rounded-xl border border-gray-200/60 dark:border-white/[0.08]"
+        className="h-24 w-full rounded-xl border border-border/60 dark:border-white/[0.08]"
         style={{ backgroundColor: `hsl(var(${color.var}))` }}
       />
       <div className="space-y-0.5">
-        <p className="text-sm font-semibold text-gray-800 dark:text-white">{color.name}</p>
-        <p className="text-xs font-mono text-gray-400 dark:text-gray-500">
+        <p className="text-sm font-semibold text-foreground dark:text-white">{color.name}</p>
+        <p className="text-xs font-mono text-muted-foreground dark:text-muted-foreground">
           <span className="inline-block w-24">var{color.var}</span>
         </p>
       </div>
@@ -155,12 +155,12 @@ export default function DesignPreviewPage() {
   const [animKey, setAnimKey] = useState(0);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-[#0a120e]">
+    <div className="min-h-screen bg-muted/50 dark:bg-[#0a120e]">
       {/* ── Hero ── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#0A3D2E] via-[#1B4332] to-[#2D6A4F]">
         <div className="absolute inset-0 bg-grid opacity-[0.04]" />
         <div className="relative mx-auto max-w-7xl px-6 py-24 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-background/5 px-4 py-1.5 mb-8">
             {' '}
             <span
               className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"
@@ -199,7 +199,7 @@ export default function DesignPreviewPage() {
       </div>
 
       {/* ── Navigation Tabs ── */}
-      <div className="sticky top-0 z-10 border-b border-gray-200/60 dark:border-white/[0.06] bg-white/80 dark:bg-[#0a120e]/80 backdrop-blur-xl">
+      <div className="sticky top-0 z-10 border-b border-border/60 dark:border-white/[0.06] bg-background/80 dark:bg-[#0a120e]/80 backdrop-blur-xl">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex gap-1 overflow-x-auto py-3 -mb-px">
             {tabs.map((tab) => (
@@ -210,7 +210,7 @@ export default function DesignPreviewPage() {
                   'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap',
                   activeTab === tab.id
                     ? 'bg-brand-light/10 text-brand-light dark:text-green-300'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.04]'
+                    : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted dark:hover:bg-background/[0.04]'
                 )}
               >
                 {tab.label}
@@ -235,7 +235,7 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="mt-8 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                 Opacity Variants
               </h3>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
@@ -252,11 +252,11 @@ export default function DesignPreviewPage() {
                   <div key={cls} className="space-y-1.5">
                     <div
                       className={cn(
-                        'h-10 rounded-lg border border-gray-200/40 dark:border-white/[0.06]',
+                        'h-10 rounded-lg border border-border/40 dark:border-white/[0.06]',
                         cls
                       )}
                     />
-                    <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 truncate">
+                    <p className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground truncate">
                       {cls}
                     </p>
                   </div>
@@ -265,7 +265,7 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="mt-8 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                 Text & Background Utilities
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -281,10 +281,10 @@ export default function DesignPreviewPage() {
                 ).map((cls) => (
                   <div
                     key={cls}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-white/[0.03]"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-muted dark:bg-card/[0.03]"
                   >
                     <span className={cn('text-sm font-semibold', cls)}>SwingZ</span>
-                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
+                    <span className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground">
                       {cls}
                     </span>
                   </div>
@@ -304,10 +304,10 @@ export default function DesignPreviewPage() {
               {typographySizes.map((t) => (
                 <div
                   key={t.name}
-                  className="flex items-baseline gap-4 border-b border-gray-100 dark:border-white/[0.04] pb-4 last:border-0"
+                  className="flex items-baseline gap-4 border-b border-border dark:border-white/[0.04] pb-4 last:border-0"
                 >
                   <span className={cn('flex-1 font-display', t.class)}>{t.text}</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 font-mono shrink-0">
+                  <span className="text-xs text-muted-foreground dark:text-muted-foreground font-mono shrink-0">
                     {t.name}
                   </span>
                 </div>
@@ -315,23 +315,31 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="mt-8 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                 Font Family
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.03]">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Display</p>
-                  <p className="text-lg font-display text-gray-800 dark:text-white">
+                <div className="p-4 rounded-xl bg-muted dark:bg-card/[0.03]">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
+                    Display
+                  </p>
+                  <p className="text-lg font-display text-foreground dark:text-white">
                     Clash Display
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.03]">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Sans</p>
-                  <p className="text-lg font-sans text-gray-800 dark:text-white">DM Sans</p>
+                <div className="p-4 rounded-xl bg-muted dark:bg-card/[0.03]">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
+                    Sans
+                  </p>
+                  <p className="text-lg font-sans text-foreground dark:text-white">DM Sans</p>
                 </div>
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.03]">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Mono</p>
-                  <p className="text-lg font-mono text-gray-800 dark:text-white">JetBrains Mono</p>
+                <div className="p-4 rounded-xl bg-muted dark:bg-card/[0.03]">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">
+                    Mono
+                  </p>
+                  <p className="text-lg font-mono text-foreground dark:text-white">
+                    JetBrains Mono
+                  </p>
                 </div>
               </div>
             </div>
@@ -349,11 +357,11 @@ export default function DesignPreviewPage() {
                 <div
                   key={s.name}
                   className={cn(
-                    'h-28 rounded-xl bg-white dark:bg-surface-dark border border-gray-200/40 dark:border-white/[0.06] flex items-center justify-center',
+                    'h-28 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06] flex items-center justify-center',
                     s.class
                   )}
                 >
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
                     {s.name}
                   </span>
                 </div>
@@ -361,7 +369,7 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="mt-8 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                 Card Shadows
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -371,11 +379,11 @@ export default function DesignPreviewPage() {
                   <div
                     key={s}
                     className={cn(
-                      'h-24 rounded-xl bg-white dark:bg-surface-dark border border-gray-200/40 dark:border-white/[0.06] flex items-center justify-center',
+                      'h-24 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06] flex items-center justify-center',
                       s
                     )}
                   >
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 capitalize">
+                    <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground capitalize">
                       {s.replace('shadow-card-', '')}
                     </span>
                   </div>
@@ -397,8 +405,8 @@ export default function DesignPreviewPage() {
                 <div className="absolute inset-0 bg-grid opacity-[0.08]" />
                 <div className="absolute inset-4 glass rounded-xl flex items-center justify-center">
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-white">.glass</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-sm font-semibold text-foreground dark:text-white">.glass</p>
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                       background: surface / 0.8
                       <br />
                       backdrop-filter: blur(24px)
@@ -410,10 +418,10 @@ export default function DesignPreviewPage() {
                 <div className="absolute inset-0 bg-grid opacity-[0.08]" />
                 <div className="absolute inset-4 glass-strong rounded-xl flex items-center justify-center">
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-white">
+                    <p className="text-sm font-semibold text-foreground dark:text-white">
                       .glass-strong
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                       background: surface / 0.9
                       <br />
                       backdrop-filter: blur(40px)
@@ -424,7 +432,7 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="mt-8 p-6 glass rounded-2xl">
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <p className="text-sm text-muted-foreground dark:text-foreground">
                 Glass-Varianten werden in Sidebar, Bottom-Nav, Modals und Cards eingesetzt. Durch
                 die{' '}
                 <code className="text-xs bg-brand-light/10 px-1.5 py-0.5 rounded text-brand-light">
@@ -452,10 +460,10 @@ export default function DesignPreviewPage() {
                     )}
                   />
                   <div className="text-center">
-                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    <p className="text-xs font-semibold text-foreground dark:text-foreground">
                       {r.name}
                     </p>
-                    <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
+                    <p className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground">
                       {r.size}
                     </p>
                   </div>
@@ -464,7 +472,7 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="mt-8 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                 Usage Examples
               </h3>
               <div className="flex flex-wrap gap-3">
@@ -476,10 +484,12 @@ export default function DesignPreviewPage() {
                 ].map((ex) => (
                   <div
                     key={ex.label}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-white/[0.03] rounded-lg border border-gray-200/40 dark:border-white/[0.06]"
+                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-card/[0.03] rounded-lg border border-border/40 dark:border-white/[0.06]"
                   >
-                    <span className="text-sm text-gray-600 dark:text-gray-300">{ex.label}</span>
-                    <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
+                    <span className="text-sm text-muted-foreground dark:text-foreground">
+                      {ex.label}
+                    </span>
+                    <span className="text-xs font-mono text-muted-foreground dark:text-muted-foreground">
                       {ex.cls}
                     </span>
                   </div>
@@ -499,7 +509,7 @@ export default function DesignPreviewPage() {
               {animations.map((anim) => (
                 <div
                   key={anim.name}
-                  className="group relative overflow-hidden rounded-xl border border-gray-200/40 dark:border-white/[0.06] bg-white dark:bg-surface-dark p-6 text-center"
+                  className="group relative overflow-hidden rounded-xl border border-border/40 dark:border-white/[0.06] bg-background dark:bg-surface-dark p-6 text-center"
                 >
                   <div
                     key={animKey}
@@ -510,10 +520,10 @@ export default function DesignPreviewPage() {
                   >
                     <span className="text-white text-lg">✦</span>
                   </div>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <p className="text-sm font-semibold text-foreground dark:text-foreground">
                     {anim.name}
                   </p>
-                  <p className="text-[10px] font-mono text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground mt-1">
                     {anim.class}
                   </p>
                   <button
@@ -544,7 +554,7 @@ export default function DesignPreviewPage() {
             <div className="space-y-3">
               {spacingScale.map((unit) => (
                 <div key={unit} className="flex items-center gap-4">
-                  <span className="w-16 text-xs font-mono text-gray-400 dark:text-gray-500 shrink-0">
+                  <span className="w-16 text-xs font-mono text-muted-foreground dark:text-muted-foreground shrink-0">
                     {unit === 0 ? '0' : unit < 1 ? `p-${unit}`.replace('.', '-') : `p-${unit}`}
                   </span>
                   <div className="flex-1 flex items-center">
@@ -553,7 +563,7 @@ export default function DesignPreviewPage() {
                       style={{ width: `${unit * 4}px`, maxWidth: '100%' }}
                     />
                     {unit > 0 && (
-                      <span className="ml-2 text-[10px] text-gray-400 dark:text-gray-500 font-mono">
+                      <span className="ml-2 text-[10px] text-muted-foreground dark:text-muted-foreground font-mono">
                         {unit * 4}px
                       </span>
                     )}
@@ -563,7 +573,7 @@ export default function DesignPreviewPage() {
             </div>
 
             <div className="mt-8 p-6 glass rounded-2xl">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-2">
                 Spacing in der Praxis
               </h3>
               <div className="flex gap-2">
@@ -577,7 +587,7 @@ export default function DesignPreviewPage() {
                         />
                       ))}
                     </div>
-                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
+                    <span className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground">
                       gap-{g}
                     </span>
                   </div>
@@ -596,7 +606,7 @@ export default function DesignPreviewPage() {
             <div className="space-y-8">
               {/* Hover Effects */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                   Hover Effects
                 </h3>
                 <div className="flex flex-wrap gap-4">
@@ -604,11 +614,11 @@ export default function DesignPreviewPage() {
                     <div
                       key={h.name}
                       className={cn(
-                        'px-6 py-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200/40 dark:border-white/[0.06] cursor-pointer transition-all duration-200',
+                        'px-6 py-4 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06] cursor-pointer transition-all duration-200',
                         h.class
                       )}
                     >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-foreground dark:text-foreground">
                         {h.name}
                       </span>
                     </div>
@@ -618,7 +628,7 @@ export default function DesignPreviewPage() {
 
               {/* Button States */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                   Button States
                 </h3>
                 <div className="flex flex-wrap gap-3">
@@ -628,12 +638,12 @@ export default function DesignPreviewPage() {
                   <button className="px-5 py-2.5 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 shadow-glow-green-sm">
                     Button Glow
                   </button>
-                  <button className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-white/[0.08] text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
+                  <button className="px-5 py-2.5 rounded-lg border border-border dark:border-white/[0.08] text-foreground dark:text-foreground text-sm font-medium hover:bg-muted dark:hover:bg-background/[0.04] transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
                     Button Outline
                   </button>
                   <button
                     disabled
-                    className="px-5 py-2.5 rounded-lg bg-gray-200 dark:bg-white/[0.06] text-gray-400 dark:text-gray-500 text-sm font-medium cursor-not-allowed"
+                    className="px-5 py-2.5 rounded-lg bg-muted dark:bg-card/[0.06] text-muted-foreground dark:text-muted-foreground text-sm font-medium cursor-not-allowed"
                   >
                     Button Disabled
                   </button>
@@ -642,16 +652,16 @@ export default function DesignPreviewPage() {
 
               {/* Focus States */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                   Focus Ring (Tab durchklicken)
                 </h3>
                 <div className="flex flex-wrap gap-3">
                   {['Link', 'Button', 'Input', 'Select'].map((el) => (
                     <div
                       key={el}
-                      className="px-5 py-3 rounded-xl bg-white dark:bg-surface-dark border border-gray-200/40 dark:border-white/[0.06]"
+                      className="px-5 py-3 rounded-xl bg-background dark:bg-surface-dark border border-border/40 dark:border-white/[0.06]"
                     >
-                      <button className="text-sm text-gray-600 dark:text-gray-300 bg-transparent border-none cursor-pointer p-0">
+                      <button className="text-sm text-muted-foreground dark:text-foreground bg-transparent border-none cursor-pointer p-0">
                         {el}
                       </button>
                     </div>
@@ -661,11 +671,11 @@ export default function DesignPreviewPage() {
 
               {/* Gradient Buttons */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <h3 className="text-sm font-semibold text-foreground dark:text-foreground">
                   Gradient Border
                 </h3>
                 <div className="gradient-border p-6 max-w-md">
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                  <p className="text-sm text-muted-foreground dark:text-foreground">
                     Cards mit gradient-border erhalten einen sanften Farbverlauf-Rahmen.
                   </p>
                 </div>
@@ -683,12 +693,12 @@ export default function DesignPreviewPage() {
       </div>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-gray-200/60 dark:border-white/[0.06] py-8">
+      <footer className="border-t border-border/60 dark:border-white/[0.06] py-8">
         <div className="mx-auto max-w-7xl px-6 text-center">
-          <p className="text-sm text-gray-400 dark:text-gray-500">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
             SwingZ Design System · Version 1.0 · Generiert aus globals.css + theme.ts
           </p>
-          <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">
+          <p className="text-xs text-muted-foreground/50 dark:text-muted-foreground mt-1">
             Clash Display via Fontshare · DM Sans via Google Fonts
           </p>
         </div>

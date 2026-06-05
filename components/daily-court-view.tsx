@@ -163,16 +163,16 @@ export default function DailyCourtView({
     const colors: Record<string, string> = {
       confirmed: 'bg-green-100 text-green-700 border-green-200',
       cancelled: 'bg-red-100 text-red-700 border-red-200',
-      no_show: 'bg-gray-100 text-gray-700 border-gray-200',
+      no_show: 'bg-muted text-foreground border-border',
       pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     };
-    return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return colors[status] || 'bg-muted text-foreground border-border';
   };
 
   if (courtsLoading || sessionsLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -180,7 +180,7 @@ export default function DailyCourtView({
   if (courts.length === 0) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Keine Plätze gefunden</div>
+        <div className="text-center py-12 text-muted-foreground">Keine Plätze gefunden</div>
       </div>
     );
   }
@@ -191,7 +191,9 @@ export default function DailyCourtView({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Tagesansicht</h1>
-          <p className="text-gray-500">Detaillierte Platzübersicht für den ausgewählten Tag</p>
+          <p className="text-muted-foreground">
+            Detaillierte Platzübersicht für den ausgewählten Tag
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => router.push('/courts')}>
@@ -226,7 +228,7 @@ export default function DailyCourtView({
         {courts.map((court) => (
           <div key={court.id} className="border rounded-lg overflow-hidden">
             {/* Court Header */}
-            <div className="bg-gray-50 p-4 border-b">
+            <div className="bg-muted p-4 border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-brand-primary/10 rounded-lg">
@@ -234,14 +236,14 @@ export default function DailyCourtView({
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">{court.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>{getSurfaceLabel(court.surface)}</span>
                       {court.hasIndoor && <span>• Indoor</span>}
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     {sessions.filter((s: Session) => s.courtId === court.id).length} Buchungen
                   </div>
                 </div>
@@ -257,7 +259,7 @@ export default function DailyCourtView({
                 return (
                   <div
                     key={timeSlot}
-                    className={`p-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${
+                    className={`p-4 flex items-center justify-between hover:bg-muted transition-colors ${
                       isAvailable ? 'cursor-pointer' : ''
                     }`}
                     role="button"
@@ -273,7 +275,7 @@ export default function DailyCourtView({
                     <div className="flex items-center gap-4">
                       <div className="w-16 text-center">
                         <div className="font-medium text-sm">{timeSlot}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {format(
                             new Date(
                               selectedDate.setHours(
@@ -291,19 +293,19 @@ export default function DailyCourtView({
                           <div
                             className={`p-3 rounded-lg border ${
                               session.bookedByUser
-                                ? 'bg-red-50 border-red-200'
-                                : 'bg-blue-50 border-blue-200'
+                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30'
+                                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30'
                             }`}
                           >
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <User className="h-4 w-4 text-gray-600" />
+                                  <User className="h-4 w-4 text-muted-foreground" />
                                   <span className="font-medium">
                                     {session.trainerName || 'Trainer'}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
                                     <span>
@@ -316,7 +318,7 @@ export default function DailyCourtView({
                                   </div>
                                 </div>
                                 {session.notes && (
-                                  <div className="mt-2 text-sm text-gray-600 italic">
+                                  <div className="mt-2 text-sm text-muted-foreground italic">
                                     {session.notes}
                                   </div>
                                 )}
@@ -338,7 +340,7 @@ export default function DailyCourtView({
                                       handleCancelBooking(session.id, session.bookingId);
                                     }
                                   }}
-                                  className="p-2 rounded-lg hover:bg-red-100 text-red-600 transition-colors"
+                                  className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
                                   title="Buchung stornieren"
                                 >
                                   <svg
@@ -361,7 +363,7 @@ export default function DailyCourtView({
                         </div>
                       ) : (
                         <div className="flex-1">
-                          <div className="p-3 rounded-lg border border-dashed border-gray-300 bg-green-50/50">
+                          <div className="p-3 rounded-lg border border-dashed border-border bg-green-50/50 dark:bg-green-900/10">
                             <div className="flex items-center gap-2 text-green-700">
                               <div className="w-2 h-2 rounded-full bg-green-500"></div>
                               <span className="text-sm">Verfügbar</span>
@@ -379,17 +381,17 @@ export default function DailyCourtView({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-50 border border-dashed border-gray-300 rounded"></div>
+          <div className="w-4 h-4 bg-green-50 dark:bg-green-900/20 border border-dashed border-border rounded"></div>
           <span>Verfügbar</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-50 border border-blue-200 rounded"></div>
+          <div className="w-4 h-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded"></div>
           <span>Belegt</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-50 border border-red-200 rounded"></div>
+          <div className="w-4 h-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded"></div>
           <span>Deine Buchung</span>
         </div>
       </div>

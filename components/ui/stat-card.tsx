@@ -50,9 +50,9 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
     border: 'hover:border-red-200 dark:hover:border-red-700/50',
   },
   gray: {
-    text: 'text-gray-600 dark:text-gray-400',
-    bg: 'bg-gray-50 dark:bg-white/5',
-    border: 'hover:border-gray-200 dark:hover:border-white/10',
+    text: 'text-muted-foreground dark:text-muted-foreground',
+    bg: 'bg-muted dark:bg-card/5',
+    border: 'hover:border-border dark:hover:border-white/10',
   },
 };
 
@@ -89,14 +89,14 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        'border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0',
+        'border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0',
         className
       )}
     >
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
               {label}
             </p>
             <p
@@ -108,7 +108,9 @@ export function StatCard({
               {value}
             </p>
             {(sub || sublabel) && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub || sublabel}</p>
+              <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                {sub || sublabel}
+              </p>
             )}
           </div>
           <div

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default function PublicRegisterPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-card">
       {/* Theme Toggle */}
       <ThemeToggleWrapper />
       <div className="max-w-3xl mx-auto px-4 py-12">

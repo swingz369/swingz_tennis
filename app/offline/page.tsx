@@ -8,13 +8,13 @@
  */
 export default function OfflinePage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-6 dark:bg-background">
       <div className="w-full max-w-md text-center">
         {/* Offline Icon */}
         <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-amber-100 p-6">
+          <div className="rounded-full bg-warning-light p-6 dark:bg-warning/10">
             <svg
-              className="h-16 w-16 text-amber-600"
+              className="h-16 w-16 text-warning"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -31,10 +31,10 @@ export default function OfflinePage() {
         </div>
 
         {/* Heading */}
-        <h1 className="mb-2 font-sans text-2xl font-bold text-gray-900">
+        <h1 className="mb-2 font-sans text-2xl font-bold text-foreground">
           Keine Internetverbindung
         </h1>
-        <p className="mb-8 text-gray-600">
+        <p className="mb-8 text-muted-foreground">
           Du bist momentan offline. Die App funktioniert nur mit einer aktiven Internetverbindung.
           Bitte prüfe deine Verbindung und versuche es erneut.
         </p>
@@ -42,7 +42,7 @@ export default function OfflinePage() {
         {/* Retry Button */}
         <button
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 font-medium text-white transition-colors hover:bg-brand-dark"
+          className="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-6 py-3 font-medium text-white transition-colors hover:bg-brand-primary/90"
         >
           <svg
             className="h-5 w-5"
@@ -61,16 +61,16 @@ export default function OfflinePage() {
         </button>
 
         {/* Cached Pages Info */}
-        <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4 text-left">
-          <h2 className="mb-2 text-sm font-semibold text-gray-700">Letzte besuchte Seiten</h2>
-          <p className="text-sm text-gray-500">
+        <div className="mt-8 rounded-2xl border border-border bg-card p-4 text-left">
+          <h2 className="mb-2 text-sm font-semibold text-foreground">Letzte besuchte Seiten</h2>
+          <p className="text-sm text-muted-foreground">
             Einige zuvor besuchte Seiten könnten noch verfügbar sein. Gehe in deinem Browser zurück
             oder versuche eine andere Seite aufzurufen.
           </p>
         </div>
 
         {/* Footer */}
-        <p className="mt-8 text-xs text-gray-400">SwingZ Tennis Club Management</p>
+        <p className="mt-8 text-xs text-muted-foreground">SwingZ Tennis Club Management</p>
       </div>
     </div>
   );

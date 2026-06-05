@@ -73,19 +73,19 @@ export default function FeedbackForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {trainerName && (
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           Rate your experience with <span className="font-medium">{trainerName}</span>
         </div>
       )}
 
       <div className="space-y-2">
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <label className="block text-sm font-medium text-gray-700">Your Rating *</label>
+        <label className="block text-sm font-medium text-foreground">Your Rating *</label>
         <StarRating rating={rating} onRatingChange={setRating} size="lg" />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="comment" className="block text-sm font-medium text-foreground">
           Comment (Optional)
         </label>
         <Textarea
@@ -97,7 +97,9 @@ export default function FeedbackForm({
           maxLength={1000}
           className="resize-none"
         />
-        <div className="text-xs text-gray-500 text-right">{comment.length}/1000 characters</div>
+        <div className="text-xs text-muted-foreground text-right">
+          {comment.length}/1000 characters
+        </div>
       </div>
 
       <div className="flex gap-2 justify-end">

@@ -191,11 +191,11 @@ export function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 overflow-hidden">
+      <div className="rounded-md border border-border dark:border-white/10 bg-background dark:bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50 dark:bg-gray-800">
+              <TableRow className="bg-muted dark:bg-muted">
                 {columns.map((col) => (
                   <TableHead
                     key={col.key}
@@ -245,7 +245,7 @@ export function DataTable<T extends Record<string, unknown>>({
                         'transition-colors',
                         hrefKey &&
                           hrefPrefix &&
-                          'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
+                          'cursor-pointer hover:bg-muted dark:hover:bg-background/5'
                       )}
                     >
                       {columns.map((col) => {

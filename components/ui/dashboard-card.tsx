@@ -44,10 +44,10 @@ export function DashboardCard({
   noHeaderPadding,
 }: DashboardCardProps) {
   return (
-    <Card className={cn('border border-gray-200 dark:border-white/10 shadow-sm', className)}>
+    <Card className={cn('border border-border dark:border-white/10 shadow-sm', className)}>
       <CardHeader className={cn('pb-3', noHeaderPadding && 'px-4 pt-4')}>
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
             {icon && <IconBox icon={icon} size="xs" variant={iconVariant} />}
             {title}
           </CardTitle>

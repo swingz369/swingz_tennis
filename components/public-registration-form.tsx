@@ -163,7 +163,7 @@ export default function PublicRegistrationForm({
             <div
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
-                s <= step ? 'bg-brand-light' : 'bg-gray-200 dark:bg-gray-700'
+                s <= step ? 'bg-brand-light' : 'bg-muted dark:bg-muted'
               }`}
             />
           ))}

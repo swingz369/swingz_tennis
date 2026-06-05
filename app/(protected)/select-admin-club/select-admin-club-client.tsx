@@ -98,7 +98,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Verein suchen…"
-              className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-brand-light focus:ring-brand-light"
+              className="pl-9 bg-background/10 border-white/20 text-white placeholder:text-white/40 focus:border-brand-light focus:ring-brand-light"
             />
           </div>
 
@@ -113,7 +113,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
                 onClick={() => handleSelect(club.id)}
                 disabled={selecting !== null}
                 className={cn(
-                  'w-full flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-brand-light/50 transition-all text-left group',
+                  'w-full flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-background/5 hover:bg-background/10 hover:border-brand-light/50 transition-all text-left group',
                   selecting === club.id && 'opacity-60 cursor-wait',
                   selecting !== null && selecting !== club.id && 'opacity-40'
                 )}
@@ -125,7 +125,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-white font-semibold truncate">{club.name}</span>
                     {club.status === 'inactive' && (
-                      <Badge variant="secondary" className="text-xs bg-white/10 text-white/50">
+                      <Badge variant="secondary" className="text-xs bg-background/10 text-white/50">
                         Inaktiv
                       </Badge>
                     )}

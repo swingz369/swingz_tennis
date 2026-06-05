@@ -17,17 +17,17 @@ export function CourtsPageClient({
 }) {
   return (
     <Tabs defaultValue="calendar" className="space-y-6">
-      <TabsList className="w-full max-w-md grid grid-cols-2 bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
+      <TabsList className="w-full max-w-md grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
         <TabsTrigger
           value="calendar"
-          className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <Calendar className="h-4 w-4 mr-2" />
           Platz-Kalender
         </TabsTrigger>
         <TabsTrigger
           value="manage"
-          className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <Settings className="h-4 w-4 mr-2" />
           Verwaltung

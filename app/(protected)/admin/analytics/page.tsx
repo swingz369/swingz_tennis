@@ -173,7 +173,9 @@ export default async function AnalyticsPage({
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-brand-primary">Vereinsanalyse</h1>
-              <p className="text-gray-500">{clubs.find((c) => c.id === effectiveClubId)?.name}</p>
+              <p className="text-muted-foreground">
+                {clubs.find((c) => c.id === effectiveClubId)?.name}
+              </p>
             </div>
             {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
           </div>

@@ -156,12 +156,12 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
           <div className="text-center py-12 text-muted-foreground">Laden...</div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden min-w-[600px]">
+            <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-lg overflow-hidden min-w-[600px]">
               {/* Day headers */}
               {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                 <div
                   key={day}
-                  className="bg-gray-50 dark:bg-gray-900 p-2 md:p-3 text-center font-semibold text-xs md:text-sm"
+                  className="bg-muted dark:bg-card p-2 md:p-3 text-center font-semibold text-xs md:text-sm"
                 >
                   {day}
                 </div>
@@ -175,7 +175,7 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                 return (
                   <div
                     key={idx}
-                    className={`min-h-[5rem] md:min-h-[6.25rem] bg-white dark:bg-gray-950 p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                    className={`min-h-[5rem] md:min-h-[6.25rem] bg-background dark:bg-background p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                   >
                     <div className="text-xs font-medium text-muted-foreground mb-1">
                       {format(day, 'd')}
@@ -243,7 +243,7 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                                     : session.bookingStatus === 'cancelled'
                                       ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200'
                                       : session.bookingStatus === 'no_show'
-                                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+                                        ? 'bg-muted dark:bg-muted text-foreground dark:text-gray-200'
                                         : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200'
                                 }`}
                               >

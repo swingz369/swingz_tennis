@@ -222,7 +222,7 @@ export default function SettingsClient() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-primary">Vereinseinstellungen</h1>
-        <p className="text-gray-500">Grundlegende Konfiguration deines Vereins</p>
+        <p className="text-muted-foreground">Grundlegende Konfiguration deines Vereins</p>
       </div>
 
       {/* Tabs */}
@@ -232,7 +232,7 @@ export default function SettingsClient() {
           className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'club'
               ? 'border-brand-primary text-brand-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export default function SettingsClient() {
             className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'system'
                 ? 'border-brand-primary text-brand-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             <div className="flex items-center gap-2">
@@ -329,7 +329,9 @@ export default function SettingsClient() {
                 }
                 className="w-48"
               />
-              <p className="text-sm text-gray-500 mt-1">Standard-Stundenpreis für Platzbuchungen</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Standard-Stundenpreis für Platzbuchungen
+              </p>
             </div>
 
             {/* Opening Hours */}
@@ -523,7 +525,7 @@ export default function SettingsClient() {
                 onChange={(e) =>
                   setSystemSettings({ ...systemSettings, emailNotifications: e.target.checked })
                 }
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="emailNotifications">E-Mail-Benachrichtigungen aktivieren</Label>
             </div>
@@ -557,7 +559,9 @@ export default function SettingsClient() {
                 }
                 placeholder="pk_live_..."
               />
-              <p className="text-sm text-gray-500 mt-1">Wird für die Zahlungsabwicklung benötigt</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Wird für die Zahlungsabwicklung benötigt
+              </p>
             </div>
 
             <div className="flex justify-end">

@@ -178,25 +178,25 @@ export function ConfigStep() {
                 type="checkbox"
                 checked={config.preferHistoricGroups}
                 onChange={(e) => handleConfigChange('preferHistoricGroups', e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-border"
               />
-              <span className="text-sm text-gray-700">Historische Gruppen bevorzugen</span>
+              <span className="text-sm text-foreground">Historische Gruppen bevorzugen</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={config.avoidHighFailureSlots}
                 onChange={(e) => handleConfigChange('avoidHighFailureSlots', e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-border"
               />
-              <span className="text-sm text-gray-700">Hohe Ausfallraten-Slots vermeiden</span>
+              <span className="text-sm text-foreground">Hohe Ausfallraten-Slots vermeiden</span>
             </label>
           </div>
           {/* Auto-Plan Options (integrated from /auto-plan page) */}
           <div className="mt-6 border-t pt-5">
             <div className="flex items-center gap-2 mb-4">
               <Zap className="h-4 w-4 text-amber-500" />
-              <span className="text-sm font-medium text-gray-900">Auto-Plan Optimierung</span>
+              <span className="text-sm font-medium text-foreground">Auto-Plan Optimierung</span>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -229,7 +229,7 @@ export function ConfigStep() {
                       : [...config.optimizationGoals, 'minimize_conflicts'];
                     handleConfigChange('optimizationGoals' as any, goals as any);
                   }}
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <label htmlFor="goal-minimize-conflicts" className="text-sm cursor-pointer">
                   Konflikte minimieren
@@ -246,7 +246,7 @@ export function ConfigStep() {
                       : [...config.optimizationGoals, 'balance_trainer_load'];
                     handleConfigChange('optimizationGoals' as any, goals as any);
                   }}
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <label htmlFor="goal-balance-trainers" className="text-sm cursor-pointer">
                   Trainer-Last ausgleichen
@@ -263,7 +263,7 @@ export function ConfigStep() {
                       : [...config.optimizationGoals, 'maximize_preferences'];
                     handleConfigChange('optimizationGoals' as any, goals as any);
                   }}
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <label htmlFor="goal-maximize-prefs" className="text-sm cursor-pointer">
                   Präferenzen maximieren
@@ -278,7 +278,7 @@ export function ConfigStep() {
                   id="use-ai"
                   checked={config.useAI}
                   onChange={(e) => handleConfigChange('useAI', e.target.checked)}
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <label
                   htmlFor="use-ai"
@@ -294,7 +294,7 @@ export function ConfigStep() {
                   id="allow-overbooking"
                   checked={config.allowOverbooking}
                   onChange={(e) => handleConfigChange('allowOverbooking', e.target.checked)}
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <label htmlFor="allow-overbooking" className="text-sm cursor-pointer">
                   Überbuchung erlauben
@@ -308,7 +308,7 @@ export function ConfigStep() {
                   onChange={(e) =>
                     handleConfigChange('preferConsistentTimeslots', e.target.checked)
                   }
-                  className="rounded border-gray-300"
+                  className="rounded border-border"
                 />
                 <label htmlFor="prefer-consistent" className="text-sm cursor-pointer">
                   Konsistente Zeitslots bevorzugen

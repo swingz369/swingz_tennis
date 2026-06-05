@@ -37,7 +37,7 @@ export default async function AdminPage() {
   if (!club) {
     return (
       <div className="p-6 text-center">
-        <p className="text-gray-500">Verein nicht gefunden.</p>
+        <p className="text-muted-foreground">Verein nicht gefunden.</p>
       </div>
     );
   }
@@ -228,9 +228,9 @@ export default async function AdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Hallo, {firstName}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
             {club.name}
-            <span className="mx-2 text-gray-300 dark:text-gray-600">·</span>
+            <span className="mx-2 text-muted-foreground/50 dark:text-muted-foreground">·</span>
             <span
               className={
                 isSuperadmin
@@ -253,9 +253,9 @@ export default async function AdminPage() {
           )}
           <Link
             href="/admin/settings"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border dark:border-white/10 hover:bg-muted dark:hover:bg-background/5 transition-colors"
           >
-            <Settings className="h-4 w-4 text-gray-500" />
+            <Settings className="h-4 w-4 text-muted-foreground" />
           </Link>
         </div>
       </div>
@@ -310,17 +310,19 @@ export default async function AdminPage() {
           },
         ].map((kpi) => (
           <Link key={kpi.label} href={kpi.href}>
-            <Card className="border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0">
+            <Card className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
                       {kpi.label}
                     </p>
                     <p className="text-2xl font-bold text-brand-primary mt-1.5 tabular-nums">
                       {kpi.value}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{kpi.sub}</p>
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                      {kpi.sub}
+                    </p>
                   </div>
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${kpi.bg} group-hover:scale-105 transition-transform`}
@@ -337,9 +339,9 @@ export default async function AdminPage() {
       {/* 2-Column Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left 60%: Heute im Verein */}
-        <Card className="lg:col-span-3 border border-gray-200 dark:border-white/10 shadow-sm p-0">
+        <Card className="lg:col-span-3 border border-border dark:border-white/10 shadow-sm p-0">
           <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between text-gray-900 dark:text-white">
+            <CardTitle className="text-sm font-semibold flex items-center justify-between text-foreground dark:text-white">
               <div className="flex items-center gap-2">
                 <IconBox icon={Calendar} size="xs" variant="light" />
                 Heute im Verein
@@ -361,15 +363,15 @@ export default async function AdminPage() {
             {(todaySessions ?? []).length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <IconBox icon={Calendar} size="lg" variant="gray" className="mb-3" />
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
                   Keine Sessions heute
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                   Schau morgen wieder vorbei
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-white/5">
+              <div className="divide-y divide-border dark:divide-white/5">
                 {(todaySessions ?? []).map((s: any) => {
                   const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
                   const membership = Array.isArray(s.user_club_memberships)
@@ -384,13 +386,15 @@ export default async function AdminPage() {
                     <div key={s.id} className="flex items-center gap-3 py-3">
                       <IconBox icon={Clock} size="sm" variant="light" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <p className="text-sm font-medium text-foreground dark:text-white truncate">
                           {court?.name ?? 'Platz'}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                           {formatTime(s.timeslot_start)} – {formatTime(s.timeslot_end)}
                           {trainerUser?.full_name && (
-                            <span className="ml-2 text-gray-400">· {trainerUser.full_name}</span>
+                            <span className="ml-2 text-muted-foreground">
+                              · {trainerUser.full_name}
+                            </span>
                           )}
                         </p>
                       </div>
@@ -406,9 +410,9 @@ export default async function AdminPage() {
         </Card>
 
         {/* Right 40%: Neueste Aktivitäten */}
-        <Card className="lg:col-span-2 border border-gray-200 dark:border-white/10 shadow-sm p-0">
+        <Card className="lg:col-span-2 border border-border dark:border-white/10 shadow-sm p-0">
           <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
               {' '}
               <IconBox icon={Activity} size="xs" variant="blue" />
               Neueste Aktivitäten
@@ -418,12 +422,12 @@ export default async function AdminPage() {
             {recentActivity.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <IconBox icon={Activity} size="lg" variant="gray" className="mb-3" />
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
                   Noch keine Aktivitäten
                 </p>
               </div>
             ) : (
-              <div className="space-y-0 divide-y divide-gray-100 dark:divide-white/5">
+              <div className="space-y-0 divide-y divide-border dark:divide-white/5">
                 {recentActivity.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 py-2.5">
                     <div
@@ -444,10 +448,10 @@ export default async function AdminPage() {
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-foreground dark:text-white truncate">
                         {item.name}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                         {item.sub} · {formatRelativeTime(item.created_at)}
                       </p>
                     </div>
@@ -470,7 +474,7 @@ export default async function AdminPage() {
 
       {/* Quick Actions Strip — 4 large action cards */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground mb-4">
           Schnellaktionen
         </p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -513,7 +517,7 @@ export default async function AdminPage() {
             },
           ].map((action) => (
             <Link key={action.href + action.label} href={action.href}>
-              <Card className="border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0 h-full">
+              <Card className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0 h-full">
                 <CardContent className="p-5 flex flex-col gap-3 h-full">
                   <div
                     className={`flex h-11 w-11 items-center justify-center rounded-xl ${action.bg} group-hover:scale-105 transition-transform`}
@@ -521,10 +525,12 @@ export default async function AdminPage() {
                     <action.icon className={`h-5 w-5 ${action.color}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-semibold text-foreground dark:text-white">
                       {action.label}
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{action.desc}</p>
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                      {action.desc}
+                    </p>
                   </div>
                   <div className="mt-auto flex items-center gap-1">
                     <span className={`text-xs font-medium ${action.accentClass}`}>Öffnen</span>
@@ -539,7 +545,7 @@ export default async function AdminPage() {
 
       {/* Secondary Quick Links */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground mb-3">
           Verwaltung
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -555,10 +561,10 @@ export default async function AdminPage() {
             <Link
               key={a.href}
               href={a.href}
-              className="flex items-center gap-2.5 p-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all bg-white dark:bg-white/5 group"
+              className="flex items-center gap-2.5 p-3 rounded-xl border border-border dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all bg-background dark:bg-card/5 group"
             >
               <IconBox icon={a.icon} size="sm" variant="light" />
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+              <span className="text-xs font-medium text-foreground dark:text-foreground truncate">
                 {a.label}
               </span>
             </Link>

@@ -21,8 +21,8 @@ export function ContactFormClient() {
         <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
           <Send className="h-8 w-8 text-green-600" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Nachricht gesendet!</h3>
-        <p className="text-gray-600">
+        <h3 className="text-xl font-bold text-foreground mb-2">Nachricht gesendet!</h3>
+        <p className="text-muted-foreground">
           Wir melden uns in Kürze bei dir. In der Regel antworten wir innerhalb von 24 Stunden.
         </p>
         <Button variant="outline" className="mt-6" onClick={() => setSubmitted(false)}>
@@ -40,7 +40,7 @@ export function ContactFormClient() {
           <Input
             id="firstName"
             required
-            className="h-12 rounded-xl border-gray-200"
+            className="h-12 rounded-xl border-border"
             placeholder="Max"
           />
         </div>
@@ -49,7 +49,7 @@ export function ContactFormClient() {
           <Input
             id="lastName"
             required
-            className="h-12 rounded-xl border-gray-200"
+            className="h-12 rounded-xl border-border"
             placeholder="Mustermann"
           />
         </div>
@@ -60,7 +60,7 @@ export function ContactFormClient() {
           id="email"
           type="email"
           required
-          className="h-12 rounded-xl border-gray-200"
+          className="h-12 rounded-xl border-border"
           placeholder="max@verein.de"
         />
       </div>
@@ -68,7 +68,7 @@ export function ContactFormClient() {
         <Label htmlFor="club">Vereinsname</Label>
         <Input
           id="club"
-          className="h-12 rounded-xl border-gray-200"
+          className="h-12 rounded-xl border-border"
           placeholder="z.B. TC Grün-Weiß"
         />
       </div>
@@ -78,7 +78,7 @@ export function ContactFormClient() {
           id="message"
           required
           rows={5}
-          className="flex w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brandPrimary/20 focus:border-brand-light resize-none"
+          className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brandPrimary/20 focus:border-brand-light resize-none"
           placeholder="Beschreibe dein Anliegen..."
         />
       </div>

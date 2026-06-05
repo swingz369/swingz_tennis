@@ -91,7 +91,7 @@ export default function NewsAnnouncements() {
       case 'medium':
         return 'bg-yellow-100 text-yellow-700 border-yellow-200';
       case 'low':
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-muted text-foreground border-border';
     }
   };
 
@@ -157,7 +157,9 @@ export default function NewsAnnouncements() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-primary">News & Ankündigungen</h1>
-        <p className="text-gray-500">Bleib auf dem Laufenden über Neuigkeiten und Updates</p>
+        <p className="text-muted-foreground">
+          Bleib auf dem Laufenden über Neuigkeiten und Updates
+        </p>
       </div>
 
       {/* Filters */}
@@ -184,7 +186,7 @@ export default function NewsAnnouncements() {
           Letzte 7 Tage
         </Button>
 
-        <div className="w-px h-8 bg-gray-300 mx-2" />
+        <div className="w-px h-8 bg-muted mx-2" />
 
         <Select value={selectedType} onValueChange={setSelectedType}>
           <SelectTrigger className="w-[180px]">
@@ -206,7 +208,7 @@ export default function NewsAnnouncements() {
           <Card>
             <CardContent className="py-12">
               <div className="flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -214,8 +216,8 @@ export default function NewsAnnouncements() {
           <Card>
             <CardContent className="py-12">
               <div className="text-center">
-                <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500">Keine Nachrichten gefunden</p>
+                <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                <p className="text-muted-foreground">Keine Nachrichten gefunden</p>
               </div>
             </CardContent>
           </Card>
@@ -235,7 +237,7 @@ export default function NewsAnnouncements() {
                     <div className="flex items-start gap-3 flex-1">
                       <div
                         className={`p-2 rounded-lg ${
-                          item.isPinned ? 'bg-brand-primary/20' : 'bg-gray-100'
+                          item.isPinned ? 'bg-brand-primary/20' : 'bg-muted'
                         }`}
                       >
                         <Bell className="h-5 w-5" />
@@ -257,7 +259,7 @@ export default function NewsAnnouncements() {
                             {getTypeLabel(item.type)}
                           </Badge>
                           {expired && (
-                            <Badge variant="outline" className="text-xs bg-gray-100">
+                            <Badge variant="outline" className="text-xs bg-muted">
                               Abgelaufen
                             </Badge>
                           )}
@@ -268,9 +270,9 @@ export default function NewsAnnouncements() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 mb-4">{item.content}</p>
+                  <p className="text-foreground mb-4">{item.content}</p>
 
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       <span>
@@ -286,7 +288,7 @@ export default function NewsAnnouncements() {
                     </div>
                     {item.expiresAt && (
                       <div className="flex items-center gap-1">
-                        <span className="text-gray-500">Gültig bis:</span>
+                        <span className="text-muted-foreground">Gültig bis:</span>
                         <span>
                           {format(parseISO(item.expiresAt), 'dd. MMMM yyyy', { locale: de })}
                         </span>
@@ -317,10 +319,10 @@ export default function NewsAnnouncements() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600">Gesamt</div>
+                <div className="text-sm text-muted-foreground">Gesamt</div>
                 <div className="text-2xl font-bold">{news.length}</div>
               </div>
-              <Bell className="h-8 w-8 text-gray-400" />
+              <Bell className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>
@@ -329,7 +331,7 @@ export default function NewsAnnouncements() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600">Angepinnt</div>
+                <div className="text-sm text-muted-foreground">Angepinnt</div>
                 <div className="text-2xl font-bold">{news.filter((n) => n.isPinned).length}</div>
               </div>
               <CheckCircle className="h-8 w-8 text-brand-primary" />
@@ -341,7 +343,7 @@ export default function NewsAnnouncements() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600">Dringend</div>
+                <div className="text-sm text-muted-foreground">Dringend</div>
                 <div className="text-2xl font-bold">
                   {news.filter((n) => n.priority === 'urgent' || n.priority === 'high').length}
                 </div>
@@ -355,7 +357,7 @@ export default function NewsAnnouncements() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600">Diese Woche</div>
+                <div className="text-sm text-muted-foreground">Diese Woche</div>
                 <div className="text-2xl font-bold">
                   {
                     news.filter((n) => {

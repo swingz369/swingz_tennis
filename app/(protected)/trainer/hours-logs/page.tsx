@@ -188,7 +188,7 @@ export default function TrainerHoursLogsPage() {
           <h1 className="text-2xl font-bold text-brand-primary dark:text-white">
             Meine Stundennachweise
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
             Erfasse und verwalte deine geleisteten Stunden
           </p>
         </div>
@@ -212,7 +212,7 @@ export default function TrainerHoursLogsPage() {
               <div>
                 <label
                   htmlFor="trainer-hl-date"
-                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                  className="text-sm font-medium mb-1.5 block text-foreground dark:text-foreground"
                 >
                   Datum *
                 </label>
@@ -226,7 +226,7 @@ export default function TrainerHoursLogsPage() {
               <div>
                 <label
                   htmlFor="trainer-hl-start"
-                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                  className="text-sm font-medium mb-1.5 block text-foreground dark:text-foreground"
                 >
                   Startzeit *
                 </label>
@@ -240,7 +240,7 @@ export default function TrainerHoursLogsPage() {
               <div>
                 <label
                   htmlFor="trainer-hl-end"
-                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                  className="text-sm font-medium mb-1.5 block text-foreground dark:text-foreground"
                 >
                   Endzeit *
                 </label>
@@ -254,7 +254,7 @@ export default function TrainerHoursLogsPage() {
               <div>
                 <label
                   htmlFor="trainer-hl-type"
-                  className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                  className="text-sm font-medium mb-1.5 block text-foreground dark:text-foreground"
                 >
                   Typ *
                 </label>
@@ -278,7 +278,7 @@ export default function TrainerHoursLogsPage() {
             <div>
               <label
                 htmlFor="trainer-hl-notes"
-                className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                className="text-sm font-medium mb-1.5 block text-foreground dark:text-foreground"
               >
                 Notizen
               </label>
@@ -309,10 +309,10 @@ export default function TrainerHoursLogsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Gesamt</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">Gesamt</p>
                 <p className="text-xl font-bold mt-0.5">{stats.total}</p>
               </div>
-              <Clock className="h-5 w-5 text-gray-300" />
+              <Clock className="h-5 w-5 text-muted-foreground/50" />
             </div>
           </CardContent>
         </Card>
@@ -320,7 +320,9 @@ export default function TrainerHoursLogsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Ausstehend</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                  Ausstehend
+                </p>
                 <p className="text-xl font-bold mt-0.5 text-amber-600">{stats.pending}</p>
               </div>
               <Hourglass className="h-5 w-5 text-amber-300" />
@@ -331,7 +333,9 @@ export default function TrainerHoursLogsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Genehmigt</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                  Genehmigt
+                </p>
                 <p className="text-xl font-bold mt-0.5 text-green-600">{stats.approved}</p>
               </div>
               <CheckCircle className="h-5 w-5 text-green-300" />
@@ -342,7 +346,9 @@ export default function TrainerHoursLogsPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Stunden gesamt</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                  Stunden gesamt
+                </p>
                 <p className="text-xl font-bold mt-0.5 text-brand-primary dark:text-brand-light">
                   {stats.totalHours.toFixed(1)}h
                 </p>
@@ -376,7 +382,7 @@ export default function TrainerHoursLogsPage() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 text-gray-600 dark:text-gray-300">
+          <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground dark:text-foreground">
             <Filter className="h-4 w-4" />
             Filter
           </CardTitle>
@@ -386,7 +392,7 @@ export default function TrainerHoursLogsPage() {
             <div>
               <label
                 htmlFor="trainer-hl-filter-status"
-                className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
               >
                 Status
               </label>
@@ -405,7 +411,7 @@ export default function TrainerHoursLogsPage() {
             <div>
               <label
                 htmlFor="trainer-hl-filter-month"
-                className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
               >
                 Monat
               </label>
@@ -423,17 +429,17 @@ export default function TrainerHoursLogsPage() {
       {/* Logs List */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm text-gray-700 dark:text-gray-200">
+          <CardTitle className="text-sm text-foreground dark:text-gray-200">
             Einträge ({logs.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           {logs.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
-              <div className="h-16 w-16 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="h-16 w-16 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8" />
               </div>
-              <p className="font-medium text-gray-500">Keine Stundennachweise</p>
+              <p className="font-medium text-muted-foreground">Keine Stundennachweise</p>
               <p className="text-sm mt-1">
                 {showForm
                   ? 'Fülle das Formular oben aus, um deine erste Eintragung zu machen.'
@@ -445,23 +451,23 @@ export default function TrainerHoursLogsPage() {
               {logs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between p-4 rounded-xl border bg-white dark:bg-white/5 hover:border-gray-200 dark:hover:border-white/20 transition-all"
+                  className="flex items-center justify-between p-4 rounded-xl border bg-background dark:bg-card/5 hover:border-border dark:hover:border-white/20 transition-all"
                 >
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-gray-900 dark:text-white">
+                      <span className="font-medium text-sm text-foreground dark:text-white">
                         {log.hours.toFixed(1)}h
                       </span>
                       {getStatusBadge(log.status)}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground dark:text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {format(parseISO(log.date), 'dd. MMM yyyy', { locale: de })}
                       </span>
                     </div>
                     {log.description && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground line-clamp-1">
                         {log.description}
                       </p>
                     )}
@@ -477,7 +483,7 @@ export default function TrainerHoursLogsPage() {
                   </div>
 
                   <div className="text-right shrink-0 ml-4">
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                       {format(parseISO(log.created_at), 'dd.MM.', { locale: de })}
                     </p>
                   </div>

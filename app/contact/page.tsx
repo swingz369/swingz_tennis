@@ -5,7 +5,7 @@ import { ContactFormClient } from './contact-form-client';
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-gray-900">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -20,7 +20,7 @@ export default function ContactPage() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="text-white/90 hover:text-white hover:bg-white/10"
+                  className="text-white/90 hover:text-white hover:bg-background/10"
                 >
                   Anmelden
                 </Button>
@@ -34,15 +34,15 @@ export default function ContactPage() {
       </header>
 
       {/* Hero */}
-      <section className="bg-gray-50 py-20 sm:py-28">
+      <section className="bg-muted py-20 sm:py-28">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
           <span className="inline-block px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-4">
             Kontakt
           </span>
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
             Wir sind für dich da
           </h1>
-          <p className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Hast du Fragen zu SWINGZ? Möchtest du einen Testzugang oder ein individuelles Angebot?
             Wir freuen uns auf deine Nachricht.
           </p>
@@ -58,22 +58,24 @@ export default function ContactPage() {
 
             {/* Contact Info — Static */}
             <div className="space-y-8">
-              <div className="bg-gray-50 rounded-3xl p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Kontaktmöglichkeiten</h3>
+              <div className="bg-muted rounded-3xl p-8">
+                <h3 className="text-xl font-bold text-foreground mb-6">Kontaktmöglichkeiten</h3>
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
                     <div className="h-10 w-10 rounded-xl bg-brand-primary/10 flex items-center justify-center shrink-0">
                       <Mail className="h-5 w-5 text-brand-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">E-Mail</p>
+                      <p className="font-medium text-foreground">E-Mail</p>
                       <a
                         href="mailto:info@swingz.app"
                         className="text-brand-primary hover:underline"
                       >
                         info@swingz.app
                       </a>
-                      <p className="text-sm text-gray-500 mt-1">Wir antworten innerhalb von 24h</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Wir antworten innerhalb von 24h
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -81,21 +83,21 @@ export default function ContactPage() {
                       <Phone className="h-5 w-5 text-brand-accent" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">Telefon</p>
+                      <p className="font-medium text-foreground">Telefon</p>
                       <a href="tel:+491234567890" className="text-brand-primary hover:underline">
                         +49 123 4567890
                       </a>
-                      <p className="text-sm text-gray-500 mt-1">Mo–Fr, 9:00–17:00 Uhr</p>
+                      <p className="text-sm text-muted-foreground mt-1">Mo–Fr, 9:00–17:00 Uhr</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
-                      <MapPin className="h-5 w-5 text-gray-600" />
+                    <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <MapPin className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">Adresse</p>
-                      <p className="text-gray-600">SWINGZ GmbH</p>
-                      <p className="text-gray-600">
+                      <p className="font-medium text-foreground">Adresse</p>
+                      <p className="text-muted-foreground">SWINGZ GmbH</p>
+                      <p className="text-muted-foreground">
                         {process.env.NEXT_PUBLIC_CLUB_ADDRESS || 'Adresse auf Anfrage'}
                       </p>
                     </div>
@@ -113,7 +115,7 @@ export default function ContactPage() {
                   <Button
                     variant="secondary"
                     size="lg"
-                    className="w-full bg-white text-brand-primary hover:bg-white/90"
+                    className="w-full bg-background text-brand-primary hover:bg-background/90"
                   >
                     Jetzt Testzugang sichern
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -127,7 +129,7 @@ export default function ContactPage() {
 
       {/* Footer */}
       <footer className="bg-gray-900 py-8 border-t border-gray-800">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
           <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
             <Link href="/about" className="hover:text-white transition-colors">
               Über uns

@@ -101,7 +101,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
       <CardContent className="space-y-4">
         {/* Session Selector */}
         {sessions.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 text-sm">
+          <div className="text-center py-8 text-muted-foreground text-sm">
             Keine bevorstehenden Sessions
           </div>
         ) : (
@@ -117,7 +117,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                     className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                       isSelected
                         ? 'bg-brand-primary text-white shadow-md'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-muted text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     <div>{formatDate(startIso)}</div>
@@ -130,7 +130,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
             {/* RSVP Summary */}
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <>
@@ -160,7 +160,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                           <div
                             key={rsvp.id}
                             className={`flex items-center justify-between p-2.5 rounded-lg text-sm ${
-                              isCheckedIn ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
+                              isCheckedIn ? 'bg-green-50 border border-green-200' : 'bg-muted'
                             }`}
                           >
                             <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>

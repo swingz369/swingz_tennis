@@ -24,17 +24,17 @@ export function BillingCategoriesTabs({
 }) {
   return (
     <Tabs defaultValue="invoices" className="space-y-6">
-      <TabsList className="w-full max-w-md grid grid-cols-2 bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
+      <TabsList className="w-full max-w-md grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
         <TabsTrigger
           value="invoices"
-          className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <CreditCard className="h-4 w-4 mr-2" />
           Rechnungen
         </TabsTrigger>
         <TabsTrigger
           value="categories"
-          className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <Tag className="h-4 w-4 mr-2" />
           Kategorien

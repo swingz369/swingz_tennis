@@ -149,7 +149,7 @@ export default function ReportsDashboard() {
               {stats.revenueByMonth.map((m) => (
                 <div key={m.month} className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground w-20">{m.month}</span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
+                  <div className="flex-1 bg-muted rounded-full h-4 overflow-hidden">
                     <div
                       className="bg-brand-light h-full rounded-full transition-all"
                       style={{

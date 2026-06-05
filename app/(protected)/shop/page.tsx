@@ -148,7 +148,7 @@ function ShopContent() {
                   >
                     <CardContent className="p-4 space-y-3">
                       {/* Product image */}
-                      <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden relative">
+                      <div className="aspect-square bg-muted dark:bg-muted rounded-xl flex items-center justify-center overflow-hidden relative">
                         {p.image_url ? (
                           <Image
                             src={p.image_url}
@@ -157,7 +157,7 @@ function ShopContent() {
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
-                          <Package className="h-10 w-10 text-gray-400" />
+                          <Package className="h-10 w-10 text-muted-foreground" />
                         )}
                         {isOutOfStock && (
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -259,7 +259,7 @@ function ShopContent() {
 
       {/* Cart slide-over panel */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-96 bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-96 bg-background dark:bg-card shadow-2xl transform transition-transform duration-300 ease-in-out ${
           cartOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -268,7 +268,7 @@ function ShopContent() {
           <div className="flex items-center justify-between px-5 py-4 border-b">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-5 w-5 text-brand-light" />
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Warenkorb</h2>
+              <h2 className="text-lg font-bold text-foreground dark:text-gray-100">Warenkorb</h2>
               {cartCount > 0 && (
                 <Badge className="bg-brand-light/10 text-brand-light text-xs">{cartCount}</Badge>
               )}
@@ -287,7 +287,7 @@ function ShopContent() {
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                <ShoppingCart className="h-12 w-12 text-gray-300" />
+                <ShoppingCart className="h-12 w-12 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground font-medium">Dein Warenkorb ist leer</p>
                 <Button variant="outline" size="sm" onClick={() => setCartOpen(false)}>
                   Weiter einkaufen
@@ -297,9 +297,9 @@ function ShopContent() {
               items.map((item) => (
                 <div
                   key={item.productId}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-muted/50"
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-700 relative">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted dark:bg-muted relative">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
@@ -308,7 +308,7 @@ function ShopContent() {
                         className="object-cover rounded-lg"
                       />
                     ) : (
-                      <Package className="h-5 w-5 text-gray-400" />
+                      <Package className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -362,7 +362,7 @@ function ShopContent() {
             <div className="border-t px-5 py-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Zwischensumme</span>
-                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                <span className="text-lg font-bold text-foreground dark:text-gray-100">
                   €{cartTotal.toFixed(2)}
                 </span>
               </div>

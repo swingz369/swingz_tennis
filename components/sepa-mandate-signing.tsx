@@ -209,25 +209,25 @@ export default function SEPAMandateSigning() {
                   Dein SEPA-Lastschriftmandat wurde erfolgreich gespeichert.
                 </p>
               </div>
-              <div className="bg-white rounded-lg p-4 text-left space-y-2">
+              <div className="bg-background rounded-lg p-4 text-left space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Kontoinhaber:</span>
+                  <span className="text-muted-foreground">Kontoinhaber:</span>
                   <span className="font-medium">{formData.accountHolder}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">IBAN:</span>
+                  <span className="text-muted-foreground">IBAN:</span>
                   <span className="font-medium">{formData.iban}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Bank:</span>
+                  <span className="text-muted-foreground">Bank:</span>
                   <span className="font-medium">{formData.bankName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Mandatsreferenz:</span>
+                  <span className="text-muted-foreground">Mandatsreferenz:</span>
                   <span className="font-medium">{formData.mandateReference}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Unterschriftdatum:</span>
+                  <span className="text-muted-foreground">Unterschriftdatum:</span>
                   <span className="font-medium">
                     {new Date(formData.signatureDate).toLocaleDateString('de-DE')}
                   </span>
@@ -252,7 +252,9 @@ export default function SEPAMandateSigning() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-primary mb-2">SEPA-Lastschriftmandat</h1>
-        <p className="text-gray-600">Unterschreibe dein SEPA-Mandat für automatische Zahlungen</p>
+        <p className="text-muted-foreground">
+          Unterschreibe dein SEPA-Mandat für automatische Zahlungen
+        </p>
       </div>
 
       {/* Info Alert */}
@@ -411,7 +413,7 @@ export default function SEPAMandateSigning() {
                   {errors.mandateReference && (
                     <p className="text-sm text-red-600">{errors.mandateReference}</p>
                   )}
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Wird automatisch generiert, wenn leer gelassen
                   </p>
                 </div>
@@ -444,7 +446,7 @@ export default function SEPAMandateSigning() {
                   <Label htmlFor="acceptTerms" className="cursor-pointer">
                     Ich akzeptiere die Bedingungen des SEPA-Lastschriftmandats *
                   </Label>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     Ich ermächtige SwingZ Tennis Club, Zahlungen von meinem Konto mittels
                     SEPA-Lastschrift einzuziehen. Zugleich weise ich mein Kreditinstitut an, die von
                     SwingZ Tennis Club auf mein Konto gezogenen Lastschriften einzulösen.
@@ -465,7 +467,7 @@ export default function SEPAMandateSigning() {
                   <Label htmlFor="acceptDirectDebit" className="cursor-pointer">
                     Ich stimme der Einziehung von Lastschriften zu *
                   </Label>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     Hinweis: Ich kann innerhalb von acht Wochen, beginnend mit dem Belastungsdatum,
                     die Erstattung des belasteten Betrages verlangen. Es gelten dabei die mit meinem
                     Kreditinstitut vereinbarten Bedingungen.

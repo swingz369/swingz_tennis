@@ -70,7 +70,7 @@ const SURFACE_COLORS: Record<string, string> = {
 };
 
 function getSurfaceColorClass(surface: string) {
-  return SURFACE_COLORS[surface] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return SURFACE_COLORS[surface] || 'bg-muted text-foreground border-border';
 }
 
 const emptyForm = {
@@ -345,7 +345,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             type="checkbox"
             checked={formData.hasLighting}
             onChange={(e) => setFormData({ ...formData, hasLighting: e.target.checked })}
-            className="h-4 w-4 rounded border-gray-300"
+            className="h-4 w-4 rounded border-border"
           />
           <span className="flex items-center gap-2 text-sm font-medium">
             <Lightbulb className="h-4 w-4 text-yellow-500" />
@@ -357,7 +357,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             type="checkbox"
             checked={formData.isActive}
             onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            className="h-4 w-4 rounded border-gray-300"
+            className="h-4 w-4 rounded border-border"
           />
           <span className="flex items-center gap-2 text-sm font-medium">
             <Power className="h-4 w-4 text-green-500" />
@@ -398,7 +398,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           <h1 className="text-xl md:text-2xl font-bold text-brand-primary dark:text-white">
             Platzverwaltung
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
             {courts.length} {courts.length === 1 ? 'Platz' : 'Plätze'} ·{' '}
             {courts.filter((c) => c.is_active).length} aktiv
           </p>
@@ -420,7 +420,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       {/* Inline Create/Edit Form */}
       {showInlineForm && (
         <Card className="border-brandPrimary/20 shadow-md animate-in">
-          <CardHeader className="border-b border-gray-100 dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+          <CardHeader className="border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" onClick={handleCloseForm} className="shrink-0">
@@ -430,7 +430,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                   <CardTitle>
                     {showInlineForm === 'create' ? 'Neuen Platz anlegen' : `Platz bearbeiten`}
                   </CardTitle>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
                     {showInlineForm === 'create'
                       ? 'Erstelle einen neuen Tennisplatz für deinen Verein.'
                       : `Ändere die Details von "${selectedCourt?.name}".`}
@@ -445,7 +445,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           <CardContent>
             <form onSubmit={showInlineForm === 'create' ? handleCreate : handleUpdate}>
               <CourtFormFields />
-              <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-white/10">
+              <div className="flex gap-3 pt-4 border-t border-border dark:border-white/10">
                 <Button type="button" variant="outline" onClick={handleCloseForm}>
                   Abbrechen
                 </Button>
@@ -473,16 +473,13 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             </div>
             <div className="flex items-center border rounded-md overflow-hidden">
               <Button
                 variant="ghost"
                 size="sm"
-                className={cn(
-                  'rounded-none px-3',
-                  viewMode === 'grid' && 'bg-gray-100 dark:bg-gray-800'
-                )}
+                className={cn('rounded-none px-3', viewMode === 'grid' && 'bg-muted dark:bg-muted')}
                 onClick={() => setViewMode('grid')}
                 aria-label="Rasteransicht"
               >
@@ -491,10 +488,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
               <Button
                 variant="ghost"
                 size="sm"
-                className={cn(
-                  'rounded-none px-3',
-                  viewMode === 'list' && 'bg-gray-100 dark:bg-gray-800'
-                )}
+                className={cn('rounded-none px-3', viewMode === 'list' && 'bg-muted dark:bg-muted')}
                 onClick={() => setViewMode('list')}
                 aria-label="Listenansicht"
               >
@@ -509,10 +503,10 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
                 <MapPin className="h-10 w-10 text-brand-light" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-xl font-semibold text-foreground dark:text-white">
                 {searchQuery ? 'Keine Plätze gefunden' : 'Noch keine Plätze'}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs">
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 max-w-xs">
                 {searchQuery
                   ? `Keine Plätze für "${searchQuery}" gefunden`
                   : 'Erstelle deine ersten Spielflächen um Buchungen zu ermöglichen'}
@@ -600,7 +594,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                         )}
                       </div>
                       {court.location && (
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground dark:text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="truncate">{court.location}</span>
                         </div>
@@ -610,12 +604,12 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           {court.is_active ? (
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-gray-400" />
+                            <XCircle className="h-4 w-4 text-muted-foreground" />
                           )}
                           <span
                             className={cn(
                               'text-xs font-medium',
-                              court.is_active ? 'text-green-600' : 'text-gray-400'
+                              court.is_active ? 'text-green-600' : 'text-muted-foreground'
                             )}
                           >
                             {court.is_active ? 'Aktiv' : 'Inaktiv'}
@@ -634,7 +628,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           ) : court.is_active ? (
                             <ToggleRight className="h-4 w-4 text-green-500" />
                           ) : (
-                            <ToggleLeft className="h-4 w-4 text-gray-400" />
+                            <ToggleLeft className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
                       </div>
@@ -683,7 +677,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                               {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
                             </span>
                           </TableCell>
-                          <TableCell className="text-sm text-gray-500">
+                          <TableCell className="text-sm text-muted-foreground">
                             {court.location || '—'}
                           </TableCell>
                           <TableCell>
@@ -692,7 +686,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                 <Lightbulb className="h-4 w-4" /> Ja
                               </span>
                             ) : (
-                              <span className="text-gray-400 text-sm">Nein</span>
+                              <span className="text-muted-foreground text-sm">Nein</span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -708,7 +702,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                   'text-xs transition-colors',
                                   court.is_active
                                     ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted'
                                 )}
                               >
                                 {togglingId === court.id

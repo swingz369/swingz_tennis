@@ -324,7 +324,7 @@ export default function MemberTrainerBookingPage() {
                     </button>
                   ))}
                   {daySlots.length === 0 && (
-                    <div className="h-8 rounded-md border-2 border-dashed border-gray-100 dark:border-white/5" />
+                    <div className="h-8 rounded-md border-2 border-dashed border-border dark:border-white/5" />
                   )}
                 </div>
               </div>

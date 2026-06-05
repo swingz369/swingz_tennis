@@ -31,12 +31,14 @@ export default function CourtsError({
           <CardTitle className="text-2xl text-center">Fehler beim Laden</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-gray-600 dark:text-gray-400">
+          <p className="text-center text-muted-foreground dark:text-muted-foreground">
             {error.message || 'Die Platzverwaltung konnte nicht geladen werden.'}
           </p>
 
           {error.digest && (
-            <p className="text-xs text-center text-gray-400 font-mono">Error ID: {error.digest}</p>
+            <p className="text-xs text-center text-muted-foreground font-mono">
+              Error ID: {error.digest}
+            </p>
           )}
 
           <div className="space-y-2 pt-2">

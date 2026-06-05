@@ -30,8 +30,8 @@ export function QueryError({
             <AlertTriangle className="h-8 w-8 text-red-600" />
           </div>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>
+        <p className="text-muted-foreground mb-6">{message}</p>
         <div className="flex gap-3 justify-center">
           {onRetry && (
             <Button onClick={onRetry} variant="default" className="gap-2">
@@ -56,10 +56,10 @@ export function QueryError({
         </div>
         {process.env.NODE_ENV === 'development' && (
           <details className="mt-6 text-left">
-            <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+            <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
               Fehlerdetails (Dev)
             </summary>
-            <pre className="mt-2 p-4 bg-gray-100 rounded text-xs overflow-auto">
+            <pre className="mt-2 p-4 bg-muted rounded text-xs overflow-auto">
               {error.toString()}
             </pre>
           </details>
@@ -84,10 +84,10 @@ export function NotFound({
     <div className="flex items-center justify-center min-h-[400px] p-6">
       <Card className="w-full max-w-md p-6 text-center">
         <div className="flex justify-center mb-4">
-          <div className="text-6xl font-bold text-gray-300">404</div>
+          <div className="text-6xl font-bold text-muted-foreground/50">404</div>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
-        <p className="text-gray-600 mb-6">{description}</p>
+        <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>
+        <p className="text-muted-foreground mb-6">{description}</p>
         <div className="flex gap-3 justify-center">
           {onBack && (
             <Button onClick={onBack} variant="outline" className="gap-2">
@@ -126,8 +126,8 @@ export function AccessDenied({
             <AlertTriangle className="h-8 w-8 text-yellow-600" />
           </div>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
-        <p className="text-gray-600 mb-6">{description}</p>
+        <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>
+        <p className="text-muted-foreground mb-6">{description}</p>
         <Button
           onClick={() => (window.location.href = '/dashboard')}
           variant="default"

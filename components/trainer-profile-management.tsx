@@ -509,7 +509,7 @@ export default function TrainerProfileManagement() {
               <h1 className="text-2xl md:text-3xl font-bold text-brand-primary">
                 Trainer-Verwaltung
               </h1>
-              <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+              <p className="text-muted-foreground dark:text-muted-foreground mt-1 text-sm">
                 Übersicht und Management aller Trainerprofile
               </p>
             </div>
@@ -567,7 +567,7 @@ export default function TrainerProfileManagement() {
               <h3 className="text-2xl font-bold text-brand-primary">
                 {searchQuery || statusFilter !== 'all' ? 'Keine Treffer' : 'Noch keine Trainer'}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-sm mx-auto">
+              <p className="text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto">
                 {searchQuery || statusFilter !== 'all'
                   ? 'Passe deine Filterkriterien an, um Ergebnisse zu sehen.'
                   : 'Füge deinen ersten Trainer hinzu, um loszulegen.'}
@@ -612,7 +612,9 @@ export default function TrainerProfileManagement() {
                             <CardTitle className="text-base truncate">
                               {trainer.firstName} {trainer.lastName}
                             </CardTitle>
-                            <p className="text-xs text-gray-500 truncate">{trainer.email}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {trainer.email}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -623,7 +625,7 @@ export default function TrainerProfileManagement() {
                           {getStatusLabel(trainer.status)}
                         </Badge>
                       </div>
-                      <div className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="space-y-2 text-xs text-muted-foreground dark:text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Award className="h-3.5 w-3.5 shrink-0" />
                           <span>{trainer.qualifications.length} Qualifikationen</span>
@@ -648,7 +650,7 @@ export default function TrainerProfileManagement() {
 
           {/* ── Count ────────────────────────────────────────────────────────── */}
           {trainers.length > 0 && !selectedTrainer && (
-            <p className="text-sm text-gray-400 text-center">
+            <p className="text-sm text-muted-foreground text-center">
               {filteredTrainers.length} von {trainers.length} Trainern
             </p>
           )}
@@ -657,9 +659,9 @@ export default function TrainerProfileManagement() {
         {/* ── Right Panel: Trainer Detail ────────────────────────────────────── */}
         <div className={`flex-1 min-w-0 ${!selectedTrainer ? 'hidden lg:block' : ''}`}>
           {selectedTrainer ? (
-            <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm overflow-hidden animate-in">
+            <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
               {/* ── Detail Header ────────────────────────────────────────────── */}
-              <div className="p-5 border-b border-gray-200 dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+              <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <Button
@@ -673,17 +675,17 @@ export default function TrainerProfileManagement() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="shrink-0 hidden lg:inline-flex text-gray-400 hover:text-gray-600"
+                      className="shrink-0 hidden lg:inline-flex text-muted-foreground hover:text-muted-foreground"
                       onClick={handleCloseDetail}
                       title="Schließen"
                     >
                       <X className="h-5 w-5" />
                     </Button>
                     <div>
-                      <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate">
+                      <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
                         {selectedTrainer.firstName} {selectedTrainer.lastName}
                       </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
                         {selectedTrainer.email}
                       </p>
                     </div>
@@ -738,7 +740,7 @@ export default function TrainerProfileManagement() {
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">Vorname</Label>
+                            <Label className="text-xs text-muted-foreground">Vorname</Label>
                             {isEditing ? (
                               <Input
                                 value={editForm.firstName || ''}
@@ -751,7 +753,7 @@ export default function TrainerProfileManagement() {
                             )}
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">Nachname</Label>
+                            <Label className="text-xs text-muted-foreground">Nachname</Label>
                             {isEditing ? (
                               <Input
                                 value={editForm.lastName || ''}
@@ -764,7 +766,7 @@ export default function TrainerProfileManagement() {
                             )}
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">E-Mail</Label>
+                            <Label className="text-xs text-muted-foreground">E-Mail</Label>
                             {isEditing ? (
                               <Input
                                 value={editForm.email || ''}
@@ -777,7 +779,7 @@ export default function TrainerProfileManagement() {
                             )}
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">Telefon</Label>
+                            <Label className="text-xs text-muted-foreground">Telefon</Label>
                             {isEditing ? (
                               <Input
                                 value={editForm.phone || ''}
@@ -790,7 +792,7 @@ export default function TrainerProfileManagement() {
                             )}
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">Geburtsdatum</Label>
+                            <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
                             {isEditing ? (
                               <Input
                                 type="date"
@@ -808,7 +810,7 @@ export default function TrainerProfileManagement() {
                             )}
                           </div>
                           <div className="md:col-span-2 space-y-1.5">
-                            <Label className="text-xs text-gray-500">Bio</Label>
+                            <Label className="text-xs text-muted-foreground">Bio</Label>
                             {isEditing ? (
                               <Textarea
                                 value={editForm.bio || ''}
@@ -817,7 +819,7 @@ export default function TrainerProfileManagement() {
                                 className="resize-none"
                               />
                             ) : (
-                              <div className="text-gray-700 dark:text-gray-300 text-sm">
+                              <div className="text-foreground dark:text-foreground text-sm">
                                 {selectedTrainer.bio || 'Keine Bio vorhanden'}
                               </div>
                             )}
@@ -835,7 +837,7 @@ export default function TrainerProfileManagement() {
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">Name</Label>
+                            <Label className="text-xs text-muted-foreground">Name</Label>
                             {isEditing ? (
                               <Input
                                 value={editForm.emergencyContact?.name || ''}
@@ -857,7 +859,7 @@ export default function TrainerProfileManagement() {
                             )}
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">Telefon</Label>
+                            <Label className="text-xs text-muted-foreground">Telefon</Label>
                             {isEditing ? (
                               <Input
                                 value={editForm.emergencyContact?.phone || ''}
@@ -879,7 +881,7 @@ export default function TrainerProfileManagement() {
                             )}
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs text-gray-500">Beziehung</Label>
+                            <Label className="text-xs text-muted-foreground">Beziehung</Label>
                             {isEditing ? (
                               <Input
                                 value={editForm.emergencyContact?.relationship || ''}
@@ -919,7 +921,9 @@ export default function TrainerProfileManagement() {
                               </Badge>
                             ))
                           ) : (
-                            <span className="text-sm text-gray-400">Keine Sprachen angegeben</span>
+                            <span className="text-sm text-muted-foreground">
+                              Keine Sprachen angegeben
+                            </span>
                           )}
                         </div>
                       </CardContent>
@@ -953,7 +957,7 @@ export default function TrainerProfileManagement() {
                                     </Badge>
                                   )}
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-muted-foreground dark:text-muted-foreground">
                                   <div>
                                     <span className="font-medium text-foreground">Aussteller:</span>{' '}
                                     {qual.issuer}
@@ -1004,7 +1008,7 @@ export default function TrainerProfileManagement() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-gray-400 text-sm">
+                      <div className="text-center py-8 text-muted-foreground text-sm">
                         Noch keine Qualifikationen vorhanden
                       </div>
                     )}
@@ -1027,7 +1031,9 @@ export default function TrainerProfileManagement() {
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-sm text-gray-400">Keine Spezialisierungen</span>
+                          <span className="text-sm text-muted-foreground">
+                            Keine Spezialisierungen
+                          </span>
                         )}
                       </div>
                     </div>
@@ -1042,7 +1048,7 @@ export default function TrainerProfileManagement() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Card variant="gradient">
                         <CardContent className="p-5 text-center">
-                          <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
+                          <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                             Branchenerfahrung
                           </p>
                           <div className="text-3xl font-bold text-gradient-primary">
@@ -1053,7 +1059,7 @@ export default function TrainerProfileManagement() {
                       </Card>
                       <Card variant="gradient">
                         <CardContent className="p-5 text-center">
-                          <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
+                          <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                             Vorherige Vereine
                           </p>
                           <div className="text-3xl font-bold text-gradient-accent">
@@ -1072,15 +1078,17 @@ export default function TrainerProfileManagement() {
                               {selectedTrainer.experience.previousClubs.map((club, index) => (
                                 <div
                                   key={index}
-                                  className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm"
+                                  className="flex items-center gap-3 text-foreground dark:text-foreground text-sm"
                                 >
-                                  <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
+                                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                                   <span>{club}</span>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-400">Keine vorherigen Stationen</p>
+                            <p className="text-sm text-muted-foreground">
+                              Keine vorherigen Stationen
+                            </p>
                           )}
                         </CardContent>
                       </Card>
@@ -1093,7 +1101,7 @@ export default function TrainerProfileManagement() {
                               {selectedTrainer.experience.achievements.map((achievement, index) => (
                                 <div
                                   key={index}
-                                  className="flex items-center gap-3 text-gray-700 dark:text-gray-300 text-sm"
+                                  className="flex items-center gap-3 text-foreground dark:text-foreground text-sm"
                                 >
                                   <Trophy className="h-4 w-4 text-brandAccent shrink-0" />
                                   <span>{achievement}</span>
@@ -1101,7 +1109,9 @@ export default function TrainerProfileManagement() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-400">Keine Erfolge eingetragen</p>
+                            <p className="text-sm text-muted-foreground">
+                              Keine Erfolge eingetragen
+                            </p>
                           )}
                         </CardContent>
                       </Card>
@@ -1117,7 +1127,9 @@ export default function TrainerProfileManagement() {
                           <Calendar className="h-4 w-4 text-brandPrimary" />
                           Reguläre Wochenverfügbarkeit
                         </h3>
-                        <span className="text-xs text-gray-400">Klicken zum Umschalten</span>
+                        <span className="text-xs text-muted-foreground">
+                          Klicken zum Umschalten
+                        </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
                         {availabilityDays.map((day) => {
@@ -1130,7 +1142,7 @@ export default function TrainerProfileManagement() {
                               className={`p-3 rounded-xl text-center transition-all duration-200 cursor-pointer hover:scale-105 ${
                                 isActive
                                   ? 'bg-brandPrimary/10 border-2 border-brandPrimary/30 text-brandPrimary shadow-sm'
-                                  : 'bg-gray-100 dark:bg-white/5 text-gray-400 border-2 border-transparent hover:border-gray-300'
+                                  : 'bg-muted dark:bg-card/5 text-muted-foreground border-2 border-transparent hover:border-border'
                               }`}
                             >
                               <div className="text-xs font-semibold uppercase tracking-wider mb-1.5">
@@ -1140,7 +1152,7 @@ export default function TrainerProfileManagement() {
                                 {isActive ? (
                                   <CheckCircle className="h-5 w-5" />
                                 ) : (
-                                  <div className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-gray-600 border-dashed" />
+                                  <div className="h-5 w-5 rounded-full border-2 border-border dark:border-gray-600 border-dashed" />
                                 )}
                               </div>
                             </button>
@@ -1198,7 +1210,7 @@ export default function TrainerProfileManagement() {
                                       ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800'
                                       : slot.status === 'blocked'
                                         ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800'
-                                        : 'bg-gray-50 border-gray-200 dark:bg-gray-900/10 dark:border-gray-800'
+                                        : 'bg-muted border-border dark:bg-card/10 dark:border-border'
                                 }`}
                               >
                                 <div className="shrink-0">
@@ -1214,7 +1226,7 @@ export default function TrainerProfileManagement() {
                                   <p className="font-medium text-xs truncate">
                                     {format(parseISO(slot.date), 'dd. MMM yyyy', { locale: de })}
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-muted-foreground">
                                     {slot.startTime} - {slot.endTime}
                                     <span className="ml-2 capitalize">({slot.status})</span>
                                   </p>
@@ -1233,7 +1245,7 @@ export default function TrainerProfileManagement() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-400 py-4 text-center">
+                          <p className="text-sm text-muted-foreground py-4 text-center">
                             Keine konkreten Verfügbarkeiten eingetragen.
                             <br />
                             <span className="text-xs">
@@ -1248,7 +1260,7 @@ export default function TrainerProfileManagement() {
                     {/* Add Slot Dialog (overlay) */}
                     {slotDialogOpen && (
                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold">Neue Verfügbarkeit</h3>
                             <Button
@@ -1332,9 +1344,9 @@ export default function TrainerProfileManagement() {
                             {selectedTrainer.preferredTimeSlots.map((slot, index) => (
                               <div
                                 key={index}
-                                className="flex items-center gap-3 bg-white dark:bg-background p-3 rounded-lg border shadow-sm text-sm"
+                                className="flex items-center gap-3 bg-background dark:bg-background p-3 rounded-lg border shadow-sm text-sm"
                               >
-                                <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+                                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                                 <span className="font-medium">
                                   {slot.start} – {slot.end}
                                 </span>
@@ -1342,7 +1354,7 @@ export default function TrainerProfileManagement() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-muted-foreground">
                             Keine bevorzugten Zeiten angegeben
                           </p>
                         )}
@@ -1353,7 +1365,7 @@ export default function TrainerProfileManagement() {
               </div>
 
               {/* ── Detail Footer ─────────────────────────────────────────────── */}
-              <div className="p-5 bg-gray-50 dark:bg-black/10 border-t border-gray-200 dark:border-white/10 flex flex-col sm:flex-row gap-3 items-center justify-between">
+              <div className="p-5 bg-muted dark:bg-black/10 border-t border-border dark:border-white/10 flex flex-col sm:flex-row gap-3 items-center justify-between">
                 {isEditing ? (
                   <div className="flex gap-2 w-full sm:w-auto">
                     <Button
@@ -1424,8 +1436,8 @@ export default function TrainerProfileManagement() {
             </div>
           ) : showInviteForm ? (
             /* ── Inline Invite Form ──────────────────────────────────────────── */
-            <div className="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm overflow-hidden animate-in">
-              <div className="p-5 border-b border-gray-200 dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+            <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+              <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Button
@@ -1437,10 +1449,10 @@ export default function TrainerProfileManagement() {
                       <X className="h-5 w-5" />
                     </Button>
                     <div>
-                      <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+                      <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white">
                         Trainer einladen
                       </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                         Lade einen neuen Trainer zu deinem Verein ein
                       </p>
                     </div>
@@ -1462,7 +1474,7 @@ export default function TrainerProfileManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="invite-name" className="font-semibold">
-                    Name <span className="text-gray-400 font-normal">(optional)</span>
+                    Name <span className="text-muted-foreground font-normal">(optional)</span>
                   </Label>
                   <Input
                     id="invite-name"
@@ -1471,7 +1483,7 @@ export default function TrainerProfileManagement() {
                     onChange={(e) => setInviteName(e.target.value)}
                   />
                 </div>
-                <div className="bg-brandPrimary/5 border border-brandPrimary/10 p-3 rounded-lg text-sm text-gray-600 dark:text-gray-400">
+                <div className="bg-brandPrimary/5 border border-brandPrimary/10 p-3 rounded-lg text-sm text-muted-foreground dark:text-muted-foreground">
                   Der Trainer erhält eine Einladungs-E-Mail und wird dem Verein mit der Rolle
                   &quot;Trainer&quot; hinzugefügt.
                 </div>
@@ -1503,10 +1515,10 @@ export default function TrainerProfileManagement() {
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brandPrimary/5 mb-6">
                 <User className="h-10 w-10 text-brandPrimary/40" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-500 dark:text-gray-400">
+              <h3 className="text-xl font-semibold text-muted-foreground dark:text-muted-foreground">
                 Trainer auswählen
               </h3>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-2 max-w-xs">
+              <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 max-w-xs">
                 Wähle einen Trainer aus der Liste aus, um sein Profil anzuzeigen und zu bearbeiten.
               </p>
             </div>

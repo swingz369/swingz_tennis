@@ -88,7 +88,7 @@ export function RsvpSection({
           return 'bg-amber-100 text-amber-700 ring-1 ring-amber-400';
       }
     }
-    return 'bg-gray-100 text-gray-600 hover:bg-gray-200';
+    return 'bg-muted text-muted-foreground hover:bg-muted';
   };
 
   return (
@@ -128,7 +128,7 @@ export function RsvpSection({
       <div className="flex items-center gap-1">
         <button
           onClick={handleExportICal}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-500 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-all"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-blue-50 hover:text-blue-600 transition-all"
           title="In Kalender exportieren (.ics)"
         >
           <CalendarIcon className="h-3.5 w-3.5" />
@@ -136,7 +136,7 @@ export function RsvpSection({
         </button>
         <button
           onClick={handleGoogleCal}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-500 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-all"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-blue-50 hover:text-blue-600 transition-all"
           title="Zu Google Kalender hinzufügen"
         >
           <CalendarIcon className="h-3.5 w-3.5" />

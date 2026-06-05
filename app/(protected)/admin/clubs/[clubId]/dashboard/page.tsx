@@ -46,7 +46,7 @@ export default async function ClubDashboardPage({
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg font-medium text-gray-500">Verein nicht gefunden</p>
+          <p className="text-lg font-medium text-muted-foreground">Verein nicht gefunden</p>
         </div>
       </div>
     );

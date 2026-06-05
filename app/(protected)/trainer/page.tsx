@@ -110,18 +110,18 @@ export default function TrainerPage() {
     return (
       <div className="space-y-6">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary/10 to-brand-dark/5 p-6">
-          <Skeleton className="h-7 w-48 bg-white/30" />
-          <Skeleton className="h-4 w-28 mt-2 bg-white/20" />
+          <Skeleton className="h-7 w-48 bg-background/30" />
+          <Skeleton className="h-4 w-28 mt-2 bg-background/20" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl border p-5 space-y-2 bg-white dark:bg-white/5">
+            <div key={i} className="rounded-2xl border p-5 space-y-2 bg-background dark:bg-card/5">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-9 w-16" />
             </div>
           ))}
         </div>
-        <div className="rounded-2xl border bg-white dark:bg-white/5">
+        <div className="rounded-2xl border bg-background dark:bg-card/5">
           <div className="px-5 pt-5 pb-3">
             <Skeleton className="h-5 w-36" />
           </div>
@@ -129,7 +129,7 @@ export default function TrainerPage() {
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 py-4 border-t border-gray-100 dark:border-white/10"
+                className="flex items-center gap-3 py-4 border-t border-border dark:border-white/10"
               >
                 <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
                 <div className="flex-1 space-y-1.5">
@@ -159,7 +159,7 @@ export default function TrainerPage() {
         <div className="h-16 w-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
           <XCircle className="h-8 w-8 text-red-400" />
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground">{error}</p>
         <button
           onClick={fetchData}
           className="text-sm font-medium text-brand-light hover:text-brand-primary dark:hover:text-brand-light/80 transition-colors underline underline-offset-4"
@@ -176,7 +176,7 @@ export default function TrainerPage() {
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
           <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex items-start justify-between">
@@ -187,7 +187,7 @@ export default function TrainerPage() {
                   Deine Übersicht über Sessions, Anwesenheit und mehr
                 </p>
               </div>
-              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm px-4 py-2.5">
+              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
                 <Award className="h-5 w-5 text-brand-accent" />
                 <span className="text-sm font-medium">{stats.attendanceRate}% Anwesenheit</span>
               </div>
@@ -237,7 +237,7 @@ export default function TrainerPage() {
             >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-2">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
                     {stat.label}
                   </p>
                   <div
@@ -246,7 +246,7 @@ export default function TrainerPage() {
                     <stat.icon className="h-5 w-5 text-brand-primary dark:text-brand-light" />
                   </div>
                 </div>
-                <p className="text-3xl font-bold tabular-nums text-gray-900 dark:text-white">
+                <p className="text-3xl font-bold tabular-nums text-foreground dark:text-white">
                   <AnimatedCounter
                     value={stat.value}
                     suffix={stat.suffix || ''}
@@ -261,8 +261,8 @@ export default function TrainerPage() {
 
       {/* Upcoming sessions */}
       <ScrollReveal delay={200}>
-        <Card className="p-0 border-0 shadow-sm bg-white dark:bg-white/5 backdrop-blur-sm overflow-hidden">
-          <CardHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-white/10">
+        <Card className="p-0 border-0 shadow-sm bg-background dark:bg-card/5 backdrop-blur-sm overflow-hidden">
+          <CardHeader className="px-5 pt-5 pb-3 border-b border-border dark:border-white/10">
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-1.5 rounded-lg bg-brand-light/10 text-brand-light">
@@ -282,18 +282,18 @@ export default function TrainerPage() {
           <CardContent className="px-5 pb-5">
             {sessions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-3">
-                  <Calendar className="h-7 w-7 text-gray-300 dark:text-gray-600" />
+                <div className="h-14 w-14 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mb-3">
+                  <Calendar className="h-7 w-7 text-muted-foreground/50 dark:text-muted-foreground" />
                 </div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
                   Keine bevorstehenden Sessions
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                   Sobald dir Einheiten zugewiesen werden, erscheinen sie hier
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-white/10">
+              <div className="divide-y divide-border dark:divide-white/10">
                 {sessions.slice(0, 5).map((session) => {
                   const court = Array.isArray(session.courts) ? session.courts[0] : session.courts;
                   const group = Array.isArray(session.groups) ? session.groups[0] : session.groups;
@@ -302,22 +302,22 @@ export default function TrainerPage() {
                   return (
                     <div
                       key={session.id}
-                      className="flex items-center gap-3 py-3.5 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors rounded-lg -mx-2 px-2 group/item"
+                      className="flex items-center gap-3 py-3.5 hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors rounded-lg -mx-2 px-2 group/item"
                     >
                       <div className="h-10 w-10 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center shrink-0 group-hover/item:scale-110 transition-transform">
                         <Calendar className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <p className="text-sm font-medium text-foreground dark:text-white truncate">
                           {group?.name || court?.name || 'Training'}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
                           {formatDate(startIso)} · {formatTime(startIso)}–{formatTime(endIso)}
                         </p>
                       </div>
                       <Link
                         href={`/attendance-history?session=${session.id}`}
-                        className="flex items-center gap-1.5 shrink-0 px-3.5 py-2 rounded-xl bg-brand-light/10 hover:bg-brand-light/20 dark:bg-white/5 dark:hover:bg-white/10 transition-all text-brand-light text-xs font-medium group/link"
+                        className="flex items-center gap-1.5 shrink-0 px-3.5 py-2 rounded-xl bg-brand-light/10 hover:bg-brand-light/20 dark:bg-card/5 dark:hover:bg-background/10 transition-all text-brand-light text-xs font-medium group/link"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <ClipboardCheck className="h-3.5 w-3.5 transition-transform group-hover/link:scale-110" />
@@ -342,7 +342,7 @@ export default function TrainerPage() {
         <div>
           <div className="flex items-center gap-2.5 mb-4">
             <div className="h-5 w-1 rounded-full bg-brand-light" />
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
               Schnellzugriff
             </p>
           </div>
@@ -358,12 +358,12 @@ export default function TrainerPage() {
               <Link
                 key={action.href + action.label}
                 href={action.href}
-                className="group flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-brand-light/30 hover:shadow-lg hover:shadow-brand-light/5 transition-all duration-300 active:scale-95"
+                className="group flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-background dark:bg-card/5 border border-border dark:border-white/10 hover:border-brand-light/30 hover:shadow-lg hover:shadow-brand-light/5 transition-all duration-300 active:scale-95"
               >
                 <div className="h-11 w-11 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center group-hover:bg-brand-light group-hover:text-white transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
                   <action.icon className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-medium text-center leading-tight text-gray-600 dark:text-gray-300 group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
+                <span className="text-xs font-medium text-center leading-tight text-muted-foreground dark:text-foreground group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
                   {action.label}
                 </span>
               </Link>

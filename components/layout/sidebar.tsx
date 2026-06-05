@@ -296,7 +296,7 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'h-[calc(100vh-4rem)] w-64 border-r border-gray-200/60 dark:border-white/[0.06] bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
+        'h-[calc(100vh-4rem)] w-64 border-r border-border/60 dark:border-white/[0.06] bg-background/90 dark:bg-surface-dark/90 backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
@@ -310,7 +310,7 @@ export function Sidebar({
       {open && (
         <button
           onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
+          className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-muted dark:hover:bg-background/10 text-muted-foreground dark:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
           aria-label="Menü schließen"
         >
           <X className="h-5 w-5" />
@@ -325,9 +325,9 @@ export function Sidebar({
             <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="relative">
                 <div className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                <Trophy className="h-5 w-5 text-gray-700 dark:text-gray-200 relative" />
+                <Trophy className="h-5 w-5 text-foreground dark:text-gray-200 relative" />
               </div>
-              <span className="text-sm font-bold tracking-tight text-gray-800 dark:text-white">
+              <span className="text-sm font-bold tracking-tight text-foreground dark:text-white">
                 SWINGZ
               </span>
             </Link>
@@ -346,10 +346,10 @@ export function Sidebar({
 
         {/* Superadmin Club Switcher */}
         {isSuperAdmin && hasMultipleClubs && (
-          <div className="mx-3 mb-4 border border-gray-200/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-gray-50/50 dark:bg-white/[0.02]">
+          <div className="mx-3 mb-4 border border-border/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-muted/50 dark:bg-card/[0.02]">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100/50 dark:hover:bg-white/[0.04] transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground dark:text-gray-200 hover:bg-muted/50 dark:hover:bg-background/[0.04] transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
@@ -357,13 +357,13 @@ export function Sidebar({
               </div>
               <ChevronDown
                 className={cn(
-                  'h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200',
+                  'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
                   clubSwitcherOpen && 'rotate-180'
                 )}
               />
             </button>
             {clubSwitcherOpen && (
-              <div className="border-t border-gray-200/60 dark:border-white/[0.06] overflow-hidden animate-slide-down">
+              <div className="border-t border-border/60 dark:border-white/[0.06] overflow-hidden animate-slide-down">
                 {clubs?.map((club) => (
                   <button
                     key={club.id}
@@ -372,7 +372,7 @@ export function Sidebar({
                       'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                       club.id === (selectedClubId ?? activeClub?.id)
                         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-medium'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04]'
+                        : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04]'
                     )}
                   >
                     <CheckCircle
@@ -401,7 +401,7 @@ export function Sidebar({
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
               isExactActive(pathname, dashboardHref)
                 ? `${colors.bg} ${colors.text} shadow-sm`
-                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
+                : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
             )}
             aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
           >
@@ -435,9 +435,9 @@ export function Sidebar({
 
           {/* Secondary Navigation — shown for both roles */}
           {secondaryNav.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-gray-100/50 dark:border-white/[0.04]">
+            <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/[0.04]">
               <div
-                className="mb-1.5 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-gray-400/50 dark:text-white/30"
+                className="mb-1.5 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-muted-foreground/50 dark:text-white/30"
                 role="heading"
                 aria-level={2}
               >
@@ -454,7 +454,7 @@ export function Sidebar({
                       'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
                         ? `${colors.bg} ${colors.text} shadow-sm`
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white'
+                        : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                     aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
@@ -477,7 +477,7 @@ export function Sidebar({
         {/* Theme Toggle — at the bottom of the sidebar */}
         <div className="mt-4 px-3 pb-4">
           <div
-            className="border-t border-gray-100/50 dark:border-white/[0.04] pt-4"
+            className="border-t border-border/50 dark:border-white/[0.04] pt-4"
             role="separator"
           />
           <ThemeToggle showLabel className="w-full justify-start px-3" />

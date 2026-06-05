@@ -118,7 +118,7 @@ export function ChurnRiskPanel() {
           </div>
           <div>
             <CardTitle className="text-lg font-semibold">Churn Prediction</CardTitle>
-            <p className="text-xs text-gray-500 mt-0.5">Mitglieder mit Kündigungsrisiko</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Mitglieder mit Kündigungsrisiko</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export function ChurnRiskPanel() {
               <p className="text-2xl font-bold tabular-nums">
                 <AnimatedCounter value={data.churnRiskRate} duration={1000} suffix="%" />
               </p>
-              <p className="text-xs text-gray-500">Risiko-Rate</p>
+              <p className="text-xs text-muted-foreground">Risiko-Rate</p>
             </div>
           )}
           <Button variant="ghost" size="icon" onClick={fetchData} disabled={loading}>
@@ -139,7 +139,7 @@ export function ChurnRiskPanel() {
       <CardContent>
         {loading && !data && (
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         )}
 
@@ -151,7 +151,7 @@ export function ChurnRiskPanel() {
         )}
 
         {data && data.atRisk.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Info className="h-8 w-8 mb-2 text-green-500" />
             <p className="text-sm font-medium">Keine gefährdeten Mitglieder</p>
             <p className="text-xs">Alle {data.totalMembers} Mitglieder sind aktiv</p>
@@ -172,8 +172,8 @@ export function ChurnRiskPanel() {
                         ? 'bg-red-100 text-red-700'
                         : filter === 'medium'
                           ? 'bg-amber-100 text-amber-700'
-                          : 'bg-gray-100 text-gray-700'
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                          : 'bg-muted text-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {filter === 'all'
@@ -208,7 +208,7 @@ export function ChurnRiskPanel() {
                               {member.riskScore}
                             </Badge>
                           </div>
-                          <p className="text-xs text-gray-500 truncate">{member.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           {/* Trend icons */}

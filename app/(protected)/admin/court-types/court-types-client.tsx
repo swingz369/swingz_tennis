@@ -249,7 +249,7 @@ export function CourtTypesClient() {
           <h1 className="text-xl md:text-2xl font-bold text-brand-primary dark:text-white">
             Platz-Typen verwalten
           </h1>
-          <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">
+          <p className="text-sm md:text-base text-muted-foreground dark:text-muted-foreground">
             Definiere verfügbare Platzarten (Belag, Ausstattung, Preise)
           </p>
         </div>
@@ -320,7 +320,7 @@ export function CourtTypesClient() {
                       id="is_indoor"
                       checked={formData.is_indoor}
                       onChange={(e) => setFormData({ ...formData, is_indoor: e.target.checked })}
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-border"
                     />
                     <Label htmlFor="is_indoor">Halle</Label>
                   </div>
@@ -330,7 +330,7 @@ export function CourtTypesClient() {
                       id="is_outdoor"
                       checked={formData.is_outdoor}
                       onChange={(e) => setFormData({ ...formData, is_outdoor: e.target.checked })}
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-border"
                     />
                     <Label htmlFor="is_outdoor">Freiluft</Label>
                   </div>
@@ -342,7 +342,7 @@ export function CourtTypesClient() {
                       onChange={(e) =>
                         setFormData({ ...formData, requires_lighting: e.target.checked })
                       }
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-border"
                     />
                     <Label htmlFor="requires_lighting" className="flex items-center gap-1">
                       <Lightbulb className="h-4 w-4" />
@@ -384,7 +384,7 @@ export function CourtTypesClient() {
                     id="is_active"
                     checked={formData.is_active}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-border"
                   />
                   <Label htmlFor="is_active">Aktiv</Label>
                 </div>
@@ -426,7 +426,7 @@ export function CourtTypesClient() {
                 </TableRow>
               ) : courtTypes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Keine Platz-Typen gefunden
                   </TableCell>
                 </TableRow>
@@ -458,7 +458,7 @@ export function CourtTypesClient() {
                     </TableCell>
                     <TableCell>{type.max_players}</TableCell>
                     <TableCell className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-gray-400" />
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
                       {type.hourly_rate.toFixed(2)}
                     </TableCell>
                     <TableCell>
@@ -467,7 +467,7 @@ export function CourtTypesClient() {
                         className={
                           type.is_active
                             ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
+                            : 'bg-muted text-foreground'
                         }
                       >
                         {type.is_active ? 'Aktiv' : 'Inaktiv'}
@@ -565,7 +565,7 @@ export function CourtTypesClient() {
                     id="edit-is_indoor"
                     checked={formData.is_indoor}
                     onChange={(e) => setFormData({ ...formData, is_indoor: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-border"
                   />
                   <Label htmlFor="edit-is_indoor">Halle</Label>
                 </div>
@@ -575,7 +575,7 @@ export function CourtTypesClient() {
                     id="edit-is_outdoor"
                     checked={formData.is_outdoor}
                     onChange={(e) => setFormData({ ...formData, is_outdoor: e.target.checked })}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-border"
                   />
                   <Label htmlFor="edit-is_outdoor">Freiluft</Label>
                 </div>
@@ -587,7 +587,7 @@ export function CourtTypesClient() {
                     onChange={(e) =>
                       setFormData({ ...formData, requires_lighting: e.target.checked })
                     }
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-border"
                   />
                   <Label htmlFor="edit-requires_lighting" className="flex items-center gap-1">
                     <Lightbulb className="h-4 w-4" />
@@ -629,7 +629,7 @@ export function CourtTypesClient() {
                   id="edit-is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-border"
                 />
                 <Label htmlFor="edit-is_active">Aktiv</Label>
               </div>

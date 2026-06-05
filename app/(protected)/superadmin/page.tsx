@@ -150,7 +150,7 @@ export default async function SuperadminPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="divide-y divide-gray-100 dark:divide-white/10">
+          <div className="divide-y divide-border dark:divide-white/10">
             {clubsWithStats.map((club: any) => (
               <div key={club.id} className="flex items-center gap-4 py-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20 shrink-0">
@@ -197,7 +197,7 @@ export default async function SuperadminPage() {
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-purple-400/50 hover:shadow-sm transition-all bg-white dark:bg-white/5"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-purple-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20 shrink-0">
                 <action.icon className="h-4 w-4 text-purple-600 dark:text-purple-400" />

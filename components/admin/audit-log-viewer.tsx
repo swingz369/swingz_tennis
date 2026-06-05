@@ -145,7 +145,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-brand-primary">Audit Logs</h2>
-          <p className="text-gray-500">System activity and changes</p>
+          <p className="text-muted-foreground">System activity and changes</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchLogs}>
@@ -164,7 +164,7 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by user, action, entity..."
                 value={searchTerm}
@@ -210,26 +210,30 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
       <Card variant="bordered">
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-8 text-center text-gray-500">Loading audit logs...</div>
+            <div className="p-8 text-center text-muted-foreground">Loading audit logs...</div>
           ) : filteredLogs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No audit logs found</div>
+            <div className="p-8 text-center text-muted-foreground">No audit logs found</div>
           ) : (
             <div className="divide-y">
               {filteredLogs.map((log) => (
-                <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div key={log.id} className="p-4 hover:bg-muted transition-colors">
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <FileText className="h-5 w-5 text-gray-600" />
+                    <div className="p-2 bg-muted rounded-lg">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant={getActionColor(log.action)}>{log.action}</Badge>
-                        <span className="text-sm font-medium text-gray-700">{log.entity_type}</span>
-                        <span className="text-sm text-gray-500">#{log.entity_id.slice(0, 8)}</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {log.entity_type}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          #{log.entity_id.slice(0, 8)}
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
                           <span>{log.user_email}</span>
@@ -244,10 +248,10 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
 
                       {log.changes && Object.keys(log.changes).length > 0 && (
                         <details className="text-sm">
-                          <summary className="cursor-pointer text-gray-600 hover:text-gray-900">
+                          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
                             View changes
                           </summary>
-                          <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                          <div className="mt-2 p-3 bg-muted rounded-lg">
                             <pre className="text-xs overflow-x-auto">
                               {JSON.stringify(log.changes, null, 2)}
                             </pre>
@@ -256,11 +260,13 @@ export function AuditLogViewer({ clubId }: AuditLogViewerProps) {
                       )}
 
                       {log.ip_address && (
-                        <div className="text-xs text-gray-500 mt-1">IP: {log.ip_address}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          IP: {log.ip_address}
+                        </div>
                       )}
                     </div>
 
-                    <div className="text-xs text-gray-500 text-right">
+                    <div className="text-xs text-muted-foreground text-right">
                       {format(new Date(log.created_at), 'MMM dd, yyyy HH:mm:ss')}
                     </div>
                   </div>

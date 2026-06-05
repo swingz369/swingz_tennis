@@ -37,15 +37,15 @@ export function SettingsTabsWrapper({
     <div className="space-y-6">
       {/* Tab bar */}
       <div className="px-6 pt-2">
-        <div className="flex gap-1 bg-gray-100 dark:bg-white/5 p-1 rounded-xl w-fit flex-wrap">
+        <div className="flex gap-1 bg-muted dark:bg-card/5 p-1 rounded-xl w-fit flex-wrap">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-white dark:bg-surface-dark text-brand-primary shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-background dark:bg-surface-dark text-brand-primary shadow-sm'
+                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white'
               }`}
             >
               <tab.icon className="h-4 w-4" />

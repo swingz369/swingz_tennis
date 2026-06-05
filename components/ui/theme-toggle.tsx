@@ -42,7 +42,7 @@ export function ThemeToggle({ className, iconSize = 18, showLabel = false }: The
       type="button"
       onClick={() => setTheme(nextTheme)}
       className={cn(
-        'relative inline-flex items-center justify-center gap-2 rounded-xl h-9 w-9 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors',
+        'relative inline-flex items-center justify-center gap-2 rounded-xl h-9 w-9 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-background/10 transition-colors',
         showLabel && 'w-auto px-3',
         className
       )}

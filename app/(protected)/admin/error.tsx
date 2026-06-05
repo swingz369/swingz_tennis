@@ -41,12 +41,12 @@ export default function AdminError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-8 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-muted px-4 dark:bg-background">
+      <div className="w-full max-w-lg rounded-2xl bg-card p-8 shadow-lg">
         <div className="mb-6 flex items-start">
           <div className="flex-shrink-0">
             <svg
-              className="h-12 w-12 text-red-600"
+              className="h-12 w-12 text-destructive"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -60,31 +60,33 @@ export default function AdminError({
             </svg>
           </div>
           <div className="ml-4">
-            <h2 className="text-2xl font-bold text-gray-900">Admin-Fehler</h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <h2 className="text-2xl font-bold text-foreground">Admin-Fehler</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               Beim Laden der Admin-Oberfläche ist ein Fehler aufgetreten.
             </p>
           </div>
         </div>
 
-        <div className="mb-6 rounded-md bg-red-50 p-4">
-          <p className="text-sm font-medium text-red-800">
+        <div className="mb-6 rounded-xl bg-destructive/10 p-4">
+          <p className="text-sm font-medium text-destructive">
             {error.message || 'Ein unbekannter Fehler ist aufgetreten.'}
           </p>
-          {error.digest && <p className="mt-2 text-xs text-red-600">Fehler-ID: {error.digest}</p>}
+          {error.digest && (
+            <p className="mt-2 text-xs text-destructive/70">Fehler-ID: {error.digest}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={reset}
-            className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="flex-1 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white hover:bg-brand-primary/90 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
           >
             Erneut versuchen
           </button>
 
           <button
             onClick={() => router.push('/admin')}
-            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="flex-1 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
           >
             Zurück zum Dashboard
           </button>
@@ -93,18 +95,18 @@ export default function AdminError({
         <div className="mt-4 text-center">
           <button
             onClick={() => (window.location.href = '/')}
-            className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
           >
             Zur Startseite
           </button>
         </div>
 
         {process.env.NODE_ENV === 'development' && (
-          <details className="mt-6 rounded border border-red-200 bg-red-50 p-3">
-            <summary className="cursor-pointer text-sm font-medium text-red-800">
+          <details className="mt-6 rounded-xl border border-destructive/20 bg-destructive/5 p-3">
+            <summary className="cursor-pointer text-sm font-medium text-destructive">
               Stack Trace anzeigen
             </summary>
-            <pre className="mt-3 overflow-auto text-xs text-red-900">{error.stack}</pre>
+            <pre className="mt-3 overflow-auto text-xs text-destructive">{error.stack}</pre>
           </details>
         )}
       </div>

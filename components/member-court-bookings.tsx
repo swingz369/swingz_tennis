@@ -102,9 +102,9 @@ export default function MemberCourtBookings() {
         return { label: 'Abgeschlossen', color: 'bg-green-100 text-green-700', icon: CheckCircle };
       }
       if (booking.bookingStatus === 'no_show') {
-        return { label: 'Nicht erschienen', color: 'bg-gray-100 text-gray-700', icon: XCircle };
+        return { label: 'Nicht erschienen', color: 'bg-muted text-foreground', icon: XCircle };
       }
-      return { label: 'Vergangen', color: 'bg-gray-100 text-gray-700', icon: Clock };
+      return { label: 'Vergangen', color: 'bg-muted text-foreground', icon: Clock };
     }
 
     if (booking.bookingStatus === 'confirmed') {
@@ -117,7 +117,7 @@ export default function MemberCourtBookings() {
   if (sessionsLoading || courtsLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function MemberCourtBookings() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Meine Platzbuchungen</h1>
-          <p className="text-gray-500">Übersicht deiner gebuchten Tennisplätze</p>
+          <p className="text-muted-foreground">Übersicht deiner gebuchten Tennisplätze</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToToday}>
@@ -189,7 +189,7 @@ export default function MemberCourtBookings() {
                   return (
                     <div
                       key={booking.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         <div className="p-3 bg-brand-primary/10 rounded-lg">
@@ -199,7 +199,7 @@ export default function MemberCourtBookings() {
                           <div className="font-semibold">
                             {format(new Date(booking.week), 'EEEE, dd. MMMM yyyy', { locale: de })}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
                               <span>
@@ -241,7 +241,7 @@ export default function MemberCourtBookings() {
         </CardHeader>
         <CardContent>
           {monthBookings.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Keine Platzbuchungen für diesen Monat
             </div>
           ) : (
@@ -258,23 +258,23 @@ export default function MemberCourtBookings() {
                       className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
                         isToday
                           ? 'bg-brand-primary/10 border-brand-primary/30'
-                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                          : 'bg-background border-border hover:bg-muted'
                       }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
                           className={`p-3 rounded-lg ${
-                            isToday ? 'bg-brand-primary/20' : 'bg-gray-100'
+                            isToday ? 'bg-brand-primary/20' : 'bg-muted'
                           }`}
                         >
                           <Calendar
-                            className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-gray-600'}`}
+                            className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-muted-foreground'}`}
                           />
                         </div>
                         <div className="flex-1">
                           <div
                             className={`font-semibold ${
-                              isToday ? 'text-brand-primary' : 'text-gray-900'
+                              isToday ? 'text-brand-primary' : 'text-foreground'
                             }`}
                           >
                             {format(new Date(booking.week), 'EEEE, dd. MMMM', { locale: de })}
@@ -284,7 +284,7 @@ export default function MemberCourtBookings() {
                               </span>
                             )}
                           </div>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mt-1">
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mt-1">
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
                               <span>
@@ -294,7 +294,7 @@ export default function MemberCourtBookings() {
                             <div className="flex items-center gap-1">
                               <MapPin className="h-4 w-4" />
                               <span>{booking.courtName}</span>
-                              <span className="text-xs bg-gray-200 px-2 py-0.5 rounded">
+                              <span className="text-xs bg-muted px-2 py-0.5 rounded">
                                 {getSurfaceLabel(booking.courtSurface)}
                               </span>
                             </div>
@@ -303,7 +303,9 @@ export default function MemberCourtBookings() {
                               <span>{booking.trainerName || 'Trainer'}</span>
                             </div>
                             {booking.notes && (
-                              <div className="text-xs italic text-gray-500">{booking.notes}</div>
+                              <div className="text-xs italic text-muted-foreground">
+                                {booking.notes}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -344,7 +346,7 @@ export default function MemberCourtBookings() {
                 return (
                   <div
                     key={courtId as string}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
                   >
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-brand-primary/10 rounded-lg">
@@ -352,14 +354,14 @@ export default function MemberCourtBookings() {
                       </div>
                       <div>
                         <div className="font-medium">{court?.name || 'Unbekannt'}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           {getSurfaceLabel(court?.surface || 'hard')}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{courtBookings.length}x</div>
-                      <div className="text-xs text-gray-600">gebucht</div>
+                      <div className="text-xs text-muted-foreground">gebucht</div>
                     </div>
                   </div>
                 );

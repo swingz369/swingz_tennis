@@ -41,7 +41,7 @@ export default async function PublicTrialBookingPage({ searchParams }: PageProps
   const clubInfo = clubId ? await fetchClubInfo(clubId) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-brand-primary/5 to-brand-light/5 dark:bg-card">
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-8">

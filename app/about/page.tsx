@@ -4,7 +4,7 @@ import { Trophy, ArrowRight, Shield, Users, Brain, Sparkles } from 'lucide-react
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-gray-900">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -19,7 +19,7 @@ export default function AboutPage() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="text-white/90 hover:text-white hover:bg-white/10"
+                  className="text-white/90 hover:text-white hover:bg-background/10"
                 >
                   Anmelden
                 </Button>
@@ -33,18 +33,18 @@ export default function AboutPage() {
       </header>
 
       {/* Hero */}
-      <section className="bg-gray-50 py-20 sm:py-28">
+      <section className="bg-muted py-20 sm:py-28">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
           <span className="inline-block px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-4">
             Über SWINGZ
           </span>
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
             Die Zukunft des{' '}
             <span className="text-gradient-primary bg-clip-text text-transparent">
               Tennis-Club-Managements
             </span>
           </h1>
-          <p className="mt-6 text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             SWINGZ wurde entwickelt, um Tennisclubs dabei zu helfen, ihre Trainingsplanung zu
             revolutionieren. Mit modernster KI-Technologie optimieren wir Abläufe, steigern die
             Auslastung und schaffen ein Premium-Erlebnis für Mitglieder und Trainer.
@@ -57,16 +57,16 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
                 Unsere Mission
               </h2>
-              <p className="mt-6 text-gray-600 leading-relaxed text-lg">
+              <p className="mt-6 text-muted-foreground leading-relaxed text-lg">
                 Wir glauben, dass exzellentes Vereinsmanagement der Schlüssel zu erfolgreichen
                 Tennisclubs ist. Deshalb haben wir eine Plattform geschaffen, die administrative
                 Aufgaben automatisiert und dir mehr Zeit für das Wesentliche gibt: großartiges
                 Training und zufriedene Mitglieder.
               </p>
-              <p className="mt-4 text-gray-600 leading-relaxed text-lg">
+              <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
                 Mit KI-gestützter Saisonplanung, intelligentem Scheduling und umfassenden Analytics
                 setzen wir neue Maßstäbe für Tennisclubs jeder Größe.
               </p>
@@ -78,10 +78,10 @@ export default function AboutPage() {
                 { value: '85K+', label: 'Mitglieder', icon: Users },
                 { value: '10K+', label: 'KI-Optimierungen', icon: Sparkles },
               ].map((stat, idx) => (
-                <div key={idx} className="bg-gray-50 rounded-2xl p-6 text-center">
+                <div key={idx} className="bg-muted rounded-2xl p-6 text-center">
                   <stat.icon className="h-8 w-8 mx-auto text-brand-primary mb-2" />
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-sm text-gray-500">{stat.label}</p>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -90,13 +90,13 @@ export default function AboutPage() {
       </section>
 
       {/* Team / Values */}
-      <section className="bg-gray-50 py-20 sm:py-28">
+      <section className="bg-muted py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
               Unsere Werte
             </h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
               Was uns antreibt und auszeichnet.
             </p>
           </div>
@@ -121,10 +121,13 @@ export default function AboutPage() {
                 icon: Shield,
               },
             ].map((value, idx) => (
-              <div key={idx} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+              <div
+                key={idx}
+                className="bg-background rounded-2xl p-8 shadow-sm border border-border"
+              >
                 <value.icon className="h-10 w-10 text-brand-primary mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                <h3 className="text-xl font-bold text-foreground mb-3">{value.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{value.description}</p>
               </div>
             ))}
           </div>
@@ -150,7 +153,7 @@ export default function AboutPage() {
               <Button
                 variant="ghost"
                 size="lg"
-                className="text-white/90 hover:text-white hover:bg-white/10 border border-white/20"
+                className="text-white/90 hover:text-white hover:bg-background/10 border border-white/20"
               >
                 Kontakt aufnehmen
               </Button>
@@ -161,7 +164,7 @@ export default function AboutPage() {
 
       {/* Footer */}
       <footer className="bg-gray-900 py-8 border-t border-gray-800">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
           <p>© 2025 SWINGZ – Premium Tennis Club Management</p>
         </div>
       </footer>

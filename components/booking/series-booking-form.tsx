@@ -416,12 +416,12 @@ export default function SeriesBookingForm({
                     <span className="text-sm font-medium">
                       {format(new Date(preview.date), 'EEE, dd. MMM yyyy', { locale: de })}
                     </span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       {preview.startTime} - {preview.endTime}
                     </span>
                   </div>
                   {preview.message && (
-                    <span className="text-xs text-gray-600">{preview.message}</span>
+                    <span className="text-xs text-muted-foreground">{preview.message}</span>
                   )}
                 </div>
               ))}

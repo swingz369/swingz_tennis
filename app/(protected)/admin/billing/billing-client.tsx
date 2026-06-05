@@ -87,14 +87,14 @@ interface LineItem {
 
 function InvoiceStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    draft: { label: 'Entwurf', className: 'bg-gray-100 text-gray-600' },
+    draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
     sent: { label: 'Versendet', className: 'bg-blue-100 text-blue-700' },
     reminder_sent: { label: 'Erinnerung', className: 'bg-yellow-100 text-yellow-700' },
     partially_paid: { label: 'Teilbezahlt', className: 'bg-orange-100 text-orange-700' },
     paid: { label: 'Bezahlt', className: 'bg-green-100 text-green-700' },
     overdue: { label: 'Überfällig', className: 'bg-red-100 text-red-700' },
     dunning: { label: 'Mahnung', className: 'bg-red-200 text-red-900 font-bold' },
-    cancelled: { label: 'Storniert', className: 'bg-gray-100 text-gray-400 line-through' },
+    cancelled: { label: 'Storniert', className: 'bg-muted text-muted-foreground line-through' },
   };
   const c = config[status] ?? config.draft;
   return (
@@ -106,7 +106,7 @@ function InvoiceTypeBadge({ type }: { type: string }) {
   const config: Record<string, { label: string; className: string }> = {
     season: { label: 'Saison', className: 'bg-purple-100 text-purple-700' },
     membership: { label: 'Mitgliedsbeitrag', className: 'bg-blue-100 text-blue-700' },
-    adhoc: { label: 'Zusatz', className: 'bg-gray-100 text-gray-600' },
+    adhoc: { label: 'Zusatz', className: 'bg-muted text-muted-foreground' },
   };
   const c = config[type] ?? config.adhoc;
   return (
@@ -130,13 +130,13 @@ function getStatusColor(status: string) {
     case 'paid':
       return 'bg-green-100 text-green-700';
     case 'canceled':
-      return 'bg-gray-100 text-gray-700';
+      return 'bg-muted text-foreground';
     case 'past_due':
       return 'bg-yellow-100 text-yellow-700';
     case 'unpaid':
       return 'bg-red-100 text-red-700';
     default:
-      return 'bg-gray-100 text-gray-700';
+      return 'bg-muted text-foreground';
   }
 }
 
@@ -356,7 +356,7 @@ export default function BillingClient({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Abrechnung</h1>
-          <p className="text-gray-500">Mitgliederabonnements und Rechnungen</p>
+          <p className="text-muted-foreground">Mitgliederabonnements und Rechnungen</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleGenerateInvoices} disabled={generatingInvoices}>
@@ -404,7 +404,7 @@ export default function BillingClient({
                           </SelectItem>
                         ))
                       ) : (
-                        <div className="px-2 py-4 text-sm text-gray-500">
+                        <div className="px-2 py-4 text-sm text-muted-foreground">
                           Keine Mitglieder gefunden
                         </div>
                       )}
@@ -446,7 +446,7 @@ export default function BillingClient({
           className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'subscriptions'
               ? 'border-brand-primary text-brand-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -459,7 +459,7 @@ export default function BillingClient({
           className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'invoices'
               ? 'border-brand-primary text-brand-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -478,7 +478,7 @@ export default function BillingClient({
           </CardHeader>
           <CardContent>
             {subscriptions.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p>Noch keine Abonnements vorhanden</p>
                 <Button variant="link" onClick={() => setShowAssignDialog(true)}>
@@ -502,7 +502,7 @@ export default function BillingClient({
                       <TableCell>
                         <div>
                           <div className="font-medium">{sub.memberName}</div>
-                          <div className="text-sm text-gray-500">{sub.memberEmail}</div>
+                          <div className="text-sm text-muted-foreground">{sub.memberEmail}</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -568,7 +568,7 @@ export default function BillingClient({
                     className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
                       invoiceTypeFilter === t
                         ? 'border-brand-primary text-brand-primary'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {labels[t]}
@@ -579,12 +579,12 @@ export default function BillingClient({
           </CardHeader>
           <CardContent>
             {loadingInvoices ? (
-              <div className="flex items-center justify-center py-8 text-gray-400">
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin mr-2" />
                 Laden…
               </div>
             ) : invoices.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p>Noch keine Rechnungen erstellt</p>
               </div>
@@ -767,7 +767,7 @@ export default function BillingClient({
                   </div>
                 ))}
               </div>
-              <div className="mt-3 text-right text-sm font-medium text-gray-700">
+              <div className="mt-3 text-right text-sm font-medium text-foreground">
                 Gesamt: {adhocTotal} €
               </div>
             </div>

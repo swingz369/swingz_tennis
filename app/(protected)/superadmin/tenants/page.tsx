@@ -116,7 +116,7 @@ export default function SuperadminTenantsPage() {
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-brand-primary mb-2">Tenant Übersicht</h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground dark:text-muted-foreground">
           Wählen Sie einen Verein aus, um dessen Administration zu öffnen.
         </p>
       </div>
@@ -124,7 +124,7 @@ export default function SuperadminTenantsPage() {
       {clubs.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
-            <p className="text-center text-gray-500">Keine aktiven Vereine gefunden.</p>
+            <p className="text-center text-muted-foreground">Keine aktiven Vereine gefunden.</p>
           </CardContent>
         </Card>
       ) : (
@@ -146,28 +146,28 @@ export default function SuperadminTenantsPage() {
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
                       <Users className="h-4 w-4" />
                       Mitglieder
                     </span>
                     <span className="font-bold text-lg">{club.member_count}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
                       <Calendar className="h-4 w-4" />
                       Trainer
                     </span>
                     <span className="font-bold text-lg">{club.trainer_count}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
                       <div className="h-4 w-4 rounded-full bg-blue-500"></div>
                       Sessions
                     </span>
                     <span className="font-bold text-lg">{club.active_sessions}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
                       <DollarSign className="h-4 w-4" />
                       Umsatz (30 Tage)
                     </span>

@@ -298,7 +298,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               </div>
             )}
 
-            <div className="pt-4 space-y-3 border-t border-gray-100 dark:border-white/10">
+            <div className="pt-4 space-y-3 border-t border-border dark:border-white/10">
               <div className="flex items-center justify-between">
                 <Label className="text-sm">Rolle</Label>
                 <Select value={member.role} onValueChange={handleRoleChange}>
@@ -349,15 +349,15 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Name</Label>
+                  <Label className="text-xs text-muted-foreground">Name</Label>
                   <div className="font-medium">{member.full_name}</div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">E-Mail</Label>
+                  <Label className="text-xs text-muted-foreground">E-Mail</Label>
                   <div className="font-medium">{member.email}</div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Telefon</Label>
+                  <Label className="text-xs text-muted-foreground">Telefon</Label>
                   {isEditing ? (
                     <Input
                       value={editForm.phone}
@@ -369,7 +369,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Geburtsdatum</Label>
+                  <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
                   {isEditing ? (
                     <Input
                       type="date"
@@ -397,7 +397,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2 space-y-1.5">
-                  <Label className="text-xs text-gray-500">Straße & Hausnummer</Label>
+                  <Label className="text-xs text-muted-foreground">Straße & Hausnummer</Label>
                   {isEditing ? (
                     <Input
                       value={editForm.address}
@@ -409,7 +409,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Postleitzahl</Label>
+                  <Label className="text-xs text-muted-foreground">Postleitzahl</Label>
                   {isEditing ? (
                     <Input
                       value={editForm.postal_code}
@@ -421,7 +421,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Stadt</Label>
+                  <Label className="text-xs text-muted-foreground">Stadt</Label>
                   {isEditing ? (
                     <Input
                       value={editForm.city}
@@ -447,7 +447,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Name</Label>
+                  <Label className="text-xs text-muted-foreground">Name</Label>
                   {isEditing ? (
                     <Input
                       value={editForm.emergency_contact}
@@ -461,7 +461,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Telefon</Label>
+                  <Label className="text-xs text-muted-foreground">Telefon</Label>
                   {isEditing ? (
                     <Input
                       value={editForm.emergency_phone}
@@ -496,7 +496,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   className="resize-none"
                 />
               ) : (
-                <div className="text-sm text-gray-700 dark:text-gray-300">
+                <div className="text-sm text-foreground dark:text-foreground">
                   {member.bio || 'Keine Bio vorhanden'}
                 </div>
               )}
@@ -530,9 +530,11 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Laden...</div>
+                <div className="text-center py-8 text-muted-foreground">Laden...</div>
               ) : bookings.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 text-sm">Noch keine Buchungen</div>
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  Noch keine Buchungen
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -560,7 +562,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                                 : b.status === 'cancelled'
                                   ? 'bg-red-100 text-red-700'
                                   : b.status === 'no_show'
-                                    ? 'bg-gray-100 text-gray-700'
+                                    ? 'bg-muted text-foreground'
                                     : 'bg-yellow-100 text-yellow-700'
                             }
                           >
@@ -573,7 +575,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                                   : 'Ausstehend'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-gray-500">
+                        <TableCell className="text-sm text-muted-foreground">
                           {b.booked_at ? formatDate(b.booked_at) : '-'}
                         </TableCell>
                       </TableRow>

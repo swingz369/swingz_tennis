@@ -198,7 +198,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-brand-primary">Feedback Moderation</h2>
-        <p className="text-gray-500">Review and moderate trainer feedback</p>
+        <p className="text-muted-foreground">Review and moderate trainer feedback</p>
       </div>
 
       {/* Stats */}
@@ -206,25 +206,25 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
         <Card variant="bordered">
           <CardContent className="p-4">
             <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-gray-500">Total Feedback</div>
+            <div className="text-xs text-muted-foreground">Total Feedback</div>
           </CardContent>
         </Card>
         <Card variant="bordered">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">{stats.visible}</div>
-            <div className="text-xs text-gray-500">Visible</div>
+            <div className="text-xs text-muted-foreground">Visible</div>
           </CardContent>
         </Card>
         <Card variant="bordered">
           <CardContent className="p-4">
-            <div className="text-2xl font-bold text-gray-600">{stats.hidden}</div>
-            <div className="text-xs text-gray-500">Hidden</div>
+            <div className="text-2xl font-bold text-muted-foreground">{stats.hidden}</div>
+            <div className="text-xs text-muted-foreground">Hidden</div>
           </CardContent>
         </Card>
         <Card variant="bordered">
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-red-600">{stats.flagged}</div>
-            <div className="text-xs text-gray-500">Flagged</div>
+            <div className="text-xs text-muted-foreground">Flagged</div>
           </CardContent>
         </Card>
       </div>
@@ -234,7 +234,7 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search feedback comments..."
                 value={searchTerm}
@@ -305,11 +305,15 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
       <div className="space-y-3">
         {isLoading ? (
           <Card variant="bordered">
-            <CardContent className="p-8 text-center text-gray-500">Loading feedback...</CardContent>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              Loading feedback...
+            </CardContent>
           </Card>
         ) : filteredFeedback.length === 0 ? (
           <Card variant="bordered">
-            <CardContent className="p-8 text-center text-gray-500">No feedback found</CardContent>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              No feedback found
+            </CardContent>
           </Card>
         ) : (
           filteredFeedback.map((item) => (
@@ -349,12 +353,12 @@ export function FeedbackModerationPanel({ clubId }: FeedbackModerationProps) {
                           </Badge>
                         )}
                       </div>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                       </span>
                     </div>
 
-                    {item.comment && <p className="text-sm text-gray-700">{item.comment}</p>}
+                    {item.comment && <p className="text-sm text-foreground">{item.comment}</p>}
 
                     {item.is_flagged && item.flagged_reason && (
                       <div className="p-2 bg-red-50 rounded text-sm text-red-700">

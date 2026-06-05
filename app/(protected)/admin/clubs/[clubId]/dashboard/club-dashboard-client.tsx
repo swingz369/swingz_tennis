@@ -79,7 +79,7 @@ export function ClubDashboardClient({
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
           <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex items-start justify-between">
@@ -88,7 +88,7 @@ export function ClubDashboardClient({
                 <h1 className="text-3xl font-bold">{clubName}</h1>
                 <p className="text-white/70 mt-2">Verwalte Mitglieder, Trainer, Plätze und mehr</p>
               </div>
-              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm px-4 py-2.5">
+              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
                 <Activity className="h-5 w-5 text-brand-accent" />
                 <span className="text-sm font-medium">{stats.members} Mitglieder</span>
               </div>
@@ -109,10 +109,10 @@ export function ClubDashboardClient({
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
                       {kpi.label}
                     </p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">
+                    <p className="text-3xl font-bold text-foreground dark:text-white tabular-nums">
                       {kpi.value}
                     </p>
                   </div>
@@ -136,9 +136,9 @@ export function ClubDashboardClient({
       <ScrollReveal delay={200}>
         <Card
           variant="bordered"
-          className="overflow-hidden border-0 shadow-sm bg-white dark:bg-white/5 backdrop-blur-sm"
+          className="overflow-hidden border-0 shadow-sm bg-background dark:bg-card/5 backdrop-blur-sm"
         >
-          <CardHeader className="border-b border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02]">
+          <CardHeader className="border-b border-border dark:border-white/10 bg-muted/50 dark:bg-card/[0.02]">
             <CardTitle className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-gradient-to-br from-brand-primary to-brand-dark text-white shadow-sm">
                 <Settings className="h-4 w-4" />
@@ -154,16 +154,18 @@ export function ClubDashboardClient({
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="group flex items-start gap-4 p-5 rounded-xl border border-gray-100 dark:border-white/10 bg-white dark:bg-white/[0.02] hover:border-brand-light/30 hover:shadow-lg hover:shadow-brand-light/5 transition-all duration-300 hover:-translate-y-0.5"
+                    className="group flex items-start gap-4 p-5 rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card/[0.02] hover:border-brand-light/30 hover:shadow-lg hover:shadow-brand-light/5 transition-all duration-300 hover:-translate-y-0.5"
                   >
                     <div className="shrink-0 h-12 w-12 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center group-hover:bg-brand-light group-hover:text-white transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
                       <ItemIcon className="h-6 w-6" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
+                      <h3 className="text-base font-semibold text-foreground dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
                         {item.label}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{item.desc}</p>
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                        {item.desc}
+                      </p>
                     </div>
                   </Link>
                 );

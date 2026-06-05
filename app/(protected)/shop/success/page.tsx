@@ -60,7 +60,7 @@ function SuccessContent() {
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 mx-auto">
           <ShoppingBag className="h-8 w-8 text-amber-600" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Keine Bestellung gefunden</h1>
+        <h1 className="text-2xl font-bold text-foreground">Keine Bestellung gefunden</h1>
         <p className="text-muted-foreground">
           Es wurde keine Bestell-ID übergeben. Bitte überprüfe den Link.
         </p>
@@ -81,7 +81,7 @@ function SuccessContent() {
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 mx-auto">
           <CheckCircle2 className="h-8 w-8 text-green-600" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Vielen Dank für deine Bestellung!</h1>
+        <h1 className="text-2xl font-bold text-foreground">Vielen Dank für deine Bestellung!</h1>
         <p className="text-sm text-muted-foreground">
           {order
             ? `Deine Bestellung #${order.id.slice(0, 8)} ist bei uns eingegangen.`

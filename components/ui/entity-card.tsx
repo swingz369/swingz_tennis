@@ -53,7 +53,7 @@ const ROLE_BADGE_CLASS: Record<string, string> = {
   admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   trainer: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   superadmin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  member: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  member: 'bg-muted text-foreground dark:bg-muted dark:text-foreground',
 };
 
 export function EntityCard({
@@ -75,7 +75,7 @@ export function EntityCard({
   return (
     <Card
       className={cn(
-        'group hover:shadow-md transition-all duration-200 border-gray-200 dark:border-white/10',
+        'group hover:shadow-md transition-all duration-200 border-border dark:border-white/10',
         className
       )}
     >
@@ -91,12 +91,16 @@ export function EntityCard({
               showStatus={false}
             />
             <div className="min-w-0">
-              <p className="font-semibold text-gray-900 dark:text-white truncate text-sm">{name}</p>
+              <p className="font-semibold text-foreground dark:text-white truncate text-sm">
+                {name}
+              </p>
               {email && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{email}</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate">
+                  {email}
+                </p>
               )}
               {subtitle && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate mt-0.5">
                   {subtitle}
                 </p>
               )}
@@ -128,7 +132,7 @@ export function EntityCard({
 
         {/* Actions */}
         {actions && actions.length > 0 && (
-          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-white/5">
+          <div className="flex items-center gap-1 pt-2 border-t border-border dark:border-white/5">
             {actions.map((action, i) => {
               const Icon = action.icon;
               const cls = cn(
@@ -216,7 +220,7 @@ export function MemberEntityCard({
           : []),
       ]}
     >
-      {phone && <p className="text-xs text-gray-500 dark:text-gray-400">{phone}</p>}
+      {phone && <p className="text-xs text-muted-foreground dark:text-muted-foreground">{phone}</p>}
     </EntityCard>
   );
 }

@@ -39,17 +39,17 @@ export default function TrainerError({
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-8 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-muted px-4 dark:bg-background">
+      <div className="w-full max-w-lg rounded-2xl bg-card p-8 shadow-lg">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Trainer-Portal Fehler</h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-foreground">Trainer-Portal Fehler</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Beim Laden des Trainer-Bereichs ist ein Fehler aufgetreten.
           </p>
         </div>
 
-        <div className="mb-6 rounded-md bg-yellow-50 border border-yellow-200 p-4">
-          <p className="text-sm text-yellow-800">
+        <div className="mb-6 rounded-xl bg-warning-light border border-warning/20 p-4 dark:bg-warning/10">
+          <p className="text-sm text-warning">
             {error.message || 'Ein unbekannter Fehler ist aufgetreten.'}
           </p>
         </div>
@@ -57,14 +57,14 @@ export default function TrainerError({
         <div className="flex flex-col gap-3 sm:flex-row">
           <button
             onClick={reset}
-            className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex-1 rounded-xl bg-brand-primary px-4 py-2 text-sm font-medium text-white hover:bg-brand-primary/90"
           >
             Erneut versuchen
           </button>
 
           <button
             onClick={() => router.push('/trainer')}
-            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex-1 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
           >
             Zum Trainer-Dashboard
           </button>

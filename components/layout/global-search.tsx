@@ -105,7 +105,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Suche (Mitglieder, Buchungen, Trainer)..."
           value={query}
@@ -116,7 +116,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
         {query && (
           <button
             onClick={() => setQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -124,28 +124,32 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       </div>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-center text-sm text-gray-500">Suche...</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">Suche...</div>
           ) : results.length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-500">Keine Ergebnisse gefunden</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              Keine Ergebnisse gefunden
+            </div>
           ) : (
             <ul className="py-1">
               {results.map((result) => (
                 <li key={`${result.type}-${result.id}`}>
                   <a
                     href={result.url}
-                    className="flex flex-col px-4 py-3 hover:bg-gray-50 border-b last:border-0"
+                    className="flex flex-col px-4 py-3 hover:bg-muted border-b last:border-0"
                     onClick={() => setOpen(false)}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">{result.title}</span>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      <span className="font-medium text-foreground">{result.title}</span>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                         {getTypeLabel(result.type)}
                       </span>
                     </div>
                     {result.subtitle && (
-                      <span className="text-sm text-gray-500 mt-0.5">{result.subtitle}</span>
+                      <span className="text-sm text-muted-foreground mt-0.5">
+                        {result.subtitle}
+                      </span>
                     )}
                   </a>
                 </li>

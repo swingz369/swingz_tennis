@@ -672,7 +672,7 @@ export default function OnboardingPage() {
                 {stepNum < TOTAL_STEPS && (
                   <div
                     className={`absolute top-5 left-full h-0.5 w-[calc(100%+0.5rem)] -translate-y-1/2 transition-colors duration-500 ${
-                      isCompleted ? 'bg-brand-primary' : 'bg-gray-200'
+                      isCompleted ? 'bg-brand-primary' : 'bg-muted'
                     }`}
                   />
                 )}
@@ -682,7 +682,7 @@ export default function OnboardingPage() {
                       ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/20'
                       : isCurrent
                         ? 'bg-brand-primary text-white ring-4 ring-brand-primary/20 shadow-lg shadow-brand-primary/30 scale-110'
-                        : 'bg-white border-2 border-gray-200 text-gray-400'
+                        : 'bg-background border-2 border-border text-muted-foreground'
                   }`}
                 >
                   {isCompleted ? (
@@ -699,7 +699,7 @@ export default function OnboardingPage() {
                       ? 'text-brand-primary font-semibold'
                       : isCompleted
                         ? 'text-brand-primary/70'
-                        : 'text-gray-400'
+                        : 'text-muted-foreground'
                   }`}
                 >
                   {s.label}
@@ -724,12 +724,12 @@ export default function OnboardingPage() {
               <Zap className="w-12 h-12 text-brand-primary" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-gray-900">Willkommen bei SwingZ!</h2>
-              <p className="text-gray-500 text-lg max-w-md mx-auto">
+              <h2 className="text-3xl font-bold text-foreground">Willkommen bei SwingZ!</h2>
+              <p className="text-muted-foreground text-lg max-w-md mx-auto">
                 Richte deinen Verein in wenigen Minuten ein – Schritt für Schritt.
               </p>
             </div>
-            <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-500">
+            <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground">
               {STEPS.slice(1, -1).map((s) => (
                 <Badge key={s.label} variant="secondary" className="gap-1.5 px-3 py-1.5">
                   <s.icon className="w-3.5 h-3.5" />
@@ -753,8 +753,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Vereinsdaten</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Vereinsdaten</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Trage die grundlegenden Informationen deines Vereins ein.
               </p>
             </div>
@@ -834,7 +834,7 @@ export default function OnboardingPage() {
                   placeholder="https://www.verein.de/logo.png"
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   URL zu deinem Vereinslogo – wird automatisch in die{' '}
                   <span className="inline-flex items-center gap-0.5">
                     <Palette className="w-3 h-3" /> Branding-Einstellungen
@@ -882,8 +882,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Öffnungszeiten</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Öffnungszeiten</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Lege die Öffnungszeiten für jeden Wochentag fest. Du kannst sie später jederzeit
                 ändern.
               </p>
@@ -892,11 +892,11 @@ export default function OnboardingPage() {
               {DAYS.map((day) => (
                 <div
                   key={day.key}
-                  className="grid grid-cols-[100px_1fr_auto_1fr] items-center gap-3 p-3 rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                  className="grid grid-cols-[100px_1fr_auto_1fr] items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                 >
-                  <span className="text-sm font-medium text-gray-700">{day.label}</span>
+                  <span className="text-sm font-medium text-foreground">{day.label}</span>
                   <div>
-                    <Label className="text-xs text-gray-400">Von</Label>
+                    <Label className="text-xs text-muted-foreground">Von</Label>
                     <Input
                       type="time"
                       value={openingHours[day.key]?.open ?? '08:00'}
@@ -909,9 +909,9 @@ export default function OnboardingPage() {
                       className="mt-0.5 h-9 text-sm"
                     />
                   </div>
-                  <span className="text-gray-400 text-sm pt-4">–</span>
+                  <span className="text-muted-foreground text-sm pt-4">–</span>
                   <div>
-                    <Label className="text-xs text-gray-400">Bis</Label>
+                    <Label className="text-xs text-muted-foreground">Bis</Label>
                     <Input
                       type="time"
                       value={openingHours[day.key]?.close ?? '22:00'}
@@ -945,8 +945,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Ersten Platz anlegen</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Ersten Platz anlegen</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Füge deinen ersten Tennisplatz hinzu. Weitere Plätze kannst du später ergänzen.
               </p>
             </div>
@@ -989,7 +989,7 @@ export default function OnboardingPage() {
                     className={
                       !courtForm.hasIndoor
                         ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
-                        : 'text-gray-600'
+                        : 'text-muted-foreground'
                     }
                   >
                     Außen
@@ -1002,7 +1002,7 @@ export default function OnboardingPage() {
                     className={
                       courtForm.hasIndoor
                         ? 'bg-brand-primary hover:bg-brand-primary/90 text-white'
-                        : 'text-gray-600'
+                        : 'text-muted-foreground'
                     }
                   >
                     Innen
@@ -1018,8 +1018,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Preise & Trainingsdauer</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Preise & Trainingsdauer</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Lege die Standardpreise und die Trainingsdauer für deinen Verein fest.
               </p>
             </div>
@@ -1043,7 +1043,7 @@ export default function OnboardingPage() {
                   }
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">Empfohlen: 15,00 €</p>
+                <p className="text-xs text-muted-foreground mt-1">Empfohlen: 15,00 €</p>
               </div>
               <div>
                 <Label htmlFor="sessionDuration">Standard-Trainingsdauer (Minuten)</Label>
@@ -1062,7 +1062,7 @@ export default function OnboardingPage() {
                   }
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">Empfohlen: 60 Minuten</p>
+                <p className="text-xs text-muted-foreground mt-1">Empfohlen: 60 Minuten</p>
               </div>
               <div>
                 <Label htmlFor="billingUnit">Abrechnungseinheit (Minuten)</Label>
@@ -1078,7 +1078,7 @@ export default function OnboardingPage() {
                   }
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   In welchen Schritten wird abgerechnet? (z.B. 60 = stundenweise)
                 </p>
               </div>
@@ -1093,7 +1093,7 @@ export default function OnboardingPage() {
                   onChange={(e) => setPriceForm((f) => ({ ...f, tax_rate: e.target.value }))}
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   0 = umsatzsteuerbefreit (Kleinunternehmer)
                 </p>
               </div>
@@ -1106,8 +1106,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Beitragskategorien</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Beitragskategorien</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Lege die Mitgliedsbeiträge und Trainingsgebühren fest. Diese werden für die
                 automatische Rechnungsstellung bei Genehmigung und Saisonveröffentlichung verwendet.
               </p>
@@ -1125,7 +1125,7 @@ export default function OnboardingPage() {
                   className="grid grid-cols-[1fr_120px_100px_120px_36px] gap-2 items-end"
                 >
                   <div>
-                    <Label className="text-xs text-gray-400">Name</Label>
+                    <Label className="text-xs text-muted-foreground">Name</Label>
                     <Input
                       value={cat.name}
                       onChange={(e) => {
@@ -1138,7 +1138,7 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-gray-400">Typ</Label>
+                    <Label className="text-xs text-muted-foreground">Typ</Label>
                     <Select
                       value={cat.type}
                       onValueChange={(v) => {
@@ -1157,7 +1157,7 @@ export default function OnboardingPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs text-gray-400">Betrag (€)</Label>
+                    <Label className="text-xs text-muted-foreground">Betrag (€)</Label>
                     <Input
                       type="number"
                       min={0}
@@ -1172,7 +1172,7 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-gray-400">Zyklus</Label>
+                    <Label className="text-xs text-muted-foreground">Zyklus</Label>
                     <Select
                       value={cat.billing_cycle}
                       onValueChange={(v) => {
@@ -1227,8 +1227,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Buchungsregeln</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Buchungsregeln</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Lege fest, wie Mitglieder Plätze buchen können.
               </p>
             </div>
@@ -1256,7 +1256,7 @@ export default function OnboardingPage() {
                   }
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">Empfohlen: 90 Minuten</p>
+                <p className="text-xs text-muted-foreground mt-1">Empfohlen: 90 Minuten</p>
               </div>
               <div>
                 <Label htmlFor="advanceDays">Vorausbuchung (Tage)</Label>
@@ -1274,7 +1274,7 @@ export default function OnboardingPage() {
                   }
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Wie viele Tage im Voraus können Mitglieder buchen?
                 </p>
               </div>
@@ -1304,8 +1304,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Erste Mitglieder einladen</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Erste Mitglieder einladen</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Lade einen Trainer und ein Mitglied per E-Mail ein. Beides ist optional.
               </p>
             </div>
@@ -1348,7 +1348,7 @@ export default function OnboardingPage() {
             </Card>
 
             {/* Member invite */}
-            <Card className="border-gray-200">
+            <Card className="border-border">
               <CardHeader className="pb-2">
                 <Badge variant="secondary" className="w-fit">
                   Mitglied
@@ -1381,7 +1381,7 @@ export default function OnboardingPage() {
               </CardContent>
             </Card>
 
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Du kannst später im Dashboard weitere Mitglieder per CSV-Upload oder Einladungslink
               hinzufügen.
             </p>
@@ -1393,8 +1393,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">E-Mail & Sprache</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">E-Mail & Sprache</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Konfiguriere die Absender-Einstellungen für E-Mails und die bevorzugte Sprache.
               </p>
             </div>
@@ -1425,7 +1425,7 @@ export default function OnboardingPage() {
                   placeholder="TC Beispiel e.V."
                   className="mt-1.5"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Dieser Name erscheint als Absender bei automatischen E-Mails.
                 </p>
               </div>
@@ -1451,8 +1451,8 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Erste Saison anlegen</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Erste Saison anlegen</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Erstelle deine erste Trainings-Saison. Danach kannst du im Saisonplanungs-Wizard
                 Trainergruppen zuweisen und den Stundenplan erstellen.
               </p>
@@ -1570,12 +1570,12 @@ export default function OnboardingPage() {
               <CheckCircle2 className="w-12 h-12 text-brand-primary" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-gray-900">Einrichtung abgeschlossen!</h2>
-              <p className="text-gray-500 text-lg max-w-md mx-auto">
+              <h2 className="text-3xl font-bold text-foreground">Einrichtung abgeschlossen!</h2>
+              <p className="text-muted-foreground text-lg max-w-md mx-auto">
                 Dein Verein ist jetzt bereit. Entdecke jetzt dein Dashboard.
               </p>
             </div>
-            <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-500">
+            <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground">
               {STEPS.slice(1, -1).map((s) => (
                 <Badge
                   key={s.label}
@@ -1636,7 +1636,7 @@ export default function OnboardingPage() {
                     variant="ghost"
                     onClick={goBack}
                     disabled={loading}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <ChevronLeft className="mr-1 h-4 w-4" />
                     Zurück
@@ -1648,7 +1648,7 @@ export default function OnboardingPage() {
                         variant="outline"
                         onClick={skipStep}
                         disabled={loading}
-                        className="text-gray-500"
+                        className="text-muted-foreground"
                       >
                         Überspringen
                       </Button>
@@ -1678,7 +1678,7 @@ export default function OnboardingPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-gray-400 text-xs mt-4">
+        <p className="text-center text-muted-foreground text-xs mt-4">
           Schritt {step} von {TOTAL_STEPS}
         </p>
       </div>

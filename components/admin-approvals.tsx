@@ -172,7 +172,7 @@ export default function AdminApprovals() {
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <User className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+            <User className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
             Keine Anträge in dieser Kategorie
           </CardContent>
         </Card>

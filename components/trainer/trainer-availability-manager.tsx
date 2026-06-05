@@ -291,7 +291,7 @@ export default function TrainerAvailabilityManager({
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-brand-primary">{day.label}</h3>
                     {dayAvailabilities.length === 0 && (
-                      <Badge variant="outline" className="text-gray-500">
+                      <Badge variant="outline" className="text-muted-foreground">
                         Keine Verfügbarkeit
                       </Badge>
                     )}
@@ -314,7 +314,7 @@ export default function TrainerAvailabilityManager({
                               </Badge>
                             </div>
                             {availability.notes && (
-                              <p className="text-sm text-gray-600 mt-1 ml-6">
+                              <p className="text-sm text-muted-foreground mt-1 ml-6">
                                 {availability.notes}
                               </p>
                             )}
@@ -332,7 +332,7 @@ export default function TrainerAvailabilityManager({
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-gray-400 text-sm">
+                    <div className="text-center py-4 text-muted-foreground text-sm">
                       Keine Verfügbarkeit für diesen Tag
                     </div>
                   )}
@@ -417,8 +417,8 @@ export default function TrainerAvailabilityManager({
         </CardHeader>
         <CardContent>
           {absences.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <AlertCircle className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <AlertCircle className="h-12 w-12 mx-auto mb-2 text-muted-foreground/50" />
               <p>Keine Abwesenheiten eingetragen</p>
             </div>
           ) : (
@@ -438,7 +438,7 @@ export default function TrainerAvailabilityManager({
                       <Badge variant="outline">{absence.reason}</Badge>
                     </div>
                     {absence.substitute_trainer_id && (
-                      <p className="text-sm text-gray-600 mt-1 ml-6">
+                      <p className="text-sm text-muted-foreground mt-1 ml-6">
                         Vertretung: Trainer {absence.substitute_trainer_id}
                       </p>
                     )}

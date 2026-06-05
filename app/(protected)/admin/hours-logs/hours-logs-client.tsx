@@ -200,7 +200,7 @@ export default function HoursLogsClient() {
       <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-brand-primary">Stundennachweise</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
             Verwalte die Arbeitsstunden deiner Trainer
           </p>
         </div>
@@ -216,7 +216,7 @@ export default function HoursLogsClient() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-primary dark:text-white">Stundennachweise</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
           Übersicht und Genehmigung aller Trainerstunden
         </p>
       </div>
@@ -227,10 +227,10 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Gesamt</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">Gesamt</p>
                 <p className="text-xl font-bold mt-0.5">{stats.total}</p>
               </div>
-              <Clock className="h-5 w-5 text-gray-300" />
+              <Clock className="h-5 w-5 text-muted-foreground/50" />
             </div>
           </CardContent>
         </Card>
@@ -238,7 +238,9 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Ausstehend</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                  Ausstehend
+                </p>
                 <p className="text-xl font-bold mt-0.5 text-amber-600">{stats.pending}</p>
               </div>
               <Hourglass className="h-5 w-5 text-amber-300" />
@@ -249,7 +251,9 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Genehmigt</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                  Genehmigt
+                </p>
                 <p className="text-xl font-bold mt-0.5 text-green-600">{stats.approved}</p>
               </div>
               <CheckCircle className="h-5 w-5 text-green-300" />
@@ -260,7 +264,9 @@ export default function HoursLogsClient() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Stunden gesamt</p>
+                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                  Stunden gesamt
+                </p>
                 <p className="text-xl font-bold mt-0.5 text-brand-primary dark:text-brand-light">
                   {stats.totalHours.toFixed(1)}h
                 </p>
@@ -291,7 +297,7 @@ export default function HoursLogsClient() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2 text-gray-600 dark:text-gray-300">
+          <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground dark:text-foreground">
             <Filter className="h-4 w-4" />
             Filter
           </CardTitle>
@@ -301,7 +307,7 @@ export default function HoursLogsClient() {
             <div>
               <label
                 htmlFor="hl-filter-status"
-                className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
               >
                 Status
               </label>
@@ -320,7 +326,7 @@ export default function HoursLogsClient() {
             <div>
               <label
                 htmlFor="hl-filter-trainer"
-                className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
               >
                 Trainer
               </label>
@@ -341,7 +347,7 @@ export default function HoursLogsClient() {
             <div>
               <label
                 htmlFor="hl-filter-month"
-                className="text-xs font-medium mb-1.5 block text-gray-500 dark:text-gray-400"
+                className="text-xs font-medium mb-1.5 block text-muted-foreground dark:text-muted-foreground"
               >
                 Monat
               </label>
@@ -358,17 +364,17 @@ export default function HoursLogsClient() {
       {/* Logs Table */}
       <Card className="p-0">
         <CardHeader className="px-5 pt-5 pb-3">
-          <CardTitle className="text-sm text-gray-700 dark:text-gray-200">
+          <CardTitle className="text-sm text-foreground dark:text-gray-200">
             Einträge ({logs.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="px-5 pb-5">
           {logs.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
-              <div className="h-16 w-16 rounded-2xl bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="h-16 w-16 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8" />
               </div>
-              <p className="font-medium text-gray-500">Keine Stundennachweise</p>
+              <p className="font-medium text-muted-foreground">Keine Stundennachweise</p>
               <p className="text-sm mt-1">
                 {statusFilter !== 'all' || trainerFilter !== 'all' || selectedMonth
                   ? 'Passe deine Filterkriterien an.'
@@ -378,61 +384,61 @@ export default function HoursLogsClient() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+                <thead className="bg-muted dark:bg-muted">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                       Trainer
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                       Datum
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                       Zeit
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                       Stunden
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider hidden md:table-cell">
                       Notizen
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                       Aktionen
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-white/10">
+                <tbody className="divide-y divide-border dark:divide-white/10">
                   {logs.map((log) => (
                     <>
                       <tr
                         key={log.id}
-                        className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                        className="hover:bg-muted dark:hover:bg-background/5 transition-colors"
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brandPrimary/10 text-brand-primary text-xs font-semibold shrink-0">
                               {log.trainer_name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-medium text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+                            <span className="font-medium text-sm text-foreground dark:text-white truncate max-w-[150px]">
                               {log.trainer_name}
                             </span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
                           {format(parseISO(log.date), 'dd. MMM yyyy', { locale: de })}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground dark:text-muted-foreground">
                           {getTypeLabel(log.hours, log.description)}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right text-gray-900 dark:text-white">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right text-foreground dark:text-white">
                           {log.hours.toFixed(1)}h
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           {getStatusBadge(log.status)}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell max-w-[200px] truncate">
+                        <td className="px-4 py-3 text-sm text-muted-foreground dark:text-muted-foreground hidden md:table-cell max-w-[200px] truncate">
                           {log.description || '—'}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-right">
@@ -496,7 +502,7 @@ export default function HoursLogsClient() {
 
       {/* Summary Footer */}
       {logs.length > 0 && (
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground dark:text-muted-foreground">
           <span className="flex items-center gap-1">
             <TrendingUp className="h-4 w-4" />
             {stats.uniqueTrainers} Trainer
@@ -517,11 +523,11 @@ export default function HoursLogsClient() {
       {/* Delete Confirmation Dialog */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+          <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+            <h3 className="text-lg font-bold text-foreground dark:text-white">
               Stundennachweis löschen?
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground dark:text-muted-foreground">
               Dieser Eintrag wird unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig
               gemacht werden.
             </p>
@@ -550,14 +556,14 @@ export default function HoursLogsClient() {
       {/* Reject Dialog */}
       {rejectId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+          <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+            <h3 className="text-lg font-bold text-foreground dark:text-white">
               Stundennachweis ablehnen
             </h3>
             <div>
               <label
                 htmlFor="hl-reject-reason"
-                className="text-sm font-medium mb-1.5 block text-gray-700 dark:text-gray-300"
+                className="text-sm font-medium mb-1.5 block text-foreground dark:text-foreground"
               >
                 Ablehnungsgrund *
               </label>

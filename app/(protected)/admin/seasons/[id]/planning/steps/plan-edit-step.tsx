@@ -160,7 +160,7 @@ export function PlanEditStep() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-light/10 mx-auto mb-4">
               <Sparkles className="h-8 w-8 text-brand-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Planung generieren</h3>
+            <h3 className="text-lg font-semibold text-foreground">Planung generieren</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
               Der Algorithmus erstellt basierend auf Mitglieder-Präferenzen, Trainer-Verfügbarkeiten
               und Niveau-Einstufungen einen optimierten Wochenstundenplan.
@@ -436,7 +436,9 @@ export function PlanEditStep() {
         <CardContent>
           {aiText ? (
             <div className="rounded-lg bg-brand-light/5 border border-brand-light/20 p-4">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{aiText}</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {aiText}
+              </p>
             </div>
           ) : (
             <div className="text-center py-6">
@@ -478,7 +480,7 @@ export function PlanEditStep() {
               {state.clusteringResult.waitlistSummary.map((w, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-lg border border-blue-100 bg-white p-3 text-sm"
+                  className="flex items-center justify-between rounded-lg border border-blue-100 bg-background p-3 text-sm"
                 >
                   <span className="font-medium">{w.memberName}</span>
                   <div className="flex items-center gap-2">
@@ -512,7 +514,7 @@ export function PlanEditStep() {
               {state.clusteringResult.unassignedMembers.map((m) => (
                 <div
                   key={m.memberId}
-                  className="flex items-center justify-between rounded-lg border border-red-100 bg-white p-3 text-sm"
+                  className="flex items-center justify-between rounded-lg border border-red-100 bg-background p-3 text-sm"
                 >
                   <span className="font-medium">{m.memberName}</span>
                   <span className="text-red-600 text-xs">{m.reason}</span>

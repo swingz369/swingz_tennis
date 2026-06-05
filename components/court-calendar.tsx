@@ -40,7 +40,7 @@ interface CourtCalendarProps {
 
 const MEMBER_LEGEND_ITEMS = [
   { label: 'Verfügbar', className: 'bg-green-50 border border-green-200' },
-  { label: 'Belegt', className: 'bg-gray-100 border border-gray-200' },
+  { label: 'Belegt', className: 'bg-muted border border-border' },
   { label: 'Deine Buchung', className: 'bg-red-50 border border-red-200' },
   { label: 'Gruppentraining', className: 'bg-purple-50 border border-purple-200' },
 ];
@@ -199,7 +199,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
   if (courtsLoading || sessionsLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -207,7 +207,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
   if (courts.length === 0) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Keine Plätze gefunden</div>
+        <div className="text-center py-12 text-muted-foreground">Keine Plätze gefunden</div>
       </div>
     );
   }
@@ -248,8 +248,8 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
         <WeekDaysHeaderRow weekDays={weekDays} />
 
         {courts.map((court) => (
-          <div key={court.id} className="border-b border-gray-200 last:border-b-0">
-            <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-gray-100">
+          <div key={court.id} className="border-b border-border last:border-b-0">
+            <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-muted">
               <CourtRowHeader court={court} />
               {weekDays.map((day) => {
                 const planEntriesForDay = showSeasonPlan
@@ -259,7 +259,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
                 return (
                   <div
                     key={day.toISOString()}
-                    className={`p-1 min-h-[300px] bg-white ${
+                    className={`p-1 min-h-[300px] bg-background ${
                       isSameDay(day, new Date()) ? 'bg-blue-50/30' : ''
                     }`}
                   >
@@ -298,7 +298,7 @@ export default function CourtCalendar({ onBookCourt }: CourtCalendarProps) {
                                   ? 'bg-red-50 text-red-800 border border-red-200'
                                   : hasPlanEntry
                                     ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                    : 'bg-gray-100 text-gray-600 border border-gray-200'
+                                    : 'bg-muted text-muted-foreground border border-border'
                             }`}
                             role="button"
                             tabIndex={isAvailable ? 0 : -1}

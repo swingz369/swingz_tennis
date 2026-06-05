@@ -35,7 +35,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     .single();
 
   if (!memberData) {
-    return <div className="p-6 text-gray-500">Mitglied nicht gefunden</div>;
+    return <div className="p-6 text-muted-foreground">Mitglied nicht gefunden</div>;
   }
 
   // Fetch full user details (extended fields available after migration)
@@ -81,7 +81,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
   };
 
   if (!member) {
-    return <div className="p-6 text-gray-500">Mitglied nicht gefunden</div>;
+    return <div className="p-6 text-muted-foreground">Mitglied nicht gefunden</div>;
   }
 
   return <MembersDetailClient initialMember={member} clubId={clubId!} />;

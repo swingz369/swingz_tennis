@@ -145,7 +145,7 @@ export default function GamificationDashboard() {
                 className={`flex items-center gap-3 p-3 rounded-xl ${
                   entry.name === 'Du'
                     ? 'bg-brand-light/10 border border-brand-light/20'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-900/50'
+                    : 'hover:bg-muted dark:hover:bg-gray-900/50'
                 }`}
               >
                 <div
@@ -153,10 +153,10 @@ export default function GamificationDashboard() {
                     entry.rank === 1
                       ? 'bg-amber-100 text-amber-700'
                       : entry.rank === 2
-                        ? 'bg-gray-100 text-gray-700'
+                        ? 'bg-muted text-foreground'
                         : entry.rank === 3
                           ? 'bg-orange-100 text-orange-700'
-                          : 'bg-gray-50 text-gray-500'
+                          : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   {entry.rank}

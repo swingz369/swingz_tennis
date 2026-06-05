@@ -62,10 +62,10 @@ export const adminSectionColors: Record<string, AdminSectionColors> = {
   },
   neutral: {
     gradient: 'from-gray-500 to-gray-700',
-    bg: 'bg-gray-50 dark:bg-gray-800/20',
-    text: 'text-gray-700 dark:text-gray-300',
+    bg: 'bg-muted dark:bg-muted/20',
+    text: 'text-foreground dark:text-foreground',
     light: 'gray',
-    ring: 'ring-gray-300/40',
+    ring: 'ring-ring/40',
   },
 };
 
@@ -143,7 +143,7 @@ export function AdminSection({
           'w-full flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold font-display uppercase tracking-[0.15em] transition-all duration-200',
           hasActiveChild
             ? colors.text
-            : 'text-gray-400/50 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50'
+            : 'text-muted-foreground/50 dark:text-white/30 hover:text-muted-foreground dark:hover:text-white/50'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
@@ -172,7 +172,7 @@ export function AdminSection({
         )}
       >
         <div
-          className="ml-2 pl-2 border-l border-gray-200/50 dark:border-white/[0.06] space-y-0.5 pb-0.5"
+          className="ml-2 pl-2 border-l border-border/50 dark:border-white/[0.06] space-y-0.5 pb-0.5"
           role="list"
         >
           {subItems.map((item) => {
@@ -187,7 +187,7 @@ export function AdminSection({
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
                     ? `${colors.bg} ${colors.text} shadow-sm`
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200'
+                    : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-gray-200'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -212,7 +212,7 @@ export function AdminSection({
           {extraAction && (
             <button
               onClick={extraAction.onClick}
-              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-150"
+              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-gray-200 transition-all duration-150"
             >
               <extraAction.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
               <span>{extraAction.label}</span>

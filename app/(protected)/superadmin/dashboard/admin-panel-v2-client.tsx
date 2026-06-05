@@ -55,7 +55,7 @@ export function AdminPanelV2Client({
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-brand-primary">Superadmin Dashboard</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             Hallo {firstName} — Plattform-Übersicht über alle Vereine
           </p>
         </div>
@@ -145,7 +145,7 @@ export function AdminPanelV2Client({
       {/* Club Overview Grid */}
       <div id="club-overview">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Alle Vereine</h2>
+          <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">Alle Vereine</h2>
           <Link
             href="/superadmin/clubs"
             className="text-xs text-purple-600 hover:underline font-medium flex items-center gap-1"
@@ -182,7 +182,7 @@ export function AdminPanelV2Client({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                   <span className="flex items-center gap-1">
                     <Users className="h-3 w-3" />
                     {club.memberCount} Mitglieder
@@ -207,8 +207,8 @@ export function AdminPanelV2Client({
 
         {clubs.length === 0 && (
           <Card>
-            <CardContent className="p-8 text-center text-gray-500">
-              <Building2 className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <Building2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
               <p className="font-medium">Keine Vereine gefunden</p>
               <p className="text-sm mt-1">
                 Erstelle einen neuen Verein unter{' '}
@@ -253,7 +253,7 @@ export function AdminPanelV2Client({
                 <TrendingUp className="h-5 w-5 text-purple-600" />
                 Plattform-Statistiken
               </h3>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Als Superadmin siehst du hier eine Gesamtübersicht aller Vereine. Wähle einen Verein
                 oben aus, um ihn als Administrator zu verwalten.
               </p>
@@ -280,12 +280,12 @@ export function AdminPanelV2Client({
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-lg"
+                    className="text-center p-4 bg-muted dark:bg-card/5 rounded-lg"
                   >
                     <p className="text-2xl font-bold text-purple-600">
                       {item.value.toLocaleString('de-DE')}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">{item.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
                   </div>
                 ))}
               </div>
@@ -304,9 +304,9 @@ export function AdminPanelV2Client({
         <TabsContent value="members" className="mt-6">
           <Card>
             <CardContent className="p-12 text-center">
-              <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Wähle einen Verein aus</h3>
-              <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
+              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Wähle einen Verein aus</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
                 Um Mitglieder zu verwalten, wähle zuerst einen Verein aus der Übersicht aus. Du
                 wirst dann in die Admin-Ansicht des Vereins weitergeleitet.
               </p>
@@ -323,9 +323,9 @@ export function AdminPanelV2Client({
         <TabsContent value="sessions" className="mt-6">
           <Card>
             <CardContent className="p-12 text-center">
-              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Wähle einen Verein aus</h3>
-              <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto">
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Wähle einen Verein aus</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
                 Um Training-Sessions zu verwalten, wähle zuerst einen Verein aus der Übersicht aus.
                 Du wirst dann in die Admin-Ansicht des Vereins weitergeleitet.
               </p>

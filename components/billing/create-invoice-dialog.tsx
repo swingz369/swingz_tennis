@@ -181,7 +181,9 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
                     </SelectItem>
                   ))
                 ) : (
-                  <div className="px-2 py-4 text-sm text-gray-500">Keine Mitglieder gefunden</div>
+                  <div className="px-2 py-4 text-sm text-muted-foreground">
+                    Keine Mitglieder gefunden
+                  </div>
                 )}
               </SelectContent>
             </Select>
@@ -339,11 +341,11 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Zwischensumme:</span>
+                  <span className="text-muted-foreground">Zwischensumme:</span>
                   <span className="font-medium">{calculateSubtotal().toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">MwSt:</span>
+                  <span className="text-muted-foreground">MwSt:</span>
                   <span className="font-medium">{calculateTax().toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">

@@ -3,21 +3,21 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
-  'rounded-2xl bg-white dark:bg-surface-dark transition-all duration-500 ease-out',
+  'rounded-2xl bg-background dark:bg-surface-dark transition-all duration-500 ease-out',
   {
     variants: {
       variant: {
         default:
-          'border border-gray-100 dark:border-white/10 shadow-sm hover:shadow-xl hover:-translate-y-1',
+          'border border-border dark:border-white/10 shadow-sm hover:shadow-xl hover:-translate-y-1',
         elevated:
-          'border border-gray-100 dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-2',
+          'border border-border dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-2',
         bordered:
-          'border-2 border-gray-200 dark:border-white/20 hover:border-brand-light/50 hover:shadow-xl',
-        flat: 'bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10',
+          'border-2 border-border dark:border-white/20 hover:border-brand-light/50 hover:shadow-xl',
+        flat: 'bg-muted dark:bg-card/5 border border-border dark:border-white/10',
         gradient:
-          'bg-gradient-to-br from-white via-gray-50/50 to-white dark:from-surface-dark dark:via-brand-primary/20 dark:to-surface-dark border border-gray-100 dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-1',
+          'bg-gradient-to-br from-white via-gray-50/50 to-white dark:from-surface-dark dark:via-brand-primary/20 dark:to-surface-dark border border-border dark:border-white/10 shadow-lg hover:shadow-2xl hover:-translate-y-1',
         glass:
-          'bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl',
+          'bg-background/80 dark:bg-card/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl',
       },
       padding: {
         none: '',
@@ -45,11 +45,11 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div ref={ref} className={cn(cardVariants({ variant, padding }), className)} {...props}>
         {header && (
-          <div className="border-b border-gray-100 dark:border-white/10 px-6 py-4">{header}</div>
+          <div className="border-b border-border dark:border-white/10 px-6 py-4">{header}</div>
         )}
         <div className={cn(header && 'pt-0', footer && 'pb-0')}>{children}</div>
         {footer && (
-          <div className="border-t border-gray-100 dark:border-white/10 px-6 py-4">{footer}</div>
+          <div className="border-t border-border dark:border-white/10 px-6 py-4">{footer}</div>
         )}
       </div>
     );
@@ -70,7 +70,7 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
     <h3
       ref={ref}
       className={cn(
-        'text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white',
+        'text-lg font-semibold leading-none tracking-tight text-foreground dark:text-white',
         className
       )}
       {...props}
@@ -83,7 +83,11 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn('text-sm text-gray-500 dark:text-gray-400', className)} {...props} />
+  <p
+    ref={ref}
+    className={cn('text-sm text-muted-foreground dark:text-muted-foreground', className)}
+    {...props}
+  />
 ));
 CardDescription.displayName = 'CardDescription';
 

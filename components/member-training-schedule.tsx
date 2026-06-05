@@ -90,9 +90,9 @@ export default function MemberTrainingSchedule() {
         return { label: 'Abgeschlossen', color: 'bg-green-100 text-green-700' };
       }
       if (session.bookingStatus === 'no_show') {
-        return { label: 'Nicht erschienen', color: 'bg-gray-100 text-gray-700' };
+        return { label: 'Nicht erschienen', color: 'bg-muted text-foreground' };
       }
-      return { label: 'Vergangen', color: 'bg-gray-100 text-gray-700' };
+      return { label: 'Vergangen', color: 'bg-muted text-foreground' };
     }
 
     if (session.bookingStatus === 'confirmed') {
@@ -105,7 +105,7 @@ export default function MemberTrainingSchedule() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function MemberTrainingSchedule() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Meine Trainingszeiten</h1>
-          <p className="text-gray-500">Übersicht deiner gebuchten Trainingssessions</p>
+          <p className="text-muted-foreground">Übersicht deiner gebuchten Trainingssessions</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToToday}>
@@ -138,18 +138,20 @@ export default function MemberTrainingSchedule() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Diesen Monat</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Diesen Monat
+            </CardTitle>
             <Calendar className="h-4 w-4 text-brand-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{monthSessions.length}</div>
-            <p className="text-xs text-gray-500 mt-1">Sessions gebucht</p>
+            <p className="text-xs text-muted-foreground mt-1">Sessions gebucht</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Kommende</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Kommende</CardTitle>
             <Clock className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -160,13 +162,15 @@ export default function MemberTrainingSchedule() {
                 }).length
               }
             </div>
-            <p className="text-xs text-gray-500 mt-1">noch bevorstehend</p>
+            <p className="text-xs text-muted-foreground mt-1">noch bevorstehend</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Abgeschlossen</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Abgeschlossen
+            </CardTitle>
             <User className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -177,7 +181,7 @@ export default function MemberTrainingSchedule() {
                 }).length
               }
             </div>
-            <p className="text-xs text-gray-500 mt-1">erfolgreich absolviert</p>
+            <p className="text-xs text-muted-foreground mt-1">erfolgreich absolviert</p>
           </CardContent>
         </Card>
       </div>
@@ -195,7 +199,7 @@ export default function MemberTrainingSchedule() {
                 return (
                   <div
                     key={session.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-muted rounded-lg hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-brand-primary/10 rounded-lg">
@@ -205,7 +209,7 @@ export default function MemberTrainingSchedule() {
                         <div className="font-semibold">
                           {format(getSessionDate(session), 'EEEE, dd. MMMM yyyy', { locale: de })}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>
@@ -251,7 +255,7 @@ export default function MemberTrainingSchedule() {
         </CardHeader>
         <CardContent>
           {monthSessions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Keine Trainings für diesen Monat gebucht
             </div>
           ) : (
@@ -266,23 +270,21 @@ export default function MemberTrainingSchedule() {
                     className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border transition-colors ${
                       isToday
                         ? 'bg-brand-primary/10 border-brand-primary/30'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        : 'bg-background border-border hover:bg-muted'
                     }`}
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className={`p-3 rounded-lg ${
-                          isToday ? 'bg-brand-primary/20' : 'bg-gray-100'
-                        }`}
+                        className={`p-3 rounded-lg ${isToday ? 'bg-brand-primary/20' : 'bg-muted'}`}
                       >
                         <Calendar
-                          className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-gray-600'}`}
+                          className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-muted-foreground'}`}
                         />
                       </div>
                       <div>
                         <div
                           className={`font-semibold ${
-                            isToday ? 'text-brand-primary' : 'text-gray-900'
+                            isToday ? 'text-brand-primary' : 'text-foreground'
                           }`}
                         >
                           {format(getSessionDate(session), 'EEEE, dd. MMMM', { locale: de })}
@@ -292,7 +294,7 @@ export default function MemberTrainingSchedule() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                           <div className="flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             <span>

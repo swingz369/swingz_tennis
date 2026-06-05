@@ -16,7 +16,10 @@ export function AdminDashboardSkeleton() {
       {/* KPI cards skeleton */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-xl border p-4 space-y-2 bg-white dark:bg-surface-dark">
+          <div
+            key={i}
+            className="rounded-xl border p-4 space-y-2 bg-background dark:bg-surface-dark"
+          >
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <Skeleton className="h-4 w-20" />
@@ -30,7 +33,7 @@ export function AdminDashboardSkeleton() {
 
       {/* 2-column main content skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3 rounded-xl border p-4 space-y-3 bg-white dark:bg-surface-dark">
+        <div className="lg:col-span-3 rounded-xl border p-4 space-y-3 bg-background dark:bg-surface-dark">
           <Skeleton className="h-5 w-32" />
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3 py-2">
@@ -43,7 +46,7 @@ export function AdminDashboardSkeleton() {
             </div>
           ))}
         </div>
-        <div className="lg:col-span-2 rounded-xl border p-4 space-y-3 bg-white dark:bg-surface-dark">
+        <div className="lg:col-span-2 rounded-xl border p-4 space-y-3 bg-background dark:bg-surface-dark">
           <Skeleton className="h-5 w-28" />
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="flex items-center gap-3 py-1.5">
@@ -60,7 +63,10 @@ export function AdminDashboardSkeleton() {
       {/* Quick actions skeleton */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-xl border p-5 space-y-3 bg-white dark:bg-surface-dark">
+          <div
+            key={i}
+            className="rounded-xl border p-5 space-y-3 bg-background dark:bg-surface-dark"
+          >
             <Skeleton className="h-10 w-10 rounded-xl" />
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-3 w-16" />

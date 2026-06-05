@@ -103,7 +103,7 @@ export default function MemberProfile() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function MemberProfile() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-primary">Mein Profil</h1>
-        <p className="text-gray-500">Verwalte deine persönlichen Informationen</p>
+        <p className="text-muted-foreground">Verwalte deine persönlichen Informationen</p>
       </div>
 
       {/* Profile Overview */}
@@ -124,8 +124,8 @@ export default function MemberProfile() {
         <CardContent>
           <div className="flex items-start gap-6">
             <div className="relative">
-              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-12 w-12 text-gray-400" />
+              <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
+                <User className="h-12 w-12 text-muted-foreground" />
               </div>
               <Button
                 size="icon"
@@ -137,7 +137,7 @@ export default function MemberProfile() {
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-semibold">{formData.fullName || 'Mitglied'}</h3>
-              <p className="text-gray-600">{formData.email}</p>
+              <p className="text-muted-foreground">{formData.email}</p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-sm bg-brand-primary/10 text-brand-primary px-2 py-1 rounded">
                   Aktives Mitglied
@@ -180,7 +180,7 @@ export default function MemberProfile() {
                 placeholder="max@example.com"
                 disabled
               />
-              <p className="text-xs text-gray-500">E-Mail kann nicht geändert werden</p>
+              <p className="text-xs text-muted-foreground">E-Mail kann nicht geändert werden</p>
             </div>
 
             <div className="space-y-2">
@@ -284,28 +284,28 @@ export default function MemberProfile() {
               </div>
               {mandateInfo.mandateReference && (
                 <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-                  <span className="text-gray-500">Mandatsreferenz:</span>
+                  <span className="text-muted-foreground">Mandatsreferenz:</span>
                   <span className="font-mono text-xs">{mandateInfo.mandateReference}</span>
                 </div>
               )}
               {mandateInfo.iban && (
                 <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-                  <span className="text-gray-500">IBAN:</span>
+                  <span className="text-muted-foreground">IBAN:</span>
                   <span className="font-mono text-xs">{mandateInfo.iban}</span>
                 </div>
               )}
               {mandateInfo.signatureDate && (
                 <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
-                  <span className="text-gray-500">Unterschrieben am:</span>
+                  <span className="text-muted-foreground">Unterschrieben am:</span>
                   <span>{new Date(mandateInfo.signatureDate).toLocaleDateString('de-DE')}</span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex items-start gap-3 text-sm text-gray-500">
+            <div className="flex items-start gap-3 text-sm text-muted-foreground">
               <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-gray-700">Kein aktives SEPA-Mandat</p>
+                <p className="font-medium text-foreground">Kein aktives SEPA-Mandat</p>
                 <p className="mt-1">
                   Du hast noch kein SEPA-Lastschriftmandat erteilt. Ein Mandat wird für die
                   automatische Zahlungsabwicklung benötigt.
@@ -353,41 +353,41 @@ export default function MemberProfile() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">E-Mail-Benachrichtigungen</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Erhalte E-Mails über Buchungen und Änderungen
                 </div>
               </div>
               <input
                 type="checkbox"
                 defaultChecked
-                className="w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                className="w-5 h-5 rounded border-border text-brand-primary focus:ring-brand-primary"
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Erinnerungen an Trainingssessions</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Erhalte Erinnerungen 24 Stunden vor deinen Sessions
                 </div>
               </div>
               <input
                 type="checkbox"
                 defaultChecked
-                className="w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                className="w-5 h-5 rounded border-border text-brand-primary focus:ring-brand-primary"
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <div className="font-medium">Newsletter</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   Erhalte Neuigkeiten und Updates vom Tennisclub
                 </div>
               </div>
               <input
                 type="checkbox"
-                className="w-5 h-5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                className="w-5 h-5 rounded border-border text-brand-primary focus:ring-brand-primary"
               />
             </div>
           </div>

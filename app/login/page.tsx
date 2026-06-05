@@ -75,7 +75,7 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-between p-16 text-white">
           {/* Theme Toggle — top right */}
           <div className="absolute top-6 right-6">
-            <ThemeToggle className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-white/10" />
+            <ThemeToggle className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-background/10" />
           </div>
           <div>
             <div className="flex items-center gap-3 mb-12 group">
@@ -99,7 +99,7 @@ export default function LoginPage() {
 
           {/* Stats + Feature cards */}
           <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/8 transition-colors">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-accent to-orange-600 flex items-center justify-center shadow-lg">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
@@ -117,7 +117,7 @@ export default function LoginPage() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 text-center hover:bg-white/8 transition-colors"
+                  className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 text-center hover:bg-background/8 transition-colors"
                 >
                   <p className="text-xl font-bold">{stat.value}</p>
                   <p className="text-white/55 text-xs mt-0.5">{stat.label}</p>
@@ -129,7 +129,7 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right: Login Form ── */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-white dark:bg-gray-900 relative">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-background dark:bg-card relative">
         {/* Theme Toggle — always visible (mobile + desktop) */}
         <div className="absolute top-4 right-4 z-10">
           <ThemeToggle className="h-9 w-9 rounded-full" />
@@ -143,7 +143,7 @@ export default function LoginPage() {
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold text-gray-900 dark:text-white font-display">
+              <span className="text-2xl font-bold text-foreground dark:text-white font-display">
                 SWINGZ
               </span>
             </div>
@@ -151,13 +151,15 @@ export default function LoginPage() {
 
           <Card variant="elevated" className="p-6 sm:p-8 border-0 shadow-premium">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-extrabold text-gray-900">Anmelden</h2>
-              <p className="mt-2 text-gray-500">Willkommen zurück — wir haben dich vermisst</p>
+              <h2 className="text-2xl font-extrabold text-foreground">Anmelden</h2>
+              <p className="mt-2 text-muted-foreground">
+                Willkommen zurück — wir haben dich vermisst
+              </p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
                   Email
                 </Label>
                 <div className="relative">
@@ -168,7 +170,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@verein.de"
                     required
-                    className="h-12 rounded-xl border-gray-200 focus:border-brand-light focus:ring-brand-light/20 pl-4 pr-4 transition-shadow focus:shadow-glow-green-sm"
+                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pl-4 pr-4 transition-shadow focus:shadow-glow-green-sm"
                     autoComplete="email"
                   />
                 </div>
@@ -176,7 +178,7 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                  <Label htmlFor="password" className="text-sm font-semibold text-foreground">
                     Passwort
                   </Label>
                   <a
@@ -194,12 +196,12 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="h-12 rounded-xl border-gray-200 focus:border-brand-light focus:ring-brand-light/20 pr-12 transition-shadow focus:shadow-glow-green-sm"
+                    className="h-12 rounded-xl border-border focus:border-brand-light focus:ring-brand-light/20 pr-12 transition-shadow focus:shadow-glow-green-sm"
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors z-10"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors z-10"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                   >
@@ -250,14 +252,14 @@ export default function LoginPage() {
 
             <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-100" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-4 text-gray-400 font-medium">oder</span>
+                <span className="bg-background px-4 text-muted-foreground font-medium">oder</span>
               </div>
             </div>
 
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-center text-sm text-muted-foreground">
               <p>
                 Noch kein Konto?{' '}
                 <a
@@ -271,7 +273,7 @@ export default function LoginPage() {
           </Card>
 
           {/* Trust badges */}
-          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-gray-400">
+          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Shield className="h-3.5 w-3.5" /> SOC 2
             </span>
@@ -280,18 +282,18 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <p className="mt-6 text-center text-xs text-gray-400">
+          <p className="mt-6 text-center text-xs text-muted-foreground">
             Mit der Anmeldung stimmst du unseren{' '}
             <a
               href="/terms"
-              className="text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
+              className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
               Nutzungsbedingungen
             </a>{' '}
             und{' '}
             <a
               href="/privacy"
-              className="text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
+              className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
               Datenschutzrichtlinie
             </a>{' '}

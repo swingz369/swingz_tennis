@@ -74,14 +74,14 @@ function DraggableSession({ session, isDragging }: DraggableSessionProps) {
     >
       <div className="flex items-start justify-between gap-1">
         <div className="flex items-center gap-1">
-          <GripVertical className="h-3 w-3 text-gray-400" />
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
           <div className="font-medium truncate">
             {session.trainerName?.substring(0, 8) || 'Trainer'}
           </div>
         </div>
         {session.bookedByUser && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
       </div>
-      <div className="flex items-center gap-1 text-[10px] text-gray-600">
+      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
         <Clock className="h-3 w-3" />
         <span>
           {session.startTime} - {session.endTime}
@@ -313,7 +313,7 @@ export default function AdminCourtCalendar({
   if (rolesLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -331,7 +331,7 @@ export default function AdminCourtCalendar({
   if (courtsLoading || sessionsLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -339,7 +339,7 @@ export default function AdminCourtCalendar({
   if (courts.length === 0) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Keine Plätze gefunden</div>
+        <div className="text-center py-12 text-muted-foreground">Keine Plätze gefunden</div>
       </div>
     );
   }
@@ -378,8 +378,8 @@ export default function AdminCourtCalendar({
           <WeekDaysHeaderRow weekDays={weekDays} />
 
           {courts.map((court) => (
-            <div key={court.id} className="border-b border-gray-200 last:border-b-0">
-              <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-gray-100">
+            <div key={court.id} className="border-b border-border last:border-b-0">
+              <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-muted">
                 <CourtRowHeader court={court} />
                 {weekDays.map((day) => {
                   const planEntriesForCourtDay = showSeasonPlan
@@ -389,7 +389,7 @@ export default function AdminCourtCalendar({
                   return (
                     <div
                       key={day.toISOString()}
-                      className={`p-1 min-h-[300px] bg-white ${
+                      className={`p-1 min-h-[300px] bg-background ${
                         isSameDay(day, new Date()) ? 'bg-blue-50/30' : ''
                       }`}
                     >

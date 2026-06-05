@@ -163,7 +163,9 @@ export default function OnlineApplicationForm() {
             <FileText className="h-8 w-8 text-brand-primary" />
           </div>
           <h1 className="text-3xl font-bold text-brand-primary mb-2">Online-Bewerbung</h1>
-          <p className="text-gray-600">Bewirb dich für eine Mitgliedschaft im SwingZ Tennis Club</p>
+          <p className="text-muted-foreground">
+            Bewirb dich für eine Mitgliedschaft im SwingZ Tennis Club
+          </p>
         </div>
 
         {/* Info Card */}
@@ -478,7 +480,7 @@ export default function OnlineApplicationForm() {
                       <Label htmlFor="acceptTerms" className="cursor-pointer">
                         Ich akzeptiere die Allgemeinen Geschäftsbedingungen *
                       </Label>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-muted-foreground">
                         Bitte lies unsere AGB sorgfältig durch
                       </p>
                     </div>
@@ -496,7 +498,7 @@ export default function OnlineApplicationForm() {
                       <Label htmlFor="acceptPrivacy" className="cursor-pointer">
                         Ich akzeptiere die Datenschutzrichtlinie *
                       </Label>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-muted-foreground">
                         Informationen zur Verarbeitung deiner Daten
                       </p>
                     </div>
@@ -516,11 +518,11 @@ export default function OnlineApplicationForm() {
         </Card>
 
         {/* Info */}
-        <Card className="mt-6 bg-gray-50 border-gray-200">
+        <Card className="mt-6 bg-muted border-border">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-gray-600 mt-0.5" />
-              <div className="space-y-2 text-sm text-gray-700">
+              <CheckCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div className="space-y-2 text-sm text-foreground">
                 <p className="font-medium">Nächste Schritte</p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Nach Absendung erhältst du eine Bestätigungs-E-Mail</li>
@@ -535,7 +537,7 @@ export default function OnlineApplicationForm() {
 
         {/* Login Link */}
         <div className="text-center mt-6">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Bereits Mitglied?{' '}
             <a href="/login" className="text-brand-primary hover:underline font-medium">
               Hier anmelden

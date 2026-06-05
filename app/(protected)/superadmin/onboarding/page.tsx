@@ -155,7 +155,7 @@ export default function SuperadminOnboardingPage() {
                 {stepNum < TOTAL_STEPS && (
                   <div
                     className={`absolute top-5 left-full h-0.5 w-[calc(100%+0.5rem)] -translate-y-1/2 transition-colors duration-500 ${
-                      isCompleted ? 'bg-purple-600' : 'bg-gray-200'
+                      isCompleted ? 'bg-purple-600' : 'bg-muted'
                     }`}
                   />
                 )}
@@ -165,7 +165,7 @@ export default function SuperadminOnboardingPage() {
                       ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
                       : isCurrent
                         ? 'bg-purple-600 text-white ring-4 ring-purple-600/20 shadow-lg shadow-purple-600/30 scale-110'
-                        : 'bg-white border-2 border-gray-200 text-gray-400'
+                        : 'bg-background border-2 border-border text-muted-foreground'
                   }`}
                 >
                   {isCompleted ? (
@@ -182,7 +182,7 @@ export default function SuperadminOnboardingPage() {
                       ? 'text-purple-600 font-semibold'
                       : isCompleted
                         ? 'text-purple-600/70'
-                        : 'text-gray-400'
+                        : 'text-muted-foreground'
                   }`}
                 >
                   {s.label}
@@ -206,10 +206,10 @@ export default function SuperadminOnboardingPage() {
               <Zap className="w-12 h-12 text-purple-600" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-3xl font-bold text-foreground">
                 Willkommen auf der SwingZ-Plattform!
               </h2>
-              <p className="text-gray-500 text-lg max-w-md mx-auto">
+              <p className="text-muted-foreground text-lg max-w-md mx-auto">
                 Als{' '}
                 <Badge
                   variant="secondary"
@@ -221,7 +221,7 @@ export default function SuperadminOnboardingPage() {
                 einen Blick.
               </p>
             </div>
-            <div className="flex flex-wrap justify-center gap-3 text-sm text-gray-500">
+            <div className="flex flex-wrap justify-center gap-3 text-sm text-muted-foreground">
               {STEPS.slice(1, -1).map((s) => (
                 <Badge key={s.label} variant="secondary" className="gap-1.5 px-3 py-1.5">
                   <s.icon className="w-3.5 h-3.5" />
@@ -244,8 +244,8 @@ export default function SuperadminOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Plattform-Tour</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Plattform-Tour</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Hier ist, was du als Superadmin alles tun kannst:
               </p>
             </div>
@@ -258,7 +258,7 @@ export default function SuperadminOnboardingPage() {
                     </div>
                     <h3 className="font-semibold text-sm">Dashboard</h3>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Plattformweite Kennzahlen: Mitglieder, Buchungen, Umsatz aller Vereine auf einen
                     Blick.
                   </p>
@@ -272,7 +272,7 @@ export default function SuperadminOnboardingPage() {
                     </div>
                     <h3 className="font-semibold text-sm">Vereinsübersicht</h3>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Alle Vereine verwalten, Statistiken einsehen und Club-Details bearbeiten.
                   </p>
                 </CardContent>
@@ -285,7 +285,7 @@ export default function SuperadminOnboardingPage() {
                     </div>
                     <h3 className="font-semibold text-sm">Club-Verwaltung</h3>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Neue Vereine anlegen, Admins zuweisen und Club-Einstellungen konfigurieren.
                   </p>
                 </CardContent>
@@ -298,7 +298,7 @@ export default function SuperadminOnboardingPage() {
                     </div>
                     <h3 className="font-semibold text-sm">Club-Wechsel</h3>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     In die Admin-Rolle eines beliebigen Vereins schlüpfen, um direkt zu helfen.
                   </p>
                 </CardContent>
@@ -317,8 +317,8 @@ export default function SuperadminOnboardingPage() {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Ersten Verein anlegen</h2>
-              <p className="text-gray-500 text-sm mt-1">
+              <h2 className="text-2xl font-bold text-foreground">Ersten Verein anlegen</h2>
+              <p className="text-muted-foreground text-sm mt-1">
                 Erstelle deinen ersten Tennisverein – oder überspringe diesen Schritt.
               </p>
             </div>
@@ -329,10 +329,10 @@ export default function SuperadminOnboardingPage() {
                   <CheckCircle2 className="w-8 h-8 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Verein &quot;{clubForm.name}&quot; wurde erstellt!
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Möchtest du jetzt als Admin in diesen Verein wechseln und ihn einrichten?
                   </p>
                 </div>
@@ -349,7 +349,7 @@ export default function SuperadminOnboardingPage() {
                     )}
                     Als Admin einrichten
                   </Button>
-                  <Button variant="outline" onClick={skipStep} className="text-gray-500">
+                  <Button variant="outline" onClick={skipStep} className="text-muted-foreground">
                     Später
                   </Button>
                 </div>
@@ -391,7 +391,7 @@ export default function SuperadminOnboardingPage() {
               </>
             )}
 
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-muted-foreground">
               Du kannst diesen Schritt überspringen und später Vereine im Club-Management anlegen.
             </p>
           </div>
@@ -404,12 +404,14 @@ export default function SuperadminOnboardingPage() {
               <CheckCircle2 className="w-12 h-12 text-purple-600" />
             </div>
             <div className="space-y-3">
-              <h2 className="text-3xl font-bold text-gray-900">Superadmin-Setup abgeschlossen!</h2>
-              <p className="text-gray-500 text-lg max-w-md mx-auto">
+              <h2 className="text-3xl font-bold text-foreground">
+                Superadmin-Setup abgeschlossen!
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-md mx-auto">
                 Du bist bereit, die Plattform zu verwalten. Entdecke jetzt dein Dashboard.
               </p>
             </div>
-            <div className="flex justify-center gap-3 text-sm text-gray-500">
+            <div className="flex justify-center gap-3 text-sm text-muted-foreground">
               {STEPS.slice(1, -1).map((s) => (
                 <Badge
                   key={s.label}
@@ -467,7 +469,7 @@ export default function SuperadminOnboardingPage() {
                     variant="ghost"
                     onClick={goBack}
                     disabled={loading}
-                    className="text-gray-500 hover:text-gray-700"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     <ChevronLeft className="mr-1 h-4 w-4" />
                     Zurück
@@ -479,7 +481,7 @@ export default function SuperadminOnboardingPage() {
                         variant="outline"
                         onClick={skipStep}
                         disabled={loading}
-                        className="text-gray-500"
+                        className="text-muted-foreground"
                       >
                         Überspringen
                       </Button>
@@ -500,7 +502,7 @@ export default function SuperadminOnboardingPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-gray-400 text-xs mt-4">
+        <p className="text-center text-muted-foreground text-xs mt-4">
           Schritt {step} von {TOTAL_STEPS}
         </p>
       </div>

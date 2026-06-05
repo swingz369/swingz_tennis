@@ -142,7 +142,7 @@ export default function TrainerAvailabilityManager() {
       {slots.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <Calendar className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+            <Calendar className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
             <p className="text-muted-foreground mb-3">Keine Verfügbarkeiten eingetragen</p>
             <Button onClick={addSlot} size="sm" variant="brand">
               <Plus className="h-4 w-4 mr-1" /> Erste Verfügbarkeit

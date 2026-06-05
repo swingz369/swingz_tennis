@@ -162,7 +162,7 @@ export default function NotificationSettings() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Benachrichtigungen</h1>
-          <p className="text-gray-500">Verwalte deine Benachrichtigungseinstellungen</p>
+          <p className="text-muted-foreground">Verwalte deine Benachrichtigungseinstellungen</p>
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
@@ -201,18 +201,18 @@ export default function NotificationSettings() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Push Notifications */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-brand-primary/10 rounded-lg">
                 {settings.pushNotifications ? (
                   <Bell className="h-5 w-5 text-brand-primary" />
                 ) : (
-                  <BellOff className="h-5 w-5 text-gray-400" />
+                  <BellOff className="h-5 w-5 text-muted-foreground" />
                 )}
               </div>
               <div>
                 <div className="font-medium">Push-Benachrichtigungen</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground dark:text-muted-foreground">
                   Erhalte Benachrichtigungen direkt in deinem Browser
                 </div>
               </div>
@@ -231,14 +231,14 @@ export default function NotificationSettings() {
           </div>
 
           {/* Email Notifications */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-lg">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <User className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <div className="font-medium">E-Mail-Benachrichtigungen</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-sm text-muted-foreground dark:text-muted-foreground">
                   Erhalte wichtige Updates per E-Mail
                 </div>
               </div>
@@ -251,13 +251,13 @@ export default function NotificationSettings() {
 
           {/* Specific Notification Types */}
           <div className="space-y-3">
-            <div className="font-medium text-sm text-gray-700 dark:text-gray-300">
+            <div className="font-medium text-sm text-foreground dark:text-foreground">
               Benachrichtigungstypen
             </div>
 
             <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <Calendar className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">Buchungsbestätigungen</span>
               </div>
               <Switch
@@ -268,7 +268,7 @@ export default function NotificationSettings() {
 
             <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <Clock className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">Trainingserinnerungen</span>
               </div>
               <Switch
@@ -279,7 +279,7 @@ export default function NotificationSettings() {
 
             <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <Bell className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">News & Updates</span>
               </div>
               <Switch
@@ -290,7 +290,7 @@ export default function NotificationSettings() {
 
             <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <User className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">Werbung & Angebote</span>
               </div>
               <Switch
@@ -302,7 +302,7 @@ export default function NotificationSettings() {
 
           {/* Reminder Time */}
           <div className="space-y-2">
-            <div className="font-medium text-sm text-gray-700 dark:text-gray-300">
+            <div className="font-medium text-sm text-foreground dark:text-foreground">
               Erinnerungszeit
             </div>
             <div className="flex items-center gap-4">
@@ -322,7 +322,7 @@ export default function NotificationSettings() {
                   <SelectItem value="48">48 Stunden vorher</SelectItem>
                 </SelectContent>
               </Select>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-muted-foreground dark:text-muted-foreground">
                 vor Trainingssessions
               </span>
             </div>
@@ -338,11 +338,11 @@ export default function NotificationSettings() {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <BellOff className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <BellOff className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <p>Keine Benachrichtigungen</p>
             </div>
           ) : (
@@ -353,13 +353,13 @@ export default function NotificationSettings() {
                     key={notification.id}
                     className={`flex items-start gap-3 p-4 rounded-lg border transition-colors ${
                       notification.read
-                        ? 'bg-white dark:bg-gray-900 border-gray-200 dark:border-white/10'
+                        ? 'bg-background dark:bg-card border-border dark:border-white/10'
                         : 'bg-brand-primary/5 border-brand-primary/30'
                     }`}
                   >
                     <div
                       className={`p-2 rounded-lg ${
-                        notification.read ? 'bg-gray-100 dark:bg-gray-800' : 'bg-brand-primary/20'
+                        notification.read ? 'bg-muted dark:bg-muted' : 'bg-brand-primary/20'
                       }`}
                     >
                       <Bell className="h-5 w-5" />
@@ -371,11 +371,11 @@ export default function NotificationSettings() {
                           <div className="w-2 h-2 rounded-full bg-brand-primary flex-shrink-0 mt-2" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                         {notification.message}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-gray-500 dark:text-gray-500">
+                        <span className="text-xs text-muted-foreground dark:text-muted-foreground">
                           {new Date(notification.timestamp).toLocaleString('de-DE')}
                         </span>
                         {notification.actionUrl && (

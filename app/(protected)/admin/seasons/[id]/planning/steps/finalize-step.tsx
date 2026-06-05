@@ -288,7 +288,7 @@ export function FinalizeStep() {
                 <div className="flex items-center gap-3 mt-3">
                   <Button
                     size="sm"
-                    className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="gap-1.5 bg-brand-primary hover:bg-brand-primary/90 text-white"
                     disabled={isGeneratingInvoices}
                     onClick={async () => {
                       setIsGeneratingInvoices(true);
@@ -383,7 +383,7 @@ export function FinalizeStep() {
         <Card>
           <CardContent className="py-8 text-center">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">Konfliktprüfung starten</h3>
+            <h3 className="mt-4 text-lg font-semibold text-foreground">Konfliktprüfung starten</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
               Führen Sie die automatische Konfliktprüfung durch, bevor Sie die Planung final
               bestätigen.
@@ -547,7 +547,7 @@ export function FinalizeStep() {
                 .map((conflict) => (
                   <label
                     key={conflict.id}
-                    className="flex items-start gap-3 rounded-lg border p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="flex items-start gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted transition-colors"
                   >
                     <Checkbox
                       checked={confirmedWarnings.has(conflict.id)}
@@ -566,7 +566,7 @@ export function FinalizeStep() {
                           {conflict.severity === 'warning' ? 'Warnung' : 'Hinweis'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-900">{conflict.description}</p>
+                      <p className="text-sm text-foreground">{conflict.description}</p>
                       {conflict.suggestedResolution && (
                         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                           <Sparkles className="h-3 w-3 text-brand-primary" />
@@ -594,8 +594,8 @@ export function FinalizeStep() {
         </CardHeader>
         <CardContent>
           {aiReviewText ? (
-            <div className="rounded-lg bg-white border border-purple-200 p-4">
-              <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+            <div className="rounded-lg bg-background border border-purple-200 p-4">
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                 {aiReviewText}
               </p>
             </div>
@@ -641,7 +641,7 @@ export function FinalizeStep() {
         </CardHeader>
         <CardContent>
           <textarea
-            className="w-full min-h-[80px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm resize-y"
+            className="w-full min-h-[80px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y"
             placeholder='z.B. "Planung mit Vorstand abgestimmt am..."'
             value={adminNotes}
             onChange={(e) => setAdminNotes(e.target.value)}
@@ -650,7 +650,7 @@ export function FinalizeStep() {
       </Card>
 
       {/* Confirm Button — sticky bottom bar */}
-      <div className="sticky bottom-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 shadow-lg rounded-t-xl px-6 py-4 z-10">
+      <div className="sticky bottom-0 bg-background dark:bg-background border-t border-border dark:border-border shadow-lg rounded-t-xl px-6 py-4 z-10">
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             {hasBlockingConflicts ? (
@@ -732,10 +732,10 @@ function ConflictCard({
         conflict.status === 'resolved'
           ? 'border-green-200 bg-green-50/30 opacity-70'
           : conflict.status === 'ignored'
-            ? 'border-gray-200 bg-gray-50/30 opacity-70'
+            ? 'border-border bg-muted/30 opacity-70'
             : conflict.severity === 'critical'
-              ? 'border-red-200 bg-white'
-              : 'border-amber-200 bg-white'
+              ? 'border-red-200 bg-background'
+              : 'border-amber-200 bg-background'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -754,12 +754,12 @@ function ConflictCard({
               </Badge>
             )}
             {conflict.status === 'ignored' && (
-              <Badge className="text-xs bg-gray-100 text-gray-600">
+              <Badge className="text-xs bg-muted text-muted-foreground">
                 <XCircle className="h-3 w-3 mr-0.5" /> Ignoriert
               </Badge>
             )}
           </div>
-          <p className="text-sm font-medium text-gray-900">{conflict.description}</p>
+          <p className="text-sm font-medium text-foreground">{conflict.description}</p>
           {conflict.suggestedResolution && (
             <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <Sparkles className="h-3 w-3 text-brand-primary" />

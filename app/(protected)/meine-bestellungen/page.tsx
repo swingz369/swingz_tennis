@@ -136,10 +136,10 @@ export default function MeineBestellungenPage() {
         <Card>
           <CardContent className="py-16 text-center">
             <IconBox icon={ShoppingBag} size="lg" variant="gray" className="mx-auto mb-4" />
-            <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-lg font-medium text-muted-foreground dark:text-muted-foreground mb-1">
               Keine Bestellungen
             </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">
               {activeFilter
                 ? `Keine Bestellungen mit Status „${STATUS_LABELS[activeFilter] || activeFilter}“`
                 : 'Du hast noch keine Bestellungen aufgegeben.'}
@@ -168,14 +168,14 @@ export default function MeineBestellungenPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4 min-w-0">
                       <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${STATUS_COLORS[order.status]?.split(' ').slice(1, 3).join(' ') || 'bg-gray-100 dark:bg-white/5'}`}
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${STATUS_COLORS[order.status]?.split(' ').slice(1, 3).join(' ') || 'bg-muted dark:bg-card/5'}`}
                       >
                         <StatusIcon
-                          className={`h-5 w-5 ${STATUS_COLORS[order.status]?.split(' ')[0] || 'text-gray-400'}`}
+                          className={`h-5 w-5 ${STATUS_COLORS[order.status]?.split(' ')[0] || 'text-muted-foreground'}`}
                         />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-sm text-gray-900 dark:text-white">
+                        <p className="font-semibold text-sm text-foreground dark:text-white">
                           Bestellung #{order.id.slice(0, 8)}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
@@ -193,7 +193,7 @@ export default function MeineBestellungenPage() {
                             className={`text-[11px] px-1.5 py-0 ${
                               order.payment_status === 'paid'
                                 ? 'border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400'
-                                : 'border-gray-200 dark:border-white/10 text-gray-500'
+                                : 'border-border dark:border-white/10 text-muted-foreground'
                             }`}
                           >
                             {order.payment_status === 'paid' ? 'Bezahlt' : 'Ausstehend'}
@@ -242,7 +242,7 @@ export default function MeineBestellungenPage() {
             <Card className="max-w-lg w-full shadow-2xl pointer-events-auto">
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-lg font-bold text-foreground dark:text-white">
                     Bestellung #{selectedOrder.id.slice(0, 8)}
                   </h2>
                   <Button
@@ -271,7 +271,7 @@ export default function MeineBestellungenPage() {
                     className={`text-xs px-2 py-0.5 ${
                       selectedOrder.payment_status === 'paid'
                         ? 'border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400'
-                        : 'border-gray-200 dark:border-white/10 text-gray-500'
+                        : 'border-border dark:border-white/10 text-muted-foreground'
                     }`}
                   >
                     {selectedOrder.payment_status === 'paid' ? 'Bezahlt' : 'Zahlung ausstehend'}
@@ -280,21 +280,21 @@ export default function MeineBestellungenPage() {
 
                 {/* Items */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-2">
                     Artikel
                   </h3>
                   <div className="space-y-2">
                     {(selectedOrder.items ?? []).map((item, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-white/5 last:border-0"
+                        className="flex items-center justify-between py-2 border-b border-border dark:border-white/5 last:border-0"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/5 shrink-0">
-                            <Package className="h-4 w-4 text-gray-400" />
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted dark:bg-card/5 shrink-0">
+                            <Package className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            <p className="text-sm font-medium text-foreground dark:text-white">
                               {item.product_name}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -302,7 +302,7 @@ export default function MeineBestellungenPage() {
                             </p>
                           </div>
                         </div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
+                        <p className="text-sm font-semibold text-foreground dark:text-white tabular-nums">
                           {formatCurrency(item.total)}
                         </p>
                       </div>
@@ -311,8 +311,8 @@ export default function MeineBestellungenPage() {
                 </div>
 
                 {/* Total */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-white/10">
-                  <span className="font-semibold text-gray-900 dark:text-white">Gesamt</span>
+                <div className="flex items-center justify-between pt-2 border-t border-border dark:border-white/10">
+                  <span className="font-semibold text-foreground dark:text-white">Gesamt</span>
                   <span className="text-xl font-bold text-brand-light">
                     {formatCurrency(selectedOrder.total_amount)}
                   </span>

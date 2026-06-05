@@ -23,7 +23,7 @@ const actionIcons: Record<string, React.ReactNode> = {
   role_changed: <ShieldAlert className="h-4 w-4 text-amber-500" />,
   settings_updated: <Settings className="h-4 w-4 text-blue-500" />,
   login: <LogIn className="h-4 w-4 text-emerald-500" />,
-  logout: <LogOut className="h-4 w-4 text-gray-500" />,
+  logout: <LogOut className="h-4 w-4 text-muted-foreground" />,
   season_created: <Clock className="h-4 w-4 text-brand-light" />,
   season_published: <Clock className="h-4 w-4 text-brand-light" />,
   billing_generated: <AlertTriangle className="h-4 w-4 text-amber-500" />,
@@ -74,7 +74,7 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
     <div className="space-y-4 p-6">
       <div>
         <h2 className="text-lg font-bold text-brand-primary">Audit-Logs</h2>
-        <p className="text-sm text-gray-500">Sicherheitsrelevante Aktivitäten im Verein</p>
+        <p className="text-sm text-muted-foreground">Sicherheitsrelevante Aktivitäten im Verein</p>
       </div>
 
       {loading ? (
@@ -83,23 +83,23 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
         </div>
       ) : logs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <ShieldAlert className="h-12 w-12 text-gray-300 mb-4" />
-          <p className="text-sm text-gray-500">Keine Audit-Logs vorhanden.</p>
+          <ShieldAlert className="h-12 w-12 text-muted-foreground/50 mb-4" />
+          <p className="text-sm text-muted-foreground">Keine Audit-Logs vorhanden.</p>
         </div>
       ) : (
-        <Card className="border border-gray-200 dark:border-white/10">
-          <CardContent className="p-0 divide-y divide-gray-100 dark:divide-white/5">
+        <Card className="border border-border dark:border-white/10">
+          <CardContent className="p-0 divide-y divide-border dark:divide-white/5">
             {logs.map((log: any) => (
               <div
                 key={log.id}
-                className="flex items-start gap-4 px-5 py-3 hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                className="flex items-start gap-4 px-5 py-3 hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors"
               >
                 <div className="mt-0.5 shrink-0">
-                  {actionIcons[log.action] ?? <Clock className="h-4 w-4 text-gray-400" />}
+                  {actionIcons[log.action] ?? <Clock className="h-4 w-4 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    <span className="text-sm font-medium text-foreground dark:text-white">
                       {actionLabels[log.action] ?? log.action}
                     </span>
                     <Badge variant="secondary" className="text-[10px] font-mono">
@@ -107,11 +107,11 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                    <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                       <UserCheck className="h-3 w-3" />
                       {log.performed_by_name ?? log.performed_by ?? 'System'}
                     </span>
-                    <span className="text-[11px] text-gray-400">
+                    <span className="text-[11px] text-muted-foreground">
                       {new Date(log.created_at).toLocaleString('de-DE', {
                         day: '2-digit',
                         month: '2-digit',

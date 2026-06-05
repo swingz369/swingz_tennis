@@ -299,7 +299,7 @@ export default function AdminTrialApprovals() {
                   ? 'Abgelehnt'
                   : 'Alle'}
             {f === 'requested' && requestedCount > 0 && (
-              <span className="ml-1.5 bg-white/20 text-[11px] px-1.5 py-0 rounded-full">
+              <span className="ml-1.5 bg-background/20 text-[11px] px-1.5 py-0 rounded-full">
                 {requestedCount}
               </span>
             )}
@@ -316,7 +316,7 @@ export default function AdminTrialApprovals() {
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <Sparkles className="h-10 w-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+            <Sparkles className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50 dark:text-muted-foreground" />
             Keine Probetrainings in dieser Kategorie
           </CardContent>
         </Card>
@@ -383,7 +383,7 @@ export default function AdminTrialApprovals() {
 
                     {/* Notes */}
                     {r.notes && (
-                      <p className="text-sm text-muted-foreground bg-gray-50 dark:bg-white/5 p-2 rounded border border-gray-100 dark:border-white/5">
+                      <p className="text-sm text-muted-foreground bg-muted dark:bg-card/5 p-2 rounded border border-border dark:border-white/5">
                         {r.notes}
                       </p>
                     )}
@@ -464,9 +464,9 @@ export default function AdminTrialApprovals() {
           const trial = requests.find((r) => r.id === approveId);
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-2xl shadow-2xl border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-brand-primary">
                       Probetraining bestätigen
@@ -497,7 +497,7 @@ export default function AdminTrialApprovals() {
                   <div>
                     <label
                       htmlFor="trainer-select"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      className="block text-sm font-medium text-foreground dark:text-foreground mb-2"
                     >
                       Trainer zuweisen
                     </label>
@@ -512,7 +512,7 @@ export default function AdminTrialApprovals() {
                           id="trainer-select"
                           value={selectedTrainerId}
                           onChange={(e) => setSelectedTrainerId(e.target.value)}
-                          className="w-full appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
+                          className="w-full appearance-none bg-background dark:bg-muted border border-border dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground dark:text-white pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
                         >
                           <option value="">Trainer auswählen...</option>
                           {trainers.map((t) => (
@@ -521,7 +521,7 @@ export default function AdminTrialApprovals() {
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                       </div>
                     )}
                   </div>
@@ -530,7 +530,7 @@ export default function AdminTrialApprovals() {
                   <div>
                     <label
                       htmlFor="court-select"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                      className="block text-sm font-medium text-foreground dark:text-foreground mb-2"
                     >
                       Platz zuweisen
                     </label>
@@ -545,7 +545,7 @@ export default function AdminTrialApprovals() {
                           id="court-select"
                           value={selectedCourtId}
                           onChange={(e) => setSelectedCourtId(e.target.value)}
-                          className="w-full appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
+                          className="w-full appearance-none bg-background dark:bg-muted border border-border dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-foreground dark:text-white pr-10 focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-transparent transition-all"
                         >
                           <option value="">Platz auswählen...</option>
                           {courts.map((c) => (
@@ -554,14 +554,14 @@ export default function AdminTrialApprovals() {
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-gray-100 dark:border-white/5 flex items-center justify-end gap-3">
+                <div className="px-6 py-4 border-t border-border dark:border-white/5 flex items-center justify-end gap-3">
                   <Button
                     variant="outline"
                     size="sm"

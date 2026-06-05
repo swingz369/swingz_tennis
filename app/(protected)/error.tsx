@@ -32,14 +32,14 @@ export default function ProtectedError({
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-foreground dark:text-gray-100">
             Etwas ist schiefgelaufen
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground dark:text-muted-foreground">
             {error.message || 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.'}
           </p>
           {error.digest && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground font-mono">
               Fehler-ID: {error.digest}
             </p>
           )}

@@ -386,7 +386,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 )}
               </div>
 
-              <hr className="border-gray-100 dark:border-white/10" />
+              <hr className="border-border dark:border-white/10" />
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -415,10 +415,10 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
               {tournament.description && (
                 <>
-                  <hr className="border-gray-100 dark:border-white/10" />
+                  <hr className="border-border dark:border-white/10" />
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Beschreibung</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-foreground dark:text-foreground">
                       {tournament.description}
                     </p>
                   </div>
@@ -427,7 +427,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
               {tournament.prize_info && (
                 <>
-                  <hr className="border-gray-100 dark:border-white/10" />
+                  <hr className="border-border dark:border-white/10" />
                   <div className="flex items-start gap-2">
                     <Trophy className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-sm">{tournament.prize_info}</p>
@@ -438,13 +438,13 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               {/* Capacity Bar */}
               {tournament.max_participants && tournament.max_participants > 0 && (
                 <>
-                  <hr className="border-gray-100 dark:border-white/10" />
+                  <hr className="border-border dark:border-white/10" />
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <span className="text-muted-foreground">Kapazität</span>
                       <span className="font-medium">{capacityPercent}%</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-muted dark:bg-card/10 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
                           capacityPercent >= 90
@@ -496,7 +496,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                   {registrations.map((reg) => (
                     <div
                       key={reg.id}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 hover:border-brand-light/30 transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/5 border border-border dark:border-white/10 hover:border-brand-light/30 transition-colors"
                     >
                       {/* Avatar */}
                       <div className="flex items-center justify-center h-9 w-9 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold shrink-0">

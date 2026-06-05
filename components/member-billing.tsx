@@ -208,7 +208,7 @@ export default function MemberBilling() {
   if (isActivelyLoading) {
     return (
       <div className="p-6">
-        <div className="text-center py-12 text-gray-500">Laden...</div>
+        <div className="text-center py-12 text-muted-foreground">Laden...</div>
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function MemberBilling() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Rechnungen & Zahlungen</h1>
-          <p className="text-gray-500">Verwalte deine Rechnungen und Zahlungen</p>
+          <p className="text-muted-foreground">Verwalte deine Rechnungen und Zahlungen</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={goToToday}>
@@ -241,18 +241,22 @@ export default function MemberBilling() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Diesen Monat</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Diesen Monat
+            </CardTitle>
             <Calendar className="h-4 w-4 text-brand-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-            <p className="text-xs text-gray-500 mt-1">{monthSessions.length} Sessions gebucht</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {monthSessions.length} Sessions gebucht
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Ausstehend</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Ausstehend</CardTitle>
             <CreditCard className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -263,7 +267,7 @@ export default function MemberBilling() {
                 .reduce((sum, inv) => sum + inv.total, 0)
                 .toFixed(2)}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {invoices.filter((inv) => inv.status === 'pending').length} Rechnungen
             </p>
           </CardContent>
@@ -271,7 +275,7 @@ export default function MemberBilling() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Bezahlt</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Bezahlt</CardTitle>
             <FileText className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -282,7 +286,7 @@ export default function MemberBilling() {
                 .reduce((sum, inv) => sum + inv.total, 0)
                 .toFixed(2)}
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {invoices.filter((inv) => inv.status === 'paid').length} Rechnungen
             </p>
           </CardContent>
@@ -296,21 +300,21 @@ export default function MemberBilling() {
         </CardHeader>
         <CardContent>
           {monthSessions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               Keine Trainings für diesen Monat gebucht
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                 <div>
                   <div className="font-semibold">Trainingssessions</div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     {monthSessions.length} Sessions × €15.00 = €{monthlyTotal.toFixed(2)}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-                  <div className="text-sm text-gray-600">zzgl. 19% MwSt</div>
+                  <div className="text-sm text-muted-foreground">zzgl. 19% MwSt</div>
                 </div>
               </div>
 
@@ -334,8 +338,8 @@ export default function MemberBilling() {
         </CardHeader>
         <CardContent>
           {invoices.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <p>Noch keine Rechnungen vorhanden</p>
               <p className="text-sm mt-2">Buche Trainingssessions, um Rechnungen zu generieren</p>
             </div>
@@ -346,7 +350,7 @@ export default function MemberBilling() {
                 return (
                   <div
                     key={invoice.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-brand-primary/10 rounded-lg">
@@ -354,10 +358,10 @@ export default function MemberBilling() {
                       </div>
                       <div>
                         <div className="font-semibold">{invoice.invoiceNumber}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           {format(invoice.issueDate, 'dd. MMMM yyyy', { locale: de })}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           Fällig: {format(invoice.dueDate, 'dd. MMMM yyyy', { locale: de })}
                         </div>
                       </div>
@@ -395,7 +399,7 @@ export default function MemberBilling() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm text-gray-700">
+          <div className="space-y-2 text-sm text-foreground">
             <p>
               <strong>Zahlungsweise:</strong> SEPA-Lastschrift
             </p>
@@ -405,7 +409,7 @@ export default function MemberBilling() {
             <p>
               <strong>MwSt:</strong> 19% (gemäß § 19 UStG)
             </p>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-muted-foreground">
               Bei Fragen zu deinen Rechnungen kontaktiere bitte unsere Buchhaltung unter{' '}
               <a href="mailto:billing@swingz.app" className="text-brand-primary hover:underline">
                 billing@swingz.app

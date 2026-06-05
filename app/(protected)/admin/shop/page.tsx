@@ -411,7 +411,7 @@ export default function AdminShopPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Shop verwalten</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
             Produkte, Bestellungen & Vereinsshop
           </p>
         </div>
@@ -453,14 +453,11 @@ export default function AdminShopPage() {
             bg: 'bg-orange-50 dark:bg-orange-900/20',
           },
         ].map((kpi) => (
-          <Card
-            key={kpi.label}
-            className="border border-gray-200 dark:border-white/10 shadow-sm p-0"
-          >
+          <Card key={kpi.label} className="border border-border dark:border-white/10 shadow-sm p-0">
             <CardContent className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
                     {kpi.label}
                   </p>
                   <p className="text-2xl font-bold text-brand-primary mt-1.5 tabular-nums">
@@ -480,17 +477,17 @@ export default function AdminShopPage() {
 
       {/* Tabs: Products | Orders */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full max-w-md grid grid-cols-2 bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
+        <TabsList className="w-full max-w-md grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
           <TabsTrigger
             value="products"
-            className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
           >
             <Package className="h-4 w-4 mr-2" />
             Produkte
           </TabsTrigger>
           <TabsTrigger
             value="orders"
-            className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
           >
             <ClipboardList className="h-4 w-4 mr-2" />
             Bestellungen
@@ -584,7 +581,7 @@ export default function AdminShopPage() {
                           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                             imageMode === 'upload'
                               ? 'bg-brand-light/10 text-brand-light border-brand-light/30'
-                              : 'bg-white dark:bg-surface-dark text-gray-500 border-gray-200 dark:border-white/10'
+                              : 'bg-background dark:bg-surface-dark text-muted-foreground border-border dark:border-white/10'
                           }`}
                         >
                           <Upload className="h-3.5 w-3.5" />
@@ -596,7 +593,7 @@ export default function AdminShopPage() {
                           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                             imageMode === 'url'
                               ? 'bg-brand-light/10 text-brand-light border-brand-light/30'
-                              : 'bg-white dark:bg-surface-dark text-gray-500 border-gray-200 dark:border-white/10'
+                              : 'bg-background dark:bg-surface-dark text-muted-foreground border-border dark:border-white/10'
                           }`}
                         >
                           <LinkIcon className="h-3.5 w-3.5" />
@@ -641,7 +638,7 @@ export default function AdminShopPage() {
                             className={`flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
                               dragOver
                                 ? 'border-brand-light bg-brand-light/5 scale-[1.02] shadow-lg shadow-brand-light/10'
-                                : 'border-gray-200 dark:border-white/10 hover:border-brand-light/40 bg-gray-50/50 dark:bg-white/[0.02]'
+                                : 'border-border dark:border-white/10 hover:border-brand-light/40 bg-muted/50 dark:bg-card/[0.02]'
                             }`}
                           >
                             {imagePreview ? (
@@ -655,14 +652,14 @@ export default function AdminShopPage() {
                               </div>
                             ) : (
                               <>
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5">
-                                  <ImagePlus className="h-6 w-6 text-gray-400" />
+                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted dark:bg-card/5">
+                                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
                                 </div>{' '}
                                 <div className="text-center">
-                                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                  <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
                                     Bild auswählen oder hier ablegen
                                   </p>
-                                  <p className="text-xs text-gray-400 mt-1">
+                                  <p className="text-xs text-muted-foreground mt-1">
                                     JPG, PNG, WebP, AVIF · max. 5 MB
                                   </p>
                                 </div>
@@ -679,7 +676,7 @@ export default function AdminShopPage() {
                             />
                           </label>
                           {imageFile && (
-                            <p className="text-xs text-gray-500 mt-1 truncate">
+                            <p className="text-xs text-muted-foreground mt-1 truncate">
                               {imageFile.name} ({(imageFile.size / 1024).toFixed(1)} KB)
                             </p>
                           )}
@@ -723,7 +720,7 @@ export default function AdminShopPage() {
                             <Eye className="h-4 w-4" /> Produkt ist sichtbar
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1.5 text-sm text-gray-400">
+                          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                             <EyeOff className="h-4 w-4" /> Produkt ist ausgeblendet
                           </span>
                         )}
@@ -763,10 +760,10 @@ export default function AdminShopPage() {
             <Card>
               <CardContent className="py-16 text-center">
                 <IconBox icon={Store} size="lg" variant="gray" className="mx-auto mb-4" />
-                <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-1">
+                <p className="text-lg font-medium text-muted-foreground dark:text-muted-foreground mb-1">
                   Noch keine Produkte
                 </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mb-4">
                   Erstelle das erste Produkt für deinen Vereinsshop
                 </p>
                 <Button onClick={openCreateForm} className="gap-2">
@@ -777,9 +774,9 @@ export default function AdminShopPage() {
           ) : (
             <>
               {activeProducts.length > 0 && (
-                <Card className="border border-gray-200 dark:border-white/10 shadow-sm p-0">
+                <Card className="border border-border dark:border-white/10 shadow-sm p-0">
                   <CardHeader className="px-5 pt-5 pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
                       <IconBox icon={Eye} size="xs" variant="light" /> Aktive Produkte
                       <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
                         {activeProducts.length}
@@ -793,20 +790,20 @@ export default function AdminShopPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-gray-100 dark:border-white/5">
-                            <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                          <tr className="border-b border-border dark:border-white/5">
+                            <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                               Produkt
                             </th>
-                            <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden sm:table-cell">
+                            <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
                               Kategorie
                             </th>
-                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                               Preis
                             </th>
-                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
+                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">
                               Bestand
                             </th>
-                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                               Aktionen
                             </th>
                           </tr>
@@ -815,11 +812,11 @@ export default function AdminShopPage() {
                           {activeProducts.map((product) => (
                             <tr
                               key={product.id}
-                              className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                              className="hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors"
                             >
                               <td className="py-3 px-2">
                                 <div className="flex items-center gap-3">
-                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/5 shrink-0">
+                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted dark:bg-card/5 shrink-0">
                                     {product.image_url ? (
                                       <Image
                                         src={product.image_url}
@@ -829,15 +826,15 @@ export default function AdminShopPage() {
                                         className="h-9 w-9 rounded-lg object-cover"
                                       />
                                     ) : (
-                                      <Package className="h-4 w-4 text-gray-400" />
+                                      <Package className="h-4 w-4 text-muted-foreground" />
                                     )}
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
+                                    <p className="font-medium text-foreground dark:text-white truncate max-w-[200px]">
                                       {product.name}
                                     </p>
                                     {product.description && (
-                                      <p className="text-xs text-gray-400 truncate max-w-[200px] hidden sm:block">
+                                      <p className="text-xs text-muted-foreground truncate max-w-[200px] hidden sm:block">
                                         {product.description}
                                       </p>
                                     )}
@@ -849,7 +846,7 @@ export default function AdminShopPage() {
                                   {product.category}
                                 </Badge>
                               </td>
-                              <td className="py-3 px-2 text-right font-medium text-gray-900 dark:text-white tabular-nums">
+                              <td className="py-3 px-2 text-right font-medium text-foreground dark:text-white tabular-nums">
                                 {formatCurrency(product.price)}
                               </td>
                               <td className="py-3 px-2 text-right hidden md:table-cell">
@@ -859,7 +856,7 @@ export default function AdminShopPage() {
                                       ? 'text-red-500 font-medium'
                                       : product.stock < 5
                                         ? 'text-orange-500 font-medium'
-                                        : 'text-gray-600 dark:text-gray-400'
+                                        : 'text-muted-foreground dark:text-muted-foreground'
                                   }
                                 >
                                   {product.stock}
@@ -897,9 +894,9 @@ export default function AdminShopPage() {
               )}
 
               {inactiveProducts.length > 0 && (
-                <Card className="border border-gray-200 dark:border-white/10 shadow-sm p-0 opacity-70">
+                <Card className="border border-border dark:border-white/10 shadow-sm p-0 opacity-70">
                   <CardHeader className="px-5 pt-5 pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-500">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
                       <IconBox icon={EyeOff} size="xs" variant="gray" /> Ausgeblendete Produkte
                       <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                         {inactiveProducts.length}
@@ -913,12 +910,14 @@ export default function AdminShopPage() {
                           {inactiveProducts.map((product) => (
                             <tr
                               key={product.id}
-                              className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                              className="hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors"
                             >
                               <td className="py-2.5 px-2">
                                 <div className="flex items-center gap-3">
-                                  <Package className="h-4 w-4 text-gray-300 shrink-0" />
-                                  <span className="text-gray-500 line-through">{product.name}</span>
+                                  <Package className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                                  <span className="text-muted-foreground line-through">
+                                    {product.name}
+                                  </span>
                                 </div>
                               </td>
                               <td className="py-2.5 px-2 text-right">
@@ -957,7 +956,7 @@ export default function AdminShopPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                     Möchtest du dieses Produkt wirklich löschen? Diese Aktion kann nicht rückgängig
                     gemacht werden.
                   </p>
@@ -988,8 +987,8 @@ export default function AdminShopPage() {
               onClick={() => handleStatusFilterChange('')}
               className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                 orderStatusFilter === ''
-                  ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white'
-                  : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                  ? 'bg-gray-900 text-white border-gray-900 dark:bg-card dark:text-foreground dark:border-white'
+                  : 'bg-background dark:bg-surface-dark text-muted-foreground dark:text-muted-foreground border-border dark:border-white/10 hover:border-border dark:hover:border-white/20'
               }`}
             >
               Alle ({orderStats.total_orders})
@@ -1005,8 +1004,8 @@ export default function AdminShopPage() {
                 onClick={() => handleStatusFilterChange(filter.key)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                   orderStatusFilter === filter.key
-                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white'
-                    : 'bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
+                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-card dark:text-foreground dark:border-white'
+                    : 'bg-background dark:bg-surface-dark text-muted-foreground dark:text-muted-foreground border-border dark:border-white/10 hover:border-border dark:hover:border-white/20'
                 }`}
               >
                 {filter.label}
@@ -1024,10 +1023,10 @@ export default function AdminShopPage() {
             <Card>
               <CardContent className="py-16 text-center">
                 <IconBox icon={ClipboardList} size="lg" variant="gray" className="mx-auto mb-4" />
-                <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-1">
+                <p className="text-lg font-medium text-muted-foreground dark:text-muted-foreground mb-1">
                   Keine Bestellungen
                 </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground">
                   {orderStatusFilter
                     ? `Keine Bestellungen mit Status „${STATUS_LABELS[orderStatusFilter]}“`
                     : 'Sobald Mitglieder Produkte bestellen, erscheinen sie hier'}
@@ -1035,9 +1034,9 @@ export default function AdminShopPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border border-gray-200 dark:border-white/10 shadow-sm p-0">
+            <Card className="border border-border dark:border-white/10 shadow-sm p-0">
               <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
                   <IconBox icon={ClipboardList} size="xs" variant="light" />
                   {orderStatusFilter ? STATUS_LABELS[orderStatusFilter] : 'Alle'} Bestellungen
                   <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
@@ -1049,23 +1048,23 @@ export default function AdminShopPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-100 dark:border-white/5">
-                        <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      <tr className="border-b border-border dark:border-white/5">
+                        <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Bestellung
                         </th>
-                        <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden md:table-cell">
+                        <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">
                           Artikel
                         </th>
-                        <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                        <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Betrag
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 hidden sm:table-cell">
+                        <th className="text-center py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
                           Zahlung
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                        <th className="text-center py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Status
                         </th>
-                        <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                        <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           Aktion
                         </th>
                       </tr>
@@ -1077,14 +1076,14 @@ export default function AdminShopPage() {
                         return (
                           <tr
                             key={order.id}
-                            className="hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                            className="hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors"
                           >
                             <td className="py-3 px-2">
                               <div className="min-w-0">
-                                <p className="font-medium text-gray-900 dark:text-white text-xs font-mono truncate max-w-[100px]">
+                                <p className="font-medium text-foreground dark:text-white text-xs font-mono truncate max-w-[100px]">
                                   {order.id.slice(0, 8)}…
                                 </p>
-                                <p className="text-[11px] text-gray-400 mt-0.5">
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
                                   {order.created_at ? formatDate(order.created_at) : '—'}
                                 </p>
                               </div>
@@ -1094,19 +1093,19 @@ export default function AdminShopPage() {
                                 {(order.items ?? []).slice(0, 2).map((item, i) => (
                                   <div
                                     key={i}
-                                    className="text-xs text-gray-600 dark:text-gray-400 truncate"
+                                    className="text-xs text-muted-foreground dark:text-muted-foreground truncate"
                                   >
                                     {item.quantity}× {item.product_name}
                                   </div>
                                 ))}
                                 {(order.items ?? []).length > 2 && (
-                                  <p className="text-[11px] text-gray-400">
+                                  <p className="text-[11px] text-muted-foreground">
                                     +{(order.items ?? []).length - 2} weitere
                                   </p>
                                 )}
                               </div>
                             </td>
-                            <td className="py-3 px-2 text-right font-medium text-gray-900 dark:text-white tabular-nums">
+                            <td className="py-3 px-2 text-right font-medium text-foreground dark:text-white tabular-nums">
                               {formatCurrency(order.total_amount)}
                             </td>
                             <td className="py-3 px-2 text-center hidden sm:table-cell">
@@ -1160,12 +1159,14 @@ export default function AdminShopPage() {
                                   )}
                                 </div>
                               ) : order.status === 'shipped' ? (
-                                <span className="text-[11px] text-gray-400 italic">Erledigt</span>
+                                <span className="text-[11px] text-muted-foreground italic">
+                                  Erledigt
+                                </span>
                               ) : order.status === 'cancelled' ? (
                                 <span className="text-[11px] text-red-400 italic">Storniert</span>
                               ) : order.payment_status !== 'paid' ? (
                                 <div className="flex items-center justify-end gap-1">
-                                  <span className="text-[11px] text-gray-400 italic">
+                                  <span className="text-[11px] text-muted-foreground italic">
                                     Warte auf Zahlung
                                   </span>
                                   <Button

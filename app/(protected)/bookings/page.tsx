@@ -49,7 +49,7 @@ import CourtCalendar from '@/components/court-calendar';
 
 export default function BookingsPage() {
   return (
-    <Suspense fallback={<div className="p-6 text-center text-gray-500">Laden...</div>}>
+    <Suspense fallback={<div className="p-6 text-center text-muted-foreground">Laden...</div>}>
       <BookingsContent />
     </Suspense>
   );
@@ -225,7 +225,7 @@ function BookingsContent() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Buchungen & Kalender</h1>
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Verwalten Sie Ihre Buchungen und sehen Sie die Platzverfügbarkeit
           </p>
         </div>
@@ -272,15 +272,15 @@ function BookingsContent() {
 
             {/* Calendar Grid */}
             {isLoading ? (
-              <div className="text-center py-12 text-gray-500">Laden...</div>
+              <div className="text-center py-12 text-muted-foreground">Laden...</div>
             ) : (
               <div className="overflow-x-auto -mx-4 px-4">
-                <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden min-w-[600px]">
+                <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-lg overflow-hidden min-w-[600px]">
                   {/* Day headers */}
                   {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                     <div
                       key={day}
-                      className="bg-gray-50 dark:bg-gray-800 p-2 md:p-3 text-center font-semibold text-gray-700 dark:text-gray-300 text-xs md:text-sm"
+                      className="bg-muted dark:bg-muted p-2 md:p-3 text-center font-semibold text-foreground dark:text-foreground text-xs md:text-sm"
                     >
                       {day}
                     </div>
@@ -294,9 +294,9 @@ function BookingsContent() {
                     return (
                       <div
                         key={idx}
-                        className={`min-h-[5rem] md:min-h-[6.25rem] bg-white dark:bg-gray-900 p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                        className={`min-h-[5rem] md:min-h-[6.25rem] bg-background dark:bg-card p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
                       >
-                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        <div className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mb-1">
                           {format(day, 'd')}
                         </div>
                         <div className="space-y-1">
@@ -363,7 +363,7 @@ function BookingsContent() {
                                           : session.bookingStatus === 'cancelled'
                                             ? 'bg-red-100 text-red-700'
                                             : session.bookingStatus === 'no_show'
-                                              ? 'bg-gray-100 text-gray-700'
+                                              ? 'bg-muted text-foreground'
                                               : 'bg-yellow-100 text-yellow-700'
                                       }`}
                                     >

@@ -73,7 +73,7 @@ const variantClasses: Record<IconBoxVariant, string> = {
   teal: 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400',
   rose: 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400',
   indigo: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400',
-  gray: 'bg-gray-50 dark:bg-white/5 text-gray-300 dark:text-gray-600',
+  gray: 'bg-muted dark:bg-card/5 text-muted-foreground/50 dark:text-muted-foreground',
   'gradient-primary': 'bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg',
   'gradient-accent': 'bg-gradient-accent text-white shadow-lg',
 };

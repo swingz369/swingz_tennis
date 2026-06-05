@@ -60,7 +60,7 @@ const levelColors: Record<string, string> = {
 function getScoreColor(score: number): string {
   if (score >= 80) return 'text-green-600';
   if (score >= 60) return 'text-amber-600';
-  return 'text-gray-600';
+  return 'text-muted-foreground';
 }
 
 function getScoreBarColor(score: number): string {
@@ -70,7 +70,7 @@ function getScoreBarColor(score: number): string {
 }
 
 function getLevelColor(level: string): string {
-  return levelColors[level] || 'bg-gray-100 text-gray-700 border-gray-200';
+  return levelColors[level] || 'bg-muted text-foreground border-border';
 }
 
 export function MatchmakingPanel() {
@@ -126,7 +126,7 @@ export function MatchmakingPanel() {
           </div>
           <div>
             <h2 className="text-lg font-semibold">Matchmaking</h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {data
                 ? `${data.matches.length} potenzielle Partner gefunden`
                 : 'Finde Trainingspartner mit passendem Level'}
@@ -148,7 +148,7 @@ export function MatchmakingPanel() {
 
       {/* Loading state */}
       {loading && !data && (
-        <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
           <RefreshCw className="h-8 w-8 animate-spin mb-3 text-blue-400" />
           <p className="text-sm font-medium">Suche nach passenden Partnern...</p>
           <p className="text-xs">Analysiere Level, Gruppen und gemeinsame Sessions</p>
@@ -165,8 +165,8 @@ export function MatchmakingPanel() {
 
       {/* Empty state */}
       {data && data.matches.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center py-16 text-gray-500 border-2 border-dashed border-gray-200 rounded-xl">
-          <Users className="h-12 w-12 mb-3 text-gray-300" />
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border-2 border-dashed border-border rounded-xl">
+          <Users className="h-12 w-12 mb-3 text-muted-foreground/50" />
           <p className="text-sm font-medium">Keine passenden Partner gefunden</p>
           <p className="text-xs mt-1">
             Es wurden {data.totalMembers} Mitglieder im Verein analysiert.
@@ -181,7 +181,7 @@ export function MatchmakingPanel() {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Nach Name oder E-Mail suchen..."
                 value={searchQuery}
@@ -195,7 +195,7 @@ export function MatchmakingPanel() {
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   levelFilter === 'all'
                     ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-muted text-muted-foreground hover:bg-muted'
                 }`}
               >
                 Alle ({data.matches.length})
@@ -207,7 +207,7 @@ export function MatchmakingPanel() {
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     levelFilter === level
                       ? getLevelColor(level)
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {getLevelLabel(level)}
@@ -240,7 +240,9 @@ export function MatchmakingPanel() {
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-medium truncate">{match.name}</p>
-                              <p className="text-[10px] text-gray-400 truncate">{match.email}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">
+                                {match.email}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -250,14 +252,14 @@ export function MatchmakingPanel() {
                           >
                             {match.compatibilityScore}
                           </span>
-                          <span className="text-[9px] text-gray-400 uppercase tracking-wider">
+                          <span className="text-[9px] text-muted-foreground uppercase tracking-wider">
                             Score
                           </span>
                         </div>
                       </div>
 
                       {/* Score bar */}
-                      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
+                      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-3">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${getScoreBarColor(match.compatibilityScore)}`}
                           style={{ width: `${match.compatibilityScore}%` }}
@@ -268,7 +270,7 @@ export function MatchmakingPanel() {
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         <Badge
                           variant="secondary"
-                          className={`text-[10px] px-1.5 py-0 border ${getLevelColor(match.playingLevel)} bg-white`}
+                          className={`text-[10px] px-1.5 py-0 border ${getLevelColor(match.playingLevel)} bg-background`}
                         >
                           <Target className="h-2.5 w-2.5 mr-1" />
                           {getLevelLabel(match.playingLevel)}
@@ -305,7 +307,10 @@ export function MatchmakingPanel() {
                       {/* Reasons */}
                       <div className="space-y-1 mb-3">
                         {match.reasons.map((reason, i) => (
-                          <p key={i} className="text-[11px] text-gray-500 flex items-start gap-1.5">
+                          <p
+                            key={i}
+                            className="text-[11px] text-muted-foreground flex items-start gap-1.5"
+                          >
                             <Sparkles className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />
                             <span>{reason}</span>
                           </p>
@@ -316,39 +321,39 @@ export function MatchmakingPanel() {
                       {isSelected && (
                         <div className="border-t pt-3 mt-2 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2 bg-gray-50 rounded-lg text-center">
-                              <p className="text-lg font-semibold text-gray-900 tabular-nums">
+                            <div className="p-2 bg-muted rounded-lg text-center">
+                              <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.compatibilityScore}
                               </p>
-                              <p className="text-[10px] text-gray-500">Gesamt-Score</p>
+                              <p className="text-[10px] text-muted-foreground">Gesamt-Score</p>
                             </div>
-                            <div className="p-2 bg-gray-50 rounded-lg text-center">
-                              <p className="text-lg font-semibold text-gray-900 tabular-nums">
+                            <div className="p-2 bg-muted rounded-lg text-center">
+                              <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.commonSessions}
                               </p>
-                              <p className="text-[10px] text-gray-500">Sessions</p>
+                              <p className="text-[10px] text-muted-foreground">Sessions</p>
                             </div>
-                            <div className="p-2 bg-gray-50 rounded-lg text-center">
-                              <p className="text-lg font-semibold text-gray-900 tabular-nums">
+                            <div className="p-2 bg-muted rounded-lg text-center">
+                              <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.groupOverlap.length}
                               </p>
-                              <p className="text-[10px] text-gray-500">Gruppen</p>
+                              <p className="text-[10px] text-muted-foreground">Gruppen</p>
                             </div>
-                            <div className="p-2 bg-gray-50 rounded-lg text-center">
-                              <p className="text-lg font-semibold text-gray-900">
+                            <div className="p-2 bg-muted rounded-lg text-center">
+                              <p className="text-lg font-semibold text-foreground">
                                 <span
                                   className={
                                     match.levelDiff === 0
                                       ? 'text-green-600'
                                       : match.levelDiff <= 1
                                         ? 'text-amber-600'
-                                        : 'text-gray-600'
+                                        : 'text-muted-foreground'
                                   }
                                 >
                                   {match.levelDiff}
                                 </span>
                               </p>
-                              <p className="text-[10px] text-gray-500">Level-Diff</p>
+                              <p className="text-[10px] text-muted-foreground">Level-Diff</p>
                             </div>
                           </div>
 
@@ -372,7 +377,7 @@ export function MatchmakingPanel() {
 
                       {/* Click hint */}
                       {!isSelected && (
-                        <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400 pt-1">
+                        <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground pt-1">
                           <span>Klicken für Details</span>
                           <ChevronRight className="h-3 w-3" />
                         </div>
@@ -386,7 +391,7 @@ export function MatchmakingPanel() {
 
           {/* Summary footer */}
           {data && (
-            <div className="flex items-center justify-between text-xs text-gray-500 pt-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
                   <Users className="h-3.5 w-3.5" />

@@ -147,7 +147,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       case 'superadmin':
         return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
       default:
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+        return 'bg-muted text-foreground dark:bg-muted dark:text-foreground';
     }
   };
 
@@ -223,7 +223,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
           <h1 className="text-xl md:text-2xl font-bold text-brand-primary dark:text-white">
             Mitgliederverwaltung
           </h1>
-          <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">
+          <p className="text-sm md:text-base text-muted-foreground dark:text-muted-foreground">
             Verwalte deine Vereinsmitglieder
           </p>
         </div>
@@ -236,7 +236,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Suche nach Name oder E-Mail..."
             value={searchQuery}
@@ -316,43 +316,43 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
       {/* Members Table / Grid */}
       {viewMode === 'table' ? (
-        <div className="rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 overflow-hidden">
+        <div className="rounded-md border border-border dark:border-white/10 bg-background dark:bg-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+              <thead className="bg-muted dark:bg-muted">
                 <tr>
-                  <th className="px-2 md:px-3 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 md:px-3 py-3 text-center text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     Planung
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     E-Mail
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider hidden lg:table-cell">
                     Telefon
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     Rolle
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider hidden md:table-cell">
                     Beigetreten
                   </th>
-                  <th className="px-4 md:px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 md:px-6 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     Aktionen
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-white/10">
+              <tbody className="divide-y divide-border dark:divide-white/10">
                 {filteredMembers.length === 0 ? (
                   <tr>
                     <td
                       colSpan={8}
-                      className="px-4 md:px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                      className="px-4 md:px-6 py-8 text-center text-muted-foreground dark:text-muted-foreground"
                     >
                       Keine Mitglieder gefunden
                     </td>
@@ -361,7 +361,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                   paginatedMembers.map((member) => (
                     <tr
                       key={member.id}
-                      className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                      className="hover:bg-muted dark:hover:bg-background/5 transition-colors"
                     >
                       <td className="px-2 md:px-3 py-4 text-center">
                         {member.role === 'member' ? (
@@ -379,22 +379,22 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                             {member.include_in_planning !== false ? (
                               <CheckSquare className="h-4 w-4 text-green-600" />
                             ) : (
-                              <Square className="h-4 w-4 text-gray-400" />
+                              <Square className="h-4 w-4 text-muted-foreground" />
                             )}
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-300">—</span>
+                          <span className="text-xs text-muted-foreground/50">—</span>
                         )}
                       </td>
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <span className="font-medium text-gray-900 dark:text-white">
+                        <span className="font-medium text-foreground dark:text-white">
                           {member.full_name}
                         </span>
                       </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400 text-sm">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground text-sm">
                         {member.email}
                       </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400 text-sm hidden lg:table-cell">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground text-sm hidden lg:table-cell">
                         {member.phone || '—'}
                       </td>
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap">
@@ -420,13 +420,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
                             member.is_active
                               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                              : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
                           }`}
                         >
                           {member.is_active ? 'Aktiv' : 'Inaktiv'}
                         </button>
                       </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground hidden md:table-cell">
                         {formatDate(member.joined_at)}
                       </td>
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right">
@@ -460,14 +460,14 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {filteredMembers.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="col-span-full text-center py-12 text-muted-foreground dark:text-muted-foreground">
               Keine Mitglieder gefunden
             </div>
           ) : (
             paginatedMembers.map((member) => (
               <Card
                 key={member.id}
-                className="hover:shadow-md transition-shadow border-gray-200 dark:border-white/10"
+                className="hover:shadow-md transition-shadow border-border dark:border-white/10"
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
@@ -475,7 +475,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                       <CardTitle className="text-sm font-semibold truncate">
                         {member.full_name}
                       </CardTitle>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate mt-0.5">
                         {member.email}
                       </p>
                     </div>
@@ -495,7 +495,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           {member.include_in_planning !== false ? (
                             <CheckSquare className="h-4 w-4 text-green-600" />
                           ) : (
-                            <Square className="h-4 w-4 text-gray-400" />
+                            <Square className="h-4 w-4 text-muted-foreground" />
                           )}
                         </button>
                       )}
@@ -524,19 +524,21 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
                         member.is_active
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                          : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
                       }`}
                     >
                       {member.is_active ? 'Aktiv' : 'Inaktiv'}
                     </button>
                   </div>
                   {member.phone && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{member.phone}</p>
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                      {member.phone}
+                    </p>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                     Beigetreten: {formatDate(member.joined_at)}
                   </p>
-                  <div className="flex justify-end gap-1 pt-1 border-t border-gray-100 dark:border-white/5">
+                  <div className="flex justify-end gap-1 pt-1 border-t border-border dark:border-white/5">
                     <Button variant="ghost" size="icon" className="h-8 w-8" title="Details" asChild>
                       <Link href={`/admin/members/${member.id}`}>
                         <Eye className="h-4 w-4" />
@@ -569,7 +571,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       )}
 
       {/* Stats */}
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+      <div className="text-sm text-muted-foreground dark:text-muted-foreground">
         {pagination.totalCount > 0 ? `${pagination.totalCount} Mitglieder` : '0 Mitglieder'}
       </div>
 

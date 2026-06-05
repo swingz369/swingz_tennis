@@ -90,7 +90,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand-primary">White-Label Einstellungen</h1>
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Passe das Aussehen deines Clubs an und konfiguriere eine eigene Domain.
         </p>
       </div>
@@ -203,7 +203,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                 value={branding.customDomain}
                 onChange={(e) => setBranding({ ...branding, customDomain: e.target.value })}
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Nach Aktivierung wird dein Studio unter dieser Domain erreichbar sein. DNS-Eintrag
                 muss auf swingz.app zeigen.
               </p>

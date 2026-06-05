@@ -31,12 +31,14 @@ export default function DashboardError({
           <CardTitle className="text-2xl text-center">Dashboard Fehler</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-center text-gray-600 dark:text-gray-400">
+          <p className="text-center text-muted-foreground dark:text-muted-foreground">
             {error.message || 'Das Dashboard konnte nicht geladen werden.'}
           </p>
 
           {error.digest && (
-            <p className="text-xs text-center text-gray-400 font-mono">Error ID: {error.digest}</p>
+            <p className="text-xs text-center text-muted-foreground font-mono">
+              Error ID: {error.digest}
+            </p>
           )}
 
           <div className="space-y-2 pt-2">
@@ -60,7 +62,7 @@ export default function DashboardError({
           </div>
 
           <div className="pt-4 border-t text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Problem besteht weiterhin?{' '}
               <a href="/support" className="text-brand-primary hover:underline">
                 Support kontaktieren

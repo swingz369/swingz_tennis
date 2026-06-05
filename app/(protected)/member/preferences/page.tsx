@@ -241,7 +241,7 @@ export default function MemberPreferencesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Meine Trainingspräferenzen
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -313,7 +313,7 @@ export default function MemberPreferencesPage() {
               const slots = weeklyAvailability[key] || [];
               return (
                 <div key={key} className="flex items-start gap-3">
-                  <span className="w-24 text-sm font-medium text-gray-700 pt-1 flex-shrink-0">
+                  <span className="w-24 text-sm font-medium text-foreground pt-1 flex-shrink-0">
                     {label}
                   </span>
                   <div className="flex flex-wrap gap-1.5 flex-1">
@@ -329,7 +329,7 @@ export default function MemberPreferencesPage() {
                             className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
                               active
                                 ? 'bg-brand-primary text-white shadow-sm'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                : 'bg-muted text-muted-foreground hover:bg-muted'
                             }`}
                           >
                             {start}
@@ -363,7 +363,7 @@ export default function MemberPreferencesPage() {
                   className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
                     preferredLevel === level
                       ? 'bg-brand-primary text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {level}
@@ -389,7 +389,7 @@ export default function MemberPreferencesPage() {
                   className={`text-sm px-3 py-1.5 rounded-lg font-medium transition-colors ${
                     selfAssessedLevel === level
                       ? 'bg-brand-primary text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {level}
@@ -418,7 +418,7 @@ export default function MemberPreferencesPage() {
             value={specialRequests}
             onChange={(e) => setSpecialRequests(e.target.value)}
             placeholder="Deine Wünsche oder Anmerkungen..."
-            className="w-full min-h-[100px] rounded-lg border border-gray-200 px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            className="w-full min-h-[100px] rounded-lg border border-border px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary"
           />
         </CardContent>
       </Card>

@@ -26,7 +26,11 @@ export default async function MemberProfilePage() {
   } | null;
 
   if (!membership) {
-    return <div className="p-6 text-center text-gray-500">Kein aktiver Vereinszugang gefunden</div>;
+    return (
+      <div className="p-6 text-center text-muted-foreground">
+        Kein aktiver Vereinszugang gefunden
+      </div>
+    );
   }
 
   // Fetch user profile from users table

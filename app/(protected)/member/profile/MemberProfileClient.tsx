@@ -108,7 +108,7 @@ export function MemberProfileClient({ member }: Props) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Mein Profil</h1>
-          <p className="text-sm text-gray-500">Verwalte deine persönlichen Daten</p>
+          <p className="text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
         </div>
         <Button
           variant={isEditing ? 'default' : 'outline'}
@@ -153,22 +153,22 @@ export function MemberProfileClient({ member }: Props) {
               </div>
               <div>
                 <CardTitle>{member.full_name}</CardTitle>
-                <p className="text-sm text-gray-500">{member.email}</p>
+                <p className="text-sm text-muted-foreground">{member.email}</p>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2 text-sm">
-              <Mail className="h-4 w-4 text-gray-400" />
+              <Mail className="h-4 w-4 text-muted-foreground" />
               {member.email}
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-gray-400" />
+              <Calendar className="h-4 w-4 text-muted-foreground" />
               Mitglied seit: {formatDate(member.joined_at)}
             </div>
             {member.phone && (
               <div className="flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4 text-gray-400" />
+                <Phone className="h-4 w-4 text-muted-foreground" />
                 {member.phone}
               </div>
             )}
@@ -185,7 +185,7 @@ export function MemberProfileClient({ member }: Props) {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-gray-500">Telefon</Label>
+                <Label className="text-xs text-muted-foreground">Telefon</Label>
                 {isEditing ? (
                   <Input
                     value={editForm.phone}
@@ -197,7 +197,7 @@ export function MemberProfileClient({ member }: Props) {
                 )}
               </div>
               <div>
-                <Label className="text-xs text-gray-500">Geburtsdatum</Label>
+                <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
                 {isEditing ? (
                   <Input
                     type="date"
@@ -224,7 +224,7 @@ export function MemberProfileClient({ member }: Props) {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <Label className="text-xs text-gray-500">Straße & Hausnummer</Label>
+                <Label className="text-xs text-muted-foreground">Straße & Hausnummer</Label>
                 {isEditing ? (
                   <Input
                     value={editForm.address}
@@ -236,7 +236,7 @@ export function MemberProfileClient({ member }: Props) {
                 )}
               </div>
               <div>
-                <Label className="text-xs text-gray-500">PLZ</Label>
+                <Label className="text-xs text-muted-foreground">PLZ</Label>
                 {isEditing ? (
                   <Input
                     value={editForm.postal_code}
@@ -248,7 +248,7 @@ export function MemberProfileClient({ member }: Props) {
                 )}
               </div>
               <div>
-                <Label className="text-xs text-gray-500">Stadt</Label>
+                <Label className="text-xs text-muted-foreground">Stadt</Label>
                 {isEditing ? (
                   <Input
                     value={editForm.city}
@@ -273,7 +273,7 @@ export function MemberProfileClient({ member }: Props) {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-gray-500">Name</Label>
+                <Label className="text-xs text-muted-foreground">Name</Label>
                 {isEditing ? (
                   <Input
                     value={editForm.emergency_contact}
@@ -287,7 +287,7 @@ export function MemberProfileClient({ member }: Props) {
                 )}
               </div>
               <div>
-                <Label className="text-xs text-gray-500">Telefon</Label>
+                <Label className="text-xs text-muted-foreground">Telefon</Label>
                 {isEditing ? (
                   <Input
                     value={editForm.emergency_phone}
@@ -318,7 +318,7 @@ export function MemberProfileClient({ member }: Props) {
                 rows={3}
               />
             ) : (
-              <div className="text-sm text-gray-600">{member.bio || 'Noch keine Bio'}</div>
+              <div className="text-sm text-muted-foreground">{member.bio || 'Noch keine Bio'}</div>
             )}
           </CardContent>
         </Card>

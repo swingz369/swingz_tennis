@@ -36,7 +36,7 @@ export function CourtCalendarHeader({
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div>
         <h1 className="text-2xl font-bold text-brand-primary">{title}</h1>
-        <p className="text-gray-500">{subtitle}</p>
+        <p className="text-muted-foreground">{subtitle}</p>
       </div>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={onGoDaily}>
@@ -74,15 +74,15 @@ export function CourtCalendarGrid({ children }: { children: React.ReactNode }) {
 /** Header row showing day-of-week abbreviations and dates. */
 export function WeekDaysHeaderRow({ weekDays }: { weekDays: Date[] }) {
   return (
-    <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-gray-200 rounded-t-lg overflow-hidden">
-      <div className="bg-gray-50 p-2 text-center font-semibold text-gray-700 text-xs">Platz</div>
+    <div className="grid grid-cols-[200px_repeat(7,1fr)] gap-px bg-muted rounded-t-lg overflow-hidden">
+      <div className="bg-muted p-2 text-center font-semibold text-foreground text-xs">Platz</div>
       {weekDays.map((day) => (
         <div
           key={day.toISOString()}
-          className="bg-gray-50 p-2 text-center font-semibold text-gray-700 text-xs"
+          className="bg-muted p-2 text-center font-semibold text-foreground text-xs"
         >
           <div>{format(day, 'EEE', { locale: de })}</div>
-          <div className="text-[11px] text-gray-500">{format(day, 'dd.MM')}</div>
+          <div className="text-[11px] text-muted-foreground">{format(day, 'dd.MM')}</div>
         </div>
       ))}
     </div>
@@ -96,10 +96,10 @@ export function CourtRowHeader({
   court: { name: string; surface: string; hasIndoor?: boolean };
 }) {
   return (
-    <div className="bg-white p-2 flex items-center gap-2 border-r border-gray-200">
+    <div className="bg-background p-2 flex items-center gap-2 border-r border-border">
       <div className="flex-1">
         <div className="font-medium text-sm">{court.name}</div>
-        <div className="flex items-center gap-1 text-[11px] text-gray-500">
+        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
           <MapPin className="h-3 w-3" />
           <span>{getSurfaceLabel(court.surface)}</span>
           {court.hasIndoor && <span>• Indoor</span>}
@@ -112,7 +112,7 @@ export function CourtRowHeader({
 /** Configurable availability legend. */
 export function CourtCalendarLegend({ items }: { items: { label: string; className: string }[] }) {
   return (
-    <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+    <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
       {items.map((item, idx) => (
         <div key={idx} className="flex items-center gap-2">
           <div className={`w-4 h-4 rounded ${item.className}`}></div>
