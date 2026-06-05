@@ -263,7 +263,9 @@ export default function SeasonPlanGrid({
                       return (
                         <div
                           key={`${court.id}-${day}`}
-                          className="min-h-[60px] border-b border-r border-border p-1 space-y-1"
+                          className={`min-h-[60px] border-b border-r border-border p-1 space-y-1 ${
+                            courtSlots.length > 0 ? 'bg-gray-50 border-l-2 border-l-gray-400' : ''
+                          }`}
                         >
                           {day === 0 && (
                             <div className="text-xs font-medium text-muted-foreground mb-1 px-1">
@@ -272,14 +274,14 @@ export default function SeasonPlanGrid({
                           )}
                           {courtSlots.length === 0 ? (
                             <div className="h-full flex items-center justify-center">
-                              <span className="text-[10px] text-muted-foreground/50">—</span>
+                              <span className="text-[10px] text-muted-foreground/40">—</span>
                             </div>
                           ) : (
                             courtSlots.map((slot) => (
                               <button
                                 key={slot.id}
                                 onClick={() => onSlotClick?.(slot)}
-                                className="w-full text-left rounded px-1.5 py-1 text-white text-xs transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer"
+                                className="w-full text-left rounded px-1.5 py-1 text-white text-xs transition-all hover:brightness-110 active:scale-[0.98] cursor-pointer shadow-sm ring-1 ring-inset ring-black/5"
                                 style={{ backgroundColor: slot.group_color }}
                                 title={`${slot.group_name} · ${slot.trainer_name} · ${slot.member_count} TN`}
                               >
@@ -287,7 +289,8 @@ export default function SeasonPlanGrid({
                                   {slot.group_name}
                                 </div>
                                 <div className="opacity-80 text-[10px] leading-tight">
-                                  {formatTime(slot.start_time)}–{formatTime(slot.end_time)}
+                                  {formatTime(slot.start_time)}–{formatTime(slot.end_time)} ·{' '}
+                                  {slot.member_count} TN
                                 </div>
                               </button>
                             ))

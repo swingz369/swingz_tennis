@@ -63,9 +63,11 @@ export default function ScheduleGrid({
                 return (
                   <div
                     key={key}
-                    className={`h-14 border-b border-r border-gray-100 p-0.5 transition-colors ${
-                      dragOver === key ? 'bg-blue-50' : ''
-                    }`}
+                    className={`h-14 border-b border-r p-0.5 transition-colors ${
+                      here.length > 0
+                        ? 'bg-gray-50 border-gray-200 border-l-2 border-l-gray-400'
+                        : 'border-gray-100'
+                    } ${dragOver === key ? 'bg-blue-50 ring-1 ring-inset ring-blue-200' : ''}`}
                     onDragOver={(e) => {
                       e.preventDefault();
                       onDragOver(key);
@@ -79,7 +81,7 @@ export default function ScheduleGrid({
                         onDragStart={() => onDragStart(slot)}
                         onDragEnd={onDragEnd}
                         title={`${slot.groupName}\n${slot.memberNames.join(', ')}`}
-                        className="rounded text-xs px-1.5 py-0.5 cursor-grab select-none"
+                        className="rounded text-xs px-1.5 py-0.5 cursor-grab select-none shadow-sm ring-1 ring-inset ring-black/5"
                         style={{
                           background: slot.groupColor,
                           color: '#fff',
