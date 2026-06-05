@@ -1,7 +1,6 @@
-'use client';
-
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { AnimatedCounter } from '@/components/animations';
 import type { LucideIcon } from 'lucide-react';
 
 /**
@@ -21,9 +20,14 @@ import type { LucideIcon } from 'lucide-react';
  * />
  */
 
-type StatColor = 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'gray';
+type StatColor = 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'gray' | 'brand';
 
 const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }> = {
+  brand: {
+    text: 'text-brand-light',
+    bg: 'bg-brand-light/10 dark:bg-brand-light/20',
+    border: 'hover:border-brand-light/30',
+  },
   blue: {
     text: 'text-blue-600 dark:text-blue-400',
     bg: 'bg-blue-50 dark:bg-blue-900/30',
@@ -65,6 +69,12 @@ interface StatCardProps {
   sublabel?: string;
   color?: StatColor;
   href?: string;
+  /** Show animated counter for numeric values */
+  animate?: boolean;
+  /** Suffix for animated counter (e.g. '%') */
+  suffix?: string;
+  /** Optional badge count shown top-right */
+  badge?: number;
   /** Extra class for the icon container */
   iconClassName?: string;
   /** Extra class for the value text */
@@ -80,16 +90,23 @@ export function StatCard({
   sublabel,
   color = 'blue',
   href,
+  animate = false,
+  suffix = '',
+  badge,
   iconClassName,
   valueClassName,
   className,
 }: StatCardProps) {
   const colors = COLOR_MAP[color];
 
+  const numericValue = typeof value === 'number' ? value : parseInt(String(value), 10);
+  const isNumeric = !isNaN(numericValue);
+
   const content = (
     <div
       className={cn(
-        'border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0',
+        'border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl',
+        colors.border,
         className
       )}
     >
@@ -99,14 +116,31 @@ export function StatCard({
             <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
               {label}
             </p>
-            <p
-              className={cn(
-                'text-2xl font-bold text-brand-primary mt-1.5 tabular-nums',
-                valueClassName
+            <div className="flex items-baseline gap-2 mt-1.5">
+              <p
+                className={cn(
+                  'text-2xl font-bold text-foreground dark:text-white tabular-nums',
+                  valueClassName
+                )}
+              >
+                {animate && isNumeric ? (
+                  <AnimatedCounter value={numericValue} suffix={suffix} />
+                ) : (
+                  value
+                )}
+              </p>
+              {badge != null && badge > 0 && (
+                <span
+                  className={cn(
+                    'text-[11px] font-bold px-2 py-0.5 rounded-full',
+                    colors.bg,
+                    colors.text
+                  )}
+                >
+                  {badge}
+                </span>
               )}
-            >
-              {value}
-            </p>
+            </div>
             {(sub || sublabel) && (
               <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
                 {sub || sublabel}

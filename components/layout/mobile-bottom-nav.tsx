@@ -10,14 +10,12 @@ import {
   Calendar,
   User,
   Menu,
-  GraduationCap,
   Users,
   BarChart3,
   Building2,
   BookOpen,
   CreditCard,
   Clock,
-  ShoppingBag,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
@@ -68,14 +66,12 @@ export function MobileBottomNav({
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else {
-    // Member: 7 tabs
+    // Member: 5 tabs (core actions — rest accessible via dashboard quick actions)
     navItems = [
       { name: 'Home', href: '/member', icon: Home },
       { name: 'Buchen', href: '/bookings', icon: Calendar },
       { name: 'Training', href: '/training-schedule', icon: BookOpen },
-      { name: 'Gamification', href: '/gamification', icon: GraduationCap },
       { name: 'Abrechnung', href: '/billing', icon: CreditCard },
-      { name: 'Bestellungen', href: '/meine-bestellungen', icon: ShoppingBag },
       { name: 'Profil', href: '/profile', icon: User },
     ];
   }

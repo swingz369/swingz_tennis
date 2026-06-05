@@ -7,7 +7,6 @@ import {
   CreditCard,
   Bell,
   MapPin,
-  Users,
   Trophy,
   ChevronRight,
   Clock,
@@ -20,6 +19,8 @@ import {
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatCard } from '@/components/ui/stat-card';
+import { QuickActions } from '@/components/ui/quick-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,15 +119,15 @@ export default async function MemberPage() {
       {/* ── Greeting ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground">
-            Hallo, {firstName}! <span className="animate-float inline-block">👋</span>
+          <h1 className="text-2xl font-bold text-foreground dark:text-white">
+            Hallo, {firstName}!
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {club?.name ?? 'Mein Verein'} · Mitglied
           </p>
         </div>
         <Link href="/profile">
-          <div className="h-11 w-11 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold shadow-md hover:shadow-lg transition-shadow">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold text-sm shadow-sm">
             {firstName.charAt(0).toUpperCase()}
           </div>
         </Link>
@@ -135,11 +136,11 @@ export default async function MemberPage() {
       {/* ── Next Session (Hero Card) ── */}
       {nextSession ? (
         <Link href="/training-schedule">
-          <Card className="border-0 shadow-premium bg-gradient-to-br from-brand-primary via-brand-primary to-brand-light text-white cursor-pointer hover:shadow-glow-primary transition-all duration-300 group">
-            <CardContent className="p-6">
+          <Card className="border-0 bg-gradient-to-br from-brand-primary to-brand-light text-white cursor-pointer hover:shadow-lg transition-all duration-300 group">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-background/20">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
                     <Zap className="h-4 w-4 text-white" />
                   </div>
                   <p className="text-xs font-semibold text-white/75 uppercase tracking-wider">
@@ -147,15 +148,15 @@ export default async function MemberPage() {
                   </p>
                 </div>
                 {isToday(nextSession.timeslot_start) && (
-                  <span className="text-[11px] font-bold bg-background/25 text-white px-3 py-1 rounded-full animate-pulse-glow">
+                  <span className="text-[11px] font-bold bg-white/25 text-white px-3 py-1 rounded-full">
                     HEUTE
                   </span>
                 )}
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xl font-bold text-white">{nextCourt?.name ?? 'Training'}</p>
-                  <p className="text-sm text-white/75 mt-1">
+                  <p className="text-lg font-bold text-white">{nextCourt?.name ?? 'Training'}</p>
+                  <p className="text-sm text-white/75 mt-0.5">
                     {formatDate(nextSession.timeslot_start)} ·{' '}
                     {formatTime(nextSession.timeslot_start)}–{formatTime(nextSession.timeslot_end)}
                   </p>
@@ -166,22 +167,18 @@ export default async function MemberPage() {
           </Card>
         </Link>
       ) : (
-        <Card className="border-0 shadow-premium bg-gradient-to-br from-gray-50 to-gray-100/50 overflow-hidden">
-          <CardContent className="p-6">
+        <Card className="border border-border dark:border-white/10">
+          <CardContent className="p-5">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary/10 flex-shrink-0">
-                <Sparkles className="h-6 w-6 text-brand-primary" />
-              </div>
+              <IconBox icon={Sparkles} size="lg" variant="light" />
               <div>
-                <p className="text-lg font-bold text-foreground">
-                  Bereit für dein erstes Training?
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="font-semibold text-foreground">Bereit für dein erstes Training?</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
                   Buche jetzt deine erste Session und starte durch.
                 </p>
                 <Link
                   href="/bookings"
-                  className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold text-brand-primary hover:text-brand-light transition-colors"
+                  className="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-brand-light hover:underline"
                 >
                   Jetzt buchen <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
@@ -192,252 +189,150 @@ export default async function MemberPage() {
       )}
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/bookings">
-          <Card className="border-0 shadow-elegant bg-gradient-to-br from-brand-light/8 to-brand-primary/5 hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-light/15 text-brand-light">
-                  <Calendar className="h-5 w-5" />
-                </div>
-                {bookingCount > 0 && (
-                  <span className="text-[11px] font-bold bg-brand-light/10 text-brand-light px-2 py-0.5 rounded-full">
-                    {bookingCount}
-                  </span>
-                )}
-              </div>
-              <p className="text-3xl font-extrabold text-foreground tabular-nums">{bookingCount}</p>
-              <p className="text-xs font-medium text-muted-foreground mt-1">Buchungen</p>
-              <p className="text-[11px] text-muted-foreground">bevorstehend</p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/billing">
-          <Card
-            className={`border-0 shadow-elegant cursor-pointer hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group ${invoiceCount > 0 ? 'bg-gradient-to-br from-red-50 to-red-100/40' : 'bg-gradient-to-br from-gray-50 to-gray-100/40'}`}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${invoiceCount > 0 ? 'bg-red-100 text-red-500' : 'bg-muted text-muted-foreground'}`}
-                >
-                  <CreditCard className="h-5 w-5" />
-                </div>
-                {invoiceCount > 0 && (
-                  <span className="text-[11px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
-                    {invoiceCount}
-                  </span>
-                )}
-              </div>
-              <p
-                className={`text-3xl font-extrabold tabular-nums ${invoiceCount > 0 ? 'text-red-600' : 'text-foreground'}`}
-              >
-                {invoiceCount}
-              </p>
-              <p className="text-xs font-medium text-muted-foreground mt-1">Rechnungen</p>
-              <p className="text-[11px] text-muted-foreground">
-                {invoiceCount > 0 ? 'zu bezahlen' : 'offen'}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link href="/notifications" className="col-span-2">
-          <Card
-            className={`border-0 shadow-elegant cursor-pointer hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group ${notifCount > 0 ? 'bg-gradient-to-br from-blue-50 to-blue-100/40' : 'bg-gradient-to-br from-gray-50 to-gray-100/40'}`}
-          >
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl ${notifCount > 0 ? 'bg-blue-100 text-blue-500' : 'bg-muted text-muted-foreground'}`}
-                  >
-                    <Bell className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Benachrichtigungen</p>
-                    <p
-                      className={`text-2xl font-extrabold tabular-nums ${notifCount > 0 ? 'text-blue-600' : 'text-foreground'}`}
-                    >
-                      {notifCount}
-                    </p>
-                  </div>
-                </div>
-                {notifCount > 0 ? (
-                  <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold">
-                    Ansehen <ChevronRight className="h-3.5 w-3.5" />
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">keine ungelesenen</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          icon={Calendar}
+          label="Buchungen"
+          value={bookingCount}
+          sub="bevorstehend"
+          color="brand"
+          href="/bookings"
+          badge={bookingCount > 0 ? bookingCount : undefined}
+        />
+        <StatCard
+          icon={CreditCard}
+          label="Rechnungen"
+          value={invoiceCount}
+          sub={invoiceCount > 0 ? 'zu bezahlen' : 'offen'}
+          color={invoiceCount > 0 ? 'red' : 'gray'}
+          href="/billing"
+        />
+        <StatCard
+          icon={Bell}
+          label="Benachrichtigungen"
+          value={notifCount}
+          sub={notifCount > 0 ? 'ungelesen' : 'keine neuen'}
+          color={notifCount > 0 ? 'blue' : 'gray'}
+          href="/notifications"
+        />
+        <StatCard
+          icon={BookOpen}
+          label="Training"
+          value={(nextSessions ?? []).length}
+          sub="kommende Sessions"
+          color="green"
+          href="/training-schedule"
+        />
       </div>
 
       {/* ── Next Bookings ── */}
       {(upcomingBookings ?? []).length > 0 && (
-        <Card className="border-0 shadow-elegant">
+        <Card className="border border-border dark:border-white/10 p-0">
           <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-base font-semibold flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center justify-between">
               Nächste Buchungen
               <Link
                 href="/bookings"
-                className="text-xs text-brand-light hover:underline font-medium flex items-center gap-1"
+                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </Link>
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-5 pb-5 space-y-0 divide-y divide-gray-50">
-            {upcomingBookings!.map((b: any) => {
-              const court = Array.isArray(b.sessions?.courts)
-                ? b.sessions.courts[0]
-                : b.sessions?.courts;
-              return (
-                <div
-                  key={b.id}
-                  className="flex items-center gap-3 py-3 group hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
-                >
-                  <IconBox icon={MapPin} size="md" variant="green" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate text-foreground">
-                      {court?.name ?? 'Platz'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatDate(b.session_start_time)} · {formatTime(b.session_start_time)}
-                    </p>
+          <CardContent className="px-5 pb-5">
+            <div className="divide-y divide-border dark:divide-white/5">
+              {upcomingBookings!.map((b: any) => {
+                const court = Array.isArray(b.sessions?.courts)
+                  ? b.sessions.courts[0]
+                  : b.sessions?.courts;
+                return (
+                  <div
+                    key={b.id}
+                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+                  >
+                    <IconBox icon={MapPin} size="sm" variant="green" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate text-foreground">
+                        {court?.name ?? 'Platz'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatDate(b.session_start_time)} · {formatTime(b.session_start_time)}
+                      </p>
+                    </div>
+                    <Badge className="text-[11px] bg-green-50 text-green-700 border-green-200 font-medium">
+                      Bestätigt
+                    </Badge>
                   </div>
-                  <Badge className="text-[11px] bg-green-50 text-green-700 border-green-200 font-medium">
-                    Bestätigt
-                  </Badge>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* ── Next Training Sessions ── */}
       {(nextSessions ?? []).length > 1 && (
-        <Card className="border-0 shadow-elegant">
+        <Card className="border border-border dark:border-white/10 p-0">
           <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-base font-semibold flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center justify-between">
               Trainingseinheiten
               <Link
                 href="/training-schedule"
-                className="text-xs text-brand-light hover:underline font-medium flex items-center gap-1"
+                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </Link>
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-5 pb-5 space-y-0 divide-y divide-gray-50">
-            {nextSessions!.slice(1, 4).map((s: any) => {
-              const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
-              return (
-                <div
-                  key={s.id}
-                  className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
-                >
-                  <IconBox icon={Clock} size="md" variant="light" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate text-foreground">
-                      {court?.name ?? 'Training'}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {formatDate(s.timeslot_start)} · {formatTime(s.timeslot_start)}–
-                      {formatTime(s.timeslot_end)}
-                    </p>
+          <CardContent className="px-5 pb-5">
+            <div className="divide-y divide-border dark:divide-white/5">
+              {nextSessions!.slice(1, 4).map((s: any) => {
+                const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
+                return (
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+                  >
+                    <IconBox icon={Clock} size="sm" variant="light" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate text-foreground">
+                        {court?.name ?? 'Training'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatDate(s.timeslot_start)} · {formatTime(s.timeslot_start)}–
+                        {formatTime(s.timeslot_end)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* ── Quick Actions ── */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3 px-1">
-          Schnellzugriff
-        </p>
-        <div className="grid grid-cols-3 gap-2.5">
-          {[
-            {
-              label: 'Trainer',
-              href: '/member/trainer-booking',
-              icon: GraduationCap,
-              color: 'bg-teal-50 text-teal-600 border-teal-100',
-            },
-            {
-              label: 'Turniere',
-              href: '/member/tournaments',
-              icon: Trophy,
-              color: 'bg-amber-50 text-amber-600 border-amber-100',
-            },
-            {
-              label: 'Buchen',
-              href: '/bookings',
-              icon: Calendar,
-              color: 'bg-brand-light/10 text-brand-light border-brand-light/20',
-            },
-            {
-              label: 'Training',
-              href: '/training-schedule',
-              icon: BookOpen,
-              color: 'bg-blue-50 text-blue-600 border-blue-100',
-            },
-            {
-              label: 'Profil',
-              href: '/profile',
-              icon: Users,
-              color: 'bg-amber-50 text-amber-600 border-amber-100',
-            },
-            {
-              label: 'Rechnungen',
-              href: '/billing',
-              icon: CreditCard,
-              color: 'bg-purple-50 text-purple-600 border-purple-100',
-            },
-            {
-              label: 'Anwesenheit',
-              href: '/attendance-history',
-              icon: Clock,
-              color: 'bg-rose-50 text-rose-600 border-rose-100',
-            },
-            {
-              label: 'Präferenzen',
-              href: '/member/preferences',
-              icon: ClipboardCheck,
-              color: 'bg-green-50 text-green-600 border-green-100',
-            },
-            {
-              label: 'News',
-              href: '/news',
-              icon: Bell,
-              color: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-            },
-          ].map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className="flex flex-col items-center gap-2 p-3.5 rounded-2xl bg-background border border-border hover:border-brand-light/30 hover:shadow-elegant transition-all active:scale-95 group"
-            >
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-xl border ${action.color} group-hover:scale-110 transition-transform duration-300`}
-              >
-                <action.icon className="h-5 w-5" />
-              </div>
-              <span className="text-[11px] font-semibold text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
-                {action.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <QuickActions
+        label="Schnellzugriff"
+        actions={[
+          { label: 'Buchen', href: '/bookings', icon: Calendar, variant: 'light' },
+          { label: 'Training', href: '/training-schedule', icon: BookOpen, variant: 'blue' },
+          {
+            label: 'Trainer',
+            href: '/member/trainer-booking',
+            icon: GraduationCap,
+            variant: 'teal',
+          },
+          { label: 'Turniere', href: '/member/tournaments', icon: Trophy, variant: 'amber' },
+          { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
+          {
+            label: 'Präferenzen',
+            href: '/member/preferences',
+            icon: ClipboardCheck,
+            variant: 'green',
+          },
+        ]}
+      />
     </div>
   );
 }

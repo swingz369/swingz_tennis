@@ -21,6 +21,8 @@ import {
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatCard } from '@/components/ui/stat-card';
+import { QuickActions } from '@/components/ui/quick-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -230,15 +232,13 @@ export default async function AdminPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Hallo, {firstName}</h1>
-          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
+          <h1 className="text-2xl font-bold text-foreground dark:text-white">Hallo, {firstName}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {club.name}
-            <span className="mx-2 text-muted-foreground/50 dark:text-muted-foreground">·</span>
+            <span className="mx-2 text-muted-foreground/50">·</span>
             <span
               className={
-                isSuperadmin
-                  ? 'text-purple-600 dark:text-purple-400'
-                  : 'text-brand-accent dark:text-brand-accent'
+                isSuperadmin ? 'text-purple-600 dark:text-purple-400' : 'text-brand-accent'
               }
             >
               {isSuperadmin ? 'Superadmin' : 'Admin'}
@@ -256,7 +256,7 @@ export default async function AdminPage() {
           )}
           <Link
             href="/admin/settings"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border dark:border-white/10 hover:bg-muted dark:hover:bg-background/5 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border dark:border-white/10 hover:bg-muted transition-colors"
           >
             <Settings className="h-4 w-4 text-muted-foreground" />
           </Link>
@@ -264,79 +264,48 @@ export default async function AdminPage() {
       </div>
 
       {/* KPI Cards Row — 4 columns */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Mitglieder',
-            value: (memberCount ?? 0).toLocaleString('de-DE'),
-            icon: Users,
-            color: 'text-blue-600 dark:text-blue-400',
-            bg: 'bg-blue-50 dark:bg-blue-900/30',
-            border: 'hover:border-blue-200 dark:hover:border-blue-700/50',
-            href: '/admin/members',
-            sub: 'aktive Mitglieder',
-          },
-          {
-            label: 'Trainer',
-            value: (trainerCount ?? 0).toLocaleString('de-DE'),
-            icon: GraduationCap,
-            color: 'text-brand-light dark:text-brand-light',
-            bg: 'bg-brand-light/10 dark:bg-brand-light/20',
-            border: 'hover:border-brand-light/30',
-            href: '/admin/trainers',
-            sub: 'aktive Trainer',
-          },
-          {
-            label: 'Sessions heute',
-            value: (activeSessions ?? 0).toLocaleString('de-DE'),
-            icon: Calendar,
-            color: 'text-purple-600 dark:text-purple-400',
-            bg: 'bg-purple-50 dark:bg-purple-900/30',
-            border: 'hover:border-purple-200 dark:hover:border-purple-700/50',
-            href: '/admin/seasons',
-            sub: new Date().toLocaleDateString('de-DE', { weekday: 'long' }),
-          },
-          {
-            label: 'Monatsumsatz',
-            value:
-              monthlyRevenue > 0
-                ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(
-                    monthlyRevenue
-                  )
-                : '—',
-            icon: CreditCard,
-            color: 'text-brand-accent',
-            bg: 'bg-orange-50 dark:bg-orange-900/20',
-            border: 'hover:border-orange-200 dark:hover:border-orange-700/50',
-            href: '/admin/billing',
-            sub: new Date().toLocaleDateString('de-DE', { month: 'long' }),
-          },
-        ].map((kpi) => (
-          <Link key={kpi.label} href={kpi.href}>
-            <Card className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
-                      {kpi.label}
-                    </p>
-                    <p className="text-2xl font-bold text-brand-primary mt-1.5 tabular-nums">
-                      {kpi.value}
-                    </p>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
-                      {kpi.sub}
-                    </p>
-                  </div>
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${kpi.bg} group-hover:scale-105 transition-transform`}
-                  >
-                    <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          icon={Users}
+          label="Mitglieder"
+          value={memberCount ?? 0}
+          sub="aktive Mitglieder"
+          color="blue"
+          href="/admin/members"
+          animate
+        />
+        <StatCard
+          icon={GraduationCap}
+          label="Trainer"
+          value={trainerCount ?? 0}
+          sub="aktive Trainer"
+          color="brand"
+          href="/admin/trainers"
+          animate
+        />
+        <StatCard
+          icon={Calendar}
+          label="Sessions heute"
+          value={activeSessions ?? 0}
+          sub={new Date().toLocaleDateString('de-DE', { weekday: 'long' })}
+          color="purple"
+          href="/admin/seasons"
+          animate
+        />
+        <StatCard
+          icon={CreditCard}
+          label="Monatsumsatz"
+          value={
+            monthlyRevenue > 0
+              ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(
+                  monthlyRevenue
+                )
+              : '—'
+          }
+          sub={new Date().toLocaleDateString('de-DE', { month: 'long' })}
+          color="orange"
+          href="/admin/billing"
+        />
       </div>
 
       {/* 2-Column Main Content */}
@@ -475,105 +444,60 @@ export default async function AdminPage() {
         </Card>
       </div>
 
-      {/* Quick Actions Strip — 4 large action cards */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground mb-4">
-          Schnellaktionen
-        </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            {
-              label: 'Mitglied einladen',
-              desc: 'Neues Mitglied hinzufügen',
-              href: '/admin/members',
-              icon: UserPlus,
-              color: 'text-blue-600 dark:text-blue-400',
-              bg: 'bg-blue-50 dark:bg-blue-900/20',
-              accentClass: 'text-blue-600 dark:text-blue-400',
-            },
-            {
-              label: 'Session planen',
-              desc: 'Saisonplanung verwalten',
-              href: '/admin/seasons',
-              icon: Calendar,
-              color: 'text-brand-light dark:text-brand-light',
-              bg: 'bg-brand-light/10',
-              accentClass: 'text-brand-light dark:text-brand-light',
-            },
-            {
-              label: 'Rechnung erstellen',
-              desc: 'Abrechnungen & Zahlungen',
-              href: '/admin/billing',
-              icon: Receipt,
-              color: 'text-brand-accent',
-              bg: 'bg-orange-50 dark:bg-orange-900/20',
-              accentClass: 'text-brand-accent dark:text-brand-accent',
-            },
-            {
-              label: 'Platz sperren',
-              desc: 'Platzverwaltung öffnen',
-              href: '/admin/courts/manage',
-              icon: LockKeyhole,
-              color: 'text-purple-600 dark:text-purple-400',
-              bg: 'bg-purple-50 dark:bg-purple-900/20',
-              accentClass: 'text-purple-600 dark:text-purple-400',
-            },
-          ].map((action) => (
-            <Link key={action.href + action.label} href={action.href}>
-              <Card className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group p-0 h-full">
-                <CardContent className="p-5 flex flex-col gap-3 h-full">
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-xl ${action.bg} group-hover:scale-105 transition-transform`}
-                  >
-                    <action.icon className={`h-5 w-5 ${action.color}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground dark:text-white">
-                      {action.label}
-                    </p>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
-                      {action.desc}
-                    </p>
-                  </div>
-                  <div className="mt-auto flex items-center gap-1">
-                    <span className={`text-xs font-medium ${action.accentClass}`}>Öffnen</span>
-                    <ArrowUpRight className={`h-3 w-3 ${action.accentClass}`} />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
+      {/* Quick Actions */}
+      <QuickActions
+        label="Schnellaktionen"
+        mode="detailed"
+        actions={[
+          {
+            label: 'Mitglied einladen',
+            description: 'Neues Mitglied hinzufügen',
+            href: '/admin/members',
+            icon: UserPlus,
+            variant: 'blue',
+          },
+          {
+            label: 'Session planen',
+            description: 'Saisonplanung verwalten',
+            href: '/admin/seasons',
+            icon: Calendar,
+            variant: 'light',
+          },
+          {
+            label: 'Rechnung erstellen',
+            description: 'Abrechnungen & Zahlungen',
+            href: '/admin/billing',
+            icon: Receipt,
+            variant: 'orange',
+          },
+          {
+            label: 'Platz sperren',
+            description: 'Platzverwaltung öffnen',
+            href: '/admin/courts/manage',
+            icon: LockKeyhole,
+            variant: 'purple',
+          },
+        ]}
+      />
 
       {/* Secondary Quick Links */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground mb-3">
-          Verwaltung
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: 'Mitglieder', href: '/admin/members', icon: Users },
-            { label: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
-            { label: 'Saisonplanung', href: '/admin/seasons', icon: Calendar },
-            { label: 'Plätze', href: '/admin/courts', icon: MapPin },
-            { label: 'Probetrainings', href: '/admin/trial-training', icon: Sparkles },
-            { label: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock },
-            { label: 'Einstellungen', href: '/admin/settings', icon: Settings },
-          ].map((a) => (
-            <Link
-              key={a.href}
-              href={a.href}
-              className="flex items-center gap-2.5 p-3 rounded-xl border border-border dark:border-white/10 hover:border-brand-light/40 hover:shadow-sm transition-all bg-background dark:bg-card/5 group"
-            >
-              <IconBox icon={a.icon} size="sm" variant="light" />
-              <span className="text-xs font-medium text-foreground dark:text-foreground truncate">
-                {a.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <QuickActions
+        label="Verwaltung"
+        actions={[
+          { label: 'Mitglieder', href: '/admin/members', icon: Users, variant: 'blue' },
+          { label: 'Trainer', href: '/admin/trainers', icon: GraduationCap, variant: 'light' },
+          { label: 'Saisonplanung', href: '/admin/seasons', icon: Calendar, variant: 'green' },
+          { label: 'Plätze', href: '/admin/courts', icon: MapPin, variant: 'purple' },
+          {
+            label: 'Probetrainings',
+            href: '/admin/trial-training',
+            icon: Sparkles,
+            variant: 'amber',
+          },
+          { label: 'Stundennachweise', href: '/admin/hours-logs', icon: Clock, variant: 'blue' },
+          { label: 'Einstellungen', href: '/admin/settings', icon: Settings, variant: 'gray' },
+        ]}
+      />
     </div>
   );
 }
