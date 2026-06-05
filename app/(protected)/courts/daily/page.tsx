@@ -1,5 +1,5 @@
-import DailyCourtView from '@/components/daily-court-view';
+import UnifiedCourtCalendar from '@/components/unified-court-calendar';
 
 export default function DailyCourtViewPage() {
-  return <DailyCourtView />;
+  return <UnifiedCourtCalendar defaultView="daily" />;
 }

@@ -45,7 +45,7 @@ import {
   type Session,
 } from '@/hooks/use-sessions';
 import FeedbackModal from '@/components/feedback/feedback-modal';
-import CourtCalendar from '@/components/court-calendar';
+import UnifiedCourtCalendar from '@/components/unified-court-calendar';
 
 export default function BookingsPage() {
   return (
@@ -431,7 +431,7 @@ function BookingsContent() {
 
         {/* Courts Tab */}
         <TabsContent value="courts" className="mt-6">
-          <CourtCalendar />
+          <UnifiedCourtCalendar />
         </TabsContent>
       </Tabs>
 

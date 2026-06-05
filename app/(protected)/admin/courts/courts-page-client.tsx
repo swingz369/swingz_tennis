@@ -1,7 +1,7 @@
 'use client';
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import AdminCourtCalendar from '@/components/admin-court-calendar';
+import UnifiedCourtCalendar from '@/components/unified-court-calendar';
 import { CourtsManageClient } from './manage/courts-manage-client';
 import { Calendar, Settings } from 'lucide-react';
 import type { Court } from '@/lib/types/court-booking';
@@ -34,7 +34,7 @@ export function CourtsPageClient({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="calendar">
-        <AdminCourtCalendar initialClubId={clubId} />
+        <UnifiedCourtCalendar initialClubId={clubId} />
       </TabsContent>
       <TabsContent value="manage">
         <CourtsManageClient initialCourts={initialCourts} courtTypes={courtTypes} clubId={clubId} />
