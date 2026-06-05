@@ -62,7 +62,8 @@ export default async function AnalyticsPage({
           .from('user_club_memberships')
           .select('id', { count: 'exact', head: true })
           .eq('club_id', effectiveClubId)
-          .eq('is_active', true),
+          .eq('is_active', true)
+          .not('role', 'in', '(trainer,superadmin)'),
         supabase
           .from('user_club_memberships')
           .select('id', { count: 'exact', head: true })

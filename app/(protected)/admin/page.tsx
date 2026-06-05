@@ -79,7 +79,8 @@ export default async function AdminPage() {
       .from('user_club_memberships')
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
-      .eq('is_active', true),
+      .eq('is_active', true)
+      .not('role', 'in', '(trainer,superadmin)'),
     supabase
       .from('user_club_memberships')
       .select('id', { count: 'exact', head: true })
@@ -90,7 +91,8 @@ export default async function AdminPage() {
       .from('user_club_memberships')
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
-      .eq('is_active', false),
+      .eq('is_active', false)
+      .not('role', 'in', '(trainer,superadmin)'),
     // Today's session count (filtered via schedules → club_id)
     supabase
       .from('sessions')
@@ -109,12 +111,13 @@ export default async function AdminPage() {
       .lte('timeslot_start', todayEnd.toISOString())
       .order('timeslot_start', { ascending: true })
       .limit(6),
-    // Recent member joins
+    // Recent member joins (exclude trainers and superadmins)
     supabase
       .from('user_club_memberships')
       .select('id, created_at, users(full_name, email)')
       .eq('club_id', clubId)
       .eq('is_active', true)
+      .not('role', 'in', '(trainer,superadmin)')
       .order('created_at', { ascending: false })
       .limit(3),
     // Recent bookings (filtered by club_id)
