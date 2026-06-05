@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,12 +47,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// Module-level flag: persists across component mounts/unmounts within the same
-// page session. On FIRST mount after a full page load this is false -> just
-// fetch data. On subsequent mounts (navigation back) this is true -> call
-// router.refresh() to bust cache, then set false so the remount doesn't loop.
-let _needsRouterRefresh = false;
 
 export interface TrainerAvailabilitySlot {
   id: string;
@@ -122,7 +115,6 @@ export interface TrainerProfile {
 }
 
 export default function TrainerProfileManagement() {
-  const router = useRouter();
   const [trainers, setTrainers] = useState<TrainerProfile[]>([]);
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -143,21 +135,8 @@ export default function TrainerProfileManagement() {
   const [slotNotes, setSlotNotes] = useState('');
   const [slotSaving, setSlotSaving] = useState(false);
 
-  // Bust Next.js router cache on re-navigation.
-  // _needsRouterRefresh is a module-level variable that persists across component
-  // lifecycles. On first mount after a full page load it's false → just fetch.
-  // After navigating away and back, it's true → router.refresh() busts the cache,
-  // then we set it to false so the resulting remount doesn't loop.
   useEffect(() => {
-    if (_needsRouterRefresh) {
-      _needsRouterRefresh = false;
-      router.refresh();
-    }
     loadTrainers();
-    // On unmount (navigation away), mark that we need a refresh next time
-    return () => {
-      _needsRouterRefresh = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

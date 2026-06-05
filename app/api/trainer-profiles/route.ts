@@ -111,12 +111,8 @@ export async function GET(_request: NextRequest) {
         }
         clubId = queryClubId;
       } else {
-        // Find the first club the user has trainer+ access to
-        const eligibleMembership = auth.memberships.find(
-          (m) =>
-            m.club_id && (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
-        );
-        clubId = eligibleMembership?.club_id ?? null;
+        // Use the resolved club from auth context (deterministic, cookie-aware)
+        clubId = auth.clubId;
       }
 
       if (!clubId) {

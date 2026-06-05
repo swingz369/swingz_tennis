@@ -55,12 +55,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ availabilities });
       }
 
-      // Fetch all trainers in club, then their availabilities
-      const clubId =
-        auth.memberships.find(
-          (m) =>
-            m.club_id && (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
-        )?.club_id ?? null;
+      // Use the resolved club from auth context (deterministic, cookie-aware)
+      const clubId = auth.clubId;
       if (!clubId) {
         return NextResponse.json({ availabilities: [] });
       }
@@ -132,11 +128,7 @@ export async function POST(request: NextRequest) {
 
       // Admin: verify the trainer belongs to their club
       if (auth.role !== 'trainer') {
-        const clubId =
-          auth.memberships.find(
-            (m) =>
-              m.club_id && (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
-          )?.club_id ?? null;
+        const clubId = auth.clubId;
         if (clubId) {
           const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
           const isInClub = clubProfiles.some((p) => p.userId === trainer_id);
@@ -210,11 +202,7 @@ export async function DELETE(request: NextRequest) {
 
       // Admin/Superadmin: verify the availability's trainer belongs to their club
       if (auth.role !== 'trainer') {
-        const clubId =
-          auth.memberships.find(
-            (m) =>
-              m.club_id && (m.role === 'trainer' || m.role === 'admin' || m.role === 'superadmin')
-          )?.club_id ?? null;
+        const clubId = auth.clubId;
         if (clubId) {
           const clubProfiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
           const isInClub = clubProfiles.some((p) => p.userId === availability.trainerId);
