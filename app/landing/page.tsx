@@ -298,7 +298,7 @@ export default function LandingPage() {
   }, [heroCtaVariant]);
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background overflow-hidden" suppressHydrationWarning>
       {/* ═══════════ HERO ═══════════ */}
       <section className="relative min-h-[100svh] flex items-center overflow-hidden">
         {/* Background Layers */}

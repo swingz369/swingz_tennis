@@ -17,8 +17,11 @@ export interface Session {
   bookedByUser?: boolean;
   bookingId?: string;
   bookingStatus?: 'pending' | 'confirmed' | 'cancelled' | 'no_show';
+  hasActiveBooking?: boolean; // Any confirmed/pending booking exists for this session
+  currentBookings?: number; // Number of active bookings
+  timeslotStart?: string; // ISO date string of session start
+  timeslotEnd?: string; // ISO date string of session end
   courtId?: string; // For admin court calendar
-  week?: string; // For admin court calendar
 }
 
 export function useSessions(clubId: string | null) {

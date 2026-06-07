@@ -148,7 +148,28 @@ export class SeasonBillingService {
     if (seasonError || !season) throw new Error('Season not found');
 
     // 2. Fetch or default billing config
-    const config = await this.getConfig(seasonId);
+    let config = await this.getConfig(seasonId);
+    if (!config) {
+      // Auto-create a default config so the admin sees real values in the preview
+      try {
+        config = await this.upsertConfig(seasonId, season.club_id, {
+          trainer_hourly_rate: 50.0,
+          use_trainer_profile_rate: false,
+          include_membership_fee: true,
+          membership_fee_amount: null, // auto-resolve from fee_configurations
+          membership_fee_type: 'yearly',
+          payment_terms_days: 30,
+          tax_rate: 0,
+          cost_split_method: 'per_participant',
+        });
+        console.log('[SeasonBilling] Auto-created default billing config for season', seasonId);
+      } catch (err) {
+        console.warn(
+          '[SeasonBilling] Could not auto-create config, using in-memory defaults:',
+          err
+        );
+      }
+    }
     const trainerRate = config?.trainer_hourly_rate ?? 50.0;
     const useProfileRate = config?.use_trainer_profile_rate ?? false;
 
@@ -405,7 +426,7 @@ export class SeasonBillingService {
       .from('invoices')
       .select('member_id, notes')
       .eq('club_id', clubId || '')
-      .eq('type', 'season')
+      .eq('invoice_type', 'season')
       .ilike('notes', `%${preview.seasonName}%`);
 
     const alreadyInvoiced = new Set(

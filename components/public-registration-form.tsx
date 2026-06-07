@@ -291,7 +291,7 @@ export default function PublicRegistrationForm({
                 value={form.playingLevel}
                 onValueChange={(v) => updateField('playingLevel', v)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="playingLevel">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

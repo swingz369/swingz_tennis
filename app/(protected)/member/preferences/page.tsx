@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/use-auth';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +20,7 @@ import {
   Calendar,
   Settings,
   Loader2,
+  Plus,
 } from 'lucide-react';
 import {
   Select,
@@ -67,6 +70,11 @@ export default function MemberPreferencesPage() {
   const [specialRequests, setSpecialRequests] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [prefId, setPrefId] = useState<string | null>(null);
+
+  // Custom time range form
+  const [customDay, setCustomDay] = useState<string>('monday');
+  const [customFrom, setCustomFrom] = useState('08:00');
+  const [customTo, setCustomTo] = useState('10:00');
 
   // Load seasons
   useEffect(() => {
@@ -142,6 +150,19 @@ export default function MemberPreferencesPage() {
       return { ...prev, [day]: [...daySlots, { start, end }] };
     });
   }, []);
+
+  const addCustomSlot = useCallback(() => {
+    setError(null);
+    if (customFrom >= customTo) {
+      setError('Startzeit muss vor Endzeit liegen');
+      return;
+    }
+    toggleTimeSlot(customDay, customFrom, customTo);
+    setCustomFrom('08:00');
+    setCustomTo('10:00');
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 2000);
+  }, [customDay, customFrom, customTo, toggleTimeSlot]);
 
   const handleSave = async () => {
     if (!userId || !selectedSeasonId) return;
@@ -341,6 +362,45 @@ export default function MemberPreferencesPage() {
                 </div>
               );
             })}
+
+            {/* Custom time range */}
+            <div className="pt-3 mt-3 border-t border-border">
+              <Label className="text-xs text-muted-foreground mb-2 block">
+                Benutzerdefiniertes Zeitfenster hinzufügen
+              </Label>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={customDay} onValueChange={setCustomDay}>
+                  <SelectTrigger className="w-[120px] h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAYS.map(({ key, label }) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground">von</span>
+                <Input
+                  type="time"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="w-[110px] h-9 text-sm"
+                />
+                <span className="text-xs text-muted-foreground">bis</span>
+                <Input
+                  type="time"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="w-[110px] h-9 text-sm"
+                />
+                <Button size="sm" variant="outline" className="gap-1 h-9" onClick={addCustomSlot}>
+                  <Plus className="h-4 w-4" />
+                  Hinzufügen
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

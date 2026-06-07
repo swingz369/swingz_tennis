@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+// Increase timeout for dynamic imports of route modules (Next.js compilation overhead)
+vi.setConfig({ hookTimeout: 30000, testTimeout: 15000 });
+
 // ── Mock Supabase server client ──────────────────────────────
 // We build a chainable mock that API routes call via createClient()
 

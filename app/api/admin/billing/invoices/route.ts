@@ -28,13 +28,13 @@ export async function GET(_request: NextRequest) {
           `
           id,
           invoice_number,
-          total_amount,
+          amount,
           currency,
           status,
           due_date,
           paid_at,
           member_id,
-          users!inner(full_name, email)
+          users(full_name, email)
         `
         )
         .eq('club_id', clubId)
@@ -49,14 +49,14 @@ export async function GET(_request: NextRequest) {
         invoiceNumber: inv.invoice_number,
         memberId: inv.member_id,
         memberName: inv.users?.full_name || 'N/A',
-        amount: inv.total_amount,
+        amount: inv.amount,
         currency: inv.currency,
         status: inv.status,
         dueDate: inv.due_date,
         paidAt: inv.paid_at,
       }));
 
-      return NextResponse.json(invoices);
+      return NextResponse.json({ data: invoices });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
       console.error('Error fetching invoices:', error);

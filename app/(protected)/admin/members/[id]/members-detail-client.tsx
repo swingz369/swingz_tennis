@@ -41,6 +41,7 @@ import {
   Target,
 } from 'lucide-react';
 import { PreferencesTab } from './preferences-tab';
+import { InvoicesTab } from './invoices-tab';
 import type { Member } from '../member.types';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -499,6 +500,20 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   {member.bio || 'Keine Bio vorhanden'}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Rechnungen */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="h-4 w-4 text-brandPrimary" />
+                Rechnungen
+              </CardTitle>
+              <CardDescription>Alle Rechnungen dieses Mitglieds</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <InvoicesTab userId={member.user_id} />
             </CardContent>
           </Card>
 

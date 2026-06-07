@@ -81,9 +81,9 @@ export function createErrorResponse(options: ApiErrorOptions): NextResponse<ApiE
     error: {
       code,
       message,
-      ...(details && { details }),
+      ...(details ? { details } : {}),
       timestamp: new Date().toISOString(),
-      ...(requestId && { requestId }),
+      ...(requestId ? { requestId } : {}),
     },
   };
 

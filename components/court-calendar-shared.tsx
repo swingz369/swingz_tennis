@@ -29,7 +29,7 @@ export function CourtCalendarHeader({
   onGoPrevious: () => void;
   onGoNext: () => void;
   onGoToday: () => void;
-  onGoDaily: () => void;
+  onGoDaily?: () => void;
   children?: React.ReactNode;
 }) {
   return (
@@ -39,10 +39,12 @@ export function CourtCalendarHeader({
         <p className="text-muted-foreground">{subtitle}</p>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={onGoDaily}>
-          <CalendarIcon className="h-4 w-4 mr-2" />
-          Tagesansicht
-        </Button>
+        {onGoDaily && (
+          <Button variant="outline" size="sm" onClick={onGoDaily}>
+            <CalendarIcon className="h-4 w-4 mr-2" />
+            Tagesansicht
+          </Button>
+        )}
         {children}
         <Button variant="outline" size="sm" onClick={onGoToday}>
           Heute

@@ -197,7 +197,7 @@ export default async function MemberPage() {
           sub="bevorstehend"
           color="brand"
           href="/bookings"
-          badge={bookingCount > 0 ? bookingCount : undefined}
+          {...(bookingCount > 0 ? { badge: bookingCount } : {})}
         />
         <StatCard
           icon={CreditCard}

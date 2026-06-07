@@ -17,13 +17,16 @@ export function BillingCategoriesTabs({
   children,
   initialCategories,
   clubId,
+  defaultTab = 'invoices',
 }: {
   children: React.ReactNode;
   initialCategories: FeeConfig[];
   clubId: string;
+  defaultTab?: string;
 }) {
+  const tab = defaultTab === 'categories' ? 'categories' : 'invoices';
   return (
-    <Tabs defaultValue="invoices" className="space-y-6">
+    <Tabs defaultValue={tab} className="space-y-6">
       <TabsList className="w-full max-w-md grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
         <TabsTrigger
           value="invoices"

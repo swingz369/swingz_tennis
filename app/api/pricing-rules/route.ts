@@ -154,9 +154,10 @@ export async function GET_MATCH(req: NextRequest) {
     }
 
     try {
+      const courtIdObj = courtId ? CourtId.fromString(courtId) : undefined;
       const rule = await repo.findBestMatch(
         ClubId.fromString(clubId),
-        courtId ? CourtId.fromString(courtId) : undefined,
+        courtIdObj ?? (undefined as any),
         memberType || undefined,
         undefined,
         bookingHours ? Number(bookingHours) : undefined,

@@ -35,7 +35,7 @@ interface Order {
   created_at: string;
 }
 
-const STATUS_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+const STATUS_ICONS: Record<string, React.ComponentType<{ className?: string | undefined }>> = {
   pending: Clock,
   confirmed: CheckCircle2,
   shipped: Truck,

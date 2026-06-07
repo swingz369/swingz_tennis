@@ -89,12 +89,16 @@ export async function POST(_request: NextRequest) {
       const postalCode = process.env.SEPA_CREDITOR_POSTAL_CODE;
       const country = process.env.SEPA_CREDITOR_COUNTRY || 'DE';
 
-      if (street || city || postalCode || country) {
+      const addrStreet = street || undefined;
+      const addrCity = city || undefined;
+      const addrPostal = postalCode || undefined;
+      const addrCountry = country || undefined;
+      if (addrStreet || addrCity || addrPostal || addrCountry) {
         config.creditorAddress = {
-          street: street || undefined,
-          city: city || undefined,
-          postalCode: postalCode || undefined,
-          country: country || undefined,
+          ...(addrStreet != null ? { street: addrStreet } : {}),
+          ...(addrCity != null ? { city: addrCity } : {}),
+          ...(addrPostal != null ? { postalCode: addrPostal } : {}),
+          ...(addrCountry != null ? { country: addrCountry } : {}),
         };
       }
 

@@ -218,6 +218,11 @@ export async function withRateLimit(
   req: NextRequest,
   type: RateLimitType = 'api'
 ): Promise<NextResponse | { headers: Record<string, string> }> {
+  // Allow test environments to bypass rate limiting
+  if (process.env.DISABLE_RATE_LIMITING === 'true') {
+    return { headers: {} };
+  }
+
   // Use IP + user ID as identifier
   const identifier = await getClientIdentifier(req);
   const result = await checkRateLimit(identifier, type);
@@ -386,6 +391,9 @@ export async function checkRateLimitOrFail(
   request: NextRequest,
   type: RateLimitType | RateLimitConfig = 'api'
 ): Promise<NextResponse | null> {
+  // Allow test environments to bypass rate limiting
+  if (process.env.DISABLE_RATE_LIMITING === 'true') return null;
+
   if (typeof type === 'object') {
     // Legacy RateLimitConfig usage
     const result = await rateLimit(request, type);

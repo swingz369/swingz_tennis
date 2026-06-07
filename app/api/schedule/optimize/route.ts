@@ -113,8 +113,6 @@ export async function POST(req: NextRequest) {
         endDate: season.end_date || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
         constraints: {
           maxParticipantsPerSession: 12,
-          preferredDays: undefined,
-          skillLevels: undefined,
           avoidTrainerOverload: true,
           balanceGroupSizes: true,
         },

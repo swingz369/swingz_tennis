@@ -1376,6 +1376,7 @@ export class SeasonClusteringEngine {
         (parseInt(g.endTime.split(':')[0]) - parseInt(g.startTime.split(':')[0])) * 60 +
         (parseInt(g.endTime.split(':')[1]) - parseInt(g.startTime.split(':')[1])),
       starts_from_week: 1,
+      ends_at_week: null,
       entry_type: 'training',
       planning_source: 'auto',
       max_participants: this.config.groupMaxSize,

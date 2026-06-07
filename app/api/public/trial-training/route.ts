@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       duration: 60, // Default 60 minutes for trial
       trainerId: '00000000-0000-0000-0000-000000000000', // Placeholder — admin assigns later
       courtId: '00000000-0000-0000-0000-000000000000', // Placeholder — admin assigns later
-      notes: combinedNotes || undefined,
+      ...(combinedNotes ? { notes: combinedNotes } : {}),
     };
 
     const trialTraining = await trialTrainingService.createPublicTrialTraining(input, clubId || '');

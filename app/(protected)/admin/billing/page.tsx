@@ -1,8 +1,10 @@
+import Link from 'next/link';
 import dynamicImport from 'next/dynamic';
 import { requireAdminClub } from '@/lib/admin-context';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BillingCategoriesTabs } from './billing-tabs-wrapper';
+import { AlertTriangle } from 'lucide-react';
 import type { Subscription, Invoice } from './billing-client';
 
 const BillingClient = dynamicImport(() => import('./billing-client'), {
@@ -41,6 +43,11 @@ export default async function BillingPage({
   } catch {
     // Table may not exist or RLS may block
   }
+
+  // Check if there is an active membership fee configuration
+  const hasActiveMembershipFee = feeCategories.some(
+    (fc) => fc.type === 'membership' && fc.is_active
+  );
 
   // --- Fetch subscriptions + members ---
   const { data: clubMemberships } = await supabase
@@ -108,7 +115,8 @@ export default async function BillingPage({
           due_date,
           paid_at,
           member_id,
-          users!inner (full_name)
+          invoice_type,
+          users (full_name)
         `
       )
       .eq('club_id', clubId)
@@ -129,13 +137,40 @@ export default async function BillingPage({
       amount: Number(inv.amount ?? 0),
       currency: String(inv.currency || 'EUR'),
       status: String(inv.status || 'draft') as Invoice['status'],
+      invoiceType: (inv.invoice_type || undefined) as Invoice['invoiceType'],
       dueDate: String(inv.due_date || ''),
       paidAt: inv.paid_at ? String(inv.paid_at) : undefined,
     } as Invoice;
   });
 
   return (
-    <BillingCategoriesTabs initialCategories={feeCategories} clubId={clubId}>
+    <BillingCategoriesTabs
+      initialCategories={feeCategories}
+      clubId={clubId}
+      defaultTab={String(params.tab ?? 'invoices')}
+    >
+      {!hasActiveMembershipFee && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-800">
+                Keine aktive Mitgliedsgebühr konfiguriert
+              </p>
+              <p className="text-sm text-amber-700 mt-1">
+                Rechnungen können erst mit einem Betrag größer 0 erstellt werden, wenn eine aktive
+                Gebühr vom Typ <strong>Mitgliedschaft</strong> existiert.
+              </p>
+              <Link
+                href="?tab=categories"
+                className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-amber-800 underline hover:text-amber-900 transition-colors"
+              >
+                Jetzt Mitgliedsgebühr anlegen →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
       <BillingClient
         initialSubscriptions={subscriptions}
         initialInvoices={invoices}

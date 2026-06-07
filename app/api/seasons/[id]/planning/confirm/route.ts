@@ -14,12 +14,18 @@ import {
   schedules,
   seasonPlanningHistory,
   users,
+  clubs,
 } from '@/src/infrastructure/persistence/schema';
-import { markHolidaySessions } from '@/lib/services/school-holidays.service';
 import { eq, and, inArray } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
+import {
+  isDateInHolidays,
+  getHolidaysForState,
+  resolveBundeslandCode,
+  type Holiday,
+} from '@/lib/season-planning/holidays';
 import type {
   ConfirmPlanRequest,
   ConfirmPlanResponse,
@@ -135,12 +141,34 @@ export async function POST(request: NextRequest, context: RouteContext) {
           );
         }
 
+        // ── Holiday / school break resolution (before transaction) ───────
+        // Fetch club's Bundesland and resolve the holiday list once.
+        // This is read-only and non-critical — a failure here falls back
+        // to no holiday filtering (all sessions get created).
+        let holidays: Holiday[] = [];
+        try {
+          const [club] = await db
+            .select({ bundesland: clubs.bundesland })
+            .from(clubs)
+            .where(eq(clubs.id, season.club_id))
+            .limit(1);
+          if (club?.bundesland) {
+            const code = resolveBundeslandCode(club.bundesland);
+            holidays = getHolidaysForState(code);
+            console.log(
+              `[Confirm] Club bundesland: ${club.bundesland} → code: ${code} → ${holidays.length} holidays loaded`
+            );
+          }
+        } catch (err) {
+          console.error('[Confirm] Failed to load holidays, proceeding without:', err);
+        }
+
         // ── Publish transaction ──────────────────────────────────────────
         // All DB writes run in a single transaction. If anything fails after
         // sessions are created (audit trail, conflict persistence, season
         // status update), the entire publish rolls back automatically.
         // ──────────────────────────────────────────────────────────────────
-        const { publishedCount, publishedIds, scheduleId } = await db.transaction(async (tx) => {
+        const { publishedCount, publishedIds } = await db.transaction(async (tx) => {
           let publishedCount = 0;
           const publishedIds: string[] = [];
 
@@ -170,6 +198,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
             (seasonEnd.getTime() - seasonStart.getTime()) / (1000 * 60 * 60 * 24)
           );
           const totalSeasonWeeks = Math.max(1, Math.ceil(seasonLengthDays / 7));
+
+          console.log(
+            `[Confirm] Season: ${season.name || 'unnamed'} (${season.id})`,
+            `| start=${seasonStart.toISOString().substring(0, 10)}`,
+            `| end=${seasonEnd.toISOString().substring(0, 10)}`,
+            `| days=${seasonLengthDays}`,
+            `| weeks=${totalSeasonWeeks}`,
+            `| entries=${entries.length}`
+          );
 
           // 3. Create recurring weekly sessions for each plan entry
           for (const entry of entries) {
@@ -228,7 +265,23 @@ export async function POST(request: NextRequest, context: RouteContext) {
             firstDate.setHours(startHours, startMinutes, 0, 0);
 
             const startWeek = entry.starts_from_week || 1;
-            const endWeek = entry.ends_at_week || totalSeasonWeeks;
+            // Only use entry.ends_at_week if it is explicitly set to a value > 1.
+            // When ends_at_week is null (not set by clustering engine) or 1 (stale default),
+            // fall back to totalSeasonWeeks to ensure sessions span the full season.
+            const endWeek =
+              entry.ends_at_week !== null &&
+              entry.ends_at_week !== undefined &&
+              entry.ends_at_week > 1
+                ? entry.ends_at_week
+                : totalSeasonWeeks;
+
+            console.log(
+              `[Confirm] Entry ${entry.id}: day=${entry.day_of_week}`,
+              `| startsWeek=${startWeek}`,
+              `| endsWeek=${endWeek}`,
+              `| dbEndsWeek=${entry.ends_at_week}`,
+              `| totalWeeks=${totalSeasonWeeks}`
+            );
             const createdSessionIds: string[] = [];
 
             for (let week = startWeek; week <= endWeek && week <= totalSeasonWeeks; week++) {
@@ -237,6 +290,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
               // Skip if session would be after season end
               if (sessionDate > seasonEnd) break;
+
+              // Skip if session falls on a school holiday / Ferien
+              if (holidays.length > 0) {
+                const dateStr = sessionDate.toISOString().substring(0, 10);
+                if (isDateInHolidays(dateStr, holidays)) continue;
+              }
 
               const sessionEndDate = new Date(sessionDate.getTime() + actualDurationMs);
 
@@ -307,28 +366,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
         });
 
         // ── Post-transaction (non-critical) ───────────────────────────────
-        // These run AFTER the transaction commits because:
-        // • markHolidaySessions queries via Supabase (not Drizzle), so it
-        //   can only see the sessions once the transaction is committed.
+        // These run AFTER the transaction commits.
+        // • Holiday sessions are already filtered out during creation
+        //   (see isDateInHolidays check in the session loop above).
         // • Email notifications should only go out after a successful publish.
         // Failures here are logged but do not roll back the publish.
         // ──────────────────────────────────────────────────────────────────
-
-        // Mark sessions that fall on school holidays as holiday_cancelled
-        if (scheduleId) {
-          try {
-            const markedCount = await markHolidaySessions(
-              auth.supabase,
-              scheduleId,
-              season.club_id
-            );
-            if (markedCount > 0) {
-              console.log(`[Season] Marked ${markedCount} sessions as holiday_cancelled`);
-            }
-          } catch (holidayError) {
-            console.error('[Season] Failed to mark holiday sessions:', holidayError);
-          }
-        }
 
         // ---- Auto-generate detailed invoices for season participants ----
         let invoicesCreated = 0;

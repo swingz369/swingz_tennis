@@ -203,7 +203,7 @@ export function MemberEntityCard({
     <EntityCard
       name={name}
       email={email}
-      subtitle={joinedAt ? `Beigetreten: ${formatDate(joinedAt)}` : undefined}
+      {...(joinedAt ? { subtitle: `Beigetreten: ${formatDate(joinedAt)}` } : {})}
       role={role}
       isActive={isActive}
       actions={[

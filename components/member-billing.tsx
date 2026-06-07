@@ -80,11 +80,12 @@ export default function MemberBilling() {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
 
-    return memberSessions.filter((session: Session): session is Session & { week: string } => {
-      return (
-        !!session.week &&
-        isWithinInterval(new Date(session.week), { start: monthStart, end: monthEnd })
-      );
+    return memberSessions.filter((session: Session) => {
+      if (!session.timeslotStart) return false;
+      return isWithinInterval(new Date(session.timeslotStart), {
+        start: monthStart,
+        end: monthEnd,
+      });
     });
   };
 
@@ -112,7 +113,8 @@ export default function MemberBilling() {
         amount: subtotal + tax,
         due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         items: monthSessions.map((s: Session) => ({
-          description: `Training ${s.week ?? ''}`.trim(),
+          description:
+            `Training ${s.timeslotStart ? format(new Date(s.timeslotStart), 'dd. MMMM yyyy', { locale: de }) : ''}`.trim(),
           quantity: 1,
           unit_price: rate,
           total: rate,

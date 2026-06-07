@@ -87,7 +87,7 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
         expect(invoice.member_id).toBeNull();
         expect(invoice.due_date).toBe(createInvoiceData.due_date);
         expect(invoice.status).toBe('draft');
-        expect(invoice.type).toBe('other');
+        expect(invoice.invoice_type).toBe('adhoc');
         expect(invoice.amount).toBeCloseTo(71.39, 2);
         expect(invoice.tax_amount).toBeCloseTo(11.4, 2);
         expect(invoice.currency).toBe('EUR');

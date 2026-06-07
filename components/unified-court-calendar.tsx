@@ -39,7 +39,9 @@ import {
   Unlock,
   Wrench,
   PartyPopper,
+  List,
 } from 'lucide-react';
+import CourtBookingsList from '@/components/court-bookings-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -80,7 +82,7 @@ import { apiFetch } from '@/lib/api-fetch';
 
 /* ─────────────────── Types ─────────────────── */
 
-type ViewMode = 'weekly' | 'daily';
+type ViewMode = 'weekly' | 'daily' | 'list';
 
 interface SeasonInfo {
   id: string;
@@ -107,7 +109,8 @@ function getLegendItems(isAdmin: boolean) {
     items.push({ label: 'Session (Drag & Drop)', className: 'bg-blue-50 border border-blue-200' });
     items.push({ label: 'Gesperrt', className: 'bg-gray-200 border border-gray-300' });
   } else {
-    items.push({ label: 'Belegt', className: 'bg-muted border border-border' });
+    items.push({ label: 'Training', className: 'bg-muted border border-border' });
+    items.push({ label: 'Belegt', className: 'bg-orange-50 border border-orange-200' });
     items.push({ label: 'Deine Buchung', className: 'bg-red-50 border border-red-200' });
   }
 
@@ -631,18 +634,22 @@ export default function UnifiedCourtCalendar({
                                     session={session}
                                     isDragging={activeId === session.id}
                                   />
-                                ) : (
-                                  <div className="flex items-center gap-1 w-full justify-between px-1">
-                                    <span className="truncate">
-                                      {session.trainerName?.substring(0, 8) || 'Trainer'}
-                                    </span>
-                                    {session.bookedByUser && session.bookingId && (
+                                ) : session.bookedByUser ? (
+                                  /* Current user's booking — red with cancel button */
+                                  <div className="flex items-center gap-0.5 w-full justify-between px-0.5">
+                                    <div className="flex items-center gap-0.5">
+                                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                                      <span className="text-[10px] font-medium truncate text-red-700">
+                                        Gebucht
+                                      </span>
+                                    </div>
+                                    {session.bookingId && (
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           handleCancelBooking(session.id, session.bookingId!);
                                         }}
-                                        className="p-0.5 rounded hover:bg-red-100 text-red-600"
+                                        className="p-0.5 rounded hover:bg-red-100 text-red-600 flex-shrink-0"
                                         title="Buchung stornieren"
                                       >
                                         <svg
@@ -660,6 +667,21 @@ export default function UnifiedCourtCalendar({
                                         </svg>
                                       </button>
                                     )}
+                                  </div>
+                                ) : session.hasActiveBooking ? (
+                                  /* Someone else booked — orange belegt badge */
+                                  <div className="flex items-center gap-0.5 px-0.5">
+                                    <Lock className="h-2.5 w-2.5 text-orange-600 flex-shrink-0" />
+                                    <span className="text-[10px] truncate text-orange-700">
+                                      {timeSlot} Belegt
+                                    </span>
+                                  </div>
+                                ) : (
+                                  /* Open session — bookable */
+                                  <div className="flex items-center gap-1 w-full justify-between px-1">
+                                    <span className="truncate">
+                                      {session.trainerName?.substring(0, 8) || 'Trainer'}
+                                    </span>
                                   </div>
                                 )
                               ) : status === 'plan' ? (
@@ -833,16 +855,36 @@ export default function UnifiedCourtCalendar({
                                 className={`p-3 rounded-lg border ${
                                   session.bookedByUser
                                     ? 'bg-red-50 border-red-200'
-                                    : 'bg-blue-50 border-blue-200'
+                                    : session.hasActiveBooking
+                                      ? 'bg-orange-50 border-orange-200'
+                                      : 'bg-blue-50 border-blue-200'
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                      <User className="h-4 w-4 text-muted-foreground" />
-                                      <span className="font-medium">
-                                        {session.trainerName || 'Trainer'}
-                                      </span>
+                                      {session.bookedByUser ? (
+                                        <>
+                                          <div className="w-2 h-2 rounded-full bg-red-500" />
+                                          <span className="font-medium text-red-700">
+                                            Deine Buchung
+                                          </span>
+                                        </>
+                                      ) : session.hasActiveBooking ? (
+                                        <>
+                                          <Lock className="h-4 w-4 text-orange-600" />
+                                          <span className="font-medium text-orange-700">
+                                            Belegt
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <User className="h-4 w-4 text-muted-foreground" />
+                                          <span className="font-medium">
+                                            {session.trainerName || 'Trainer'}
+                                          </span>
+                                        </>
+                                      )}
                                     </div>
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                       <div className="flex items-center gap-1">
@@ -852,6 +894,11 @@ export default function UnifiedCourtCalendar({
                                         </span>
                                       </div>
                                       <span>Max. {session.maxParticipants} TN</span>
+                                      {session.hasActiveBooking && !session.bookedByUser && (
+                                        <span className="text-orange-600">
+                                          • {session.trainerName || 'Trainer'}
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                   {session.bookedByUser && session.bookingId && (
@@ -920,24 +967,48 @@ export default function UnifiedCourtCalendar({
         subtitle={
           viewMode === 'weekly'
             ? 'Wochenansicht der Platzverfügbarkeit'
-            : `Tagesansicht · ${format(selectedDate, 'EEEE, dd. MMMM yyyy', { locale: de })}`
+            : viewMode === 'list'
+              ? 'Buchungsübersicht — Alle Buchungen auf einen Blick'
+              : `Tagesansicht · ${format(selectedDate, 'EEEE, dd. MMMM yyyy', { locale: de })}`
         }
         weekStart={weekStart}
         weekEnd={weekEnd}
         onGoPrevious={goToPrevious}
         onGoNext={goToNext}
         onGoToday={goToToday}
-        onGoDaily={() => setViewMode(viewMode === 'weekly' ? 'daily' : 'weekly')}
       >
         {/* View toggle */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setViewMode(viewMode === 'weekly' ? 'daily' : 'weekly')}
-        >
-          <CalendarIcon className="h-4 w-4 mr-2" />
-          {viewMode === 'weekly' ? 'Tagesansicht' : 'Wochenansicht'}
-        </Button>
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          <Button
+            variant={viewMode === 'weekly' ? 'default' : 'ghost'}
+            size="sm"
+            className="rounded-none"
+            onClick={() => setViewMode('weekly')}
+          >
+            <CalendarIcon className="h-4 w-4 mr-1.5" />
+            Woche
+          </Button>
+          <Button
+            variant={viewMode === 'daily' ? 'default' : 'ghost'}
+            size="sm"
+            className="rounded-none border-x border-border"
+            onClick={() => setViewMode('daily')}
+          >
+            <CalendarIcon className="h-4 w-4 mr-1.5" />
+            Tag
+          </Button>
+          {isAdmin && (
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-none"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4 mr-1.5" />
+              Liste
+            </Button>
+          )}
+        </div>
 
         {viewMode === 'daily' && (
           <>
@@ -973,9 +1044,14 @@ export default function UnifiedCourtCalendar({
         )}
       </CourtCalendarHeader>
 
-      {calendarContent}
-
-      <CourtCalendarLegend items={getLegendItems(isAdmin)} />
+      {viewMode === 'list' && isAdmin ? (
+        <CourtBookingsList clubId={clubId!} isAdmin={isAdmin} />
+      ) : (
+        <>
+          {calendarContent}
+          <CourtCalendarLegend items={getLegendItems(isAdmin)} />
+        </>
+      )}
     </div>
   );
 

@@ -124,3 +124,4 @@ tramp
 next-env.d.ts
 tsconfig.tsbuildinfo
 midscene_run/
+TEST-CREDENTIALS.md

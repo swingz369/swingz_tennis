@@ -83,6 +83,21 @@ export async function POST(req: NextRequest) {
     const feeAmount = feeConfig ? Number(feeConfig.amount) : 0;
     const feeCurrency = feeConfig?.currency ?? 'EUR';
 
+    // Guard: don't create €0 invoices when no fee is configured
+    if (feeAmount === 0) {
+      const monthLabel = new Date(year, month - 1).toLocaleDateString('de-DE', {
+        month: 'long',
+        year: 'numeric',
+      });
+      return NextResponse.json({
+        created: 0,
+        skipped: memberships?.length ?? 0,
+        month: monthStr,
+        message: `Keine Gebühr konfiguriert — Rechnungen für ${monthLabel} wurden NICHT erstellt`,
+        warning: 'NO_FEE_CONFIGURED',
+      });
+    }
+
     // 3. Get existing invoices for this club and month to detect duplicates
     const monthStart = `${yearStr}-${monStr}-01`;
     const monthEnd = dueDateStr;
@@ -91,12 +106,12 @@ export async function POST(req: NextRequest) {
       .from('invoices')
       .select('member_id')
       .eq('club_id', clubId)
-      .eq('type', 'member_fee')
+      .eq('invoice_type', 'membership')
       .gte('due_date', monthStart)
       .lte('due_date', monthEnd);
 
     const alreadyBilledMemberIds = new Set(
-      (existingInvoices ?? []).map((inv: any) => inv.member_id)
+      (existingInvoices ?? []).map((inv: any) => inv.member_id).filter(Boolean)
     );
 
     // 4. Get current invoice count for auto-numbering
@@ -109,7 +124,20 @@ export async function POST(req: NextRequest) {
     let created = 0;
     let skipped = 0;
 
-    // 5. Create invoices for members who don't have one yet
+    // 5. Get club tax rate (once, before the loop)
+    let taxRate = 0;
+    try {
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('tax_rate')
+        .eq('id', clubId)
+        .maybeSingle();
+      taxRate = (clubData as any)?.tax_rate ?? 0;
+    } catch {
+      taxRate = 0;
+    }
+
+    // 6. Create invoices for members who don't have one yet
     const toInsert = [];
     for (const membership of memberships) {
       const memberId: string = membership.user_id;
@@ -122,12 +150,15 @@ export async function POST(req: NextRequest) {
       const seqNum = baseCount + created + 1;
       const invoiceNumber = `INV-${year}-${monStr}-${String(seqNum).padStart(4, '0')}`;
 
+      const memberTaxAmount = feeAmount * (taxRate / 100);
+
       toInsert.push({
         club_id: clubId,
         member_id: memberId,
         invoice_number: invoiceNumber,
-        type: 'member_fee',
-        amount: feeAmount,
+        invoice_type: 'membership',
+        amount: feeAmount + memberTaxAmount,
+        tax_amount: memberTaxAmount,
         currency: feeCurrency,
         status: 'open',
         due_date: dueDateStr,
@@ -138,19 +169,58 @@ export async function POST(req: NextRequest) {
     }
 
     if (toInsert.length > 0) {
-      const { error: insertError } = await supabase.from('invoices').insert(toInsert);
+      const { data: insertedInvoices, error: insertError } = await supabase
+        .from('invoices')
+        .insert(toInsert)
+        .select('id, member_id');
 
       if (insertError) {
         console.error('[GenerateInvoices] insert error:', insertError);
         return NextResponse.json({ error: insertError.message }, { status: 500 });
       }
+
+      // Create line items for each invoice
+      if (insertedInvoices && feeAmount > 0) {
+        const lineItems = insertedInvoices.map((inv: any) => ({
+          invoice_id: inv.id,
+          description: feeConfig
+            ? `${feeConfig.name} — ${monthStr}`
+            : `Mitgliedsbeitrag ${monthStr}`,
+          quantity: 1,
+          unit_price: feeAmount,
+          item_type: 'membership_fee',
+        }));
+
+        const { error: itemsError } = await supabase.from('invoice_items').insert(lineItems as any);
+        if (itemsError) {
+          console.error('[GenerateInvoices] line items insert error:', itemsError);
+        }
+      }
+    }
+
+    // Build informative message with month context
+    const monthLabel = new Date(year, month - 1).toLocaleDateString('de-DE', {
+      month: 'long',
+      year: 'numeric',
+    });
+    const message =
+      created > 0
+        ? `${created} Rechnung(en) für ${monthLabel} erstellt${
+            skipped > 0 ? `, ${skipped} bereits vorhanden` : ''
+          }`
+        : `Alle ${skipped} Mitglieder wurden bereits für ${monthLabel} abgerechnet — 0 neue Rechnungen erstellt`;
+
+    if (created === 0 && skipped > 0) {
+      console.log(
+        `[GenerateInvoices] All ${skipped} members already billed for ${monthStr} (club=${clubId})`
+      );
     }
 
     return NextResponse.json({
       created,
       skipped,
       month: monthStr,
-      message: `${created} Rechnung(en) erstellt, ${skipped} übersprungen`,
+      message,
     });
   });
 }

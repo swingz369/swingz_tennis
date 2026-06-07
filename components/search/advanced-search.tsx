@@ -44,8 +44,8 @@ export function AdvancedSearch({ onSearch, onClearFilters }: AdvancedSearchProps
   const handleClearFilters = () => {
     setFilters({
       type: 'all',
-      sortBy: 'relevance',
-      sortOrder: 'desc',
+      sortBy: 'relevance' as const,
+      sortOrder: 'desc' as const,
     });
     setQuery('');
     onClearFilters?.();

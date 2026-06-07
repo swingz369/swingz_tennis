@@ -86,7 +86,6 @@ export default function SettingsClient() {
       saturday: { open: '09:00', close: '22:00' },
       sunday: { open: '09:00', close: '22:00' },
     },
-    bundesland: undefined,
     billing_unit_minutes: 60,
     tax_rate: 0,
     default_payment_method: 'transfer',
@@ -120,7 +119,7 @@ export default function SettingsClient() {
           maxMembers: clubData.club.maxMembers || 100,
           defaultHourlyRate: clubData.club.defaultHourlyRate || 15.0,
           status: clubData.club.status || 'active',
-          bundesland: clubData.club.bundesland ?? undefined,
+          ...(clubData.club.bundesland != null ? { bundesland: clubData.club.bundesland } : {}),
           billing_unit_minutes: clubData.club.billing_unit_minutes === 45 ? 45 : 60,
           tax_rate: clubData.club.tax_rate ?? 0,
           default_payment_method: (['sepa', 'transfer', 'cash', 'stripe'] as const).includes(

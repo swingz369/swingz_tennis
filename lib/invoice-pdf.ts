@@ -403,7 +403,7 @@ export function generateInvoiceFromBookings(bookings: any[], memberData: any): I
   const dueDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
   const items: InvoiceItem[] = bookings.map((booking) => ({
-    description: `Training am ${format(new Date(booking.week), 'dd. MMMM yyyy', { locale: de })}`,
+    description: `Training am ${format(new Date(booking.timeslotStart), 'dd. MMMM yyyy', { locale: de })}`,
     quantity: 1,
     unitPrice: 15.0,
     total: 15.0,

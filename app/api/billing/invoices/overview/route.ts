@@ -42,13 +42,13 @@ export async function GET(_request: NextRequest) {
 
       if (clubId) {
         invoices = await billingEngine.getInvoicesByClub(clubId, {
-          status: status ?? undefined,
+          ...(status != null ? { status } : {}),
           limit,
           offset,
         });
       } else if (memberId) {
         invoices = await billingEngine.getInvoicesByMember(memberId, {
-          status: status ?? undefined,
+          ...(status != null ? { status } : {}),
           limit,
           offset,
         });

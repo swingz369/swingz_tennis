@@ -62,7 +62,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
           recipientEmail: trialTraining.participant.email,
           clubName: settings['club_name'] ?? 'SwingZ Tennis Club',
           memberType: memberType || 'member',
-          startDate: startDate ? new Date(startDate) : undefined,
+          ...(startDate ? { startDate: new Date(startDate) } : {}),
           assignedGroup,
           clubAddress: settings['club_address'] ?? '',
           clubPhone: settings['club_phone'] ?? '',

@@ -43,7 +43,7 @@ export function getSurfaceLabel(surface: string): string {
 }
 
 /** Visual status of a calendar slot */
-export type SlotStatus = 'available' | 'session' | 'booked' | 'plan' | 'blocked';
+export type SlotStatus = 'available' | 'session' | 'booked' | 'own-booking' | 'plan' | 'blocked';
 
 /**
  * Find the session that covers a given court+date+timeslot.
@@ -61,17 +61,14 @@ export function getSessionForSlot(
 
   return sessions.find((session) => {
     if (!session.courtId || session.courtId !== courtId) return false;
-    if (!session.week) return false;
+    // Use timeslotStart (ISO date string) for accurate date matching
+    if (!session.timeslotStart || !session.timeslotEnd) return false;
 
-    const sessionDate = new Date(session.week);
-    const [startHour, startMinute] = session.startTime.split(':').map(Number);
-    const [endHour, endMinute] = session.endTime.split(':').map(Number);
-
-    const sessionStart = setMinutes(setHours(sessionDate, startHour), startMinute);
-    const sessionEnd = setMinutes(setHours(sessionDate, endHour), endMinute);
+    const sessionStart = new Date(session.timeslotStart);
+    const sessionEnd = new Date(session.timeslotEnd);
 
     return (
-      isSameDay(sessionDate, date) &&
+      isSameDay(sessionStart, date) &&
       (isBefore(slotStart, sessionEnd) || slotStart.getTime() === sessionStart.getTime()) &&
       (isAfter(slotEnd, sessionStart) || slotEnd.getTime() === sessionEnd.getTime())
     );
@@ -94,7 +91,11 @@ export function getSlotStatus(
     if (session.sessionType === 'event' || session.sessionType === 'maintenance') {
       return { status: 'blocked', session };
     }
-    return { status: session.bookedByUser ? 'booked' : 'session', session };
+    // Booked by current user → red "Deine Buchung"
+    if (session.bookedByUser) return { status: 'own-booking', session };
+    // Someone else booked → orange "Belegt" (unavailable)
+    if (session.hasActiveBooking) return { status: 'booked', session };
+    return { status: 'session', session };
   }
 
   const hasPlanEntry = planEntries.some(
@@ -109,7 +110,8 @@ export function getSlotStatus(
 export const SLOT_STATUS_STYLES: Record<SlotStatus, string> = {
   available: 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 cursor-pointer',
   session: 'bg-muted text-muted-foreground border border-border',
-  booked: 'bg-red-50 text-red-800 border border-red-200',
+  booked: 'bg-orange-50 text-orange-800 border border-orange-200',
+  'own-booking': 'bg-red-50 text-red-800 border border-red-200',
   plan: 'bg-purple-50 text-purple-700 border border-purple-200',
   blocked: 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed',
 };

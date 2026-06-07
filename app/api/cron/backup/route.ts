@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
       totalRows,
       fileSizeBytes: 0, // Updated after upload
       status: errors.length === 0 ? 'success' : 'partial',
-      errors: errors.length > 0 ? errors : undefined,
+      ...(errors.length > 0 ? { errors } : {}),
     };
 
     // Serialize to JSON

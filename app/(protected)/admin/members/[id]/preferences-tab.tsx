@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -13,10 +14,21 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Clock, Target, Users, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { Clock, Target, Users, Save, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
 type DaySchedule = Array<{ start: string; end: string }>;
+
+const PRESET_STARTS = [
+  '08:00',
+  '09:30',
+  '11:00',
+  '13:00',
+  '14:30',
+  '16:00',
+  '17:30',
+  '19:00',
+] as const;
 
 interface WeeklyAvailability {
   monday: DaySchedule;
@@ -51,11 +63,6 @@ const DAYS: { key: keyof WeeklyAvailability; label: string }[] = [
   { key: 'sunday', label: 'Sonntag' },
 ];
 
-const HOURS = Array.from({ length: 18 }, (_, i) => {
-  const h = i + 6; // 06:00 - 23:00
-  return `${String(h).padStart(2, '0')}:00`;
-});
-
 const emptyAvailability = (): WeeklyAvailability => ({
   monday: [],
   tuesday: [],
@@ -85,6 +92,11 @@ export function PreferencesTab({ userId, clubId }: Props) {
     special_requests: null,
     notes: null,
   });
+
+  // Custom time range form
+  const [customDay, setCustomDay] = useState<keyof WeeklyAvailability>('monday');
+  const [customFrom, setCustomFrom] = useState('08:00');
+  const [customTo, setCustomTo] = useState('10:00');
 
   const fetchPrefs = useCallback(async () => {
     try {
@@ -117,6 +129,51 @@ export function PreferencesTab({ userId, clubId }: Props) {
     fetchPrefs();
   }, [fetchPrefs]);
 
+  const togglePresetSlot = useCallback((day: keyof WeeklyAvailability, start: string) => {
+    const [h, m] = start.split(':').map(Number);
+    const end = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    setPrefs((prev) => {
+      const daySlots = prev.weekly_availability[day];
+      const exists = daySlots.some((s) => s.start === start && s.end === end);
+      return {
+        ...prev,
+        weekly_availability: {
+          ...prev.weekly_availability,
+          [day]: exists
+            ? daySlots.filter((s) => !(s.start === start && s.end === end))
+            : [...daySlots, { start, end }],
+        },
+      };
+    });
+  }, []);
+
+  const removeSlot = useCallback((day: keyof WeeklyAvailability, start: string, end: string) => {
+    setPrefs((prev) => ({
+      ...prev,
+      weekly_availability: {
+        ...prev.weekly_availability,
+        [day]: prev.weekly_availability[day].filter((s) => !(s.start === start && s.end === end)),
+      },
+    }));
+  }, []);
+
+  const addCustomSlot = useCallback(() => {
+    if (customFrom >= customTo) {
+      toast.error('Startzeit muss vor Endzeit liegen');
+      return;
+    }
+    setPrefs((prev) => ({
+      ...prev,
+      weekly_availability: {
+        ...prev.weekly_availability,
+        [customDay]: [...prev.weekly_availability[customDay], { start: customFrom, end: customTo }],
+      },
+    }));
+    setCustomFrom('08:00');
+    setCustomTo('10:00');
+    toast.success('Zeitfenster hinzugefügt');
+  }, [customDay, customFrom, customTo]);
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -141,43 +198,6 @@ export function PreferencesTab({ userId, clubId }: Props) {
     } finally {
       setSaving(false);
     }
-  };
-
-  const addTimeSlot = (day: keyof WeeklyAvailability) => {
-    setPrefs((prev) => ({
-      ...prev,
-      weekly_availability: {
-        ...prev.weekly_availability,
-        [day]: [...prev.weekly_availability[day], { start: '09:00', end: '10:00' }],
-      },
-    }));
-  };
-
-  const removeTimeSlot = (day: keyof WeeklyAvailability, index: number) => {
-    setPrefs((prev) => ({
-      ...prev,
-      weekly_availability: {
-        ...prev.weekly_availability,
-        [day]: prev.weekly_availability[day].filter((_, i) => i !== index),
-      },
-    }));
-  };
-
-  const updateTimeSlot = (
-    day: keyof WeeklyAvailability,
-    index: number,
-    field: 'start' | 'end',
-    value: string
-  ) => {
-    setPrefs((prev) => ({
-      ...prev,
-      weekly_availability: {
-        ...prev.weekly_availability,
-        [day]: prev.weekly_availability[day].map((slot, i) =>
-          i === index ? { ...slot, [field]: value } : slot
-        ),
-      },
-    }));
   };
 
   if (loading) {
@@ -258,74 +278,140 @@ export function PreferencesTab({ userId, clubId }: Props) {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           {DAYS.map(({ key, label }) => {
             const slots = prefs.weekly_availability[key];
             return (
               <div key={key} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">{label}</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs gap-1"
-                    onClick={() => addTimeSlot(key)}
-                  >
-                    + Zeitfenster
-                  </Button>
+                <Label className="text-sm font-medium">{label}</Label>
+                {/* Preset chip toggles */}
+                <div className="flex flex-wrap gap-1.5">
+                  {PRESET_STARTS.map((start) => {
+                    const [h, m] = start.split(':').map(Number);
+                    const end = `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    const active = slots.some((s) => s.start === start && s.end === end);
+                    return (
+                      <button
+                        key={start}
+                        onClick={() => togglePresetSlot(key, start)}
+                        className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
+                          active
+                            ? 'bg-brand-primary text-white shadow-sm'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        }`}
+                      >
+                        {start}
+                      </button>
+                    );
+                  })}
                 </div>
-                {slots.length === 0 ? (
-                  <p className="text-xs text-muted-foreground pl-2">Keine Verfügbarkeit</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {slots.map((slot, idx) => (
-                      <div key={idx} className="flex items-center gap-2 ml-2">
-                        <Select
-                          value={slot.start}
-                          onValueChange={(v) => updateTimeSlot(key, idx, 'start', v)}
-                        >
-                          <SelectTrigger className="w-[100px] h-8 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {HOURS.map((h) => (
-                              <SelectItem key={h} value={h}>
-                                {h}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <span className="text-muted-foreground text-sm">–</span>
-                        <Select
-                          value={slot.end}
-                          onValueChange={(v) => updateTimeSlot(key, idx, 'end', v)}
-                        >
-                          <SelectTrigger className="w-[100px] h-8 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {HOURS.map((h) => (
-                              <SelectItem key={h} value={h}>
-                                {h}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-400 hover:text-red-600"
-                          onClick={() => removeTimeSlot(key, idx)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                {/* Non-preset (custom) slots */}
+                {slots
+                  .filter((s) => {
+                    const isPreset = PRESET_STARTS.some((ps) => {
+                      const [ph, pm] = ps.split(':').map(Number);
+                      const pe = `${String(ph + 1).padStart(2, '0')}:${String(pm).padStart(2, '0')}`;
+                      return s.start === ps && s.end === pe;
+                    });
+                    return !isPreset;
+                  })
+                  .map((slot, idx) => (
+                    <div key={`custom-${idx}`} className="flex items-center gap-2 ml-2">
+                      <Input
+                        type="time"
+                        value={slot.start}
+                        onChange={(e) => {
+                          const newSlots = [...slots];
+                          const realIdx = newSlots.findIndex(
+                            (s) => s.start === slot.start && s.end === slot.end
+                          );
+                          if (realIdx >= 0) {
+                            newSlots[realIdx] = { ...newSlots[realIdx], start: e.target.value };
+                            setPrefs((prev) => ({
+                              ...prev,
+                              weekly_availability: { ...prev.weekly_availability, [key]: newSlots },
+                            }));
+                          }
+                        }}
+                        className="w-[120px] h-8 text-sm"
+                      />
+                      <span className="text-muted-foreground text-sm">–</span>
+                      <Input
+                        type="time"
+                        value={slot.end}
+                        onChange={(e) => {
+                          const newSlots = [...slots];
+                          const realIdx = newSlots.findIndex(
+                            (s) => s.start === slot.start && s.end === slot.end
+                          );
+                          if (realIdx >= 0) {
+                            newSlots[realIdx] = { ...newSlots[realIdx], end: e.target.value };
+                            setPrefs((prev) => ({
+                              ...prev,
+                              weekly_availability: { ...prev.weekly_availability, [key]: newSlots },
+                            }));
+                          }
+                        }}
+                        className="w-[120px] h-8 text-sm"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-400 hover:text-red-600"
+                        onClick={() => removeSlot(key, slot.start, slot.end)}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                {slots.length === 0 && (
+                  <p className="text-xs text-muted-foreground pl-1">Keine Verfügbarkeit</p>
                 )}
               </div>
             );
           })}
+
+          {/* Custom time range */}
+          <div className="pt-3 mt-3 border-t border-border">
+            <Label className="text-xs text-muted-foreground mb-2 block">
+              Benutzerdefiniertes Zeitfenster hinzufügen
+            </Label>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select
+                value={customDay}
+                onValueChange={(v) => setCustomDay(v as keyof WeeklyAvailability)}
+              >
+                <SelectTrigger className="w-[120px] h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS.map(({ key, label }) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-muted-foreground">von</span>
+              <Input
+                type="time"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="w-[110px] h-9 text-sm"
+              />
+              <span className="text-xs text-muted-foreground">bis</span>
+              <Input
+                type="time"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="w-[110px] h-9 text-sm"
+              />
+              <Button size="sm" variant="outline" className="gap-1 h-9" onClick={addCustomSlot}>
+                <Plus className="h-4 w-4" />
+                Hinzufügen
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

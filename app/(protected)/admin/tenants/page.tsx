@@ -69,15 +69,14 @@ export default function SuperadminTenantsPage() {
 
           const { data: revenueData } = await supabase
             .from('invoices')
-            .select('total_amount')
+            .select('amount')
             .eq('club_id', club.id)
             .eq('status', 'paid')
             .gte('paid_at', thirtyDaysAgo.toISOString());
 
           club.revenue =
             revenueData?.reduce(
-              (sum: number, inv: { total_amount: number | null }) =>
-                sum + (Number(inv.total_amount) || 0),
+              (sum: number, inv: { amount: number | null }) => sum + (Number(inv.amount) || 0),
               0
             ) || 0;
         })

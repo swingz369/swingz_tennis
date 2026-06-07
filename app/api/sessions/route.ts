@@ -85,17 +85,33 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      // Fetch current user's bookings for this club
-      const { data: userBookings } = await supabase
-        .from('bookings')
-        .select('id, session_id, status')
-        .eq('member_id', userId)
-        .eq('club_id', clubIdParam);
+      // Fetch ALL active bookings for this club's upcoming sessions
+      const sessionIds = (sessions ?? []).map((s: any) => s.id);
+      const activeStatuses = ['pending', 'confirmed'];
 
-      const bookingsMap = new Map<string, { bookingId: string; status: string }>();
-      (userBookings ?? []).forEach((b: any) => {
-        bookingsMap.set(b.session_id, { bookingId: b.id, status: b.status });
+      const { data: allActiveBookings } =
+        sessionIds.length > 0
+          ? await supabase
+              .from('bookings')
+              .select('id, session_id, status, member_id')
+              .in('session_id', sessionIds)
+              .in('status', activeStatuses)
+              .eq('club_id', clubIdParam)
+          : { data: [] };
+
+      // Build per-session booking stats
+      const sessionBookingCount = new Map<string, number>();
+      (allActiveBookings ?? []).forEach((b: any) => {
+        sessionBookingCount.set(b.session_id, (sessionBookingCount.get(b.session_id) ?? 0) + 1);
       });
+
+      // Build current-user booking map
+      const bookingsMap = new Map<string, { bookingId: string; status: string }>();
+      (allActiveBookings ?? [])
+        .filter((b: any) => b.member_id === userId)
+        .forEach((b: any) => {
+          bookingsMap.set(b.session_id, { bookingId: b.id, status: b.status });
+        });
 
       // Transform sessions to the format the booking UI expects
       const result = (sessions ?? []).map((s: any) => {
@@ -107,6 +123,8 @@ export async function GET(req: NextRequest) {
 
         const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
         const booking = bookingsMap.get(s.id);
+        const currentBookings = sessionBookingCount.get(s.id) ?? 0;
+        const maxParticipants = s.max_participants ?? 4;
 
         return {
           id: s.id,
@@ -118,14 +136,15 @@ export async function GET(req: NextRequest) {
           trainerId: s.trainer_id,
           trainerName: trainersMap.get(s.trainer_id) ?? 'Trainer',
           courtName: court?.name ?? 'Platz',
-          maxParticipants: s.max_participants ?? 4,
-          week: s.week_number?.toString() ?? '1',
+          maxParticipants,
           sessionType: s.session_type ?? 'training',
           notes: s.notes ?? null,
           courtId: s.court_id,
           bookedByUser: !!booking,
           bookingId: booking?.bookingId ?? null,
           bookingStatus: booking?.status ?? null,
+          hasActiveBooking: currentBookings > 0,
+          currentBookings,
         };
       });
 

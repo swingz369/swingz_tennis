@@ -88,6 +88,7 @@ interface LineItem {
 function InvoiceStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
+    open: { label: 'Offen', className: 'bg-sky-100 text-sky-700' },
     sent: { label: 'Versendet', className: 'bg-blue-100 text-blue-700' },
     reminder_sent: { label: 'Erinnerung', className: 'bg-yellow-100 text-yellow-700' },
     partially_paid: { label: 'Teilbezahlt', className: 'bg-orange-100 text-orange-700' },
@@ -95,6 +96,9 @@ function InvoiceStatusBadge({ status }: { status: string }) {
     overdue: { label: 'Überfällig', className: 'bg-red-100 text-red-700' },
     dunning: { label: 'Mahnung', className: 'bg-red-200 text-red-900 font-bold' },
     cancelled: { label: 'Storniert', className: 'bg-muted text-muted-foreground line-through' },
+    void: { label: 'Ungültig', className: 'bg-muted text-muted-foreground line-through' },
+    uncollectible: { label: 'Uneinbringlich', className: 'bg-red-100 text-red-700 italic' },
+    refunded: { label: 'Erstattet', className: 'bg-purple-100 text-purple-700' },
   };
   const c = config[status] ?? config.draft;
   return (
@@ -206,24 +210,23 @@ export default function BillingClient({
     }
     setLoadingInvoices(true);
     const params = new URLSearchParams({ clubId, type: invoiceTypeFilter });
-    apiFetch(`/api/billing/invoices?${params.toString()}`)
+    apiFetch(`/api/admin/billing/invoices?${params.toString()}`)
       .then((r) => r.json())
       .then((json) => {
         if (json.data) {
           setInvoices(
             (json.data as Record<string, unknown>[]).map((inv) => {
-              const users = inv.users as Record<string, unknown> | null;
               return {
                 id: String(inv.id),
-                invoiceNumber: String(inv.invoice_number || ''),
-                memberId: String(inv.member_id || ''),
-                memberName: String(users?.full_name || inv.member_name || 'N/A'),
+                invoiceNumber: String(inv.invoiceNumber || ''),
+                memberId: String(inv.memberId || ''),
+                memberName: String(inv.memberName || 'N/A'),
                 amount: Number(inv.amount ?? 0),
                 currency: String(inv.currency || 'EUR'),
                 status: String(inv.status || 'draft') as Invoice['status'],
-                invoiceType: inv.invoice_type as Invoice['invoiceType'],
-                dueDate: String(inv.due_date || ''),
-                paidAt: inv.paid_at ? String(inv.paid_at) : undefined,
+                invoiceType: inv.invoiceType as Invoice['invoiceType'],
+                dueDate: String(inv.dueDate || ''),
+                paidAt: inv.paidAt ? String(inv.paidAt) : undefined,
               } as Invoice;
             })
           );
@@ -337,8 +340,14 @@ export default function BillingClient({
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success(data.message ?? `${data.created} Rechnung(en) erstellt`);
-        refreshData();
+        if (data.warning === 'NO_FEE_CONFIGURED') {
+          toast.warning(data.message ?? 'Keine aktive Mitgliedsgebühr');
+        } else {
+          toast.success(data.message ?? `${data.created} Rechnung(en) erstellt`);
+        }
+        // Switch to invoices tab with membership filter — useEffect handles the API fetch
+        setActiveTab('invoices');
+        setInvoiceTypeFilter('membership');
       } else {
         toast.error(data.error ?? 'Fehler beim Generieren der Rechnungen');
       }

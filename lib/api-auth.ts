@@ -106,7 +106,7 @@ async function buildAuthContext(
     session: null,
     supabase,
     clubId: effectiveClubId,
-    selectedClubId,
+    ...(selectedClubId != null ? { selectedClubId } : {}),
     role: effectiveRole,
     roles: memberships.map((m) => m.role),
     memberships,

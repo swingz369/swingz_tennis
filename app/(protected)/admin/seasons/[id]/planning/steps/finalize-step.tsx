@@ -27,8 +27,14 @@ import {
   ChevronRight,
   RefreshCw,
   Brain,
+  Euro,
+  Receipt,
+  TrendingUp,
+  DollarSign,
+  Table2,
 } from 'lucide-react';
 import type { ConflictDetectionResult, ConflictSeverityLevel } from '@/lib/season-planning/types';
+import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
 import { apiFetch } from '@/lib/api-fetch';
 
 export function FinalizeStep() {
@@ -48,6 +54,12 @@ export function FinalizeStep() {
   const [aiReviewText, setAiReviewText] = useState<string | null>(null);
   const [aiReviewLoading, setAiReviewLoading] = useState(false);
   const [hasRunAiReview, setHasRunAiReview] = useState(false);
+
+  // Billing preview state
+  const [billingPreview, setBillingPreview] = useState<SeasonBillingPreview | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [billingFetched, setBillingFetched] = useState(false);
 
   const conflicts = state.conflicts;
   const criticalConflicts = conflicts.filter(
@@ -193,6 +205,50 @@ export function FinalizeStep() {
     });
   };
 
+  // Fetch billing preview when confirmed and not yet fetched
+  useEffect(() => {
+    if (state.isConfirmed && !billingFetched) {
+      setBillingFetched(true);
+      setBillingLoading(true);
+      setBillingError(null);
+      apiFetch(`/api/seasons/${state.seasonId}/billing`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.error) throw new Error(data.error);
+          setBillingPreview(data);
+        })
+        .catch((err) => {
+          setBillingError(err instanceof Error ? err.message : 'Vorschau nicht verfügbar');
+        })
+        .finally(() => setBillingLoading(false));
+    }
+  }, [state.isConfirmed, billingFetched, state.seasonId]);
+
+  const handleGenerateInvoices = async () => {
+    setIsGeneratingInvoices(true);
+    try {
+      const res = await apiFetch(`/api/seasons/${state.seasonId}/billing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const created = data.created?.length ?? 0;
+        const skipped = data.skipped?.length ?? 0;
+        toast.success(
+          `${created} Rechnung(en) erstellt${skipped > 0 ? `, ${skipped} bereits vorhanden` : ''}`
+        );
+      } else {
+        toast.error(data.error ?? 'Fehler beim Erstellen der Rechnungen');
+      }
+    } catch {
+      toast.error('Netzwerkfehler');
+    } finally {
+      setIsGeneratingInvoices(false);
+    }
+  };
+
   // === POST-CONFIRMATION SUCCESS STATE ===
   if (state.isConfirmed) {
     return (
@@ -272,62 +328,321 @@ export function FinalizeStep() {
           </Card>
         )}
 
-        {/* Billing Call-to-Action — auto-generate invoices for season participants */}
-        <Card className="border-blue-200 bg-blue-50/30">
-          <CardContent className="py-6">
-            <div className="flex items-start gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 flex-shrink-0">
-                <FileText className="h-5 w-5 text-blue-600" />
+        {/* ═══ BILLING PREVIEW ═══ */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-brand-primary" />
+                  Abrechnungs-Vorschau
+                </CardTitle>
+                <CardDescription>
+                  Kostenzusammensetzung basierend auf der Saisonplanung
+                </CardDescription>
               </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-blue-900">Rechnungen generieren</h3>
-                <p className="text-xs text-blue-700 mt-1">
-                  Erstelle Monatsrechnungen für alle aktiven Mitglieder des Vereins. Die
-                  Saisonplanung ist abgeschlossen.
-                </p>
-                <div className="flex items-center gap-3 mt-3">
-                  <Button
-                    size="sm"
-                    className="gap-1.5 bg-brand-primary hover:bg-brand-primary/90 text-white"
-                    disabled={isGeneratingInvoices}
-                    onClick={async () => {
-                      setIsGeneratingInvoices(true);
-                      try {
-                        const res = await apiFetch('/api/billing/generate-invoices', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({}),
-                        });
-                        const data = await res.json();
-                        if (res.ok) {
-                          toast.success(data.message ?? 'Rechnungen erstellt');
-                        } else {
-                          toast.error(data.error ?? 'Fehler');
-                        }
-                      } catch {
-                        toast.error('Netzwerkfehler');
-                      } finally {
-                        setIsGeneratingInvoices(false);
-                      }
-                    }}
-                  >
-                    {isGeneratingInvoices ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <FileText className="h-3.5 w-3.5" />
-                    )}
-                    Rechnungen jetzt generieren
-                  </Button>
-                  <Link
-                    href="/admin/billing"
-                    className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    Zur Abrechnung
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </div>
+              {billingPreview && (
+                <Badge variant="outline" className="text-xs">
+                  {billingPreview.memberCount} Mitglieder · {billingPreview.groupCount} Gruppen
+                </Badge>
+              )}
             </div>
+          </CardHeader>
+          <CardContent>
+            {/* ── Loading State ── */}
+            {billingLoading && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
+                <p className="text-sm text-muted-foreground">Berechne Abrechnungs-Vorschau...</p>
+              </div>
+            )}
+
+            {/* ── Error State ── */}
+            {!billingLoading && billingError && (
+              <div className="flex flex-col items-center justify-center py-10 gap-3">
+                <AlertTriangle className="h-8 w-8 text-amber-500" />
+                <p className="text-sm text-muted-foreground">{billingError}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setBillingFetched(false);
+                    setBillingError(null);
+                  }}
+                >
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                  Erneut versuchen
+                </Button>
+              </div>
+            )}
+
+            {/* ── Empty State ── */}
+            {!billingLoading &&
+              !billingError &&
+              billingPreview &&
+              billingPreview.memberPreviews.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                  <Info className="h-8 w-8 text-blue-400" />
+                  <p className="text-sm text-muted-foreground">
+                    Keine Planungseinträge für die Abrechnung gefunden.
+                  </p>
+                </div>
+              )}
+
+            {/* ── Billing Content ── */}
+            {!billingLoading &&
+              !billingError &&
+              billingPreview &&
+              billingPreview.memberPreviews.length > 0 && (
+                <div className="space-y-6">
+                  {/* ▸ Summary KPI Cards */}
+                  <div className="grid gap-3 md:grid-cols-4">
+                    <BillingKpiCard
+                      icon={<Euro className="h-4 w-4 text-brand-primary" />}
+                      label="Trainingskosten"
+                      value={billingPreview.totalTrainingCost}
+                      subtitle={`${billingPreview.groupCount} Gruppen`}
+                    />
+                    <BillingKpiCard
+                      icon={<Users className="h-4 w-4 text-blue-500" />}
+                      label="Mitgliedsbeiträge"
+                      value={billingPreview.totalMembershipFees}
+                      subtitle={`${billingPreview.memberCount} Mitglieder`}
+                    />
+                    <BillingKpiCard
+                      icon={<DollarSign className="h-4 w-4 text-amber-500" />}
+                      label="Zusatzgebühren"
+                      value={billingPreview.totalAdditionalFees}
+                      subtitle={billingPreview.totalAdditionalFees > 0 ? 'Konfiguriert' : 'Keine'}
+                    />
+                    <BillingKpiCard
+                      icon={<TrendingUp className="h-4 w-4 text-green-600" />}
+                      label="Gesamtsumme"
+                      value={billingPreview.grandTotal}
+                      subtitle="Alle Posten"
+                      highlight
+                    />
+                  </div>
+
+                  {/* ▸ Config Info */}
+                  {billingPreview.config && (
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                      <span className="font-medium text-foreground">Konfiguration:</span>
+                      <Badge variant="secondary" className="text-[11px]">
+                        Stundensatz {billingPreview.config.trainer_hourly_rate.toFixed(2)} €
+                      </Badge>
+                      {billingPreview.config.use_trainer_profile_rate && (
+                        <Badge variant="secondary" className="text-[11px]">
+                          Trainer-Profile
+                        </Badge>
+                      )}
+                      {billingPreview.config.include_membership_fee && (
+                        <Badge variant="secondary" className="text-[11px]">
+                          Mitgliedsbeitrag inkl.
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="text-[11px]">
+                        MwSt. {billingPreview.config.tax_rate}%
+                      </Badge>
+                      <Badge variant="secondary" className="text-[11px]">
+                        Zahlungsziel {billingPreview.config.payment_terms_days} Tage
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* ▸ Group Breakdown Table */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <Table2 className="h-4 w-4 text-muted-foreground" />
+                      Kostenzusammensetzung pro Gruppe
+                    </h4>
+                    <div className="rounded-lg border border-border overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-muted/50 border-b border-border">
+                            <th className="text-left px-3 py-2 font-medium text-muted-foreground">
+                              Gruppe / Trainer
+                            </th>
+                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                              Stundensatz
+                            </th>
+                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                              Dauer
+                            </th>
+                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                              Termine
+                            </th>
+                            <th className="text-center px-3 py-2 font-medium text-muted-foreground">
+                              Teilnehmer
+                            </th>
+                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                              Gesamtkosten
+                            </th>
+                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                              Pro Person
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {billingPreview.groupBreakdown.map((group, idx) => (
+                            <tr
+                              key={`${group.groupName}-${idx}`}
+                              className={`border-b border-border last:border-0 ${
+                                idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
+                              } hover:bg-muted/30 transition-colors`}
+                            >
+                              <td className="px-3 py-2.5">
+                                <div className="font-medium text-foreground">{group.groupName}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {group.trainerName}
+                                </div>
+                              </td>
+                              <td className="text-center px-3 py-2.5 tabular-nums">
+                                {group.trainerHourlyRate.toFixed(2)} €
+                              </td>
+                              <td className="text-center px-3 py-2.5 tabular-nums">
+                                {group.sessionDurationHours.toFixed(1)} h
+                              </td>
+                              <td className="text-center px-3 py-2.5 tabular-nums">
+                                {group.totalSessions}
+                              </td>
+                              <td className="text-center px-3 py-2.5 tabular-nums">
+                                {group.participantCount}
+                              </td>
+                              <td className="text-right px-3 py-2.5 tabular-nums font-medium">
+                                {group.totalTrainerCost.toFixed(2)} €
+                              </td>
+                              <td className="text-right px-3 py-2.5 tabular-nums font-medium text-brand-primary">
+                                {group.costPerParticipant.toFixed(2)} €
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* ▸ Member Cost Table */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      Kosten pro Mitglied
+                      <Badge variant="secondary" className="text-[11px] ml-1">
+                        {billingPreview.memberPreviews.length}
+                      </Badge>
+                    </h4>
+                    <div className="rounded-lg border border-border overflow-hidden max-h-[420px] overflow-y-auto">
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-muted/50 z-10">
+                          <tr className="border-b border-border">
+                            <th className="text-left px-3 py-2 font-medium text-muted-foreground">
+                              Mitglied
+                            </th>
+                            <th className="text-left px-3 py-2 font-medium text-muted-foreground">
+                              Gruppe
+                            </th>
+                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                              Training
+                            </th>
+                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                              Beitrag
+                            </th>
+                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                              Zusatz
+                            </th>
+                            <th className="text-right px-3 py-2 font-medium text-muted-foreground">
+                              Gesamt
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {billingPreview.memberPreviews.map((member, idx) => (
+                            <tr
+                              key={member.memberId}
+                              className={`border-b border-border last:border-0 ${
+                                idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'
+                              } hover:bg-muted/30 transition-colors`}
+                            >
+                              <td className="px-3 py-2.5 font-medium text-foreground">
+                                {member.memberName}
+                              </td>
+                              <td className="px-3 py-2.5 text-muted-foreground">
+                                {member.groupName}
+                              </td>
+                              <td className="text-right px-3 py-2.5 tabular-nums">
+                                {member.trainingCost.toFixed(2)} €
+                              </td>
+                              <td className="text-right px-3 py-2.5 tabular-nums">
+                                {member.membershipFee > 0
+                                  ? `${member.membershipFee.toFixed(2)} €`
+                                  : '–'}
+                              </td>
+                              <td className="text-right px-3 py-2.5 tabular-nums">
+                                {member.additionalFees > 0
+                                  ? `${member.additionalFees.toFixed(2)} €`
+                                  : '–'}
+                              </td>
+                              <td className="text-right px-3 py-2.5 tabular-nums font-semibold text-brand-primary">
+                                {member.totalAmount.toFixed(2)} €
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* ▸ Grand Total Bar */}
+                  <div className="flex items-center justify-between rounded-lg bg-brand-primary/5 border border-brand-primary/20 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-primary/10">
+                        <Euro className="h-4 w-4 text-brand-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          Gesamtsumme Saison-Abrechnung
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {billingPreview.memberCount} Mitglieder · {billingPreview.groupCount}{' '}
+                          Gruppen
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-brand-primary tabular-nums">
+                      {billingPreview.grandTotal.toFixed(2)} €
+                    </p>
+                  </div>
+
+                  {/* ▸ Generate Invoices Button */}
+                  <div className="flex items-center gap-3">
+                    <Button
+                      size="lg"
+                      className="gap-2 bg-brand-primary hover:bg-brand-primary/90 text-white"
+                      disabled={isGeneratingInvoices}
+                      onClick={handleGenerateInvoices}
+                    >
+                      {isGeneratingInvoices ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Erstelle Rechnungen...
+                        </>
+                      ) : (
+                        <>
+                          <Receipt className="h-4 w-4" />
+                          {billingPreview.memberCount} Rechnungen generieren
+                        </>
+                      )}
+                    </Button>
+                    <Link
+                      href="/admin/billing"
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Zur Abrechnung
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              )}
           </CardContent>
         </Card>
       </div>
@@ -699,6 +1014,42 @@ export function FinalizeStep() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ============================================
+// BILLING KPI CARD
+// ============================================
+function BillingKpiCard({
+  icon,
+  label,
+  value,
+  subtitle,
+  highlight,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  subtitle: string;
+  highlight?: boolean;
+}) {
+  return (
+    <Card className={highlight ? 'border-brand-primary/30 bg-brand-primary/5' : ''}>
+      <CardContent className="pt-4 pb-3">
+        <div className="flex items-center gap-2">
+          {icon}
+          <p className="text-xs text-muted-foreground">{label}</p>
+        </div>
+        <p
+          className={`text-xl font-bold mt-1 tabular-nums ${
+            highlight ? 'text-brand-primary' : 'text-foreground'
+          }`}
+        >
+          {value.toFixed(2)} €
+        </p>
+        <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+      </CardContent>
+    </Card>
   );
 }
 

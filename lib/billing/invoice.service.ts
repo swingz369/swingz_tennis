@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import type { Invoice, CreateInvoice, InvoiceWithItems, InvoiceStatus } from '../types/billing';
+import { CreateInvoiceSchema } from '../types/billing';
 
 const supabase = createServiceClient();
 
@@ -40,6 +41,8 @@ export class InvoiceService {
   }
 
   async createInvoice(data: CreateInvoice & { type?: string }): Promise<InvoiceWithItems> {
+    CreateInvoiceSchema.parse(data);
+
     const invoiceNumber = await this.generateInvoiceNumber(data.club_id);
 
     const subtotal = data.items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
@@ -55,7 +58,7 @@ export class InvoiceService {
         club_id: data.club_id,
         member_id: data.member_id,
         invoice_number: invoiceNumber,
-        type: data.type ?? 'other',
+        invoice_type: data.type ?? 'adhoc',
         amount: totalAmount,
         tax_amount: taxAmount,
         due_date: data.due_date,

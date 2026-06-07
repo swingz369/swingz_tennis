@@ -101,6 +101,8 @@ interface MockConfig {
   season: unknown[];
   /** Plan entries query result */
   entries: unknown[];
+  /** Club query result (for bundesland/holiday resolution) */
+  club: unknown[];
   /** Existing schedule (empty array → no schedule, triggers insert) */
   schedule: unknown[];
   /** ID returned from schedule insert */
@@ -131,6 +133,7 @@ function resetConfig(overrides: Partial<MockConfig> = {}): MockConfig {
   config = {
     season: [DEFAULT_SEASON],
     entries: [DEFAULT_ENTRY],
+    club: [{ bundesland: null }],
     schedule: [DEFAULT_SCHEDULE],
     newScheduleId: DEFAULT_NEW_SCHEDULE_ID,
     sessions: DEFAULT_SESSIONS,
@@ -333,6 +336,22 @@ vi.mock('@/src/infrastructure/persistence/schema', () => ({
     email: { name: 'email' },
     full_name: { name: 'full_name' },
   },
+  clubs: {
+    _table: 'clubs',
+    id: { name: 'id' },
+    bundesland: { name: 'bundesland' },
+  },
+}));
+
+// ── Holiday checking (now integrated into the session creation loop) ───
+const mockIsDateInHolidays = vi.fn().mockReturnValue(false);
+const mockGetHolidaysForState = vi.fn().mockReturnValue([]);
+const mockResolveBundeslandCode = vi.fn().mockReturnValue('HE');
+
+vi.mock('@/lib/season-planning/holidays', () => ({
+  isDateInHolidays: (...args: unknown[]) => mockIsDateInHolidays(...args),
+  getHolidaysForState: (...args: unknown[]) => mockGetHolidaysForState(...args),
+  resolveBundeslandCode: (...args: unknown[]) => mockResolveBundeslandCode(...args),
 }));
 
 const mockMarkHolidaySessions = vi.fn().mockResolvedValue(0);
@@ -441,6 +460,8 @@ function buildDb(): any {
         resolve(config.entries);
       } else if (tableName === 'users') {
         resolve(config.users);
+      } else if (tableName === 'clubs') {
+        resolve(config.club);
       } else {
         resolve([]);
       }
@@ -477,6 +498,9 @@ beforeEach(() => {
   resetConfig();
   vi.clearAllMocks();
   mockMarkHolidaySessions.mockReset().mockResolvedValue(0);
+  mockIsDateInHolidays.mockReset().mockReturnValue(false);
+  mockGetHolidaysForState.mockReset().mockReturnValue([]);
+  mockResolveBundeslandCode.mockReset().mockReturnValue('HE');
   mockPersistConflicts.mockReset().mockResolvedValue(0);
   mockDetectAll.mockReset().mockResolvedValue([]);
   mockGetCriticalConflicts.mockReset().mockReturnValue([]);
@@ -653,41 +677,45 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
   });
 
   // ──────────────────────────────────────────────────────────
-  // POST-TRANSACTION BEHAVIOR
+  // POST-TRANSACTION & HOLIDAY CHECKING
   // ──────────────────────────────────────────────────────────
 
   describe('post-transaction behavior', () => {
-    it('publish succeeds even if markHolidaySessions throws (non-critical)', async () => {
+    it('publish succeeds even if holiday data cannot be loaded (club query fails)', async () => {
       resetConfig({
         entries: [DEFAULT_ENTRY],
         schedule: [DEFAULT_SCHEDULE],
+        // Empty club → triggers fallback to empty holidays
+        club: [],
       });
       mockGetDb = vi.fn(() => buildDb());
-      mockMarkHolidaySessions.mockRejectedValueOnce(new Error('Supabase connection error'));
 
       const res = await POST(buildRequest(), ctx());
-      // Publish itself succeeded — holiday marking is non-critical
+      // Publish itself succeeded — holiday resolution is non-critical
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.success).toBe(true);
       expect(body.publishedSessions).toBe(16);
 
-      // markHolidaySessions was called but error was caught and logged
-      expect(mockMarkHolidaySessions).toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('holiday'),
-        expect.any(Error)
-      );
+      // resolveBundeslandCode was NOT called because club query returned empty
+      expect(mockResolveBundeslandCode).not.toHaveBeenCalled();
     });
 
-    it('does not call markHolidaySessions when no schedule was created', async () => {
-      resetConfig({ entries: [], schedule: [] });
+    it('does not skip sessions when club has no bundesland set', async () => {
+      resetConfig({
+        entries: [DEFAULT_ENTRY],
+        schedule: [DEFAULT_SCHEDULE],
+        club: [{ bundesland: null }],
+      });
       mockGetDb = vi.fn(() => buildDb());
 
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(200);
-      // scheduleId is null → markHolidaySessions is not called
-      expect(mockMarkHolidaySessions).not.toHaveBeenCalled();
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      // No bundesland → no holidays → all 16 weeks published
+      expect(body.publishedSessions).toBe(16);
+      expect(mockGetHolidaysForState).not.toHaveBeenCalled();
     });
 
     it('sends email notifications when RESEND_API_KEY is set and members exist', async () => {
@@ -979,27 +1007,35 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
   });
 
   // ──────────────────────────────────────────────────────────
-  // HOLIDAY MARKING
+  // INLINE HOLIDAY CHECKING (in session creation loop)
   // ──────────────────────────────────────────────────────────
 
-  describe('post-transaction holiday marking', () => {
-    it('calls markHolidaySessions with schedule and club ID after commit', async () => {
+  describe('inline holiday checking', () => {
+    it('skips sessions that fall on school holidays during creation', async () => {
       resetConfig({
         entries: [DEFAULT_ENTRY],
         schedule: [DEFAULT_SCHEDULE],
+        club: [{ bundesland: 'Hessen' }],
       });
       mockGetDb = vi.fn(() => buildDb());
-      mockMarkHolidaySessions.mockResolvedValueOnce(3);
+      // Simulate Hessen Sommerferien — isDateInHolidays returns true for
+      // weeks 10–15 (July 7 – Aug 15), skipping 6 of 16 weeks
+      mockIsDateInHolidays.mockImplementation((_date: unknown) => {
+        // The mock receives an ISO date string like "2025-07-07"
+        return true; // ALL sessions are considered on holiday
+      });
+      mockResolveBundeslandCode.mockReturnValue('HE');
+      mockGetHolidaysForState.mockReturnValue([
+        { name: 'Sommerferien', start: '2025-07-07', end: '2025-08-15' },
+      ]);
 
       const res = await POST(buildRequest(), ctx());
       expect(res.status).toBe(200);
-      expect(mockMarkHolidaySessions).toHaveBeenCalledWith(
-        mockAuthCtx.supabase,
-        DEFAULT_SCHEDULE.id,
-        CLUB_ID
-      );
-      // 3 sessions marked as holiday
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Marked 3 sessions'));
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      // All 16 weeks are holidays → 0 sessions published
+      expect(body.publishedSessions).toBe(0);
+      expect(mockIsDateInHolidays).toHaveBeenCalled();
     });
   });
 });

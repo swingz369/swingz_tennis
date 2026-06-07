@@ -170,7 +170,7 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
           <div>
             <Label htmlFor="member">Mitglied</Label>
             <Select value={memberId} onValueChange={setMemberId}>
-              <SelectTrigger>
+              <SelectTrigger id="member">
                 <SelectValue placeholder="Mitglied wählen" />
               </SelectTrigger>
               <SelectContent>

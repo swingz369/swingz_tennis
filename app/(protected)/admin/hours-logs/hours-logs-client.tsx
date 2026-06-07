@@ -312,7 +312,7 @@ export default function HoursLogsClient() {
                 Status
               </label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="hl-filter-status">
                   <SelectValue placeholder="Alle" />
                 </SelectTrigger>
                 <SelectContent>
@@ -331,7 +331,7 @@ export default function HoursLogsClient() {
                 Trainer
               </label>
               <Select value={trainerFilter} onValueChange={setTrainerFilter}>
-                <SelectTrigger>
+                <SelectTrigger id="hl-filter-trainer">
                   <SelectValue placeholder="Alle Trainer" />
                 </SelectTrigger>
                 <SelectContent>
@@ -352,6 +352,7 @@ export default function HoursLogsClient() {
                 Monat
               </label>
               <Input
+                id="hl-filter-month"
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}

@@ -33,13 +33,10 @@ export default function MemberTrainingSchedule() {
     return sessions.filter((s: Session) => s.bookedByUser);
   }, [sessions]);
 
-  // Helper to get session date (prefer timeslotStart, fall back to week if it's a date string)
+  // Helper to get session date (prefer timeslotStart)
   const getSessionDate = (session: any): Date => {
     const ts = session.timeslotStart || session.timeslot_start;
     if (ts) return new Date(ts);
-    // week field may be a week number string like "1" — not a date; ignore it
-    const w = session.week;
-    if (w && w.length > 4) return new Date(w);
     return new Date(0);
   };
 

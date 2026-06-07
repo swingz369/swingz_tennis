@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 
       const { data: invoices } = await supabase
         .from('invoices')
-        .select('club_id, total_amount')
+        .select('club_id, amount')
         .in('club_id', clubIds)
         .eq('status', 'paid')
         .gte('paid_at', thirtyDaysAgo.toISOString());
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       const revenueMap = new Map<string, number>();
       invoices?.forEach((invoice: any) => {
         const current = revenueMap.get(invoice.club_id) || 0;
-        revenueMap.set(invoice.club_id, current + Number(invoice.total_amount));
+        revenueMap.set(invoice.club_id, current + Number(invoice.amount));
       });
 
       // Map to simplified stats

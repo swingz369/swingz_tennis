@@ -16,7 +16,7 @@ type SettingsTab = 'general' | 'branding' | 'court-types' | 'audit-logs';
 const tabs: {
   id: SettingsTab;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string | undefined }>;
 }[] = [
   { id: 'general', label: 'Allgemein', icon: Settings },
   { id: 'branding', label: 'Branding', icon: Palette },

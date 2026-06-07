@@ -59,6 +59,15 @@ export interface TrainerAvailabilitySlot {
   notes?: string;
 }
 
+interface WeeklyAvailabilitySlot {
+  id?: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+  notes?: string;
+}
+
 export interface TrainerProfile {
   id: string;
   userId: string;
@@ -115,7 +124,7 @@ export interface TrainerProfile {
   updatedAt: string;
 }
 
-export default function TrainerProfileManagement() {
+export default function TrainerProfileManagement({ clubId }: { clubId: string }) {
   const [trainers, setTrainers] = useState<TrainerProfile[]>([]);
   const [selectedTrainer, setSelectedTrainer] = useState<TrainerProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -135,34 +144,58 @@ export default function TrainerProfileManagement() {
   const [slotEndTime, setSlotEndTime] = useState('17:00');
   const [slotNotes, setSlotNotes] = useState('');
   const [slotSaving, setSlotSaving] = useState(false);
+  const [weeklySlots, setWeeklySlots] = useState<WeeklyAvailabilitySlot[]>([]);
+  const [weeklyLoading, setWeeklyLoading] = useState(false);
+  const [weeklyDialogOpen, setWeeklyDialogOpen] = useState(false);
+  const [weeklyDay, setWeeklyDay] = useState(1);
+  const [weeklyStart, setWeeklyStart] = useState('08:00');
+  const [weeklyEnd, setWeeklyEnd] = useState('17:00');
+  const [weeklyNotes, setWeeklyNotes] = useState('');
+  const [weeklySaving, setWeeklySaving] = useState(false);
+  const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
+  const [absenceStartDate, setAbsenceStartDate] = useState('');
+  const [absenceEndDate, setAbsenceEndDate] = useState('');
+  const [absenceReason, setAbsenceReason] = useState('vacation');
+  const [absenceSaving, setAbsenceSaving] = useState(false);
 
   useEffect(() => {
     loadTrainers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch real availability slots when a trainer is selected
+  // Fetch all availability slots when a trainer is selected (single API call)
   useEffect(() => {
     if (!selectedTrainer) {
       setAvailabilitySlots([]);
+      setWeeklySlots([]);
       return;
     }
-    loadAvailabilitySlots(selectedTrainer.userId);
+    loadAllSlots(selectedTrainer.userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTrainer?.userId]);
 
-  const loadAvailabilitySlots = async (trainerId: string) => {
+  const loadAllSlots = async (trainerId: string) => {
     setAvailLoading(true);
+    setWeeklyLoading(true);
     try {
       const res = await apiFetch(`/api/trainer-availability?trainer_id=${trainerId}`);
       if (res.ok) {
         const data = await res.json();
-        setAvailabilitySlots(data.availabilities || []);
+        const all = data.availabilities || [];
+        // Date-specific slots: have a date but no day_of_week
+        setAvailabilitySlots(
+          all.filter((a: any) => !a.day_of_week && a.day_of_week !== 0 && a.date)
+        );
+        // Weekly recurring slots: have day_of_week set
+        setWeeklySlots(
+          all.filter((a: any) => a.day_of_week !== undefined && a.day_of_week !== null)
+        );
       }
     } catch (err) {
-      console.error('Failed to load availability slots:', err);
+      console.error('Failed to load availability:', err);
     } finally {
       setAvailLoading(false);
+      setWeeklyLoading(false);
     }
   };
 
@@ -306,29 +339,54 @@ export default function TrainerProfileManagement() {
     setIsEditing(false);
   };
 
-  // Toggle weekly availability day for the selected trainer
-  const handleToggleDay = async (day: keyof TrainerProfile['availability']) => {
+  // Add a weekly availability slot
+  const handleAddWeeklySlot = async () => {
     if (!selectedTrainer) return;
-    const newAvailability = {
-      ...selectedTrainer.availability,
-      [day]: !selectedTrainer.availability[day],
-    };
+    if (weeklyStart >= weeklyEnd) {
+      toast.error('Startzeit muss vor Endzeit liegen');
+      return;
+    }
+    setWeeklySaving(true);
     try {
-      const response = await apiFetch(`/api/trainer-profiles/${selectedTrainer.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ availability: newAvailability }),
+      const res = await apiFetch('/api/trainer-availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trainer_id: selectedTrainer.userId,
+          day_of_week: weeklyDay,
+          start_time: weeklyStart,
+          end_time: weeklyEnd,
+          is_available: true,
+          notes: weeklyNotes || undefined,
+        }),
       });
-      if (!response.ok) throw new Error('Failed to update availability');
-      const data = await response.json();
-      setSelectedTrainer(data.trainerProfile);
-      setTrainers((prev) =>
-        prev.map((t) => (t.id === selectedTrainer.id ? data.trainerProfile : t))
-      );
-      toast.success(
-        `${day.charAt(0).toUpperCase() + day.slice(1)} ${newAvailability[day] ? 'aktiviert' : 'deaktiviert'}`
-      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Speichern');
+      }
+      toast.success('Wöchentliche Verfügbarkeit hinzugefügt');
+      setWeeklyDialogOpen(false);
+      setWeeklyStart('08:00');
+      setWeeklyEnd('17:00');
+      setWeeklyNotes('');
+      loadAllSlots(selectedTrainer.userId);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern');
+    } finally {
+      setWeeklySaving(false);
+    }
+  };
+
+  // Delete a weekly availability slot
+  const handleDeleteWeeklySlot = async (slotId: string) => {
+    if (!selectedTrainer) return;
+    try {
+      const res = await apiFetch(`/api/trainer-availability?id=${slotId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Fehler beim Löschen');
+      toast.success('Verfügbarkeit gelöscht');
+      loadAllSlots(selectedTrainer.userId);
     } catch {
-      toast.error('Fehler beim Aktualisieren der Verfügbarkeit');
+      toast.error('Fehler beim Löschen der Verfügbarkeit');
     }
   };
 
@@ -365,11 +423,56 @@ export default function TrainerProfileManagement() {
       setSlotStartTime('08:00');
       setSlotEndTime('17:00');
       setSlotNotes('');
-      loadAvailabilitySlots(selectedTrainer.userId);
+      loadAllSlots(selectedTrainer.userId);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern');
     } finally {
       setSlotSaving(false);
+    }
+  };
+
+  // Submit a trainer absence via /api/trainer-absences
+  const handleAddAbsence = async () => {
+    if (!selectedTrainer) return;
+    if (!absenceStartDate || !absenceEndDate) {
+      toast.error('Bitte Start- und Enddatum auswählen');
+      return;
+    }
+    if (absenceStartDate > absenceEndDate) {
+      toast.error('Startdatum muss vor Enddatum liegen');
+      return;
+    }
+    setAbsenceSaving(true);
+    try {
+      const res = await apiFetch('/api/trainer-absences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trainer_id: selectedTrainer.userId,
+          club_id: clubId,
+          start_date: absenceStartDate,
+          end_date: absenceEndDate,
+          reason: absenceReason,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Speichern');
+      }
+      toast.success('Abwesenheit erfolgreich eingetragen');
+      setAbsenceDialogOpen(false);
+      setAbsenceStartDate('');
+      setAbsenceEndDate('');
+      setAbsenceReason('vacation');
+      // Update trainer status to on_leave and refresh the list
+      setTrainers((prev) =>
+        prev.map((t) => (t.id === selectedTrainer.id ? { ...t, status: 'on_leave' as const } : t))
+      );
+      setSelectedTrainer((prev) => (prev ? { ...prev, status: 'on_leave' as const } : null));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern');
+    } finally {
+      setAbsenceSaving(false);
     }
   };
 
@@ -380,7 +483,7 @@ export default function TrainerProfileManagement() {
       const res = await apiFetch(`/api/trainer-availability?id=${slotId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Fehler beim Löschen');
       toast.success('Verfügbarkeit gelöscht');
-      loadAvailabilitySlots(selectedTrainer.userId);
+      loadAllSlots(selectedTrainer.userId);
     } catch {
       toast.error('Fehler beim Löschen der Verfügbarkeit');
     }
@@ -443,15 +546,18 @@ export default function TrainerProfileManagement() {
     return matchesStatus && matchesSearch;
   });
 
-  const availabilityDays = [
-    'monday',
-    'tuesday',
-    'wednesday',
-    'thursday',
-    'friday',
-    'saturday',
-    'sunday',
-  ] as const;
+  const weekDays = [
+    { value: 1, label: 'Montag', short: 'Mo' },
+    { value: 2, label: 'Dienstag', short: 'Di' },
+    { value: 3, label: 'Mittwoch', short: 'Mi' },
+    { value: 4, label: 'Donnerstag', short: 'Do' },
+    { value: 5, label: 'Freitag', short: 'Fr' },
+    { value: 6, label: 'Samstag', short: 'Sa' },
+    { value: 0, label: 'Sonntag', short: 'So' },
+  ];
+
+  const getWeeklySlotsForDay = (dayOfWeek: number) =>
+    weeklySlots.filter((s) => s.day_of_week === dayOfWeek);
 
   // ── Loading Skeleton ──────────────────────────────────────────────────────────
   if (isLoading) {
@@ -1120,46 +1226,179 @@ export default function TrainerProfileManagement() {
 
                   {/* ── Availability Tab ─────────────────────────────────────── */}
                   <TabsContent value="availability" className="space-y-6 animate-in">
-                    {/* Reguläre Wochenverfügbarkeit — now interactive */}
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-semibold flex items-center gap-2 text-base">
-                          <Calendar className="h-4 w-4 text-brandPrimary" />
-                          Reguläre Wochenverfügbarkeit
-                        </h3>
-                        <span className="text-xs text-muted-foreground">
-                          Klicken zum Umschalten
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                        {availabilityDays.map((day) => {
-                          const isActive = selectedTrainer.availability[day];
-                          return (
-                            <button
-                              key={day}
-                              type="button"
-                              onClick={() => handleToggleDay(day)}
-                              className={`p-3 rounded-xl text-center transition-all duration-200 cursor-pointer hover:scale-105 ${
-                                isActive
-                                  ? 'bg-brandPrimary/10 border-2 border-brandPrimary/30 text-brandPrimary shadow-sm'
-                                  : 'bg-muted dark:bg-card/5 text-muted-foreground border-2 border-transparent hover:border-border'
-                              }`}
+                    {/* Reguläre Wochenverfügbarkeit — now with hourly time slots */}
+                    <Card variant="flat">
+                      <CardContent className="p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold flex items-center gap-2 text-base">
+                            <Calendar className="h-4 w-4 text-brandPrimary" />
+                            Reguläre Wochenverfügbarkeit
+                          </h3>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => loadAllSlots(selectedTrainer.userId)}
+                              disabled={weeklyLoading}
                             >
-                              <div className="text-xs font-semibold uppercase tracking-wider mb-1.5">
-                                {day.slice(0, 2)}
+                              <RefreshCw
+                                className={`h-4 w-4 ${weeklyLoading ? 'animate-spin' : ''}`}
+                              />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setWeeklyDialogOpen(true)}
+                              className="gap-1.5"
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              Zeitfenster hinzufügen
+                            </Button>
+                          </div>
+                        </div>
+                        {weeklyLoading ? (
+                          <div className="space-y-3">
+                            {[1, 2, 3].map((i) => (
+                              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                            ))}
+                          </div>
+                        ) : weeklySlots.length > 0 ? (
+                          <div className="space-y-3">
+                            {weekDays.map((day) => {
+                              const daySlots = getWeeklySlotsForDay(day.value);
+                              if (daySlots.length === 0) return null;
+                              return (
+                                <div key={day.value} className="border rounded-lg p-3">
+                                  <h4 className="font-semibold text-sm text-brand-primary mb-2">
+                                    {day.label}
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {daySlots.map((slot) => (
+                                      <div
+                                        key={slot.id}
+                                        className="flex items-center justify-between bg-green-50 border border-green-200 dark:bg-green-900/10 dark:border-green-800 rounded p-3"
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <Clock className="h-4 w-4 text-green-600" />
+                                          <span className="font-medium text-sm">
+                                            {slot.start_time} – {slot.end_time}
+                                          </span>
+                                          <Badge variant="success" size="sm">
+                                            Verfügbar
+                                          </Badge>
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={() => slot.id && handleDeleteWeeklySlot(slot.id)}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground py-4 text-center">
+                            Keine wöchentlichen Verfügbarkeiten eingetragen.
+                            <br />
+                            <span className="text-xs">
+                              Klicke auf &quot;Zeitfenster hinzufügen&quot; um eine regelmäßige
+                              Verfügbarkeit zu hinterlegen.
+                            </span>
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    {/* Weekly Slot Dialog */}
+                    {weeklyDialogOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold">Neue wöchentliche Verfügbarkeit</h3>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setWeeklyDialogOpen(false)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <Label>Wochentag</Label>
+                              <Select
+                                value={String(weeklyDay)}
+                                onValueChange={(v) => setWeeklyDay(parseInt(v))}
+                              >
+                                <SelectTrigger className="w-full mt-1">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {weekDays.map((day) => (
+                                    <SelectItem key={day.value} value={String(day.value)}>
+                                      {day.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label>Startzeit</Label>
+                                <Input
+                                  type="time"
+                                  value={weeklyStart}
+                                  onChange={(e) => setWeeklyStart(e.target.value)}
+                                  className="mt-1"
+                                />
                               </div>
-                              <div className="flex justify-center">
-                                {isActive ? (
-                                  <CheckCircle className="h-5 w-5" />
-                                ) : (
-                                  <div className="h-5 w-5 rounded-full border-2 border-border dark:border-gray-600 border-dashed" />
-                                )}
+                              <div>
+                                <Label>Endzeit</Label>
+                                <Input
+                                  type="time"
+                                  value={weeklyEnd}
+                                  onChange={(e) => setWeeklyEnd(e.target.value)}
+                                  className="mt-1"
+                                />
                               </div>
-                            </button>
-                          );
-                        })}
+                            </div>
+                            <div>
+                              <Label>Notizen (optional)</Label>
+                              <Input
+                                value={weeklyNotes}
+                                onChange={(e) => setWeeklyNotes(e.target.value)}
+                                placeholder="z.B. Nur Anfängertraining"
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => setWeeklyDialogOpen(false)}
+                            >
+                              Abbrechen
+                            </Button>
+                            <Button
+                              className="flex-1"
+                              onClick={handleAddWeeklySlot}
+                              disabled={weeklySaving}
+                            >
+                              {weeklySaving ? 'Speichern...' : 'Hinzufügen'}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Konkrete Verfügbarkeitsslots — now with add + delete */}
                     <Card variant="flat">
@@ -1174,7 +1413,7 @@ export default function TrainerProfileManagement() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => loadAvailabilitySlots(selectedTrainer.userId)}
+                              onClick={() => loadAllSlots(selectedTrainer.userId)}
                               disabled={availLoading}
                             >
                               <RefreshCw
@@ -1394,7 +1633,7 @@ export default function TrainerProfileManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleStatusChange(selectedTrainer.id, 'on_leave')}
+                          onClick={() => setAbsenceDialogOpen(true)}
                           className="flex-1 sm:flex-initial"
                         >
                           Urlaub eintragen
@@ -1433,6 +1672,81 @@ export default function TrainerProfileManagement() {
                   </>
                 )}
               </div>
+
+              {/* ── Absence Dialog (date-range Urlaub) ──────────────────────── */}
+              {absenceDialogOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                  <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold">Abwesenheit eintragen</h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setAbsenceDialogOpen(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Trainer: {selectedTrainer.firstName} {selectedTrainer.lastName}
+                    </p>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Von *</Label>
+                          <Input
+                            type="date"
+                            value={absenceStartDate}
+                            onChange={(e) => setAbsenceStartDate(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>Bis *</Label>
+                          <Input
+                            type="date"
+                            value={absenceEndDate}
+                            onChange={(e) => setAbsenceEndDate(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Grund</Label>
+                        <Select value={absenceReason} onValueChange={setAbsenceReason}>
+                          <SelectTrigger className="w-full mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="vacation">Urlaub</SelectItem>
+                            <SelectItem value="sick">Krankheit</SelectItem>
+                            <SelectItem value="training">Weiterbildung</SelectItem>
+                            <SelectItem value="personal">Persönlich</SelectItem>
+                            <SelectItem value="other">Sonstiges</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setAbsenceDialogOpen(false)}
+                      >
+                        Abbrechen
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        onClick={handleAddAbsence}
+                        disabled={absenceSaving || !absenceStartDate || !absenceEndDate}
+                      >
+                        {absenceSaving ? 'Speichern...' : 'Eintragen'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : showInviteForm ? (
             /* ── Inline Invite Form ──────────────────────────────────────────── */

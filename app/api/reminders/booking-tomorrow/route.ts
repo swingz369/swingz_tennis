@@ -23,17 +23,17 @@ class TempSessionRepository {
             name: session.trainers.name,
             email: session.trainers.email,
           }
-        : undefined,
+        : (undefined as any),
       courts: session.courts
         ? {
             name: session.courts.name,
           }
-        : undefined,
+        : (undefined as any),
       clubs: session.clubs
         ? {
             name: (session.clubs as any).name,
           }
-        : undefined,
+        : (undefined as any),
     }));
   }
 }

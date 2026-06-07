@@ -125,7 +125,7 @@ describeIntegration('Payment Flow Integration Tests', () => {
       expect(invoice.club_id).toBe(testClubId);
       expect(invoice.member_id).toBe(testMemberId);
       expect(invoice.status).toBe('draft');
-      expect(invoice.type).toBe('other');
+      expect(invoice.invoice_type).toBe('adhoc');
       expect(invoice.currency).toBe('EUR');
       expect(invoice.items).toHaveLength(2);
       // Subtotal = 50 + 50 = 100. Tax = 50*0.19 + 50*0.07 = 9.5 + 3.5 = 13. Total = 113

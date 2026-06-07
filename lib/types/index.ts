@@ -91,7 +91,6 @@ export interface Session {
   groupNames?: string[];
   maxParticipants: number;
   notes?: string;
-  week?: string;
   // User-specific fields
   bookedByUser?: boolean;
   bookingId?: string;

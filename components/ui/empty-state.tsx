@@ -204,14 +204,7 @@ export function NoInvoicesEmptyState({ onCreate }: { onCreate?: () => void }) {
           ? 'Es gibt noch keine Rechnungen. Erstelle deine erste Rechnung.'
           : 'Du hast aktuell keine offenen Rechnungen.'
       }
-      action={
-        onCreate
-          ? {
-              label: 'Rechnung erstellen',
-              onClick: onCreate,
-            }
-          : undefined
-      }
+      {...(onCreate ? { action: { label: 'Rechnung erstellen', onClick: onCreate } } : {})}
     />
   );
 }
@@ -265,14 +258,7 @@ export function ErrorState({
       icon={AlertCircle}
       title={title}
       description={description || 'Bitte versuche es später erneut.'}
-      action={
-        onRetry
-          ? {
-              label: 'Erneut versuchen',
-              onClick: onRetry,
-            }
-          : undefined
-      }
+      {...(onRetry ? { action: { label: 'Erneut versuchen', onClick: onRetry } } : {})}
     />
   );
 }

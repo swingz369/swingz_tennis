@@ -141,7 +141,7 @@ export function openGoogleCalendar(event: CalendarEvent): void {
 /** Input shape for calendar export — subset of session fields we need */
 export interface SessionExportInput {
   id: string;
-  week: string;
+  timeslotStart: string;
   startTime: string;
   endTime: string;
   trainerName?: string;
@@ -156,7 +156,7 @@ export function sessionToCalendarEvent(
   session: SessionExportInput,
   courtName?: string
 ): CalendarEvent {
-  const sessionDate = parseISO(session.week);
+  const sessionDate = parseISO(session.timeslotStart);
   const [startHour, startMinute] = session.startTime.split(':').map(Number);
   const [endHour, endMinute] = session.endTime.split(':').map(Number);
 

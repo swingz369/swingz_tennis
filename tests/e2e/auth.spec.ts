@@ -23,7 +23,7 @@ test.describe('Authentication & Authorization', () => {
   test('member cannot access admin routes', async ({ page }) => {
     // Use loginAsRoleAware — middleware role checks must be active
     await loginAsRoleAware(page, process.env.TEST_MEMBER_EMAIL!, process.env.TEST_MEMBER_PASSWORD!);
-    await page.goto(`${BASE_URL}/admin`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/admin`, { waitUntil: 'load', timeout: 15000 });
     await page.waitForURL((url) => !url.pathname.includes('/admin'), { timeout: 15000 });
     expect(page.url()).not.toContain('/admin');
   });
@@ -35,7 +35,7 @@ test.describe('Member Route Access', () => {
   });
 
   test('member can access unified bookings page', async ({ page }) => {
-    await page.goto(`${BASE_URL}/bookings`, { waitUntil: 'networkidle', timeout: 15000 });
+    await page.goto(`${BASE_URL}/bookings`, { waitUntil: 'load', timeout: 15000 });
     await expect(page.locator('body')).toBeVisible();
     // The unified bookings page has heading "Buchungen & Kalender"
     await expect(page.getByRole('heading', { name: /Buchungen.*Kalender/i })).toBeVisible({
@@ -47,7 +47,7 @@ test.describe('Member Route Access', () => {
     // /dashboard/* is under protected layout (not admin layout)
     // Any authenticated user can access it — only /admin/* is role-guarded
     await page.goto(`${BASE_URL}/dashboard/bookings/new`, {
-      waitUntil: 'networkidle',
+      waitUntil: 'load',
       timeout: 15000,
     });
     const currentUrl = page.url();
@@ -57,7 +57,7 @@ test.describe('Member Route Access', () => {
 
   test('member redirected from /admin routes', async ({ page }) => {
     // /admin/* IS guarded by admin layout — member should be redirected
-    await page.goto(`${BASE_URL}/admin`, { waitUntil: 'networkidle', timeout: 15000 });
+    await page.goto(`${BASE_URL}/admin`, { waitUntil: 'load', timeout: 15000 });
     await page.waitForURL((url) => !url.pathname.includes('/admin'), { timeout: 15000 });
     expect(page.url()).not.toContain('/admin');
   });

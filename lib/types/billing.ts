@@ -47,7 +47,7 @@ export const InvoiceSchema = z.object({
   member_id: z.string().uuid().nullable(),
   trainer_id: z.string().uuid().nullable(),
   invoice_number: z.string().min(1),
-  type: z.string().nullable(),
+  invoice_type: z.string().nullable(),
   amount: z.number(),
   tax_amount: z.number().nullable(),
   currency: z.string().nullable(),
@@ -120,7 +120,7 @@ export const CreateInvoiceSchema = z.object({
   club_id: z.string().uuid(),
   member_id: z.string().uuid().nullable().optional(),
   due_date: z.string(),
-  type: z.string().optional(),
+  type: z.enum(['season', 'membership', 'adhoc']).optional(),
   items: z.array(
     z.object({
       description: z.string().min(1),

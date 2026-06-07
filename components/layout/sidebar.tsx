@@ -174,11 +174,17 @@ export function Sidebar({
 
   interface SectionDef {
     label: string;
-    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+    icon: React.ComponentType<{
+      className?: string | undefined;
+      'aria-hidden'?: boolean | 'true' | 'false' | undefined;
+    }>;
     subItems: { name: string; href: string; badge?: number }[];
     extraAction?: {
       label: string;
-      icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+      icon: React.ComponentType<{
+        className?: string | undefined;
+        'aria-hidden'?: boolean | 'true' | 'false' | undefined;
+      }>;
       onClick: () => void;
     };
   }
@@ -272,7 +278,10 @@ export function Sidebar({
   interface NavItem {
     name: string;
     href: string;
-    icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
+    icon: React.ComponentType<{
+      className?: string | undefined;
+      'aria-hidden'?: boolean | 'true' | 'false' | undefined;
+    }>;
     badge?: number;
   }
 

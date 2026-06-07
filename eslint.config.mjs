@@ -112,7 +112,7 @@ const eslintConfig = [
   {
     files: ['**/*.{tsx,jsx}'],
     plugins: {
-      'swingz': {
+      swingz: {
         rules: {
           'pagination-nav-mutually-exclusive-props': paginationNavRule,
         },

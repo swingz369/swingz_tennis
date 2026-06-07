@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
         // Override trainer_id with their own
         const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
           trainerId: profile.userId,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-          status: (status as any) || undefined,
+          ...(startDate ? { startDate } : {}),
+          ...(endDate ? { endDate } : {}),
+          ...(status ? { status: status as any } : {}),
         });
         return NextResponse.json({ availabilities });
       }
@@ -48,9 +48,9 @@ export async function GET(request: NextRequest) {
       if (trainerId) {
         const availabilities = await trainerAvailabilityService.queryTrainerAvailabilities({
           trainerId,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-          status: (status as any) || undefined,
+          ...(startDate ? { startDate } : {}),
+          ...(endDate ? { endDate } : {}),
+          ...(status ? { status: status as any } : {}),
         });
         return NextResponse.json({ availabilities });
       }

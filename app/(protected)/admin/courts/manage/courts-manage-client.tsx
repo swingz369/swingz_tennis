@@ -307,7 +307,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             setFormData({ ...formData, courtTypeId: v, surface: type?.surface || '' });
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger id="form-courtTypeId">
             <SelectValue placeholder="Typ wählen..." />
           </SelectTrigger>
           <SelectContent>
