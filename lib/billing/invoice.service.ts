@@ -76,6 +76,8 @@ export class InvoiceService {
     const items = await Promise.all(
       data.items.map(async (item) => {
         const { data: invoiceItem, error: itemError } = await supabase
+          // total_price is GENERATED ALWAYS AS (quantity * unit_price) STORED —
+          // must NOT be included in INSERT.
           .from('invoice_items')
           .insert({
             invoice_id: invoice.id,

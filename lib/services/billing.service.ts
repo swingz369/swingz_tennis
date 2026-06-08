@@ -54,13 +54,14 @@ export async function createAdhocInvoice(params: {
     .single();
   if (error) throw new Error(`Failed to create invoice: ${error.message}`);
 
+  // total_price is a GENERATED ALWAYS AS (quantity * unit_price) STORED column —
+  // must NOT be included in INSERT, PostgreSQL computes it automatically.
   const lineItems = params.items.map((i) => ({
     invoice_id: (invoice as any).id,
     description: i.description,
     quantity: i.quantity,
     unit_price: i.unit_price,
     tax_rate: taxRate,
-    total_price: i.quantity * i.unit_price,
     item_type: 'other',
   }));
   const { error: itemsError } = await (supabase as any).from('invoice_items').insert(lineItems);

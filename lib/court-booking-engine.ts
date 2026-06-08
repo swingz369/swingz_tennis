@@ -6,7 +6,6 @@ import type {
   BookingRule,
   WaitlistEntry,
   CreateCourt,
-  CreateBooking,
   CreateWaitlistEntry,
   CreateBookingRule,
   BookingStatus,
@@ -38,10 +37,6 @@ export class CourtBookingEngine {
     return CourtBookingEngine.instance;
   }
 
-  async generateBookingNumber(clubId: string): Promise<string> {
-    return this.bookingService.generateBookingNumber(clubId);
-  }
-
   async createCourt(data: CreateCourt): Promise<Court> {
     return this.courtService.createCourt(data);
   }
@@ -66,10 +61,6 @@ export class CourtBookingEngine {
 
   async getCourtTypes(): Promise<CourtType[]> {
     return this.courtService.getCourtTypes();
-  }
-
-  async createBooking(data: CreateBooking, userId: string, clubId: string): Promise<Booking> {
-    return this.bookingService.createBooking(data, userId, clubId);
   }
 
   async getBookingById(bookingId: string): Promise<Booking | null> {

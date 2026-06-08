@@ -48,8 +48,11 @@ export const InvoiceSchema = z.object({
   trainer_id: z.string().uuid().nullable(),
   invoice_number: z.string().min(1),
   invoice_type: z.string().nullable(),
+  invoice_date: z.string().nullable(),
+  subtotal: z.number(),
   amount: z.number(),
   tax_amount: z.number().nullable(),
+  paid_amount: z.number(),
   currency: z.string().nullable(),
   status: z.string().nullable(),
   due_date: z.string().nullable(),
@@ -106,11 +109,21 @@ export type SepaMandate = z.infer<typeof SepaMandateSchema>;
 export const DunningRecordSchema = z.object({
   id: z.string().uuid(),
   invoice_id: z.string().uuid(),
+  club_id: z.string().uuid(),
+  member_id: z.string().uuid().nullable(),
   level: z.number().nullable(),
+  status: z.string().nullable(),
+  original_amount: z.number(),
+  total_amount: z.number(),
   sent_at: z.string().nullable(),
   due_date: z.string().nullable(),
   fee_amount: z.number().nullable(),
+  paid_at: z.string().nullable(),
+  escalated_at: z.string().nullable(),
+  cancelled_at: z.string().nullable(),
   notes: z.string().nullable(),
+  created_at: z.string().nullable(),
+  updated_at: z.string().nullable(),
 });
 export type DunningRecord = z.infer<typeof DunningRecordSchema>;
 

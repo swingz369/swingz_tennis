@@ -26,7 +26,7 @@ export interface Invoice {
   status: InvoiceStatus;
   subtotal: number;
   tax_amount: number;
-  total_amount: number;
+  amount: number;
   paid_amount: number;
   currency: string;
   notes: string | null;

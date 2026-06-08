@@ -358,6 +358,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'bookings_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'bookings_schedule_id_schedules_id_fk';
             columns: ['schedule_id'];
             isOneToOne: false;
@@ -424,8 +431,8 @@ export type Database = {
           default_session_duration_minutes: number | null;
           description: string | null;
           email: string | null;
-          hourly_rate: number | null;
           founding_date: string | null;
+          hourly_rate: number | null;
           id: string;
           invoice_number_prefix: string;
           logo_url: string | null;
@@ -453,8 +460,8 @@ export type Database = {
           default_session_duration_minutes?: number | null;
           description?: string | null;
           email?: string | null;
-          hourly_rate?: number | null;
           founding_date?: string | null;
+          hourly_rate?: number | null;
           id?: string;
           invoice_number_prefix?: string;
           logo_url?: string | null;
@@ -482,8 +489,8 @@ export type Database = {
           default_session_duration_minutes?: number | null;
           description?: string | null;
           email?: string | null;
-          hourly_rate?: number | null;
           founding_date?: string | null;
+          hourly_rate?: number | null;
           id?: string;
           invoice_number_prefix?: string;
           logo_url?: string | null;
@@ -729,38 +736,82 @@ export type Database = {
       };
       dunning_records: {
         Row: {
+          cancelled_at: string | null;
+          club_id: string;
+          created_at: string | null;
           due_date: string | null;
+          escalated_at: string | null;
           fee_amount: number | null;
           id: string;
           invoice_id: string;
           level: number | null;
+          member_id: string | null;
           notes: string | null;
+          original_amount: number;
+          paid_at: string | null;
           sent_at: string | null;
+          status: string | null;
+          total_amount: number;
+          updated_at: string | null;
         };
         Insert: {
+          cancelled_at?: string | null;
+          club_id: string;
+          created_at?: string | null;
           due_date?: string | null;
+          escalated_at?: string | null;
           fee_amount?: number | null;
           id?: string;
           invoice_id: string;
           level?: number | null;
+          member_id?: string | null;
           notes?: string | null;
+          original_amount?: number;
+          paid_at?: string | null;
           sent_at?: string | null;
+          status?: string | null;
+          total_amount?: number;
+          updated_at?: string | null;
         };
         Update: {
+          cancelled_at?: string | null;
+          club_id?: string;
+          created_at?: string | null;
           due_date?: string | null;
+          escalated_at?: string | null;
           fee_amount?: number | null;
           id?: string;
           invoice_id?: string;
           level?: number | null;
+          member_id?: string | null;
           notes?: string | null;
+          original_amount?: number;
+          paid_at?: string | null;
           sent_at?: string | null;
+          status?: string | null;
+          total_amount?: number;
+          updated_at?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'dunning_records_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'dunning_records_invoice_id_fkey';
             columns: ['invoice_id'];
             isOneToOne: false;
             referencedRelation: 'invoices';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'dunning_records_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -1313,9 +1364,14 @@ export type Database = {
           description: string;
           id: string;
           invoice_id: string;
+          item_type: string;
           quantity: number | null;
+          reference_id: string | null;
+          reference_type: string | null;
+          tax_rate: number;
           total_price: number | null;
           unit_price: number;
+          updated_at: string;
         };
         Insert: {
           created_at?: string | null;
@@ -1323,9 +1379,14 @@ export type Database = {
           description: string;
           id?: string;
           invoice_id: string;
+          item_type: string;
           quantity?: number | null;
+          reference_id?: string | null;
+          reference_type?: string | null;
+          tax_rate?: number;
           total_price?: number | null;
           unit_price: number;
+          updated_at?: string;
         };
         Update: {
           created_at?: string | null;
@@ -1333,9 +1394,14 @@ export type Database = {
           description?: string;
           id?: string;
           invoice_id?: string;
+          item_type?: string;
           quantity?: number | null;
+          reference_id?: string | null;
+          reference_type?: string | null;
+          tax_rate?: number;
           total_price?: number | null;
           unit_price?: number;
+          updated_at?: string;
         };
         Relationships: [
           {
@@ -1350,59 +1416,74 @@ export type Database = {
       invoices: {
         Row: {
           amount: number;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
           club_id: string;
           created_at: string | null;
           currency: string | null;
           due_date: string | null;
           id: string;
+          invoice_date: string;
           invoice_number: string;
           invoice_type: string | null;
           member_id: string | null;
           notes: string | null;
+          paid_amount: number;
           paid_at: string | null;
           season_id: string | null;
+          sent_at: string | null;
           status: string | null;
+          subtotal: number;
           tax_amount: number | null;
           trainer_id: string | null;
-          type: string | null;
           updated_at: string | null;
         };
         Insert: {
           amount?: number;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
           club_id: string;
           created_at?: string | null;
           currency?: string | null;
           due_date?: string | null;
           id?: string;
+          invoice_date?: string;
           invoice_number: string;
           invoice_type?: string | null;
           member_id?: string | null;
           notes?: string | null;
+          paid_amount?: number;
           paid_at?: string | null;
           season_id?: string | null;
+          sent_at?: string | null;
           status?: string | null;
+          subtotal?: number;
           tax_amount?: number | null;
           trainer_id?: string | null;
-          type?: string | null;
           updated_at?: string | null;
         };
         Update: {
           amount?: number;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
           club_id?: string;
           created_at?: string | null;
           currency?: string | null;
           due_date?: string | null;
           id?: string;
+          invoice_date?: string;
           invoice_number?: string;
           invoice_type?: string | null;
           member_id?: string | null;
           notes?: string | null;
+          paid_amount?: number;
           paid_at?: string | null;
           season_id?: string | null;
+          sent_at?: string | null;
           status?: string | null;
+          subtotal?: number;
           tax_amount?: number | null;
           trainer_id?: string | null;
-          type?: string | null;
           updated_at?: string | null;
         };
         Relationships: [
@@ -1414,10 +1495,24 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'invoices_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'invoices_season_id_fkey';
             columns: ['season_id'];
             isOneToOne: false;
             referencedRelation: 'schedules';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'invoices_trainer_id_fkey';
+            columns: ['trainer_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -1509,6 +1604,72 @@ export type Database = {
           },
         ];
       };
+      member_schedule_preferences: {
+        Row: {
+          club_id: string;
+          created_at: string;
+          id: string;
+          max_sessions_per_week: number | null;
+          notes: string | null;
+          preferred_age_group: string | null;
+          preferred_court_ids: Json | null;
+          preferred_level: string | null;
+          preferred_trainer_ids: Json | null;
+          special_requests: string | null;
+          updated_at: string;
+          user_id: string;
+          weekly_availability: Json;
+          wish_partner_ids: Json | null;
+        };
+        Insert: {
+          club_id: string;
+          created_at?: string;
+          id?: string;
+          max_sessions_per_week?: number | null;
+          notes?: string | null;
+          preferred_age_group?: string | null;
+          preferred_court_ids?: Json | null;
+          preferred_level?: string | null;
+          preferred_trainer_ids?: Json | null;
+          special_requests?: string | null;
+          updated_at?: string;
+          user_id: string;
+          weekly_availability?: Json;
+          wish_partner_ids?: Json | null;
+        };
+        Update: {
+          club_id?: string;
+          created_at?: string;
+          id?: string;
+          max_sessions_per_week?: number | null;
+          notes?: string | null;
+          preferred_age_group?: string | null;
+          preferred_court_ids?: Json | null;
+          preferred_level?: string | null;
+          preferred_trainer_ids?: Json | null;
+          special_requests?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          weekly_availability?: Json;
+          wish_partner_ids?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'member_schedule_preferences_club_id_clubs_id_fk';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'member_schedule_preferences_user_id_users_id_fk';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       news_comments: {
         Row: {
           content: string;
@@ -1537,6 +1698,13 @@ export type Database = {
             columns: ['post_id'];
             isOneToOne: false;
             referencedRelation: 'news_posts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'news_comments_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -1582,6 +1750,13 @@ export type Database = {
           updated_at?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'news_posts_author_id_fkey';
+            columns: ['author_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'news_posts_club_id_fkey';
             columns: ['club_id'];
@@ -1631,6 +1806,13 @@ export type Database = {
             columns: ['club_id'];
             isOneToOne: false;
             referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'notifications_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -2136,6 +2318,75 @@ export type Database = {
         };
         Relationships: [];
       };
+      season_billing_configs: {
+        Row: {
+          additional_fees: Json | null;
+          club_id: string;
+          cost_split_method: string;
+          created_at: string;
+          id: string;
+          include_membership_fee: boolean;
+          invoice_notes: string | null;
+          membership_fee_amount: number | null;
+          membership_fee_type: string | null;
+          payment_terms_days: number;
+          season_id: string;
+          tax_rate: number;
+          trainer_hourly_rate: number;
+          updated_at: string;
+          use_trainer_profile_rate: boolean;
+        };
+        Insert: {
+          additional_fees?: Json | null;
+          club_id: string;
+          cost_split_method?: string;
+          created_at?: string;
+          id?: string;
+          include_membership_fee?: boolean;
+          invoice_notes?: string | null;
+          membership_fee_amount?: number | null;
+          membership_fee_type?: string | null;
+          payment_terms_days?: number;
+          season_id: string;
+          tax_rate?: number;
+          trainer_hourly_rate?: number;
+          updated_at?: string;
+          use_trainer_profile_rate?: boolean;
+        };
+        Update: {
+          additional_fees?: Json | null;
+          club_id?: string;
+          cost_split_method?: string;
+          created_at?: string;
+          id?: string;
+          include_membership_fee?: boolean;
+          invoice_notes?: string | null;
+          membership_fee_amount?: number | null;
+          membership_fee_type?: string | null;
+          payment_terms_days?: number;
+          season_id?: string;
+          tax_rate?: number;
+          trainer_hourly_rate?: number;
+          updated_at?: string;
+          use_trainer_profile_rate?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'season_billing_configs_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_billing_configs_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: true;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       season_plan_entries: {
         Row: {
           admin_notes: string | null;
@@ -2240,7 +2491,7 @@ export type Database = {
             foreignKeyName: 'season_plan_entries_group_id_fkey';
             columns: ['group_id'];
             isOneToOne: false;
-            referencedRelation: 'training_groups';
+            referencedRelation: 'groups';
             referencedColumns: ['id'];
           },
           {
@@ -2266,17 +2517,103 @@ export type Database = {
           },
         ];
       };
+      season_planning_configs: {
+        Row: {
+          ai_clustering_enabled: boolean;
+          avoid_high_failure_slots: boolean;
+          club_id: string;
+          created_at: string;
+          group_max_size: number;
+          group_min_size: number;
+          id: string;
+          kids_group_max_size: number;
+          kids_group_min_size: number;
+          max_niveau_span_advanced_months: number;
+          max_niveau_span_beginner_months: number;
+          prefer_historic_groups: boolean;
+          proven_group_attendance_threshold_pct: number;
+          season_id: string | null;
+          slot_duration_minutes: number;
+          slot_failure_rate_threshold_pct: number;
+          trainer_utilization_max_pct: number;
+          updated_at: string;
+          waitlist_priority_rule: string;
+        };
+        Insert: {
+          ai_clustering_enabled?: boolean;
+          avoid_high_failure_slots?: boolean;
+          club_id: string;
+          created_at?: string;
+          group_max_size?: number;
+          group_min_size?: number;
+          id?: string;
+          kids_group_max_size?: number;
+          kids_group_min_size?: number;
+          max_niveau_span_advanced_months?: number;
+          max_niveau_span_beginner_months?: number;
+          prefer_historic_groups?: boolean;
+          proven_group_attendance_threshold_pct?: number;
+          season_id?: string | null;
+          slot_duration_minutes?: number;
+          slot_failure_rate_threshold_pct?: number;
+          trainer_utilization_max_pct?: number;
+          updated_at?: string;
+          waitlist_priority_rule?: string;
+        };
+        Update: {
+          ai_clustering_enabled?: boolean;
+          avoid_high_failure_slots?: boolean;
+          club_id?: string;
+          created_at?: string;
+          group_max_size?: number;
+          group_min_size?: number;
+          id?: string;
+          kids_group_max_size?: number;
+          kids_group_min_size?: number;
+          max_niveau_span_advanced_months?: number;
+          max_niveau_span_beginner_months?: number;
+          prefer_historic_groups?: boolean;
+          proven_group_attendance_threshold_pct?: number;
+          season_id?: string | null;
+          slot_duration_minutes?: number;
+          slot_failure_rate_threshold_pct?: number;
+          trainer_utilization_max_pct?: number;
+          updated_at?: string;
+          waitlist_priority_rule?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'season_planning_configs_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_planning_configs_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       season_planning_history: {
         Row: {
           action_type: string;
           actor_id: string | null;
           actor_role: string | null;
           algorithm_metrics: Json | null;
+          changed_by: string | null;
+          changed_by_role: string | null;
+          changes: Json | null;
           club_id: string;
           conflicts_created: number | null;
           conflicts_resolved: number | null;
           created_at: string;
           details: Json | null;
+          entity_id: string | null;
+          entity_type: string | null;
           entries_affected: number | null;
           id: string;
           notes: string | null;
@@ -2287,11 +2624,16 @@ export type Database = {
           actor_id?: string | null;
           actor_role?: string | null;
           algorithm_metrics?: Json | null;
+          changed_by?: string | null;
+          changed_by_role?: string | null;
+          changes?: Json | null;
           club_id: string;
           conflicts_created?: number | null;
           conflicts_resolved?: number | null;
           created_at?: string;
           details?: Json | null;
+          entity_id?: string | null;
+          entity_type?: string | null;
           entries_affected?: number | null;
           id?: string;
           notes?: string | null;
@@ -2302,11 +2644,16 @@ export type Database = {
           actor_id?: string | null;
           actor_role?: string | null;
           algorithm_metrics?: Json | null;
+          changed_by?: string | null;
+          changed_by_role?: string | null;
+          changes?: Json | null;
           club_id?: string;
           conflicts_created?: number | null;
           conflicts_resolved?: number | null;
           created_at?: string;
           details?: Json | null;
+          entity_id?: string | null;
+          entity_type?: string | null;
           entries_affected?: number | null;
           id?: string;
           notes?: string | null;
@@ -2329,6 +2676,219 @@ export type Database = {
           },
           {
             foreignKeyName: 'season_planning_history_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      season_statistics: {
+        Row: {
+          attendance_by_group: Json | null;
+          attendance_by_trainer: Json | null;
+          avg_group_size: number | null;
+          avg_niveau_span_months: number | null;
+          avg_waitlist_duration_days: number | null;
+          club_id: string;
+          computed_at: string;
+          conflicts_resolved: number;
+          created_at: string;
+          critical_conflicts: number;
+          groups_below_min_size: number;
+          id: string;
+          level_upgrades_applied: number;
+          level_upgrades_recommended: number;
+          niveau_span_violations: number;
+          overall_attendance_quote: number | null;
+          preference_satisfaction_score: number | null;
+          preferences_submitted: number;
+          preferences_total: number;
+          season_id: string;
+          slot_failure_rates: Json | null;
+          total_conflicts_detected: number;
+          total_groups: number;
+          total_members_planned: number;
+          total_waitlist_entries: number;
+          trainer_burnout_warnings: number;
+          trainer_utilization_avg: number | null;
+          waitlist_acceptance_rate: number | null;
+          wish_partner_fulfilled: number;
+          wish_partner_fulfillment_rate: number | null;
+          wish_partner_requests: number;
+        };
+        Insert: {
+          attendance_by_group?: Json | null;
+          attendance_by_trainer?: Json | null;
+          avg_group_size?: number | null;
+          avg_niveau_span_months?: number | null;
+          avg_waitlist_duration_days?: number | null;
+          club_id: string;
+          computed_at?: string;
+          conflicts_resolved?: number;
+          created_at?: string;
+          critical_conflicts?: number;
+          groups_below_min_size?: number;
+          id?: string;
+          level_upgrades_applied?: number;
+          level_upgrades_recommended?: number;
+          niveau_span_violations?: number;
+          overall_attendance_quote?: number | null;
+          preference_satisfaction_score?: number | null;
+          preferences_submitted?: number;
+          preferences_total?: number;
+          season_id: string;
+          slot_failure_rates?: Json | null;
+          total_conflicts_detected?: number;
+          total_groups?: number;
+          total_members_planned?: number;
+          total_waitlist_entries?: number;
+          trainer_burnout_warnings?: number;
+          trainer_utilization_avg?: number | null;
+          waitlist_acceptance_rate?: number | null;
+          wish_partner_fulfilled?: number;
+          wish_partner_fulfillment_rate?: number | null;
+          wish_partner_requests?: number;
+        };
+        Update: {
+          attendance_by_group?: Json | null;
+          attendance_by_trainer?: Json | null;
+          avg_group_size?: number | null;
+          avg_niveau_span_months?: number | null;
+          avg_waitlist_duration_days?: number | null;
+          club_id?: string;
+          computed_at?: string;
+          conflicts_resolved?: number;
+          created_at?: string;
+          critical_conflicts?: number;
+          groups_below_min_size?: number;
+          id?: string;
+          level_upgrades_applied?: number;
+          level_upgrades_recommended?: number;
+          niveau_span_violations?: number;
+          overall_attendance_quote?: number | null;
+          preference_satisfaction_score?: number | null;
+          preferences_submitted?: number;
+          preferences_total?: number;
+          season_id?: string;
+          slot_failure_rates?: Json | null;
+          total_conflicts_detected?: number;
+          total_groups?: number;
+          total_members_planned?: number;
+          total_waitlist_entries?: number;
+          trainer_burnout_warnings?: number;
+          trainer_utilization_avg?: number | null;
+          waitlist_acceptance_rate?: number | null;
+          wish_partner_fulfilled?: number;
+          wish_partner_fulfillment_rate?: number | null;
+          wish_partner_requests?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'season_statistics_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_statistics_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      season_waitlists: {
+        Row: {
+          accepted_at: string | null;
+          alternative_assigned_at: string | null;
+          alternative_group_id: string | null;
+          club_id: string;
+          created_at: string;
+          group_id: string;
+          id: string;
+          member_id: string;
+          notes: string | null;
+          notified_at: string | null;
+          position: number;
+          priority: number;
+          priority_reason: string | null;
+          registered_at: string;
+          season_id: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          alternative_assigned_at?: string | null;
+          alternative_group_id?: string | null;
+          club_id: string;
+          created_at?: string;
+          group_id: string;
+          id?: string;
+          member_id: string;
+          notes?: string | null;
+          notified_at?: string | null;
+          position: number;
+          priority?: number;
+          priority_reason?: string | null;
+          registered_at?: string;
+          season_id: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          alternative_assigned_at?: string | null;
+          alternative_group_id?: string | null;
+          club_id?: string;
+          created_at?: string;
+          group_id?: string;
+          id?: string;
+          member_id?: string;
+          notes?: string | null;
+          notified_at?: string | null;
+          position?: number;
+          priority?: number;
+          priority_reason?: string | null;
+          registered_at?: string;
+          season_id?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'season_waitlists_alternative_group_id_fkey';
+            columns: ['alternative_group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_waitlists_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_waitlists_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_waitlists_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_waitlists_season_id_fkey';
             columns: ['season_id'];
             isOneToOne: false;
             referencedRelation: 'seasons';
@@ -2482,6 +3042,67 @@ export type Database = {
           },
         ];
       };
+      session_rsvps: {
+        Row: {
+          club_id: string;
+          created_at: string;
+          id: string;
+          member_id: string;
+          notes: string | null;
+          reminded_at: string | null;
+          responded_at: string | null;
+          session_id: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          club_id: string;
+          created_at?: string;
+          id?: string;
+          member_id: string;
+          notes?: string | null;
+          reminded_at?: string | null;
+          responded_at?: string | null;
+          session_id: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          club_id?: string;
+          created_at?: string;
+          id?: string;
+          member_id?: string;
+          notes?: string | null;
+          reminded_at?: string | null;
+          responded_at?: string | null;
+          session_id?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'session_rsvps_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'session_rsvps_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'session_rsvps_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'sessions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sessions: {
         Row: {
           court_id: string | null;
@@ -2491,10 +3112,11 @@ export type Database = {
           max_participants: number;
           notes: string | null;
           schedule_id: string;
+          session_type: string;
           status: string;
           timeslot_end: string;
           timeslot_start: string;
-          trainer_id: string;
+          trainer_id: string | null;
           updated_at: string;
           week_number: number;
         };
@@ -2506,10 +3128,11 @@ export type Database = {
           max_participants?: number;
           notes?: string | null;
           schedule_id: string;
+          session_type?: string;
           status?: string;
           timeslot_end: string;
           timeslot_start: string;
-          trainer_id: string;
+          trainer_id?: string | null;
           updated_at?: string;
           week_number: number;
         };
@@ -2521,10 +3144,11 @@ export type Database = {
           max_participants?: number;
           notes?: string | null;
           schedule_id?: string;
+          session_type?: string;
           status?: string;
           timeslot_end?: string;
           timeslot_start?: string;
-          trainer_id?: string;
+          trainer_id?: string | null;
           updated_at?: string;
           week_number?: number;
         };
@@ -2688,6 +3312,13 @@ export type Database = {
             referencedRelation: 'clubs';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'system_settings_updated_by_fkey';
+            columns: ['updated_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
         ];
       };
       tournament_matches: {
@@ -2742,10 +3373,31 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'tournament_matches_player1_id_fkey';
+            columns: ['player1_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'tournament_matches_player2_id_fkey';
+            columns: ['player2_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'tournament_matches_tournament_id_fkey';
             columns: ['tournament_id'];
             isOneToOne: false;
             referencedRelation: 'tournaments';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'tournament_matches_winner_id_fkey';
+            columns: ['winner_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -2786,10 +3438,24 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: 'tournament_registrations_partner_id_fkey';
+            columns: ['partner_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'tournament_registrations_tournament_id_fkey';
             columns: ['tournament_id'];
             isOneToOne: false;
             referencedRelation: 'tournaments';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'tournament_registrations_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -2860,6 +3526,13 @@ export type Database = {
             referencedRelation: 'clubs';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'tournaments_organizer_id_fkey';
+            columns: ['organizer_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
         ];
       };
       trainer_absences: {
@@ -2912,6 +3585,13 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'trainer_absences_approved_by_fkey';
+            columns: ['approved_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'trainer_absences_club_id_fkey';
             columns: ['club_id'];
@@ -3006,7 +3686,15 @@ export type Database = {
           updated_at?: string | null;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'trainer_availability_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       trainer_billings: {
         Row: {
@@ -3145,61 +3833,94 @@ export type Database = {
       };
       trainer_feedback: {
         Row: {
+          areas_for_improvement: Json | null;
+          attendance_quote: number | null;
           club_id: string;
           comment: string | null;
           communication: number | null;
           created_at: string | null;
           flagged_reason: string | null;
+          group_id: string | null;
           id: string;
           is_flagged: boolean | null;
+          is_submitted: boolean;
           is_visible: boolean | null;
           member_id: string;
           moderated_at: string | null;
           moderated_by: string | null;
           motivation: number | null;
+          notes: string | null;
+          performance_rating: number | null;
           punctuality: number | null;
           rating: number;
+          ready_for_next_level: string | null;
+          recommended_level: string | null;
+          season_id: string | null;
           session_id: string | null;
+          strengths: Json | null;
+          submitted_at: string | null;
           teaching_quality: number | null;
           trainer_id: string;
           updated_at: string | null;
         };
         Insert: {
+          areas_for_improvement?: Json | null;
+          attendance_quote?: number | null;
           club_id: string;
           comment?: string | null;
           communication?: number | null;
           created_at?: string | null;
           flagged_reason?: string | null;
+          group_id?: string | null;
           id?: string;
           is_flagged?: boolean | null;
+          is_submitted?: boolean;
           is_visible?: boolean | null;
           member_id: string;
           moderated_at?: string | null;
           moderated_by?: string | null;
           motivation?: number | null;
+          notes?: string | null;
+          performance_rating?: number | null;
           punctuality?: number | null;
           rating: number;
+          ready_for_next_level?: string | null;
+          recommended_level?: string | null;
+          season_id?: string | null;
           session_id?: string | null;
+          strengths?: Json | null;
+          submitted_at?: string | null;
           teaching_quality?: number | null;
           trainer_id: string;
           updated_at?: string | null;
         };
         Update: {
+          areas_for_improvement?: Json | null;
+          attendance_quote?: number | null;
           club_id?: string;
           comment?: string | null;
           communication?: number | null;
           created_at?: string | null;
           flagged_reason?: string | null;
+          group_id?: string | null;
           id?: string;
           is_flagged?: boolean | null;
+          is_submitted?: boolean;
           is_visible?: boolean | null;
           member_id?: string;
           moderated_at?: string | null;
           moderated_by?: string | null;
           motivation?: number | null;
+          notes?: string | null;
+          performance_rating?: number | null;
           punctuality?: number | null;
           rating?: number;
+          ready_for_next_level?: string | null;
+          recommended_level?: string | null;
+          season_id?: string | null;
           session_id?: string | null;
+          strengths?: Json | null;
+          submitted_at?: string | null;
           teaching_quality?: number | null;
           trainer_id?: string;
           updated_at?: string | null;
@@ -3213,10 +3934,45 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'trainer_feedback_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trainer_feedback_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trainer_feedback_moderated_by_fkey';
+            columns: ['moderated_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trainer_feedback_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'trainer_feedback_session_id_fkey';
             columns: ['session_id'];
             isOneToOne: false;
             referencedRelation: 'sessions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'trainer_feedback_trainer_id_fkey';
+            columns: ['trainer_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -3359,6 +4115,13 @@ export type Database = {
             referencedRelation: 'clubs';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'trainer_profiles_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
         ];
       };
       trainer_rating_summary: {
@@ -3418,6 +4181,13 @@ export type Database = {
             referencedRelation: 'clubs';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'trainer_rating_summary_trainer_id_fkey';
+            columns: ['trainer_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
         ];
       };
       trainers: {
@@ -3454,7 +4224,15 @@ export type Database = {
           updated_at?: string;
           user_id?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'trainers_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       training_group_memberships: {
         Row: {
@@ -3674,6 +4452,7 @@ export type Database = {
           deactivated_by: string | null;
           fee_configuration_id: string | null;
           id: string;
+          include_in_planning: boolean;
           is_active: boolean;
           joined_at: string;
           role: string;
@@ -3688,6 +4467,7 @@ export type Database = {
           deactivated_by?: string | null;
           fee_configuration_id?: string | null;
           id?: string;
+          include_in_planning?: boolean;
           is_active?: boolean;
           joined_at?: string;
           role?: string;
@@ -3702,6 +4482,7 @@ export type Database = {
           deactivated_by?: string | null;
           fee_configuration_id?: string | null;
           id?: string;
+          include_in_planning?: boolean;
           is_active?: boolean;
           joined_at?: string;
           role?: string;
@@ -3718,6 +4499,13 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'user_club_memberships_deactivated_by_fkey';
+            columns: ['deactivated_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'user_club_memberships_fee_configuration_id_fkey';
             columns: ['fee_configuration_id'];
             isOneToOne: false;
@@ -3728,6 +4516,7 @@ export type Database = {
       };
       user_training_preferences: {
         Row: {
+          avoid_member_ids: Json | null;
           can_teach_groups: Json | null;
           club_id: string;
           created_at: string;
@@ -3742,6 +4531,7 @@ export type Database = {
           preferred_level: string | null;
           priority: number;
           season_id: string;
+          self_assessed_level: string | null;
           special_requests: string | null;
           submitted_at: string | null;
           unavailable_dates: Json | null;
@@ -3749,8 +4539,10 @@ export type Database = {
           user_id: string;
           user_role: string;
           weekly_availability: Json;
+          wish_partner_ids: Json | null;
         };
         Insert: {
+          avoid_member_ids?: Json | null;
           can_teach_groups?: Json | null;
           club_id: string;
           created_at?: string;
@@ -3765,6 +4557,7 @@ export type Database = {
           preferred_level?: string | null;
           priority?: number;
           season_id: string;
+          self_assessed_level?: string | null;
           special_requests?: string | null;
           submitted_at?: string | null;
           unavailable_dates?: Json | null;
@@ -3772,8 +4565,10 @@ export type Database = {
           user_id: string;
           user_role: string;
           weekly_availability?: Json;
+          wish_partner_ids?: Json | null;
         };
         Update: {
+          avoid_member_ids?: Json | null;
           can_teach_groups?: Json | null;
           club_id?: string;
           created_at?: string;
@@ -3788,6 +4583,7 @@ export type Database = {
           preferred_level?: string | null;
           priority?: number;
           season_id?: string;
+          self_assessed_level?: string | null;
           special_requests?: string | null;
           submitted_at?: string | null;
           unavailable_dates?: Json | null;
@@ -3795,6 +4591,7 @@ export type Database = {
           user_id?: string;
           user_role?: string;
           weekly_availability?: Json;
+          wish_partner_ids?: Json | null;
         };
         Relationships: [
           {
@@ -3833,10 +4630,12 @@ export type Database = {
           email: string;
           emergency_contact: string | null;
           emergency_phone: string | null;
+          experience_months: number | null;
           full_name: string | null;
           id: string;
           phone: string | null;
           postal_code: string | null;
+          skill_level: string | null;
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
           subscription_status: string | null;
@@ -3856,10 +4655,12 @@ export type Database = {
           email: string;
           emergency_contact?: string | null;
           emergency_phone?: string | null;
+          experience_months?: number | null;
           full_name?: string | null;
           id?: string;
           phone?: string | null;
           postal_code?: string | null;
+          skill_level?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           subscription_status?: string | null;
@@ -3879,10 +4680,12 @@ export type Database = {
           email?: string;
           emergency_contact?: string | null;
           emergency_phone?: string | null;
+          experience_months?: number | null;
           full_name?: string | null;
           id?: string;
           phone?: string | null;
           postal_code?: string | null;
+          skill_level?: string | null;
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           subscription_status?: string | null;
@@ -3941,6 +4744,13 @@ export type Database = {
             referencedRelation: 'courts';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'waitlist_entries_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
         ];
       };
     };
@@ -3967,6 +4777,10 @@ export type Database = {
           reference_id: string;
           reference_type: string;
         }[];
+      };
+      calculate_dunning_level: {
+        Args: { p_invoice_id: string };
+        Returns: number;
       };
       calculate_member_fees: {
         Args: {
@@ -4120,6 +4934,7 @@ export type Database = {
         Returns: number;
       };
       get_my_trainer_id: { Args: never; Returns: string };
+      get_session_end_time: { Args: { p_session_id: string }; Returns: string };
       get_setting_value: {
         Args: { p_club_id?: string; p_key: string };
         Returns: string;
@@ -4180,6 +4995,7 @@ export type Database = {
         };
       };
       get_user_club_ids: { Args: never; Returns: string[] };
+      get_user_role: { Args: never; Returns: string };
       get_valid_fee_configurations: {
         Args: { p_club_id: string; p_date?: string };
         Returns: {

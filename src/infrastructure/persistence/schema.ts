@@ -8,6 +8,7 @@ import {
   uuid,
   varchar,
   integer,
+  smallint,
   numeric,
   index,
   text,
@@ -275,12 +276,20 @@ export const bookings = pgTable(
     session_id: uuid('session_id')
       .notNull()
       .references(() => sessions.id),
+    court_id: uuid('court_id').notNull(),
+    booking_number: text('booking_number'),
+    booking_type: text('booking_type').default('court'),
     status: varchar('status', { length: 20 }).notNull().default('pending'),
     booked_at: timestamp('booked_at').notNull().defaultNow(),
-    session_start_time: timestamp('session_start_time').notNull(), // For cancellation policy calculations
+    session_start_time: timestamp('session_start_time', { withTimezone: true }).notNull(),
+    start_time: timestamp('start_time', { withTimezone: true }),
+    end_time: timestamp('end_time', { withTimezone: true }),
+    is_recurring: boolean('is_recurring').default(false),
+    payment_status: text('payment_status').default('pending'),
     cancelled_at: timestamp('cancelled_at'),
     cancellation_reason: varchar('cancellation_reason', { length: 50 }),
     cancellation_notes: text('cancellation_notes'),
+    notes: text('notes'),
   },
   (table) => ({
     club_idx: index('bookings_club_idx').on(table.club_id),
@@ -374,8 +383,11 @@ export const invoices = pgTable(
     invoice_type: text('invoice_type'),
     due_date: timestamp('due_date', { mode: 'date' }).notNull(),
     status: text('status').notNull().default('draft'),
+    invoice_date: date('invoice_date').notNull().defaultNow(),
     amount: numeric('amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    subtotal: numeric('subtotal', { precision: 10, scale: 2 }).notNull().default('0'),
     tax_amount: numeric('tax_amount', { precision: 10, scale: 2 }),
+    paid_amount: numeric('paid_amount', { precision: 10, scale: 2 }).notNull().default('0'),
     currency: text('currency').notNull().default('EUR'),
     notes: text('notes'),
     season_id: uuid('season_id'),
@@ -454,6 +466,57 @@ export const invoicesRelations = relations(invoices, ({ one, many }) => ({
 export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
   invoice: one(invoices, {
     fields: [invoiceItems.invoice_id],
+    references: [invoices.id],
+  }),
+}));
+
+// ==============================================================================
+// Dunning Records — Mahnwesen
+// ==============================================================================
+
+/**
+ * Dunning records (Mahnläufe) for overdue invoices.
+ * Linked to invoices; club_id enables multi-tenant isolation / RLS.
+ */
+export const dunningRecords = pgTable(
+  'dunning_records',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    invoice_id: uuid('invoice_id').notNull(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id'),
+    level: smallint('level').default(1),
+    status: varchar('status', { length: 20 }).default('sent'),
+    original_amount: numeric('original_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    total_amount: numeric('total_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    due_date: date('due_date'),
+    fee_amount: numeric('fee_amount', { precision: 10, scale: 2 }).default('0'),
+    sent_at: timestamp('sent_at', { withTimezone: true }).defaultNow(),
+    paid_at: timestamp('paid_at', { withTimezone: true }),
+    escalated_at: timestamp('escalated_at', { withTimezone: true }),
+    cancelled_at: timestamp('cancelled_at', { withTimezone: true }),
+    notes: text('notes'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('dunning_records_club_idx').on(table.club_id),
+    member_idx: index('dunning_records_member_idx').on(table.member_id),
+    invoice_idx: index('dunning_records_invoice_idx').on(table.invoice_id),
+    status_idx: index('dunning_records_status_idx').on(table.status),
+    level_idx: index('dunning_records_level_idx').on(table.level),
+  })
+);
+
+export const dunningRecordsRelations = relations(dunningRecords, ({ one }) => ({
+  club: one(clubs, {
+    fields: [dunningRecords.club_id],
+    references: [clubs.id],
+  }),
+  invoice: one(invoices, {
+    fields: [dunningRecords.invoice_id],
     references: [invoices.id],
   }),
 }));
@@ -1148,6 +1211,33 @@ export const sessionRsvpsRelations = relations(sessionRsvps, ({ one }) => ({
 /**
  * Trainer availability slots (when trainers are available/unavailable)
  */
+// ==============================================================================
+// Trainer Availability (singular) — user_id + day_of_week based
+// Used by Supabase-based trainer availability API routes
+// ==============================================================================
+
+/**
+ * Trainer availability by day-of-week pattern (simpler model than the date-based
+ * trainer_availabilities table). Used by /api/trainer/availability endpoints.
+ */
+export const trainerAvailability = pgTable(
+  'trainer_availability',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    user_id: uuid('user_id').notNull(),
+    day_of_week: smallint('day_of_week').notNull(), // 0=Sunday ... 6=Saturday
+    start_time: time('start_time').notNull(),
+    end_time: time('end_time').notNull(),
+    is_available: boolean('is_available').default(true),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => ({
+    user_idx: index('trainer_availability_user_idx').on(table.user_id),
+    day_idx: index('trainer_availability_day_idx').on(table.day_of_week),
+  })
+);
+
 export const trainerAvailabilities = pgTable(
   'trainer_availabilities',
   {

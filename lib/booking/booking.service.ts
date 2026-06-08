@@ -1,10 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service';
-import type {
-  Booking,
-  CreateBooking,
-  BookingStatus,
-  BookingConflict,
-} from '../types/court-booking';
+import type { Booking, BookingStatus, BookingConflict } from '../types/court-booking';
 
 const supabase = createServiceClient();
 
@@ -18,48 +13,6 @@ export class BookingService {
       BookingService.instance = new BookingService();
     }
     return BookingService.instance;
-  }
-
-  async generateBookingNumber(clubId: string): Promise<string> {
-    const { data, error } = await supabase.rpc('generate_booking_number', {
-      p_club_id: clubId,
-    });
-
-    if (error) {
-      throw new Error(`Failed to generate booking number: ${error.message}`);
-    }
-
-    return data;
-  }
-
-  async createBooking(data: CreateBooking, userId: string, clubId: string): Promise<Booking> {
-    const bookingNumber = await this.generateBookingNumber(clubId);
-
-    const { data: booking, error } = await supabase
-      .from('bookings')
-      .insert({
-        club_id: clubId,
-        court_id: data.court_id,
-        user_id: userId,
-        booking_number: bookingNumber,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        status: 'confirmed',
-        booking_type: data.booking_type,
-        is_recurring: data.is_recurring,
-        recurring_pattern: data.recurring_pattern,
-        number_of_players: data.number_of_players,
-        notes: data.notes,
-        payment_status: 'unpaid',
-      })
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create booking: ${error.message}`);
-    }
-
-    return booking;
   }
 
   async getBookingById(bookingId: string): Promise<Booking | null> {

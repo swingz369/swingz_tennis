@@ -57,7 +57,9 @@ export type Invoice = {
   invoiceNumber: string;
   memberId: string;
   memberName: string;
+  subtotal: number;
   amount: number;
+  paidAmount: number;
   currency: string;
   status:
     | 'draft'
@@ -72,6 +74,7 @@ export type Invoice = {
     | 'dunning'
     | 'cancelled';
   invoiceType?: 'season' | 'membership' | 'adhoc';
+  invoiceDate: string;
   dueDate: string;
   paidAt?: string;
   stripeInvoiceId?: string;
@@ -166,7 +169,7 @@ export default function BillingClient({
   searchParams,
 }: BillingClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'invoices'>('subscriptions');
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'invoices'>('invoices');
   const subscriptions = initialSubscriptions;
   const clubMembers = members;
   const [generatingInvoices, setGeneratingInvoices] = useState(false);
@@ -221,10 +224,13 @@ export default function BillingClient({
                 invoiceNumber: String(inv.invoiceNumber || ''),
                 memberId: String(inv.memberId || ''),
                 memberName: String(inv.memberName || 'N/A'),
+                subtotal: Number(inv.subtotal ?? 0),
                 amount: Number(inv.amount ?? 0),
+                paidAmount: Number(inv.paidAmount ?? 0),
                 currency: String(inv.currency || 'EUR'),
                 status: String(inv.status || 'draft') as Invoice['status'],
                 invoiceType: inv.invoiceType as Invoice['invoiceType'],
+                invoiceDate: String(inv.invoiceDate || ''),
                 dueDate: String(inv.dueDate || ''),
                 paidAt: inv.paidAt ? String(inv.paidAt) : undefined,
               } as Invoice;
@@ -602,9 +608,12 @@ export default function BillingClient({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Rechnungsnr.</TableHead>
+                    <TableHead>Datum</TableHead>
                     <TableHead>Mitglied</TableHead>
                     <TableHead>Typ</TableHead>
-                    <TableHead>Betrag</TableHead>
+                    <TableHead className="text-right">Netto</TableHead>
+                    <TableHead className="text-right">Betrag</TableHead>
+                    <TableHead className="text-right">Bezahlt</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Fällig</TableHead>
                     <TableHead className="text-right">Aktionen</TableHead>
@@ -614,6 +623,11 @@ export default function BillingClient({
                   {invoices.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-mono text-sm">{invoice.invoiceNumber}</TableCell>
+                      <TableCell className="text-sm">
+                        {invoice.invoiceDate
+                          ? new Date(invoice.invoiceDate).toLocaleDateString('de-DE')
+                          : '-'}
+                      </TableCell>
                       <TableCell>{invoice.memberName}</TableCell>
                       <TableCell>
                         {invoice.invoiceType ? (
@@ -622,8 +636,26 @@ export default function BillingClient({
                           '-'
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {invoice.subtotal.toFixed(2)} {invoice.currency}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
                         {invoice.amount.toFixed(2)} {invoice.currency}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {invoice.paidAmount > 0 ? (
+                          <span
+                            className={
+                              invoice.paidAmount >= invoice.amount
+                                ? 'text-green-600'
+                                : 'text-orange-600'
+                            }
+                          >
+                            {invoice.paidAmount.toFixed(2)} {invoice.currency}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <InvoiceStatusBadge status={invoice.status} />

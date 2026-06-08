@@ -106,7 +106,7 @@ export default async function AdminPage() {
     supabase
       .from('sessions')
       .select(
-        `id, timeslot_start, timeslot_end, courts(name), schedules!inner(club_id), user_club_memberships(users(full_name))`
+        `id, timeslot_start, timeslot_end, courts(name), schedules!inner(club_id), trainers(name)`
       )
       .eq('schedules.club_id', clubId)
       .gte('timeslot_start', todayStart.toISOString())
@@ -123,9 +123,10 @@ export default async function AdminPage() {
       .order('created_at', { ascending: false })
       .limit(3),
     // Recent bookings (filtered by club_id)
+    // bookings.member_id has FK to users — PostgREST can resolve users(full_name)
     supabase
       .from('bookings')
-      .select('id, created_at, session_start_time, users(full_name)')
+      .select('id, created_at, session_start_time, users!bookings_member_id_fkey(full_name)')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false })
       .limit(3),
@@ -172,7 +173,7 @@ export default async function AdminPage() {
       return {
         id: `booking-${b.id}`,
         type: 'booking' as const,
-        name: u?.full_name || 'Unbekannt',
+        name: u?.full_name || 'Mitglied',
         created_at: b.created_at,
         sub: 'Buchung erstellt',
       };
@@ -346,14 +347,7 @@ export default async function AdminPage() {
               <div className="divide-y divide-border dark:divide-white/5">
                 {(todaySessions ?? []).map((s: any) => {
                   const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
-                  const membership = Array.isArray(s.user_club_memberships)
-                    ? s.user_club_memberships[0]
-                    : s.user_club_memberships;
-                  const trainerUser = membership
-                    ? Array.isArray(membership.users)
-                      ? membership.users[0]
-                      : membership.users
-                    : null;
+                  const trainer = Array.isArray(s.trainers) ? s.trainers[0] : s.trainers;
                   return (
                     <div key={s.id} className="flex items-center gap-3 py-3">
                       <IconBox icon={Clock} size="sm" variant="light" />
@@ -363,10 +357,8 @@ export default async function AdminPage() {
                         </p>
                         <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                           {formatTime(s.timeslot_start)} – {formatTime(s.timeslot_end)}
-                          {trainerUser?.full_name && (
-                            <span className="ml-2 text-muted-foreground">
-                              · {trainerUser.full_name}
-                            </span>
+                          {trainer?.name && (
+                            <span className="ml-2 text-muted-foreground">· {trainer.name}</span>
                           )}
                         </p>
                       </div>

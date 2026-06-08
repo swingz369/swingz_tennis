@@ -4,13 +4,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, User, Trophy } from 'lucide-react';
 
+type ClubMembership = {
+  clubs: { id: string; name: string; status: string };
+};
+
 type Member = {
   id: string;
   full_name: string | null;
   email: string;
   created_at: string;
   phone: string | null;
-  club_memberships: any[];
+  club_memberships: ClubMembership[];
 };
 
 type Booking = {
@@ -61,7 +65,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
 
   const { data: memberData } = await supabase
     .from('users')
-    .select('*, club_memberships(clubs(id, name, status))')
+    .select('*, club_memberships: user_club_memberships(clubs(id, name, status))')
     .eq('id', id)
     .single();
 
@@ -79,7 +83,8 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
     email: memberData.email ?? '',
     created_at: memberData.created_at ?? '',
     phone: ((memberData as Record<string, unknown>).phone as string | null) ?? null,
-    club_memberships: ((memberData as Record<string, unknown>).club_memberships as any[]) ?? [],
+    club_memberships:
+      ((memberData as Record<string, unknown>).club_memberships as ClubMembership[]) ?? [],
   };
 
   const { data: bookingsData } = await supabase
@@ -99,7 +104,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
     .order('created_at', { ascending: false })
     .limit(10);
 
-  bookings = bookingsData || [];
+  bookings = (bookingsData || []) as Booking[];
 
   // Stats (both modes) – only use bookings data we have
   const totalBookings = bookings.length;
@@ -205,23 +210,21 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
           <CardContent>
             {member!.club_memberships && member!.club_memberships.length > 0 ? (
               <div className="space-y-2">
-                {member.club_memberships.map(
-                  (membership: { clubs: { id: string; name: string; status: string } }) => (
-                    <div
-                      key={membership.clubs.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{membership.clubs.name}</p>
-                        <Badge
-                          variant={membership.clubs.status === 'active' ? 'default' : 'secondary'}
-                        >
-                          {membership.clubs.status === 'active' ? 'Aktiv' : 'Inaktiv'}
-                        </Badge>
-                      </div>
+                {member.club_memberships.map((membership: ClubMembership) => (
+                  <div
+                    key={membership.clubs.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium">{membership.clubs.name}</p>
+                      <Badge
+                        variant={membership.clubs.status === 'active' ? 'default' : 'secondary'}
+                      >
+                        {membership.clubs.status === 'active' ? 'Aktiv' : 'Inaktiv'}
+                      </Badge>
                     </div>
-                  )
-                )}
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Keine Vereinsmitgliedschaft</p>

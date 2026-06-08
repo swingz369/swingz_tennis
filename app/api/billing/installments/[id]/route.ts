@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { data: installment, error: fetchErr } = await (supabase as any)
     .from('invoice_installments')
-    .select('*, invoices(club_id, member_id, total_amount)')
+    .select('*, invoices(club_id, member_id, amount)')
     .eq('id', id)
     .single();
   if (fetchErr || !installment) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .update({
         status: 'paid',
         paid_at: paidAt,
-        paid_amount: installment.invoices?.total_amount ?? 0,
+        paid_amount: installment.invoices?.amount ?? 0,
       })
       .eq('id', installment.invoice_id);
   }

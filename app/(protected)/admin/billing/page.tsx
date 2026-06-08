@@ -102,28 +102,35 @@ export default async function BillingPage({
     .filter((m): m is { id: string; name: string; email: string } => m !== null);
 
   // --- Fetch invoices (server-paginated) ---
-  const [{ data: invoicesData }, { count: invoiceCount }] = await Promise.all([
-    supabase
-      .from('invoices')
-      .select(
-        `
+  const [{ data: invoicesData, error: invoicesError }, { count: invoiceCount, error: countError }] =
+    await Promise.all([
+      supabase
+        .from('invoices')
+        .select(
+          `
           id,
           invoice_number,
+          subtotal,
           amount,
+          paid_amount,
           currency,
           status,
+          invoice_date,
           due_date,
           paid_at,
           member_id,
           invoice_type,
-          users (full_name)
+          users!invoices_member_id_fkey (full_name)
         `
-      )
-      .eq('club_id', clubId)
-      .order('due_date', { ascending: false })
-      .range(offset, offset + limit - 1),
-    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId),
-  ]);
+        )
+        .eq('club_id', clubId)
+        .order('due_date', { ascending: false })
+        .range(offset, offset + limit - 1),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId),
+    ]);
+
+  if (invoicesError) console.error('[BillingPage] invoice query error:', invoicesError);
+  if (countError) console.error('[BillingPage] count query error:', countError);
 
   const invoicePagination = buildPaginationMeta(page, limit, invoiceCount);
 
@@ -134,10 +141,13 @@ export default async function BillingPage({
       invoiceNumber: String(inv.invoice_number || ''),
       memberId: String(inv.member_id || ''),
       memberName: String(users?.full_name || 'N/A'),
+      subtotal: Number(inv.subtotal ?? 0),
       amount: Number(inv.amount ?? 0),
+      paidAmount: Number(inv.paid_amount ?? 0),
       currency: String(inv.currency || 'EUR'),
       status: String(inv.status || 'draft') as Invoice['status'],
       invoiceType: (inv.invoice_type || undefined) as Invoice['invoiceType'],
+      invoiceDate: String(inv.invoice_date || ''),
       dueDate: String(inv.due_date || ''),
       paidAt: inv.paid_at ? String(inv.paid_at) : undefined,
     } as Invoice;

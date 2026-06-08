@@ -4,7 +4,7 @@ import type {
   ReminderResult,
 } from '@/application/validation/schemas/reminders.schema';
 
-interface Session {
+export interface Session {
   id: string;
   timeslot_start: string;
   timeslot_end: string;
@@ -23,7 +23,7 @@ interface Booking {
 }
 
 // Repository interfaces for data access
-interface ISessionRepository {
+export interface ISessionRepository {
   findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]>;
 }
 

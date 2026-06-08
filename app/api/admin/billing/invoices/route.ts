@@ -28,13 +28,16 @@ export async function GET(_request: NextRequest) {
           `
           id,
           invoice_number,
+          subtotal,
           amount,
+          paid_amount,
           currency,
           status,
+          invoice_date,
           due_date,
           paid_at,
           member_id,
-          users(full_name, email)
+          users!invoices_member_id_fkey(full_name, email)
         `
         )
         .eq('club_id', clubId)
@@ -49,9 +52,12 @@ export async function GET(_request: NextRequest) {
         invoiceNumber: inv.invoice_number,
         memberId: inv.member_id,
         memberName: inv.users?.full_name || 'N/A',
+        subtotal: inv.subtotal,
         amount: inv.amount,
+        paidAmount: inv.paid_amount,
         currency: inv.currency,
         status: inv.status,
+        invoiceDate: inv.invoice_date,
         dueDate: inv.due_date,
         paidAt: inv.paid_at,
       }));

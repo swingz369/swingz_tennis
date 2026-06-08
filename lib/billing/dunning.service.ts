@@ -34,10 +34,23 @@ export class DunningService {
   async createDunningRecord(data: CreateDunningRecord): Promise<DunningRecord> {
     const dunningFee = data.fee_amount || this.calculateDunningFee(data.level);
 
+    // Look up club_id from the invoice (club_id is NOT NULL on dunning_records)
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select('club_id, member_id')
+      .eq('id', data.invoice_id)
+      .single();
+
+    if (!invoice?.club_id) {
+      throw new Error(`Cannot create dunning record: invoice ${data.invoice_id} has no club_id`);
+    }
+
     const { data: dunning, error } = await supabase
       .from('dunning_records')
       .insert({
         invoice_id: data.invoice_id,
+        club_id: invoice?.club_id ?? null,
+        member_id: invoice?.member_id ?? null,
         level: data.level,
         due_date: data.due_date,
         fee_amount: dunningFee,

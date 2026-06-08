@@ -1,6 +1,6 @@
 import { eq, and, sql, gte, lt } from 'drizzle-orm';
 import { db } from '../db';
-import { bookings } from '../schema';
+import { bookings, sessions } from '../schema';
 import { Booking } from '@/domain/entities/booking';
 import type { CancellationReason } from '@/domain/entities/booking';
 import { BookingId, ClubId, MemberId, ScheduleId, SessionId } from '@/domain/value-objects';
@@ -64,7 +64,19 @@ export class DrizzleBookingRepository implements BookingRepository {
       if (existing) {
         await db.update(bookings).set(values).where(eq(bookings.id, booking.getId().getValue()));
       } else {
-        await db.insert(bookings).values(values);
+        // Look up court_id from the linked session (court_id is NOT NULL in DB)
+        const session = await db
+          .select({ court_id: sessions.court_id })
+          .from(sessions)
+          .where(eq(sessions.id, booking.getSessionId().getValue()))
+          .limit(1);
+        const courtId = session[0]?.court_id;
+        if (!courtId) {
+          throw new Error(
+            `Cannot insert booking: session ${booking.getSessionId().getValue()} has no court_id`
+          );
+        }
+        await db.insert(bookings).values({ ...values, court_id: courtId });
       }
     } catch (error) {
       // Parse Postgres errors (including GIST constraint violations)

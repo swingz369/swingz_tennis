@@ -2,13 +2,13 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { ReminderService } from '@/application/use-cases/send-reminders.use-case';
+import { ReminderService, type Session } from '@/application/use-cases/send-reminders.use-case';
 import { EmailService } from '@/infrastructure/email/email.service';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 
 class TempSessionRepository {
-  async findSessionsForDateRange(startDate: Date, endDate: Date) {
+  async findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = await createClient();
     const { data } = await supabase
@@ -16,25 +16,27 @@ class TempSessionRepository {
       .select('*, trainers(*), courts(*), clubs(*)')
       .gte('timeslot_start', startDate.toISOString())
       .lte('timeslot_end', endDate.toISOString());
-    return (data || []).map((session) => ({
-      ...session,
-      trainers: session.trainers
-        ? {
-            name: session.trainers.name,
-            email: session.trainers.email,
-          }
-        : (undefined as any),
-      courts: session.courts
-        ? {
-            name: session.courts.name,
-          }
-        : (undefined as any),
-      clubs: session.clubs
-        ? {
-            name: (session.clubs as any).name,
-          }
-        : (undefined as any),
-    }));
+    return (data || []).map((session): Session => {
+      const trainer = (Array.isArray(session.trainers) ? session.trainers[0] : session.trainers) as
+        | { name: string; email?: string }
+        | undefined;
+      const court = (Array.isArray(session.courts) ? session.courts[0] : session.courts) as
+        | { name: string }
+        | undefined;
+      const club = (Array.isArray(session.clubs) ? session.clubs[0] : session.clubs) as
+        | { name: string }
+        | undefined;
+      return {
+        id: session.id,
+        timeslot_start: session.timeslot_start,
+        timeslot_end: session.timeslot_end,
+        trainer_id: session.trainer_id ?? '',
+        court_id: session.court_id ?? null,
+        trainers: trainer ? { name: trainer.name, email: trainer.email ?? undefined } : undefined,
+        courts: court ? { name: court.name } : undefined,
+        clubs: club ? { name: club.name } : undefined,
+      };
+    });
   }
 }
 

@@ -76,11 +76,24 @@ export async function requireAdminClub(): Promise<AdminContext> {
     clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
     if (!clubId) redirect('/select-admin-club');
   } else {
-    // Admin always sees their own club (no ClubSwitcher — only superadmin has that)
-    const adminMembership = (memberships ?? []).find(
-      (m: { role: string; club_id: string | null }) => m.role === 'admin'
-    );
-    clubId = adminMembership?.club_id || null;
+    // Also honor ADMIN_CLUB_COOKIE for regular admins (allows club switching across managed clubs)
+    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+    if (cookieClubId) {
+      const isValid = (memberships ?? []).some(
+        (m: { role: string; club_id: string | null }) =>
+          m.role === 'admin' && m.club_id === cookieClubId
+      );
+      if (isValid) {
+        clubId = cookieClubId;
+      }
+    }
+    // Fallback: first admin membership
+    if (!clubId) {
+      const adminMembership = (memberships ?? []).find(
+        (m: { role: string; club_id: string | null }) => m.role === 'admin'
+      );
+      clubId = adminMembership?.club_id || null;
+    }
     if (!clubId) redirect('/dashboard');
   }
 
