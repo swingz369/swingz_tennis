@@ -19,6 +19,7 @@
  *   - .eslintcache    (ESLint Cache)
  *   - *.tsbuildinfo   (TypeScript Incremental Build Info)
  *   - .mdx/           (MDX Compilation Cache)
+ *   - !supabase/migrations/*.sql  (Whitelist: versioniertes DB-Schema, sonst von *.sql blockiert)
  *
  * Usage:
  *   npx tsx scripts/verify-gitignore.ts
@@ -60,6 +61,8 @@ const REQUIRED_PATTERNS = [
   '.DS_Store',
   'Thumbs.db',
   '*~',
+  // Negation-Whitelist (Supabase-Migrations sind versioniertes DB-Schema)
+  '!supabase/migrations/*.sql',
 ];
 
 // ═══ CLI arg parsing ═══════════════════════════════════════════════════
