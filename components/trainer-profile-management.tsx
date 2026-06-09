@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CenteredModal } from '@/components/ui/centered-modal';
 
 import {
   Select,
@@ -1324,89 +1325,87 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
                     </Card>
 
                     {/* Weekly Slot Dialog */}
-                    {weeklyDialogOpen && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/40 p-4">
-                        {' '}
-                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[85vh] space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold">Neue wöchentliche Verfügbarkeit</h3>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => setWeeklyDialogOpen(false)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                    <CenteredModal
+                      open={weeklyDialogOpen}
+                      onClose={() => setWeeklyDialogOpen(false)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-bold">Neue wöchentliche Verfügbarkeit</h3>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setWeeklyDialogOpen(false)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <Label>Wochentag</Label>
+                          <Select
+                            value={String(weeklyDay)}
+                            onValueChange={(v) => setWeeklyDay(parseInt(v))}
+                          >
+                            <SelectTrigger className="w-full mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {weekDays.map((day) => (
+                                <SelectItem key={day.value} value={String(day.value)}>
+                                  {day.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Startzeit</Label>
+                            <Input
+                              type="time"
+                              value={weeklyStart}
+                              onChange={(e) => setWeeklyStart(e.target.value)}
+                              className="mt-1"
+                            />
                           </div>
-                          <div className="space-y-3">
-                            <div>
-                              <Label>Wochentag</Label>
-                              <Select
-                                value={String(weeklyDay)}
-                                onValueChange={(v) => setWeeklyDay(parseInt(v))}
-                              >
-                                <SelectTrigger className="w-full mt-1">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {weekDays.map((day) => (
-                                    <SelectItem key={day.value} value={String(day.value)}>
-                                      {day.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label>Startzeit</Label>
-                                <Input
-                                  type="time"
-                                  value={weeklyStart}
-                                  onChange={(e) => setWeeklyStart(e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                              <div>
-                                <Label>Endzeit</Label>
-                                <Input
-                                  type="time"
-                                  value={weeklyEnd}
-                                  onChange={(e) => setWeeklyEnd(e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label>Notizen (optional)</Label>
-                              <Input
-                                value={weeklyNotes}
-                                onChange={(e) => setWeeklyNotes(e.target.value)}
-                                placeholder="z.B. Nur Anfängertraining"
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex gap-2 pt-2">
-                            <Button
-                              variant="outline"
-                              className="flex-1"
-                              onClick={() => setWeeklyDialogOpen(false)}
-                            >
-                              Abbrechen
-                            </Button>
-                            <Button
-                              className="flex-1"
-                              onClick={handleAddWeeklySlot}
-                              disabled={weeklySaving}
-                            >
-                              {weeklySaving ? 'Speichern...' : 'Hinzufügen'}
-                            </Button>
+                          <div>
+                            <Label>Endzeit</Label>
+                            <Input
+                              type="time"
+                              value={weeklyEnd}
+                              onChange={(e) => setWeeklyEnd(e.target.value)}
+                              className="mt-1"
+                            />
                           </div>
                         </div>
+                        <div>
+                          <Label>Notizen (optional)</Label>
+                          <Input
+                            value={weeklyNotes}
+                            onChange={(e) => setWeeklyNotes(e.target.value)}
+                            placeholder="z.B. Nur Anfängertraining"
+                            className="mt-1"
+                          />
+                        </div>
                       </div>
-                    )}
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setWeeklyDialogOpen(false)}
+                        >
+                          Abbrechen
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={handleAddWeeklySlot}
+                          disabled={weeklySaving}
+                        >
+                          {weeklySaving ? 'Speichern...' : 'Hinzufügen'}
+                        </Button>
+                      </div>
+                    </CenteredModal>
 
                     {/* Konkrete Verfügbarkeitsslots — now with add + delete */}
                     <Card variant="flat">
@@ -1505,80 +1504,75 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
                     </Card>
 
                     {/* Add Slot Dialog (overlay) */}
-                    {slotDialogOpen && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/40 p-4">
-                        {' '}
-                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[85vh] space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold">Neue Verfügbarkeit</h3>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => setSlotDialogOpen(false)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                    <CenteredModal open={slotDialogOpen} onClose={() => setSlotDialogOpen(false)}>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-bold">Neue Verfügbarkeit</h3>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setSlotDialogOpen(false)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <Label>Datum</Label>
+                          <Input
+                            type="date"
+                            value={slotDate}
+                            onChange={(e) => setSlotDate(e.target.value)}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Startzeit</Label>
+                            <Input
+                              type="time"
+                              value={slotStartTime}
+                              onChange={(e) => setSlotStartTime(e.target.value)}
+                              className="mt-1"
+                            />
                           </div>
-                          <div className="space-y-3">
-                            <div>
-                              <Label>Datum</Label>
-                              <Input
-                                type="date"
-                                value={slotDate}
-                                onChange={(e) => setSlotDate(e.target.value)}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <Label>Startzeit</Label>
-                                <Input
-                                  type="time"
-                                  value={slotStartTime}
-                                  onChange={(e) => setSlotStartTime(e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                              <div>
-                                <Label>Endzeit</Label>
-                                <Input
-                                  type="time"
-                                  value={slotEndTime}
-                                  onChange={(e) => setSlotEndTime(e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                            </div>
-                            <div>
-                              <Label>Notizen (optional)</Label>
-                              <Input
-                                value={slotNotes}
-                                onChange={(e) => setSlotNotes(e.target.value)}
-                                placeholder="z.B. Nur Anfängertraining"
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex gap-2 pt-2">
-                            <Button
-                              variant="outline"
-                              className="flex-1"
-                              onClick={() => setSlotDialogOpen(false)}
-                            >
-                              Abbrechen
-                            </Button>
-                            <Button
-                              className="flex-1"
-                              onClick={handleAddSlot}
-                              disabled={slotSaving || !slotDate}
-                            >
-                              {slotSaving ? 'Speichern...' : 'Hinzufügen'}
-                            </Button>
+                          <div>
+                            <Label>Endzeit</Label>
+                            <Input
+                              type="time"
+                              value={slotEndTime}
+                              onChange={(e) => setSlotEndTime(e.target.value)}
+                              className="mt-1"
+                            />
                           </div>
                         </div>
+                        <div>
+                          <Label>Notizen (optional)</Label>
+                          <Input
+                            value={slotNotes}
+                            onChange={(e) => setSlotNotes(e.target.value)}
+                            placeholder="z.B. Nur Anfängertraining"
+                            className="mt-1"
+                          />
+                        </div>
                       </div>
-                    )}
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setSlotDialogOpen(false)}
+                        >
+                          Abbrechen
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={handleAddSlot}
+                          disabled={slotSaving || !slotDate}
+                        >
+                          {slotSaving ? 'Speichern...' : 'Hinzufügen'}
+                        </Button>
+                      </div>
+                    </CenteredModal>
 
                     {/* Bevorzugte Arbeitszeiten */}
                     <Card variant="flat">
@@ -1683,80 +1677,75 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
               </div>
 
               {/* ── Absence Dialog (date-range Urlaub) ──────────────────────── */}
-              {absenceDialogOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/40 p-4">
-                  {' '}
-                  <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[85vh] space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-bold">Abwesenheit eintragen</h3>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setAbsenceDialogOpen(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+              <CenteredModal open={absenceDialogOpen} onClose={() => setAbsenceDialogOpen(false)}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold">Abwesenheit eintragen</h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setAbsenceDialogOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Trainer: {selectedTrainer.firstName} {selectedTrainer.lastName}
+                </p>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Von *</Label>
+                      <Input
+                        type="date"
+                        value={absenceStartDate}
+                        onChange={(e) => setAbsenceStartDate(e.target.value)}
+                        className="mt-1"
+                      />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Trainer: {selectedTrainer.firstName} {selectedTrainer.lastName}
-                    </p>
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label>Von *</Label>
-                          <Input
-                            type="date"
-                            value={absenceStartDate}
-                            onChange={(e) => setAbsenceStartDate(e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label>Bis *</Label>
-                          <Input
-                            type="date"
-                            value={absenceEndDate}
-                            onChange={(e) => setAbsenceEndDate(e.target.value)}
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Grund</Label>
-                        <Select value={absenceReason} onValueChange={setAbsenceReason}>
-                          <SelectTrigger className="w-full mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="vacation">Urlaub</SelectItem>
-                            <SelectItem value="sick">Krankheit</SelectItem>
-                            <SelectItem value="training">Weiterbildung</SelectItem>
-                            <SelectItem value="personal">Persönlich</SelectItem>
-                            <SelectItem value="other">Sonstiges</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setAbsenceDialogOpen(false)}
-                      >
-                        Abbrechen
-                      </Button>
-                      <Button
-                        className="flex-1"
-                        onClick={handleAddAbsence}
-                        disabled={absenceSaving || !absenceStartDate || !absenceEndDate}
-                      >
-                        {absenceSaving ? 'Speichern...' : 'Eintragen'}
-                      </Button>
+                    <div>
+                      <Label>Bis *</Label>
+                      <Input
+                        type="date"
+                        value={absenceEndDate}
+                        onChange={(e) => setAbsenceEndDate(e.target.value)}
+                        className="mt-1"
+                      />
                     </div>
                   </div>
+                  <div>
+                    <Label>Grund</Label>
+                    <Select value={absenceReason} onValueChange={setAbsenceReason}>
+                      <SelectTrigger className="w-full mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vacation">Urlaub</SelectItem>
+                        <SelectItem value="sick">Krankheit</SelectItem>
+                        <SelectItem value="training">Weiterbildung</SelectItem>
+                        <SelectItem value="personal">Persönlich</SelectItem>
+                        <SelectItem value="other">Sonstiges</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setAbsenceDialogOpen(false)}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={handleAddAbsence}
+                    disabled={absenceSaving || !absenceStartDate || !absenceEndDate}
+                  >
+                    {absenceSaving ? 'Speichern...' : 'Eintragen'}
+                  </Button>
+                </div>
+              </CenteredModal>
             </div>
           ) : showInviteForm ? (
             /* ── Inline Invite Form ──────────────────────────────────────────── */
