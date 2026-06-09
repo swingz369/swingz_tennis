@@ -138,19 +138,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     });
   };
 
-  const getRoleBadgeClass = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-      case 'trainer':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'superadmin':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
-      default:
-        return 'bg-muted text-foreground dark:bg-muted dark:text-foreground';
-    }
-  };
-
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteLoading(true);
@@ -164,7 +151,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       });
 
       if (!res.ok) {
-        const err = await res.json();
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Einladung fehlgeschlagen');
       }
 
@@ -193,27 +180,8 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
     }
   };
 
-  const handleRoleChange = async (memberId: string, newRole: string) => {
-    try {
-      const res = await apiFetch(`/api/members/${memberId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Fehler bei Rollenänderung');
-      }
-
-      setMembers((prev) =>
-        prev.map((m) => (m.id === memberId ? { ...m, role: newRole as Member['role'] } : m))
-      );
-      toast.success(`Rolle geändert zu ${newRole}`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Fehler';
-      toast.error(message);
-    }
-  };
+  // Note: Role-Änderung wurde aus der Liste entfernt — wird jetzt ausschließlich
+  // über die Mitglieder-Detail-Seite (app/(protected)/admin/members/[id]) verwaltet.
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6">
@@ -334,9 +302,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                     Telefon
                   </th>
                   <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
-                    Rolle
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider hidden md:table-cell">
@@ -351,7 +316,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 {filteredMembers.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={7}
                       className="px-4 md:px-6 py-8 text-center text-muted-foreground dark:text-muted-foreground"
                     >
                       Keine Mitglieder gefunden
@@ -396,23 +361,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                       </td>
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground text-sm hidden lg:table-cell">
                         {member.phone || '—'}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <Select
-                          value={member.role}
-                          onValueChange={(v) => handleRoleChange(member.id, v)}
-                        >
-                          <SelectTrigger
-                            className={`h-7 w-[110px] text-xs border-0 rounded-full px-2.5 py-0.5 font-medium ${getRoleBadgeClass(member.role)}`}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="member">Mitglied</SelectItem>
-                            <SelectItem value="trainer">Trainer</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </td>
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                         <button
@@ -504,21 +452,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 </CardHeader>
                 <CardContent className="space-y-2 pt-0">
                   <div className="flex items-center gap-2">
-                    <Select
-                      value={member.role}
-                      onValueChange={(v) => handleRoleChange(member.id, v)}
-                    >
-                      <SelectTrigger
-                        className={`h-7 w-[110px] text-xs border-0 rounded-full px-2.5 py-0.5 font-medium ${getRoleBadgeClass(member.role)}`}
-                      >
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="member">Mitglied</SelectItem>
-                        <SelectItem value="trainer">Trainer</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
                     <button
                       onClick={() => handleToggleActive(member.id, member.is_active)}
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
