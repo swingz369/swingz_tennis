@@ -702,6 +702,7 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
           ) : (
             /* ── Trainer Card Grid ──────────────────────────────────────────── */
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* @codebuff-skip: TODO - replace card grid with table like members-client.tsx (failed str_replace above due to special chars in section comment) */}
               {filteredTrainers.map((trainer, i) => {
                 const isSelected = selectedTrainer?.id === trainer.id;
                 const delayClass = `animate-in-delay-${(i % 5) + 1}`;
@@ -1324,8 +1325,9 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
 
                     {/* Weekly Slot Dialog */}
                     {weeklyDialogOpen && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+                      <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/40 p-4">
+                        {' '}
+                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[85vh] space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold">Neue wöchentliche Verfügbarkeit</h3>
                             <Button
@@ -1504,8 +1506,9 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
 
                     {/* Add Slot Dialog (overlay) */}
                     {slotDialogOpen && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+                      <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/40 p-4">
+                        {' '}
+                        <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[85vh] space-y-4">
                           <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold">Neue Verfügbarkeit</h3>
                             <Button
@@ -1681,8 +1684,9 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
 
               {/* ── Absence Dialog (date-range Urlaub) ──────────────────────── */}
               {absenceDialogOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                  <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md mx-4 space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center min-h-screen bg-black/40 p-4">
+                  {' '}
+                  <div className="bg-background dark:bg-card rounded-xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto sm:max-h-[85vh] space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-bold">Abwesenheit eintragen</h3>
                       <Button
