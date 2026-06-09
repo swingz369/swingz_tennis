@@ -1,0 +1,123 @@
+# Supabase local dev configuration
+# Spec: api=3001, db=54322, studio=54323, inbucket=54324, auth.enable_signup=true
+# Start full stack:    supabase start
+# Stop:               supabase stop
+# Reset DB:           supabase db reset
+# Status:             supabase status
+
+project_id = "swingz"
+
+# ═══ API ═════════════════════════════════════════════════════════════════
+[api]
+enabled = true
+port = 3001
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+# ═══ Database ════════════════════════════════════════════════════════════
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+# ═══ Studio (Web-UI) ════════════════════════════════════════════════════
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1:3001"
+
+# ═══ Inbucket (Email-Testing) ════════════════════════════════════════════
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+# ═══ Auth (GoTrue) ═══════════════════════════════════════════════════════
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000", "http://localhost:3001"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+enable_manual_linking = false
+
+# Password requirements (perf-seed uses TestAdmin2026! etc. — keep it lenient locally)
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false  # skip email-confirm in dev (perf seed relies on this)
+secure_password_change = false
+max_frequency = "1m0s"
+otp_length = 6
+otp_expiry = 3600
+
+[auth.email.template.invite]
+subject = "You have been invited to SwingZ"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.confirmation]
+subject = "Confirm your SwingZ account"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your SwingZ password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Your SwingZ magic link"
+content_path = "./supabase/templates/magic_link.html"
+
+# (Email templates defined inline above; no extra table headers needed.)
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+template = "Your code is {{ .Code }} ."
+
+# Auth providers
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+redirect_uri = ""
+
+[auth.external.github]
+enabled = false
+client_id = ""
+secret = ""
+redirect_uri = ""
+
+# ═══ Storage ═════════════════════════════════════════════════════════════
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[storage.image_transformation]
+enabled = false
+
+# ═══ Realtime ════════════════════════════════════════════════════════════
+[realtime]
+enabled = true
+
+# ═══ Edge Functions ══════════════════════════════════════════════════════
+[functions]
+verify_jwt = true
+
+# ═══ Analytics (Logflare) ════════════════════════════════════════════════
+[analytics]
+enabled = false
+
+# ═══ Experimental ════════════════════════════════════════════════════════
+[experimental]
+orioledb_version = ""
+webhooks = { enabled = true }
