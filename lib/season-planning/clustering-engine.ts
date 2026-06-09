@@ -156,6 +156,13 @@ export class SeasonClusteringEngine {
   > | null = null;
   private _cachedPreviousSeasonId: string | null | undefined = undefined;
 
+  // ═══ Sprint 4 P0 #1: Slot-Lookup-Cache (Sprint-4-Optimierung) ═══════
+  // Pre-computed availability maps: key = `${kind}|${id}|${day}_${slotStart}`,
+  // value = boolean. Replaces per-iteration Array.some() calls in findBestTimeSlot.
+  private _memberSlotAvail: Map<string, boolean> | null = null;
+  private _trainerSlotAvail: Map<string, boolean> | null = null;
+  private _cachedTimeSlotKeys: string[] = []; // [\"0_08:00\", \"0_09:30\", ...]
+
   constructor(seasonId: string, clubId: string, config?: Partial<ClusteringConfig>) {
     this.seasonId = seasonId;
     this.clubId = clubId;
@@ -189,6 +196,11 @@ export class SeasonClusteringEngine {
 
     // Step 4: Build dynamic time slots based on configured duration
     const timeSlots = buildStandardTimeSlots(this.config.slotDurationMinutes);
+
+    // Sprint 4 P0 #1: Pre-compute slot-availability caches so findBestTimeSlot can
+    // do O(1) lookups instead of O(members × trainers) per (day, time) iteration.
+    // Expected impact: 2000m run 32ms → ~18ms (-44%) per docs/SCALING_ANALYSIS.md.
+    this.buildSlotAvailabilityCaches(members, trainers, timeSlots);
 
     // Step 5: Run greedy clustering with hard + soft constraints
     const { assignments, unassigned } = await this.greedyCluster(
@@ -1317,14 +1329,12 @@ export class SeasonClusteringEngine {
       | null = null;
 
     for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
-      const dayName = DAY_NAMES[dayOfWeek];
-
       for (const timeSlot of timeSlots) {
-        // HARD CONSTRAINT: Check member availability
-        const availableMembers = members.filter((m) => {
-          const daySlots = m.availability[dayName] || [];
-          return daySlots.some((slot) => slot.start <= timeSlot.start && slot.end >= timeSlot.end);
-        });
+        // HARD CONSTRAINT: Check member availability via pre-computed cache
+        // (Sprint 4 P0 #1: O(1) lookup instead of Array.some() per member)
+        const availableMembers = members.filter((m) =>
+          this.isMemberSlotAvailable(m.id, dayOfWeek, timeSlot)
+        );
 
         if (availableMembers.length < Math.max(1, this.config.groupMinSize)) continue;
 
@@ -1333,12 +1343,8 @@ export class SeasonClusteringEngine {
         let bestTrainerScore = -Infinity;
 
         for (const trainer of trainers) {
-          // Check availability
-          const daySlots = trainer.availability[dayName] || [];
-          const isAvailable = daySlots.some(
-            (slot) => slot.start <= timeSlot.start && slot.end >= timeSlot.end
-          );
-          if (!isAvailable) continue;
+          // Check availability via pre-computed cache (Sprint 4 P0 #1)
+          if (!this.isTrainerSlotAvailable(trainer.id, dayOfWeek, timeSlot)) continue;
 
           // Check max sessions
           const currentSessions = trainerSessionCount.get(trainer.id) || 0;
@@ -1441,6 +1447,76 @@ export class SeasonClusteringEngine {
     }
 
     return bestResult;
+  }
+
+  // ═══ Sprint 4 P0 #1: Slot-Lookup-Cache ═══════════════════════════════
+  /**
+   * Pre-compute (member, day, timeSlot) → boolean and (trainer, day, timeSlot) → boolean
+   * availability maps. findBestTimeSlot uses these instead of running
+   * `member.availability[day].some(slot => slot.start <= t.start && slot.end >= t.end)`
+   * on every iteration, which is the hottest path in the engine
+   * (2000m run: 32ms before, ~18ms after expected per SCALING_ANALYSIS.md).
+   *
+   * Cache key format: `${kind}|${id}|${dayOfWeek}_${slotStart}`
+   *   - kind = 'm' (member) or 't' (trainer)
+   *   - id = member/trainer UUID
+   *   - dayOfWeek = 0..6
+   *   - slotStart = \"08:00\", \"09:30\" etc.
+   *
+   * The cache is invalidated on the next call to buildSlotAvailabilityCaches.
+   */
+  private buildSlotAvailabilityCaches(
+    members: (MemberWithDetails & { _unassignedReason?: string })[],
+    trainers: TrainerWithDetails[],
+    timeSlots: Array<{ start: string; end: string }>
+  ): void {
+    this._memberSlotAvail = new Map();
+    this._trainerSlotAvail = new Map();
+    this._cachedTimeSlotKeys = timeSlots.map((t) => t.start);
+
+    const DAY_NAMES_LOCAL = DAY_NAMES;
+
+    for (let day = 0; day < 7; day++) {
+      const dayName = DAY_NAMES_LOCAL[day];
+      for (const slot of timeSlots) {
+        for (const m of members) {
+          const daySlots = m.availability[dayName] || [];
+          const ok = daySlots.some((s) => s.start <= slot.start && s.end >= slot.end);
+          this._memberSlotAvail.set(`m|${m.id}|${day}_${slot.start}`, ok);
+        }
+        for (const t of trainers) {
+          const daySlots = t.availability[dayName] || [];
+          const ok = daySlots.some((s) => s.start <= slot.start && s.end >= slot.end);
+          this._trainerSlotAvail.set(`t|${t.id}|${day}_${slot.start}`, ok);
+        }
+      }
+    }
+  }
+
+  /**
+   * Fast member-availability lookup: O(1) Map.get() instead of Array.some().
+   * Returns true iff the member has at least one availability window that fully
+   * covers the given (day, timeSlot).
+   */
+  private isMemberSlotAvailable(
+    memberId: string,
+    dayOfWeek: number,
+    timeSlot: { start: string; end: string }
+  ): boolean {
+    return this._memberSlotAvail?.get(`m|${memberId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
+  }
+
+  /**
+   * Fast trainer-availability lookup: O(1) Map.get() instead of Array.some().
+   * Note: this checks *availability only* — max-sessions and hours-limit checks
+   * remain in findBestTimeSlot (those depend on per-run state).
+   */
+  private isTrainerSlotAvailable(
+    trainerId: string,
+    dayOfWeek: number,
+    timeSlot: { start: string; end: string }
+  ): boolean {
+    return this._trainerSlotAvail?.get(`t|${trainerId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
   }
 
   /**
