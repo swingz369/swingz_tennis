@@ -31,14 +31,11 @@ export function PlanEditStep() {
   const {
     plan,
     setPlan,
-    dragging,
-    setDragging,
-    dragOver,
-    setDragOver,
     expandedSlot,
     setExpandedSlot,
     moveMember,
-    drop,
+    slotMove,
+    slotUpdate,
     byDay,
     activeDays,
   } = useSchedulePlan();
@@ -400,19 +397,8 @@ export function PlanEditStep() {
         )}
       </div>
 
-      {/* Schedule Grid */}
-      <ScheduleGrid
-        plan={plan}
-        dragging={dragging}
-        dragOver={dragOver}
-        onDragStart={(slot) => setDragging(slot)}
-        onDragEnd={() => {
-          setDragging(null);
-          setDragOver(null);
-        }}
-        onDragOver={(key) => setDragOver(key)}
-        onDrop={drop}
-      />
+      {/* Schedule Grid with dnd-kit */}
+      <ScheduleGrid plan={plan} onSlotMove={slotMove} onSlotUpdate={slotUpdate} />
 
       {/* Group List View */}
       <GroupListView

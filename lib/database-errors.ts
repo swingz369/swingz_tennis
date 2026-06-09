@@ -38,10 +38,17 @@ export class UniqueConstraintError extends DatabaseError {
  * - 23514: check_violation
  * - 23P01: exclusion_violation (GIST constraint)
  */
-export function parsePostgresError(error: any): DatabaseError {
-  const code = error.code;
-  const constraint = error.constraint;
-  const detail = error.detail;
+export function parsePostgresError(error: unknown): DatabaseError {
+  const e = error as {
+    code?: string;
+    constraint?: string;
+    detail?: string;
+    message?: string;
+    column?: string;
+  };
+  const code = e.code;
+  const constraint = e.constraint;
+  const detail = e.detail;
 
   // GIST Exclusion Constraint (booking overlap)
   if (code === '23P01' && constraint === 'bookings_no_court_overlap') {
@@ -50,7 +57,7 @@ export function parsePostgresError(error: any): DatabaseError {
       {
         constraint,
         detail,
-        message: error.message,
+        message: e.message,
       }
     );
   }
@@ -79,7 +86,7 @@ export function parsePostgresError(error: any): DatabaseError {
 
   // Not Null Violation
   if (code === '23502') {
-    const column = error.column;
+    const column = e.column;
     return new DatabaseError(
       `Pflichtfeld '${column}' darf nicht leer sein.`,
       'NOT_NULL_VIOLATION',
@@ -97,11 +104,10 @@ export function parsePostgresError(error: any): DatabaseError {
   }
 
   // Generic database error
-  return new DatabaseError(
-    error.message || 'Ein Datenbankfehler ist aufgetreten.',
-    code || 'UNKNOWN',
-    { detail, constraint }
-  );
+  return new DatabaseError(e.message || 'Ein Datenbankfehler ist aufgetreten.', code || 'UNKNOWN', {
+    detail,
+    constraint,
+  });
 }
 
 /**

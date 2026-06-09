@@ -143,7 +143,7 @@ export class DrizzleFeeConfigurationRepository implements IFeeConfigurationRepos
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof feeConfigurations.$inferInsert> = {
         updated_at: now,
       };
 

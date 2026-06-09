@@ -51,6 +51,13 @@ interface ClusteringConfig {
   waitlistPriorityRule: string;
   preferHistoricGroups: boolean;
   avoidHighFailureSlots: boolean;
+  // Optimization #5: treat high-failure-rate slots as a hard constraint (skip them)
+  // instead of only as a soft -50 score. Default off to preserve backwards compatibility.
+  treatHighFailureAsHard: boolean;
+  // Optimization #6: depth of backtracking retries for unassigned members.
+  // 0 = greedy only (original behavior). >0 = re-evaluate the last N groups and try
+  // alternative slots before giving up.
+  backtrackDepth: number;
 }
 
 const DEFAULT_CONFIG: ClusteringConfig = {
@@ -67,6 +74,8 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   waitlistPriorityRule: 'registration_time',
   preferHistoricGroups: true,
   avoidHighFailureSlots: true,
+  treatHighFailureAsHard: false,
+  backtrackDepth: 0,
 };
 
 // ============================================
@@ -135,6 +144,17 @@ export class SeasonClusteringEngine {
   private clubId: string;
   private config: ClusteringConfig;
   private startTime = 0;
+  // Cached DB-loaded data so backtracking/second-pass can re-use them without re-querying.
+  private _cachedMembers: (MemberWithDetails & { _unassignedReason?: string })[] | null = null;
+  private _cachedTrainers: TrainerWithDetails[] | null = null;
+  private _cachedCourts: CourtInfo[] | null = null;
+  private _cachedGroups: GroupInfo[] | null = null;
+  private _cachedSlotFailureRates: Record<string, number> | null = null;
+  private _cachedHistoricGroups: Map<
+    string,
+    { groupId: string; attendance: number; members: string[] }
+  > | null = null;
+  private _cachedPreviousSeasonId: string | null | undefined = undefined;
 
   constructor(seasonId: string, clubId: string, config?: Partial<ClusteringConfig>) {
     this.seasonId = seasonId;
@@ -152,7 +172,8 @@ export class SeasonClusteringEngine {
     // Step 0: Load planning config from DB (overrides defaults)
     await this.loadConfig();
 
-    // Step 1: Load all data
+    // Step 1: Load all data (cached so re-entrant calls — e.g. during backtracking —
+    // don't re-query the DB).
     const members = await this.loadMembers();
     const trainers = await this.loadTrainers();
     const courts = await this.loadCourts();
@@ -249,6 +270,9 @@ export class SeasonClusteringEngine {
           dbConfig.prefer_historic_groups ?? DEFAULT_CONFIG.preferHistoricGroups,
         avoidHighFailureSlots:
           dbConfig.avoid_high_failure_slots ?? DEFAULT_CONFIG.avoidHighFailureSlots,
+        treatHighFailureAsHard:
+          dbConfig.treat_high_failure_as_hard ?? DEFAULT_CONFIG.treatHighFailureAsHard,
+        backtrackDepth: dbConfig.backtrack_depth ?? DEFAULT_CONFIG.backtrackDepth,
         kidsGroupMaxSize: dbConfig.kids_group_max_size ?? DEFAULT_CONFIG.kidsGroupMaxSize,
         kidsGroupMinSize: dbConfig.kids_group_min_size ?? DEFAULT_CONFIG.kidsGroupMinSize,
         slotDurationMinutes: dbConfig.slot_duration_minutes ?? DEFAULT_CONFIG.slotDurationMinutes,
@@ -257,6 +281,7 @@ export class SeasonClusteringEngine {
   }
 
   private async loadMembers(): Promise<(MemberWithDetails & { _unassignedReason?: string })[]> {
+    if (this._cachedMembers) return this._cachedMembers;
     const prefs = await db
       .select({
         pref: userTrainingPreferences,
@@ -292,6 +317,7 @@ export class SeasonClusteringEngine {
 
     // Load trainer feedback from previous season
     const previousSeasonId = await this.getPreviousSeasonId();
+    void previousSeasonId; // re-used below via feedbackMap
     const feedbackMap = new Map<
       string,
       { ready: boolean; level: SkillLevel | null; attendance: number | null }
@@ -311,7 +337,7 @@ export class SeasonClusteringEngine {
       }
     }
 
-    return prefs.map((p) => {
+    const result = prefs.map((p) => {
       const fb = feedbackMap.get(p.pref.user_id);
       const skillLevel = (p.user_skill_level || p.pref.preferred_level || 'beginner') as SkillLevel;
       const prefAgeGroup = p.pref.preferred_age_group || '';
@@ -335,9 +361,12 @@ export class SeasonClusteringEngine {
         _unassignedReason: undefined,
       };
     });
+    this._cachedMembers = result;
+    return result;
   }
 
   private async loadTrainers(): Promise<TrainerWithDetails[]> {
+    if (this._cachedTrainers) return this._cachedTrainers;
     // 1. Get trainers who submitted preferences
     const prefs = await db
       .select({
@@ -411,43 +440,54 @@ export class SeasonClusteringEngine {
         maxHoursPerWeek: trainer.max_hours_per_week || 30,
         utilizationPct: this.config.trainerUtilizationMaxPct,
         availability: defaultAvailability,
-        maxSessionsPerWeek: Math.floor((trainer.max_hours_per_week || 30) / 1.5),
+        // Compute max sessions from configured slot duration (was hardcoded to 1.5h)
+        maxSessionsPerWeek: Math.floor(
+          (trainer.max_hours_per_week || 30) / (this.config.slotDurationMinutes / 60)
+        ),
         preferredCourtIds: [],
         canTeachGroups: (trainer.specialties as string[]) || [],
         sessionsAssigned: 0,
       });
     }
 
+    this._cachedTrainers = loadedTrainers;
     return loadedTrainers;
   }
 
   private async loadCourts(): Promise<CourtInfo[]> {
+    if (this._cachedCourts) return this._cachedCourts;
     const courtRows = await db
       .select()
       .from(courts)
       .where(and(eq(courts.club_id, this.clubId), eq(courts.is_active, true)));
-    return courtRows.map((c) => ({
+    const result = courtRows.map((c) => ({
       id: c.id,
       name: c.name,
       surface: c.surface,
       isActive: c.is_active,
     }));
+    this._cachedCourts = result;
+    return result;
   }
 
   private async loadGroups(): Promise<GroupInfo[]> {
+    if (this._cachedGroups) return this._cachedGroups;
     const groupRows = await db
       .select()
       .from(groups)
       .where(and(eq(groups.club_id, this.clubId), eq(groups.is_active, true)));
-    return groupRows.map((g) => ({
+    const result = groupRows.map((g) => ({
       id: g.id,
       name: g.name,
       level: g.level as SkillLevel,
       ageGroup: g.age_group,
     }));
+    this._cachedGroups = result;
+    return result;
   }
 
   private async loadSlotFailureRates(): Promise<Record<string, number>> {
+    if (this._cachedSlotFailureRates) return this._cachedSlotFailureRates;
     const stats = await db
       .select()
       .from(seasonStatistics)
@@ -465,14 +505,19 @@ export class SeasonClusteringEngine {
         }
       }
     }
+    this._cachedSlotFailureRates = rates;
     return rates;
   }
 
   private async loadHistoricGroups(): Promise<
     Map<string, { groupId: string; attendance: number; members: string[] }>
   > {
+    if (this._cachedHistoricGroups) return this._cachedHistoricGroups;
     const previousSeasonId = await this.getPreviousSeasonId();
-    if (!previousSeasonId) return new Map();
+    if (!previousSeasonId) {
+      this._cachedHistoricGroups = new Map();
+      return this._cachedHistoricGroups;
+    }
 
     const entries = await db
       .select()
@@ -495,6 +540,7 @@ export class SeasonClusteringEngine {
     }
 
     const result = new Map<string, { groupId: string; attendance: number; members: string[] }>();
+    this._cachedHistoricGroups = result;
 
     for (const entry of entries) {
       if (!entry.group_id) continue;
@@ -515,6 +561,7 @@ export class SeasonClusteringEngine {
   }
 
   private async getPreviousSeasonId(): Promise<string | null> {
+    if (this._cachedPreviousSeasonId !== undefined) return this._cachedPreviousSeasonId;
     const [currentSeason] = await db.select().from(seasons).where(eq(seasons.id, this.seasonId));
 
     if (!currentSeason) return null;
@@ -529,8 +576,9 @@ export class SeasonClusteringEngine {
 
     // Find the season just before current one
     const idx = previousSeasons.findIndex((s) => s.id === this.seasonId);
-    if (idx <= 0) return null;
-    return previousSeasons[idx - 1].id;
+    const result = idx <= 0 ? null : previousSeasons[idx - 1].id;
+    this._cachedPreviousSeasonId = result;
+    return result;
   }
 
   // ============================================
@@ -603,6 +651,10 @@ export class SeasonClusteringEngine {
       trainerSessionCount.set(t.id, 0);
     }
 
+    // Build a member-by-id lookup once, re-used for the second pass and other hot paths.
+    const membersById = new Map<string, (typeof members)[number]>();
+    for (const m of members) membersById.set(m.id, m);
+
     // Sort members: priority to waitlist-carryovers, then high attendance, then by experience
     const sortedMembers = [...members].sort((a, b) => {
       // Priorität 1: Wartelisten-Mitglieder aus Vorsaison
@@ -657,15 +709,16 @@ export class SeasonClusteringEngine {
 
     // SECOND PASS: try to place unassigned members (e.g. avoid-conflict victims)
     // into groups that have remaining capacity, matching level/age-group, and no avoid-conflicts.
-    // NOTE: This is best-effort — it does NOT verify time-slot availability per member,
-    //       so a member could be assigned to a time they can't attend. Admins should
-    //       review second-pass placements in the plan-edit step.
+    // Improved: also verify member time-slot availability and wish-partner fulfillment
+    // so admins see fewer "wrong-time" placements in the plan-edit step.
     const stillUnassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
+    const DAY_NAMES_LOCAL = DAY_NAMES;
     if (stillUnassigned.length > 0) {
       for (const member of stillUnassigned) {
         const effectiveLevel = member.promotedLevel || member.skillLevel;
         const memberAgeGroup = member.isMinor ? 'kids' : 'adult';
         const maxSize = member.isMinor ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
+        const avoidSet = new Set(member.avoidMemberIds);
 
         // Try to find an existing group with space, matching level/age, and no avoid-conflicts
         let placed = false;
@@ -680,19 +733,31 @@ export class SeasonClusteringEngine {
           // Age-group compatibility: must match the group's age group
           if (groupInfo && groupInfo.ageGroup && groupInfo.ageGroup !== memberAgeGroup) continue;
 
-          // Avoid conflicts: member avoids any existing group member
-          if (member.avoidMemberIds.length > 0) {
-            const hasConflict = assignment.memberIds.some((mid) =>
-              member.avoidMemberIds.includes(mid)
-            );
+          // TIME-SLOT CHECK: member must be available for this group's slot
+          // (was previously a known gap — see Optimization #4)
+          const dayName = DAY_NAMES_LOCAL[assignment.dayOfWeek];
+          const daySlots = member.availability[dayName] || [];
+          const memberAvailable = daySlots.some(
+            (s) => s.start <= assignment.startTime && s.end >= assignment.endTime
+          );
+          if (!memberAvailable) continue;
+
+          // Avoid conflicts: member avoids any existing group member (O(1) Set lookup)
+          if (avoidSet.size > 0) {
+            const hasConflict = assignment.memberIds.some((mid) => avoidSet.has(mid));
             if (hasConflict) continue;
           }
 
-          // Avoid conflicts: any existing group member avoids this member
-          const groupMemberAvoids = sortedMembers.filter(
-            (m) => assignment.memberIds.includes(m.id) && m.avoidMemberIds.includes(member.id)
-          );
-          if (groupMemberAvoids.length > 0) continue;
+          // Avoid conflicts: any existing group member avoids this member.
+          // Build a single-pass index instead of a per-assignment O(n²) scan.
+          const groupMemberAvoids =
+            member.avoidMemberIds.length > 0
+              ? assignment.memberIds.some((mid) => {
+                  const other = membersById.get(mid);
+                  return !!other && other.avoidMemberIds.includes(member.id);
+                })
+              : false;
+          if (groupMemberAvoids) continue;
 
           // Place member in this group
           assignment.memberIds.push(member.id);
@@ -702,10 +767,14 @@ export class SeasonClusteringEngine {
             niveauMatch: -1, // -1 = not computed (second-pass placement)
             experienceMonths: member.experienceMonths,
             groupExperienceSpan: '—',
-            wishPartnerFulfilled: false,
-            wishPartnerNames: [],
+            wishPartnerFulfilled: member.wishPartnerIds.some((wpid) =>
+              assignment.memberIds.includes(wpid)
+            ),
+            wishPartnerNames: member.wishPartnerIds
+              .filter((wpid) => assignment.memberIds.includes(wpid))
+              .map((wpid) => membersById.get(wpid)?.name || 'Unbekannt'),
             isPromoted: !!member.promotedLevel,
-            assignmentReason: 'Nachträglich zugewiesen (zweite Runde)',
+            assignmentReason: 'Nachträglich zugewiesen (zweite Runde, Slot verifiziert)',
           });
           assignedMemberIds.add(member.id);
           member._unassignedReason = undefined;
@@ -716,13 +785,275 @@ export class SeasonClusteringEngine {
         if (!placed) {
           member._unassignedReason =
             member._unassignedReason ||
-            `Keine passende Gruppe mit Kapazität gefunden (${memberAgeGroup}, ${effectiveLevel})`;
+            `Keine passende Gruppe mit Kapazität + Slot-Verfügbarkeit (${memberAgeGroup}, ${effectiveLevel})`;
         }
       }
     }
 
     const unassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
-    return { assignments, unassigned };
+
+    // BACKTRACKING (Optimization #6): If unassigned members remain and backtrackDepth > 0,
+    // try depth-first: pop the last N groups, free their slots/trainers/courts, then re-evaluate
+    // them with the goal of also placing the previously unassigned members. Capped at 3 retries.
+    if (unassigned.length > 0 && this.config.backtrackDepth > 0 && assignments.length > 0) {
+      await this.backtrackForUnassigned(
+        unassigned,
+        sortedMembers,
+        membersById,
+        members,
+        trainers,
+        courts,
+        candidateGroups,
+        slotFailureRates,
+        timeSlots,
+        trainerSessionCount,
+        courtTimeSlotUsage,
+        assignments,
+        assignedMemberIds
+      );
+    }
+    void membersById; // referenced for parity with other call sites
+
+    const finalUnassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
+    return { assignments, unassigned: finalUnassigned };
+  }
+
+  /**
+   * Backtracking optimizer: undo the last N group assignments, then re-evaluate them
+   * with the dual goal of (a) re-placing the undone groups in alternative slots and
+   * (b) freeing up the original slots for previously-unassigned members.
+   *
+   * Depth-first: tries the most recent group first. Max 3 retries (overrides `backtrackDepth`
+   * if larger) to bound worst-case runtime.
+   */
+  private async backtrackForUnassigned(
+    initialUnassigned: (MemberWithDetails & { _unassignedReason?: string })[],
+    _sortedMembers: (MemberWithDetails & { _unassignedReason?: string })[],
+    _membersById: Map<string, MemberWithDetails & { _unassignedReason?: string }>,
+    allMembers: (MemberWithDetails & { _unassignedReason?: string })[],
+    trainers: TrainerWithDetails[],
+    courts: CourtInfo[],
+    _candidateGroups: Map<string, GroupInfo>,
+    slotFailureRates: Record<string, number>,
+    timeSlots: Array<{ start: string; end: string }>,
+    trainerSessionCount: Map<string, number>,
+    courtTimeSlotUsage: Map<string, Set<string>>,
+    assignments: GroupAssignment[],
+    assignedMemberIds: Set<string>
+  ): Promise<void> {
+    const maxRetries = 3;
+    const depth = Math.min(this.config.backtrackDepth, maxRetries, assignments.length);
+
+    let stillUnassigned = initialUnassigned;
+    let retryCount = 0;
+
+    while (retryCount < maxRetries && stillUnassigned.length > 0 && assignments.length > 0) {
+      retryCount++;
+
+      // Take the last `depth` groups (the "victims" we might need to re-slot)
+      const victimCount = Math.min(depth, assignments.length);
+      const victims = assignments.splice(assignments.length - victimCount, victimCount);
+
+      // Free up the resources each victim group consumed
+      for (const v of victims) {
+        // Decrement trainer session count
+        const currentCount = trainerSessionCount.get(v.trainerId) || 0;
+        trainerSessionCount.set(v.trainerId, Math.max(0, currentCount - 1));
+        // Remove member assignments
+        for (const mid of v.memberIds) assignedMemberIds.delete(mid);
+        // Free up court usage
+        if (v.courtId) {
+          const courtKey = `${v.dayOfWeek}_${v.startTime}`;
+          const usage = courtTimeSlotUsage.get(v.courtId);
+          if (usage) usage.delete(courtKey);
+        }
+      }
+
+      // Also re-add the victim members to the "unassigned" pool for this retry
+      const freedMembers: (MemberWithDetails & { _unassignedReason?: string })[] = [];
+      for (const v of victims) {
+        for (const detail of v.memberDetails) {
+          // Pull the full member object from the loaded data (still in allMembers)
+          const fullMember = allMembers.find((m) => m.id === detail.memberId);
+          if (fullMember) {
+            fullMember._unassignedReason = undefined;
+            freedMembers.push(fullMember);
+          }
+        }
+      }
+
+      // The "unassigned pool" for this retry: previous unassigned + freed members
+      const unassignedPool = [...stillUnassigned, ...freedMembers];
+
+      // Try to re-place victims in alternative slots (excluding the slot they just vacated)
+      const rePlaced: GroupAssignment[] = [];
+      for (const v of victims) {
+        const victimMemberDetails = v.memberDetails;
+        const victimMembers = victimMemberDetails
+          .map((d) => allMembers.find((m) => m.id === d.memberId))
+          .filter((m): m is NonNullable<typeof m> => m !== undefined);
+
+        if (victimMembers.length === 0) continue;
+
+        // Find a new slot, excluding the original slot
+        const excludeDayTime = { day: v.dayOfWeek, start: v.startTime };
+        const newSlot = this.findBestTimeSlot(
+          victimMembers,
+          trainers,
+          courts,
+          trainerSessionCount,
+          courtTimeSlotUsage,
+          slotFailureRates,
+          [...assignments, ...rePlaced], // treat re-placed as already-committed
+          timeSlots
+        );
+
+        // If new slot is found AND is different from the original, use it
+        if (
+          newSlot &&
+          (newSlot.dayOfWeek !== excludeDayTime.day || newSlot.startTime !== excludeDayTime.start)
+        ) {
+          // Re-add the victim group at the new slot
+          const rePlacedGroup: GroupAssignment = {
+            ...v,
+            trainerId: newSlot.trainerId,
+            trainerName: newSlot.trainerName,
+            dayOfWeek: newSlot.dayOfWeek,
+            startTime: newSlot.startTime,
+            endTime: newSlot.endTime,
+            courtId: newSlot.courtId,
+            courtName: newSlot.courtName,
+          };
+          rePlaced.push(rePlacedGroup);
+          // Update trainer + court usage for the new slot
+          const newCount = trainerSessionCount.get(newSlot.trainerId) || 0;
+          trainerSessionCount.set(newSlot.trainerId, newCount + 1);
+          if (newSlot.courtId) {
+            const newCourtKey = `${newSlot.dayOfWeek}_${newSlot.startTime}`;
+            const newUsage = courtTimeSlotUsage.get(newSlot.courtId) || new Set();
+            newUsage.add(newCourtKey);
+            courtTimeSlotUsage.set(newSlot.courtId, newUsage);
+          }
+          // Re-mark victim members as assigned
+          for (const mid of v.memberIds) assignedMemberIds.add(mid);
+        }
+        // If no new slot, the victim members stay in `unassignedPool` and will be retried
+      }
+
+      // Commit the re-placed groups back into assignments
+      assignments.push(...rePlaced);
+
+      // Now try to place the still-unassigned members into the freed-up original slots
+      // of any victims that were NOT successfully re-placed
+      const freedOriginalSlots: Array<{
+        day: number;
+        start: string;
+        end: string;
+        courtId: string | null;
+        trainerId: string;
+        trainerName: string;
+      }> = [];
+      for (const v of victims) {
+        const wasReplaced = rePlaced.some(
+          (r) =>
+            r.groupId === v.groupId && (r.dayOfWeek !== v.dayOfWeek || r.startTime !== v.startTime)
+        );
+        if (!wasReplaced) {
+          freedOriginalSlots.push({
+            day: v.dayOfWeek,
+            start: v.startTime,
+            end: v.endTime,
+            courtId: v.courtId,
+            trainerId: v.trainerId,
+            trainerName: v.trainerName,
+          });
+        }
+      }
+
+      // For each unassigned member, try to fit them into a freed original slot
+      const newlyPlaced: string[] = [];
+      for (const member of unassignedPool) {
+        if (assignedMemberIds.has(member.id)) continue;
+
+        for (const slot of freedOriginalSlots) {
+          // Check member availability for this slot
+          const dayName = DAY_NAMES[slot.day];
+          const daySlots = member.availability[dayName] || [];
+          const available = daySlots.some((s) => s.start <= slot.start && s.end >= slot.end);
+          if (!available) continue;
+
+          // Capacity check: 1 per slot (we're creating a single-member group)
+          // Avoid conflicts: check against the other victim members that are still unassigned
+          const otherFreed = unassignedPool.filter(
+            (m) => m.id !== member.id && !assignedMemberIds.has(m.id)
+          );
+          const hasAvoid = member.avoidMemberIds.some((id) => otherFreed.some((o) => o.id === id));
+          if (hasAvoid) continue;
+
+          // Place the member in a new ghost group at the freed slot
+          const ghostAssignment: GroupAssignment = {
+            groupId: `backtrack-${retryCount}-${member.id}`,
+            groupName: `Backtrack Retry ${retryCount} - ${member.name}`,
+            trainerId: slot.trainerId,
+            trainerName: slot.trainerName,
+            dayOfWeek: slot.day as DayOfWeek,
+            startTime: slot.start,
+            endTime: slot.end,
+            courtId: slot.courtId,
+            courtName:
+              victims.find((v) => v.dayOfWeek === slot.day && v.startTime === slot.start)
+                ?.courtName ?? null,
+            memberIds: [member.id],
+            memberDetails: [
+              {
+                memberId: member.id,
+                memberName: member.name,
+                niveauMatch: -1,
+                experienceMonths: member.experienceMonths,
+                groupExperienceSpan: '—',
+                wishPartnerFulfilled: false,
+                wishPartnerNames: [],
+                isPromoted: !!member.promotedLevel,
+                assignmentReason: `Backtracking-Retry ${retryCount} (freier Slot nach Re-Slotting)`,
+              },
+            ],
+            waitlistIds: [],
+            waitlistDetails: [],
+            warnings: ['Backtracking-Einzelzuweisung - bitte manuell prüfen'],
+            conflictIds: [],
+          };
+          assignments.push(ghostAssignment);
+          assignedMemberIds.add(member.id);
+          // Update trainer session count for the freed slot
+          const tc = trainerSessionCount.get(slot.trainerId) || 0;
+          trainerSessionCount.set(slot.trainerId, tc + 1);
+          if (slot.courtId) {
+            const ck = `${slot.day}_${slot.start}`;
+            const cu = courtTimeSlotUsage.get(slot.courtId) || new Set();
+            cu.add(ck);
+            courtTimeSlotUsage.set(slot.courtId, cu);
+          }
+          // Consume this slot so no other unassigned member takes it
+          freedOriginalSlots.splice(freedOriginalSlots.indexOf(slot), 1);
+          newlyPlaced.push(member.id);
+          break;
+        }
+      }
+
+      // If no progress was made in this retry, break to avoid infinite loop
+      if (newlyPlaced.length === 0 && rePlaced.length === 0) {
+        // Restore victims to assignments so we don't lose their data permanently
+        // (they will be marked unassigned, but at least the data is preserved)
+        for (const v of victims) {
+          for (const mid of v.memberIds) assignedMemberIds.add(mid);
+        }
+        assignments.push(...victims);
+        break;
+      }
+
+      // Update stillUnassigned for next retry
+      stillUnassigned = unassignedPool.filter((m) => !assignedMemberIds.has(m.id));
+    }
   }
 
   /**
@@ -1013,10 +1344,11 @@ export class SeasonClusteringEngine {
           const currentSessions = trainerSessionCount.get(trainer.id) || 0;
           if (currentSessions >= trainer.maxSessionsPerWeek) continue;
 
-          // Check hours limit
-          const hoursAssigned = currentSessions * 1.5; // 90 min sessions
+          // Check hours limit (uses configured slot duration, not hardcoded 1.5h)
+          const slotHours = this.config.slotDurationMinutes / 60;
+          const hoursAssigned = currentSessions * slotHours;
           const maxHours = trainer.maxHoursPerWeek * (trainer.utilizationPct / 100);
-          if (hoursAssigned + 1.5 > maxHours) continue;
+          if (hoursAssigned + slotHours > maxHours) continue;
 
           // Check trainer not already assigned to same day+time
           const isDoubleBooked = existingAssignments.some(
@@ -1069,11 +1401,21 @@ export class SeasonClusteringEngine {
 
         // Court is optional (can be null if no courts configured)
 
-        // Check slot failure rate (soft constraint)
+        // Check slot failure rate (soft constraint by default, hard-constraint
+        // when `treatHighFailureAsHard` is true — see Optimization #5).
         const slotKey = `${dayOfWeek}_${timeSlot.start}`;
         const failureRate = slotFailureRates[slotKey] || null;
         const failureWarning =
           failureRate !== null && failureRate >= this.config.slotFailureThreshold / 100;
+
+        // Hard constraint: skip slots with unacceptable failure rate if the flag is on.
+        if (
+          failureWarning &&
+          this.config.avoidHighFailureSlots &&
+          this.config.treatHighFailureAsHard
+        ) {
+          continue;
+        }
 
         let score = 0;
         score += availableMembers.length * 10; // prefer fuller groups
@@ -1139,19 +1481,29 @@ export class SeasonClusteringEngine {
     const summary: ClusteringResult['waitlistSummary'] = [];
 
     // For each member's wish partners not in the same group:
-    // If a member wanted to be in a specific group but it's full, put them on waitlist
+    // If a member wanted to be in a specific group but it's full, put them on waitlist.
+    // Performance fix: build member + group-member indices once (O(n + g·m)) instead of
+    // the previous O(n · g · m) pattern with repeated `members.find` and `assignments.find`.
+    const memberById = new Map<string, (typeof members)[number]>();
+    for (const m of members) memberById.set(m.id, m);
+
+    const groupMemberIndex = new Map<string, GroupAssignment>();
+    for (const a of assignments) {
+      for (const mid of a.memberIds) groupMemberIndex.set(mid, a);
+    }
+
     for (const assignment of assignments) {
       const groupMembers = new Set(assignment.memberIds);
 
       for (const detail of assignment.memberDetails) {
-        const member = members.find((m) => m.id === detail.memberId);
+        const member = memberById.get(detail.memberId);
         if (!member || member.wishPartnerIds.length === 0) continue;
 
         for (const wpid of member.wishPartnerIds) {
           if (groupMembers.has(wpid)) continue; // already together
 
-          // Find which group the wish partner is in
-          const partnerAssignment = assignments.find((a) => a.memberIds.includes(wpid));
+          // O(1) lookup instead of assignments.find (was O(g))
+          const partnerAssignment = groupMemberIndex.get(wpid);
           if (!partnerAssignment) continue;
 
           // Check if there's space in partner's group
@@ -1372,9 +1724,9 @@ export class SeasonClusteringEngine {
       day_of_week: g.dayOfWeek,
       start_time: `${g.startTime}:00`,
       end_time: `${g.endTime}:00`,
-      duration_minutes:
-        (parseInt(g.endTime.split(':')[0]) - parseInt(g.startTime.split(':')[0])) * 60 +
-        (parseInt(g.endTime.split(':')[1]) - parseInt(g.startTime.split(':')[1])),
+      // Use configured slot duration instead of recomputing from HH:MM diff
+      // (more robust against malformed times, single source of truth)
+      duration_minutes: this.config.slotDurationMinutes,
       starts_from_week: 1,
       ends_at_week: null,
       entry_type: 'training',
@@ -1391,7 +1743,13 @@ export class SeasonClusteringEngine {
     }));
 
     if (entriesToInsert.length > 0) {
-      await db.insert(seasonPlanEntries).values(entriesToInsert as any);
+      // Typed via Drizzle's $inferInsert — documents the intended payload shape
+      // (one object per row) instead of `as never`. The `unknown` bridge is needed
+      // because the in-memory mapper may set fields to `undefined` or omit them,
+      // which Drizzle's strict `.values()` overloads reject when handed Partial<T>.
+      const typedPlanEntries =
+        entriesToInsert as unknown as (typeof seasonPlanEntries.$inferInsert)[];
+      await db.insert(seasonPlanEntries).values(typedPlanEntries);
     }
 
     // Insert waitlist entries
@@ -1410,7 +1768,9 @@ export class SeasonClusteringEngine {
     }));
 
     if (waitlistToInsert.length > 0) {
-      await db.insert(seasonWaitlists).values(waitlistToInsert as any);
+      // Typed via Drizzle's $inferInsert — see comment above on the plan-entries cast.
+      const typedWaitlist = waitlistToInsert as unknown as (typeof seasonWaitlists.$inferInsert)[];
+      await db.insert(seasonWaitlists).values(typedWaitlist);
     }
 
     // Update season status

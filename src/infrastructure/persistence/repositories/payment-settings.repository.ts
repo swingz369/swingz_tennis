@@ -110,7 +110,7 @@ export class DrizzlePaymentSettingsRepository implements IPaymentSettingsReposit
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof paymentSettings.$inferInsert> = {
         updated_at: now,
       };
 

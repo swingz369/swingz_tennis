@@ -184,11 +184,17 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
         const all = data.availabilities || [];
         // Date-specific slots: have a date but no day_of_week
         setAvailabilitySlots(
-          all.filter((a: any) => !a.day_of_week && a.day_of_week !== 0 && a.date)
+          all.filter(
+            (a: { day_of_week?: number | null; date?: string | null; [k: string]: unknown }) =>
+              !a.day_of_week && a.day_of_week !== 0 && a.date
+          )
         );
         // Weekly recurring slots: have day_of_week set
         setWeeklySlots(
-          all.filter((a: any) => a.day_of_week !== undefined && a.day_of_week !== null)
+          all.filter(
+            (a: { day_of_week?: number | null; [k: string]: unknown }) =>
+              a.day_of_week !== undefined && a.day_of_week !== null
+          )
         );
       }
     } catch (err) {
@@ -238,8 +244,8 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
       setInviteEmail('');
       setInviteName('');
       loadTrainers();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setInviteLoading(false);
     }

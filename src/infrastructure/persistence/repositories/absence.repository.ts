@@ -163,7 +163,7 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof trainerAbsences.$inferInsert> = {
         updated_at: now,
       };
 

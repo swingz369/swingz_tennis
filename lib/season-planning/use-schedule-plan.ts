@@ -1,14 +1,13 @@
-// Custom hook for schedule plan state management and drag-and-drop
-// Adapted from TSOWAPP useSchedulePlan
+// Custom hook for schedule plan state management
+// dnd-kit handles drag-and-drop directly in ScheduleGrid component
 import { useState, useCallback } from 'react';
 import type { ScheduleSlot } from './types';
 
 export function useSchedulePlan() {
   const [plan, setPlan] = useState<ScheduleSlot[]>([]);
-  const [dragging, setDragging] = useState<ScheduleSlot | null>(null);
-  const [dragOver, setDragOver] = useState<string | null>(null);
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
 
+  /** Move a member from one slot to another (used by GroupListView) */
   const moveMember = useCallback(
     (fromId: string, personId: string, personName: string, toId: string) => {
       setPlan((p) =>
@@ -32,25 +31,25 @@ export function useSchedulePlan() {
     []
   );
 
-  const drop = useCallback(
-    (e: React.DragEvent, day: number, hour: string) => {
-      e.preventDefault();
-      if (!dragging) return;
-      const [sh, sm] = hour.split(':').map(Number);
-      const tot = sh * 60 + sm + dragging.durationMin;
-      const newEnd = `${Math.floor(tot / 60)
-        .toString()
-        .padStart(2, '0')}:${(tot % 60).toString().padStart(2, '0')}`;
-      setPlan((p) =>
-        p.map((s) =>
-          s.id === dragging.id ? { ...s, dayOfWeek: day, startTime: hour, endTime: newEnd } : s
-        )
-      );
-      setDragging(null);
-      setDragOver(null);
-    },
-    [dragging]
-  );
+  /** Move a slot to a new day/time (called by dnd-kit onDragEnd or edit modal) */
+  const slotMove = useCallback((slotId: string, newDay: number, newStartTime: string) => {
+    setPlan((p) =>
+      p.map((s) => {
+        if (s.id !== slotId) return s;
+        const [sh, sm] = newStartTime.split(':').map(Number);
+        const tot = sh * 60 + sm + s.durationMin;
+        const newEnd = `${Math.floor(tot / 60)
+          .toString()
+          .padStart(2, '0')}:${(tot % 60).toString().padStart(2, '0')}`;
+        return { ...s, dayOfWeek: newDay, startTime: newStartTime, endTime: newEnd };
+      })
+    );
+  }, []);
+
+  /** Update a slot in-place (called by edit modal for trainer/court/time changes) */
+  const slotUpdate = useCallback((updated: ScheduleSlot) => {
+    setPlan((p) => p.map((s) => (s.id === updated.id ? updated : s)));
+  }, []);
 
   // Group plan by day of week
   const byDay = useCallback((): Record<number, ScheduleSlot[]> => {
@@ -72,14 +71,11 @@ export function useSchedulePlan() {
   return {
     plan,
     setPlan,
-    dragging,
-    setDragging,
-    dragOver,
-    setDragOver,
     expandedSlot,
     setExpandedSlot,
     moveMember,
-    drop,
+    slotMove,
+    slotUpdate,
     byDay,
     activeDays,
   };

@@ -9,7 +9,7 @@ export enum LogLevel {
 }
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
@@ -57,7 +57,7 @@ class Logger {
     this.log(LogLevel.FATAL, message, context);
   }
 
-  trackEvent(eventName: string, properties?: Record<string, any>) {
+  trackEvent(eventName: string, properties?: Record<string, unknown>) {
     Sentry.addBreadcrumb({
       category: 'user',
       message: eventName,
@@ -75,7 +75,7 @@ class Logger {
     });
   }
 
-  trackUserAction(action: string, properties?: Record<string, any>) {
+  trackUserAction(action: string, properties?: Record<string, unknown>) {
     this.trackEvent('user_action', {
       action,
       ...properties,
@@ -91,10 +91,15 @@ export const logger = new Logger();
 
 export function createLogger(context: string) {
   return {
-    debug: (message: string, data?: any) => logger.debug(message, { ...data, context }),
-    info: (message: string, data?: any) => logger.info(message, { ...data, context }),
-    warn: (message: string, data?: any) => logger.warn(message, { ...data, context }),
-    error: (message: string, data?: any) => logger.error(message, { ...data, context }),
-    fatal: (message: string, data?: any) => logger.fatal(message, { ...data, context }),
+    debug: (message: string, data?: unknown) =>
+      logger.debug(message, { ...(data as Record<string, unknown>), context }),
+    info: (message: string, data?: unknown) =>
+      logger.info(message, { ...(data as Record<string, unknown>), context }),
+    warn: (message: string, data?: unknown) =>
+      logger.warn(message, { ...(data as Record<string, unknown>), context }),
+    error: (message: string, data?: unknown) =>
+      logger.error(message, { ...(data as Record<string, unknown>), context }),
+    fatal: (message: string, data?: unknown) =>
+      logger.fatal(message, { ...(data as Record<string, unknown>), context }),
   };
 }

@@ -43,8 +43,9 @@ export default function AttendanceHistory() {
       const data = await res.json();
       setRecords(data.records || []);
       setPagination(buildPaginationMeta(page, pageSize, data.total ?? 0));
-    } catch (err: any) {
-      if (err.name !== 'AbortError') setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== 'AbortError')
+        setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setLoading(false);
     }

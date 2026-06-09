@@ -111,7 +111,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <div className="hidden md:block relative" ref={menuRef}>
             <Button
               variant="ghost"
-              className="relative h-9 gap-2.5 pl-2 pr-3 hover:bg-muted dark:hover:bg-background/10 text-foreground dark:text-gray-200 rounded-xl transition-all duration-200"
+              className="relative h-9 gap-2.5 pl-2 pr-3 hover:bg-muted dark:hover:bg-background/10 text-foreground dark:text-foreground rounded-xl transition-all duration-200"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               aria-expanded={userMenuOpen}
               aria-haspopup="menu"
@@ -161,7 +161,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 <Link
                   href={dashboardLink}
                   onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-background/5 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/5 transition-colors"
                   role="menuitem"
                 >
                   <LayoutDashboard className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -172,7 +172,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   onClick={() => {
                     setUserMenuOpen(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-background/5 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/5 transition-colors"
                   role="menuitem"
                 >
                   <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -182,7 +182,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                   <Link
                     href="/admin/settings"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-background/5 transition-colors"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/5 transition-colors"
                     role="menuitem"
                   >
                     <Settings className="h-4 w-4 text-muted-foreground" aria-hidden="true" />

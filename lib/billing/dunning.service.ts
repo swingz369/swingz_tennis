@@ -132,6 +132,14 @@ export class DunningService {
       const currentLevel = existingDunning?.[0]?.level || 0;
       const nextLevel = currentLevel + 1;
 
+      // Prevent duplicate dunning on the same day for the same level
+      const lastDunningDate = existingDunning?.[0]?.sent_at
+        ? new Date(existingDunning[0].sent_at).toDateString()
+        : null;
+      if (lastDunningDate === new Date().toDateString()) {
+        continue;
+      }
+
       if (nextLevel <= 3) {
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 14);
@@ -148,13 +156,13 @@ export class DunningService {
         // Fetch member email to send notification
         if (invoice.member_id) {
           try {
-            const { data: profile } = await supabase
-              .from('profiles')
+            const { data: user } = await supabase
+              .from('users')
               .select('email')
               .eq('id', invoice.member_id)
               .single();
 
-            const memberEmail = profile?.email;
+            const memberEmail = user?.email;
             if (memberEmail) {
               await this.sendDunningEmail(
                 memberEmail,

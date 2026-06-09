@@ -210,7 +210,7 @@ export class CourtService {
   async updateCourtType(id: string, updates: Partial<CourtType>): Promise<CourtType | null> {
     const { data: courtType, error } = await supabase
       .from('court_types')
-      .update(updates as any)
+      .update(updates as Record<string, unknown>)
       .eq('id', id)
       .select()
       .single();
@@ -237,7 +237,7 @@ export class CourtService {
 
   async updateCourt(courtId: string, updates: Partial<Court>): Promise<Court | null> {
     // Build update object with snake_case keys for Supabase
-    const dbUpdates: Record<string, any> = {};
+    const dbUpdates: Record<string, unknown> = {};
 
     if (updates.club_id !== undefined) dbUpdates.club_id = updates.club_id;
     if (updates.court_type_id !== undefined) dbUpdates.court_type_id = updates.court_type_id;

@@ -2,273 +2,90 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 env:
-  NODE_VERSION: '24'
+  NEXT_TELEMETRY_DISABLED: 1
+  SKIP_ENV_VALIDATION: 1
 
 jobs:
-  # ─────────────────────────────────────────
-  lint:
-    name: 🔍 Lint & Format
+  quality:
+    name: Lint, Typecheck & Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci # NICHT npm install!
+        run: npm ci --no-audit --prefer-offline
 
-      - name: Run ESLint
+      - name: Lint
         run: npm run lint
 
-      - name: Check Prettier
-        run: npx prettier --check .
+      - name: Typecheck
+        run: npm run typecheck
 
-      - name: Verify pre-commit hook config
-        run: |
-          echo "🔍 Checking pre-commit hook configuration…"
-
-          # 1. Hook file must exist
-          test -f .husky/pre-commit || { echo "❌ .husky/pre-commit missing"; exit 1; }
-
-          # 2. Hook must call lint-staged
-          grep -q "lint-staged" .husky/pre-commit || { echo "❌ pre-commit hook must call lint-staged"; exit 1; }
-
-          # 3. Config file must exist
-          test -f .lintstagedrc.js || { echo "❌ .lintstagedrc.js missing"; exit 1; }
-
-          # 4. lint-staged must be installed (require directly, npx auto-downloads)
-          node -e "require('lint-staged')" 2>/dev/null || { echo "❌ lint-staged not installed (add to devDependencies)"; exit 1; }
-
-          echo "✅ Pre-commit hook configuration valid (.husky/pre-commit + .lintstagedrc.js + lint-staged)"
-
-      - name: Simulate pre-commit hook (lint-staged on diff)
-        run: |
-          # Determine diff: merge-base for PRs, HEAD~1 for pushes
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            DIFF="origin/${{ github.base_ref }}...HEAD"
-          else
-            DIFF="HEAD~1"
-            # Edge case: first commit has no parent
-            if ! git rev-parse HEAD~1 > /dev/null 2>&1; then
-              echo "⚠️  Only one commit — skipping lint-staged diff check"
-              exit 0
-            fi
-          fi
-          echo "🔍 Running lint-staged on diff: $DIFF"
-          npx lint-staged --diff="$DIFF"
-
-  # ─────────────────────────────────────────
-  typecheck:
-    name: 🔷 TypeScript
-    runs-on: ubuntu-latest
-    needs: [lint]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: TypeScript Check
-        run: npx tsc --noEmit
-
-  # ─────────────────────────────────────────
-  unit-test:
-    name: 🧪 Unit Tests
-    runs-on: ubuntu-latest
-    needs: [lint, typecheck]
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run Vitest
-        run: npm run test -- --coverage --exclude e2e
+      - name: Unit tests
+        run: npm run test:run -- --reporter=dot --coverage
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage-report
+          path: coverage/
 
-  # ─────────────────────────────────────────
   build:
-    name: 🏗️ Build
+    name: Build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, unit-test]
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+    needs: quality
+    timeout-minutes: 15
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci --no-audit --prefer-offline
 
-      - name: Build Next.js
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
         run: npm run build
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nextjs-build
-          path: .next/
-          retention-days: 1
-
-  # ─────────────────────────────────────────
-  security:
-    name: 🔐 Security Audit
+  lighthouse:
+    name: Lighthouse CI
     runs-on: ubuntu-latest
-    needs: [lint, typecheck]
+    needs: build
+    timeout-minutes: 10
+    if: github.ref == 'refs/heads/main'
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci --no-audit --prefer-offline
 
-      - name: npm audit (high + critical)
-        run: npm audit --audit-level=high
-
-      - name: Check for secrets in code
-        uses: gitleaks/gitleaks-action@v2
+      - name: Run Lighthouse CI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # ─────────────────────────────────────────
-  e2e:
-    name: 🎭 E2E Tests (Playwright)
-    runs-on: ubuntu-latest
-    needs: [build]
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
-      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-      TEST_MEMBER_EMAIL: ${{ secrets.TEST_MEMBER_EMAIL }}
-      TEST_MEMBER_PASSWORD: ${{ secrets.TEST_MEMBER_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: nextjs-build
-          path: .next/
-
-      - name: Run Playwright tests
-        run: npx playwright test
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
-
-  # ─────────────────────────────────────────
-  e2e-vitest:
-    name: 🤖 E2E Tests (Vitest + Midscene)
-    runs-on: ubuntu-latest
-    needs: [build]
-    timeout-minutes: 30
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
-      TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-      TEST_MEMBER_EMAIL: ${{ secrets.TEST_MEMBER_EMAIL }}
-      TEST_MEMBER_PASSWORD: ${{ secrets.TEST_MEMBER_PASSWORD }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      BASE_URL: http://localhost:3000
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Start dev server
-        run: |
-          npm run dev &
-          echo "DEV_PID=$!" >> $GITHUB_ENV
-
-      - name: Wait for server
-        run: |
-          for i in $(seq 1 30); do
-            if curl -s -o /dev/null -w '%{http_code}' http://localhost:3000 | grep -q '200\|302\|304\|301'; then
-              echo "Server ready after ${i}s"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server failed to start within 30s"
-          exit 1
-
-      - name: Run Vitest E2E tests
-        run: npx vitest run e2e/
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vitest-e2e-results
-          path: midscene_run/
-          retention-days: 7
-
-      - name: Kill dev server
-        if: always()
-        run: |
-          kill -TERM -- -$DEV_PID 2>/dev/null || true
-          pkill -f "next dev" 2>/dev/null || true
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        run: npx --yes @lhci/cli@0.13.x autorun

@@ -10,9 +10,11 @@ import { CACHE_TAGS } from '@/lib/server-cache';
  * Wrapper for revalidateTag — compatible with Next.js 16 which requires a profile arg.
  * Uses 'default' profile for all standard invalidations.
  */
+type RevalidateTagFn = (tag: string, profile?: string) => void;
+const _revalidateTagTyped = _revalidateTag as unknown as RevalidateTagFn;
+
 function revalidateTag(tag: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (_revalidateTag as any)(tag, 'default');
+  _revalidateTagTyped(tag, 'default');
 }
 
 /**

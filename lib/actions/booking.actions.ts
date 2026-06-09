@@ -54,7 +54,7 @@ export async function createBookingAction(
         end_time: endTime,
         notes: notes ?? null,
         status: 'confirmed',
-      } as any)
+      } as never)
       .select('id')
       .single();
 

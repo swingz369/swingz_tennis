@@ -42,8 +42,8 @@ export default function AdminApprovals() {
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
       setRequests(data.requests || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setLoading(false);
     }
@@ -64,8 +64,8 @@ export default function AdminApprovals() {
       if (!res.ok) throw new Error('Genehmigung fehlgeschlagen');
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'approved' } : r)));
       setSelectedId(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setProcessing(false);
     }
@@ -87,8 +87,8 @@ export default function AdminApprovals() {
         )
       );
       setSelectedId(null);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setProcessing(false);
     }

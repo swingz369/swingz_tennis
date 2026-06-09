@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest) {
     supabase: {
       url: process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasServiceKey: '[REDACTED]',
     },
     vercel: {
       url: process.env.VERCEL_URL,

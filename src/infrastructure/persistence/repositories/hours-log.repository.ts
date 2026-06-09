@@ -86,7 +86,7 @@ export class DrizzleHoursLogRepository implements HoursLogRepository {
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof hoursLogs.$inferInsert> = {
         updated_at: now,
       };
 

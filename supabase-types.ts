@@ -2387,6 +2387,67 @@ export type Database = {
           },
         ];
       };
+      season_group_weeks: {
+        Row: {
+          club_id: string;
+          created_at: string;
+          group_id: string;
+          id: string;
+          is_active: boolean;
+          reason: string | null;
+          season_id: string;
+          updated_at: string;
+          week_monday: string;
+          week_number: number;
+        };
+        Insert: {
+          club_id: string;
+          created_at?: string;
+          group_id: string;
+          id?: string;
+          is_active?: boolean;
+          reason?: string | null;
+          season_id: string;
+          updated_at?: string;
+          week_monday: string;
+          week_number: number;
+        };
+        Update: {
+          club_id?: string;
+          created_at?: string;
+          group_id?: string;
+          id?: string;
+          is_active?: boolean;
+          reason?: string | null;
+          season_id?: string;
+          updated_at?: string;
+          week_monday?: string;
+          week_number?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'season_group_weeks_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_group_weeks_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'season_group_weeks_season_id_fkey';
+            columns: ['season_id'];
+            isOneToOne: false;
+            referencedRelation: 'seasons';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       season_plan_entries: {
         Row: {
           admin_notes: string | null;

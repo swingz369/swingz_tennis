@@ -57,6 +57,24 @@ interface PlanningData {
   courts: Array<{ id: string; name: string; capacity: number }>;
 }
 
+/** Raw shape of a session as returned by the AI model (before mapping to GeneratedSession) */
+interface RawAiSession {
+  courtId?: unknown;
+  trainerId?: unknown;
+  startTime?: unknown;
+  endTime?: unknown;
+  participants?: unknown;
+  skillLevel?: unknown;
+  confidence?: unknown;
+}
+
+/** Raw shape of the AI response object */
+interface RawAiResponse {
+  sessions?: unknown;
+  reasoning?: unknown;
+  warnings?: unknown;
+}
+
 // =============================================================================
 // System Prompt (consistent across models)
 // =============================================================================
@@ -354,41 +372,50 @@ Generate the schedule now. Remember: output ONLY valid JSON, no markdown.`;
     if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
     cleaned = cleaned.trim();
 
-    try {
-      const parsed = JSON.parse(cleaned);
+    const mapSession = (s: unknown): GeneratedSession => {
+      const raw = s as RawAiSession;
       return {
-        sessions: (parsed.sessions || []).map((s: any) => ({
-          courtId: s.courtId,
-          trainerId: s.trainerId,
-          startTime: new Date(s.startTime),
-          endTime: new Date(s.endTime),
-          participants: s.participants || [],
-          skillLevel: s.skillLevel,
-          confidence: s.confidence || 0.8,
-        })),
-        reasoning: parsed.reasoning || 'No reasoning provided',
-        warnings: parsed.warnings || [],
+        courtId: typeof raw.courtId === 'string' ? raw.courtId : '',
+        trainerId: typeof raw.trainerId === 'string' ? raw.trainerId : '',
+        startTime:
+          typeof raw.startTime === 'string' || raw.startTime instanceof Date
+            ? new Date(raw.startTime as string | Date)
+            : new Date(0),
+        endTime:
+          typeof raw.endTime === 'string' || raw.endTime instanceof Date
+            ? new Date(raw.endTime as string | Date)
+            : new Date(0),
+        participants: Array.isArray(raw.participants)
+          ? (raw.participants as unknown[]).filter((p): p is string => typeof p === 'string')
+          : [],
+        skillLevel: typeof raw.skillLevel === 'string' ? raw.skillLevel : undefined,
+        confidence: typeof raw.confidence === 'number' ? raw.confidence : 0.8,
       };
+    };
+
+    const buildResult = (parsed: unknown) => {
+      const raw = (parsed ?? {}) as RawAiResponse;
+      const sessions = Array.isArray(raw.sessions)
+        ? (raw.sessions as unknown[]).map(mapSession)
+        : [];
+      return {
+        sessions,
+        reasoning: typeof raw.reasoning === 'string' ? raw.reasoning : 'No reasoning provided',
+        warnings: Array.isArray(raw.warnings)
+          ? (raw.warnings as unknown[]).filter((w): w is string => typeof w === 'string')
+          : [],
+      };
+    };
+
+    try {
+      return buildResult(JSON.parse(cleaned));
     } catch {
       // Try to extract JSON from within the text
       const match = text.match(/\{[\s\S]*\}/);
       if (!match) {
         throw new Error('No JSON found in AI response');
       }
-      const parsed = JSON.parse(match[0]);
-      return {
-        sessions: (parsed.sessions || []).map((s: any) => ({
-          courtId: s.courtId,
-          trainerId: s.trainerId,
-          startTime: new Date(s.startTime),
-          endTime: new Date(s.endTime),
-          participants: s.participants || [],
-          skillLevel: s.skillLevel,
-          confidence: s.confidence || 0.8,
-        })),
-        reasoning: parsed.reasoning || 'No reasoning provided',
-        warnings: parsed.warnings || [],
-      };
+      return buildResult(JSON.parse(match[0]));
     }
   }
 

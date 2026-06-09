@@ -59,7 +59,7 @@ export class DrizzleBillingLineItemRepository implements BillingLineItemReposito
 
   async update(id: string, data: Partial<BillingLineItem>): Promise<BillingLineItem | null> {
     try {
-      const updateData: any = {};
+      const updateData: Partial<typeof billingLineItems.$inferInsert> = {};
 
       if (data.date !== undefined) updateData.date = new Date(data.date);
       if (data.description !== undefined) updateData.description = data.description;

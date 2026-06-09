@@ -78,12 +78,15 @@ export class InvoiceService {
         const { data: invoiceItem, error: itemError } = await supabase
           // total_price is GENERATED ALWAYS AS (quantity * unit_price) STORED —
           // must NOT be included in INSERT.
+          // item_type is NOT NULL in the DB; fall back to 'other' when the caller
+          // omits it (legacy callers and adhoc flows may not set it).
           .from('invoice_items')
           .insert({
             invoice_id: invoice.id,
             description: item.description,
             quantity: item.quantity,
             unit_price: item.unit_price,
+            item_type: item.item_type ?? 'other',
           })
           .select()
           .single();

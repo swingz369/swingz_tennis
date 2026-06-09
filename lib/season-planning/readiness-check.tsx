@@ -164,7 +164,7 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
 
       {/* Details ausgeklappt */}
       {expanded && (
-        <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
           {items
             .filter((c) => c.status !== 'ok')
             .map((item) => (

@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/nextjs';
 import { createServiceClient } from '@/lib/supabase/service';
 import { dunningService } from '@/lib/billing/dunning.service';
 import { createLogger } from '@/lib/logger';
+import { env } from '@/lib/env';
 
 const log = createLogger('cron:billing-overdue');
 
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   // Verify Vercel cron secret to prevent unauthorized invocation
   const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+  const cronSecret = env.CRON_SECRET;
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

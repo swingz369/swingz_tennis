@@ -29,6 +29,17 @@ export interface Invoice {
  * Generate PDF invoice using browser's print functionality
  * This creates a printable HTML invoice that can be saved as PDF
  */
+// Add supporting interfaces for the helper functions
+interface MemberData {
+  fullName?: string;
+  email?: string;
+  address?: string;
+}
+
+interface BookingData {
+  timeslotStart: string | Date;
+}
+
 export function generateInvoiceHTML(invoice: Invoice): string {
   const formattedIssueDate = format(invoice.issueDate, 'dd. MMMM yyyy', { locale: de });
   const formattedDueDate = format(invoice.dueDate, 'dd. MMMM yyyy', { locale: de });
@@ -351,7 +362,7 @@ export function downloadInvoicePDF(invoice: Invoice): void {
 /**
  * Generate sample invoice for testing
  */
-export function generateSampleInvoice(memberData: any): Invoice {
+export function generateSampleInvoice(memberData: MemberData | null): Invoice {
   const now = new Date();
   const dueDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days from now
 
@@ -398,7 +409,10 @@ export function generateSampleInvoice(memberData: any): Invoice {
 /**
  * Generate invoice from booking data
  */
-export function generateInvoiceFromBookings(bookings: any[], memberData: any): Invoice {
+export function generateInvoiceFromBookings(
+  bookings: BookingData[],
+  memberData: MemberData | null
+): Invoice {
   const now = new Date();
   const dueDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 

@@ -67,3 +67,34 @@ docker-compose*.yml
 # Backup files
 *.bak
 *.backup
+
+# ═══ Sensitive / runtime artifacts (NEVER deploy) ═══════════════════
+# Test credentials
+.test-credentials.json
+.test-credentials.*
+*.credentials.json
+*.credentials.local
+
+# Seed / benchmark outputs (may contain PII or internal IDs)
+scripts/seed-output*
+scripts/*.seed-output*
+.bench-results.json
+.bench-results.*
+tests/bench/.bench-results.json
+tests/bench/.scaling-results.json
+tests/bench/.scaling-results.*
+tests/bench/.previous/
+tests/e2e/.clustering-perf-results.json
+tests/e2e/.clustering-perf-results.*
+tests/e2e/.previous/
+.regression-report.json
+.regression-report.*
+
+# Sentry replay / profiling debug artifacts
+.sentry/
+sentry-debug.*
+
+# Local-only logs and dumps
+*.dump
+*.heap
+*.core

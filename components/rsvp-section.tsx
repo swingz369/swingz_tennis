@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, X, HelpCircle, CalendarIcon } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { CalendarIcon, Hourglass } from 'lucide-react';
 import { useSubmitRsvp } from '@/hooks/use-rsvp';
 import { generateICal, downloadICal, googleCalendarUrl } from '@/lib/ical-export';
+import {
+  RSVP_ACTION_KEYS,
+  getRsvpStatusConfig,
+  normalizeRsvpStatus,
+  type RsvpStatusKey,
+} from '@/lib/rsvp-status';
+import { cn } from '@/lib/utils';
 
 interface RsvpSectionProps {
   sessionId: string;
@@ -24,13 +31,28 @@ export function RsvpSection({
   trainerName,
   currentStatus,
 }: RsvpSectionProps) {
-  const [status, setStatus] = useState<string | null>(currentStatus || null);
+  // Normalize to canonical key so the button highlight matches the badge semantics
+  const [status, setStatus] = useState<RsvpStatusKey | null>(
+    currentStatus ? normalizeRsvpStatus(currentStatus) : null
+  );
   const submitRsvp = useSubmitRsvp();
   const isPending = submitRsvp.isPending;
+  const actionGroupRef = useRef<HTMLDivElement>(null);
+  const firstActionButtonRef = useRef<HTMLButtonElement>(null);
+
+  /** Click on the pending indicator — focus the first action button so the user can respond. */
+  const focusFirstAction = () => {
+    firstActionButtonRef.current?.focus();
+  };
 
   const handleRsvp = async (newStatus: 'accepted' | 'declined' | 'maybe') => {
     setStatus(newStatus);
-    await submitRsvp.mutateAsync({ sessionId, status: newStatus });
+    try {
+      await submitRsvp.mutateAsync({ sessionId, status: newStatus });
+    } catch {
+      // Revert on failure so the UI matches the server state
+      setStatus(currentStatus ? normalizeRsvpStatus(currentStatus) : null);
+    }
   };
 
   const handleExportICal = () => {
@@ -77,54 +99,43 @@ export function RsvpSection({
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const getButtonStyle = (btnStatus: string) => {
-    if (status === btnStatus) {
-      switch (btnStatus) {
-        case 'accepted':
-          return 'bg-green-100 text-green-700 ring-1 ring-green-400';
-        case 'declined':
-          return 'bg-red-100 text-red-700 ring-1 ring-red-400';
-        case 'maybe':
-          return 'bg-amber-100 text-amber-700 ring-1 ring-amber-400';
-      }
-    }
-    return 'bg-muted text-muted-foreground hover:bg-muted';
-  };
-
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* RSVP Buttons */}
-      <div className="flex items-center gap-1.5">
-        <button
-          onClick={() => handleRsvp('accepted')}
-          disabled={isPending}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${getButtonStyle('accepted')}`}
-          title="Ich komme"
-        >
-          <Check className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Komm</span>
-        </button>
-        <button
-          onClick={() => handleRsvp('declined')}
-          disabled={isPending}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${getButtonStyle('declined')}`}
-          title="Ich fehle"
-        >
-          <X className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Fehle</span>
-        </button>
-        <button
-          onClick={() => handleRsvp('maybe')}
-          disabled={isPending}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${getButtonStyle('maybe')}`}
-          title="Vielleicht"
-        >
-          <HelpCircle className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Vllt.</span>
-        </button>
+      {/* RSVP Action Buttons — colors mirror getRsvpStatusBadge exactly */}
+      <div
+        ref={actionGroupRef}
+        className="flex items-center gap-1.5"
+        role="group"
+        aria-label="RSVP-Status setzen"
+      >
+        {RSVP_ACTION_KEYS.map((key, idx) => {
+          const cfg = getRsvpStatusConfig(key);
+          const Icon = cfg.buttonIcon;
+          const isActive = status === key;
+          return (
+            <button
+              key={key}
+              ref={idx === 0 ? firstActionButtonRef : undefined}
+              onClick={() => handleRsvp(key as 'accepted' | 'declined' | 'maybe')}
+              disabled={isPending}
+              aria-pressed={isActive}
+              className={cn(
+                'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-transparent transition-all',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'focus:outline-none focus:ring-2 focus:ring-primary/40',
+                isActive ? cfg.buttonActiveClass : cfg.buttonClass
+              )}
+              title={cfg.label}
+              data-rsvp-status={key}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{cfg.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Calendar Buttons */}
+      {/* Calendar Export Buttons (unchanged) */}
       <div className="flex items-center gap-1">
         <button
           onClick={handleExportICal}
@@ -143,6 +154,38 @@ export function RsvpSection({
           <span className="hidden sm:inline">Google</span>
         </button>
       </div>
+
+      {/* Live status indicator — uses the same badge class for consistency.
+          When the status is "pending" (no response yet) the indicator is
+          rendered as a clickable button so the user can jump straight to
+          the action buttons to submit their RSVP. */}
+      {status &&
+        (status === 'pending' ? (
+          <button
+            type="button"
+            onClick={focusFirstAction}
+            className={cn(
+              'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border cursor-pointer transition-all',
+              'hover:ring-2 hover:ring-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/40',
+              'bg-blue-100 text-blue-700 border-blue-200 animate-pulse'
+            )}
+            aria-label="Jetzt antworten — fokussiert die RSVP-Action-Buttons"
+            title="Klicken um zu antworten"
+          >
+            <Hourglass className="h-3 w-3" />
+            Jetzt antworten
+          </button>
+        ) : (
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border',
+              getRsvpStatusConfig(status).badgeClass
+            )}
+            aria-live="polite"
+          >
+            Status: {getRsvpStatusConfig(status).label}
+          </span>
+        ))}
     </div>
   );
 }

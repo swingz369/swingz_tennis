@@ -76,6 +76,8 @@ async function buildAuthContext(
   }
 
   // Highest role wins — track which membership granted it
+  // FIX P0-3: Always use the role from the membership that matches the effective club,
+  // not the global highest. This prevents role-bleeding across clubs.
   const effectiveRole = getHighestRole(memberships.map((m) => m.role));
   const effectiveMembership = memberships.find((m) => m.role === effectiveRole) || memberships[0];
 
@@ -99,6 +101,23 @@ async function buildAuthContext(
   } else {
     // Admin always sees their own club (no ClubSwitcher — only superadmin has that)
     effectiveClubId = effectiveMembership.club_id ?? null;
+
+    // FIX P0-3: Re-resolve role for the specific club.
+    // If user is admin in Club A but trainer in Club B, accessing Club B should give role=trainer.
+    if (effectiveClubId) {
+      const clubMembership = memberships.find((m) => m.club_id === effectiveClubId);
+      if (clubMembership) {
+        return {
+          user,
+          session: null,
+          supabase,
+          clubId: effectiveClubId,
+          role: clubMembership.role as AuthContext['role'],
+          roles: memberships.map((m) => m.role),
+          memberships,
+        };
+      }
+    }
   }
 
   return {

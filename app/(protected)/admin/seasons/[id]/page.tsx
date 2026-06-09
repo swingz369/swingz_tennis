@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/select';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
 import { apiFetch } from '@/lib/api-fetch';
+import { SeasonCalendarTab } from '@/components/admin/season-calendar-tab';
 
 function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId: string }) {
   const [installmentCount, setInstallmentCount] = useState(1);
@@ -633,6 +634,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           <TabsTrigger value="plan">Plan ({season.planned_entries})</TabsTrigger>
           <TabsTrigger value="conflicts">Konflikte ({season.open_conflicts})</TabsTrigger>
           <TabsTrigger value="group-change">Gruppenwechsel</TabsTrigger>
+          <TabsTrigger value="calendar">Saisonkalender</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -758,6 +760,10 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               <GroupMembersPanel seasonId={id} clubId={season.club_id ?? ''} />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="calendar">
+          <SeasonCalendarTab seasonId={id} clubId={season.club_id ?? ''} />
         </TabsContent>
       </Tabs>
     </div>

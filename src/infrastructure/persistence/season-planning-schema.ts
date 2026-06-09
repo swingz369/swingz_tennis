@@ -267,6 +267,12 @@ export const seasonPlanningConfigs = pgTable(
     prefer_historic_groups: boolean('prefer_historic_groups').notNull().default(true),
     avoid_high_failure_slots: boolean('avoid_high_failure_slots').notNull().default(true),
 
+    // Optimization #5: Treat high-failure-rate slots as a hard constraint
+    treat_high_failure_as_hard: boolean('treat_high_failure_as_hard').notNull().default(false),
+
+    // Optimization #6: Backtracking depth for unassigned members (0 = disabled, capped at 3 at runtime)
+    backtrack_depth: integer('backtrack_depth').notNull().default(0),
+
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },

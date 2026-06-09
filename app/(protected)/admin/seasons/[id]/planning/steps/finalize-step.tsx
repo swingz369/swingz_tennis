@@ -36,6 +36,7 @@ import {
 import type { ConflictDetectionResult, ConflictSeverityLevel } from '@/lib/season-planning/types';
 import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
 import { apiFetch } from '@/lib/api-fetch';
+import { DryRunPanel } from '@/components/admin/dry-run-panel';
 
 export function FinalizeStep() {
   const { state, confirmPlan, detectConflicts } = useWizard();
@@ -895,6 +896,9 @@ export function FinalizeStep() {
           </CardContent>
         </Card>
       )}
+
+      {/* Dry-Run Preview — simulates the full publish workflow (read-only) */}
+      <DryRunPanel seasonId={state.seasonId} />
 
       {/* AI Review */}
       <Card className="border-purple-200 bg-purple-50/30">

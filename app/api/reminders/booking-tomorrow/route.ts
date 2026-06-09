@@ -2,12 +2,19 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { ReminderService, type Session } from '@/application/use-cases/send-reminders.use-case';
+import {
+  ReminderService,
+  type Session,
+  type Booking,
+  type ISessionRepository,
+  type IBookingRepository,
+  type IMemberRepository,
+} from '@/application/use-cases/send-reminders.use-case';
 import { EmailService } from '@/infrastructure/email/email.service';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 
-class TempSessionRepository {
+class TempSessionRepository implements ISessionRepository {
   async findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = await createClient();
@@ -40,8 +47,8 @@ class TempSessionRepository {
   }
 }
 
-class TempBookingRepository {
-  async findConfirmedBookingsForSessions(sessionIds: string[]) {
+class TempBookingRepository implements IBookingRepository {
+  async findConfirmedBookingsForSessions(sessionIds: string[]): Promise<Booking[]> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = await createClient();
     const { data } = await supabase
@@ -49,17 +56,19 @@ class TempBookingRepository {
       .select('id, member_id, session_id, status')
       .in('session_id', sessionIds)
       .eq('status', 'confirmed');
-    return (data || []).map((booking) => ({
-      id: booking.id,
-      member_id: booking.member_id as string,
-      session_id: booking.session_id as string,
-      status: booking.status,
-    }));
+    return (data || []).map(
+      (booking): Booking => ({
+        id: booking.id,
+        member_id: booking.member_id ?? '',
+        session_id: booking.session_id ?? '',
+        status: booking.status ?? '',
+      })
+    );
   }
 }
 
-class TempMemberRepository {
-  async findMemberById(memberId: string) {
+class TempMemberRepository implements IMemberRepository {
+  async findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null> {
     const { createClient } = await import('@/infrastructure/external/supabase/server');
     const supabase = await createClient();
     const { data } = await supabase
@@ -67,7 +76,8 @@ class TempMemberRepository {
       .select('email, full_name')
       .eq('id', memberId)
       .single();
-    return data as { email: string; full_name: string } | null;
+    if (!data) return null;
+    return { email: data.email ?? '', full_name: data.full_name ?? '' };
   }
 }
 

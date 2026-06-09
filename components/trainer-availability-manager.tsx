@@ -1,6 +1,19 @@
 'use client';
 
+/** Raw API shape for availability slots returned by /api/trainer-availability */
+interface ApiAvailabilitySlot {
+  id: string;
+  date: string;
+  start_time?: string;
+  end_time?: string;
+  status?: string;
+  notes?: string | null;
+  trainer_id?: string;
+  recurring_pattern?: unknown;
+}
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { getErrorMessage } from '@/lib/typed-helpers';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -96,7 +109,8 @@ async function fetchExistingKeys(weekStart: Date): Promise<Set<string>> {
     const data = res.ok ? await res.json().catch(() => ({ slots: [] })) : { slots: [] };
     return new Set(
       (data.slots || []).map(
-        (s: any) => `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
+        (s: ApiAvailabilitySlot) =>
+          `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
       )
     );
   } catch {
@@ -205,8 +219,8 @@ export default function TrainerAvailabilityManager() {
         }
         const data = await res.json();
         // Convert date-based API slots -> weekday-based internal slots
-        const apiSlots: any[] = data.slots || [];
-        const converted: AvailabilitySlot[] = apiSlots.map((s: any) => ({
+        const apiSlots: ApiAvailabilitySlot[] = data.slots || [];
+        const converted: AvailabilitySlot[] = apiSlots.map((s: ApiAvailabilitySlot) => ({
           id: s.id ?? `api-${s.date}-${s.start_time}`,
           weekday: new Date(s.date).getDay(), // 0=Sun … 6=Sat
           fromTime: s.start_time?.slice(0, 5) ?? '00:00',
@@ -214,8 +228,8 @@ export default function TrainerAvailabilityManager() {
           isAvailable: s.status === 'available',
         }));
         setSlots(converted);
-      } catch (err: any) {
-        setMessage(err.message);
+      } catch (err: unknown) {
+        setMessage(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -279,8 +293,8 @@ export default function TrainerAvailabilityManager() {
               const errData = await res.json().catch(() => ({}));
               errorDates.push(`${date}: ${errData.error ?? 'Fehler'}`);
             }
-          } catch (err: any) {
-            errorDates.push(`${date}: ${err.message}`);
+          } catch (err: unknown) {
+            errorDates.push(`${date}: ${getErrorMessage(err)}`);
           }
         }
       }
@@ -301,8 +315,8 @@ export default function TrainerAvailabilityManager() {
       }
 
       setTimeout(() => setMessage(null), 6000);
-    } catch (err: any) {
-      setMessage(`Fehler: ${err.message}`);
+    } catch (err: unknown) {
+      setMessage(`Fehler: ${getErrorMessage(err)}`);
     } finally {
       setApplyingToMonth(false);
     }
@@ -377,7 +391,8 @@ export default function TrainerAvailabilityManager() {
         : { slots: [] };
       const existingKeys = new Set(
         (existingData.slots || []).map(
-          (s: any) => `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
+          (s: ApiAvailabilitySlot) =>
+            `${s.date}|${s.start_time?.slice(0, 5)}|${s.end_time?.slice(0, 5)}`
         )
       );
 
@@ -406,8 +421,8 @@ export default function TrainerAvailabilityManager() {
                 deleteErrors.push(`${existing.date}: ${delErr.error ?? 'Löschung fehlgeschlagen'}`);
               }
             }
-          } catch (delErr: any) {
-            deleteErrors.push(`${existing.date}: ${delErr.message}`);
+          } catch (delErr: unknown) {
+            deleteErrors.push(`${existing.date}: ${getErrorMessage(delErr)}`);
           }
         }
       }
@@ -471,8 +486,8 @@ export default function TrainerAvailabilityManager() {
       }
 
       setTimeout(() => setMessage(null), 4000);
-    } catch (err: any) {
-      setMessage(`Fehler: ${err.message}`);
+    } catch (err: unknown) {
+      setMessage(`Fehler: ${getErrorMessage(err)}`);
     } finally {
       setSaving(false);
     }

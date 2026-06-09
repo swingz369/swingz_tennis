@@ -115,7 +115,7 @@ export function MobileBottomNav({
                 'group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1',
                 isActive
                   ? 'text-brand-light dark:text-brand-light bg-brand-light/10 dark:bg-brand-light/20'
-                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted/50 dark:hover:bg-background/[0.03]'
+                  : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.03]'
               )}
               aria-current={isActive ? 'page' : undefined}
               aria-label={`${item.name}${isActive ? ' (aktuelle Seite)' : ''}`}
@@ -144,7 +144,7 @@ export function MobileBottomNav({
         {(isSuperAdmin || isAdmin) && onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted/50 dark:hover:bg-background/[0.03]"
+            className="group relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] flex-1 text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.03]"
             aria-label="Hauptmenü öffnen"
           >
             <Menu

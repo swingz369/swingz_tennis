@@ -89,7 +89,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {kpiCards.map((kpi, i) => (
           <ScrollReveal key={kpi.title} delay={i * 80}>
             <Card
-              variant="elevated"
+              variant="glass"
               className="group hover-lift transition-all duration-300 hover:shadow-lg p-6"
             >
               <div className="flex items-start justify-between">

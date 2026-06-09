@@ -15,7 +15,7 @@ export interface Session {
   clubs?: { name: string };
 }
 
-interface Booking {
+export interface Booking {
   id: string;
   member_id: string;
   session_id: string | number;
@@ -27,11 +27,11 @@ export interface ISessionRepository {
   findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]>;
 }
 
-interface IBookingRepository {
+export interface IBookingRepository {
   findConfirmedBookingsForSessions(sessionIds: string[]): Promise<Booking[]>;
 }
 
-interface IMemberRepository {
+export interface IMemberRepository {
   findMemberById(memberId: string): Promise<{ email: string; full_name: string } | null>;
 }
 

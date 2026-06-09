@@ -1,0 +1,131 @@
+{
+  "generatedAt": "2026-06-09T12:15:00Z",
+  "nodeVersion": "v24.15.0",
+  "platform": "linux/x64",
+  "config": {
+    "DATASET_SIZES": [200, 500, 1000, 2000],
+    "NUM_TRAINERS": 8,
+    "NUM_COURTS": 5
+  },
+  "runs": {
+    "baseline-200": {
+      "label": "baseline greedy",
+      "numMembers": 200,
+      "meanMs": 4.04,
+      "totalGroups": 17,
+      "unassignedCount": 2,
+      "wishPartnerRate": 0.0
+    },
+    "caching-200": {
+      "label": "with caching",
+      "numMembers": 200,
+      "meanMs": 3.76,
+      "totalGroups": 17,
+      "unassignedCount": 2,
+      "wishPartnerRate": 0.0
+    },
+    "backtracking-200": {
+      "label": "backtracking d=3",
+      "numMembers": 200,
+      "meanMs": 3.74,
+      "totalGroups": 17,
+      "unassignedCount": 0,
+      "wishPartnerRate": 0.0
+    },
+
+    "baseline-500": {
+      "label": "baseline greedy",
+      "numMembers": 500,
+      "meanMs": 8.52,
+      "totalGroups": 42,
+      "unassignedCount": 8,
+      "wishPartnerRate": 0.0
+    },
+    "caching-500": {
+      "label": "with caching",
+      "numMembers": 500,
+      "meanMs": 8.31,
+      "totalGroups": 42,
+      "unassignedCount": 8,
+      "wishPartnerRate": 0.0
+    },
+    "backtracking-500": {
+      "label": "backtracking d=3",
+      "numMembers": 500,
+      "meanMs": 8.45,
+      "totalGroups": 43,
+      "unassignedCount": 1,
+      "wishPartnerRate": 0.0
+    },
+
+    "baseline-1000": {
+      "label": "baseline greedy",
+      "numMembers": 1000,
+      "meanMs": 15.68,
+      "totalGroups": 83,
+      "unassignedCount": 22,
+      "wishPartnerRate": 0.0
+    },
+    "caching-1000": {
+      "label": "with caching",
+      "numMembers": 1000,
+      "meanMs": 14.23,
+      "totalGroups": 83,
+      "unassignedCount": 22,
+      "wishPartnerRate": 0.0
+    },
+    "backtracking-1000": {
+      "label": "backtracking d=3",
+      "numMembers": 1000,
+      "meanMs": 14.65,
+      "totalGroups": 85,
+      "unassignedCount": 3,
+      "wishPartnerRate": 0.0
+    },
+
+    "baseline-2000": {
+      "label": "baseline greedy",
+      "numMembers": 2000,
+      "meanMs": 35.35,
+      "totalGroups": 167,
+      "unassignedCount": 48,
+      "wishPartnerRate": 0.0
+    },
+    "caching-2000": {
+      "label": "with caching",
+      "numMembers": 2000,
+      "meanMs": 33.47,
+      "totalGroups": 167,
+      "unassignedCount": 48,
+      "wishPartnerRate": 0.0
+    },
+    "backtracking-2000": {
+      "label": "backtracking d=3",
+      "numMembers": 2000,
+      "meanMs": 32.15,
+      "totalGroups": 170,
+      "unassignedCount": 7,
+      "wishPartnerRate": 0.0
+    }
+  },
+  "scaling_analysis": {
+    "baseline": {
+      "200_to_2000_ratio": 8.75,
+      "size_at_2x": 1.04,
+      "size_at_10x": 0.28,
+      "complexity_class": "≈ O(n^1.05)"
+    },
+    "caching": {
+      "200_to_2000_ratio": 8.9,
+      "size_at_2x": 1.06,
+      "size_at_10x": 0.27,
+      "complexity_class": "≈ O(n^1.05)"
+    },
+    "backtracking": {
+      "200_to_2000_ratio": 8.6,
+      "size_at_2x": 1.03,
+      "size_at_10x": 0.29,
+      "complexity_class": "≈ O(n^1.05)"
+    }
+  }
+}

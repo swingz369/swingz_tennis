@@ -15,6 +15,10 @@ node_modules/
 out/
 dist/
 build/
+.turbo/
+coverage/
+.drizzle/
+node_modules/.vitest/
 
 # Logs
 *.log
@@ -44,13 +48,34 @@ Thumbs.db
 .vercel/
 
 # Temp files
-.tmp/
+.tmp
 .vercel/
 .playwright-mcp/
 
 # Misc
-.cache/
-.temp/
+.cache
+.temp
+node_modules/.cache
+
+# ═══ Compiler / Linter / Bundler caches ═════════════════════════════════
+# TypeScript incremental build info
+*.tsbuildinfo
+**/*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ESLint cache (--cache flag)
+.eslintcache
+**/.eslintcache
+
+# SWC (Rust-based compiler used by Next.js / Turbopack)
+.swc/
+**/.swc/
+
+# MDX compilation cache
+.mdx/
+**/.mdx/
+.mjs.map
+**/*.mjs.map
 
 # PWA generated files
 public/sw.js

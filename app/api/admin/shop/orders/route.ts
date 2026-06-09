@@ -2,6 +2,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { buildPaginationMeta } from '@/lib/pagination';
+import type { Database } from '@/supabase-types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * GET /api/admin/shop/orders
@@ -15,7 +17,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const sb = auth.supabase as any;
+    // Typed Supabase client using generated Database types
+    const sb = auth.supabase as SupabaseClient<Database>;
     const { searchParams } = new URL(request.url);
     const statusFilter = searchParams.get('status');
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
@@ -23,15 +26,27 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Valid statuses (including legacy 'pending_payment' treated as 'pending')
-    const VALID_STATUSES = ['pending', 'pending_payment', 'confirmed', 'shipped', 'cancelled'];
+    const VALID_STATUSES = [
+      'pending',
+      'pending_payment',
+      'confirmed',
+      'shipped',
+      'cancelled',
+    ] as const;
+    type ValidStatus = (typeof VALID_STATUSES)[number];
+
+    // Row type aliases from generated Supabase types
+    type ShopOrderRow = Database['public']['Tables']['shop_orders']['Row'];
+    type ShopProductRow = Database['public']['Tables']['shop_products']['Row'];
+    type OrderItem = { product_id: string; [key: string]: unknown };
 
     // Helper: normalize status and apply filter
-    function normalizeStatus(o: any) {
+    function normalizeStatus(o: ShopOrderRow): ShopOrderRow {
       return { ...o, status: o.status === 'pending_payment' ? 'pending' : o.status };
     }
 
-    function matchesFilter(o: any) {
-      if (!statusFilter || !VALID_STATUSES.includes(statusFilter)) return true;
+    function matchesFilter(o: ShopOrderRow): boolean {
+      if (!statusFilter || !VALID_STATUSES.includes(statusFilter as ValidStatus)) return true;
       if (statusFilter === 'pending') return o.status === 'pending';
       return o.status === statusFilter;
     }
@@ -53,7 +68,7 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      const productIds = clubProducts.map((p: any) => p.id);
+      const productIds: string[] = (clubProducts as Pick<ShopProductRow, 'id'>[]).map((p) => p.id);
 
       const { data: allOrders, error } = await sb
         .from('shop_orders')
@@ -64,16 +79,17 @@ export async function GET(request: NextRequest) {
       }
 
       // Client-side filter: orders containing club products
-      const clubOrders = (allOrders ?? []).map(normalizeStatus).filter((order: any) => {
-        const items: any[] = order.items ?? [];
-        return items.some((item: any) => productIds.includes(item.product_id));
+      const typedOrders = (allOrders ?? []) as ShopOrderRow[];
+      const clubOrders = typedOrders.map(normalizeStatus).filter((order) => {
+        const items = (order.items as OrderItem[] | null) ?? [];
+        return items.some((item) => productIds.includes(item.product_id));
       });
 
       // Global stats from all club orders (unfiltered by status)
       const globalStats = {
         total_orders: clubOrders.length,
-        total_revenue: clubOrders.reduce((sum: number, o: any) => sum + (o.total_amount ?? 0), 0),
-        pending_orders: clubOrders.filter((o: any) => o.status === 'pending').length,
+        total_revenue: clubOrders.reduce((sum, o) => sum + (o.total_amount ?? 0), 0),
+        pending_orders: clubOrders.filter((o) => o.status === 'pending').length,
       };
 
       // Apply status filter + pagination
@@ -92,7 +108,7 @@ export async function GET(request: NextRequest) {
       })
       .order('created_at', { ascending: false });
 
-    if (statusFilter && VALID_STATUSES.includes(statusFilter)) {
+    if (statusFilter && VALID_STATUSES.includes(statusFilter as ValidStatus)) {
       // Include legacy 'pending_payment' when filtering for 'pending'
       if (statusFilter === 'pending') {
         query = query.in('status', ['pending', 'pending_payment']);
@@ -107,7 +123,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const normalized = (orders ?? []).map(normalizeStatus);
+    const normalized = ((orders ?? []) as ShopOrderRow[]).map(normalizeStatus);
 
     // For global stats we need unfiltered counts — fetch separately
     const [{ count: totalCount }, { count: pendingCount }, { data: revenueData }] =
@@ -120,12 +136,10 @@ export async function GET(request: NextRequest) {
         sb.from('shop_orders').select('total_amount'),
       ]);
 
+    const typedRevenue = (revenueData ?? []) as Pick<ShopOrderRow, 'total_amount'>[];
     const globalStats = {
       total_orders: totalCount ?? 0,
-      total_revenue: (revenueData ?? []).reduce(
-        (sum: number, o: any) => sum + (o.total_amount ?? 0),
-        0
-      ),
+      total_revenue: typedRevenue.reduce((sum, o) => sum + (o.total_amount ?? 0), 0),
       pending_orders: pendingCount ?? 0,
     };
 

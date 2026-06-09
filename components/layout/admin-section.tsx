@@ -136,30 +136,31 @@ export function AdminSection({
       role="group"
       aria-label={`${label} Bereich`}
     >
-      {/* Section header / toggle */}
+      {/* Section header / toggle — unified with Dashboard + secondary nav items */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          'w-full flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-[10px] font-semibold font-display uppercase tracking-[0.15em] transition-all duration-200',
+          'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
           hasActiveChild
-            ? colors.text
-            : 'text-muted-foreground/50 dark:text-white/30 hover:text-muted-foreground dark:hover:text-white/50'
+            ? `${colors.bg} ${colors.text} shadow-sm`
+            : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
       >
-        <div className="flex items-center gap-2">
-          <Icon
-            className={cn(
-              'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
-              hasActiveChild && 'scale-110'
-            )}
-            aria-hidden="true"
-          />
-          <span>{label}</span>
-        </div>
+        <Icon
+          className={cn(
+            'h-5 w-5 shrink-0 transition-transform duration-200',
+            hasActiveChild && 'scale-110'
+          )}
+          aria-hidden="true"
+        />
+        <span className="flex-1 text-left">{label}</span>
         <ChevronDown
-          className={cn('h-3 w-3 transition-all duration-300 opacity-50', isOpen && 'rotate-180')}
+          className={cn(
+            'h-4 w-4 shrink-0 transition-all duration-300 opacity-50',
+            isOpen && 'rotate-180'
+          )}
           aria-hidden="true"
         />
       </button>
@@ -187,7 +188,7 @@ export function AdminSection({
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
                     ? `${colors.bg} ${colors.text} shadow-sm`
-                    : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-gray-200'
+                    : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-foreground'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -212,7 +213,7 @@ export function AdminSection({
           {extraAction && (
             <button
               onClick={extraAction.onClick}
-              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-gray-200 transition-all duration-150"
+              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-foreground transition-all duration-150"
             >
               <extraAction.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
               <span>{extraAction.label}</span>

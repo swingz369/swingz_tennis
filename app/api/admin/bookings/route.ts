@@ -7,6 +7,74 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import {
+  unwrapJoin,
+  DEFAULT_COURT,
+  DEFAULT_USER,
+  DEFAULT_TRAINER,
+  type DefaultCourtShape,
+  type DefaultUserShape,
+  type DefaultTrainerShape,
+} from '@/lib/typed-helpers';
+import type { Database } from '@/supabase-types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// Row type aliases from generated Supabase types
+type BookingRow = Database['public']['Tables']['bookings']['Row'];
+type CourtJoin = DefaultCourtShape;
+type SessionJoin = {
+  id: string;
+  timeslot_start: string;
+  timeslot_end: string;
+  trainer_id: string | null;
+  session_type: string | null;
+  notes: string | null;
+  schedule_id: string;
+  max_participants: number | null;
+  courts: CourtJoin | CourtJoin[] | null;
+};
+type UserJoin = DefaultUserShape;
+type TrainerJoin = DefaultTrainerShape;
+type BookingWithJoins = BookingRow & {
+  courts: CourtJoin | CourtJoin[] | null;
+  sessions: SessionJoin | SessionJoin[] | null;
+  users: UserJoin | UserJoin[] | null;
+};
+type SessionWithJoins = Database['public']['Tables']['sessions']['Row'] & {
+  schedules: { club_id: string } | { club_id: string }[] | null;
+  courts: CourtJoin | CourtJoin[] | null;
+  trainers: TrainerJoin | TrainerJoin[] | null;
+};
+
+// Flat response shape consumed by the admin UI
+type AdminBookingEntry = {
+  id: string;
+  source: 'booking' | 'season_plan';
+  status: string;
+  session_start_time: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  payment_status: string | null;
+  notes: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  booked_at: string | null;
+  court_id: string | null;
+  court_name: string;
+  court_surface: string | null;
+  court_number: number | null;
+  session_id: string | null;
+  session_type: string;
+  session_notes: string | null;
+  session_trainer_id: string | null;
+  session_max_participants: number | null;
+  member_name: string;
+  member_email: string;
+  member_id: string;
+  trainer_name: string | null;
+  group_ids: string[] | null;
+  week_number: number | null;
+};
 
 // ─── GET: List bookings ────────────────────────────────────────────────────────
 
@@ -31,7 +99,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
-    const supabase = auth.supabase;
+    const supabase = auth.supabase as SupabaseClient<Database>;
 
     // Build query with joins to courts and users for rich display data
     let query = supabase
@@ -94,8 +162,11 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply sorting
-    const allowedSorts = ['session_start_time', 'start_time', 'status', 'booked_at'];
-    const sortCol = allowedSorts.includes(sort) ? sort : 'session_start_time';
+    const allowedSorts = ['session_start_time', 'start_time', 'status', 'booked_at'] as const;
+    type AllowedSort = (typeof allowedSorts)[number];
+    const sortCol: AllowedSort = (allowedSorts as readonly string[]).includes(sort)
+      ? (sort as AllowedSort)
+      : 'session_start_time';
     const sortOrder = order === 'asc' ? true : false;
     query = query.order(sortCol, { ascending: sortOrder });
 
@@ -110,10 +181,24 @@ export async function GET(req: NextRequest) {
     }
 
     // Transform the nested Supabase response into a flat, frontend-friendly shape
-    const flat = ((bookings || []) as any[]).map((b: any) => {
-      const court = b.courts || {};
-      const session = b.sessions || {};
-      const member = b.users || {};
+    const typedBookings = (bookings ?? []) as BookingWithJoins[];
+    const flat: AdminBookingEntry[] = typedBookings.map((b) => {
+      const court = unwrapJoin(b.courts) ?? DEFAULT_COURT;
+      const joinedSession = unwrapJoin(b.sessions);
+      // Fallback: derive a SessionJoin-shaped object from the booking's own time fields
+      const session: SessionJoin = joinedSession ?? {
+        id: b.session_id,
+        timeslot_start: b.session_start_time,
+        timeslot_end: b.end_time ?? b.session_start_time,
+        trainer_id: null,
+        session_type: 'training',
+        notes: b.notes,
+        schedule_id: b.schedule_id,
+        max_participants: null,
+        courts: null,
+      };
+      const member = unwrapJoin(b.users) ?? DEFAULT_USER;
+      const sessionCourt = unwrapJoin(session.courts) ?? DEFAULT_COURT;
 
       return {
         id: b.id,
@@ -129,29 +214,31 @@ export async function GET(req: NextRequest) {
         booked_at: b.booked_at,
         // Court info
         court_id: b.court_id,
-        court_name: court.name || session?.courts?.name || '—',
-        court_surface: court.surface || null,
-        court_number: court.number || null,
+        court_name: court.name || sessionCourt.name || '—',
+        court_surface: court.surface,
+        court_number: court.number,
         // Session info
         session_id: b.session_id,
-        session_type: session?.session_type || 'training',
-        session_notes: session?.notes || null,
-        session_trainer_id: session?.trainer_id || null,
-        session_max_participants: session?.max_participants || null,
+        session_type: session.session_type || 'training',
+        session_notes: session.notes,
+        session_trainer_id: session.trainer_id,
+        session_max_participants: session.max_participants,
         // Member info
-        member_name: member?.full_name || member?.email?.split('@')[0] || '—',
-        member_email: member?.email || '—',
+        member_name: member.full_name || member.email?.split('@')[0] || '—',
+        member_email: member.email || '—',
         member_id: b.member_id,
         // Season plan fields (not applicable for bookings)
-        trainer_name: null as string | null,
-        group_ids: null as string[] | null,
-        week_number: null as number | null,
+        trainer_name: null,
+        group_ids: null,
+        week_number: null,
       };
     });
 
     // ── Also fetch season plan sessions (sessions without bookings) ──────
-    const bookedSessionIds = new Set(flat.map((b: any) => b.session_id).filter(Boolean));
-    let seasonPlanEntries: any[] = [];
+    const bookedSessionIds = new Set(
+      flat.map((b) => b.session_id).filter((id): id is string => Boolean(id))
+    );
+    let seasonPlanEntries: AdminBookingEntry[] = [];
 
     try {
       let sessionQuery = supabase
@@ -191,12 +278,13 @@ export async function GET(req: NextRequest) {
       if (sessionErr) {
         console.error('Season sessions fetch error:', sessionErr);
       } else if (rawSessions) {
+        const typedRawSessions = rawSessions as SessionWithJoins[];
         // Only include sessions that have no bookings (not already shown)
-        seasonPlanEntries = rawSessions
-          .filter((s: any) => !bookedSessionIds.has(s.id))
-          .map((s: any) => {
-            const court = s.courts || {};
-            const trainer = s.trainers || {};
+        seasonPlanEntries = typedRawSessions
+          .filter((s) => !bookedSessionIds.has(s.id))
+          .map((s) => {
+            const court = unwrapJoin(s.courts) ?? DEFAULT_COURT;
+            const trainer = unwrapJoin(s.trainers) ?? DEFAULT_TRAINER;
             const startTime = s.timeslot_start
               ? new Date(s.timeslot_start).toTimeString().substring(0, 5)
               : null;
@@ -219,22 +307,22 @@ export async function GET(req: NextRequest) {
               // Court info
               court_id: s.court_id,
               court_name: court.name || '—',
-              court_surface: court.surface || null,
-              court_number: court.number || null,
+              court_surface: court.surface,
+              court_number: court.number,
               // Session info
               session_id: s.id,
               session_type: 'training',
-              session_notes: s.notes || null,
+              session_notes: s.notes,
               session_trainer_id: s.trainer_id,
-              session_max_participants: s.max_participants || null,
+              session_max_participants: s.max_participants,
               // Member info (not applicable for season plan)
               member_name: '—',
               member_email: '—',
               member_id: '',
               // Season plan fields
               trainer_name: trainer.name || '—',
-              group_ids: s.group_ids || [],
-              week_number: s.week_number || null,
+              group_ids: (s.group_ids as string[] | null) || [],
+              week_number: s.week_number,
             };
           });
       }
@@ -243,18 +331,18 @@ export async function GET(req: NextRequest) {
     }
 
     // Merge bookings and season plan entries
-    const allEntries = [...flat, ...seasonPlanEntries];
+    const allEntries: AdminBookingEntry[] = [...flat, ...seasonPlanEntries];
 
     // Apply member search filter client-side (Supabase doesn't support cross-table text search easily)
     let filtered = allEntries;
     if (search) {
       const q = search.toLowerCase();
       filtered = allEntries.filter(
-        (b: any) =>
+        (b) =>
           b.member_name.toLowerCase().includes(q) ||
           b.member_email.toLowerCase().includes(q) ||
           b.court_name.toLowerCase().includes(q) ||
-          (b.trainer_name && b.trainer_name.toLowerCase().includes(q))
+          (b.trainer_name !== null && b.trainer_name.toLowerCase().includes(q))
       );
     }
 
@@ -274,7 +362,11 @@ export async function PATCH(req: NextRequest) {
     const isAdmin = await verifyRole(auth, 'admin');
     if (!isAdmin) return forbiddenResponse('Admin access required');
 
-    const body = await req.json().catch(() => null);
+    const body = (await req.json().catch(() => null)) as {
+      bookingId?: string;
+      action?: string;
+      reason?: string;
+    } | null;
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
     const { bookingId, action, reason } = body;
@@ -282,15 +374,21 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'bookingId and action required' }, { status: 400 });
     }
 
-    const validActions = ['cancel', 'no_show', 'confirm'];
-    if (!validActions.includes(action)) {
+    const validActions = ['cancel', 'no_show', 'confirm'] as const;
+    type ValidAction = (typeof validActions)[number];
+    if (!(validActions as readonly string[]).includes(action)) {
       return NextResponse.json({ error: `Invalid action: ${action}` }, { status: 400 });
     }
 
-    const supabase = auth.supabase;
-    const updates: { status?: string; cancelled_at?: string; cancellation_reason?: string } = {};
+    const supabase = auth.supabase as SupabaseClient<Database>;
+    const typedAction = action as ValidAction;
+    const updates: {
+      status: string;
+      cancelled_at?: string;
+      cancellation_reason?: string;
+    } = { status: '' };
 
-    switch (action) {
+    switch (typedAction) {
       case 'cancel':
         updates.status = 'cancelled';
         updates.cancelled_at = new Date().toISOString();

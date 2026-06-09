@@ -8,6 +8,20 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import type { Database } from '@/supabase-types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// Row type aliases from generated Supabase types
+type SessionRow = Database['public']['Tables']['sessions']['Row'];
+type TrainerRow = Database['public']['Tables']['trainers']['Row'];
+type UserRow = Database['public']['Tables']['users']['Row'];
+type BookingRow = Database['public']['Tables']['bookings']['Row'];
+type SessionRsvpRow = Database['public']['Tables']['session_rsvps']['Row'];
+type CourtJoin = { name: string | null };
+type SessionWithJoins = SessionRow & {
+  schedules: { club_id: string } | { club_id: string }[] | null;
+  courts: CourtJoin | CourtJoin[] | null;
+};
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -21,7 +35,7 @@ export async function GET(req: NextRequest) {
     const clubIdParam = url.searchParams.get('clubId');
     if (!clubIdParam) return NextResponse.json({ error: 'clubId required' }, { status: 400 });
 
-    const supabase = auth.supabase;
+    const supabase = auth.supabase as SupabaseClient<Database>;
     const userId = auth.user.id;
 
     try {
@@ -56,9 +70,13 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: sessionsError.message }, { status: 500 });
       }
 
+      const typedSessions = (sessions ?? []) as SessionWithJoins[];
+
       // Fetch trainer names
       const trainerIds = [
-        ...new Set((sessions ?? []).map((s: any) => s.trainer_id).filter(Boolean)),
+        ...new Set(
+          typedSessions.map((s) => s.trainer_id).filter((id): id is string => Boolean(id))
+        ),
       ];
       const trainersMap = new Map<string, string>();
 
@@ -68,7 +86,7 @@ export async function GET(req: NextRequest) {
           .select('id, name, email')
           .in('id', trainerIds);
 
-        (trainerData ?? []).forEach((t: any) => {
+        ((trainerData ?? []) as Pick<TrainerRow, 'id' | 'name' | 'email'>[]).forEach((t) => {
           trainersMap.set(t.id, t.name || t.email || 'Trainer');
         });
 
@@ -78,7 +96,7 @@ export async function GET(req: NextRequest) {
           .select('id, full_name')
           .in('id', trainerIds);
 
-        (usersData ?? []).forEach((u: any) => {
+        ((usersData ?? []) as Pick<UserRow, 'id' | 'full_name'>[]).forEach((u) => {
           if (u.full_name && !trainersMap.has(u.id)) {
             trainersMap.set(u.id, u.full_name);
           }
@@ -86,8 +104,8 @@ export async function GET(req: NextRequest) {
       }
 
       // Fetch ALL active bookings for this club's upcoming sessions
-      const sessionIds = (sessions ?? []).map((s: any) => s.id);
-      const activeStatuses = ['pending', 'confirmed'];
+      const sessionIds = typedSessions.map((s) => s.id);
+      const activeStatuses: BookingRow['status'][] = ['pending', 'confirmed'];
 
       const { data: allActiveBookings } =
         sessionIds.length > 0
@@ -97,24 +115,50 @@ export async function GET(req: NextRequest) {
               .in('session_id', sessionIds)
               .in('status', activeStatuses)
               .eq('club_id', clubIdParam)
-          : { data: [] };
+          : { data: [] as Pick<BookingRow, 'id' | 'session_id' | 'status' | 'member_id'>[] };
+
+      const typedBookings = (allActiveBookings ?? []) as Pick<
+        BookingRow,
+        'id' | 'session_id' | 'status' | 'member_id'
+      >[];
 
       // Build per-session booking stats
       const sessionBookingCount = new Map<string, number>();
-      (allActiveBookings ?? []).forEach((b: any) => {
+      typedBookings.forEach((b) => {
         sessionBookingCount.set(b.session_id, (sessionBookingCount.get(b.session_id) ?? 0) + 1);
       });
 
       // Build current-user booking map
       const bookingsMap = new Map<string, { bookingId: string; status: string }>();
-      (allActiveBookings ?? [])
-        .filter((b: any) => b.member_id === userId)
-        .forEach((b: any) => {
+      typedBookings
+        .filter((b) => b.member_id === userId)
+        .forEach((b) => {
           bookingsMap.set(b.session_id, { bookingId: b.id, status: b.status });
         });
 
+      // Fetch current-user RSVPs for these sessions (separate from bookings)
+      const rsvpMap = new Map<string, string>();
+      if (sessionIds.length > 0) {
+        const { data: rsvps, error: rsvpError } = await supabase
+          .from('session_rsvps')
+          .select('session_id, status, member_id')
+          .eq('member_id', userId)
+          .in('session_id', sessionIds);
+
+        if (rsvpError) {
+          // Non-fatal: log and continue without RSVP data
+          console.warn('[Sessions API] RSVP fetch failed:', rsvpError.message);
+        } else {
+          ((rsvps ?? []) as Pick<SessionRsvpRow, 'session_id' | 'status' | 'member_id'>[]).forEach(
+            (r) => {
+              rsvpMap.set(r.session_id, r.status);
+            }
+          );
+        }
+      }
+
       // Transform sessions to the format the booking UI expects
-      const result = (sessions ?? []).map((s: any) => {
+      const result = typedSessions.map((s) => {
         const start = new Date(s.timeslot_start);
         const end = new Date(s.timeslot_end);
         // dayOfWeek: JS convention 0=Sun, 1=Mon, ..., 6=Sat → API uses 1-7
@@ -134,7 +178,7 @@ export async function GET(req: NextRequest) {
           timeslotStart: s.timeslot_start,
           timeslotEnd: s.timeslot_end,
           trainerId: s.trainer_id,
-          trainerName: trainersMap.get(s.trainer_id) ?? 'Trainer',
+          trainerName: trainersMap.get(s.trainer_id ?? '') ?? 'Trainer',
           courtName: court?.name ?? 'Platz',
           maxParticipants,
           sessionType: s.session_type ?? 'training',
@@ -143,6 +187,7 @@ export async function GET(req: NextRequest) {
           bookedByUser: !!booking,
           bookingId: booking?.bookingId ?? null,
           bookingStatus: booking?.status ?? null,
+          rsvpStatus: rsvpMap.get(s.id) ?? null,
           hasActiveBooking: currentBookings > 0,
           currentBookings,
         };
@@ -176,7 +221,16 @@ export async function POST(req: NextRequest) {
       max_participants,
       group_ids,
       week_number,
-    } = body;
+    } = body as {
+      schedule_id?: string;
+      trainer_id?: string | null;
+      court_id?: string | null;
+      timeslot_start?: string;
+      timeslot_end?: string;
+      max_participants?: number;
+      group_ids?: string[];
+      week_number?: number;
+    };
 
     if (!schedule_id || !timeslot_start || !timeslot_end) {
       return NextResponse.json(
@@ -185,7 +239,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { data, error } = await auth.supabase
+    const supabase = auth.supabase as SupabaseClient<Database>;
+    const { data, error } = await supabase
       .from('sessions')
       .insert({
         schedule_id,

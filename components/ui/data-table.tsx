@@ -195,7 +195,7 @@ export function DataTable<T extends Record<string, unknown>>({
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted dark:bg-muted">
+              <TableRow className="bg-brand-primary/5 dark:bg-brand-primary/10 border-b-2 border-brand-primary/20">
                 {columns.map((col) => (
                   <TableHead
                     key={col.key}
@@ -237,15 +237,15 @@ export function DataTable<T extends Record<string, unknown>>({
                   </TableCell>
                 </TableRow>
               ) : (
-                paginated.map((row) => {
+                paginated.map((row, idx) => {
                   const rowContent = (
                     <TableRow
                       key={String(row[rowKey])}
                       className={cn(
                         'transition-colors',
-                        hrefKey &&
-                          hrefPrefix &&
-                          'cursor-pointer hover:bg-muted dark:hover:bg-background/5'
+                        idx % 2 === 1 && 'bg-muted/30 dark:bg-muted/10',
+                        'hover:bg-brand-primary/5 dark:hover:bg-brand-primary/10',
+                        hrefKey && hrefPrefix && 'cursor-pointer'
                       )}
                     >
                       {columns.map((col) => {

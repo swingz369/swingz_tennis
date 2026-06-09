@@ -113,7 +113,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
 
   async update(id: string, input: UpdateHourlyRateTierInput): Promise<HourlyRateTier | null> {
     try {
-      const updateData: any = { updatedAt: new Date().toISOString() };
+      const updateData: Partial<typeof hourlyRateTiers.$inferInsert> = { updatedAt: new Date() };
       if (input.name !== undefined) updateData.name = input.name;
       if (input.description !== undefined) updateData.description = input.description;
       if (input.baseRate !== undefined) updateData.baseRate = input.baseRate.toString();

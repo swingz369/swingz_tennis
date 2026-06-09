@@ -82,7 +82,7 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof trainerBillings.$inferInsert> = {
         updated_at: now,
       };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { getRsvpStatusBadge } from '@/lib/rsvp-status';
 import {
   format,
   startOfMonth,
@@ -34,8 +35,8 @@ export default function MemberTrainingSchedule() {
   }, [sessions]);
 
   // Helper to get session date (prefer timeslotStart)
-  const getSessionDate = (session: any): Date => {
-    const ts = session.timeslotStart || session.timeslot_start;
+  const getSessionDate = (session: Session): Date => {
+    const ts = session.timeslotStart || session.timeslotStart;
     if (ts) return new Date(ts);
     return new Date(0);
   };
@@ -45,11 +46,11 @@ export default function MemberTrainingSchedule() {
     const monthEnd = endOfMonth(currentMonth);
 
     return memberSessions
-      .filter((session: any) => {
+      .filter((session: Session) => {
         const sessionDate = getSessionDate(session);
         return isWithinInterval(sessionDate, { start: monthStart, end: monthEnd });
       })
-      .sort((a: any, b: any) => {
+      .sort((a: Session, b: Session) => {
         return getSessionDate(a).getTime() - getSessionDate(b).getTime();
       });
   };
@@ -59,10 +60,10 @@ export default function MemberTrainingSchedule() {
   const getUpcomingSessions = () => {
     const now = new Date();
     return memberSessions
-      .filter((session: any) => {
+      .filter((session: Session) => {
         return getSessionDate(session) >= now;
       })
-      .sort((a: any, b: any) => {
+      .sort((a: Session, b: Session) => {
         return getSessionDate(a).getTime() - getSessionDate(b).getTime();
       })
       .slice(0, 5);
@@ -74,7 +75,7 @@ export default function MemberTrainingSchedule() {
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToToday = () => setCurrentMonth(new Date());
 
-  const getSessionStatus = (session: any) => {
+  const getSessionStatus = (session: Session) => {
     const now = new Date();
     const sessionDate = getSessionDate(session);
 
@@ -98,6 +99,12 @@ export default function MemberTrainingSchedule() {
 
     return { label: 'Ausstehend', color: 'bg-yellow-100 text-yellow-700' };
   };
+
+  /**
+   * Map a raw RSVP status string to a colored badge with icon.
+   * Returns `null` if no RSVP has been submitted yet — caller can hide the badge.
+   * Single source of truth: see `@/lib/rsvp-status`.
+   */
 
   if (isLoading) {
     return (
@@ -154,7 +161,7 @@ export default function MemberTrainingSchedule() {
           <CardContent>
             <div className="text-2xl font-bold">
               {
-                monthSessions.filter((s: any) => {
+                monthSessions.filter((s: Session) => {
                   return getSessionDate(s) >= new Date();
                 }).length
               }
@@ -173,7 +180,7 @@ export default function MemberTrainingSchedule() {
           <CardContent>
             <div className="text-2xl font-bold">
               {
-                monthSessions.filter((s: any) => {
+                monthSessions.filter((s: Session) => {
                   return getSessionDate(s) < new Date() && s.bookingStatus === 'confirmed';
                 }).length
               }
@@ -191,8 +198,9 @@ export default function MemberTrainingSchedule() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {upcomingSessions.map((session: any) => {
+              {upcomingSessions.map((session: Session) => {
                 const status = getSessionStatus(session);
+                const rsvpBadge = getRsvpStatusBadge(session.rsvpStatus);
                 return (
                   <div
                     key={session.id}
@@ -232,10 +240,21 @@ export default function MemberTrainingSchedule() {
                         </div>
                       </div>
                     </div>
-                    <div
-                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}
-                    >
-                      {status.label}
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div
+                        className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}
+                      >
+                        {status.label}
+                      </div>
+                      {rsvpBadge && (
+                        <div
+                          className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${rsvpBadge.color}`}
+                          title="Dein RSVP-Status"
+                        >
+                          <rsvpBadge.icon className="h-3 w-3" />
+                          <span>RSVP: {rsvpBadge.label}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -257,8 +276,9 @@ export default function MemberTrainingSchedule() {
             </div>
           ) : (
             <div className="space-y-2">
-              {monthSessions.map((session: any) => {
+              {monthSessions.map((session: Session) => {
                 const status = getSessionStatus(session);
+                const rsvpBadge = getRsvpStatusBadge(session.rsvpStatus);
                 const isToday = isSameDay(getSessionDate(session), new Date());
 
                 return (
@@ -323,10 +343,21 @@ export default function MemberTrainingSchedule() {
                         </div>
                       </div>
                     </div>
-                    <div
-                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}
-                    >
-                      {status.label}
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div
+                        className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${status.color}`}
+                      >
+                        {status.label}
+                      </div>
+                      {rsvpBadge && (
+                        <div
+                          className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${rsvpBadge.color}`}
+                          title="Dein RSVP-Status"
+                        >
+                          <rsvpBadge.icon className="h-3 w-3" />
+                          <span>RSVP: {rsvpBadge.label}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,18 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import {
   Bell,
   Calendar,
@@ -22,6 +34,10 @@ import {
   AlertTriangle,
   CheckCircle,
   Loader2,
+  Plus,
+  Trash2,
+  Pin,
+  Send,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -38,49 +54,147 @@ export interface NewsItem {
   isPinned?: boolean;
 }
 
-export default function NewsAnnouncements() {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface NewsAnnouncementsProps {
+  /** Whether the current user may create/delete news (admin/superadmin) */
+  canManage?: boolean;
+  /** Server-rendered initial list (so first paint is fast) */
+  initialNews?: NewsItem[];
+}
+
+const TYPE_OPTIONS: NewsItem['type'][] = ['announcement', 'update', 'maintenance', 'event'];
+const PRIORITY_OPTIONS: NewsItem['priority'][] = ['low', 'medium', 'high', 'urgent'];
+
+export default function NewsAnnouncements({
+  canManage = false,
+  initialNews = [],
+}: NewsAnnouncementsProps) {
+  const [news, setNews] = useState<NewsItem[]>(initialNews);
+  const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pinned' | 'recent'>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  // Fetch news from API
-  useEffect(() => {
-    const abortController = new AbortController();
+  // Compose-dialog state
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    title: '',
+    content: '',
+    type: 'announcement' as NewsItem['type'],
+    priority: 'medium' as NewsItem['priority'],
+    isPinned: false,
+    expiresAt: '',
+  });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-    async function fetchNews() {
-      try {
-        const res = await apiFetch('/api/news', {
-          signal: abortController.signal,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const mapped: NewsItem[] = (data.news || []).map((n: any) => ({
-            id: n.id,
-            title: n.title || '',
-            content: n.content || '',
-            type: n.type || 'announcement',
-            priority: n.priority || 'medium',
-            publishedAt: n.published_at || n.created_at || new Date().toISOString(),
-            author: n.author || 'SwingZ Team',
-            tags: n.tags || [],
-            expiresAt: n.expires_at || undefined,
-            isPinned: n.is_pinned || false,
-          }));
-          setNews(mapped);
-        }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error('Failed to fetch news:', err);
-        }
-      } finally {
-        setIsLoading(false);
+  const fetchNews = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const res = await apiFetch('/api/news', signal ? { signal } : {});
+      if (res.ok) {
+        const data = await res.json();
+        const mapped: NewsItem[] = (data.news || []).map((n: Record<string, unknown>) => ({
+          id: n.id,
+          title: n.title || '',
+          content: n.content || '',
+          type: n.type || 'announcement',
+          priority: n.priority || 'medium',
+          publishedAt: n.published_at || n.created_at || new Date().toISOString(),
+          author: n.author_name || n.author || 'SwingZ Team',
+          tags: n.tags || [],
+          expiresAt: n.expires_at || undefined,
+          isPinned: n.is_pinned || false,
+        }));
+        setNews(mapped);
       }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Failed to fetch news:', err);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Only refetch if we don't have initial data (defensive — server prefills today)
+  useEffect(() => {
+    if (initialNews.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+    const abortController = new AbortController();
+    setIsLoading(true);
+    fetchNews(abortController.signal);
+    return () => abortController.abort();
+  }, [fetchNews, initialNews.length]);
+
+  const resetForm = () =>
+    setForm({
+      title: '',
+      content: '',
+      type: 'announcement',
+      priority: 'medium',
+      isPinned: false,
+      expiresAt: '',
+    });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim() || !form.content.trim()) {
+      toast.error('Titel und Inhalt sind erforderlich');
+      return;
     }
 
-    fetchNews();
-    return () => abortController.abort();
-  }, []);
+    setIsSubmitting(true);
+    try {
+      const payload: Record<string, unknown> = {
+        title: form.title.trim(),
+        content: form.content.trim(),
+        type: form.type,
+        priority: form.priority,
+        is_pinned: form.isPinned,
+      };
+      if (form.expiresAt) {
+        payload.expires_at = new Date(form.expiresAt).toISOString();
+      }
+
+      const res = await apiFetch('/api/news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Fehler ${res.status}`);
+      }
+
+      toast.success('Nachricht veröffentlicht');
+      setComposeOpen(false);
+      resetForm();
+      await fetchNews();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Veröffentlichen fehlgeschlagen');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Diese Nachricht wirklich löschen?')) return;
+    setDeletingId(id);
+    try {
+      const res = await apiFetch(`/api/news/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Fehler ${res.status}`);
+      }
+      toast.success('Nachricht gelöscht');
+      setNews((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Löschen fehlgeschlagen');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const getPriorityColor = (priority: NewsItem['priority']) => {
     switch (priority) {
@@ -155,11 +269,19 @@ export default function NewsAnnouncements() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-brand-primary">News & Ankündigungen</h1>
-        <p className="text-muted-foreground">
-          Bleib auf dem Laufenden über Neuigkeiten und Updates
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-primary">News & Ankündigungen</h1>
+          <p className="text-muted-foreground">
+            Bleib auf dem Laufenden über Neuigkeiten und Updates
+          </p>
+        </div>
+        {canManage && (
+          <Button onClick={() => setComposeOpen(true)} className="gap-2 self-start sm:self-auto">
+            <Plus className="h-4 w-4" />
+            Neue Nachricht verfassen
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -217,7 +339,11 @@ export default function NewsAnnouncements() {
             <CardContent className="py-12">
               <div className="text-center">
                 <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                <p className="text-muted-foreground">Keine Nachrichten gefunden</p>
+                <p className="text-muted-foreground">
+                  {canManage
+                    ? 'Noch keine Nachrichten — verfasse die erste.'
+                    : 'Keine Nachrichten gefunden'}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -233,7 +359,7 @@ export default function NewsAnnouncements() {
                 } ${expired ? 'opacity-60' : ''}`}
               >
                 <CardHeader>
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-3 flex-1">
                       <div
                         className={`p-2 rounded-lg ${
@@ -243,9 +369,10 @@ export default function NewsAnnouncements() {
                         <Bell className="h-5 w-5" />
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
                           {item.isPinned && (
-                            <Badge variant="default" className="text-xs">
+                            <Badge variant="default" className="text-xs gap-1">
+                              <Pin className="h-3 w-3" />
                               Angepinnt
                             </Badge>
                           )}
@@ -267,10 +394,26 @@ export default function NewsAnnouncements() {
                         <CardTitle className="text-xl">{item.title}</CardTitle>
                       </div>
                     </div>
+                    {canManage && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(item.id)}
+                        disabled={deletingId === item.id}
+                        className="text-muted-foreground hover:text-red-600 shrink-0"
+                        aria-label={`Nachricht "${item.title}" löschen`}
+                      >
+                        {deletingId === item.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-foreground mb-4">{item.content}</p>
+                  <p className="text-foreground mb-4 whitespace-pre-wrap">{item.content}</p>
 
                   <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
@@ -372,6 +515,125 @@ export default function NewsAnnouncements() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Compose Dialog (admin only) */}
+      <Dialog open={composeOpen} onOpenChange={(open) => !isSubmitting && setComposeOpen(open)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Neue Nachricht verfassen</DialogTitle>
+            <DialogDescription>
+              Veröffentliche eine Ankündigung, ein Update oder eine Veranstaltung für deinen Verein.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="news-title">Titel</Label>
+              <Input
+                id="news-title"
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder="z.B. Sommer-Saisonplan veröffentlicht"
+                maxLength={120}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="news-content">Inhalt</Label>
+              <Textarea
+                id="news-content"
+                value={form.content}
+                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                placeholder="Was möchtest du den Mitgliedern mitteilen?"
+                rows={6}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="news-type">Typ</Label>
+                <Select
+                  value={form.type}
+                  onValueChange={(v) => setForm((f) => ({ ...f, type: v as NewsItem['type'] }))}
+                >
+                  <SelectTrigger id="news-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TYPE_OPTIONS.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {getTypeLabel(t)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="news-priority">Priorität</Label>
+                <Select
+                  value={form.priority}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, priority: v as NewsItem['priority'] }))
+                  }
+                >
+                  <SelectTrigger id="news-priority">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {getPriorityLabel(p)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="news-expires">Gültig bis (optional)</Label>
+              <Input
+                id="news-expires"
+                type="datetime-local"
+                value={form.expiresAt}
+                onChange={(e) => setForm((f) => ({ ...f, expiresAt: e.target.value }))}
+              />
+            </div>
+
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={form.isPinned}
+                onChange={(e) => setForm((f) => ({ ...f, isPinned: e.target.checked }))}
+                className="h-4 w-4 rounded border-border text-brand-primary focus:ring-brand-primary"
+              />
+              <Pin className="h-4 w-4 text-muted-foreground" />
+              <span>Angepinnt an den Anfang der Liste</span>
+            </label>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setComposeOpen(false)}
+                disabled={isSubmitting}
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="gap-2">
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Veröffentlichen
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

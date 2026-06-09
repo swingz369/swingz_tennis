@@ -87,8 +87,8 @@ export default function AdminTrialApprovals() {
       }
       const data = await res.json();
       setRequests(data.trialTrainings || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setLoading(false);
     }
@@ -172,8 +172,8 @@ export default function AdminTrialApprovals() {
       setApproveId(null);
       setSelectedTrainerId('');
       setSelectedCourtId('');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setProcessing(false);
     }
@@ -202,8 +202,8 @@ export default function AdminTrialApprovals() {
       );
       setSelectedId(null);
       setRejectionReason('');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setProcessing(false);
     }

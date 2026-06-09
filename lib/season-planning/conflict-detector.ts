@@ -14,6 +14,18 @@ import {
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import { and, eq } from 'drizzle-orm';
+
+/**
+ * Minimal query-builder interface for the optional transaction parameter.
+ * Drizzle's `PgTransaction` and `PostgresJsDatabase` both satisfy this.
+ * The signatures are intentionally wide (accepting `any` for the table) so
+ * that we can pass in either a transaction instance or the global db handle
+ * without Drizzle's exact generic types clashing across call sites.
+ */
+type DrizzleTransactionLike = {
+  delete: (table: any) => { where: (filter: any) => Promise<any> };
+  insert: (table: any) => { values: (rows: any | any[]) => Promise<any> };
+};
 import type {
   ConflictDetectionResult,
   ConflictSeverityLevel,
@@ -580,8 +592,9 @@ export class ConflictDetector {
     conflicts: ConflictDetectionResult[],
     // Drizzle's PgTransaction type differs from PostgresJsDatabase, but both
     // satisfy the query-builder interface (select/insert/update/delete).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tx?: any
+    // We type as `unknown` and let the minimal query-builder interface below
+    // validate the actual usage at the call sites.
+    tx?: DrizzleTransactionLike
   ): Promise<number> {
     if (conflicts.length === 0) return 0;
 
@@ -611,7 +624,14 @@ export class ConflictDetector {
       detection_source: 'auto_planner',
     }));
 
-    await dbInstance.insert(planningConflicts).values(rows as any);
+    // Typed insert-cast: Drizzle's `.values()` requires the exact
+    // `$inferInsert` shape; we bridge via `unknown` because individual
+    // fields may be optional / partial in the input rows. The runtime
+    // shape is verified by the DB constraints (see planningConflicts
+    // schema in src/infrastructure/persistence/schema.ts).
+    await dbInstance
+      .insert(planningConflicts)
+      .values(rows as unknown as (typeof planningConflicts.$inferInsert)[]);
     return rows.length;
   }
 

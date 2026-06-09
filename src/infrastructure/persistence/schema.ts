@@ -46,6 +46,18 @@ export const clubs = pgTable(
     tax_rate: integer('tax_rate').default(0),
     default_payment_method: varchar('default_payment_method', { length: 20 }).default('transfer'),
     invoice_number_prefix: varchar('invoice_number_prefix', { length: 10 }),
+    // Per-club feature flags. Keys defined in lib/features.ts.
+    // Core features (members, trainers, seasons, finance) are immutable and always true.
+    features: jsonb('features').$type<Record<string, boolean>>().notNull().default({
+      members: true,
+      trainers: true,
+      seasons: true,
+      finance: true,
+      shop: false,
+      tournaments: false,
+      trial_training: false,
+      ai_matchmaking: false,
+    }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),

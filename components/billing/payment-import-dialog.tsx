@@ -22,8 +22,8 @@ interface ImportResult {
   total: number;
   imported: number;
   failed: number;
-  invalid: Array<{ record: any; errors: string[] }>;
-  errors: Array<{ record: any; error: string }>;
+  invalid: Array<{ record: Record<string, unknown>; errors: string[] }>;
+  errors: Array<{ record: Record<string, unknown>; error: string }>;
 }
 
 export default function PaymentImportDialog() {
@@ -183,7 +183,9 @@ export default function PaymentImportDialog() {
                         {result.invalid.map((item, index) => (
                           <div key={index} className="text-xs bg-yellow-50 p-2 rounded">
                             <div className="font-medium">
-                              {item.record.memberEmail || item.record.memberId || 'Unbekannt'}
+                              {String(
+                                item.record.memberEmail ?? item.record.memberId ?? 'Unbekannt'
+                              )}
                             </div>
                             <div className="text-muted-foreground">{item.errors.join(', ')}</div>
                           </div>
@@ -203,7 +205,9 @@ export default function PaymentImportDialog() {
                         {result.errors.map((item, index) => (
                           <div key={index} className="text-xs bg-red-50 p-2 rounded">
                             <div className="font-medium">
-                              {item.record.memberEmail || item.record.memberId || 'Unbekannt'}
+                              {String(
+                                item.record.memberEmail ?? item.record.memberId ?? 'Unbekannt'
+                              )}
                             </div>
                             <div className="text-muted-foreground">{item.error}</div>
                           </div>

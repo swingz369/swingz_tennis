@@ -14,6 +14,8 @@ import { sql } from 'drizzle-orm';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+// Explicitly mark as public: bypass any auth checks (must NOT call withApiAuth)
+export const publicEndpoint = true;
 
 /**
  * Health check response format
@@ -120,6 +122,8 @@ export async function GET() {
       status: 200,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
+        // Mark as public so Vercel/any edge proxy should not require auth
+        'X-Robots-Tag': 'noindex',
       },
     });
   } catch (error) {
@@ -141,6 +145,7 @@ export async function GET() {
       status: 503,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
+        'X-Robots-Tag': 'noindex',
       },
     });
   }

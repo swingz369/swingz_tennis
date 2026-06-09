@@ -43,7 +43,7 @@ export interface ApiError {
   error: {
     code: ErrorCode;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
     timestamp: string;
     requestId?: string;
   };
@@ -53,7 +53,7 @@ export interface ApiErrorOptions {
   code: ErrorCode;
   message: string;
   status?: number;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   cause?: Error;
   requestId?: string;
 }
@@ -121,7 +121,7 @@ function getStatusFromCode(code: ErrorCode): number {
 /**
  * Wraps API route handlers with standardized error handling
  */
-export function withErrorHandler<T extends (...args: any[]) => Promise<NextResponse>>(
+export function withErrorHandler<T extends (...args: never[]) => Promise<NextResponse>>(
   handler: T
 ): T {
   return (async (...args: Parameters<T>): Promise<NextResponse> => {
@@ -141,10 +141,12 @@ export function withErrorHandler<T extends (...args: any[]) => Promise<NextRespo
 
       // Handle validation errors (Zod)
       if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        // ZodError carries an `errors` array; cast through unknown to satisfy strict TS
+        const zodErrors = (error as unknown as { errors: unknown }).errors;
         return createErrorResponse({
           code: ErrorCode.VALIDATION_ERROR,
           message: 'Validation failed',
-          details: { errors: (error as any).errors },
+          details: { errors: zodErrors },
         });
       }
 
@@ -167,7 +169,7 @@ export class ApiException extends Error {
     public code: ErrorCode,
     message: string,
     public status?: number,
-    public details?: Record<string, any>
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'ApiException';
@@ -197,21 +199,21 @@ export const ErrorResponses = {
       message: message || `${resource} not found`,
     }),
 
-  validationError: (message: string, details?: Record<string, any>) =>
+  validationError: (message: string, details?: Record<string, unknown>) =>
     createErrorResponse({
       code: ErrorCode.VALIDATION_ERROR,
       message,
       details,
     }),
 
-  conflict: (message: string, details?: Record<string, any>) =>
+  conflict: (message: string, details?: Record<string, unknown>) =>
     createErrorResponse({
       code: ErrorCode.RESOURCE_CONFLICT,
       message,
       details,
     }),
 
-  badRequest: (message: string, details?: Record<string, any>) =>
+  badRequest: (message: string, details?: Record<string, unknown>) =>
     createErrorResponse({
       code: ErrorCode.BAD_REQUEST,
       message,
@@ -225,7 +227,7 @@ export const ErrorResponses = {
       cause,
     }),
 
-  rateLimited: (message = 'Too many requests', details?: Record<string, any>) =>
+  rateLimited: (message = 'Too many requests', details?: Record<string, unknown>) =>
     createErrorResponse({
       code: ErrorCode.RATE_LIMIT_EXCEEDED,
       message,
@@ -242,13 +244,10 @@ export const ErrorResponses = {
 /**
  * Type guard to check if response is an error
  */
-export function isApiError(response: any): response is ApiError {
-  return (
-    response &&
-    typeof response === 'object' &&
-    'error' in response &&
-    typeof response.error === 'object' &&
-    'code' in response.error &&
-    'message' in response.error
-  );
+export function isApiError(response: unknown): response is ApiError {
+  if (!response || typeof response !== 'object') return false;
+  const errorField = (response as { error?: unknown }).error;
+  if (!errorField || typeof errorField !== 'object') return false;
+  const errObj = errorField as { code?: unknown; message?: unknown };
+  return typeof errObj.code === 'string' && typeof errObj.message === 'string';
 }

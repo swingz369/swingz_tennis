@@ -29,7 +29,7 @@ export default function GroupListView({
 }: GroupListViewProps) {
   if (plan.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+      <div className="bg-card rounded-xl border border-border p-8 text-center text-muted-foreground text-sm">
         Kein Plan generiert
       </div>
     );
@@ -38,22 +38,25 @@ export default function GroupListView({
   return (
     <div className="space-y-4 mb-5">
       {activeDays.map((day) => (
-        <div key={day} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div
+          key={day}
+          className="bg-card rounded-xl border border-border overflow-hidden shadow-sm"
+        >
           {/* Day header */}
-          <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 border-b border-gray-200">
-            <div className="w-8 h-8 rounded-lg bg-[#1A2E44] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+          <div className="flex items-center gap-3 px-5 py-3 bg-muted/50 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-brand-secondary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
               {DAYS[day - 1]}
             </div>
-            <h2 className="font-semibold text-gray-900 text-sm">{DAY_LABELS[day - 1]}</h2>
-            <span className="text-xs text-gray-400">
+            <h2 className="font-semibold text-foreground text-sm">{DAY_LABELS[day - 1]}</h2>
+            <span className="text-xs text-muted-foreground">
               {byDay[day].length} Gruppe{byDay[day].length > 1 ? 'n' : ''}
             </span>
-            <span className="text-xs text-gray-400 ml-auto">
+            <span className="text-xs text-muted-foreground ml-auto">
               {byDay[day].reduce((s, g) => s + g.memberNames.length, 0)} Mitglieder gesamt
             </span>
           </div>
           {/* Groups for this day */}
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-border">
             {byDay[day]
               .sort((a, b) => a.startTime.localeCompare(b.startTime))
               .map((slot) => (
@@ -63,13 +66,13 @@ export default function GroupListView({
                       className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ background: slot.groupColor }}
                     />
-                    <p className="font-medium text-gray-900 text-sm">{slot.groupName}</p>
-                    <span className="text-xs text-gray-400">
+                    <p className="font-medium text-foreground text-sm">{slot.groupName}</p>
+                    <span className="text-xs text-muted-foreground">
                       {slot.startTime}–{slot.endTime} Uhr · {slot.trainerName} · {slot.courtName}
                     </span>
                     <button
                       onClick={() => onToggleExpand(slot.id === expandedSlot ? '' : slot.id)}
-                      className="ml-auto text-xs text-blue-600 hover:text-blue-800 flex-shrink-0"
+                      className="ml-auto text-xs text-brand-primary hover:text-brand-primary-light flex-shrink-0"
                     >
                       {expandedSlot === slot.id ? 'Schließen' : 'Mitglieder verschieben'}
                     </button>
@@ -89,18 +92,18 @@ export default function GroupListView({
                       </span>
                     ))}
                     {slot.memberNames.length === 0 && (
-                      <span className="text-xs text-gray-400 italic">Keine Mitglieder</span>
+                      <span className="text-xs text-muted-foreground italic">Keine Mitglieder</span>
                     )}
                   </div>
                   {/* Member transfer UI */}
                   {expandedSlot === slot.id && (
-                    <div className="mt-3 ml-6 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      <p className="text-xs font-medium text-gray-600 mb-2">
+                    <div className="mt-3 ml-6 p-3 bg-muted/50 rounded-lg border border-border">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
                         Mitglied in andere Gruppe verschieben:
                       </p>
                       {slot.memberNames.map((name, i) => (
                         <div key={i} className="flex items-center gap-2 mb-1.5">
-                          <span className="text-xs text-gray-700 w-36 truncate">{name}</span>
+                          <span className="text-xs text-foreground w-36 truncate">{name}</span>
                           <Select
                             onValueChange={(value) =>
                               onMoveMember(slot.id, slot.memberIds[i], name, value)

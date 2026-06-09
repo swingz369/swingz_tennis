@@ -6,7 +6,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gray-900">
+      <header className="bg-brand-secondary">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
@@ -163,7 +163,7 @@ export default function AboutPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 py-8 border-t border-gray-800">
+      <footer className="bg-brand-secondary py-8 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
           <p>© 2025 SWINGZ – Premium Tennis Club Management</p>
         </div>

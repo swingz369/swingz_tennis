@@ -256,8 +256,8 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
         toast.success(labels[action] || 'Aktion erfolgreich');
         setSelectedBooking(null);
         queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
-      } catch (err: any) {
-        toast.error(err.message || 'Fehler');
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : String(err) || 'Fehler');
       } finally {
         setActionLoading(false);
       }
@@ -324,7 +324,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Plätze</SelectItem>
-                {courts.map((c: any) => (
+                {courts.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.name}
                   </SelectItem>

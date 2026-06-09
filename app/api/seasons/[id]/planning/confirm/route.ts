@@ -13,12 +13,11 @@ import {
   sessions,
   schedules,
   seasonPlanningHistory,
-  users,
   clubs,
 } from '@/src/infrastructure/persistence/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
-import { Resend } from 'resend';
+import { seasonConfirmationEmailService } from '@/lib/season-planning/season-confirmation-email.service';
 import { env } from '@/lib/env';
 import {
   isDateInHolidays,
@@ -388,63 +387,55 @@ export async function POST(request: NextRequest, context: RouteContext) {
           }
         }
 
-        // ---- Send email notifications to assigned members ----
+        // ---- Send personalized email notifications with ICS attachments ----
         let notificationsSent = 0;
+        let emailFailures = 0;
         if (env.RESEND_API_KEY && publishedIds.length > 0) {
           try {
-            const resend = new Resend(env.RESEND_API_KEY);
-            const fromEmail = env.EMAIL_FROM || 'noreply@swingz.app';
+            const seasonName = season.name || `Saison ${season.year}`;
 
-            // Collect unique member IDs from plan entries
-            const allMemberIds = new Set<string>();
-            for (const entry of entries) {
-              const participantIds = (entry.expected_participants as string[]) || [];
-              for (const mid of participantIds) allMemberIds.add(mid);
-            }
+            // Build per-recipient email data (group, trainer, first session, etc.)
+            const recipients = await seasonConfirmationEmailService.buildRecipients(
+              seasonId,
+              entries.map((e) => ({
+                expected_participants: (e.expected_participants as string[]) ?? null,
+                trainer_id: e.trainer_id,
+                group_id: e.group_id,
+              })),
+              publishedIds
+            );
 
-            if (allMemberIds.size > 0) {
-              const memberRows = await db
-                .select({ id: users.id, email: users.email, full_name: users.full_name })
-                .from(users)
-                .where(inArray(users.id, Array.from(allMemberIds)));
-
-              const seasonName = season.name || `Saison ${season.year}`;
-
-              const emailPromises = memberRows.map((member) =>
-                resend.emails
-                  .send({
-                    from: fromEmail,
-                    to: member.email,
-                    subject: `Trainingsplan für ${seasonName} - SwingZ`,
-                    html: `
-                    <h1>Dein Trainingsplan für ${seasonName}</h1>
-                    <p>Hallo ${member.full_name || 'Mitglied'},</p>
-                    <p>Der Trainingsplan für die neue Saison wurde veröffentlicht!</p>
-                    <p>Du findest deine Trainingszeiten in deinem SwingZ-Konto unter "Meine Trainings".</p>
-                    <p>Bei Fragen wende dich bitte an deinen Trainer oder die Club-Administration.</p>
-                    <br/>
-                    <p>Sportliche Grüße,<br/>Dein SwingZ-Team</p>
-                  `,
-                  })
-                  .catch((err) => {
-                    console.error(`[Confirm] Failed to send email to ${member.email}:`, err);
-                    return null;
-                  })
+            if (recipients.length > 0) {
+              const emailResult = await seasonConfirmationEmailService.sendConfirmationEmails({
+                seasonId,
+                seasonName,
+                recipients,
+                publishedSessionIds: publishedIds,
+              });
+              notificationsSent = emailResult.sent;
+              emailFailures = emailResult.failed;
+              console.log(
+                `[Confirm] Season confirmation emails: ${emailResult.sent} sent, ${emailResult.failed} failed ` +
+                  `(of ${recipients.length} members). Errors: ${JSON.stringify(emailResult.errors.slice(0, 3))}`
               );
-
-              const results = await Promise.all(emailPromises);
-              notificationsSent = results.filter((r) => r !== null).length;
+            } else {
+              console.log('[Confirm] No recipients to notify');
             }
           } catch (emailError) {
             console.error('[Confirm] Email notification batch failed:', emailError);
+            emailFailures = 1;
           }
         }
 
-        const response: ConfirmPlanResponse & { invoicesCreated: number } = {
+        const response: ConfirmPlanResponse & {
+          invoicesCreated: number;
+          emailFailures: number;
+        } = {
           success: true,
           publishedSessions: publishedCount,
           publishedSessionIds: publishedIds,
           notificationsSent,
+          emailFailures,
           invoicesCreated,
           waitlistNotifications: 0,
           unresolvedCriticalConflicts: [],

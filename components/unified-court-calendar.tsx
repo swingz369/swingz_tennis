@@ -107,7 +107,7 @@ function getLegendItems(isAdmin: boolean) {
 
   if (isAdmin) {
     items.push({ label: 'Session (Drag & Drop)', className: 'bg-blue-50 border border-blue-200' });
-    items.push({ label: 'Gesperrt', className: 'bg-gray-200 border border-gray-300' });
+    items.push({ label: 'Gesperrt', className: 'bg-muted border border-border' });
   } else {
     items.push({ label: 'Training', className: 'bg-muted border border-border' });
     items.push({ label: 'Belegt', className: 'bg-orange-50 border border-orange-200' });
@@ -275,7 +275,8 @@ export default function UnifiedCourtCalendar({
     (courtId: string, dayOfWeek: number) => {
       const apiDay = jsDayToApiDay(dayOfWeek);
       return planSlots.filter(
-        (slot: any) => slot.court_id === courtId && slot.day_of_week === apiDay
+        (slot: { court_id: string; day_of_week: number; [k: string]: unknown }) =>
+          slot.court_id === courtId && slot.day_of_week === apiDay
       );
     },
     [planSlots]
@@ -542,9 +543,21 @@ export default function UnifiedCourtCalendar({
                       {/* Season plan entries — always visible */}
                       {planEntriesForDay.length > 0 && (
                         <div className="space-y-0.5 mb-1">
-                          {planEntriesForDay.map((entry: any) => (
-                            <PlanEntryBadge key={entry.id} entry={entry} />
-                          ))}
+                          {planEntriesForDay.map(
+                            (entry: {
+                              id: string;
+                              group_id: string | null;
+                              group_name: string;
+                              group_color: string;
+                              trainer_id: string;
+                              start_time: string;
+                              end_time: string;
+                              court_id: string | null;
+                              [k: string]: unknown;
+                            }) => (
+                              <PlanEntryBadge key={entry.id} entry={entry} />
+                            )
+                          )}
                         </div>
                       )}
 
@@ -566,7 +579,7 @@ export default function UnifiedCourtCalendar({
                               id={isAdmin ? dropTargetId : undefined}
                               className={`h-6 rounded text-[11px] flex items-center justify-center transition-colors ${
                                 status === 'blocked' && isAdmin
-                                  ? 'bg-gray-200 text-gray-500 border border-gray-300 cursor-pointer hover:bg-gray-300'
+                                  ? 'bg-muted text-muted-foreground border border-border cursor-pointer hover:bg-muted/80'
                                   : SLOT_STATUS_STYLES[status]
                               }`}
                               role={
@@ -609,9 +622,9 @@ export default function UnifiedCourtCalendar({
                                   <div className="flex items-center gap-1 w-full justify-between px-1">
                                     <div className="flex items-center gap-0.5">
                                       {session.sessionType === 'maintenance' ? (
-                                        <Wrench className="h-2.5 w-2.5 text-gray-500" />
+                                        <Wrench className="h-2.5 w-2.5 text-muted-foreground" />
                                       ) : (
-                                        <PartyPopper className="h-2.5 w-2.5 text-gray-500" />
+                                        <PartyPopper className="h-2.5 w-2.5 text-muted-foreground" />
                                       )}
                                       <span className="truncate text-[10px]">
                                         {session.notes?.substring(0, 10) ||
@@ -620,11 +633,11 @@ export default function UnifiedCourtCalendar({
                                             : 'Event')}
                                       </span>
                                     </div>
-                                    <Unlock className="h-2.5 w-2.5 text-gray-400 hover:text-gray-700" />
+                                    <Unlock className="h-2.5 w-2.5 text-muted-foreground hover:text-foreground" />
                                   </div>
                                 ) : (
                                   <div className="flex items-center gap-0.5 px-1">
-                                    <Lock className="h-2.5 w-2.5 text-gray-400" />
+                                    <Lock className="h-2.5 w-2.5 text-muted-foreground" />
                                     <span className="text-[10px]">Gesperrt</span>
                                   </div>
                                 )
@@ -729,18 +742,30 @@ export default function UnifiedCourtCalendar({
                 {/* Plan entries at top */}
                 {planEntriesForDay.length > 0 && (
                   <div className="px-4 py-2 bg-purple-50/50 border-b space-y-1">
-                    {planEntriesForDay.map((entry: any) => (
-                      <div key={entry.id} className="flex items-center gap-2 text-sm">
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: entry.group_color || '#7c3aed' }}
-                        />
-                        <span className="font-medium">{entry.group_name}</span>
-                        <span className="text-muted-foreground">
-                          {entry.start_time}–{entry.end_time}
-                        </span>
-                      </div>
-                    ))}
+                    {planEntriesForDay.map(
+                      (entry: {
+                        id: string;
+                        group_id: string | null;
+                        group_name: string;
+                        group_color: string;
+                        trainer_id: string;
+                        start_time: string;
+                        end_time: string;
+                        court_id: string | null;
+                        [k: string]: unknown;
+                      }) => (
+                        <div key={entry.id} className="flex items-center gap-2 text-sm">
+                          <div
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: entry.group_color || '#7c3aed' }}
+                          />
+                          <span className="font-medium">{entry.group_name}</span>
+                          <span className="text-muted-foreground">
+                            {entry.start_time}–{entry.end_time}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
 
@@ -793,8 +818,8 @@ export default function UnifiedCourtCalendar({
                             <div className="flex-1">
                               <div
                                 className={`p-3 rounded-lg border ${
-                                  isAdmin ? 'cursor-pointer hover:bg-gray-100' : ''
-                                } bg-gray-100 border-gray-300`}
+                                  isAdmin ? 'cursor-pointer hover:bg-muted' : ''
+                                } bg-muted border-border`}
                                 onClick={
                                   isAdmin
                                     ? (e) => {
@@ -820,11 +845,11 @@ export default function UnifiedCourtCalendar({
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
                                       {session.sessionType === 'maintenance' ? (
-                                        <Wrench className="h-4 w-4 text-gray-500" />
+                                        <Wrench className="h-4 w-4 text-muted-foreground" />
                                       ) : (
-                                        <PartyPopper className="h-4 w-4 text-gray-500" />
+                                        <PartyPopper className="h-4 w-4 text-muted-foreground" />
                                       )}
-                                      <span className="font-medium text-gray-600">
+                                      <span className="font-medium text-muted-foreground">
                                         {session.notes ||
                                           (session.sessionType === 'maintenance'
                                             ? 'Wartung'
@@ -841,7 +866,7 @@ export default function UnifiedCourtCalendar({
                                     </div>
                                   </div>
                                   {isAdmin && (
-                                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                       <Unlock className="h-4 w-4" />
                                       <span>Entsperren</span>
                                     </div>

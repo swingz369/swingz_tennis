@@ -103,7 +103,7 @@ export class DrizzleAttendanceRecordRepository implements AttendanceRecordReposi
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof attendanceRecords.$inferInsert> = {
         updated_at: now,
       };
 

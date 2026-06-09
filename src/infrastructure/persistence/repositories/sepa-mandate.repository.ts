@@ -111,7 +111,7 @@ export class SEPAMandateRepository implements ISEPAMandateRepository {
 
   async update(id: string, input: UpdateSEPAMandateInput): Promise<SEPAMandate | null> {
     try {
-      const updateData: any = {};
+      const updateData: Partial<typeof sepaMandates.$inferInsert> = {};
       if (input.accountHolder !== undefined) updateData.accountHolder = input.accountHolder;
       if (input.iban !== undefined) updateData.iban = input.iban.replace(/\s/g, '').toUpperCase();
       if (input.bic !== undefined) updateData.bic = input.bic.replace(/\s/g, '').toUpperCase();

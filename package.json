@@ -12,7 +12,11 @@
     "dev:proxy": "npx tsx scripts/anthropic-openai-proxy.ts",
     "dev:with-proxy": "npx tsx scripts/anthropic-openai-proxy.ts & next dev --turbopack",
     "build": "next build",
+    "prebuild": "rm -rf .next",
     "postbuild": "npx drizzle-kit migrate",
+    "clean": "rm -rf .next .turbo coverage .drizzle node_modules/.vitest .vitest-cache test-results playwright-report .swc .eslintcache *.tsbuildinfo tsconfig.tsbuildinfo .mdx",
+    "clean:all": "rm -rf .next .turbo coverage .drizzle node_modules/.vitest .vitest-cache node_modules/.cache .cache .tmp test-results playwright-report .swc .eslintcache *.tsbuildinfo tsconfig.tsbuildinfo .mdx **/.DS_Store **/Thumbs.db **/*~ **/.~lock.* **/npm-debug.log* **/yarn-error.log* **/*.dump **/*.heap **/*.core **/*.mjs.map",
+    "predev": "rm -rf .next/cache",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -34,7 +38,8 @@
     "analyze": "ANALYZE=true next build --webpack",
     "gen:types": "bash scripts/gen-supabase-types.sh",
     "gen:types:clean": "bash scripts/clean-supabase-types.sh",
-    "prepare": "husky"
+    "prepare": "husky",
+    "validate:skills": "tsx scripts/validate-skills.ts"
   },
   "overrides": {
     "@modelcontextprotocol/sdk": "^1.29.0"
@@ -62,6 +67,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.8",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.2",
@@ -83,6 +89,7 @@
     "next-swagger-doc": "^0.4.1",
     "next-themes": "^0.4.6",
     "openai": "^4.67.0",
+    "pdf-lib": "^1.17.1",
     "pg": "^8.20.0",
     "postgres": "^3.4.4",
     "react": "^18.3.1",

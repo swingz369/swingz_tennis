@@ -9,6 +9,7 @@
  */
 
 import { isApiError } from './api-error';
+import { extractErrorMessage } from '@/lib/typed-helpers';
 
 export interface FetchOptions extends RequestInit {
   timeout?: number; // milliseconds
@@ -23,7 +24,7 @@ export interface FetchOptions extends RequestInit {
 export interface FetchError extends Error {
   status?: number;
   code?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -100,7 +101,7 @@ export async function fetchWithTimeout(url: string, options: FetchOptions = {}):
 /**
  * Fetch JSON with automatic error handling
  */
-export async function fetchJSON<T = any>(url: string, options: FetchOptions = {}): Promise<T> {
+export async function fetchJSON<T = unknown>(url: string, options: FetchOptions = {}): Promise<T> {
   const response = await fetchWithTimeout(url, {
     ...options,
     headers: {
@@ -110,7 +111,7 @@ export async function fetchJSON<T = any>(url: string, options: FetchOptions = {}
   });
 
   // Parse JSON response
-  let data: any;
+  let data: unknown;
   try {
     data = await response.json();
   } catch (error) {
@@ -128,7 +129,8 @@ export async function fetchJSON<T = any>(url: string, options: FetchOptions = {}
     }
 
     // Fallback for non-standardized errors
-    throw new Error(data.error || data.message || `HTTP ${response.status}`);
+    const errorMessage = extractErrorMessage(data) || `HTTP ${response.status}`;
+    throw new Error(errorMessage);
   }
 
   return data as T;
@@ -137,9 +139,9 @@ export async function fetchJSON<T = any>(url: string, options: FetchOptions = {}
 /**
  * POST request with JSON body
  */
-export async function postJSON<T = any>(
+export async function postJSON<T = unknown>(
   url: string,
-  body: any,
+  body: unknown,
   options: FetchOptions = {}
 ): Promise<T> {
   return fetchJSON<T>(url, {
@@ -152,9 +154,9 @@ export async function postJSON<T = any>(
 /**
  * PUT request with JSON body
  */
-export async function putJSON<T = any>(
+export async function putJSON<T = unknown>(
   url: string,
-  body: any,
+  body: unknown,
   options: FetchOptions = {}
 ): Promise<T> {
   return fetchJSON<T>(url, {
@@ -167,9 +169,9 @@ export async function putJSON<T = any>(
 /**
  * PATCH request with JSON body
  */
-export async function patchJSON<T = any>(
+export async function patchJSON<T = unknown>(
   url: string,
-  body: any,
+  body: unknown,
   options: FetchOptions = {}
 ): Promise<T> {
   return fetchJSON<T>(url, {
@@ -182,7 +184,7 @@ export async function patchJSON<T = any>(
 /**
  * DELETE request
  */
-export async function deleteJSON<T = any>(url: string, options: FetchOptions = {}): Promise<T> {
+export async function deleteJSON<T = unknown>(url: string, options: FetchOptions = {}): Promise<T> {
   return fetchJSON<T>(url, {
     ...options,
     method: 'DELETE',
@@ -212,6 +214,14 @@ function calculateBackoff(
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Extract a readable error message from an unknown response body.
+ * Handles common shapes: { error: string }, { message: string }, strings.
+ *
+ * Re-exported from `@/lib/typed-helpers` so existing call-sites keep working.
+ */
+export { extractErrorMessage };
 
 /**
  * Create an AbortController that auto-aborts after timeout

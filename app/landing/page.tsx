@@ -765,7 +765,7 @@ export default function LandingPage() {
                 <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-xl mb-6 group-hover:scale-110 transition-transform duration-500 group-hover:shadow-glow-primary">
                   <item.icon className="h-9 w-9" />
                 </div>
-                <div className="absolute top-3 -right-2 text-7xl font-black text-gray-100 select-none -z-10 group-hover:text-gray-50 transition-colors">
+                <div className="absolute top-3 -right-2 text-7xl font-black text-white/90 select-none -z-10 group-hover:text-white transition-colors">
                   {item.step}
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{item.title}</h3>
@@ -892,7 +892,7 @@ export default function LandingPage() {
                       className={`group flex items-center justify-center gap-2 w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] ${
                         plan.popular
                           ? 'bg-gradient-to-r from-brand-primary to-brand-light text-white shadow-lg hover:shadow-xl hover:brightness-105'
-                          : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
+                          : 'bg-brand-secondary text-white hover:bg-brand-secondary/90 shadow-sm'
                       }`}
                     >
                       {plan.cta}
@@ -966,7 +966,7 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <footer className="bg-gray-900 py-14 sm:py-16 relative overflow-hidden">
+      <footer className="bg-brand-secondary py-14 sm:py-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-950" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">

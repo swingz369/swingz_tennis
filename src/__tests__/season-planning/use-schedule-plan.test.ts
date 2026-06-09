@@ -63,11 +63,22 @@ describe('useSchedulePlan — initial state', () => {
     expect(result.current.plan).toEqual([]);
   });
 
-  it('should have null dragging, dragOver, and expandedSlot by default', () => {
+  it('should have null expandedSlot by default', () => {
     const { result } = renderHook(() => useSchedulePlan());
-    expect(result.current.dragging).toBeNull();
-    expect(result.current.dragOver).toBeNull();
     expect(result.current.expandedSlot).toBeNull();
+  });
+
+  it('should not expose dragging/dragOver/drop in the public API (dnd-kit handles it externally)', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    expect(result.current).not.toHaveProperty('dragging');
+    expect(result.current).not.toHaveProperty('dragOver');
+    expect(result.current).not.toHaveProperty('drop');
+  });
+
+  it('should expose slotMove and slotUpdate in the public API', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    expect(typeof result.current.slotMove).toBe('function');
+    expect(typeof result.current.slotUpdate).toBe('function');
   });
 
   it('should allow setting plan via setPlan', () => {
@@ -137,7 +148,6 @@ describe('useSchedulePlan — moveMember', () => {
     });
 
     // Move a member that exists in slot-1 to slot-2, but use a different fromId
-    // The member is NOT removed from slot-1 (fromId doesn't match) but IS added to slot-2 (toId matches)
     act(() => {
       result.current.moveMember('slot-99', 'm1', 'Alice', 'slot-2');
     });
@@ -174,11 +184,11 @@ describe('useSchedulePlan — moveMember', () => {
 });
 
 // ============================================
-// TESTS: drop
+// TESTS: slotMove (replaces old drop function)
 // ============================================
 
-describe('useSchedulePlan — drop', () => {
-  it('should update slot day and time on drop', () => {
+describe('useSchedulePlan — slotMove', () => {
+  it('should update slot day and startTime', () => {
     const { result } = renderHook(() => useSchedulePlan());
     const plan = makePlan();
 
@@ -186,63 +196,18 @@ describe('useSchedulePlan — drop', () => {
       result.current.setPlan(plan);
     });
 
-    // Set dragging to slot-1
+    // Move slot-1 to Wednesday 14:00
     act(() => {
-      result.current.setDragging(plan[0]); // slot-1 with 90min duration
+      result.current.slotMove('slot-1', 3, '14:00');
     });
 
-    // Drop on Wednesday 14:00
-    const mockEvent = { preventDefault: () => {} } as React.DragEvent;
-    act(() => {
-      result.current.drop(mockEvent, 3, '14:00');
-    });
-
-    const droppedSlot = result.current.plan.find((s) => s.id === 'slot-1')!;
-    expect(droppedSlot.dayOfWeek).toBe(3);
-    expect(droppedSlot.startTime).toBe('14:00');
-    expect(droppedSlot.endTime).toBe('15:30'); // 14:00 + 90 min
+    const movedSlot = result.current.plan.find((s) => s.id === 'slot-1')!;
+    expect(movedSlot.dayOfWeek).toBe(3);
+    expect(movedSlot.startTime).toBe('14:00');
+    expect(movedSlot.endTime).toBe('15:30'); // 14:00 + 90 min
   });
 
-  it('should reset dragging and dragOver after drop', () => {
-    const { result } = renderHook(() => useSchedulePlan());
-    const plan = makePlan();
-
-    act(() => {
-      result.current.setPlan(plan);
-      result.current.setDragging(plan[0]);
-      result.current.setDragOver('day-hour');
-    });
-
-    const mockEvent = { preventDefault: () => {} } as React.DragEvent;
-    act(() => {
-      result.current.drop(mockEvent, 3, '14:00');
-    });
-
-    expect(result.current.dragging).toBeNull();
-    expect(result.current.dragOver).toBeNull();
-  });
-
-  it('should do nothing when no slot is dragging', () => {
-    const { result } = renderHook(() => useSchedulePlan());
-    const plan = makePlan();
-
-    act(() => {
-      result.current.setPlan(plan);
-      // No setDragging — dragging is null
-    });
-
-    const mockEvent = { preventDefault: () => {} } as React.DragEvent;
-    act(() => {
-      result.current.drop(mockEvent, 3, '14:00');
-    });
-
-    // Plan should be unchanged
-    const slot1 = result.current.plan.find((s) => s.id === 'slot-1')!;
-    expect(slot1.dayOfWeek).toBe(1);
-    expect(slot1.startTime).toBe('17:00');
-  });
-
-  it('should calculate endTime correctly across hour boundaries', () => {
+  it('should derive endTime from startTime + durationMin', () => {
     const { result } = renderHook(() => useSchedulePlan());
 
     const longSlot = makeSlot({
@@ -254,19 +219,140 @@ describe('useSchedulePlan — drop', () => {
 
     act(() => {
       result.current.setPlan([longSlot]);
-      result.current.setDragging(longSlot);
     });
 
-    const mockEvent = { preventDefault: () => {} } as React.DragEvent;
     act(() => {
-      result.current.drop(mockEvent, 5, '20:30');
+      result.current.slotMove('slot-long', 5, '20:30');
     });
 
-    const dropped = result.current.plan[0];
-    expect(dropped.startTime).toBe('20:30');
-    // 20:30 + 120min = 22:30, but HOURS max is 21:00 → actually hours go to 21:00 + 1 = 22:00
-    // The drop function calculates endTime: tot = 20*60 + 30 + 120 = 1350 → 22:30
-    expect(dropped.endTime).toBe('22:30');
+    const moved = result.current.plan[0];
+    expect(moved.startTime).toBe('20:30');
+    // 20:30 + 120min = 22:30
+    expect(moved.endTime).toBe('22:30');
+  });
+
+  it('should not affect other slots', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    const plan = makePlan();
+
+    act(() => {
+      result.current.setPlan(plan);
+    });
+
+    act(() => {
+      result.current.slotMove('slot-1', 3, '14:00');
+    });
+
+    const slot2 = result.current.plan.find((s) => s.id === 'slot-2')!;
+    const slot3 = result.current.plan.find((s) => s.id === 'slot-3')!;
+    expect(slot2.dayOfWeek).toBe(1);
+    expect(slot2.startTime).toBe('18:30');
+    expect(slot3.dayOfWeek).toBe(2);
+    expect(slot3.startTime).toBe('17:00');
+  });
+
+  it('should be a no-op when slotId does not match any plan entry', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    const plan = makePlan();
+
+    act(() => {
+      result.current.setPlan(plan);
+    });
+
+    act(() => {
+      result.current.slotMove('non-existent', 3, '14:00');
+    });
+
+    // Plan should be unchanged
+    expect(result.current.plan).toEqual(plan);
+  });
+
+  it('should preserve memberIds, memberNames, and other fields during move', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    const plan = makePlan();
+
+    act(() => {
+      result.current.setPlan(plan);
+    });
+
+    act(() => {
+      result.current.slotMove('slot-1', 4, '19:00');
+    });
+
+    const movedSlot = result.current.plan.find((s) => s.id === 'slot-1')!;
+    expect(movedSlot.memberIds).toEqual(['m1', 'm2']);
+    expect(movedSlot.memberNames).toEqual(['Alice', 'Bob']);
+    expect(movedSlot.groupName).toBe('Gruppe A');
+    expect(movedSlot.trainerId).toBe('t1');
+    expect(movedSlot.durationMin).toBe(90);
+  });
+});
+
+// ============================================
+// TESTS: slotUpdate (in-place edit via modal)
+// ============================================
+
+describe('useSchedulePlan — slotUpdate', () => {
+  it('should replace the matching slot with the provided updated slot', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    const plan = makePlan();
+
+    act(() => {
+      result.current.setPlan(plan);
+    });
+
+    const updated = makeSlot({
+      id: 'slot-1',
+      trainerName: 'Trainer Schmidt',
+      startTime: '16:00',
+      endTime: '17:30',
+    });
+
+    act(() => {
+      result.current.slotUpdate(updated);
+    });
+
+    const slot1 = result.current.plan.find((s) => s.id === 'slot-1')!;
+    expect(slot1.trainerName).toBe('Trainer Schmidt');
+    expect(slot1.startTime).toBe('16:00');
+    expect(slot1.endTime).toBe('17:30');
+  });
+
+  it('should not modify other slots', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    const plan = makePlan();
+
+    act(() => {
+      result.current.setPlan(plan);
+    });
+
+    const updated = makeSlot({ id: 'slot-1', trainerName: 'Trainer Neu' });
+
+    act(() => {
+      result.current.slotUpdate(updated);
+    });
+
+    const slot2 = result.current.plan.find((s) => s.id === 'slot-2')!;
+    const slot3 = result.current.plan.find((s) => s.id === 'slot-3')!;
+    expect(slot2.trainerName).toBe('Trainer Müller');
+    expect(slot3.trainerName).toBe('Trainer Müller');
+  });
+
+  it('should be a no-op when updated.id does not match any plan entry', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    const plan = makePlan();
+
+    act(() => {
+      result.current.setPlan(plan);
+    });
+
+    const updated = makeSlot({ id: 'non-existent', trainerName: 'Ghost' });
+
+    act(() => {
+      result.current.slotUpdate(updated);
+    });
+
+    expect(result.current.plan).toEqual(plan);
   });
 });
 
@@ -364,42 +450,32 @@ describe('useSchedulePlan — activeDays', () => {
     const active = result.current.activeDays();
     expect(active).toContain(7);
   });
+
+  it('should update after slotMove changes the day', () => {
+    const { result } = renderHook(() => useSchedulePlan());
+    const plan = makePlan();
+
+    act(() => {
+      result.current.setPlan(plan);
+    });
+
+    // Move slot-1 from Monday to Friday
+    act(() => {
+      result.current.slotMove('slot-1', 5, '17:00');
+    });
+
+    const active = result.current.activeDays();
+    expect(active).toContain(1); // slot-2 still on Monday
+    expect(active).toContain(2); // slot-3 still on Tuesday
+    expect(active).toContain(5); // slot-1 moved to Friday
+  });
 });
 
 // ============================================
-// TESTS: setDragging / setDragOver / setExpandedSlot
+// TESTS: setExpandedSlot
 // ============================================
 
-describe('useSchedulePlan — drag state setters', () => {
-  it('should set and clear dragging slot', () => {
-    const { result } = renderHook(() => useSchedulePlan());
-    const slot = makeSlot();
-
-    act(() => {
-      result.current.setDragging(slot);
-    });
-    expect(result.current.dragging).toEqual(slot);
-
-    act(() => {
-      result.current.setDragging(null);
-    });
-    expect(result.current.dragging).toBeNull();
-  });
-
-  it('should set and change dragOver cell key', () => {
-    const { result } = renderHook(() => useSchedulePlan());
-
-    act(() => {
-      result.current.setDragOver('1-17:00');
-    });
-    expect(result.current.dragOver).toBe('1-17:00');
-
-    act(() => {
-      result.current.setDragOver('2-18:00');
-    });
-    expect(result.current.dragOver).toBe('2-18:00');
-  });
-
+describe('useSchedulePlan — expandedSlot', () => {
   it('should set and toggle expandedSlot', () => {
     const { result } = renderHook(() => useSchedulePlan());
 

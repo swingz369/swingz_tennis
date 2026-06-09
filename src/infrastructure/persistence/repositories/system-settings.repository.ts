@@ -146,7 +146,7 @@ export class DrizzleSystemSettingsRepository implements ISystemSettingsRepositor
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof systemSettings.$inferInsert> = {
         updated_at: now,
         updated_by: updatedBy,
       };

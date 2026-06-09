@@ -113,5 +113,5 @@ export const SLOT_STATUS_STYLES: Record<SlotStatus, string> = {
   booked: 'bg-orange-50 text-orange-800 border border-orange-200',
   'own-booking': 'bg-red-50 text-red-800 border border-red-200',
   plan: 'bg-purple-50 text-purple-700 border border-purple-200',
-  blocked: 'bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed',
+  blocked: 'bg-muted text-muted-foreground border border-border cursor-not-allowed',
 };

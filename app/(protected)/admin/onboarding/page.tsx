@@ -45,6 +45,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
+import { ModuleSelectionStep } from '@/components/onboarding/module-selection-step';
 
 type ClubData = {
   id: string;
@@ -59,10 +60,11 @@ type ClubData = {
   founding_date?: string | null;
 };
 
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 12;
 
 const STEPS = [
   { label: 'Start', icon: Sparkles },
+  { label: 'Module', icon: Zap },
   { label: 'Verein', icon: Building2 },
   { label: 'Öffnungszeiten', icon: Clock },
   { label: 'Platz', icon: MapPin },
@@ -110,7 +112,10 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [club, setClub] = useState<ClubData | null>(null);
 
-  // Step 2 – Club data
+  // Step 2 – Module selection (saves into clubs.features on Continue)
+  const [modulesSaved, setModulesSaved] = useState(false);
+
+  // Step 3 – Club data
   const [clubForm, setClubForm] = useState({
     name: '',
     city: '',
@@ -123,17 +128,17 @@ export default function OnboardingPage() {
     founding_date: '',
   });
 
-  // Step 3 – Opening hours
+  // Step 4 – Opening hours
   const [openingHours, setOpeningHours] = useState<OpeningHours>(DEFAULT_OPENING_HOURS);
 
-  // Step 4 – Court
+  // Step 5 – Court
   const [courtForm, setCourtForm] = useState({
     name: 'Platz 1',
     surface: 'sand',
     hasIndoor: false,
   });
 
-  // Step 5 – Prices & Training duration
+  // Step 6 – Prices & Training duration
   const [priceForm, setPriceForm] = useState({
     default_hourly_rate: '15.00',
     default_session_duration_minutes: '60',
@@ -141,21 +146,21 @@ export default function OnboardingPage() {
     tax_rate: '0',
   });
 
-  // Step 6 – Booking rules
+  // Step 7 – Booking rules
   const [rulesForm, setRulesForm] = useState({
     max_booking_duration_minutes: 90,
     advance_booking_days: 14,
     max_bookings_per_week: 3,
   });
 
-  // Step 6 – Fee categories (Beiträge)
+  // Step 7 – Fee categories (Beiträge)
   const [feeCategoriesSaved, setFeeCategoriesSaved] = useState(false);
   const [feeCategories, setFeeCategories] = useState<FeeCategory[]>([
     { name: 'Jahresmitgliedschaft', type: 'membership', amount: '240', billing_cycle: 'yearly' },
     { name: 'Training Einzelstunde', type: 'training', amount: '25', billing_cycle: 'one_time' },
   ]);
 
-  // Step 10 – Season creation
+  // Step 11 – Season creation
   const [seasonForm, setSeasonForm] = useState({
     name: '',
     season_type: 'summer' as 'summer' | 'winter',
@@ -165,9 +170,9 @@ export default function OnboardingPage() {
   });
   const [seasonAutoFilled, setSeasonAutoFilled] = useState(false);
 
-  // Auto-fill season name + dates when entering Step 10 for the first time
+  // Auto-fill season name + dates when entering Step 11 for the first time
   useEffect(() => {
-    if (step === 10 && !seasonAutoFilled) {
+    if (step === 11 && !seasonAutoFilled) {
       const yr = seasonForm.year;
       const type = seasonForm.season_type;
       const typeName = type === 'summer' ? 'Sommer' : 'Winter';
@@ -179,11 +184,11 @@ export default function OnboardingPage() {
     }
   }, [step, seasonAutoFilled, seasonForm.year, seasonForm.season_type]);
 
-  // Step 7 – Invitations
+  // Step 9 – Invitations
   const [trainerForm, setTrainerForm] = useState({ name: '', email: '' });
   const [memberForm, setMemberForm] = useState({ name: '', email: '' });
 
-  // Step 8 – E-Mail & Language
+  // Step 10 – E-Mail & Language
   const [emailSettings, setEmailSettings] = useState({
     language: 'de',
     email_from_name: '',
@@ -582,53 +587,62 @@ export default function OnboardingPage() {
   const goNext = async () => {
     switch (step) {
       case 2: {
+        // Module selection — no API call here, the user saves from within
+        // ModuleSelectionStep. We only require that they have saved at least once.
+        if (!modulesSaved) {
+          toast.error('Bitte speichere deine Modul-Auswahl zuerst');
+          return;
+        }
+        break;
+      }
+      case 3: {
         const ok = await saveClubData();
         if (!ok) return;
         break;
       }
-      case 3: {
+      case 4: {
         const ok = await saveOpeningHours();
         if (!ok) return;
         break;
       }
-      case 4: {
+      case 5: {
         const ok = await saveCourtData();
         if (!ok) return;
         break;
       }
-      case 5: {
+      case 6: {
         const ok = await savePriceData();
         if (!ok) return;
         break;
       }
-      case 6: {
+      case 7: {
         const ok = await saveFeeCategories();
         if (!ok) return;
         break;
       }
-      case 7: {
+      case 8: {
         const ok = await saveBookingRules();
         if (!ok) return;
         break;
       }
-      case 8: {
+      case 9: {
         const ok1 = await saveTrainerInvite();
         if (!ok1) return;
         const ok2 = await saveMemberInvite();
         if (!ok2) return;
         break;
       }
-      case 9: {
+      case 10: {
         const ok = await saveEmailSettings();
         if (!ok) return;
         break;
       }
-      case 10: {
+      case 11: {
         const ok = await createFirstSeason();
         if (!ok) return;
         break;
       }
-      case 11: {
+      case 12: {
         const ok = await markSetupComplete();
         if (!ok) return;
         router.push('/admin');
@@ -748,8 +762,29 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 2 – Club data
+      // Step 2 – Module selection
       case 2:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Module auswählen</h2>
+              <p className="text-muted-foreground text-sm mt-1">
+                Wähle die Bereiche aus, die dein Verein nutzen wird. Du kannst dies später in den
+                Einstellungen jederzeit ändern.
+              </p>
+            </div>
+            {club?.id && (
+              <ModuleSelectionStep
+                clubId={club.id}
+                showContinue
+                onSaved={() => setModulesSaved(true)}
+              />
+            )}
+          </div>
+        );
+
+      // Step 3 – Club data
+      case 3:
         return (
           <div className="space-y-6">
             <div>
@@ -877,8 +912,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 3 – Opening hours
-      case 3:
+      // Step 4 – Opening hours
+      case 4:
         return (
           <div className="space-y-6">
             <div>
@@ -940,8 +975,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 4 – Court
-      case 4:
+      // Step 5 – Court
+      case 5:
         return (
           <div className="space-y-6">
             <div>
@@ -1013,8 +1048,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 5 – Prices & Training duration
-      case 5:
+      // Step 6 – Prices & Training duration
+      case 6:
         return (
           <div className="space-y-6">
             <div>
@@ -1101,8 +1136,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 6 – Fee categories (Beiträge)
-      case 6:
+      // Step 7 – Fee categories (Beiträge)
+      case 7:
         return (
           <div className="space-y-6">
             <div>
@@ -1222,8 +1257,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 7 – Booking rules
-      case 7:
+      // Step 8 – Booking rules
+      case 8:
         return (
           <div className="space-y-6">
             <div>
@@ -1299,8 +1334,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 8 – Invitations
-      case 8:
+      // Step 9 – Invitations
+      case 9:
         return (
           <div className="space-y-6">
             <div>
@@ -1388,8 +1423,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 9 – E-Mail & Language
-      case 9:
+      // Step 10 – E-Mail & Language
+      case 10:
         return (
           <div className="space-y-6">
             <div>
@@ -1446,8 +1481,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 10 – Saison
-      case 10:
+      // Step 11 – Saison
+      case 11:
         return (
           <div className="space-y-6">
             <div>
@@ -1562,8 +1597,8 @@ export default function OnboardingPage() {
           </div>
         );
 
-      // Step 11 – Complete
-      case 11:
+      // Step 12 – Complete
+      case 12:
         return (
           <div className="text-center space-y-8 py-6">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-brand-primary/10 rounded-full">
@@ -1609,9 +1644,9 @@ export default function OnboardingPage() {
   };
 
   // Optional steps: Place, Fee categories, Invitations, Email settings, Season
-  const isOptionalStep = step === 4 || step === 6 || step === 8 || step === 9 || step === 10;
+  const isOptionalStep = step === 5 || step === 7 || step === 9 || step === 10 || step === 11;
   // Steps where next triggers save
-  const savesOnNext = step >= 2 && step <= 10;
+  const savesOnNext = step >= 3 && step <= 11;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-brand-primary/5 flex items-center justify-center p-4">
@@ -1630,7 +1665,7 @@ export default function OnboardingPage() {
                 {renderStepContent()}
               </div>
               {/* Navigation */}
-              {step > 1 && step < 11 && (
+              {step > 1 && step < 12 && (
                 <div className="flex items-center justify-between pt-6 mt-6 border-t">
                   <Button
                     variant="ghost"

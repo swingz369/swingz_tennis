@@ -142,7 +142,7 @@ export class DrizzleTrainerAvailabilityRepository implements TrainerAvailability
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof trainerAvailabilities.$inferInsert> = {
         updated_at: now,
       };
 

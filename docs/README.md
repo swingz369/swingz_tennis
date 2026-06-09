@@ -369,6 +369,63 @@ npm run test -- --coverage
 
 ---
 
+## 🗄 Caching Strategy
+
+Next.js erzeugt beim Build und im Dev-Modus umfangreiche Caches (`.next/cache`, `.next/server`, `.next/static`, Turbopack-Cache, Drizzle-Migrations-Cache, Vitest-Cache). Diese Caches beschleunigen Rebuilds enorm, können aber bei Schema-Änderungen, Dependency-Updates oder inkompatiblen Cache-Versionen zu **stale-cache-Problemen** führen (z. B. „Cannot find module" obwohl die Datei existiert, oder TypeScript-Fehler aus einer alten Datei-Version, die längst gefixt ist).
+
+### Hook-Reihenfolge
+
+| Hook        | Wann läuft es?            | Befehl                                                                                                    | Zweck                                                                                                                          |
+| ----------- | ------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `prebuild`  | Vor `npm run build`       | `rm -rf .next`                                                                                            | Vollständiger Wipe — garantiert reproduzierbare Production-Builds.                                                             |
+| `build`     | `npm run build`           | `next build`                                                                                              | Production-Build mit TypeScript-Validierung + Bundle-Optimierung.                                                              |
+| `postbuild` | Nach erfolgreichem Build  | `npx drizzle-kit migrate`                                                                                 | Drizzle-Migrationen werden automatisch ausgeführt.                                                                             |
+| `predev`    | Vor `npm run dev`         | `rm -rf .next/cache`                                                                                      | Nur den Cache-Unterordner löschen — Build-Artefakte (`.next/server`, `.next/static`) bleiben für schnellen Dev-Start erhalten. |
+| `clean`     | Manuell (`npm run clean`) | `rm -rf .next .turbo coverage .drizzle node_modules/.vitest .vitest-cache test-results playwright-report` | Komplettes Aufräumen — alle Build- und Test-Artefakte auf einmal.                                                              |
+
+### Warum wird `.next/cache` separat gelöscht?
+
+`.next/cache` enthält den **Turbopack-/Webpack-Cache** (kompilierte Module, HMR-State, TypeScript-Ausgabe). Bei kleineren Code-Änderungen ist dieser Cache extrem nützlich — Dev-Server-Restarts dauern statt 30s oft nur 2s.
+
+**.next/server** und **.next/static** enthalten dagegen die **kompilierten Server-Components und statischen Assets** für den _letzten_ Production-Build. Diese beim Dev-Start zu löschen würde den Server zwingen, alles neu zu kompilieren.
+
+**Trade-off:**
+
+- `predev` löscht **nur** `.next/cache` → schneller Dev-Start, aber potentiell stale Module (selten).
+- `prebuild` löscht **komplett** `.next/` → garantiert sauberer Build, aber ~30s längerer Build-Start.
+
+Falls du einen stale-cache-Fehler im Dev-Modus bekommst (z. B. „Module not found", seltsame TypeScript-Fehler aus alter Datei-Version), reicht ein manueller Wipe:
+
+```bash
+npm run clean
+# oder selektiv:
+rm -rf .next/cache
+```
+
+### Wie verhindert `prebuild` stale-cache-Probleme?
+
+Der `prebuild`-Hook in `package.json` löscht vor jedem `npm run build` automatisch den gesamten `.next/`-Ordner. Das stellt sicher:
+
+1. **Reproduzierbarkeit** — zwei aufeinanderfolgende `npm run build`-Aufrufe produzieren identische Outputs.
+2. **Keine Cache-Inkonsistenzen** — Dependency-Updates, Schema-Änderungen oder Refactorings beeinflussen den Build nicht durch alte, gecachte Module.
+3. **CI/CD-Sicherheit** — Vercel-Deploys starten immer mit leerem Cache, egal was der vorherige Build hinterlassen hat.
+
+Der Trade-off ist ~30 Sekunden längere Build-Zeit — in Anbetracht der dadurch vermiedenen Debugging-Stunden ein klarer Gewinn.
+
+### Verifizierung
+
+Das Skript [`scripts/verify-gitignore.ts`](../scripts/verify-gitignore.ts) prüft, ob alle Cache-/Build-Pfade korrekt in `.gitignore` stehen, und listet sie via `git status --ignored` auf:
+
+```bash
+npx tsx scripts/verify-gitignore.ts
+# Erwartet: ✓ All 10 required patterns are in .gitignore
+#          ✓ All 10 patterns are in the npm run clean script
+```
+
+So stellst du sicher, dass nie versehentlich `.next/`, `coverage/` oder `.drizzle/` ins Repository committed werden.
+
+---
+
 ## 🚢 Deploy
 
 ### Vercel ( empfohlen)
@@ -388,6 +445,23 @@ docker run -p 3000:3000 swingz
 ---
 
 ## 🐛 Fehler & Troubleshooting
+
+### Stale Next.js Cache
+
+**Symptom:** Build- oder TypeScript-Fehler aus einer Datei, die längst gefixt wurde, oder `Module not found` obwohl die Datei existiert. Tritt besonders nach Änderungen an `lib/`, `supabase/migrations/` oder `package.json` auf.
+
+**Ursache:** Der `.next/cache` (Turbopack/Webpack-Cache) hält Module aus einer früheren Version fest.
+
+**2-Step-Lösung:**
+
+```bash
+npm run clean   # löscht .next, .turbo, coverage, .drizzle, node_modules/.vitest, .vitest-cache
+npm run dev     # startet Dev-Server mit leerem Cache
+```
+
+Falls das nicht reicht: `npm run clean:all` (löscht zusätzlich `node_modules/.cache`, `.cache/`, `.tmp/`, OS-Temp-Files).
+
+Siehe [Caching Strategy](#-caching-strategy) für Details zu `predev`/`prebuild`/pre-commit-Hook und wann welche Cache ungültig wird.
 
 ### "Demo Mode" aktiv
 

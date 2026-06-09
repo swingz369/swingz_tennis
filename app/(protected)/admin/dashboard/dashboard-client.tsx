@@ -51,7 +51,7 @@ function StatCard({
   return (
     <ScrollReveal delay={delay}>
       <Card
-        variant="elevated"
+        variant="glass"
         className="group cursor-pointer hover-lift transition-all duration-300"
         onClick={() => router.push(href)}
       >
@@ -171,11 +171,9 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
 
       {/* Club List */}
       <ScrollReveal delay={200}>
-        <Card
-          variant="bordered"
-          className="overflow-hidden border-0 shadow-sm bg-background dark:bg-card/5 backdrop-blur-sm"
-        >
-          <CardHeader className="border-b border-border dark:border-white/10 bg-muted/50 dark:bg-card/[0.02]">
+        <Card variant="glass" className="overflow-hidden">
+          {' '}
+          <CardHeader className="border-b border-border/50 bg-muted/30">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-brand-primary to-brand-dark text-white shadow-sm">

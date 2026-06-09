@@ -808,7 +808,7 @@ export default function AdminShopPage() {
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
+                        <tbody className="divide-y divide-border/30 dark:divide-white/[0.02]">
                           {activeProducts.map((product) => (
                             <tr
                               key={product.id}
@@ -906,7 +906,7 @@ export default function AdminShopPage() {
                   <CardContent className="px-5 pb-5">
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
-                        <tbody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
+                        <tbody className="divide-y divide-border/30 dark:divide-white/[0.02]">
                           {inactiveProducts.map((product) => (
                             <tr
                               key={product.id}
@@ -987,7 +987,7 @@ export default function AdminShopPage() {
               onClick={() => handleStatusFilterChange('')}
               className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                 orderStatusFilter === ''
-                  ? 'bg-gray-900 text-white border-gray-900 dark:bg-card dark:text-foreground dark:border-white'
+                  ? 'bg-foreground text-background border-foreground dark:bg-card dark:text-foreground dark:border-white'
                   : 'bg-background dark:bg-surface-dark text-muted-foreground dark:text-muted-foreground border-border dark:border-white/10 hover:border-border dark:hover:border-white/20'
               }`}
             >
@@ -1004,7 +1004,7 @@ export default function AdminShopPage() {
                 onClick={() => handleStatusFilterChange(filter.key)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                   orderStatusFilter === filter.key
-                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-card dark:text-foreground dark:border-white'
+                    ? 'bg-foreground text-background border-foreground dark:bg-card dark:text-foreground dark:border-white'
                     : 'bg-background dark:bg-surface-dark text-muted-foreground dark:text-muted-foreground border-border dark:border-white/10 hover:border-border dark:hover:border-white/20'
                 }`}
               >
@@ -1069,7 +1069,7 @@ export default function AdminShopPage() {
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50 dark:divide-white/[0.02]">
+                    <tbody className="divide-y divide-border/30 dark:divide-white/[0.02]">
                       {orders.map((order) => {
                         const StatusIcon = STATUS_ICONS[order.status] || Clock;
                         const nextAction = STATUS_NEXT_ACTION[order.status] || null;

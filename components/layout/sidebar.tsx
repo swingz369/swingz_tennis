@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { isActivePath, isExactActive } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useClubFeatures } from '@/hooks/use-club-features';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { AdminSection } from './admin-section';
@@ -131,6 +132,15 @@ export function Sidebar({
   const { currentRole, isSuperAdmin, isAdmin } = useUserRole(roles);
   const colors = roleColors[currentRole];
 
+  // Feature flags — hide sidebar sections for disabled modules
+  const activeClubId = selectedClubId ?? clubs?.[0]?.id;
+  const { features } = useClubFeatures(activeClubId);
+  const hiddenSections = new Set(
+    Object.entries(features)
+      .filter(([, enabled]) => !enabled)
+      .map(([key]) => key)
+  );
+
   // Active club for display
   const activeClub = clubs?.find((c) => c.id === selectedClubId) ?? clubs?.[0] ?? null;
   const hasMultipleClubs = (clubs?.length ?? 0) > 1;
@@ -190,9 +200,10 @@ export function Sidebar({
   }
 
   // Role-specific collapsible sections — uniform structure for both roles
+  // Filter out sections whose primary feature is disabled.
   const roleSections: SectionDef[] = (() => {
     if (isAdmin) {
-      return [
+      const allSections: SectionDef[] = [
         {
           label: 'Mitglieder',
           icon: Users,
@@ -217,8 +228,12 @@ export function Sidebar({
           subItems: [
             { name: 'Saisonplanung', href: '/admin/seasons' },
             { name: 'Trainer & Stunden', href: '/admin/trainers' },
-            { name: 'Probetrainings', href: '/admin/trial-training' },
-            { name: 'Turniere', href: '/admin/tournaments' },
+            ...(!hiddenSections.has('trial_training')
+              ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
+              : []),
+            ...(!hiddenSections.has('tournaments')
+              ? [{ name: 'Turniere', href: '/admin/tournaments' }]
+              : []),
           ],
         },
         {
@@ -226,7 +241,9 @@ export function Sidebar({
           icon: MapPin,
           subItems: [
             { name: 'Platz-Kalender & Verwaltung', href: '/admin/courts' },
-            { name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' },
+            ...(!hiddenSections.has('ai_matchmaking')
+              ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
+              : []),
           ],
         },
         {
@@ -242,11 +259,21 @@ export function Sidebar({
           icon: Settings,
           subItems: [
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
-            { name: 'Shop verwalten', href: '/admin/shop' },
+            ...(!hiddenSections.has('shop')
+              ? [{ name: 'Shop verwalten', href: '/admin/shop' }]
+              : []),
             { name: 'Audit-Logs', href: '/admin/audit-logs' },
           ],
         },
       ];
+      // Hide entire sections if the primary feature is disabled.
+      return allSections.filter((section) => {
+        if (section.label === 'Mitglieder') return !hiddenSections.has('members');
+        if (section.label === 'Training & Saison')
+          return !hiddenSections.has('trainers') || !hiddenSections.has('seasons');
+        if (section.label === 'Finanzen') return !hiddenSections.has('finance');
+        return true;
+      });
     }
 
     if (isSuperAdmin) {
@@ -334,7 +361,7 @@ export function Sidebar({
             <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="relative">
                 <div className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                <Trophy className="h-5 w-5 text-foreground dark:text-gray-200 relative" />
+                <Trophy className="h-5 w-5 text-foreground dark:text-foreground relative" />
               </div>
               <span className="text-sm font-bold tracking-tight text-foreground dark:text-white">
                 SWINGZ
@@ -358,7 +385,7 @@ export function Sidebar({
           <div className="mx-3 mb-4 border border-border/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-muted/50 dark:bg-card/[0.02]">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground dark:text-gray-200 hover:bg-muted/50 dark:hover:bg-background/[0.04] transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground dark:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.04] transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
@@ -460,7 +487,7 @@ export function Sidebar({
                     href={item.href}
                     onClick={() => onClose?.()}
                     className={cn(
-                      'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
                         ? `${colors.bg} ${colors.text} shadow-sm`
                         : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'

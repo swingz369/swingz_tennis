@@ -347,7 +347,6 @@ export const InvoiceDownloadLink = ({
     }
     fileName={`Rechnung-${invoice.invoice_number}.pdf`}
   >
-    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-    {children as any}
+    {children as React.ReactElement}
   </PDFDownloadLink>
 );

@@ -71,19 +71,21 @@ export default function NotificationSettings() {
         });
         if (res.ok) {
           const data = await res.json();
-          const mapped: Notification[] = (data.notifications || []).map((n: any) => ({
-            id: n.id,
-            type: n.type || 'system',
-            title: n.title || '',
-            message: n.message || '',
-            timestamp: n.created_at || n.timestamp || new Date().toISOString(),
-            read: n.read || false,
-            actionUrl: n.action_url || undefined,
-          }));
+          const mapped: Notification[] = (data.notifications || []).map(
+            (n: Record<string, unknown>) => ({
+              id: n.id,
+              type: n.type || 'system',
+              title: n.title || '',
+              message: n.message || '',
+              timestamp: n.created_at || n.timestamp || new Date().toISOString(),
+              read: n.read || false,
+              actionUrl: n.action_url || undefined,
+            })
+          );
           setNotifications(mapped);
         }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Failed to fetch notifications:', err);
         }
       } finally {

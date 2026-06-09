@@ -113,8 +113,8 @@ export default function PublicRegistrationForm({
         throw new Error(data.error || 'Registrierung fehlgeschlagen');
       }
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setLoading(false);
     }

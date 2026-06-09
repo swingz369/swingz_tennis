@@ -3,7 +3,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, Clock, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from '@/lib/locale';
 import { toast } from 'sonner';
@@ -33,13 +34,35 @@ interface Props {
 }
 
 export function CourtBookings({ clubId }: Props) {
-  const [selectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [courts, setCourts] = useState<Court[]>([]);
   const [schedules, setSchedules] = useState<Record<string, CourtSchedule>>({});
   const [loading, setLoading] = useState(true);
   const [bookingSlot, setBookingSlot] = useState<{ courtId: string; time: string } | null>(null);
+  const [bookingDuration, setBookingDuration] = useState(30);
 
   const dateStr = format(selectedDate, 'yyyy-MM-dd');
+  const maxDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d;
+  }, []);
+
+  const goToPrevDay = useCallback(() => {
+    setSelectedDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 1);
+      return d < new Date(new Date().toDateString()) ? prev : d;
+    });
+  }, []);
+
+  const goToNextDay = useCallback(() => {
+    setSelectedDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 1);
+      return d > maxDate ? prev : d;
+    });
+  }, [maxDate]);
 
   useEffect(() => {
     async function load() {
@@ -86,9 +109,10 @@ export function CourtBookings({ clubId }: Props) {
     try {
       const startTime = `${dateStr}T${time}:00`;
       const [h, m] = time.split(':').map(Number);
-      const endHour = m === 30 ? h + 1 : h;
-      const endMin = m === 30 ? '00' : '30';
-      const endTime = `${dateStr}T${String(endHour).padStart(2, '0')}:${endMin}:00`;
+      const endMinutes = h * 60 + m + bookingDuration;
+      const endHour = Math.floor(endMinutes / 60);
+      const endMin = endMinutes % 60;
+      const endTime = `${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`;
 
       const res = await apiFetch('/api/bookings/court', {
         method: 'POST',
@@ -104,11 +128,13 @@ export function CourtBookings({ clubId }: Props) {
         `/api/courts/${courtId}/schedule?start_date=${dateStr}&end_date=${dateStr}`,
         { credentials: 'include' }
       );
-      if (schedRes.ok)
+      if (schedRes.ok) {
+        const updatedSchedule = await schedRes.json();
         setSchedules((prev) => ({
           ...prev,
-          [courtId]: schedRes.json() as unknown as CourtSchedule,
+          [courtId]: updatedSchedule as CourtSchedule,
         }));
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Buchung fehlgeschlagen');
     } finally {
@@ -123,11 +149,36 @@ export function CourtBookings({ clubId }: Props) {
         <CardDescription>Reserviere einen Platz für dein freies Spiel</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-muted-foreground" />
+            <span className="font-medium">
+              {format(selectedDate, 'EEEE, d. MMMM yyyy', { locale: de })}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToPrevDay}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={goToNextDay}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-muted-foreground" />
-          <span className="font-medium">
-            {format(selectedDate, 'EEEE, d. MMMM yyyy', { locale: de })}
-          </span>
+          <span className="text-sm text-muted-foreground">Buchungsdauer:</span>
+          {[30, 60, 90].map((mins) => (
+            <Button
+              key={mins}
+              variant={bookingDuration === mins ? 'default' : 'outline'}
+              size="sm"
+              className="text-xs"
+              onClick={() => setBookingDuration(mins)}
+            >
+              {mins} Min
+            </Button>
+          ))}
         </div>
 
         {loading ? (
@@ -154,7 +205,7 @@ export function CourtBookings({ clubId }: Props) {
                     </div>
                   </div>
                   <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
-                    {slots.slice(0, 8).map((slot) => {
+                    {slots.map((slot) => {
                       const time = slot.start_time.substring(11, 16);
                       const busy = bookingSlot?.courtId === court.id && bookingSlot?.time === time;
                       return (
@@ -187,7 +238,7 @@ export function CourtBookings({ clubId }: Props) {
         <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Buchungsregeln</h4>
           <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-            <li>• Maximale Buchungsdauer: 90 Minuten</li>
+            <li>• Buchungsdauer wählbar: 30, 60 oder 90 Minuten</li>
             <li>• Buchungen bis zu 7 Tage im Voraus möglich</li>
             <li>• Kostenlose Stornierung bis 24h vor Beginn</li>
             <li>• Maximal 2 Buchungen pro Tag</li>

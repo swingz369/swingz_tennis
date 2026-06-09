@@ -22,6 +22,8 @@ export interface Session {
   timeslotStart?: string; // ISO date string of session start
   timeslotEnd?: string; // ISO date string of session end
   courtId?: string; // For admin court calendar
+  courtName?: string; // Court display name for member training schedule
+  rsvpStatus?: string | null; // Current user's RSVP status for the session
 }
 
 export function useSessions(clubId: string | null) {
@@ -97,8 +99,8 @@ export function useCreateBooking() {
       // Optimistically update to the new value
       queryClient.setQueryData(
         QUERY_KEYS.sessions(variables.clubId),
-        (old: any) =>
-          old?.map((s: any) =>
+        (old: Session[] | undefined) =>
+          old?.map((s: Session) =>
             s.id === variables.sessionId
               ? { ...s, bookedByUser: true, bookingStatus: 'pending' }
               : s
@@ -112,8 +114,8 @@ export function useCreateBooking() {
       // Use server response as source of truth
       queryClient.setQueryData(
         QUERY_KEYS.sessions(variables.clubId),
-        (old: any) =>
-          old?.map((s: any) =>
+        (old: Session[] | undefined) =>
+          old?.map((s: Session) =>
             s.id === variables.sessionId
               ? { ...s, bookedByUser: true, bookingId: data.bookingId, bookingStatus: data.status }
               : s
@@ -202,8 +204,8 @@ export function useCancelBooking() {
       // Optimistically update
       queryClient.setQueryData(
         QUERY_KEYS.sessions(variables.clubId),
-        (old: any) =>
-          old?.map((s: any) =>
+        (old: Session[] | undefined) =>
+          old?.map((s: Session) =>
             s.id === variables.sessionId
               ? { ...s, bookedByUser: false, bookingStatus: 'cancelled' }
               : s
@@ -258,8 +260,8 @@ export function useUpdateBookingStatus() {
     onSuccess: (_data, variables) => {
       queryClient.setQueryData(
         QUERY_KEYS.sessions(variables.clubId),
-        (old: any) =>
-          old?.map((s: any) =>
+        (old: Session[] | undefined) =>
+          old?.map((s: Session) =>
             s.bookingId === variables.bookingId ? { ...s, bookingStatus: variables.status } : s
           ) || []
       );

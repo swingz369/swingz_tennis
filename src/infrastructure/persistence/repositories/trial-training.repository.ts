@@ -214,7 +214,7 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     const now = new Date();
 
     try {
-      const updateData: any = {
+      const updateData: Partial<typeof trialTrainings.$inferInsert> = {
         updated_at: now,
       };
 

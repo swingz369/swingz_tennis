@@ -268,7 +268,7 @@ function ShopContent() {
           <div className="flex items-center justify-between px-5 py-4 border-b">
             <div className="flex items-center gap-2">
               <ShoppingCart className="h-5 w-5 text-brand-light" />
-              <h2 className="text-lg font-bold text-foreground dark:text-gray-100">Warenkorb</h2>
+              <h2 className="text-lg font-bold text-foreground dark:text-foreground">Warenkorb</h2>
               {cartCount > 0 && (
                 <Badge className="bg-brand-light/10 text-brand-light text-xs">{cartCount}</Badge>
               )}
@@ -362,7 +362,7 @@ function ShopContent() {
             <div className="border-t px-5 py-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Zwischensumme</span>
-                <span className="text-lg font-bold text-foreground dark:text-gray-100">
+                <span className="text-lg font-bold text-foreground dark:text-foreground">
                   €{cartTotal.toFixed(2)}
                 </span>
               </div>

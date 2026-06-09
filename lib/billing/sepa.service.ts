@@ -23,7 +23,10 @@ export class SepaService {
 
   async createSepaMandate(data: CreateSepaMandate): Promise<SepaMandate> {
     const mandateReference = `SWINGZ-${data.club_id.slice(0, 8)}-${Date.now()}`;
-    const creditorId = process.env.SEPA_CREDITOR_ID || 'DE98ZZZ09999999999';
+    const creditorId = process.env.SEPA_CREDITOR_ID;
+    if (!creditorId) {
+      throw new Error('SEPA_CREDITOR_ID environment variable is required for mandate creation');
+    }
 
     const { data: mandate, error } = await supabase
       .from('sepa_mandates')

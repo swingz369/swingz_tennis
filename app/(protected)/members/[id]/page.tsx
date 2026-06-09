@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, User, Trophy } from 'lucide-react';
 
 type ClubMembership = {
-  clubs: { id: string; name: string; status: string };
+  clubs: { id: string; name: string; status: string } | null;
 };
 
 type Member = {
@@ -210,21 +210,23 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
           <CardContent>
             {member!.club_memberships && member!.club_memberships.length > 0 ? (
               <div className="space-y-2">
-                {member.club_memberships.map((membership: ClubMembership) => (
-                  <div
-                    key={membership.clubs.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{membership.clubs.name}</p>
-                      <Badge
-                        variant={membership.clubs.status === 'active' ? 'default' : 'secondary'}
-                      >
-                        {membership.clubs.status === 'active' ? 'Aktiv' : 'Inaktiv'}
-                      </Badge>
+                {member.club_memberships.map((membership: ClubMembership) =>
+                  membership.clubs ? (
+                    <div
+                      key={membership.clubs.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">{membership.clubs.name}</p>
+                        <Badge
+                          variant={membership.clubs.status === 'active' ? 'default' : 'secondary'}
+                        >
+                          {membership.clubs.status === 'active' ? 'Aktiv' : 'Inaktiv'}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ) : null
+                )}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Keine Vereinsmitgliedschaft</p>

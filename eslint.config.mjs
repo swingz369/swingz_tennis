@@ -84,6 +84,11 @@ const eslintConfig = [
       '@typescript-eslint/consistent-type-imports': 'warn',
       'no-console': 'off',
 
+      // React: disable for German UI strings (apostrophes/quotes are valid in de-DE)
+      // and for display-name (anonymous forwardRef components are an established pattern)
+      'react/no-unescaped-entities': 'off',
+      'react/display-name': 'off',
+
       // jsx-a11y: downgrade noisy recommended rules from error to warn
       'jsx-a11y/click-events-have-key-events': 'warn',
       'jsx-a11y/label-has-associated-control': 'warn',

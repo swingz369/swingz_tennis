@@ -76,7 +76,7 @@ const statusSizeClasses = {
 
 const statusColors = {
   online: 'bg-green-500',
-  offline: 'bg-gray-400',
+  offline: 'bg-muted-foreground',
   busy: 'bg-red-500',
 };
 
