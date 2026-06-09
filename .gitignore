@@ -104,6 +104,11 @@ scripts/**/output.txt
 *.dump
 *.backup
 
+# Exception: Supabase migrations are versioned DB schema — must be tracked
+!supabase/migrations/*.sql
+!supabase/seed.sql
+!supabase/tests/*.sql
+
 # Test credentials
 .test-credentials.json
 
