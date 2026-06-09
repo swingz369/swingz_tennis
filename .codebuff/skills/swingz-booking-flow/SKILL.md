@@ -7,12 +7,12 @@ description: SwingZ-specific knowledge for the booking system — status machine
 
 ## Where it lives
 
-- **Core services:** `lib/booking/booking.service.ts`, `court.service.ts`, `safe-booking.ts`, `schedule.service.ts`, `waitlist.service.ts`
-- **Status machine:** `src/domain/services/booking-status-machine.ts`
+- **Core services:** `lib/booking/booking.service.ts`, `lib/booking/schedule.service.ts`, lib/booking/booking-status.ts (status helpers)
+- **Status machine:** inlined in the service file (no separate state-machine file) via `applyBookingTransition()` + table-driven `TRANSITIONS` map
 - **API endpoints:** `app/api/bookings/` (direct, [id], series, validate-series)
 - **Schema:** `bookings` table in `src/infrastructure/persistence/schema.ts`
 - **UI components:** `components/bookings/court-bookings.tsx`, `app/(protected)/bookings/`
-- **Validation:** `src/domain/services/validation.service.ts`
+- **Validation:** inline in the service file via Zod schemas + `lib/booking/validation.ts`
 - **Audit:** `audit_logs` table (every booking write is logged)
 
 ## The booking status machine

@@ -8,12 +8,12 @@ description: SwingZ-specific knowledge for the per-club feature flag system — 
 ## Where it lives
 
 - **Type definition:** `lib/features.ts` (TypeScript types + `ALL_FEATURES` constant)
-- **DB column:** `clubs.features` (jsonb, default `{}`) in `src/infrastructure/persistence/schema.ts`
-- **Helper:** `lib/club-features.ts` (server-side getter with caching)
-- **Client helper:** `lib/client-features.ts` (read-only from cookies, for fast initial render)
+- **DB column:** clubs.features (jsonb, default `{}`) in `src/infrastructure/persistence/schema.ts`
+- **Helper:** `lib/features.ts` (also exports `getClubFeatures()` server-side getter with caching)
+- **Client helper:** same `lib/features.ts` (read-only from cookies via `getCookieClubFeatures()`)
 - **API:** `app/api/clubs/[id]/features/route.ts` (GET, PUT — club admin only)
 - **Onboarding:** `components/onboarding/module-selection-step.tsx` (where user picks features at signup)
-- **Gating:** `lib/feature-gate.tsx` (React component for conditional rendering)
+- **Gating:** inline React patterns (no separate component) — see the _Gating patterns_ section below
 
 ## Architecture: Per-Club JSONB
 

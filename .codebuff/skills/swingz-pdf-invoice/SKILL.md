@@ -11,7 +11,7 @@ description: SwingZ-specific knowledge for PDF invoice generation — pdf-lib pa
 - **Utilities:** `lib/pdf/invoice-pdf-utils.tsx` (number formatters, layout helpers)
 - **API:** `app/api/invoices/[id]/pdf/route.ts` (GET endpoint)
 - **Storage:** `invoices` table (`pdf_url` column points to Supabase Storage)
-- **Email:** `lib/billing/invoice-email.ts` (sends PDF as attachment)
+- **Email:** lib/billing/invoice-email.ts (sends PDF as attachment) — _Note: this file may not exist yet; emails are typically sent via lib/email Resend helpers directly from the billing service_
 - **Schema:** `invoices` table in `src/infrastructure/persistence/schema.ts`
 
 ## Why @react-pdf/renderer (NOT puppeteer/playwright)

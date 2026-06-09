@@ -9,9 +9,9 @@ description: SwingZ-specific knowledge for the role-based access control (RBAC) 
 
 - **Auth helpers:** `lib/api-auth.ts` (server-side `requireRole`, `requirePermission`)
 - **Session:** `lib/admin-context.ts` (current admin user + club context)
-- **Permissions:** `lib/rbac/permissions.ts` (the canonical permission list)
-- **Roles:** `lib/rbac/roles.ts` (the 4-role hierarchy)
-- **Middleware:** `proxy.ts` (Next.js middleware for route protection)
+- **Permissions:** defined inline in `lib/api-auth.ts` (the canonical permission list as `Permission` union type — no separate permissions file)
+- **Roles:** defined inline in `lib/api-auth.ts` (the 4-role hierarchy as `Role` union + `ROLE_HIERARCHY` map — no separate roles file)
+- **Middleware:** proxy.ts at project root (Next.js middleware for route protection; referenced from `next.config.js`)
 - **Supabase Auth:** `src/infrastructure/external/supabase/` (server + client)
 - **Type:** `Role = 'member' | 'trainer' | 'admin' | 'superadmin'`
 
@@ -162,7 +162,7 @@ export function middleware(req: NextRequest) {
 
 ## Adding a new permission
 
-1. Add to the `Permission` union in `lib/rbac/permissions.ts`
+1. Add to the `Permission` union in lib/api-auth.ts
 2. Add to the role-permission map in `lib/rbac/role-permissions.ts`
 3. Add to the matrix in `docs/ROLE-MANAGEMENT.md`
 4. Use `requirePermission('new:permission')` in the API route
