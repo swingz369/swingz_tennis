@@ -856,6 +856,12 @@ export class SeasonClusteringEngine {
     const maxRetries = 3;
     const depth = Math.min(this.config.backtrackDepth, maxRetries, assignments.length);
 
+    // Sprint 4 refactor: build a member id -> member map once to replace the per-victim
+    // `allMembers.find(m => m.id === ...)` O(members) scans that previously ran for
+    // each freed victim. Was: 2× O(members) per victim in the worst case.
+    const allMembersById = new Map<string, MemberWithDetails & { _unassignedReason?: string }>();
+    for (const m of allMembers) allMembersById.set(m.id, m);
+
     let stillUnassigned = initialUnassigned;
     let retryCount = 0;
 
@@ -885,8 +891,9 @@ export class SeasonClusteringEngine {
       const freedMembers: (MemberWithDetails & { _unassignedReason?: string })[] = [];
       for (const v of victims) {
         for (const detail of v.memberDetails) {
-          // Pull the full member object from the loaded data (still in allMembers)
-          const fullMember = allMembers.find((m) => m.id === detail.memberId);
+          // Pull the full member object via pre-built id index (Sprint 4 refactor:
+          // was O(members) per victim via Array.find, now O(1) Map.get).
+          const fullMember = allMembersById.get(detail.memberId);
           if (fullMember) {
             fullMember._unassignedReason = undefined;
             freedMembers.push(fullMember);
@@ -902,11 +909,9 @@ export class SeasonClusteringEngine {
       for (const v of victims) {
         const victimMemberDetails = v.memberDetails;
         const victimMembers = victimMemberDetails
-          .map((d) => allMembers.find((m) => m.id === d.memberId))
+          .map((d) => allMembersById.get(d.memberId))
           .filter((m): m is NonNullable<typeof m> => m !== undefined);
-
         if (victimMembers.length === 0) continue;
-
         // Find a new slot, excluding the original slot
         const excludeDayTime = { day: v.dayOfWeek, start: v.startTime };
         const newSlot = this.findBestTimeSlot(
@@ -1338,6 +1343,13 @@ export class SeasonClusteringEngine {
 
         if (availableMembers.length < Math.max(1, this.config.groupMinSize)) continue;
 
+        // Sprint 4 refactor: pre-compute the Set of member skill levels once per
+        // (day, timeSlot) iteration. The previous code rebuilt the Set inside the
+        // trainer loop, so it ran O(trainers) times per slot — a measurable
+        // allocation overhead. Levels don't change per trainer, so the Set is
+        // stable across the trainer loop.
+        const memberLevels = new Set(availableMembers.map((m) => m.promotedLevel || m.skillLevel));
+
         // HARD CONSTRAINT: Find available trainer
         let bestTrainer: TrainerWithDetails | null = null;
         let bestTrainerScore = -Infinity;
@@ -1367,9 +1379,6 @@ export class SeasonClusteringEngine {
 
           // Score trainer: specialization match + availability match
           let score = 0;
-          const memberLevels = new Set(
-            availableMembers.map((m) => m.promotedLevel || m.skillLevel)
-          );
           for (const level of memberLevels) {
             if (trainer.specialties.includes(level)) score += 20;
           }
@@ -1656,8 +1665,15 @@ export class SeasonClusteringEngine {
       },
       {} as Record<string, number>
     );
+    // Sprint 4 refactor: build a trainer id -> trainer map once so the per-trainer
+    // `trainers.find(t => t.id === tid)` scan (O(trainers) per assignment) becomes
+    // an O(1) Map.get(). Combined with the same change in generateExplanations,
+    // this saves a small but measurable amount of time in the metrics phase.
+    const trainerByIdForMetrics = new Map<string, TrainerWithDetails>();
+    for (const t of trainers) trainerByIdForMetrics.set(t.id, t);
+
     const trainerUtils = Object.entries(trainerLoads).map(([tid, sessions]) => {
-      const trainer = trainers.find((t) => t.id === tid);
+      const trainer = trainerByIdForMetrics.get(tid);
       const maxSess = trainer?.maxSessionsPerWeek || 20;
       return (sessions / maxSess) * 100;
     });
@@ -1760,8 +1776,12 @@ export class SeasonClusteringEngine {
       },
       {} as Record<string, number>
     );
+    // Sprint 4 refactor: O(1) trainer lookup (was O(trainers) per assignment via Array.find).
+    const trainerByIdForExplanations = new Map<string, TrainerWithDetails>();
+    for (const t of trainers) trainerByIdForExplanations.set(t.id, t);
+
     for (const [tid, count] of Object.entries(trainerCounts)) {
-      const trainer = trainers.find((t) => t.id === tid);
+      const trainer = trainerByIdForExplanations.get(tid);
       if (trainer) {
         const hours = count * 1.5;
         const max = trainer.maxHoursPerWeek * (trainer.utilizationPct / 100);
