@@ -16,14 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
 import {
   Bell,
@@ -516,16 +509,26 @@ export default function NewsAnnouncements({
         </Card>
       </div>
 
-      {/* Compose Dialog (admin only) */}
-      <Dialog open={composeOpen} onOpenChange={(open) => !isSubmitting && setComposeOpen(open)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Neue Nachricht verfassen</DialogTitle>
-            <DialogDescription>
-              Veröffentliche eine Ankündigung, ein Update oder eine Veranstaltung für deinen Verein.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Compose Dialog (admin only) — migrated to CenteredModal for
+          robust viewport-centering + internal scroll (fixed the
+          "modal loads at bottom of viewport" bug). */}
+      <CenteredModal
+        open={composeOpen}
+        onClose={() => !isSubmitting && setComposeOpen(false)}
+        ariaLabel="Neue Nachricht verfassen"
+        className="max-w-2xl"
+      >
+        <div className="space-y-1 mb-4">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">
+            Neue Nachricht verfassen
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Veröffentliche eine Ankündigung, ein Update oder eine Veranstaltung für deinen Verein.
+          </p>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Section 1 — Inhalt */}
+          <section className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="news-title">Titel</Label>
               <Input
@@ -549,7 +552,10 @@ export default function NewsAnnouncements({
                 required
               />
             </div>
+          </section>
 
+          {/* Section 2 — Klassifizierung */}
+          <section className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="news-type">Typ</Label>
@@ -591,7 +597,10 @@ export default function NewsAnnouncements({
                 </Select>
               </div>
             </div>
+          </section>
 
+          {/* Section 3 — Sichtbarkeit */}
+          <section className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="news-expires">Gültig bis (optional)</Label>
               <Input
@@ -612,28 +621,29 @@ export default function NewsAnnouncements({
               <Pin className="h-4 w-4 text-muted-foreground" />
               <span>Angepinnt an den Anfang der Liste</span>
             </label>
+          </section>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setComposeOpen(false)}
-                disabled={isSubmitting}
-              >
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={isSubmitting} className="gap-2">
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                Veröffentlichen
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:gap-2 pt-2 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setComposeOpen(false)}
+              disabled={isSubmitting}
+              className="mt-2 sm:mt-0"
+            >
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="gap-2">
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              Veröffentlichen
+            </Button>
+          </div>
+        </form>
+      </CenteredModal>
     </div>
   );
 }
