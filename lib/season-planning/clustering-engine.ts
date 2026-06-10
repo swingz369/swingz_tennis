@@ -58,6 +58,11 @@ interface ClusteringConfig {
   // 0 = greedy only (original behavior). >0 = re-evaluate the last N groups and try
   // alternative slots before giving up.
   backtrackDepth: number;
+  // Sprint 4 P0 #3 (Adaptive Backtrack): if the unassigned rate after the first
+  // backtrack pass is still above this threshold (default 5%), the engine runs a
+  // second pass with depth=5 to give the algorithm more freedom to re-slot victims.
+  // Lower values = more aggressive retries; set to 1.0 to disable the second pass.
+  unassignedRateThreshold: number;
 }
 
 const DEFAULT_CONFIG: ClusteringConfig = {
@@ -76,6 +81,7 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   avoidHighFailureSlots: true,
   treatHighFailureAsHard: false,
   backtrackDepth: 0,
+  unassignedRateThreshold: 0.05,
 };
 
 // ============================================
@@ -804,9 +810,14 @@ export class SeasonClusteringEngine {
 
     const unassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
 
-    // BACKTRACKING (Optimization #6): If unassigned members remain and backtrackDepth > 0,
-    // try depth-first: pop the last N groups, free their slots/trainers/courts, then re-evaluate
-    // them with the goal of also placing the previously unassigned members. Capped at 3 retries.
+    // BACKTRACKING (Optimization #6 + Sprint 4 P0 #3 Adaptive Backtrack):
+    // First pass: depth=3 (cap 3 retries) — the proven Sprint 3 default.
+    // Second pass: depth=5 (cap 2 retries) — runs ONLY if the unassigned rate
+    // after the first pass is still above `unassignedRateThreshold` (default 5%).
+    // The two-pass design bounds total work to at most 5 victim-pops per member
+    // while giving the algorithm more freedom to re-slot when many members remain
+    // unassigned. Expected impact: Unassigned @ 2000m 7 → ~2 (-71%) per
+    // docs/SCALING_ANALYSIS.md (Opt #3).
     if (unassigned.length > 0 && this.config.backtrackDepth > 0 && assignments.length > 0) {
       await this.backtrackForUnassigned(
         unassigned,
@@ -821,8 +832,39 @@ export class SeasonClusteringEngine {
         trainerSessionCount,
         courtTimeSlotUsage,
         assignments,
-        assignedMemberIds
+        assignedMemberIds,
+        3, // first pass: maxRetries = 3, depth = 3
+        3 // first pass: explicit depth = 3 (independent of maxRetries now)
       );
+
+      // Recompute unassigned rate after first pass to decide whether to escalate.
+      const stillUnassignedAfterPass1 = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
+      const unassignedRate =
+        members.length > 0 ? stillUnassignedAfterPass1.length / members.length : 0;
+      if (
+        stillUnassignedAfterPass1.length > 0 &&
+        unassignedRate > this.config.unassignedRateThreshold &&
+        this.config.backtrackDepth > 0 &&
+        assignments.length > 0
+      ) {
+        await this.backtrackForUnassigned(
+          stillUnassignedAfterPass1,
+          sortedMembers,
+          membersById,
+          members,
+          trainers,
+          courts,
+          candidateGroups,
+          slotFailureRates,
+          timeSlots,
+          trainerSessionCount,
+          courtTimeSlotUsage,
+          assignments,
+          assignedMemberIds,
+          2, // second pass: maxRetries = 2 (bounds total loops)
+          5 // second pass: depth = 5 (deeper re-slotting, matches doc-spec)
+        );
+      }
     }
     void membersById; // referenced for parity with other call sites
 
@@ -851,10 +893,20 @@ export class SeasonClusteringEngine {
     trainerSessionCount: Map<string, number>,
     courtTimeSlotUsage: Map<string, Set<string>>,
     assignments: GroupAssignment[],
-    assignedMemberIds: Set<string>
+    assignedMemberIds: Set<string>,
+    maxRetries: number = 3,
+    depthOverride?: number
   ): Promise<void> {
-    const maxRetries = 3;
-    const depth = Math.min(this.config.backtrackDepth, maxRetries, assignments.length);
+    // Sprint 4 P0 #3: depth is now independent of maxRetries so the adaptive
+    // second pass can use depth=5 with only maxRetries=2 (bounds total work
+    // while allowing deeper re-slotting). The original code coupled them via
+    // `Math.min(backtrackDepth, maxRetries, ...)`, which capped depth at
+    // maxRetries — a leftover from the original 3-retry design.
+    const depth = Math.min(
+      this.config.backtrackDepth,
+      depthOverride ?? maxRetries,
+      assignments.length
+    );
 
     // Sprint 4 refactor: build a member id -> member map once to replace the per-victim
     // `allMembers.find(m => m.id === ...)` O(members) scans that previously ran for

@@ -502,6 +502,29 @@ describe('Clustering Scaling Benchmark — 200/500/1000/2000 Members', () => {
         },
         { iterations: 2, time: 12000 }
       );
+
+      // Sprint 4 P0 #3: Adaptive Backtrack — depth=5 with the second pass
+      // enabled (unassignedRateThreshold=0.05 is the default). This exercises
+      // the full two-pass path: first pass with maxRetries=3, second pass with
+      // maxRetries=2 + depth=5 if unassigned rate > 5%.
+      bench(
+        `adaptive backtrack — ${numMembers}m (depth=5, two-pass)`,
+        async () => {
+          seedMockData(numMembers);
+          const engine = new SeasonClusteringEngine(SEASON_ID, CLUB_ID, {
+            backtrackDepth: 5,
+            unassignedRateThreshold: 0.05,
+          });
+          const start = performance.now();
+          const result = await engine.runClustering(true);
+          const elapsed = performance.now() - start;
+          const label = `adaptive-${numMembers}`;
+          if (!SCALING_RESULTS[label]) {
+            recordRun(label, elapsed, result, numMembers);
+          }
+        },
+        { iterations: 2, time: 15000 }
+      );
     });
   }
 });

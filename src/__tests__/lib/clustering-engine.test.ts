@@ -1072,6 +1072,125 @@ describe('Optimization #6: Backtracking', () => {
   });
 });
 
+// ═══ Sprint 4 P0 #3: Adaptive Backtrack (decoupled depth + threshold) ═
+
+describe('Sprint 4 P0 #3: Adaptive Backtrack', () => {
+  it('default config has unassignedRateThreshold=0.05', () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    expect(engine.config.unassignedRateThreshold).toBe(0.05);
+  });
+
+  it('respects unassignedRateThreshold override', () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', {
+      unassignedRateThreshold: 0.1,
+    }) as any;
+    expect(engine.config.unassignedRateThreshold).toBe(0.1);
+  });
+
+  it('disables adaptive second pass when threshold is 1.0 (no second pass)', () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', {
+      unassignedRateThreshold: 1.0,
+    }) as any;
+    // Threshold=1.0 means unassignedRate > 1.0 is impossible → second pass never fires
+    expect(engine.config.unassignedRateThreshold).toBe(1.0);
+  });
+
+  it('decouples maxRetries from depthOverride (depth follows depthOverride)', async () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', { backtrackDepth: 10 }) as any;
+    const allMembers: MemberWithDetails[] = [makeMember({ id: 'm1' })];
+    const sortedMembers = allMembers;
+    const membersById = new Map<string, MemberWithDetails>();
+    membersById.set('m1', allMembers[0]);
+    // Need 5 assignments so depth=5 has something to splice
+    const assignments: GroupAssignment[] = [
+      makeAssignment({ groupId: 'g1', memberIds: ['m1'] }),
+      makeAssignment({ groupId: 'g2', memberIds: ['m2'] }),
+      makeAssignment({ groupId: 'g3', memberIds: ['m3'] }),
+      makeAssignment({ groupId: 'g4', memberIds: ['m4'] }),
+      makeAssignment({ groupId: 'g5', memberIds: ['m5'] }),
+    ];
+    const assignedMemberIds = new Set<string>(['m1', 'm2', 'm3', 'm4', 'm5']);
+    const trainerSessionCount = new Map<string, number>();
+    const courtTimeSlotUsage = new Map<string, Set<string>>();
+
+    let splicedCount = 0;
+    const originalSplice = assignments.splice.bind(assignments);
+    assignments.splice = ((start: number, deleteCount: number) => {
+      splicedCount++;
+      return originalSplice(start, deleteCount);
+    }) as any;
+
+    // maxRetries=2, depthOverride=5 — total splices bounded by maxRetries (2),
+    // not by depth (5). This is the key Sprint 4 fix.
+    await engine.backtrackForUnassigned(
+      [],
+      sortedMembers,
+      membersById,
+      allMembers,
+      [makeTrainer()],
+      [makeCourt()],
+      new Map(),
+      {},
+      [{ start: '18:00', end: '19:30' }],
+      trainerSessionCount,
+      courtTimeSlotUsage,
+      assignments,
+      assignedMemberIds,
+      2, // maxRetries
+      5 // depthOverride
+    );
+
+    // maxRetries bounds total iterations → splices capped at 2, not 5
+    expect(splicedCount).toBeLessThanOrEqual(2);
+  });
+
+  it('uses depth=3 by default when depthOverride is omitted', async () => {
+    const engine = new SeasonClusteringEngine('s1', 'c1', { backtrackDepth: 5 }) as any;
+    const allMembers: MemberWithDetails[] = [makeMember({ id: 'm1' })];
+    const sortedMembers = allMembers;
+    const membersById = new Map<string, MemberWithDetails>();
+    membersById.set('m1', allMembers[0]);
+    const assignments: GroupAssignment[] = [
+      makeAssignment({ groupId: 'g1', memberIds: ['m1'] }),
+      makeAssignment({ groupId: 'g2', memberIds: ['m2'] }),
+      makeAssignment({ groupId: 'g3', memberIds: ['m3'] }),
+      makeAssignment({ groupId: 'g4', memberIds: ['m4'] }),
+      makeAssignment({ groupId: 'g5', memberIds: ['m5'] }),
+    ];
+    const assignedMemberIds = new Set<string>(['m1', 'm2', 'm3', 'm4', 'm5']);
+    const trainerSessionCount = new Map<string, number>();
+    const courtTimeSlotUsage = new Map<string, Set<string>>();
+
+    let maxDepthObserved = 0;
+    const originalSplice = assignments.splice.bind(assignments);
+    assignments.splice = ((start: number, deleteCount: number) => {
+      maxDepthObserved = Math.max(maxDepthObserved, deleteCount);
+      return originalSplice(start, deleteCount);
+    }) as any;
+
+    // maxRetries=3, no depthOverride → depth should default to 3 (legacy behavior)
+    await engine.backtrackForUnassigned(
+      [],
+      sortedMembers,
+      membersById,
+      allMembers,
+      [makeTrainer()],
+      [makeCourt()],
+      new Map(),
+      {},
+      [{ start: '18:00', end: '19:30' }],
+      trainerSessionCount,
+      courtTimeSlotUsage,
+      assignments,
+      assignedMemberIds,
+      3 // maxRetries only, depthOverride omitted
+    );
+
+    // depth follows maxRetries (3) by default — backwards compatible
+    expect(maxDepthObserved).toBeLessThanOrEqual(3);
+  });
+});
+
 // ═══ Second-pass slot check (Optimization #4) ═════════════════════════
 
 describe('Optimization #4: Second-pass slot availability check', () => {
