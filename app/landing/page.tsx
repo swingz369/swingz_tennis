@@ -372,17 +372,6 @@ export default function LandingPage() {
                     Anmelden
                   </Button>
                 </Link>
-                <Link href="/login">
-                  <Button
-                    size="md"
-                    variant="accent"
-                    className="rounded-full shadow-glow-accent"
-                    onClick={() => analytics.signUp('landing_header')}
-                  >
-                    Kostenlos starten
-                    <ArrowRight className="ml-1.5 h-4 w-4" />
-                  </Button>
-                </Link>
               </div>
               <div className="md:hidden">
                 <Link href="/login">
