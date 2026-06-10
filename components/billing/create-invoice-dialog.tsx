@@ -12,15 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
 import { addDays } from 'date-fns';
@@ -152,18 +144,25 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Rechnung erstellen
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Neue Rechnung erstellen</DialogTitle>
-          <DialogDescription>Erstellen Sie eine neue Rechnung für ein Mitglied</DialogDescription>
-        </DialogHeader>
+    <>
+      <Button onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4 mr-2" />
+        Rechnung erstellen
+      </Button>
+      <CenteredModal
+        open={open}
+        onClose={() => !loading && setOpen(false)}
+        className="max-w-4xl"
+        ariaLabel="Neue Rechnung erstellen"
+      >
+        <div className="space-y-1 mb-4">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">
+            Neue Rechnung erstellen
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Erstellen Sie eine neue Rechnung für ein Mitglied
+          </p>
+        </div>
 
         <div className="space-y-6 py-4">
           {/* Member Selection */}
@@ -357,15 +356,15 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
           </Card>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:gap-2 pt-4 mt-4 border-t border-border">
+          <Button variant="outline" onClick={() => setOpen(false)} className="mt-2 sm:mt-0">
             Abbrechen
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading ? 'Wird erstellt...' : 'Rechnung erstellen'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </CenteredModal>
+    </>
   );
 }

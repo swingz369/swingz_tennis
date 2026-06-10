@@ -3,15 +3,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
 import { Upload, Download, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { generatePaymentCsvTemplate } from '@/lib/csv/payment-import';
@@ -87,20 +79,27 @@ export default function PaymentImportDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <span className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            Zahlungen importieren
-          </span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Zahlungen aus CSV importieren</DialogTitle>
-          <DialogDescription>Importieren Sie Zahlungen aus einer CSV-Datei</DialogDescription>
-        </DialogHeader>
+    <>
+      <Button onClick={() => setOpen(true)}>
+        <span className="flex items-center gap-2">
+          <Upload className="h-4 w-4" />
+          Zahlungen importieren
+        </span>
+      </Button>
+      <CenteredModal
+        open={open}
+        onClose={() => !loading && setOpen(false)}
+        className="max-w-3xl"
+        ariaLabel="Zahlungen aus CSV importieren"
+      >
+        <div className="space-y-1 mb-4">
+          <h2 className="text-lg font-semibold leading-none tracking-tight">
+            Zahlungen aus CSV importieren
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Importieren Sie Zahlungen aus einer CSV-Datei
+          </p>
+        </div>
 
         <div className="space-y-6 py-4">
           {/* Instructions */}
@@ -229,12 +228,12 @@ export default function PaymentImportDialog() {
           )}
         </div>
 
-        <DialogFooter>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end pt-4 mt-4 border-t border-border">
           <Button onClick={handleClose} disabled={loading}>
             {loading ? 'Wird importiert...' : 'Schließen'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </CenteredModal>
+    </>
   );
 }
