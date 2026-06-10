@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useCallback, type ReactNode, type MouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
 export interface CenteredModalProps {
@@ -114,7 +115,17 @@ export function CenteredModal({
 
   if (!open) return null;
 
-  return (
+  // SSR safety — `createPortal` requires `document` which doesn't exist on the server.
+  // 'use client' components are still SSR-rendered for the initial HTML, so guard here.
+  if (typeof document === 'undefined') return null;
+
+  // Render the modal into <body> via a portal. This guarantees the modal's parent
+  // in the DOM is <body> regardless of where the component is mounted in the React
+  // tree, so no ancestor can establish a containing block for `position: fixed`
+  // via `transform`, `filter`, `backdrop-filter`, `will-change`, `contain`, or
+  // `perspective`. The overlay's `min-h-screen flex items-center justify-center`
+  // is therefore always computed against the viewport, not a local parent.
+  return createPortal(
     <div
       role="presentation"
       onClick={handleOverlayClick}
@@ -137,7 +148,8 @@ export function CenteredModal({
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
