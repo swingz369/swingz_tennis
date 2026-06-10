@@ -6,6 +6,7 @@ node_modules/
 .env.local
 .env.*.local
 .env
+.env.test
 .env.vercel
 .env.vercel.*
 .env.swingz
