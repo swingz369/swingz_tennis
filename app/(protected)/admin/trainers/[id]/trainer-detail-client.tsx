@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
@@ -25,6 +26,7 @@ import {
   Calendar,
   MapPin,
   CheckCircle,
+  ChevronRight,
   AlertCircle,
   Edit,
   Save,
@@ -434,23 +436,20 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in">
-      {/* ── Back-Button + Page-Header ──────────────────────────────────────── */}
-      <div className="mb-5 flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/admin/trainers')}
-          title="Zurück zur Trainerliste"
+      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
+      <nav className="mb-4 flex items-center gap-1.5 text-sm">
+        <Link
+          href="/admin/trainers"
+          className="inline-flex items-center gap-1 text-muted-foreground hover:text-brand-primary transition-colors"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-brand-primary">Trainer-Detail</h1>
-          <p className="text-muted-foreground dark:text-muted-foreground mt-1 text-sm">
-            Profil, Qualifikationen, Erfahrung und Verfügbarkeit
-          </p>
-        </div>
-      </div>
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Trainer
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+        <span className="font-medium text-foreground">
+          {trainer.firstName} {trainer.lastName}
+        </span>
+      </nav>
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
@@ -466,16 +465,24 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                 </p>
               </div>
             </div>
-            <Badge variant={getStatusVariant(trainer.status)} size="lg" className="shrink-0">
-              {getStatusLabel(trainer.status)}
-            </Badge>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <Badge variant={getStatusVariant(trainer.status)} size="lg">
+                {getStatusLabel(trainer.status)}
+              </Badge>
+              {!isEditing && (
+                <Button onClick={handleEdit} variant="primary" size="sm" className="gap-1.5">
+                  <Edit className="h-4 w-4" />
+                  Bearbeiten
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* ── Detail Body ──────────────────────────────────────────────── */}
         <div className="p-5">
           <Tabs defaultValue="profile" className="space-y-5">
-            <TabsList className="w-full justify-start bg-transparent border-b rounded-none px-0 gap-6 overflow-x-auto">
+            <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
@@ -486,7 +493,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                 value="qualifications"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
-                Qualifikationen
+                Qualifikationen ({trainer.qualifications.length})
               </TabsTrigger>
               <TabsTrigger
                 value="experience"
@@ -498,7 +505,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                 value="availability"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
-                Verfügbarkeit
+                Verfügbarkeit ({weeklySlots.length + availabilitySlots.length})
               </TabsTrigger>
             </TabsList>
 
@@ -1231,44 +1238,38 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
               </Button>
             </div>
           ) : (
-            <>
-              <div className="flex gap-2 w-full sm:w-auto">
-                {trainer.status === 'active' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAbsenceDialogOpen(true)}
-                    className="flex-1 sm:flex-initial"
-                  >
-                    Urlaub eintragen
-                  </Button>
-                )}
-                {trainer.status !== 'active' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStatusChange('active')}
-                    className="flex-1 sm:flex-initial"
-                  >
-                    Aktivieren
-                  </Button>
-                )}
-                {trainer.status !== 'terminated' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStatusChange('inactive')}
-                    className="flex-1 sm:flex-initial"
-                  >
-                    Deaktivieren
-                  </Button>
-                )}
-              </div>
-              <Button onClick={handleEdit} variant="primary" size="sm" className="w-full sm:w-auto">
-                <Edit className="h-4 w-4 mr-2" />
-                Profil bearbeiten
-              </Button>
-            </>
+            <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+              {trainer.status === 'active' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAbsenceDialogOpen(true)}
+                  className="flex-1 sm:flex-initial"
+                >
+                  Urlaub eintragen
+                </Button>
+              )}
+              {trainer.status !== 'active' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStatusChange('active')}
+                  className="flex-1 sm:flex-initial"
+                >
+                  Aktivieren
+                </Button>
+              )}
+              {trainer.status !== 'terminated' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleStatusChange('inactive')}
+                  className="flex-1 sm:flex-initial"
+                >
+                  Deaktivieren
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </div>
