@@ -31,14 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api-fetch';
@@ -634,229 +627,225 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
       </Card>
 
       {/* ── Detail Dialog ──────────────────────────────────────────────────── */}
-      <Dialog open={!!selectedBooking} onOpenChange={(open) => !open && setSelectedBooking(null)}>
-        <DialogContent className="sm:max-w-lg">
-          {selectedBooking && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-brandPrimary" />
-                  Buchungsdetails
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedBooking.session_start_time
-                    ? format(parseISO(selectedBooking.session_start_time), 'EEEE, dd. MMMM yyyy', {
-                        locale: de,
-                      })
-                    : 'Kein Datum'}
-                  {selectedBooking.start_time && ` · ${selectedBooking.start_time}`}
-                  {selectedBooking.end_time && ` – ${selectedBooking.end_time}`}
-                </DialogDescription>
-              </DialogHeader>
+      <CenteredModal open={!!selectedBooking} onClose={() => setSelectedBooking(null)}>
+        {selectedBooking && (
+          <>
+            <div className="space-y-1.5">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5 text-brandPrimary" />
+                Buchungsdetails
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {selectedBooking.session_start_time
+                  ? format(parseISO(selectedBooking.session_start_time), 'EEEE, dd. MMMM yyyy', {
+                      locale: de,
+                    })
+                  : 'Kein Datum'}
+                {selectedBooking.start_time && ` · ${selectedBooking.start_time}`}
+                {selectedBooking.end_time && ` – ${selectedBooking.end_time}`}
+              </p>
+            </div>
 
-              <div className="space-y-4 py-2">
-                {/* Member / Trainer */}
-                {selectedBooking.source === 'season_plan' ? (
-                  <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
-                    <User className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="font-medium">{selectedBooking.trainer_name || '—'}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {selectedBooking.week_number != null
-                          ? `KW ${selectedBooking.week_number}`
-                          : 'Trainer'}
-                        {selectedBooking.group_ids && selectedBooking.group_ids.length > 0
-                          ? ` · ${selectedBooking.group_ids.length} Gruppe(n)`
-                          : ''}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                    <User className="h-5 w-5 text-brandPrimary mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="font-medium">{selectedBooking.member_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {selectedBooking.member_email}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Court + Type */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <div>
-                      <div className="text-sm font-medium">{selectedBooking.court_name}</div>
-                      {selectedBooking.court_surface && (
-                        <div className="text-xs text-muted-foreground capitalize">
-                          {selectedBooking.court_surface === 'clay'
-                            ? 'Sand'
-                            : selectedBooking.court_surface === 'hard'
-                              ? 'Hartplatz'
-                              : selectedBooking.court_surface === 'grass'
-                                ? 'Rasen'
-                                : selectedBooking.court_surface}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-                    <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <div>
-                      <div className="text-sm font-medium">
-                        {selectedBooking.session_type === 'walk_in'
-                          ? 'Walk-in'
-                          : selectedBooking.session_type === 'event'
-                            ? 'Event'
-                            : selectedBooking.session_type === 'maintenance'
-                              ? 'Wartung'
-                              : 'Training'}
-                      </div>
-                      {selectedBooking.session_max_participants && (
-                        <div className="text-xs text-muted-foreground">
-                          Max. {selectedBooking.session_max_participants} TN
-                        </div>
-                      )}
+            <div className="space-y-4 py-2">
+              {/* Member / Trainer */}
+              {selectedBooking.source === 'season_plan' ? (
+                <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                  <User className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <div className="font-medium">{selectedBooking.trainer_name || '—'}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {selectedBooking.week_number != null
+                        ? `KW ${selectedBooking.week_number}`
+                        : 'Trainer'}
+                      {selectedBooking.group_ids && selectedBooking.group_ids.length > 0
+                        ? ` · ${selectedBooking.group_ids.length} Gruppe(n)`
+                        : ''}
                     </div>
                   </div>
                 </div>
-
-                {/* Herkunft */}
-                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <span className="text-sm text-muted-foreground">Herkunft</span>
-                  <Badge
-                    variant={SOURCE_CONFIG[selectedBooking.source]?.variant || 'secondary'}
-                    size="md"
-                  >
-                    {SOURCE_CONFIG[selectedBooking.source]?.label || selectedBooking.source}
-                  </Badge>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  {(() => {
-                    const cfg = STATUS_CONFIG[selectedBooking.status] || STATUS_CONFIG.pending;
-                    const Icon = cfg.icon;
-                    return (
-                      <Badge variant={cfg.variant} size="md" className="gap-1">
-                        <Icon className="h-3.5 w-3.5" />
-                        {cfg.label}
-                      </Badge>
-                    );
-                  })()}
-                </div>
-
-                {/* Booked at */}
-                {selectedBooking.booked_at && (
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm text-muted-foreground">Gebucht am</span>
-                    <span className="text-sm font-medium">
-                      {format(parseISO(selectedBooking.booked_at), 'dd.MM.yyyy HH:mm', {
-                        locale: de,
-                      })}
-                    </span>
-                  </div>
-                )}
-
-                {/* Payment */}
-                {selectedBooking.payment_status && (
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm text-muted-foreground">Zahlung</span>
-                    <Badge
-                      variant={
-                        selectedBooking.payment_status === 'paid'
-                          ? 'success'
-                          : selectedBooking.payment_status === 'unpaid'
-                            ? 'warning'
-                            : 'secondary'
-                      }
-                      size="md"
-                    >
-                      {selectedBooking.payment_status === 'paid'
-                        ? 'Bezahlt'
-                        : selectedBooking.payment_status === 'unpaid'
-                          ? 'Offen'
-                          : selectedBooking.payment_status === 'refunded'
-                            ? 'Erstattet'
-                            : selectedBooking.payment_status}
-                    </Badge>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {selectedBooking.notes && (
-                  <div className="p-3 bg-muted/30 rounded-lg">
-                    <div className="text-xs text-muted-foreground mb-1">Notizen</div>
-                    <div className="text-sm">{selectedBooking.notes}</div>
-                  </div>
-                )}
-
-                {/* Cancellation info */}
-                {selectedBooking.status === 'cancelled' && selectedBooking.cancelled_at && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                    <div className="font-medium">
-                      Storniert am{' '}
-                      {format(parseISO(selectedBooking.cancelled_at), 'dd.MM.yyyy HH:mm', {
-                        locale: de,
-                      })}
+              ) : (
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                  <User className="h-5 w-5 text-brandPrimary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <div className="font-medium">{selectedBooking.member_name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {selectedBooking.member_email}
                     </div>
-                    {selectedBooking.cancellation_reason && (
-                      <div className="text-xs mt-1">
-                        Grund: {selectedBooking.cancellation_reason}
+                  </div>
+                </div>
+              )}
+
+              {/* Court + Type */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                  <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div>
+                    <div className="text-sm font-medium">{selectedBooking.court_name}</div>
+                    {selectedBooking.court_surface && (
+                      <div className="text-xs text-muted-foreground capitalize">
+                        {selectedBooking.court_surface === 'clay'
+                          ? 'Sand'
+                          : selectedBooking.court_surface === 'hard'
+                            ? 'Hartplatz'
+                            : selectedBooking.court_surface === 'grass'
+                              ? 'Rasen'
+                              : selectedBooking.court_surface}
                       </div>
                     )}
                   </div>
-                )}
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                  <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <div>
+                    <div className="text-sm font-medium">
+                      {selectedBooking.session_type === 'walk_in'
+                        ? 'Walk-in'
+                        : selectedBooking.session_type === 'event'
+                          ? 'Event'
+                          : selectedBooking.session_type === 'maintenance'
+                            ? 'Wartung'
+                            : 'Training'}
+                    </div>
+                    {selectedBooking.session_max_participants && (
+                      <div className="text-xs text-muted-foreground">
+                        Max. {selectedBooking.session_max_participants} TN
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              {/* ── Admin Actions ──────────────────────────────────────────── */}
-              {isAdmin &&
-                selectedBooking.source === 'booking' &&
-                selectedBooking.status !== 'cancelled' && (
-                  <DialogFooter className="flex-col sm:flex-row gap-2">
-                    {selectedBooking.status === 'pending' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAdminAction(selectedBooking.id, 'confirm')}
-                        disabled={actionLoading}
-                        className="gap-1.5"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        Bestätigen
-                      </Button>
-                    )}
+              {/* Herkunft */}
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm text-muted-foreground">Herkunft</span>
+                <Badge
+                  variant={SOURCE_CONFIG[selectedBooking.source]?.variant || 'secondary'}
+                  size="md"
+                >
+                  {SOURCE_CONFIG[selectedBooking.source]?.label || selectedBooking.source}
+                </Badge>
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <span className="text-sm text-muted-foreground">Status</span>
+                {(() => {
+                  const cfg = STATUS_CONFIG[selectedBooking.status] || STATUS_CONFIG.pending;
+                  const Icon = cfg.icon;
+                  return (
+                    <Badge variant={cfg.variant} size="md" className="gap-1">
+                      <Icon className="h-3.5 w-3.5" />
+                      {cfg.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
+
+              {/* Booked at */}
+              {selectedBooking.booked_at && (
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <span className="text-sm text-muted-foreground">Gebucht am</span>
+                  <span className="text-sm font-medium">
+                    {format(parseISO(selectedBooking.booked_at), 'dd.MM.yyyy HH:mm', {
+                      locale: de,
+                    })}
+                  </span>
+                </div>
+              )}
+
+              {/* Payment */}
+              {selectedBooking.payment_status && (
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <span className="text-sm text-muted-foreground">Zahlung</span>
+                  <Badge
+                    variant={
+                      selectedBooking.payment_status === 'paid'
+                        ? 'success'
+                        : selectedBooking.payment_status === 'unpaid'
+                          ? 'warning'
+                          : 'secondary'
+                    }
+                    size="md"
+                  >
+                    {selectedBooking.payment_status === 'paid'
+                      ? 'Bezahlt'
+                      : selectedBooking.payment_status === 'unpaid'
+                        ? 'Offen'
+                        : selectedBooking.payment_status === 'refunded'
+                          ? 'Erstattet'
+                          : selectedBooking.payment_status}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Notes */}
+              {selectedBooking.notes && (
+                <div className="p-3 bg-muted/30 rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">Notizen</div>
+                  <div className="text-sm">{selectedBooking.notes}</div>
+                </div>
+              )}
+
+              {/* Cancellation info */}
+              {selectedBooking.status === 'cancelled' && selectedBooking.cancelled_at && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  <div className="font-medium">
+                    Storniert am{' '}
+                    {format(parseISO(selectedBooking.cancelled_at), 'dd.MM.yyyy HH:mm', {
+                      locale: de,
+                    })}
+                  </div>
+                  {selectedBooking.cancellation_reason && (
+                    <div className="text-xs mt-1">Grund: {selectedBooking.cancellation_reason}</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── Admin Actions ──────────────────────────────────────────── */}
+            {isAdmin &&
+              selectedBooking.source === 'booking' &&
+              selectedBooking.status !== 'cancelled' && (
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  {selectedBooking.status === 'pending' && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleAdminAction(selectedBooking.id, 'no_show')}
+                      onClick={() => handleAdminAction(selectedBooking.id, 'confirm')}
                       disabled={actionLoading}
-                      className="gap-1.5 text-amber-600 hover:text-amber-700"
+                      className="gap-1.5"
                     >
-                      <AlertTriangle className="h-4 w-4" />
-                      Nicht erschienen
+                      <CheckCircle className="h-4 w-4" />
+                      Bestätigen
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleAdminAction(selectedBooking.id, 'cancel', 'admin_cancellation')
-                      }
-                      disabled={actionLoading}
-                      className="gap-1.5 text-red-600 hover:text-red-700"
-                    >
-                      <Ban className="h-4 w-4" />
-                      Stornieren
-                    </Button>
-                  </DialogFooter>
-                )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAdminAction(selectedBooking.id, 'no_show')}
+                    disabled={actionLoading}
+                    className="gap-1.5 text-amber-600 hover:text-amber-700"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    Nicht erschienen
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleAdminAction(selectedBooking.id, 'cancel', 'admin_cancellation')
+                    }
+                    disabled={actionLoading}
+                    className="gap-1.5 text-red-600 hover:text-red-700"
+                  >
+                    <Ban className="h-4 w-4" />
+                    Stornieren
+                  </Button>
+                </div>
+              )}
+          </>
+        )}
+      </CenteredModal>
     </div>
   );
 }

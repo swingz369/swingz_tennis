@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,15 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -253,153 +245,12 @@ export function CourtTypesClient() {
             Definiere verfügbare Platzarten (Belag, Ausstattung, Preise)
           </p>
         </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <span className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Neuer Platz-Typ
-              </span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <form onSubmit={handleCreate}>
-              <DialogHeader>
-                <DialogTitle>Neuen Platz-Typ anlegen</DialogTitle>
-                <DialogDescription>
-                  Definiere einen neuen Tennisplatz-Typ mit Belag und Preiseinstellungen.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="z.B. Sandplatz"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Beschreibung</Label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Optionale Beschreibung"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="surface_type">Belag *</Label>
-                  <Select
-                    value={formData.surface_type}
-                    onValueChange={(v) =>
-                      setFormData({
-                        ...formData,
-                        surface_type: v as CourtType['surface_type'],
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="clay">Sand (Clay)</SelectItem>
-                      <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
-                      <SelectItem value="grass">Rasen (Grass)</SelectItem>
-                      <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
-                      <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="is_indoor"
-                      checked={formData.is_indoor}
-                      onChange={(e) => setFormData({ ...formData, is_indoor: e.target.checked })}
-                      className="h-4 w-4 rounded border-border"
-                    />
-                    <Label htmlFor="is_indoor">Halle</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="is_outdoor"
-                      checked={formData.is_outdoor}
-                      onChange={(e) => setFormData({ ...formData, is_outdoor: e.target.checked })}
-                      className="h-4 w-4 rounded border-border"
-                    />
-                    <Label htmlFor="is_outdoor">Freiluft</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="requires_lighting"
-                      checked={formData.requires_lighting}
-                      onChange={(e) =>
-                        setFormData({ ...formData, requires_lighting: e.target.checked })
-                      }
-                      className="h-4 w-4 rounded border-border"
-                    />
-                    <Label htmlFor="requires_lighting" className="flex items-center gap-1">
-                      <Lightbulb className="h-4 w-4" />
-                      Flutlicht
-                    </Label>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="max_players">Max. Spieler</Label>
-                    <Input
-                      id="max_players"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={formData.max_players}
-                      onChange={(e) =>
-                        setFormData({ ...formData, max_players: parseInt(e.target.value) || 4 })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hourly_rate">Std-Preis (€)</Label>
-                    <Input
-                      id="hourly_rate"
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      value={formData.hourly_rate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <Label htmlFor="is_active">Aktiv</Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Abbrechen
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Wird erstellt...' : 'Erstellen'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button className="gap-2" onClick={() => setShowCreateDialog(true)}>
+          <span className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Neuer Platz-Typ
+          </span>
+        </Button>
       </div>
 
       {/* Court Types Table */}
@@ -509,142 +360,279 @@ export function CourtTypesClient() {
       {/* Pagination */}
       {pagination && <PaginationNav meta={pagination} compact onPageChange={setPage} />}
 
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <form onSubmit={handleUpdate}>
-            <DialogHeader>
-              <DialogTitle>Platz-Typ bearbeiten</DialogTitle>
-              <DialogDescription>Ändere die Details des Platz-Typs.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Name *</Label>
-                <Input
-                  id="edit-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
+      {/* Create Dialog */}
+      <CenteredModal open={showCreateDialog} onClose={() => setShowCreateDialog(false)}>
+        <form onSubmit={handleCreate}>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-bold">Neuen Platz-Typ anlegen</h2>
+            <p className="text-sm text-muted-foreground">
+              Definiere einen neuen Tennisplatz-Typ mit Belag und Preiseinstellungen.
+            </p>
+          </div>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="z.B. Sandplatz"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Beschreibung</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Optionale Beschreibung"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="surface_type">Belag *</Label>
+              <Select
+                value={formData.surface_type}
+                onValueChange={(v) =>
+                  setFormData({
+                    ...formData,
+                    surface_type: v as CourtType['surface_type'],
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clay">Sand (Clay)</SelectItem>
+                  <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
+                  <SelectItem value="grass">Rasen (Grass)</SelectItem>
+                  <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
+                  <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="is_indoor"
+                  checked={formData.is_indoor}
+                  onChange={(e) => setFormData({ ...formData, is_indoor: e.target.checked })}
+                  className="h-4 w-4 rounded border-border"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Beschreibung</Label>
-                <Input
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-surface_type">Belag *</Label>
-                <Select
-                  value={formData.surface_type}
-                  onValueChange={(v) =>
-                    setFormData({
-                      ...formData,
-                      surface_type: v as CourtType['surface_type'],
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="clay">Sand (Clay)</SelectItem>
-                    <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
-                    <SelectItem value="grass">Rasen (Grass)</SelectItem>
-                    <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
-                    <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="edit-is_indoor"
-                    checked={formData.is_indoor}
-                    onChange={(e) => setFormData({ ...formData, is_indoor: e.target.checked })}
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <Label htmlFor="edit-is_indoor">Halle</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="edit-is_outdoor"
-                    checked={formData.is_outdoor}
-                    onChange={(e) => setFormData({ ...formData, is_outdoor: e.target.checked })}
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <Label htmlFor="edit-is_outdoor">Freiluft</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="edit-requires_lighting"
-                    checked={formData.requires_lighting}
-                    onChange={(e) =>
-                      setFormData({ ...formData, requires_lighting: e.target.checked })
-                    }
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <Label htmlFor="edit-requires_lighting" className="flex items-center gap-1">
-                    <Lightbulb className="h-4 w-4" />
-                    Flutlicht
-                  </Label>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-max_players">Max. Spieler</Label>
-                  <Input
-                    id="edit-max_players"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={formData.max_players}
-                    onChange={(e) =>
-                      setFormData({ ...formData, max_players: parseInt(e.target.value) || 4 })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-hourly_rate">Std-Preis (€)</Label>
-                  <Input
-                    id="edit-hourly_rate"
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={formData.hourly_rate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })
-                    }
-                  />
-                </div>
+                <Label htmlFor="is_indoor">Halle</Label>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  id="edit-is_active"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  id="is_outdoor"
+                  checked={formData.is_outdoor}
+                  onChange={(e) => setFormData({ ...formData, is_outdoor: e.target.checked })}
                   className="h-4 w-4 rounded border-border"
                 />
-                <Label htmlFor="edit-is_active">Aktiv</Label>
+                <Label htmlFor="is_outdoor">Freiluft</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="requires_lighting"
+                  checked={formData.requires_lighting}
+                  onChange={(e) =>
+                    setFormData({ ...formData, requires_lighting: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-border"
+                />
+                <Label htmlFor="requires_lighting" className="flex items-center gap-1">
+                  <Lightbulb className="h-4 w-4" />
+                  Flutlicht
+                </Label>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
-                Abbrechen
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="max_players">Max. Spieler</Label>
+                <Input
+                  id="max_players"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.max_players}
+                  onChange={(e) =>
+                    setFormData({ ...formData, max_players: parseInt(e.target.value) || 4 })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hourly_rate">Std-Preis (€)</Label>
+                <Input
+                  id="hourly_rate"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={formData.hourly_rate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="h-4 w-4 rounded border-border"
+              />
+              <Label htmlFor="is_active">Aktiv</Label>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2 justify-end">
+            <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Wird erstellt...' : 'Erstellen'}
+            </Button>
+          </div>
+        </form>
+      </CenteredModal>
+
+      {/* Edit Dialog */}
+      <CenteredModal open={showEditDialog} onClose={() => setShowEditDialog(false)}>
+        <form onSubmit={handleUpdate}>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-bold">Platz-Typ bearbeiten</h2>
+            <p className="text-sm text-muted-foreground">Ändere die Details des Platz-Typs.</p>
+          </div>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Name *</Label>
+              <Input
+                id="edit-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Beschreibung</Label>
+              <Input
+                id="edit-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-surface_type">Belag *</Label>
+              <Select
+                value={formData.surface_type}
+                onValueChange={(v) =>
+                  setFormData({
+                    ...formData,
+                    surface_type: v as CourtType['surface_type'],
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clay">Sand (Clay)</SelectItem>
+                  <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
+                  <SelectItem value="grass">Rasen (Grass)</SelectItem>
+                  <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
+                  <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="edit-is_indoor"
+                  checked={formData.is_indoor}
+                  onChange={(e) => setFormData({ ...formData, is_indoor: e.target.checked })}
+                  className="h-4 w-4 rounded border-border"
+                />
+                <Label htmlFor="edit-is_indoor">Halle</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="edit-is_outdoor"
+                  checked={formData.is_outdoor}
+                  onChange={(e) => setFormData({ ...formData, is_outdoor: e.target.checked })}
+                  className="h-4 w-4 rounded border-border"
+                />
+                <Label htmlFor="edit-is_outdoor">Freiluft</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="edit-requires_lighting"
+                  checked={formData.requires_lighting}
+                  onChange={(e) =>
+                    setFormData({ ...formData, requires_lighting: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-border"
+                />
+                <Label htmlFor="edit-requires_lighting" className="flex items-center gap-1">
+                  <Lightbulb className="h-4 w-4" />
+                  Flutlicht
+                </Label>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-max_players">Max. Spieler</Label>
+                <Input
+                  id="edit-max_players"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.max_players}
+                  onChange={(e) =>
+                    setFormData({ ...formData, max_players: parseInt(e.target.value) || 4 })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-hourly_rate">Std-Preis (€)</Label>
+                <Input
+                  id="edit-hourly_rate"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={formData.hourly_rate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, hourly_rate: parseFloat(e.target.value) || 0 })
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="edit-is_active"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                className="h-4 w-4 rounded border-border"
+              />
+              <Label htmlFor="edit-is_active">Aktiv</Label>
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2 justify-end">
+            <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}
+            </Button>
+          </div>
+        </form>
+      </CenteredModal>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

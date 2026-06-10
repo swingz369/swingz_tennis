@@ -44,14 +44,7 @@ import {
 import CourtBookingsList from '@/components/court-bookings-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
@@ -1082,83 +1075,81 @@ export default function UnifiedCourtCalendar({
 
   // ── Block Slot Dialog ──
   const blockDialog = (
-    <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Platz sperren
-          </DialogTitle>
-          <DialogDescription>
-            Sperrt den Platz {blockCourtId && courts.find((c) => c.id === blockCourtId)?.name} am{' '}
-            {format(blockDate, 'dd.MM.yyyy', { locale: de })} um {blockTimeSlot} Uhr.
-          </DialogDescription>
-        </DialogHeader>
+    <CenteredModal open={blockDialogOpen} onClose={() => setBlockDialogOpen(false)}>
+      <div className="space-y-1.5">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+          <Lock className="h-5 w-5" />
+          Platz sperren
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Sperrt den Platz {blockCourtId && courts.find((c) => c.id === blockCourtId)?.name} am{' '}
+          {format(blockDate, 'dd.MM.yyyy', { locale: de })} um {blockTimeSlot} Uhr.
+        </p>
+      </div>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="block-type">Sperrtyp</Label>
-            <div className="flex gap-2">
-              <Button
-                variant={blockType === 'event' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setBlockType('event')}
-                className="gap-1.5"
-              >
-                <PartyPopper className="h-4 w-4" />
-                Veranstaltung
-              </Button>
-              <Button
-                variant={blockType === 'maintenance' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setBlockType('maintenance')}
-                className="gap-1.5"
-              >
-                <Wrench className="h-4 w-4" />
-                Wartung
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="block-duration">Dauer (Stunden)</Label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map((h) => (
-                <Button
-                  key={h}
-                  variant={blockDuration === h ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setBlockDuration(h)}
-                >
-                  {h}h
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="block-reason">Grund (optional)</Label>
-            <Input
-              id="block-reason"
-              placeholder={
-                blockType === 'event' ? 'z.B. Firmenevent, Turnier...' : 'z.B. Platzreparatur...'
-              }
-              value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
-            />
+      <div className="space-y-4 py-2">
+        <div className="space-y-2">
+          <Label htmlFor="block-type">Sperrtyp</Label>
+          <div className="flex gap-2">
+            <Button
+              variant={blockType === 'event' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setBlockType('event')}
+              className="gap-1.5"
+            >
+              <PartyPopper className="h-4 w-4" />
+              Veranstaltung
+            </Button>
+            <Button
+              variant={blockType === 'maintenance' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setBlockType('maintenance')}
+              className="gap-1.5"
+            >
+              <Wrench className="h-4 w-4" />
+              Wartung
+            </Button>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
-            Abbrechen
-          </Button>
-          <Button onClick={handleBlockSlot} disabled={blockLoading}>
-            {blockLoading ? 'Sperre wird gesetzt...' : 'Platz sperren'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-2">
+          <Label htmlFor="block-duration">Dauer (Stunden)</Label>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map((h) => (
+              <Button
+                key={h}
+                variant={blockDuration === h ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setBlockDuration(h)}
+              >
+                {h}h
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="block-reason">Grund (optional)</Label>
+          <Input
+            id="block-reason"
+            placeholder={
+              blockType === 'event' ? 'z.B. Firmenevent, Turnier...' : 'z.B. Platzreparatur...'
+            }
+            value={blockReason}
+            onChange={(e) => setBlockReason(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2 pt-2">
+        <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
+          Abbrechen
+        </Button>
+        <Button onClick={handleBlockSlot} disabled={blockLoading}>
+          {blockLoading ? 'Sperre wird gesetzt...' : 'Platz sperren'}
+        </Button>
+      </div>
+    </CenteredModal>
   );
 
   // Wrap with DndContext for admins

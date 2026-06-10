@@ -22,15 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
 import { CreditCard, DollarSign, Plus, Eye, FileText, Loader2, Trash2, Send } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
@@ -384,73 +376,12 @@ export default function BillingClient({
           </Button>
           <CreateInvoiceDialog onSuccess={refreshData} members={clubMembers} />
           <PaymentImportDialog />
-          <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <span className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Abonnement zuweisen
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Abonnement zuweisen</DialogTitle>
-                <DialogDescription>Weise einem Mitglied einen Tarif zu</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div>
-                  <Label htmlFor="member">Mitglied</Label>
-                  <Select
-                    value={selectedMember?.id || ''}
-                    onValueChange={(v) => {
-                      const member = clubMembers.find((m) => m.id === v);
-                      setSelectedMember(member || null);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Mitglied wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clubMembers.length > 0 ? (
-                        clubMembers.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            {member.name} ({member.email})
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-4 text-sm text-muted-foreground">
-                          Keine Mitglieder gefunden
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="plan">Tarif</Label>
-                  <Select
-                    value={selectedPlan}
-                    onValueChange={(v) => setSelectedPlan(v as Subscription['plan'])}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">Free (0€)</SelectItem>
-                      <SelectItem value="pro">Pro (29,99€/Monat)</SelectItem>
-                      <SelectItem value="enterprise">Enterprise (99€/Monat)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
-                  Abbrechen
-                </Button>
-                <Button onClick={handleAssignPlan}>Zuweisen</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setShowAssignDialog(true)}>
+            <span className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Abonnement zuweisen
+            </span>
+          </Button>
         </div>
       </div>
 
@@ -715,115 +646,167 @@ export default function BillingClient({
           />
         )}
 
+      {/* Assign Subscription Dialog */}
+      <CenteredModal open={showAssignDialog} onClose={() => setShowAssignDialog(false)}>
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold">Abonnement zuweisen</h2>
+          <p className="text-sm text-muted-foreground">Weise einem Mitglied einen Tarif zu</p>
+        </div>
+        <div className="space-y-4 py-4">
+          <div>
+            <Label htmlFor="member">Mitglied</Label>
+            <Select
+              value={selectedMember?.id || ''}
+              onValueChange={(v) => {
+                const member = clubMembers.find((m) => m.id === v);
+                setSelectedMember(member || null);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Mitglied wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {clubMembers.length > 0 ? (
+                  clubMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name} ({member.email})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-4 text-sm text-muted-foreground">
+                    Keine Mitglieder gefunden
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="plan">Tarif</Label>
+            <Select
+              value={selectedPlan}
+              onValueChange={(v) => setSelectedPlan(v as Subscription['plan'])}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free (0€)</SelectItem>
+                <SelectItem value="pro">Pro (29,99€/Monat)</SelectItem>
+                <SelectItem value="enterprise">Enterprise (99€/Monat)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex gap-2 pt-2 justify-end">
+          <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+            Abbrechen
+          </Button>
+          <Button onClick={handleAssignPlan}>Zuweisen</Button>
+        </div>
+      </CenteredModal>
+
       {/* Adhoc Invoice Dialog */}
-      <Dialog open={showAdhocDialog} onOpenChange={setShowAdhocDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Neue Zusatz-Rechnung</DialogTitle>
-            <DialogDescription>Erstelle eine manuelle Rechnung für ein Mitglied</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="adhoc-member">Mitglied *</Label>
-                <Select value={adhocMemberId} onValueChange={setAdhocMemberId}>
-                  <SelectTrigger id="adhoc-member">
-                    <SelectValue placeholder="Mitglied wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clubMembers.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name} ({m.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="adhoc-due">Fälligkeitsdatum *</Label>
-                <Input
-                  id="adhoc-due"
-                  type="date"
-                  value={adhocDueDate}
-                  onChange={(e) => setAdhocDueDate(e.target.value)}
-                />
-              </div>
+      <CenteredModal open={showAdhocDialog} onClose={() => setShowAdhocDialog(false)}>
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold">Neue Zusatz-Rechnung</h2>
+          <p className="text-sm text-muted-foreground">
+            Erstelle eine manuelle Rechnung für ein Mitglied
+          </p>
+        </div>
+        <div className="space-y-4 py-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="adhoc-member">Mitglied *</Label>
+              <Select value={adhocMemberId} onValueChange={setAdhocMemberId}>
+                <SelectTrigger id="adhoc-member">
+                  <SelectValue placeholder="Mitglied wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubMembers.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name} ({m.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <Label htmlFor="adhoc-notes">Notizen</Label>
+              <Label htmlFor="adhoc-due">Fälligkeitsdatum *</Label>
               <Input
-                id="adhoc-notes"
-                value={adhocNotes}
-                onChange={(e) => setAdhocNotes(e.target.value)}
-                placeholder="Optionale Anmerkungen"
+                id="adhoc-due"
+                type="date"
+                value={adhocDueDate}
+                onChange={(e) => setAdhocDueDate(e.target.value)}
               />
             </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Positionen *</Label>
-                <Button type="button" size="sm" variant="outline" onClick={addItem}>
-                  <Plus className="h-3 w-3 mr-1" />
-                  Position hinzufügen
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {adhocItems.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-[1fr_80px_100px_36px] gap-2 items-center"
+          </div>
+          <div>
+            <Label htmlFor="adhoc-notes">Notizen</Label>
+            <Input
+              id="adhoc-notes"
+              value={adhocNotes}
+              onChange={(e) => setAdhocNotes(e.target.value)}
+              placeholder="Optionale Anmerkungen"
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Label>Positionen *</Label>
+              <Button type="button" size="sm" variant="outline" onClick={addItem}>
+                <Plus className="h-3 w-3 mr-1" />
+                Position hinzufügen
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {adhocItems.map((item, idx) => (
+                <div key={idx} className="grid grid-cols-[1fr_80px_100px_36px] gap-2 items-center">
+                  <Input
+                    placeholder="Beschreibung"
+                    value={item.description}
+                    onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="Anz."
+                    value={item.quantity}
+                    onChange={(e) => updateItem(idx, 'quantity', parseInt(e.target.value, 10) || 1)}
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    placeholder="Preis €"
+                    value={item.unit_price}
+                    onChange={(e) => updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeItem(idx)}
+                    disabled={adhocItems.length === 1}
                   >
-                    <Input
-                      placeholder="Beschreibung"
-                      value={item.description}
-                      onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                    />
-                    <Input
-                      type="number"
-                      min={1}
-                      placeholder="Anz."
-                      value={item.quantity}
-                      onChange={(e) =>
-                        updateItem(idx, 'quantity', parseInt(e.target.value, 10) || 1)
-                      }
-                    />
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      placeholder="Preis €"
-                      value={item.unit_price}
-                      onChange={(e) =>
-                        updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)
-                      }
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeItem(idx)}
-                      disabled={adhocItems.length === 1}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-400" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 text-right text-sm font-medium text-foreground">
-                Gesamt: {adhocTotal} €
-              </div>
+                    <Trash2 className="h-4 w-4 text-red-400" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 text-right text-sm font-medium text-foreground">
+              Gesamt: {adhocTotal} €
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAdhocDialog(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleSubmitAdhoc} disabled={submittingAdhoc}>
-              {submittingAdhoc && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Rechnung erstellen
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+        <div className="flex gap-2 pt-2 justify-end">
+          <Button variant="outline" onClick={() => setShowAdhocDialog(false)}>
+            Abbrechen
+          </Button>
+          <Button onClick={handleSubmitAdhoc} disabled={submittingAdhoc}>
+            {submittingAdhoc && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Rechnung erstellen
+          </Button>
+        </div>
+      </CenteredModal>
     </div>
   );
 }

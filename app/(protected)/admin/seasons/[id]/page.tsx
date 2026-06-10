@@ -23,14 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import {
   Select,
   SelectContent,
@@ -217,68 +210,68 @@ function GroupChangeDialog({
         Wechseln
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Gruppenwechsel</DialogTitle>
-            <DialogDescription>Mitglied in eine andere Gruppe wechseln lassen</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Aktuelle Gruppe</Label>
-              <p className="mt-1 text-sm font-medium">{currentGroupName}</p>
-            </div>
-            <div>
-              <Label>Neue Gruppe</Label>
-              <Select value={newGroupId} onValueChange={setNewGroupId}>
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue placeholder="Gruppe wählen…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {otherGroups.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name} ({g.age_group} / {g.level})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="change_date">Wechseldatum</Label>
-              <Input
-                id="change_date"
-                type="date"
-                value={changeDate}
-                onChange={(e) => setChangeDate(e.target.value)}
-                className="mt-1 max-w-xs"
-              />
-            </div>
-            {err && <p className="text-sm text-red-600">{err}</p>}
-            {result && (
-              <p className="text-sm font-medium text-green-600">
-                Wechsel durchgeführt. Netto: {result.net_delta >= 0 ? '+' : ''}
-                {result.net_delta.toFixed(2)} €
-              </p>
-            )}
+      <CenteredModal open={open} onClose={() => setOpen(false)}>
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold">Gruppenwechsel</h2>
+          <p className="text-sm text-muted-foreground">
+            Mitglied in eine andere Gruppe wechseln lassen
+          </p>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <Label>Aktuelle Gruppe</Label>
+            <p className="mt-1 text-sm font-medium">{currentGroupName}</p>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setOpen(false);
-                setResult(null);
-                setErr(null);
-                setNewGroupId('');
-              }}
-            >
-              Abbrechen
-            </Button>
-            <Button onClick={handleSubmit} disabled={loading || !newGroupId}>
-              {loading ? 'Wird ausgeführt…' : 'Wechsel durchführen'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div>
+            <Label>Neue Gruppe</Label>
+            <Select value={newGroupId} onValueChange={setNewGroupId}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Gruppe wählen…" />
+              </SelectTrigger>
+              <SelectContent>
+                {otherGroups.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name} ({g.age_group} / {g.level})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="change_date">Wechseldatum</Label>
+            <Input
+              id="change_date"
+              type="date"
+              value={changeDate}
+              onChange={(e) => setChangeDate(e.target.value)}
+              className="mt-1 max-w-xs"
+            />
+          </div>
+          {err && <p className="text-sm text-red-600">{err}</p>}
+          {result && (
+            <p className="text-sm font-medium text-green-600">
+              Wechsel durchgeführt. Netto: {result.net_delta >= 0 ? '+' : ''}
+              {result.net_delta.toFixed(2)} €
+            </p>
+          )}
+        </div>
+        <div className="flex gap-2 pt-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+              setResult(null);
+              setErr(null);
+              setNewGroupId('');
+            }}
+          >
+            Abbrechen
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading || !newGroupId}>
+            {loading ? 'Wird ausgeführt…' : 'Wechsel durchführen'}
+          </Button>
+        </div>
+      </CenteredModal>
     </>
   );
 }
