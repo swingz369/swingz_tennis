@@ -3,9 +3,17 @@
 import { useState, useEffect } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -701,64 +709,115 @@ export default function TrainerProfileManagement({ clubId }: { clubId: string })
               )}
             </Card>
           ) : (
-            /* ── Trainer Card Grid ──────────────────────────────────────────── */
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* @codebuff-skip: TODO - replace card grid with table like members-client.tsx (failed str_replace above due to special chars in section comment) */}
-              {filteredTrainers.map((trainer, i) => {
-                const isSelected = selectedTrainer?.id === trainer.id;
-                const delayClass = `animate-in-delay-${(i % 5) + 1}`;
-                return (
-                  <Card
-                    key={trainer.id}
-                    variant={isSelected ? 'gradient' : 'elevated'}
-                    className={`cursor-pointer hover-lift animate-in ${delayClass} transition-all duration-200 ${
-                      isSelected ? 'ring-2 ring-brandPrimary/50 shadow-md' : ''
-                    }`}
-                    onClick={() => setSelectedTrainer(trainer)}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 shadow-sm shrink-0">
-                            <User className="h-6 w-6 text-brandPrimary" />
-                          </div>
-                          <div className="min-w-0">
-                            <CardTitle className="text-base truncate">
-                              {trainer.firstName} {trainer.lastName}
-                            </CardTitle>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {trainer.email}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Badge variant={getStatusVariant(trainer.status)} size="sm">
-                          {getStatusLabel(trainer.status)}
-                        </Badge>
-                      </div>
-                      <div className="space-y-2 text-xs text-muted-foreground dark:text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Award className="h-3.5 w-3.5 shrink-0" />
-                          <span>{trainer.qualifications.length} Qualifikationen</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Target className="h-3.5 w-3.5 shrink-0" />
-                          <span>{trainer.specializations.length} Spezialisierungen</span>
-                        </div>
-                        {trainer.hourlyRate && (
-                          <div className="flex items-center gap-2">
-                            <Euro className="h-3.5 w-3.5 shrink-0" />
-                            <span>€{trainer.hourlyRate}/h</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            /* ── Trainer Table (Mitgliederverwaltungs-Stil) ─────────────── */
+            <div className="rounded-lg border border-border/60 dark:border-white/10 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="hidden md:table-cell">E-Mail</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden lg:table-cell">Spezialisierungen</TableHead>
+                    <TableHead className="hidden lg:table-cell">Qualifikationen</TableHead>
+                    <TableHead className="hidden xl:table-cell text-right">Stundensatz</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTrainers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        Keine Trainer gefunden
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTrainers.map((trainer) => {
+                      const isSelected = selectedTrainer?.id === trainer.id;
+                      return (
+                        <TableRow
+                          key={trainer.id}
+                          className={`cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-brandPrimary/5 hover:bg-brandPrimary/10'
+                              : 'hover:bg-muted/40 dark:hover:bg-background/40'
+                          }`}
+                          onClick={() => setSelectedTrainer(trainer)}
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 shrink-0">
+                                <User className="h-4 w-4 text-brandPrimary" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold">
+                                  {trainer.firstName} {trainer.lastName}
+                                </div>
+                                <div className="truncate text-xs text-muted-foreground md:hidden">
+                                  {trainer.email}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                            {trainer.email}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(trainer.status)} size="sm">
+                              {getStatusLabel(trainer.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-sm">
+                            {trainer.specializations.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {trainer.specializations.slice(0, 2).map((s) => (
+                                  <Badge key={s} variant="outline" size="sm">
+                                    {s}
+                                  </Badge>
+                                ))}
+                                {trainer.specializations.length > 2 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    +{trainer.specializations.length - 2}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell text-sm">
+                            <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                              <Award className="h-3.5 w-3.5" />
+                              {trainer.qualifications.length}
+                            </span>
+                          </TableCell>
+                          <TableCell className="hidden xl:table-cell text-right tabular-nums text-sm">
+                            {trainer.hourlyRate ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Euro className="h-3.5 w-3.5 text-muted-foreground" />
+                                {trainer.hourlyRate}/h
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTrainer(trainer);
+                              }}
+                            >
+                              Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </div>
           )}
 
