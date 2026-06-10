@@ -273,6 +273,19 @@ export const seasonPlanningConfigs = pgTable(
     // Optimization #6: Backtracking depth for unassigned members (0 = disabled, capped at 3 at runtime)
     backtrack_depth: integer('backtrack_depth').notNull().default(0),
 
+    // Sprint 4 P0 #3 (Adaptive Backtrack): threshold for the unassigned-member
+    // rate that triggers the second backtrack pass (depth=5). Range 0..1,
+    // default 0.05 (5%). Set to 1.0 to disable the second pass entirely.
+    // `mode: 'number'` maps the PG numeric to a JS number (lossless for this
+    // 0..1 range at scale 4).
+    unassigned_rate_threshold: numeric('unassigned_rate_threshold', {
+      precision: 5,
+      scale: 4,
+      mode: 'number',
+    })
+      .notNull()
+      .default(0.05),
+
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },

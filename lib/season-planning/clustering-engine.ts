@@ -308,9 +308,11 @@ export class SeasonClusteringEngine {
         kidsGroupMaxSize: dbConfig.kids_group_max_size ?? DEFAULT_CONFIG.kidsGroupMaxSize,
         kidsGroupMinSize: dbConfig.kids_group_min_size ?? DEFAULT_CONFIG.kidsGroupMinSize,
         slotDurationMinutes: dbConfig.slot_duration_minutes ?? DEFAULT_CONFIG.slotDurationMinutes,
-        // Sprint 4 P0 #3 (Adaptive Backtrack) — column not yet in DB schema,
-        // so we use the default until the planning-configs migration lands.
-        unassignedRateThreshold: DEFAULT_CONFIG.unassignedRateThreshold,
+        // Sprint 4 P0 #3 (Adaptive Backtrack): DB column added in
+        // supabase/migrations/20260610_add_unassigned_rate_threshold.sql.
+        // Range 0..1, default 0.05 (5%) via DB DEFAULT.
+        unassignedRateThreshold:
+          dbConfig.unassigned_rate_threshold ?? DEFAULT_CONFIG.unassignedRateThreshold,
       };
     }
   }

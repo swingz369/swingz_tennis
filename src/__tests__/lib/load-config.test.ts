@@ -93,6 +93,9 @@ import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine'
 // defaults there, update these here.
 const DEFAULT_TREAT_HIGH_FAILURE_AS_HARD = false;
 const DEFAULT_BACKTRACK_DEPTH = 0;
+// Sprint 4 P0 #3 (Adaptive Backtrack): see migration
+// supabase/migrations/20260610_add_unassigned_rate_threshold.sql
+const DEFAULT_UNASSIGNED_RATE_THRESHOLD = 0.05;
 
 beforeEach(() => {
   h.setDbRow(null);
@@ -104,9 +107,10 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
     h.setDbRow({
       club_id: 'c1',
       season_id: 's1',
-      // The two new columns we want to type-access
+      // The new columns we want to type-access
       treat_high_failure_as_hard: true,
       backtrack_depth: 3,
+      unassigned_rate_threshold: 0.12,
       // Plus a couple of other fields to prove typed access works for the whole row
       max_niveau_span_beginner_months: 5,
       group_max_size: 10,
@@ -119,6 +123,7 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
     // Typed access on the new fields
     expect(engine.config.treatHighFailureAsHard).toBe(true);
     expect(engine.config.backtrackDepth).toBe(3);
+    expect(engine.config.unassignedRateThreshold).toBe(0.12);
 
     // Typed access on other fields proves the row was read end-to-end
     expect(engine.config.maxNiveauSpanBeginner).toBe(5);
@@ -229,5 +234,36 @@ describe('SeasonClusteringEngine.loadConfig — typed access + NULL defaults', (
     // The ?? operator treats undefined as a missing value → default
     expect(engine.config.treatHighFailureAsHard).toBe(false);
     expect(engine.config.backtrackDepth).toBe(0);
+  });
+
+  it('Sprint 4 P0 #3: reads unassigned_rate_threshold from DB and overrides default 0.05', async () => {
+    h.setDbRow({
+      club_id: 'c1',
+      season_id: 's1',
+      // Override the default 0.05 with a more aggressive threshold
+      unassigned_rate_threshold: 0.1,
+    });
+
+    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    await engine.loadConfig();
+
+    // The DB value is read end-to-end and overrides DEFAULT_CONFIG
+    expect(engine.config.unassignedRateThreshold).toBe(0.1);
+    expect(engine.config.unassignedRateThreshold).not.toBe(DEFAULT_UNASSIGNED_RATE_THRESHOLD);
+  });
+
+  it('Sprint 4 P0 #3: uses default 0.05 when unassigned_rate_threshold is NULL in DB', async () => {
+    h.setDbRow({
+      club_id: 'c1',
+      season_id: 's1',
+      unassigned_rate_threshold: null,
+    });
+
+    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    await engine.loadConfig();
+
+    // ?? operator falls back to DEFAULT_CONFIG.unassignedRateThreshold
+    expect(engine.config.unassignedRateThreshold).toBe(DEFAULT_UNASSIGNED_RATE_THRESHOLD);
+    expect(engine.config.unassignedRateThreshold).toBe(0.05);
   });
 });
