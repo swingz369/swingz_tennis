@@ -1392,6 +1392,16 @@ export class SeasonClusteringEngine {
         courtName: string | null;
       })
     | null {
+    // Sprint 4 follow-up: stash the call's member/trainer lists into the
+    // fallback fields so the slot-check helpers (`isMemberSlotAvailable` /
+    // `isTrainerSlotAvailable`) can do a linear search when the pre-computed
+    // Map cache is null — this is the path taken by direct callers such as
+    // unit tests that call `findBestTimeSlot` without going through
+    // `runClustering`. Production callers are unaffected because the Map
+    // cache is always populated first and is preferred over the fallback.
+    this._cachedMembersForSlotCheck = members;
+    this._cachedTrainersForSlotCheck = trainers;
+
     let bestScore = -Infinity;
     let bestResult:
       | (TimeSlotInfo & {
