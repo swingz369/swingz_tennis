@@ -316,7 +316,9 @@ export function Sidebar({
   // Secondary navigation — shown consistently for both admin & superadmin
   const secondaryNav: NavItem[] = [
     { name: 'Mein Profil', href: '/profile', icon: User },
-    ...(!isSuperAdmin ? [{ name: 'Meine Rechnungen', href: '/billing', icon: CreditCard }] : []),
+    ...(!isAdmin && !isSuperAdmin
+      ? [{ name: 'Meine Rechnungen', href: '/billing', icon: CreditCard }]
+      : []),
     { name: 'News & Updates', href: '/news', icon: Newspaper },
   ];
 
