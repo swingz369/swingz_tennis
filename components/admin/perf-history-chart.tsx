@@ -125,7 +125,7 @@ export function PerfHistoryChart({ points, colors }: ChartProps) {
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
           }}
           labelStyle={{ fontWeight: 600, marginBottom: 4 }}
-          formatter={(value: number, name: string) => [`${value.toFixed(2)} ms`, name]}
+          formatter={(value, name) => [`${Number(value).toFixed(2)} ms`, String(name)]}
         />
         <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="line" />
         {series.map((s) => (

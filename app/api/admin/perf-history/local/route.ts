@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 import { requireAdminClub } from '@/lib/admin-context';
-import { checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ const SCALING_RESULTS_PATH = resolve(BENCH_DIR, '.scaling-results.json');
  * timeline of `meanMs` (or other metrics) per (source, numMembers, config).
  */
 export interface PerfHistoryPoint {
-  source: 'local-bench' | 'local-scaling';
+  source: 'local-bench' | 'local-scaling' | 'github';
   runId: string;
   label: string;
   timestamp: string;
@@ -167,7 +167,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const rateLimitResponse = await checkRateLimitOrFail(_req, 'admin-perf-history-local');
+  const rateLimitResponse = await checkRateLimitOrFail(_req, RATE_LIMITS.STANDARD);
   if (rateLimitResponse) return rateLimitResponse;
 
   const payload: PerfHistoryPayload = {

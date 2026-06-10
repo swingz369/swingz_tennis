@@ -34,7 +34,8 @@
 
 import { Worker } from 'node:worker_threads';
 import { join } from 'node:path';
-import type { ClusteringResult, ClusteringConfig } from './types';
+import type { ClusteringResult } from './types';
+import type { ClusteringConfig } from './clustering-engine';
 
 export interface RunClusteringOptions {
   seasonId: string;

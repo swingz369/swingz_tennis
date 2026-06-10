@@ -147,7 +147,7 @@ async function listArtifacts(
  */
 async function downloadAndExtractJson(
   token: string,
-  repo: string,
+  _repo: string,
   artifact: GithubArtifact
 ): Promise<ScalingResultsJson | null> {
   const url = artifact.archive_download_url;

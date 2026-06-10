@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireAdminClub } from '@/lib/admin-context';
-import { checkRateLimitOrFail } from '@/lib/rate-limit';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getGithubWorkflowPerfHistory } from '@/lib/perf-history/github-source';
-import type { PerfHistoryPoint } from './local/route';
+import type { PerfHistoryPoint } from '../local/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const rateLimitResponse = await checkRateLimitOrFail(req, 'admin-perf-history-github');
+  const rateLimitResponse = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
   if (rateLimitResponse) return rateLimitResponse;
 
   const payload: GithubPerfPayload = {

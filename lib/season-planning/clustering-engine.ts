@@ -37,7 +37,11 @@ import type {
 // CONFIG DEFAULTS
 // ============================================
 
-interface ClusteringConfig {
+/**
+ * Tunable knobs for the clustering engine. Exported so the worker-client and
+ * tests can reference the exact shape (vs. re-declaring it).
+ */
+export interface ClusteringConfig {
   maxNiveauSpanBeginner: number; // months, default 4
   maxNiveauSpanAdvanced: number; // months, default 8
   trainerUtilizationMaxPct: number; // default 80
@@ -167,7 +171,6 @@ export class SeasonClusteringEngine {
   // value = boolean. Replaces per-iteration Array.some() calls in findBestTimeSlot.
   private _memberSlotAvail: Map<string, boolean> | null = null;
   private _trainerSlotAvail: Map<string, boolean> | null = null;
-  private _cachedTimeSlotKeys: string[] = []; // [\"0_08:00\", \"0_09:30\", ...]
 
   constructor(seasonId: string, clubId: string, config?: Partial<ClusteringConfig>) {
     this.seasonId = seasonId;
@@ -294,6 +297,9 @@ export class SeasonClusteringEngine {
         kidsGroupMaxSize: dbConfig.kids_group_max_size ?? DEFAULT_CONFIG.kidsGroupMaxSize,
         kidsGroupMinSize: dbConfig.kids_group_min_size ?? DEFAULT_CONFIG.kidsGroupMinSize,
         slotDurationMinutes: dbConfig.slot_duration_minutes ?? DEFAULT_CONFIG.slotDurationMinutes,
+        // Sprint 4 P0 #3 (Adaptive Backtrack) — column not yet in DB schema,
+        // so we use the default until the planning-configs migration lands.
+        unassignedRateThreshold: DEFAULT_CONFIG.unassignedRateThreshold,
       };
     }
   }
@@ -1533,7 +1539,6 @@ export class SeasonClusteringEngine {
   ): void {
     this._memberSlotAvail = new Map();
     this._trainerSlotAvail = new Map();
-    this._cachedTimeSlotKeys = timeSlots.map((t) => t.start);
 
     const DAY_NAMES_LOCAL = DAY_NAMES;
 

@@ -49,7 +49,6 @@ export default async function SeasonPlanPage({ params }: { params: Promise<{ id:
   return (
     <PlanListClient
       seasonId={season.id}
-      clubId={season.club_id}
       seasonName={season.name}
       planningStatus={season.planning_status}
     />
