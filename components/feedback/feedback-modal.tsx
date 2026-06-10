@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import FeedbackForm from './feedback-form';
 
 interface FeedbackModalProps {
@@ -35,25 +29,28 @@ export default function FeedbackModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Share Your Feedback</DialogTitle>
-          <DialogDescription>
-            {sessionTitle
-              ? `How was your experience in "${sessionTitle}"?`
-              : `Rate your experience with ${trainerName}`}
-          </DialogDescription>
-        </DialogHeader>
+    <CenteredModal
+      open={open}
+      onClose={() => onOpenChange(false)}
+      className="sm:max-w-[500px]"
+      ariaLabel="Share Your Feedback"
+    >
+      <div className="space-y-1 mb-4">
+        <h2 className="text-lg font-semibold leading-none tracking-tight">Share Your Feedback</h2>
+        <p className="text-sm text-muted-foreground">
+          {sessionTitle
+            ? `How was your experience in "${sessionTitle}"?`
+            : `Rate your experience with ${trainerName}`}
+        </p>
+      </div>
 
-        <FeedbackForm
-          trainerId={trainerId}
-          trainerName={trainerName}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-          {...(sessionId ? { sessionId } : {})}
-        />
-      </DialogContent>
-    </Dialog>
+      <FeedbackForm
+        trainerId={trainerId}
+        trainerName={trainerName}
+        onSuccess={handleSuccess}
+        onCancel={handleCancel}
+        {...(sessionId ? { sessionId } : {})}
+      />
+    </CenteredModal>
   );
 }

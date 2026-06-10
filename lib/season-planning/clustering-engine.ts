@@ -171,6 +171,17 @@ export class SeasonClusteringEngine {
   // value = boolean. Replaces per-iteration Array.some() calls in findBestTimeSlot.
   private _memberSlotAvail: Map<string, boolean> | null = null;
   private _trainerSlotAvail: Map<string, boolean> | null = null;
+  // Fallback for direct (non-`runClustering`) callers — when the cache above is
+  // null (e.g. in unit tests that call `findBestTimeSlot` directly), these
+  // arrays let `isMemberSlotAvailable` / `isTrainerSlotAvailable` do an O(n)
+  // linear search + Array.some() instead of returning the `?? false` default
+  // (which would make every member/trainer look unavailable).
+  private _cachedMembersForSlotCheck:
+    | (MemberWithDetails & {
+        _unassignedReason?: string;
+      })[]
+    | null = null;
+  private _cachedTrainersForSlotCheck: TrainerWithDetails[] | null = null;
 
   constructor(seasonId: string, clubId: string, config?: Partial<ClusteringConfig>) {
     this.seasonId = seasonId;
@@ -1539,6 +1550,10 @@ export class SeasonClusteringEngine {
   ): void {
     this._memberSlotAvail = new Map();
     this._trainerSlotAvail = new Map();
+    // Stash the input lists so the slot-check helpers can fall back to a
+    // direct Array.some() when the cache is null (unit-test / direct call path).
+    this._cachedMembersForSlotCheck = members;
+    this._cachedTrainersForSlotCheck = trainers;
 
     const DAY_NAMES_LOCAL = DAY_NAMES;
 
@@ -1563,26 +1578,49 @@ export class SeasonClusteringEngine {
    * Fast member-availability lookup: O(1) Map.get() instead of Array.some().
    * Returns true iff the member has at least one availability window that fully
    * covers the given (day, timeSlot).
+   *
+   * Sprint 4 follow-up: when the pre-computed cache is null (direct callers
+   * like unit tests that call `findBestTimeSlot` without going through
+   * `runClustering`), falls back to a linear search over the last-known
+   * member list. Preserves the original semantics for production callers
+   * (where the cache is always populated) while letting tests use the same
+   * entry point.
    */
   private isMemberSlotAvailable(
     memberId: string,
     dayOfWeek: number,
     timeSlot: { start: string; end: string }
   ): boolean {
-    return this._memberSlotAvail?.get(`m|${memberId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
+    if (this._memberSlotAvail) {
+      return this._memberSlotAvail.get(`m|${memberId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
+    }
+    const member = this._cachedMembersForSlotCheck?.find((m) => m.id === memberId);
+    if (!member) return false;
+    const dayName = DAY_NAMES[dayOfWeek];
+    const daySlots = member.availability[dayName] || [];
+    return daySlots.some((s) => s.start <= timeSlot.start && s.end >= timeSlot.end);
   }
 
   /**
    * Fast trainer-availability lookup: O(1) Map.get() instead of Array.some().
    * Note: this checks *availability only* — max-sessions and hours-limit checks
    * remain in findBestTimeSlot (those depend on per-run state).
+   *
+   * Sprint 4 follow-up: same null-cache fallback as `isMemberSlotAvailable`.
    */
   private isTrainerSlotAvailable(
     trainerId: string,
     dayOfWeek: number,
     timeSlot: { start: string; end: string }
   ): boolean {
-    return this._trainerSlotAvail?.get(`t|${trainerId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
+    if (this._trainerSlotAvail) {
+      return this._trainerSlotAvail.get(`t|${trainerId}|${dayOfWeek}_${timeSlot.start}`) ?? false;
+    }
+    const trainer = this._cachedTrainersForSlotCheck?.find((t) => t.id === trainerId);
+    if (!trainer) return false;
+    const dayName = DAY_NAMES[dayOfWeek];
+    const daySlots = trainer.availability[dayName] || [];
+    return daySlots.some((s) => s.start <= timeSlot.start && s.end >= timeSlot.end);
   }
 
   /**

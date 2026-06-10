@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { Badge } from '@/components/ui/badge';
 import { Command, Keyboard } from 'lucide-react';
 
@@ -124,59 +118,64 @@ export function KeyboardShortcutsDialog() {
         <Keyboard className="h-5 w-5" />
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <Command className="h-5 w-5" />
-              <DialogTitle>Keyboard Shortcuts</DialogTitle>
-            </div>
-            <DialogDescription>
-              Nutze diese Tastenkombinationen für schnellere Navigation
-            </DialogDescription>
-          </DialogHeader>
+      <CenteredModal
+        open={open}
+        onClose={() => setOpen(false)}
+        className="max-w-2xl"
+        ariaLabel="Keyboard Shortcuts"
+      >
+        <div className="space-y-1 mb-4">
+          <div className="flex items-center gap-2">
+            <Command className="h-5 w-5" />
+            <h2 className="text-lg font-semibold leading-none tracking-tight">
+              Keyboard Shortcuts
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Nutze diese Tastenkombinationen für schnellere Navigation
+          </p>
+        </div>
 
-          <div className="space-y-6 mt-4">
-            {Object.entries(groupedShortcuts).map(([category, categoryShortcuts]) => (
-              <div key={category}>
-                <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
-                  {categoryLabels[category as keyof typeof categoryLabels]}
-                </h3>
-                <div className="space-y-2">
-                  {categoryShortcuts.map((shortcut, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <span className="text-sm">{shortcut.description}</span>
-                      {renderKey(shortcut.key, {
-                        ...(shortcut.metaKey !== undefined && { metaKey: shortcut.metaKey }),
-                        ...(shortcut.shiftKey !== undefined && { shiftKey: shortcut.shiftKey }),
-                        ...(shortcut.ctrlKey !== undefined && { ctrlKey: shortcut.ctrlKey }),
-                        ...(shortcut.altKey !== undefined && { altKey: shortcut.altKey }),
-                      })}
-                    </div>
-                  ))}
-                </div>
+        <div className="space-y-6 mt-4">
+          {Object.entries(groupedShortcuts).map(([category, categoryShortcuts]) => (
+            <div key={category}>
+              <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+                {categoryLabels[category as keyof typeof categoryLabels]}
+              </h3>
+              <div className="space-y-2">
+                {categoryShortcuts.map((shortcut, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-sm">{shortcut.description}</span>
+                    {renderKey(shortcut.key, {
+                      ...(shortcut.metaKey !== undefined && { metaKey: shortcut.metaKey }),
+                      ...(shortcut.shiftKey !== undefined && { shiftKey: shortcut.shiftKey }),
+                      ...(shortcut.ctrlKey !== undefined && { ctrlKey: shortcut.ctrlKey }),
+                      ...(shortcut.altKey !== undefined && { altKey: shortcut.altKey }),
+                    })}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
-          <div className="mt-6 pt-6 border-t">
-            <p className="text-xs text-muted-foreground text-center">
-              Drücke{' '}
-              <Badge variant="outline" className="mx-1">
-                Shift
-              </Badge>{' '}
-              +{' '}
-              <Badge variant="outline" className="mx-1">
-                ?
-              </Badge>{' '}
-              um dieses Fenster zu öffnen/schließen
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
+        <div className="mt-6 pt-6 border-t">
+          <p className="text-xs text-muted-foreground text-center">
+            Drücke{' '}
+            <Badge variant="outline" className="mx-1">
+              Shift
+            </Badge>{' '}
+            +{' '}
+            <Badge variant="outline" className="mx-1">
+              ?
+            </Badge>{' '}
+            um dieses Fenster zu öffnen/schließen
+          </p>
+        </div>
+      </CenteredModal>
     </>
   );
 }

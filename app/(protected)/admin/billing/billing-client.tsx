@@ -466,7 +466,7 @@ export default function BillingClient({
         >
           <div className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
-            Abonnements ({subscriptions.length})
+            Plattform-Abos ({subscriptions.length})
           </div>
         </button>
         <button
