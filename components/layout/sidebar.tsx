@@ -263,6 +263,7 @@ export function Sidebar({
               ? [{ name: 'Shop verwalten', href: '/admin/shop' }]
               : []),
             { name: 'Audit-Logs', href: '/admin/audit-logs' },
+            { name: 'Performance-Verlauf', href: '/admin/perf-history' },
           ],
         },
       ];
