@@ -1,17 +1,9 @@
-import { FlatCompat } from '@eslint/eslintrc';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import nextConfig from 'eslint-config-next';
+import nextTypescriptConfig from 'eslint-config-next/typescript';
 import paginationNavRule from './eslint-rules/pagination-nav-mutually-exclusive-props.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  resolvePluginsRelativeTo: __dirname,
-});
-
 const eslintConfig = [
-  // ═══ Global ignores (migrated from .eslintignore) ═══
+  // ═══ Global ignores ═══
   {
     ignores: [
       // Build outputs
@@ -60,10 +52,11 @@ const eslintConfig = [
     ],
   },
 
-  // ═══ Legacy extends via FlatCompat ═══
-  ...compat.extends('next/core-web-vitals', 'next/typescript', 'plugin:jsx-a11y/recommended'),
+  // ═══ Next.js core + TypeScript + jsx-a11y (native flat config) ═══
+  ...nextConfig,
+  ...nextTypescriptConfig,
 
-  // ═══ Main configuration ═══
+  // ═══ Main configuration overrides ═══
   {
     files: ['**/*.{ts,tsx,js,jsx,mjs,cjs}'],
 
@@ -103,7 +96,7 @@ const eslintConfig = [
     },
   },
 
-  // ═══ Test file overrides (migrated from .eslintrc.cjs overrides) ═══
+  // ═══ Test file overrides ═══
   {
     files: ['**/__tests__/**/*.ts', '**/__tests__/**/*.tsx'],
     rules: {
@@ -113,6 +106,7 @@ const eslintConfig = [
       'jsx-a11y/label-has-associated-control': 'off',
     },
   },
+
   // ═══ Custom project rules ═══
   {
     files: ['**/*.{tsx,jsx}'],

@@ -29,7 +29,9 @@ export class WebTest {
     // networkidle wartet, bis keine Netzwerk-Requests mehr ausstehen (React-Hydration abgeschlossen)
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 
-    const agent = new PlaywrightAgent(page, opts);
+    // playwright-core type mismatch: project pins 1.59.x, @midscene/web brings 1.60.0
+    // Resolved via pnpm.overrides — cast kept as safety net
+    const agent = new PlaywrightAgent(page as never, opts);
     return { browser, page, agent };
   }
 

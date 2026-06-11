@@ -10,10 +10,12 @@ import { RuleTester } from 'eslint';
 import rule from '../../../eslint-rules/pagination-nav-mutually-exclusive-props.js';
 
 const tester = new RuleTester({
-  parserOptions: {
-    ecmaVersion: 2022,
-    sourceType: 'module',
-    ecmaFeatures: { jsx: true },
+  languageOptions: {
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      ecmaFeatures: { jsx: true },
+    },
   },
 });
 
