@@ -537,9 +537,11 @@ describe('GroupListView — slot sorting', () => {
     );
 
     // The groups section: find the group name texts and check order
-    const groupNames = container.querySelectorAll('.font-medium.text-gray-900.text-sm');
+    // The component uses text-foreground (Tailwind) not text-gray-900
+    const groupNames = container.querySelectorAll('.font-medium.text-foreground.text-sm');
     const names = Array.from(groupNames).map((el) => el.textContent);
     // "Frühe Gruppe" (17:00) should come before "Späte Gruppe" (18:30)
+    expect(names).toHaveLength(2);
     expect(names[0]).toBe('Frühe Gruppe');
     expect(names[1]).toBe('Späte Gruppe');
   });

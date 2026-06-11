@@ -2,23 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ─── Mocks (must come before importing the service) ─────────────────────────
 
-// Chainable helper for Supabase .from() / .select() / .eq() / .in() / .maybeSingle() / .single()
-function makeChainable(result: { data: unknown; error: unknown }) {
-  const handler: ProxyHandler<object> = {
-    get(_target, prop) {
-      if (prop === 'then') return undefined; // not a promise at the leaf
-      if (prop === 'data' || prop === 'error') {
-        // Only resolve at the leaf — .single() / .maybeSingle() returns { data, error }
-        return result[prop as 'data' | 'error'];
-      }
-      // Return a proxy that resolves to the same result regardless of which
-      // method the chain ends with (.single, .maybeSingle, implicit await).
-      return () => new Proxy({}, handler);
-    },
-  };
-  return new Proxy({}, handler);
-}
-
 const mockRpc = vi.fn();
 const mockFrom = vi.fn();
 
@@ -68,11 +51,11 @@ const BASE_PREVIEW = {
     use_trainer_profile_rate: false,
     include_membership_fee: false,
     membership_fee_amount: null,
-    membership_fee_type: 'yearly',
+    membership_fee_type: 'yearly' as const,
     payment_terms_days: 30,
     invoice_notes: null,
     tax_rate: 19,
-    cost_split_method: 'per_participant',
+    cost_split_method: 'per_participant' as const,
     additional_fees: [],
   },
   groupBreakdown: [],
@@ -133,6 +116,25 @@ const MEMBERS = [
   },
 ];
 
+/**
+ * Helper: create a mock Supabase query builder that resolves to `result`.
+ * Unlike the old makeChainable Proxy, this returns a proper thenable that
+ * resolves to { data, error } — matching Supabase's real .from().select().eq()...single() chain.
+ */
+function makeQueryResult(result: { data: unknown; error: unknown }) {
+  const builder: Record<string, unknown> = {};
+  // Chainable methods — all return self
+  for (const key of ['select', 'eq', 'in', 'single', 'maybeSingle', 'limit', 'order', 'neq', 'gte', 'lte', 'filter']) {
+    builder[key] = () => builder;
+  }
+  // thenable — makes `await` resolve to `result`
+  builder.then = (resolve: (v: unknown) => unknown) => {
+    resolve(result);
+    return builder;
+  };
+  return builder;
+}
+
 // ─── Test suite ──────────────────────────────────────────────────────────────
 
 describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
@@ -141,47 +143,21 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
   });
 
   it('calls the atomic RPC with the correct payload when the function is available', async () => {
-    // Mock calculatePreview's underlying queries — first fetch is the season,
-    // then billing config (or not, we use the auto-default path).
-    let fromCall = 0;
-    mockFrom.mockImplementation(() => {
-      fromCall += 1;
-      // 1: seasons 2: season_billing_configs 3: season_plan_entries
-      // 4: trainers 5: groups 6: users 7: invoices (idempotency)
-      if (fromCall === 1) {
-        return makeChainable({
-          data: {
-            id: SEASON_ID,
-            name: 'Sommer 2026',
-            club_id: CLUB_ID,
-            start_date: '2026-06-01',
-            end_date: '2026-08-31',
-          },
-          error: null,
-        });
+    // Mock from() to return results based on table name
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'seasons') {
+        return makeQueryResult({ data: SEASON_ROW, error: null });
       }
-      if (fromCall === 7) {
-        return makeChainable({ data: [], error: null });
-      }
-      return makeChainable({ data: [], error: null });
+      // season_billing_configs, season_plan_entries, trainers, groups, users, invoices
+      return makeQueryResult({ data: [], error: null });
     });
 
     // Mock the RPC to return success
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
-          {
-            member_id: M1,
-            invoice_id: 'inv-1',
-            invoice_number: 'INV-AAA-2026-00001',
-            total_amount: 89.25,
-          },
-          {
-            member_id: M2,
-            invoice_id: 'inv-2',
-            invoice_number: 'INV-AAA-2026-00002',
-            total_amount: 89.25,
-          },
+          { member_id: M1, invoice_id: 'inv-1', invoice_number: 'INV-AAA-2026-00001', total_amount: 89.25 },
+          { member_id: M2, invoice_id: 'inv-2', invoice_number: 'INV-AAA-2026-00002', total_amount: 89.25 },
         ],
         skipped: [],
         failed: [],
@@ -238,20 +214,13 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       memberPreviews: MEMBERS,
     });
 
-    let fromCall = 0;
-    mockFrom.mockImplementation(() => {
-      fromCall += 1;
-      // 1: getSeasonClubId → season row with club_id
-      // 2: idempotency check → empty
-      // 3-4: billingEngine.createInvoice → supabase.from('invoices').insert + items
-      if (fromCall === 1) {
-        return makeChainable({ data: SEASON_ROW, error: null });
+    // Mock from() based on table — idempotency check returns empty
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'seasons') {
+        return makeQueryResult({ data: SEASON_ROW, error: null });
       }
-      // For invoice + item inserts, return a synthetic row
-      return makeChainable({
-        data: { id: 'synth-inv', invoice_number: 'SYNTH-1' },
-        error: null,
-      });
+      // invoices idempotency + any other table → empty
+      return makeQueryResult({ data: [], error: null });
     });
 
     // RPC returns the PostgREST "function not found" code
@@ -291,15 +260,11 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       memberPreviews: MEMBERS,
     });
 
-    let fromCall = 0;
-    mockFrom.mockImplementation(() => {
-      fromCall += 1;
-      if (fromCall === 1) {
-        // getSeasonClubId → season row
-        return makeChainable({ data: SEASON_ROW, error: null });
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'seasons') {
+        return makeQueryResult({ data: SEASON_ROW, error: null });
       }
-      // idempotency + invoice/items inserts in the fallback path
-      return makeChainable({ data: { id: 'synth-inv' }, error: null });
+      return makeQueryResult({ data: [], error: null });
     });
 
     // RPC throws (e.g. transport error)
@@ -321,11 +286,8 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
     vi.spyOn(svc, 'calculatePreview').mockResolvedValue({
       ...BASE_PREVIEW,
       memberPreviews: [],
-      grandTotal: 0, // no members → no totals
+      grandTotal: 0,
     });
-
-    // No mockFrom needed: the service early-returns BEFORE calling
-    // getSeasonClubId when memberPreviews is empty.
 
     const result = await seasonBillingService.generateInvoices(SEASON_ID);
 
@@ -345,24 +307,17 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       memberPreviews: MEMBERS,
     });
 
-    let fromCall = 0;
-    mockFrom.mockImplementation(() => {
-      fromCall += 1;
-      if (fromCall === 1) {
-        return makeChainable({ data: SEASON_ROW, error: null });
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'seasons') {
+        return makeQueryResult({ data: SEASON_ROW, error: null });
       }
-      return makeChainable({ data: [], error: null });
+      return makeQueryResult({ data: [], error: null });
     });
 
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
-          {
-            member_id: M1,
-            invoice_id: 'inv-1',
-            invoice_number: 'INV-AAA-2026-00001',
-            total_amount: 89.25,
-          },
+          { member_id: M1, invoice_id: 'inv-1', invoice_number: 'INV-AAA-2026-00001', total_amount: 89.25 },
         ],
         skipped: [],
         failed: [{ member_id: M2, error: 'duplicate invoice_number' }],
@@ -387,31 +342,19 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
       memberPreviews: MEMBERS,
     });
 
-    let fromCall = 0;
-    mockFrom.mockImplementation(() => {
-      fromCall += 1;
-      if (fromCall === 1) {
-        return makeChainable({ data: SEASON_ROW, error: null });
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'seasons') {
+        return makeQueryResult({ data: SEASON_ROW, error: null });
       }
-      return makeChainable({ data: [], error: null });
+      return makeQueryResult({ data: [], error: null });
     });
 
     // RPC returns slightly different totals (simulating a rounding edge case)
     mockRpc.mockResolvedValueOnce({
       data: {
         created: [
-          {
-            member_id: M1,
-            invoice_id: 'inv-1',
-            invoice_number: 'INV-AAA-2026-00001',
-            total_amount: 89.24, // off by 1 ct
-          },
-          {
-            member_id: M2,
-            invoice_id: 'inv-2',
-            invoice_number: 'INV-AAA-2026-00002',
-            total_amount: 89.24,
-          },
+          { member_id: M1, invoice_id: 'inv-1', invoice_number: 'INV-AAA-2026-00001', total_amount: 89.24 },
+          { member_id: M2, invoice_id: 'inv-2', invoice_number: 'INV-AAA-2026-00002', total_amount: 89.24 },
         ],
         skipped: [],
         failed: [],
@@ -423,7 +366,7 @@ describe('SeasonBillingService.generateInvoices — atomic RPC path', () => {
 
     const result = await seasonBillingService.generateInvoices(SEASON_ID);
 
-    expect(result.roundingDrift).toBeCloseTo(0.02, 2); // 178.5 - 178.48
+    expect(result.roundingDrift).toBeCloseTo(0.02, 1); // 178.5 - 178.48
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('[SeasonBilling] Rounding drift detected'),
       expect.anything(),

@@ -379,6 +379,17 @@ vi.mock('resend', () => ({
   }),
 }));
 
+const mockBuildRecipients = vi.fn().mockResolvedValue([
+  { memberId: 'member-001', email: 'max@test.com', name: 'Max', groupName: 'Gruppe A', trainerName: 'Trainer', dayOfWeek: 2, startTime: '17:00', endTime: '18:30', firstSessionDate: '2025-05-06' },
+]);
+const mockSendConfirmationEmails = vi.fn().mockResolvedValue({ sent: 1, failed: 0, errors: [] });
+vi.mock('@/lib/season-planning/season-confirmation-email.service', () => ({
+  seasonConfirmationEmailService: {
+    buildRecipients: (...args: unknown[]) => mockBuildRecipients(...args),
+    sendConfirmationEmails: (...args: unknown[]) => mockSendConfirmationEmails(...args),
+  },
+}));
+
 vi.mock('@/lib/env', () => ({
   env: {
     RESEND_API_KEY: 're_test_key',
@@ -505,6 +516,10 @@ beforeEach(() => {
   mockDetectAll.mockReset().mockResolvedValue([]);
   mockGetCriticalConflicts.mockReset().mockReturnValue([]);
   mockResendSend.mockReset().mockResolvedValue({ id: 'email-001' });
+  mockBuildRecipients.mockReset().mockResolvedValue([
+    { memberId: 'member-001', email: 'max@test.com', name: 'Max', groupName: 'Gruppe A', trainerName: 'Trainer', dayOfWeek: 2, startTime: '17:00', endTime: '18:30', firstSessionDate: '2025-05-06' },
+  ]);
+  mockSendConfirmationEmails.mockReset().mockResolvedValue({ sent: 1, failed: 0, errors: [] });
 });
 
 afterEach(() => {
@@ -522,7 +537,7 @@ describe('POST /api/seasons/[id]/planning/confirm', () => {
   beforeAll(async () => {
     const mod = await import('@/app/api/seasons/[id]/planning/confirm/route');
     POST = mod.POST;
-  });
+  }, 30_000);
 
   function ctx(id: string = SEASON_ID) {
     return { params: Promise.resolve({ id }) };

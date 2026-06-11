@@ -6,12 +6,14 @@ import { CreateSepaMandate } from '@/lib/types/billing';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SEPA_CREDITOR_ID = process.env.SEPA_CREDITOR_ID || '';
 
 const hasSupabase = !!SUPABASE_SERVICE_KEY;
+const hasSepaCreditor = !!SEPA_CREDITOR_ID;
 const describeIntegration = hasSupabase ? describe : describe.skip;
+const describeSepa = hasSupabase && hasSepaCreditor ? describe : describe.skip;
 
 // Use a real auth.users UUID from seed script, or fallback to fake UUID for non-FK tests
-// Run: npx tsx scripts/seed-test-billing-user.ts to create a test user
 const TEST_MEMBER = process.env.TEST_MEMBER_UUID || '00000000-0000-0000-0000-000000000001';
 const hasRealTestUser = !!process.env.TEST_MEMBER_UUID;
 
@@ -32,7 +34,7 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
       .single();
 
     if (club && !clubError) {
-      testClubId = club.id;
+      testClubId = (club as { id: string }).id;
     }
   });
 
@@ -299,7 +301,7 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
     });
   });
 
-  describe('SEPA Mandate Management', () => {
+  describeSepa('SEPA Mandate Management', () => {
     describe('createSepaMandate', () => {
       it('should create a SEPA mandate', async () => {
         const mandate = await billingEngine.createSepaMandate({

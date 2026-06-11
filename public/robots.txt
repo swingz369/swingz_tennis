@@ -1,0 +1,8 @@
+# SwingZ - Tennis Club Management
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /protected/
+
+Sitemap: https://swingz.de/sitemap.xml

@@ -27,12 +27,18 @@ export const dynamic = 'force-dynamic';
 export default async function MemberPage() {
   const { supabase, user } = await requireAuth();
 
-  const { data: membership } = await supabase
+  // Use .limit(1) instead of .maybeSingle() to gracefully handle users
+  // with multiple club memberships (e.g. multi-tenant setups).  maybeSingle()
+  // throws when >1 row is returned, which causes the onboarding form to show
+  // even for active members.
+  const { data: memberships } = await supabase
     .from('user_club_memberships')
     .select('role, club_id, is_active, clubs(id, name)')
     .eq('user_id', user.id)
     .eq('is_active', true)
-    .maybeSingle();
+    .limit(1);
+
+  const membership = memberships?.[0] ?? null;
 
   if (!membership) {
     // Do NOT redirect back to /dashboard — that causes an infinite redirect
