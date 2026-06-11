@@ -25,7 +25,7 @@ export default function AboutPage() {
                 </Button>
               </Link>
               <Link href="/register">
-                <Button variant="accent">Kostenlos starten</Button>
+                <Button variant="accent">Mehr erfahren</Button>
               </Link>
             </div>
           </nav>
@@ -146,7 +146,7 @@ export default function AboutPage() {
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
               <Button variant="accent" size="lg">
-                Kostenlos starten <ArrowRight className="ml-2 h-4 w-4" />
+                Mehr erfahren <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/contact">

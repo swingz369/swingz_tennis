@@ -226,7 +226,7 @@ const PRICING_PLANS = [
       'Einfache Buchungsverwaltung',
       'E-Mail-Support',
     ],
-    cta: 'Kostenlos starten',
+    cta: 'Jetzt wählen',
     popular: false,
     iconColor: 'text-green-600',
     borderHover: 'hover:border-green-200',
@@ -933,7 +933,7 @@ export default function LandingPage() {
                 className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[52px] shadow-glow-accent"
               >
                 <Sparkles className="h-5 w-5" />
-                Kostenlos testen
+                Jetzt testen
                 <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
@@ -949,7 +949,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mt-8 text-white/45 text-sm">
-            Keine Kreditkarte erforderlich — 30 Tage kostenlos testen.
+            Keine Kreditkarte erforderlich — 30 Tage unverbindlich testen.
           </p>
         </div>
       </section>

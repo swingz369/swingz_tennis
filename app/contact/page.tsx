@@ -26,7 +26,7 @@ export default function ContactPage() {
                 </Button>
               </Link>
               <Link href="/register">
-                <Button variant="accent">Kostenlos starten</Button>
+                <Button variant="accent">Mehr erfahren</Button>
               </Link>
             </div>
           </nav>
