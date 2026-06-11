@@ -22,128 +22,48 @@ serve(async (req) => {
     const weekAgoStr = weekAgo.toISOString();
     const nowStr = now.toISOString();
 
-    // Get all active clubs
-    const { data: clubs, error: clubsError } = await supabase
-      .from('clubs')
-      .select('id, name')
-      .eq('status', 'active');
+    // Single RPC call — all aggregation happens server-side via LATERAL joins
+    const { data: rows, error: rpcError } = await supabase.rpc('generate_weekly_club_reports', {
+      week_ago: weekAgoStr,
+    });
 
-    if (clubsError) {
-      console.error('[GenerateReports] clubs error:', clubsError);
-      return new Response(JSON.stringify({ error: clubsError.message }), {
+    if (rpcError) {
+      console.error('[GenerateReports] RPC error:', rpcError);
+      return new Response(JSON.stringify({ error: rpcError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (!clubs || clubs.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, message: 'No active clubs found', reports: [] }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const reports = [];
-
-    for (const club of clubs) {
-      try {
-        // Count new members this week
-        const { count: newMembers } = await supabase
-          .from('user_club_memberships')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', club.id)
-          .eq('role', 'member')
-          .gte('created_at', weekAgoStr);
-
-        // Count total active members
-        const { count: totalMembers } = await supabase
-          .from('user_club_memberships')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', club.id)
-          .eq('role', 'member')
-          .eq('is_active', true);
-
-        // Count sessions this week
-        const { count: totalSessions } = await supabase
-          .from('sessions')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', club.id)
-          .gte('created_at', weekAgoStr);
-
-        // Count open invoices
-        const { count: openInvoices } = await supabase
-          .from('invoices')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', club.id)
-          .in('status', ['open', 'sent', 'overdue']);
-
-        // Sum overdue invoice amounts
-        const { data: overdueData } = await supabase
-          .from('invoices')
-          .select('amount')
-          .eq('club_id', club.id)
-          .eq('status', 'overdue');
-
-        const overdueTotal = (overdueData ?? []).reduce(
-          (sum: number, inv: { amount: number }) => sum + Number(inv.amount),
-          0
-        );
-
-        // Count trial training requests this week
-        const { count: trialRequests } = await supabase
-          .from('trial_trainings')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', club.id)
-          .gte('created_at', weekAgoStr);
-
-        // Count pending approvals
-        const { count: pendingApprovals } = await supabase
-          .from('trial_trainings')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', club.id)
-          .eq('status', 'requested');
-
-        // Count RSVPs this week
-        const { count: rsvps } = await supabase
-          .from('session_rsvps')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', club.id)
-          .gte('created_at', weekAgoStr);
-
-        reports.push({
-          club_id: club.id,
-          club_name: club.name,
-          period: { from: weekAgoStr.slice(0, 10), to: nowStr.slice(0, 10) },
-          members: {
-            total: totalMembers ?? 0,
-            new_this_week: newMembers ?? 0,
-          },
-          sessions: {
-            total_this_week: totalSessions ?? 0,
-          },
-          rsvps: {
-            this_week: rsvps ?? 0,
-          },
-          trial_training: {
-            requests_this_week: trialRequests ?? 0,
-            pending_approval: pendingApprovals ?? 0,
-          },
-          billing: {
-            open_invoices: openInvoices ?? 0,
-            overdue_total_eur: overdueTotal,
-          },
-        });
-      } catch (error) {
-        console.error(`[GenerateReports] Error for club ${club.id}:`, error);
-        reports.push({ club_id: club.id, club_name: club.name, error: (error as Error).message });
-      }
-    }
+    const reports = (rows ?? []).map((row: Record<string, unknown>) => ({
+      club_id: row.club_id,
+      club_name: row.club_name,
+      period: { from: weekAgoStr.slice(0, 10), to: nowStr.slice(0, 10) },
+      members: {
+        total: Number(row.total_members),
+        new_this_week: Number(row.new_members_week),
+      },
+      sessions: {
+        total_this_week: Number(row.sessions_week),
+      },
+      rsvps: {
+        this_week: Number(row.rsvps_week),
+      },
+      trial_training: {
+        requests_this_week: Number(row.trial_requests_week),
+        pending_approval: Number(row.pending_approvals),
+      },
+      billing: {
+        open_invoices: Number(row.open_invoices),
+        overdue_total_eur: Number(row.overdue_total),
+      },
+    }));
 
     return new Response(
       JSON.stringify({
         success: true,
         generated_at: nowStr,
-        clubs_processed: clubs.length,
+        clubs_processed: reports.length,
         reports,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
