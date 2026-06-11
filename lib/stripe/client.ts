@@ -11,7 +11,7 @@ export function getStripe() {
   }
   // Use require to avoid module-level errors when key is absent
   const Stripe = require('stripe');
-  return new Stripe(key, { apiVersion: '2024-12-18.acacia' });
+  return new Stripe(key, { apiVersion: '2026-05-27.dahlia' });
 }
 
 export const STRIPE_CONFIGURED = !!(

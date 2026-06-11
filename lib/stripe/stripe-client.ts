@@ -28,7 +28,7 @@ export interface StripeCheckoutData {
 export async function createStripeCheckoutSession(data: StripeCheckoutData): Promise<string> {
   const stripe = getStripeClient();
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
-    payment_method_types: ['card', 'sofort'],
+    payment_method_types: ['card', 'sepa_debit', 'sofort'],
     line_items: [
       {
         price_data: {
