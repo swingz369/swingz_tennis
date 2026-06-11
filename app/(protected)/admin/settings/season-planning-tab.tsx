@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Sparkles, Save, Loader2, Calendar, Zap, Info, History } from 'lucide-react';
+import { Sparkles, Save, Loader2, Calendar, Zap, Info, History, Target } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
 // ═══ Types ═══
@@ -35,6 +35,7 @@ type PlanningConfig = {
   season_id?: string;
   treat_high_failure_as_hard?: boolean;
   backtrack_depth?: number;
+  unassigned_rate_threshold?: number;
   max_niveau_span_beginner_months?: number;
   max_niveau_span_advanced_months?: number;
   trainer_utilization_max_pct?: number;
@@ -138,6 +139,10 @@ export function SeasonPlanningTab() {
     }
     // Clamp on the client as a UX nicety (server also clamps)
     const depth = Math.max(0, Math.min(10, Number(config.backtrack_depth ?? 0)));
+    const unassignedRateThreshold = Math.max(
+      0,
+      Math.min(1, Number(config.unassigned_rate_threshold ?? 0.05))
+    );
     setSaving(true);
     try {
       const res = await apiFetch(`/api/seasons/${selectedSeasonId}/planning/config`, {
@@ -146,6 +151,7 @@ export function SeasonPlanningTab() {
         body: JSON.stringify({
           treat_high_failure_as_hard: !!config.treat_high_failure_as_hard,
           backtrack_depth: depth,
+          unassigned_rate_threshold: unassignedRateThreshold,
         }),
       });
       if (res.ok) {
@@ -311,6 +317,53 @@ export function SeasonPlanningTab() {
                 aria-label="Backtracking-Tiefe (0 = deaktiviert, max 3 Retries intern)"
               />
               <History className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+
+          {/* Number-Input: unassigned_rate_threshold (Sprint 4 P0 #3) */}
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+            <div className="flex-1 min-w-0 space-y-1">
+              <div className="flex items-center gap-2">
+                <Label
+                  htmlFor="unassigned-rate-threshold"
+                  className="text-sm font-medium text-foreground cursor-pointer"
+                >
+                  Schwellwert für unzugewiesene Mitglieder
+                </Label>
+                <Badge variant="secondary" className="text-[10px]">
+                  Sprint 4 P0 #3
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Liegt die Rate der unzugewiesenen Mitglieder nach dem ersten Backtrack-Pass noch
+                über diesem Schwellwert, startet der Algorithmus einen zweiten Pass mit Tiefe 5, um
+                mehr Freiheit für die Neuplatzierung zu bekommen. Dezimalzahl, z.B.{' '}
+                <code className="px-1 rounded bg-muted">0.05</code> = 5%.
+              </p>
+              <p className="text-[11px] text-muted-foreground italic flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Standard: <code className="px-1 rounded bg-muted">0.05</code> (5%) · Range: 0–1 ·
+                Auf <code className="px-1 rounded bg-muted">1.0</code> setzen, um zweiten Pass zu
+                deaktivieren
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                id="unassigned-rate-threshold"
+                type="number"
+                min={0}
+                max={1}
+                step={0.01}
+                value={config.unassigned_rate_threshold ?? 0.05}
+                onChange={(e) => {
+                  const raw = parseFloat(e.target.value);
+                  const val = Number.isFinite(raw) ? Math.max(0, Math.min(1, raw)) : 0.05;
+                  setConfig({ ...config, unassigned_rate_threshold: val });
+                }}
+                className="w-20 text-center"
+                aria-label="Schwellwert für unzugewiesene Mitglieder (0–1, z.B. 0.05 = 5%)"
+              />
+              <Target className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
 

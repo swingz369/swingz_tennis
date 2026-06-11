@@ -255,11 +255,21 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
    */
   async update(id: string, input: UpdateTrainerProfileInput): Promise<TrainerProfile | null> {
     try {
+      // Map camelCase domain keys to the snake_case Drizzle column names used
+      // by the dual-rate migration (contracted_hourly_rate, extra_hours_rate).
+      // The existing hourlyRate column is already camelCase in Drizzle so it
+      // passes through the spread unchanged.
+      const { contractedHourlyRate, extraHoursRate, ...rest } = input;
+
       const [updated] = await db
         .update(trainerProfiles)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .set({
-          ...input,
+          ...rest,
+          ...(contractedHourlyRate !== undefined
+            ? { contracted_hourly_rate: contractedHourlyRate }
+            : {}),
+          ...(extraHoursRate !== undefined ? { extra_hours_rate: extraHoursRate } : {}),
           updated_at: new Date(),
         } as any)
         .where(eq(trainerProfiles.id, id))
@@ -495,6 +505,14 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
         typeof row.hourlyRate === 'string'
           ? parseFloat(row.hourlyRate)
           : (row.hourlyRate ?? undefined),
+      contractedHourlyRate:
+        typeof row.contracted_hourly_rate === 'string'
+          ? parseFloat(row.contracted_hourly_rate)
+          : (row.contracted_hourly_rate ?? null),
+      extraHoursRate:
+        typeof row.extra_hours_rate === 'string'
+          ? parseFloat(row.extra_hours_rate)
+          : (row.extra_hours_rate ?? null),
       availability: (row.availability as TrainerProfile['availability']) || {
         monday: true,
         tuesday: true,

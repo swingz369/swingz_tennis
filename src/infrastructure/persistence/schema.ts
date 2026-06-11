@@ -1733,6 +1733,10 @@ export const trainerProfiles = pgTable(
       .default({ years: 0, previousClubs: [], achievements: [] }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     hourlyRate: numeric('hourly_rate', { precision: 10, scale: 2 }),
+    // Sprint 4 P0 #4 (Dual Hourly Rate): contractually agreed rate + trainer-editable rate
+    // for additional hours. See supabase/migrations/20260610_add_trainer_dual_rate.sql
+    contracted_hourly_rate: numeric('contracted_hourly_rate', { precision: 10, scale: 2 }),
+    extra_hours_rate: numeric('extra_hours_rate', { precision: 10, scale: 2 }),
     availability: jsonb('availability')
       .$type<{
         monday: boolean;

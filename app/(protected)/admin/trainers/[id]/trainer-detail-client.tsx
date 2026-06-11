@@ -43,6 +43,8 @@ import {
   RefreshCw,
   XCircle,
   Trash2,
+  Euro,
+  Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -50,6 +52,8 @@ import type {
   TrainerProfile,
   TrainerAvailabilitySlot,
 } from '@/components/trainer-profile-management';
+import { useUserRole } from '@/hooks/use-user-role';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 interface WeeklyAvailabilitySlot {
   id?: string;
@@ -67,6 +71,8 @@ interface TrainerDetailClientProps {
 
 export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientProps) {
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
+  const { isAdmin } = useUserRole(currentUser?.roles);
   const [trainer, setTrainer] = useState<TrainerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -102,7 +108,11 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
     try {
       setIsLoading(true);
       const res = await apiFetch(`/api/trainer-profiles/${trainerId}`);
-      if (!res.ok) throw new Error('Failed to load trainer');
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const detail = errBody.error || `HTTP ${res.status}`;
+        throw new Error(`Failed to load trainer: ${detail}`);
+      }
       const data = await res.json();
       setTrainer(data.trainerProfile);
       if (data.trainerProfile?.userId) {
@@ -154,9 +164,14 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
   const handleSave = async () => {
     if (!trainer) return;
     try {
+      // Strip admin-only fields for non-admin trainers to avoid a 403.
+      // The PATCH handler rejects contractedHourlyRate from non-admins.
+      const { contractedHourlyRate: _, ...body } = editForm;
+      const payload = isAdmin ? editForm : body;
+
       const response = await apiFetch(`/api/trainer-profiles/${trainer.id}`, {
         method: 'PATCH',
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error('Failed to update trainer');
       const data = await response.json();
@@ -410,14 +425,90 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
   if (isLoading) {
     return (
       <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-9 w-9 rounded-md" />
-          <div className="space-y-1.5 flex-1">
-            <Skeleton className="h-7 w-64" />
-            <Skeleton className="h-4 w-72" />
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1.5 text-sm">
+          <Skeleton className="h-3.5 w-14 rounded" />
+          <Skeleton className="h-3.5 w-3.5 rounded" />
+          <Skeleton className="h-4 w-32 rounded" />
+        </div>
+
+        <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden">
+          {/* Header skeleton */}
+          <div className="p-5 border-b border-border dark:border-white/10">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <Skeleton className="h-7 w-48 rounded" />
+                <Skeleton className="h-4 w-56 rounded" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-8 w-28 rounded-md" />
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs skeleton */}
+          <div className="p-5 space-y-5">
+            <div className="flex gap-6 border-b pb-3">
+              <Skeleton className="h-4 w-12 rounded" />
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-4 w-20 rounded" />
+              <Skeleton className="h-4 w-28 rounded" />
+            </div>
+
+            {/* Personal info card skeleton */}
+            <div className="rounded-lg border border-border p-5 space-y-4">
+              <Skeleton className="h-5 w-44 rounded" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="space-y-1.5">
+                    <Skeleton className="h-3 w-16 rounded" />
+                    <Skeleton className="h-5 w-full rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Emergency contact card skeleton */}
+            <div className="rounded-lg border border-border p-5 space-y-4">
+              <Skeleton className="h-5 w-36 rounded" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-1.5">
+                    <Skeleton className="h-3 w-16 rounded" />
+                    <Skeleton className="h-5 w-full rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Honorar card skeleton */}
+            <div className="rounded-lg border border-border p-5 space-y-4">
+              <Skeleton className="h-5 w-24 rounded" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-36 rounded" />
+                  <Skeleton className="h-6 w-28 rounded" />
+                  <Skeleton className="h-3 w-64 rounded" />
+                </div>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-40 rounded" />
+                  <Skeleton className="h-6 w-28 rounded" />
+                  <Skeleton className="h-3 w-56 rounded" />
+                </div>
+              </div>
+            </div>
+
+            {/* Languages card skeleton */}
+            <div className="rounded-lg border border-border p-5 space-y-3">
+              <Skeleton className="h-5 w-24 rounded" />
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-24 rounded-full" />
+              </div>
+            </div>
           </div>
         </div>
-        <Skeleton className="h-96 w-full rounded-2xl" />
       </div>
     );
   }
@@ -667,6 +758,90 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                       ) : (
                         <div className="font-medium">{trainer.emergencyContact.relationship}</div>
                       )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
+                    <Euro className="h-4 w-4 text-brandAccent" />
+                    Honorar
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* contracted_hourly_rate — admin-only */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        Vertragssatz (EUR/h)
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                      </Label>
+                      {isEditing && isAdmin ? (
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          value={editForm.contractedHourlyRate ?? ''}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              contractedHourlyRate: e.target.value
+                                ? parseFloat(e.target.value)
+                                : null,
+                            })
+                          }
+                          placeholder="z.B. 45.00"
+                        />
+                      ) : isEditing && !isAdmin ? (
+                        <div className="font-medium flex items-center gap-1.5 text-muted-foreground">
+                          {trainer.contractedHourlyRate != null
+                            ? `${trainer.contractedHourlyRate.toFixed(2)} €/h`
+                            : 'Nicht festgelegt'}
+                          <span className="text-xs italic">(nur Admin)</span>
+                        </div>
+                      ) : (
+                        <div className="font-medium">
+                          {trainer.contractedHourlyRate != null
+                            ? `${trainer.contractedHourlyRate.toFixed(2)} €/h`
+                            : 'Nicht festgelegt'}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-muted-foreground">
+                        Vertraglich vereinbarter Stundensatz. Nur durch Admins änderbar.
+                      </p>
+                    </div>
+
+                    {/* extra_hours_rate — admin + trainer editable */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">
+                        Zusatzstunden-Satz (EUR/h)
+                      </Label>
+                      {isEditing ? (
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          value={editForm.extraHoursRate ?? ''}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              extraHoursRate: e.target.value ? parseFloat(e.target.value) : null,
+                            })
+                          }
+                          placeholder="z.B. 50.00"
+                        />
+                      ) : (
+                        <div className="font-medium">
+                          {trainer.extraHoursRate != null
+                            ? `${trainer.extraHoursRate.toFixed(2)} €/h`
+                            : 'Nicht festgelegt'}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-muted-foreground">
+                        {isAdmin
+                          ? 'Satz für Zusatzstunden. Trainer kann diesen ebenfalls anpassen.'
+                          : 'Du kannst diesen Satz selbst für deine Zusatzstunden festlegen.'}
+                      </p>
                     </div>
                   </div>
                 </CardContent>

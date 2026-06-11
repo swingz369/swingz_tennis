@@ -32,6 +32,7 @@ const UPDATABLE_FIELDS = [
   'kids_group_max_size',
   'kids_group_min_size',
   'slot_duration_minutes',
+  'unassigned_rate_threshold',
 ] as const;
 
 export async function GET(request: NextRequest, context: RouteContext) {
@@ -123,6 +124,21 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           );
         }
         updatePayload.backtrack_depth = depth;
+      }
+
+      // Clamp unassigned_rate_threshold to 0..1 (CHECK constraint in DB is 0..1)
+      // Sprint 4 P0 #3 (Adaptive Backtrack): if the unassigned-member rate after
+      // the first pass is still above this threshold, the engine runs a second
+      // pass with depth=5. Set to 1.0 to effectively disable the second pass.
+      if ('unassigned_rate_threshold' in updatePayload) {
+        const threshold = Number(updatePayload.unassigned_rate_threshold);
+        if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
+          return NextResponse.json(
+            { error: 'unassigned_rate_threshold must be a number between 0 and 1' },
+            { status: 400 }
+          );
+        }
+        updatePayload.unassigned_rate_threshold = threshold;
       }
 
       if (Object.keys(updatePayload).length === 0) {

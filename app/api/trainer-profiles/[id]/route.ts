@@ -74,11 +74,39 @@ export async function PATCH(
         experience,
         status,
         hourlyRate,
+        contractedHourlyRate: rawContractedRate,
+        extraHoursRate: rawExtraRate,
         availability,
         preferredTimeSlots,
         languages,
         emergencyContact,
       } = body;
+
+      // ── Role-based field gating ─────────────────────────────────────────
+      // contracted_hourly_rate: admin-only write
+      // extra_hours_rate: admin AND trainer (own profile) may write
+      let contractedHourlyRate: number | undefined = undefined;
+      let extraHoursRate: number | undefined = undefined;
+
+      if (rawContractedRate !== undefined) {
+        if (!isAdmin) {
+          return forbiddenResponse('Nur Admins können den Vertragssatz ändern');
+        }
+        if (
+          rawContractedRate !== null &&
+          (typeof rawContractedRate !== 'number' || rawContractedRate < 0)
+        ) {
+          return NextResponse.json({ error: 'Vertragssatz muss ≥ 0 sein' }, { status: 400 });
+        }
+        contractedHourlyRate = rawContractedRate;
+      }
+
+      if (rawExtraRate !== undefined) {
+        if (rawExtraRate !== null && (typeof rawExtraRate !== 'number' || rawExtraRate < 0)) {
+          return NextResponse.json({ error: 'Zusatzstunden-Satz muss ≥ 0 sein' }, { status: 400 });
+        }
+        extraHoursRate = rawExtraRate;
+      }
 
       const updated = await trainerProfileService.updateTrainerProfile(id, {
         firstName,
@@ -93,6 +121,8 @@ export async function PATCH(
         experience,
         status,
         hourlyRate,
+        ...(contractedHourlyRate !== undefined ? { contractedHourlyRate } : {}),
+        ...(extraHoursRate !== undefined ? { extraHoursRate } : {}),
         availability,
         preferredTimeSlots,
         languages,

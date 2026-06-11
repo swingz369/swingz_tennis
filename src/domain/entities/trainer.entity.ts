@@ -35,6 +35,10 @@ export interface TrainerProfile {
   };
   status: 'active' | 'inactive' | 'on_leave' | 'terminated';
   hourlyRate?: number;
+  /** EUR/h — contractually agreed rate. Admin-only write, read-only for the trainer. */
+  contractedHourlyRate?: number | null;
+  /** EUR/h — rate the trainer can set for extra hours beyond the contract. Trainer + Admin editable. */
+  extraHoursRate?: number | null;
   availability: {
     monday: boolean;
     tuesday: boolean;
@@ -103,6 +107,8 @@ export interface UpdateTrainerProfileInput {
   };
   status?: TrainerProfile['status'];
   hourlyRate?: number;
+  contractedHourlyRate?: number | null;
+  extraHoursRate?: number | null;
   availability?: {
     monday: boolean;
     tuesday: boolean;

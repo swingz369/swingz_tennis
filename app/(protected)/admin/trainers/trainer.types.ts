@@ -19,6 +19,19 @@ export interface Trainer {
   specialties: string[];
   /** EUR/h, may be null if rate comes from a rate tier */
   hourly_rate: number | null;
+  /**
+   * EUR/h, contractually agreed rate. Admin-only write, read-only for the
+   * trainer. The trainer cannot change this field (enforced at the API layer
+   * + input disabled in the detail UI for non-admin roles).
+   * Added by migration 20260610_add_trainer_dual_rate.sql.
+   */
+  contracted_hourly_rate: number | null;
+  /**
+   * EUR/h, rate the trainer can freely set for additional hours they offer
+   * (e.g. extra sessions beyond the contract). Trainer-editable AND
+   * admin-editable. Added by migration 20260610_add_trainer_dual_rate.sql.
+   */
+  extra_hours_rate: number | null;
   max_hours_per_week: number;
   created_at: string;
 }

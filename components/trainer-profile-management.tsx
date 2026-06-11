@@ -24,7 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { User, Award, Plus, Search, GraduationCap, Euro, Eye, X } from 'lucide-react';
+import {
+  User,
+  Award,
+  Plus,
+  Search,
+  GraduationCap,
+  Euro,
+  Eye,
+  X,
+  UserCheck,
+  UserX,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -71,6 +82,10 @@ export interface TrainerProfile {
   };
   status: 'active' | 'inactive' | 'on_leave' | 'terminated';
   hourlyRate?: number;
+  /** EUR/h — contractually agreed rate. Admin-only write. */
+  contractedHourlyRate?: number | null;
+  /** EUR/h — trainer-editable rate for extra hours. */
+  extraHoursRate?: number | null;
   availability: {
     monday: boolean;
     tuesday: boolean;
@@ -152,6 +167,34 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setInviteLoading(false);
+    }
+  };
+
+  // Toggle trainer status between 'active' and 'inactive' (matches the
+  // members-list Activate/Deactivate pattern). Other statuses (on_leave,
+  // terminated) are managed from the detail page where context is richer.
+  const handleToggleTrainerStatus = async (
+    trainerId: string,
+    currentStatus: TrainerProfile['status']
+  ) => {
+    const newStatus: TrainerProfile['status'] = currentStatus === 'active' ? 'inactive' : 'active';
+    try {
+      const res = await apiFetch(`/api/trainer-profiles/${trainerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Fehler beim Ändern des Status');
+      }
+      setTrainers((prev) =>
+        prev.map((t) => (t.id === trainerId ? { ...t, status: newStatus } : t))
+      );
+      toast.success(newStatus === 'active' ? 'Trainer aktiviert' : 'Trainer deaktiviert');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Aktion fehlgeschlagen';
+      toast.error(message);
     }
   };
 
@@ -366,12 +409,25 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button asChild size="sm" variant="outline" className="gap-1.5">
-                      <Link href={`/admin/trainers/${trainer.id}`}>
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">Details anzeigen</span>
-                      </Link>
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" title="Details" asChild>
+                        <Link href={`/admin/trainers/${trainer.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                        onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
+                      >
+                        {trainer.status === 'active' ? (
+                          <UserX className="h-4 w-4 text-orange-600" />
+                        ) : (
+                          <UserCheck className="h-4 w-4 text-green-600" />
+                        )}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
