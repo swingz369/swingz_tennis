@@ -1,6 +1,5 @@
 import { requireAuth } from '@/lib/auth';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import {
   Calendar,
   BookOpen,
@@ -21,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/ui/stat-card';
 import { QuickActions } from '@/components/ui/quick-actions';
+import OnboardingTrialBooking from '@/components/onboarding-trial-booking';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,57 @@ export default async function MemberPage() {
     .maybeSingle();
 
   if (!membership) {
-    redirect('/dashboard');
+    // Do NOT redirect back to /dashboard — that causes an infinite redirect
+    // loop when the dashboard dispatches to /member for members without
+    // active memberships.  Show a Probetraining onboarding flow instead.
+    // User data is pre-filled from the auth context — only trial-specific
+    // fields (date, time, experience) need to be entered.
+    const { data: onboardingProfile } = await supabase
+      .from('users')
+      .select('full_name, email, phone')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const { data: clubs } = await supabase.from('clubs').select('id, name').order('name');
+
+    const onboardingFirstName =
+      onboardingProfile?.full_name?.split(' ')[0] ||
+      user.user_metadata?.full_name?.split(' ')[0] ||
+      user.email?.split('@')[0] ||
+      '';
+    const onboardingLastName =
+      onboardingProfile?.full_name?.split(' ').slice(1).join(' ') ||
+      user.user_metadata?.full_name?.split(' ').slice(1).join(' ') ||
+      '';
+
+    // If only one club exists, auto-select it
+    const singleClubId = clubs && clubs.length === 1 ? clubs[0].id : undefined;
+    const singleClubName = clubs && clubs.length === 1 ? clubs[0].name : undefined;
+
+    return (
+      <div className="max-w-xl mx-auto py-4">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-brand-primary/10 mb-3">
+            <Sparkles className="h-7 w-7 text-brand-primary" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground dark:text-white">
+            Willkommen bei SwingZ!
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Buche ein kostenloses Probetraining, um loszulegen.
+          </p>
+        </div>
+        <OnboardingTrialBooking
+          firstName={onboardingFirstName}
+          lastName={onboardingLastName}
+          email={onboardingProfile?.email ?? user.email ?? ''}
+          phone={onboardingProfile?.phone ?? ''}
+          clubs={(clubs ?? []).map((c) => ({ id: c.id, name: c.name }))}
+          clubId={singleClubId}
+          clubName={singleClubName}
+        />
+      </div>
+    );
   }
 
   const clubsData = membership.clubs;
