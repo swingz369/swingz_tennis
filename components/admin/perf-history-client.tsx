@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { RefreshCw, Activity, Github, Database, AlertCircle } from 'lucide-react';
+import { RefreshCw, Activity, ExternalLink, Database, AlertCircle } from 'lucide-react';
 import { PerfHistoryChart } from './perf-history-chart';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -155,7 +155,7 @@ export function PerfHistoryClient() {
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Github className="h-4 w-4" />
+              <ExternalLink className="h-4 w-4" />
               GitHub
             </button>
           </div>

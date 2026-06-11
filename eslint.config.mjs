@@ -81,6 +81,8 @@ const eslintConfig = [
       // and for display-name (anonymous forwardRef components are an established pattern)
       'react/no-unescaped-entities': 'off',
       'react/display-name': 'off',
+      // Async data fetching in useEffect is a standard React pattern
+      'react-hooks/set-state-in-effect': 'off',
 
       // jsx-a11y: downgrade noisy recommended rules from error to warn
       'jsx-a11y/click-events-have-key-events': 'warn',
