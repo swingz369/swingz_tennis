@@ -28,7 +28,10 @@ const TIMEOUT_NAVIGATION = 20_000;
  */
 async function tryClickByName(page: Page, patterns: RegExp[]): Promise<boolean> {
   for (const pattern of patterns) {
-    const el = page.getByRole('link', { name: pattern }).or(page.getByRole('button', { name: pattern })).first();
+    const el = page
+      .getByRole('link', { name: pattern })
+      .or(page.getByRole('button', { name: pattern }))
+      .first();
     try {
       if (await el.isVisible({ timeout: 1500 })) {
         await el.click();
@@ -45,10 +48,7 @@ test.describe('Season Planning Flow (Plan + Grid routes)', () => {
   test.beforeEach(async ({ page }) => {
     const email = process.env.TEST_ADMIN_EMAIL;
     const password = process.env.TEST_ADMIN_PASSWORD;
-    test.skip(
-      !email || !password,
-      'TEST_ADMIN_EMAIL/TEST_ADMIN_PASSWORD not set in env'
-    );
+    test.skip(!email || !password, 'TEST_ADMIN_EMAIL/TEST_ADMIN_PASSWORD not set in env');
     try {
       await loginAs(page, email!, password!);
     } catch (e) {

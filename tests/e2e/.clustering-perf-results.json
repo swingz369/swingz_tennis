@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-06-10T23:55:22.784Z",
+  "nodeVersion": "v24.15.0",
+  "baseUrl": "http://localhost:3000",
+  "runType": "e2e-playwright",
+  "config": {
+    "NUM_MEMBERS": 200,
+    "NUM_TRAINERS": 8,
+    "NUM_COURTS": 5
+  },
+  "runs": {},
+  "speedups": {}
+}
