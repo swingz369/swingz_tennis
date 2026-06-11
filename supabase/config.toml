@@ -110,8 +110,7 @@ enabled = false
 enabled = true
 
 # ═══ Edge Functions ══════════════════════════════════════════════════════
-[functions]
-verify_jwt = true
+# Per-function config (global verify_jwt removed for CLI v2 compat)
 
 # ═══ Analytics (Logflare) ════════════════════════════════════════════════
 [analytics]
