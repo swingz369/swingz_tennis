@@ -149,7 +149,7 @@ export async function POST(_request: NextRequest) {
       const cancelUrl = `${baseUrl}/shop?payment=cancelled&orderId=${order.id}`;
 
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card', 'sepa_debit', 'sofort'],
+        payment_method_types: ['card', 'sepa_debit', 'sofort', 'paypal'],
         mode: 'payment',
         line_items: lineItems,
         success_url: successUrl,
