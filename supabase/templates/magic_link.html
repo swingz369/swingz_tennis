@@ -1,1 +1,52 @@
-<html><body>Placeholder</body></html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dein Login-Link</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .card { background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #f97316, #ea580c); padding: 32px 40px; text-align: center; }
+    .header h1 { color: #ffffff; font-size: 24px; margin: 0; font-weight: 700; }
+    .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin: 6px 0 0; }
+    .body { padding: 40px; }
+    .body h2 { color: #18181b; font-size: 20px; margin: 0 0 16px; font-weight: 600; }
+    .body p { color: #52525b; font-size: 15px; line-height: 1.6; margin: 0 0 24px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 600; font-size: 15px; }
+    .highlight { background: #fff7ed; border-left: 4px solid #f97316; border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 24px; }
+    .highlight p { color: #9a3412; font-size: 14px; margin: 0; }
+    .footer { padding: 24px 40px; text-align: center; border-top: 1px solid #e4e4e7; }
+    .footer p { color: #a1a1aa; font-size: 12px; margin: 0 0 4px; line-height: 1.5; }
+    .footer a { color: #f97316; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <h1>🎾 SwingZ</h1>
+        <p>Dein Tennis-Club-Management</p>
+      </div>
+      <div class="body">
+        <h2>Dein Login-Link</h2>
+        <p>Hallo,</p>
+        <p>klicke auf den Button unten, um dich sicher bei SwingZ anzumelden — kein Passwort benötigt.</p>
+        <p style="text-align: center; margin-bottom: 32px;">
+          <a href="{{ .ConfirmationURL }}" class="btn">Jetzt einloggen</a>
+        </p>
+        <p style="font-size: 13px; color: #71717a;">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:</p>
+        <p style="font-size: 13px; color: #f97316; word-break: break-all;">{{ .ConfirmationURL }}</p>
+        <div class="highlight" style="margin-top: 24px;">
+          <p>🔐 Dieser Link ist nur <strong>einmal verwendbar</strong> und verfällt nach 1 Stunde. Falls du keinen Login angefordert hast, kannst du diese E-Mail ignorieren.</p>
+        </div>
+      </div>
+      <div class="footer">
+        <p>Du erhältst diese E-Mail, weil ein Login für <strong>{{ .Email }}</strong> angefordert wurde.</p>
+        <p><a href="{{ .SiteURL }}">SwingZ</a> — Dein Tennis-Club-Management</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
