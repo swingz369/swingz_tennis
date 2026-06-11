@@ -289,7 +289,7 @@ export default function TrainerPage() {
             variant: 'blue',
           },
           { label: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock, variant: 'purple' },
-          { label: 'Profil', href: '/profile', icon: Users, variant: 'green' },
+          { label: 'Profil', href: '/trainer/profile', icon: Users, variant: 'green' },
           { label: 'Abrechnung', href: '/billing', icon: BarChart3, variant: 'amber' },
           { label: 'Nachrichten', href: '/notifications', icon: Bell, variant: 'blue' },
         ]}

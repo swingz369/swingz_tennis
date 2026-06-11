@@ -24,7 +24,9 @@ export default async function DashboardPage() {
 
   if (error || !memberships || memberships.length === 0) {
     console.warn('[Dashboard Dispatch] No active memberships for user:', user.id);
-    // Show member area with onboarding hint
+    // Do NOT redirect to /member here — that causes a redirect loop when
+    // /member also finds no membership and redirects back to /dashboard.
+    // Instead, render the member area directly (it handles the no-membership case).
     redirect('/member');
   }
 
@@ -43,6 +45,7 @@ export default async function DashboardPage() {
     redirect('/trainer');
   }
 
-  // Default: member
+  // Default: member — render the member dashboard directly.
+  // /member handles its own no-membership state with an onboarding prompt.
   redirect('/member');
 }

@@ -129,7 +129,7 @@ test.describe('Public Pages (no auth required)', () => {
     { path: '/', expectedContent: /swingz|tischtennis|sport/i, timeout: 10000 },
     { path: '/login', expectedContent: /anmelden|login/i },
     { path: '/register', expectedContent: /Mitglied werden|registrieren|register/i },
-    { path: '/apply', expectedContent: /Online-Bewerbung|bewerben|apply/i },
+    // /apply was removed — onboarding is now via Probetraining on /member
     { path: '/landing', expectedContent: /swingz|tischtennis|sport/i },
   ];
 
