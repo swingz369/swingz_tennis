@@ -22,20 +22,23 @@ export async function GET() {
       return NextResponse.json({ familyMembers: [] });
     }
 
-    // Get all members in the family group
+    // Get all members in the family group, including user details and role
     const { data: familyMembers } = await (supabase as any)
       .from('family_accounts')
-      .select('user_id, relationship, users(full_name, email)')
+      .select('user_id, relationship, role, users(full_name, email, date_of_birth)')
       .eq('family_group_id', familyLink.family_group_id)
       .order('created_at');
 
     return NextResponse.json({
       familyGroupId: familyLink.family_group_id,
+      currentUserId: user.id,
       members: (familyMembers || []).map((m: any) => ({
         userId: m.user_id,
-        name: (m.users as any)?.full_name || 'Unbekannt',
+        fullName: (m.users as any)?.full_name || 'Unbekannt',
         email: (m.users as any)?.email || '',
+        role: m.role || 'member',
         relationship: m.relationship,
+        dateOfBirth: (m.users as any)?.date_of_birth ?? null,
         isSelf: m.user_id === user.id,
       })),
     });
@@ -71,11 +74,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Add to family group
+      // Add to family group — if user is a minor (has date_of_birth < 18), mark as child
+      const { data: userData } = await supabase
+        .from('users')
+        .select('date_of_birth')
+        .eq('id', user.id)
+        .maybeSingle();
+      const dob = userData?.date_of_birth;
+      const isMinor = dob
+        ? (Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000) < 18
+        : false;
       await (supabase as any).from('family_accounts').insert({
         family_group_id: invite.family_group_id,
         user_id: user.id,
         relationship: 'family',
+        role: isMinor ? 'child' : 'member',
       });
 
       // Mark invite as used
@@ -98,12 +111,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Bereits Teil einer Familie' }, { status: 409 });
     }
 
-    // Create family group and add self
+    // Create family group and add self as parent
     const familyGroupId = crypto.randomUUID();
     await (supabase as any).from('family_accounts').insert({
       family_group_id: familyGroupId,
       user_id: user.id,
       relationship: 'primary',
+      role: 'parent',
     });
 
     // Generate invite code
