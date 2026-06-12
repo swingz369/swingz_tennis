@@ -205,7 +205,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
               />
               <p className="text-sm text-muted-foreground">
                 Nach Aktivierung wird dein Studio unter dieser Domain erreichbar sein. DNS-Eintrag
-                muss auf swingz.app zeigen.
+                muss auf swingz.cloud zeigen.
               </p>
             </div>
             <div className="mt-4 flex justify-end">

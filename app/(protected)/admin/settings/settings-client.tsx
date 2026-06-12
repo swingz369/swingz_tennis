@@ -104,10 +104,6 @@ export default function SettingsClient() {
 
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
   const fetchSettings = async () => {
     try {
       // Fetch user club
@@ -122,14 +118,14 @@ export default function SettingsClient() {
           defaultHourlyRate: clubData.club.defaultHourlyRate || 15.0,
           status: clubData.club.status || 'active',
           ...(clubData.club.bundesland != null ? { bundesland: clubData.club.bundesland } : {}),
-          billing_unit_minutes: clubData.club.billing_unit_minutes === 45 ? 45 : 60,
+          billing_unit_minutes: clubData.club.billingUnitMinutes === 45 ? 45 : 60,
           tax_rate: clubData.club.tax_rate ?? 0,
           default_payment_method: (['sepa', 'transfer', 'cash', 'stripe'] as const).includes(
-            clubData.club.default_payment_method
+            clubData.club.defaultPaymentMethod
           )
-            ? clubData.club.default_payment_method
+            ? clubData.club.defaultPaymentMethod
             : 'transfer',
-          invoice_number_prefix: clubData.club.invoice_number_prefix ?? '',
+          invoice_number_prefix: clubData.club.invoicePrefix ?? '',
         }));
       }
 
@@ -152,6 +148,10 @@ export default function SettingsClient() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void fetchSettings();
+  }, []); // fetchSettings is a stable component-level const
 
   const handleSaveClubSettings = async () => {
     setSaving(true);
