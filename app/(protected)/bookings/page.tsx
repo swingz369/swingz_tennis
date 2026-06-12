@@ -33,6 +33,7 @@ import {
   MessageSquare,
   Calendar as CalendarIcon,
   MapPin,
+  GraduationCap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
@@ -46,6 +47,7 @@ import {
 } from '@/hooks/use-sessions';
 import FeedbackModal from '@/components/feedback/feedback-modal';
 import UnifiedCourtCalendar from '@/components/unified-court-calendar';
+import MemberTrainingSchedule from '@/components/member-training-schedule';
 
 export default function BookingsPage() {
   return (
@@ -57,7 +59,7 @@ export default function BookingsPage() {
 
 function BookingsContent() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams?.get('tab') || 'bookings';
+  const initialTab = searchParams?.get('tab') || 'courts';
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -78,7 +80,7 @@ function BookingsContent() {
   // Update tab when URL param changes
   useEffect(() => {
     const tab = searchParams?.get('tab');
-    if (tab && (tab === 'bookings' || tab === 'courts')) {
+    if (tab && (tab === 'bookings' || tab === 'courts' || tab === 'training')) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -226,7 +228,7 @@ function BookingsContent() {
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Buchungen & Kalender</h1>
           <p className="text-muted-foreground">
-            Verwalten Sie Ihre Buchungen und sehen Sie die Platzverfügbarkeit
+            Platzverfügbarkeit, Training und Buchungen verwalten
           </p>
         </div>
         {/* Button to create court booking */}
@@ -237,14 +239,18 @@ function BookingsContent() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="bookings" className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            <span>Meine Buchungen</span>
-          </TabsTrigger>
+        <TabsList className="grid w-full max-w-lg grid-cols-3">
           <TabsTrigger value="courts" className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
             <span>Platz-Kalender</span>
+          </TabsTrigger>
+          <TabsTrigger value="training" className="flex items-center gap-2">
+            <GraduationCap className="h-4 w-4" />
+            <span>Training</span>
+          </TabsTrigger>
+          <TabsTrigger value="bookings" className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            <span>Meine Buchungen</span>
           </TabsTrigger>
         </TabsList>
 
@@ -427,6 +433,11 @@ function BookingsContent() {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        {/* Training Tab */}
+        <TabsContent value="training" className="mt-6">
+          <MemberTrainingSchedule />
         </TabsContent>
 
         {/* Courts Tab */}
