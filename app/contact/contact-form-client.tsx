@@ -4,41 +4,75 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Send } from 'lucide-react';
+import { Send, CheckCircle2, Loader2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 export function ContactFormClient() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, this would send an email or create a support ticket
-    setSubmitted(true);
+    setError(null);
+    setLoading(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const firstName = (formData.get('firstName') as string)?.trim();
+    const lastName = (formData.get('lastName') as string)?.trim();
+    const email = (formData.get('email') as string)?.trim();
+    const clubName = (formData.get('club') as string)?.trim();
+    const message = (formData.get('message') as string)?.trim();
+
+    try {
+      const res = await apiFetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, clubName, message }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Senden fehlgeschlagen');
+      }
+
+      setSubmitted(true);
+      form.reset();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
     return (
-      <div className="bg-green-50 border border-green-100 rounded-3xl p-8 text-center">
-        <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-          <Send className="h-8 w-8 text-green-600" />
+      <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/30 rounded-3xl p-8 text-center">
+        <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <h3 className="text-xl font-bold text-foreground mb-2">Nachricht gesendet!</h3>
+        <h3 className="text-xl font-bold text-foreground mb-2">Early Access angefragt!</h3>
         <p className="text-muted-foreground">
-          Wir melden uns in Kürze bei dir. In der Regel antworten wir innerhalb von 24 Stunden.
+          Danke für dein Interesse! Wir melden uns persönlich bei dir — in der Regel innerhalb von
+          24 Stunden.
         </p>
         <Button variant="outline" className="mt-6" onClick={() => setSubmitted(false)}>
-          Neue Nachricht
+          Weitere Anfrage stellen
         </Button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} id="contact-form" className="space-y-6">
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">Vorname *</Label>
           <Input
             id="firstName"
+            name="firstName"
             required
             className="h-12 rounded-xl border-border"
             placeholder="Max"
@@ -48,6 +82,7 @@ export function ContactFormClient() {
           <Label htmlFor="lastName">Nachname *</Label>
           <Input
             id="lastName"
+            name="lastName"
             required
             className="h-12 rounded-xl border-border"
             placeholder="Mustermann"
@@ -58,6 +93,7 @@ export function ContactFormClient() {
         <Label htmlFor="email">E-Mail *</Label>
         <Input
           id="email"
+          name="email"
           type="email"
           required
           className="h-12 rounded-xl border-border"
@@ -68,6 +104,7 @@ export function ContactFormClient() {
         <Label htmlFor="club">Vereinsname</Label>
         <Input
           id="club"
+          name="club"
           className="h-12 rounded-xl border-border"
           placeholder="z.B. TC Grün-Weiß"
         />
@@ -76,19 +113,37 @@ export function ContactFormClient() {
         <Label htmlFor="message">Nachricht *</Label>
         <textarea
           id="message"
+          name="message"
           required
           rows={5}
           className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brandPrimary/20 focus:border-brand-light resize-none"
-          placeholder="Beschreibe dein Anliegen..."
+          placeholder="Erzähl uns von deinem Verein und was dich an SWINGZ interessiert..."
         />
       </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
       <Button
         type="submit"
         size="lg"
         className="w-full h-12 rounded-xl bg-gradient-primary text-white shadow-lg"
+        disabled={loading}
       >
-        <Send className="h-4 w-4 mr-2" />
-        Nachricht senden
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Wird gesendet...
+          </>
+        ) : (
+          <>
+            <Send className="h-4 w-4 mr-2" />
+            Early Access anfragen
+          </>
+        )}
       </Button>
     </form>
   );
