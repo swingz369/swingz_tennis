@@ -13,7 +13,7 @@ export interface EmailConfig {
 }
 
 const config: EmailConfig = {
-  from: process.env.EMAIL_FROM || 'SwingZ <noreply@swingz.app>',
+  from: process.env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>',
   replyTo: process.env.EMAIL_REPLY_TO,
 };
 

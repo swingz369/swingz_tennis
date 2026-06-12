@@ -81,7 +81,7 @@ export async function buildMemberEmailHtml(input: {
   seasonName: string;
   firstSessionTime: string | null;
 }): Promise<string> {
-  const appUrl = env.NEXT_PUBLIC_APP_URL || 'https://swingz.app';
+  const appUrl = env.NEXT_PUBLIC_APP_URL || 'https://swingz.cloud';
   const element: ReactElement = createElement(SeasonConfirmationEmail, {
     fullName: input.fullName,
     groupName: input.groupName,
@@ -261,7 +261,7 @@ export class SeasonConfirmationEmailService {
       return result;
     }
 
-    const fromEmail = params.fromEmail || env.EMAIL_FROM || 'noreply@swingz.app';
+    const fromEmail = params.fromEmail || env.EMAIL_FROM || 'noreply@swingz.cloud';
 
     // Send emails sequentially (not in parallel) to respect Resend rate limits
     // and avoid hammering the DB session lookup

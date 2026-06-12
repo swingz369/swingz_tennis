@@ -283,7 +283,9 @@ class TrialTrainingServiceAdapter {
       const clubName = clubResult[0]?.name ?? 'SwingZ Tennis Club';
 
       const baseUrl =
-        process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://swingz.app';
+        process.env.NEXT_PUBLIC_APP_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        'https://swingz.cloud';
       const adminDashboardUrl = `${baseUrl}/admin/trial-training`;
 
       const participant = trialTraining.participant;

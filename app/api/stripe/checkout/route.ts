@@ -134,7 +134,6 @@ export async function POST(_request: NextRequest) {
       const lineItemName = description || `Platzbuchung - ${courtName}`;
 
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card', 'sepa_debit', 'sofort', 'paypal'],
         mode: 'payment',
         line_items: [
           {

@@ -611,3 +611,12 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Hide scrollbar for mobile day-pills */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

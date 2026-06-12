@@ -42,7 +42,7 @@ Users can only access data for clubs they belong to (except superadmins).
         `,
         contact: {
           name: 'SwingZ Support',
-          email: 'support@swingz.app',
+          email: 'support@swingz.cloud',
         },
         license: {
           name: 'Proprietary',

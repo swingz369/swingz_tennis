@@ -50,10 +50,10 @@ export async function GET(_req: NextRequest) {
         defaultHourlyRate: club.default_hourly_rate || 15.0,
         status: club.status,
         bundesland: club.bundesland ?? null,
-        billing_unit_minutes: club.billing_unit_minutes ?? 60,
-        tax_rate: club.tax_rate ?? 0,
-        default_payment_method: club.default_payment_method ?? 'transfer',
-        invoice_number_prefix: club.invoice_number_prefix ?? '',
+        billingUnitMinutes: club.billing_unit_minutes ?? 60,
+        taxRate: club.tax_rate ?? 0,
+        defaultPaymentMethod: club.default_payment_method ?? 'transfer',
+        invoicePrefix: club.invoice_number_prefix ?? '',
       },
     });
   });

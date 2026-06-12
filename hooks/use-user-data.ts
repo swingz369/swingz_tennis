@@ -11,7 +11,12 @@ export interface UserClubData {
     name: string;
     maxMembers: number;
     defaultHourlyRate: number;
+    taxRate: number;
     status: string;
+    bundesland: string | null;
+    billingUnitMinutes: number;
+    defaultPaymentMethod: string;
+    invoicePrefix: string;
   } | null;
 }
 
