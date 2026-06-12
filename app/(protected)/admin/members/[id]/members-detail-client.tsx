@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CenteredModal } from '@/components/ui/centered-modal';
+import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -23,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -34,11 +37,12 @@ import {
   Phone,
   MapPin,
   Shield,
-  FileText,
   Save,
   Edit,
   AlertCircle,
   Target,
+  ChevronRight,
+  Euro,
 } from 'lucide-react';
 import { PreferencesTab } from './preferences-tab';
 import { InvoicesTab } from './invoices-tab';
@@ -60,11 +64,14 @@ interface BookingData {
 }
 
 export function MembersDetailClient({ initialMember, clubId }: Props) {
-  const router = useRouter();
   const [member, setMember] = useState<Member>(initialMember);
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | {
+    type: 'deactivate' | 'activate' | 'role';
+    newRole?: Member['role'];
+  }>(null);
   const [editForm, setEditForm] = useState({
     phone: '',
     address: '',
@@ -109,6 +116,15 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
   }, [fetchBookings]);
 
   const handleRoleChange = async (newRole: Member['role']) => {
+    // Require confirmation when promoting to admin
+    if (newRole === 'admin' && member.role !== 'admin') {
+      setConfirmAction({ type: 'role', newRole });
+      return;
+    }
+    await executeRoleChange(newRole);
+  };
+
+  const executeRoleChange = async (newRole: Member['role']) => {
     try {
       const res = await apiFetch(`/api/members/${member.id}`, {
         method: 'PATCH',
@@ -126,10 +142,21 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler';
       toast.error(message);
+    } finally {
+      setConfirmAction(null);
     }
   };
 
   const handleToggleActive = async () => {
+    // Require confirmation when deactivating
+    if (member.is_active) {
+      setConfirmAction({ type: 'deactivate' });
+      return;
+    }
+    await executeToggleActive();
+  };
+
+  const executeToggleActive = async () => {
     try {
       const res = await apiFetch(`/api/members/${member.id}`, {
         method: 'PATCH',
@@ -147,6 +174,8 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler';
       toast.error(message);
+    } finally {
+      setConfirmAction(null);
     }
   };
 
@@ -200,407 +229,568 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     });
   };
 
+  const getStatusVariant = (isActive: boolean): 'success' | 'secondary' => {
+    return isActive ? 'success' : 'secondary';
+  };
+
+  const getStatusLabel = (isActive: boolean) => {
+    return isActive ? 'Aktiv' : 'Inaktiv';
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Admin';
+      case 'trainer':
+        return 'Trainer';
+      case 'superadmin':
+        return 'Superadmin';
+      default:
+        return 'Mitglied';
+    }
+  };
+
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-brand-primary">Mitgliedsdetails</h1>
-            <p className="text-muted-foreground text-sm">Verwaltung von {member.full_name}</p>
-          </div>
-        </div>
-        <Button
-          variant={isEditing ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => {
-            if (isEditing) {
-              handleSaveProfile();
-            } else {
-              setIsEditing(true);
-            }
-          }}
-          className="gap-2"
+    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in">
+      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
+      <nav className="mb-4 flex items-center gap-1.5 text-sm">
+        <Link
+          href="/admin/members"
+          className="inline-flex items-center gap-1 text-muted-foreground hover:text-brand-primary transition-colors"
         >
-          {isEditing ? (
-            <>
-              <Save className="h-4 w-4" />
-              Speichern
-            </>
-          ) : (
-            <>
-              <Edit className="h-4 w-4" />
-              Bearbeiten
-            </>
-          )}
-        </Button>
-      </div>
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Mitglieder
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+        <span className="font-medium text-foreground truncate">{member.full_name}</span>
+      </nav>
 
-      {isEditing && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-brandAccent/5 border border-brandAccent/20 rounded-xl text-sm text-brandAccent">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>
-            Bearbeitungsmodus aktiv — Änderungen werden erst nach Klick auf &quot;Speichern&quot;
-            übernommen.
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="ml-auto text-xs"
-            onClick={() => {
-              setIsEditing(false);
-              setEditForm({
-                phone: member.phone || '',
-                address: member.address || '',
-                city: member.city || '',
-                postal_code: member.postal_code || '',
-                date_of_birth: member.date_of_birth || '',
-                bio: member.bio || '',
-                emergency_contact: member.emergency_contact || '',
-                emergency_phone: member.emergency_phone || '',
-              });
-            }}
-          >
-            Abbrechen
-          </Button>
-        </div>
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* ── Profile Card (left sidebar) ─────────────────────────────────── */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 flex items-center justify-center shrink-0 shadow-sm">
-                <User className="h-8 w-8 text-brandPrimary" />
+      <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+        {/* ── Detail Header ────────────────────────────────────────────── */}
+        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 flex items-center justify-center shrink-0">
+                <User className="h-6 w-6 text-brandPrimary" />
               </div>
               <div className="min-w-0">
-                <CardTitle className="text-lg truncate">{member.full_name}</CardTitle>
-                <CardDescription className="truncate">{member.email}</CardDescription>
+                <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
+                  {member.full_name}
+                </h2>
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground truncate">
+                  {member.email}
+                </p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="truncate">{member.email}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span>Beigetreten: {formatDate(member.joined_at)}</span>
-            </div>
-            {member.phone && (
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span>{member.phone}</span>
-              </div>
-            )}
-
-            <div className="pt-4 space-y-3 border-t border-border dark:border-white/10">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm">Rolle</Label>
-                <Select value={member.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="member">Mitglied</SelectItem>
-                    <SelectItem value="trainer">Trainer</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label className="text-sm">Status</Label>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <Badge variant={getStatusVariant(member.is_active)} size="lg">
+                {getStatusLabel(member.is_active)}
+              </Badge>
+              <Badge variant="secondary" size="lg">
+                {getRoleLabel(member.role)}
+              </Badge>
+              {!isEditing && (
                 <Button
-                  variant={member.is_active ? 'default' : 'outline'}
+                  onClick={() => setIsEditing(true)}
+                  variant="primary"
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <Edit className="h-4 w-4" />
+                  Bearbeiten
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Editing Banner ──────────────────────────────────────────── */}
+        {isEditing && (
+          <div className="flex items-center gap-2 px-5 py-2 bg-brandAccent/5 border-b border-brandAccent/20 text-sm text-brandAccent">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>
+              Bearbeitungsmodus aktiv — Änderungen werden erst nach Klick auf &quot;Speichern&quot;
+              übernommen.
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto text-xs"
+              onClick={() => {
+                setIsEditing(false);
+                setEditForm({
+                  phone: member.phone || '',
+                  address: member.address || '',
+                  city: member.city || '',
+                  postal_code: member.postal_code || '',
+                  date_of_birth: member.date_of_birth || '',
+                  bio: member.bio || '',
+                  emergency_contact: member.emergency_contact || '',
+                  emergency_phone: member.emergency_phone || '',
+                });
+              }}
+            >
+              Abbrechen
+            </Button>
+          </div>
+        )}
+
+        {/* ── Detail Body ──────────────────────────────────────────────── */}
+        <div className="p-5">
+          <Tabs defaultValue="profile" className="space-y-5">
+            <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
+              <TabsTrigger
+                value="profile"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+              >
+                Profil
+              </TabsTrigger>
+              <TabsTrigger
+                value="preferences"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+              >
+                Präferenzen
+              </TabsTrigger>
+              <TabsTrigger
+                value="invoices"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+              >
+                Rechnungen
+              </TabsTrigger>
+              <TabsTrigger
+                value="bookings"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+              >
+                Buchungen
+              </TabsTrigger>
+            </TabsList>
+
+            {/* ── Profile Tab ──────────────────────────────────────────── */}
+            <TabsContent value="profile" className="space-y-6 animate-in">
+              {/* Role & Status Management */}
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
+                    <Shield className="h-4 w-4 text-brandPrimary" />
+                    Rolle & Status
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Rolle</Label>
+                      <Select value={member.role} onValueChange={handleRoleChange}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="member">Mitglied</SelectItem>
+                          <SelectItem value="trainer">Trainer</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Status</Label>
+                      <div>
+                        <Button
+                          variant={member.is_active ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={handleToggleActive}
+                        >
+                          {member.is_active ? (
+                            <>
+                              <Check className="h-4 w-4 mr-1" /> Aktiv
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-4 w-4 mr-1" /> Inaktiv
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Beigetreten</Label>
+                      <div className="font-medium flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        {formatDate(member.joined_at)}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Personal Information */}
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
+                    <User className="h-4 w-4 text-brandPrimary" />
+                    Persönliche Informationen
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Name</Label>
+                      <div className="font-medium">{member.full_name}</div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">E-Mail</Label>
+                      <div className="font-medium flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        {member.email}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Telefon</Label>
+                      {isEditing ? (
+                        <Input
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                          placeholder="+49 123 456 7890"
+                        />
+                      ) : (
+                        <div className="font-medium flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          {member.phone || '—'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
+                      {isEditing ? (
+                        <Input
+                          type="date"
+                          value={editForm.date_of_birth}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, date_of_birth: e.target.value })
+                          }
+                        />
+                      ) : (
+                        <div className="font-medium">
+                          {member.date_of_birth ? formatDate(member.date_of_birth) : '—'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="md:col-span-2 space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Bio</Label>
+                      {isEditing ? (
+                        <Textarea
+                          value={editForm.bio}
+                          onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                          placeholder="Kurzbeschreibung des Mitglieds..."
+                          rows={3}
+                          className="resize-none"
+                        />
+                      ) : (
+                        <div className="text-foreground dark:text-foreground text-sm">
+                          {member.bio || 'Keine Bio vorhanden'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Address */}
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
+                    <MapPin className="h-4 w-4 text-brandAccent" />
+                    Adresse
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="md:col-span-2 space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Straße & Hausnummer</Label>
+                      {isEditing ? (
+                        <Input
+                          value={editForm.address}
+                          onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                          placeholder="Musterstraße 123"
+                        />
+                      ) : (
+                        <div className="font-medium">{member.address || '—'}</div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Postleitzahl</Label>
+                      {isEditing ? (
+                        <Input
+                          value={editForm.postal_code}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, postal_code: e.target.value })
+                          }
+                          placeholder="12345"
+                        />
+                      ) : (
+                        <div className="font-medium">{member.postal_code || '—'}</div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Stadt</Label>
+                      {isEditing ? (
+                        <Input
+                          value={editForm.city}
+                          onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                          placeholder="Musterstadt"
+                        />
+                      ) : (
+                        <div className="font-medium">{member.city || '—'}</div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Emergency Contact */}
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
+                    <Shield className="h-4 w-4 text-brandAccent" />
+                    Notfallkontakt
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Name</Label>
+                      {isEditing ? (
+                        <Input
+                          value={editForm.emergency_contact}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, emergency_contact: e.target.value })
+                          }
+                          placeholder="Max Mustermann"
+                        />
+                      ) : (
+                        <div className="font-medium">{member.emergency_contact || '—'}</div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Telefon</Label>
+                      {isEditing ? (
+                        <Input
+                          value={editForm.emergency_phone}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, emergency_phone: e.target.value })
+                          }
+                          placeholder="+49 123 456 7890"
+                        />
+                      ) : (
+                        <div className="font-medium">{member.emergency_phone || '—'}</div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Preferences Tab ──────────────────────────────────────── */}
+            <TabsContent value="preferences" className="space-y-5 animate-in">
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
+                    <Target className="h-4 w-4 text-brandPrimary" />
+                    Trainings-Präferenzen
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Verfügbarkeiten und Wünsche für die Trainingsplanung
+                  </p>
+                  <PreferencesTab userId={member.user_id} clubId={clubId} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Invoices Tab ─────────────────────────────────────────── */}
+            <TabsContent value="invoices" className="space-y-5 animate-in">
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
+                    <Euro className="h-4 w-4 text-brandPrimary" />
+                    Rechnungen
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Alle Rechnungen dieses Mitglieds
+                  </p>
+                  <InvoicesTab userId={member.user_id} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Bookings Tab ─────────────────────────────────────────── */}
+            <TabsContent value="bookings" className="space-y-5 animate-in">
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
+                    <Calendar className="h-4 w-4 text-brandPrimary" />
+                    Buchungen
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Alle Trainingsbuchungen dieses Mitglieds
+                  </p>
+                  {loading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  ) : bookings.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                      Noch keine Buchungen
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Datum/Uhrzeit</TableHead>
+                          <TableHead>Trainer</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Gebucht am</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bookings.map((b) => (
+                          <TableRow key={b.id}>
+                            <TableCell>
+                              {b.session_start
+                                ? new Date(b.session_start).toLocaleString('de-DE')
+                                : '-'}
+                            </TableCell>
+                            <TableCell>{b.trainer_name || '-'}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  b.status === 'confirmed'
+                                    ? 'success'
+                                    : b.status === 'cancelled'
+                                      ? 'error'
+                                      : b.status === 'no_show'
+                                        ? 'secondary'
+                                        : 'warning'
+                                }
+                              >
+                                {b.status === 'confirmed'
+                                  ? 'Bestätigt'
+                                  : b.status === 'cancelled'
+                                    ? 'Storniert'
+                                    : b.status === 'no_show'
+                                      ? 'Nicht erschienen'
+                                      : 'Ausstehend'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {b.booked_at ? formatDate(b.booked_at) : '-'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* ── Detail Footer ─────────────────────────────────────────────── */}
+        <div className="p-5 bg-muted dark:bg-black/10 border-t border-border dark:border-white/10 flex flex-col sm:flex-row gap-3 items-center justify-between">
+          {isEditing ? (
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditForm({
+                    phone: member.phone || '',
+                    address: member.address || '',
+                    city: member.city || '',
+                    postal_code: member.postal_code || '',
+                    date_of_birth: member.date_of_birth || '',
+                    bio: member.bio || '',
+                    emergency_contact: member.emergency_contact || '',
+                    emergency_phone: member.emergency_phone || '',
+                  });
+                }}
+                className="flex-1 sm:flex-initial"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                onClick={handleSaveProfile}
+                variant="primary"
+                className="flex-1 sm:flex-initial"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Speichern
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+              {member.is_active ? (
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleToggleActive}
+                  className="flex-1 sm:flex-initial"
                 >
-                  {member.is_active ? (
-                    <>
-                      <Check className="h-4 w-4 mr-1" /> Aktiv
-                    </>
-                  ) : (
-                    <>
-                      <X className="h-4 w-4 mr-1" /> Inaktiv
-                    </>
-                  )}
+                  Deaktivieren
                 </Button>
-              </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleActive}
+                  className="flex-1 sm:flex-initial"
+                >
+                  Aktivieren
+                </Button>
+              )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Main Content (right area) ──────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Persönliche Informationen */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <User className="h-4 w-4 text-brandPrimary" />
-                Persönliche Informationen
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Name</Label>
-                  <div className="font-medium">{member.full_name}</div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">E-Mail</Label>
-                  <div className="font-medium">{member.email}</div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Telefon</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      placeholder="+49 123 456 7890"
-                    />
-                  ) : (
-                    <div className="font-medium">{member.phone || '—'}</div>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
-                  {isEditing ? (
-                    <Input
-                      type="date"
-                      value={editForm.date_of_birth}
-                      onChange={(e) => setEditForm({ ...editForm, date_of_birth: e.target.value })}
-                    />
-                  ) : (
-                    <div className="font-medium">
-                      {member.date_of_birth ? formatDate(member.date_of_birth) : '—'}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Adresse */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <MapPin className="h-4 w-4 text-brandAccent" />
-                Adresse
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="md:col-span-2 space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Straße & Hausnummer</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.address}
-                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                      placeholder="Musterstraße 123"
-                    />
-                  ) : (
-                    <div className="font-medium">{member.address || '—'}</div>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Postleitzahl</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.postal_code}
-                      onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
-                      placeholder="12345"
-                    />
-                  ) : (
-                    <div className="font-medium">{member.postal_code || '—'}</div>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Stadt</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.city}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                      placeholder="Musterstadt"
-                    />
-                  ) : (
-                    <div className="font-medium">{member.city || '—'}</div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notfallkontakt */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Shield className="h-4 w-4 text-brandAccent" />
-                Notfallkontakt
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Name</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.emergency_contact}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, emergency_contact: e.target.value })
-                      }
-                      placeholder="Max Mustermann"
-                    />
-                  ) : (
-                    <div className="font-medium">{member.emergency_contact || '—'}</div>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Telefon</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.emergency_phone}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, emergency_phone: e.target.value })
-                      }
-                      placeholder="+49 123 456 7890"
-                    />
-                  ) : (
-                    <div className="font-medium">{member.emergency_phone || '—'}</div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bio */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="h-4 w-4 text-brandPrimary" />
-                Über das Mitglied
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <Textarea
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                  placeholder="Kurzbeschreibung des Mitglieds..."
-                  rows={3}
-                  className="resize-none"
-                />
-              ) : (
-                <div className="text-sm text-foreground dark:text-foreground">
-                  {member.bio || 'Keine Bio vorhanden'}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Rechnungen */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="h-4 w-4 text-brandPrimary" />
-                Rechnungen
-              </CardTitle>
-              <CardDescription>Alle Rechnungen dieses Mitglieds</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <InvoicesTab userId={member.user_id} />
-            </CardContent>
-          </Card>
-
-          {/* Trainings-Präferenzen */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Target className="h-4 w-4 text-brandPrimary" />
-                Trainings-Präferenzen
-              </CardTitle>
-              <CardDescription>
-                Verfügbarkeiten und Wünsche für die Trainingsplanung
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PreferencesTab userId={member.user_id} clubId={clubId} />
-            </CardContent>
-          </Card>
-
-          {/* Buchungen */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Calendar className="h-4 w-4 text-brandPrimary" />
-                Buchungen
-              </CardTitle>
-              <CardDescription>Alle Trainingsbuchungen dieses Mitglieds</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Laden...</div>
-              ) : bookings.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">
-                  Noch keine Buchungen
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Datum/Uhrzeit</TableHead>
-                      <TableHead>Trainer</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Gebucht am</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bookings.map((b) => (
-                      <TableRow key={b.id}>
-                        <TableCell>
-                          {b.session_start
-                            ? new Date(b.session_start).toLocaleString('de-DE')
-                            : '-'}
-                        </TableCell>
-                        <TableCell>{b.trainer_name || '-'}</TableCell>
-                        <TableCell>
-                          <Badge
-                            className={
-                              b.status === 'confirmed'
-                                ? 'bg-green-100 text-green-700'
-                                : b.status === 'cancelled'
-                                  ? 'bg-red-100 text-red-700'
-                                  : b.status === 'no_show'
-                                    ? 'bg-muted text-foreground'
-                                    : 'bg-yellow-100 text-yellow-700'
-                            }
-                          >
-                            {b.status === 'confirmed'
-                              ? 'Bestätigt'
-                              : b.status === 'cancelled'
-                                ? 'Storniert'
-                                : b.status === 'no_show'
-                                  ? 'Nicht erschienen'
-                                  : 'Ausstehend'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {b.booked_at ? formatDate(b.booked_at) : '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          )}
         </div>
       </div>
+
+      {/* ── Confirmation Dialog ──────────────────────────────────────── */}
+      <CenteredModal open={!!confirmAction} onClose={() => setConfirmAction(null)}>
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold">
+            {confirmAction?.type === 'deactivate' && 'Mitglied deaktivieren?'}
+            {confirmAction?.type === 'role' && 'Rolle auf Admin ändern?'}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {confirmAction?.type === 'deactivate' && (
+              <>
+                Möchtest du <strong>{member.full_name}</strong> wirklich deaktivieren?
+                <span className="block mt-1">
+                  Das Mitglied verliert den Zugang zum Vereinsportal und kann sich nicht mehr für
+                  Trainings anmelden.
+                </span>
+              </>
+            )}
+            {confirmAction?.type === 'role' && (
+              <>
+                Möchtest du <strong>{member.full_name}</strong> wirklich die Rolle{' '}
+                <strong>Admin</strong> zuweisen?
+                <span className="block mt-1">
+                  Admins haben vollen Zugriff auf alle Vereinsverwaltungsfunktionen inkl.
+                  Mitgliederverwaltung, Buchhaltung und Einstellungen.
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex gap-2 pt-4 justify-end">
+          <Button variant="outline" onClick={() => setConfirmAction(null)}>
+            Abbrechen
+          </Button>
+          <Button
+            variant={confirmAction?.type === 'deactivate' ? 'destructive' : 'default'}
+            onClick={() => {
+              if (confirmAction?.type === 'deactivate') executeToggleActive();
+              else if (confirmAction?.type === 'role' && confirmAction.newRole)
+                executeRoleChange(confirmAction.newRole);
+            }}
+          >
+            {confirmAction?.type === 'deactivate' && 'Deaktivieren'}
+            {confirmAction?.type === 'role' && 'Ja, Admin zuweisen'}
+          </Button>
+        </div>
+      </CenteredModal>
     </div>
   );
 }

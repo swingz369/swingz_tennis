@@ -924,17 +924,19 @@ export default function UnifiedCourtCalendar({
   }
 
   /* ═══════════════════════════════════════════════════
-     Court Selection Cards (Member only)
-     Shown when no court is selected and user is not admin.
+     Court Selection Cards (Admin + Member)
+     Shown when no court is selected. Click a court to see its schedule.
      ═══════════════════════════════════════════════════ */
 
-  if (!isAdmin && !effectiveCourtId) {
+  if (!effectiveCourtId) {
     return (
       <div className="p-4 md:p-6 space-y-5">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Platz-Kalender</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Wähle einen Platz, um die Verfügbarkeit zu sehen und zu buchen
+            {isAdmin
+              ? 'Wähle einen Platz, um den Stundenplan zu verwalten'
+              : 'Wähle einen Platz, um die Verfügbarkeit zu sehen und zu buchen'}
           </p>
         </div>
 
@@ -1624,8 +1626,8 @@ export default function UnifiedCourtCalendar({
 
   const content = (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-      {/* Back button for single-court member view */}
-      {effectiveCourtId && !isAdmin && (
+      {/* Back button to return to court selection cards */}
+      {effectiveCourtId && (
         <button
           onClick={() => setSelectedCourtId(null)}
           className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors group/back"

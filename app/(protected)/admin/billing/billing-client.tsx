@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DollarSign, Plus, FileText, Loader2, Trash2, Send } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
@@ -190,6 +191,70 @@ export default function BillingClient({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const selectableInvoices = invoices.filter((inv) => inv.status !== 'paid');
+  const allSelected =
+    selectableInvoices.length > 0 && selectableInvoices.every((inv) => selectedIds.has(inv.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(selectableInvoices.map((inv) => inv.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkDeleting(true);
+    let successCount = 0;
+    let failCount = 0;
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const res = await apiFetch(`/api/billing/invoices/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch {
+          failCount++;
+        }
+      })
+    );
+    if (successCount > 0) {
+      toast.success(`${successCount} Rechnung${successCount !== 1 ? 'en' : ''} gelöscht`);
+      setInvoices((prev) => prev.filter((inv) => !selectedIds.has(inv.id)));
+    }
+    if (failCount > 0) {
+      toast.error(
+        `${failCount} Rechnung${failCount !== 1 ? 'en' : ''} konnte${failCount === 1 ? 'te' : 'n'} nicht gelöscht werden`
+      );
+    }
+    setSelectedIds(new Set());
+    setBulkDeleteConfirmOpen(false);
+    setBulkDeleting(false);
+  };
+
   const handleSendInvoice = async (invoiceId: string) => {
     setSendingInvoiceId(invoiceId);
     try {
@@ -354,7 +419,10 @@ export default function BillingClient({
                 return (
                   <button
                     key={t}
-                    onClick={() => setInvoiceTypeFilter(t)}
+                    onClick={() => {
+                      setInvoiceTypeFilter(t);
+                      setSelectedIds(new Set());
+                    }}
                     className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
                       invoiceTypeFilter === t
                         ? 'border-brand-primary text-brand-primary'
@@ -382,6 +450,13 @@ export default function BillingClient({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allSelected || (someSelected ? 'indeterminate' : false)}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Alle auswählen"
+                      />
+                    </TableHead>
                     <TableHead>Rechnungsnr.</TableHead>
                     <TableHead>Datum</TableHead>
                     <TableHead>Mitglied</TableHead>
@@ -396,7 +471,18 @@ export default function BillingClient({
                 </TableHeader>
                 <TableBody>
                   {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
+                    <TableRow key={invoice.id} data-selected={selectedIds.has(invoice.id)}>
+                      <TableCell className="w-10">
+                        {invoice.status === 'paid' ? (
+                          <span className="block w-4 h-4" />
+                        ) : (
+                          <Checkbox
+                            checked={selectedIds.has(invoice.id)}
+                            onCheckedChange={() => toggleSelect(invoice.id)}
+                            aria-label={`Rechnung ${invoice.invoiceNumber} auswählen`}
+                          />
+                        )}
+                      </TableCell>
                       <TableCell className="font-mono text-sm">{invoice.invoiceNumber}</TableCell>
                       <TableCell className="text-sm">
                         {invoice.invoiceDate
@@ -502,7 +588,76 @@ export default function BillingClient({
           />
         )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Bulk Selection Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-3 shadow-lg">
+          <span className="text-sm font-medium">
+            {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} ausgewählt
+          </span>
+          <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+            Auswahl aufheben
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setBulkDeleteConfirmOpen(true)}>
+            <Trash2 className="h-4 w-4 mr-1.5" />
+            Ausgewählte löschen
+          </Button>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <CenteredModal open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)}>
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold text-red-600">
+            {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} löschen?
+          </h2>
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p>Folgende Rechnungen werden gelöscht:</p>
+            <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-muted/50 p-2 space-y-1">
+              {Array.from(selectedIds).map((id) => {
+                const inv = invoices.find((i) => i.id === id);
+                if (!inv) return null;
+                return (
+                  <div key={id} className="flex items-center justify-between text-xs">
+                    <span className="font-mono">{inv.invoiceNumber}</span>
+                    <span>{inv.memberName}</span>
+                    <span className="font-medium tabular-nums">
+                      {inv.amount.toFixed(2)} {inv.currency}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {Array.from(selectedIds).some((id) => {
+              const inv = invoices.find((i) => i.id === id);
+              return inv && !['draft', 'open'].includes(inv.status);
+            }) && (
+              <p className="text-amber-600 font-medium">
+                ⚠️ Einige Rechnungen wurden bereits versendet oder haben Zahlungen erhalten.
+              </p>
+            )}
+            <p>Diese Aktion kann nicht rückgängig gemacht werden.</p>
+          </div>
+        </div>
+        <div className="flex gap-2 pt-4 justify-end">
+          <Button
+            variant="outline"
+            onClick={() => setBulkDeleteConfirmOpen(false)}
+            disabled={bulkDeleting}
+          >
+            Abbrechen
+          </Button>
+          <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleting}>
+            {bulkDeleting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 mr-2" />
+            )}
+            {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} löschen
+          </Button>
+        </div>
+      </CenteredModal>
+
+      {/* Single Delete Confirmation Dialog */}
       <CenteredModal
         open={deleteConfirmOpen}
         onClose={() => {
