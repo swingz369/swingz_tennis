@@ -143,9 +143,8 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* scroll-behavior is set via data-scroll-behavior attribute on <html> in layout.tsx
+   to avoid the Next.js console warning about scroll-behavior: smooth. */
 
 body {
   @apply bg-background text-foreground;
@@ -561,6 +560,28 @@ body {
   }
 }
 
+@keyframes page-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-exit {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 @keyframes gradient-shift {
   0%,
   100% {
@@ -602,7 +623,18 @@ body {
   animation: slide-in-left 0.5s var(--ease-out-expo) forwards;
 }
 
+/* ── Page Transition ── */
+.page-transition-enter {
+  animation: page-enter 0.35s var(--ease-out-expo) both;
+}
+.page-transition-exit {
+  animation: page-exit 0.2s ease-in both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
   *,
   *::before,
   *::after {
@@ -619,4 +651,31 @@ body {
 }
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+/* ── Route Progress Bar ── */
+.route-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  background: transparent;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+}
+.route-progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--brand-primary)) 0%,
+    hsl(var(--brand-primary-light)) 50%,
+    hsl(var(--brand-accent)) 100%
+  );
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 12px hsl(var(--brand-primary) / 0.5);
+}
+.dark .route-progress-bar-inner {
+  box-shadow: 0 0 12px hsl(var(--brand-primary-light) / 0.6);
 }

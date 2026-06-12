@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/ui/stat-card';
 import { QuickActions } from '@/components/ui/quick-actions';
 import OnboardingTrialBooking from '@/components/onboarding-trial-booking';
+import { MemberHeroActions } from '@/components/member-hero-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -181,6 +182,7 @@ export default async function MemberPage() {
           <p className="text-sm text-muted-foreground mt-0.5">
             {club?.name ?? 'Mein Verein'} · Mitglied
           </p>
+          <MemberHeroActions />
         </div>
         <Link href="/profile">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold text-sm shadow-sm">

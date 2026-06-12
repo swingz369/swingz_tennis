@@ -7,7 +7,6 @@ import {
   CreditCard,
   Clock,
   ChevronRight,
-  Settings,
   AlertTriangle,
   UserPlus,
   Receipt,
@@ -20,6 +19,8 @@ import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DashboardTabs } from './dashboard-tabs';
+import { AdminHeroHeader } from '@/components/admin-hero-header';
+import { ScrollReveal } from '@/components/animations';
 
 export const dynamic = 'force-dynamic';
 
@@ -244,355 +245,341 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
-      {/* ── Page Header ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground dark:text-white">Hallo, {firstName}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {club.name}
-            <span className="mx-2 text-muted-foreground/50">·</span>
-            <span
-              className={
-                isSuperadmin ? 'text-purple-600 dark:text-purple-400' : 'text-brand-accent'
-              }
-            >
-              {isSuperadmin ? 'Superadmin' : 'Admin'}
-            </span>
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {isSuperadmin && (
-            <Link
-              href="/select-admin-club"
-              className="flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Verein wechseln <ChevronRight className="h-3 w-3" />
-            </Link>
-          )}
-          <Link
-            href="/admin/settings"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border dark:border-white/10 hover:bg-muted transition-colors"
-          >
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        </div>
-      </div>
+      {/* ── Hero Header ── */}
+      <AdminHeroHeader
+        firstName={firstName}
+        clubName={club.name}
+        isSuperadmin={isSuperadmin}
+        memberCount={memberCount ?? 0}
+        trainerCount={trainerCount ?? 0}
+        todaySessionCount={activeSessions ?? 0}
+      />
 
       {/* ── Action-First Inbox: only visible when there are actionable tasks ── */}
-      {(needsApprovals || needsBilling) && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1 flex items-center gap-1.5">
-            <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
-            Aufmerksamkeit benötigt
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {needsApprovals && (
-              <Link
-                href="/admin/approvals"
-                className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 border border-orange-200 dark:border-orange-700/50 px-4 py-3 hover:shadow-md transition-all"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30 shrink-0">
-                  <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
-                    {pendingApprovals} ausstehende Anfrage{(pendingApprovals ?? 0) > 1 ? 'n' : ''}
-                  </p>
-                  <p className="text-xs text-orange-600 dark:text-orange-400">
-                    Jetzt bearbeiten und Mitglieder aktivieren
-                  </p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-orange-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </Link>
-            )}
-            {needsBilling && (
-              <Link
-                href="/admin/billing"
-                className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 border border-blue-200 dark:border-blue-700/50 px-4 py-3 hover:shadow-md transition-all"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30 shrink-0">
-                  <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
-                    Rechnungen ausstehend
-                  </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">
-                    Monatsrechnungen für {memberCount ?? 0} Mitglieder erstellen
-                  </p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </Link>
-            )}
+      <ScrollReveal delay={100}>
+        {(needsApprovals || needsBilling) && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
+              Aufmerksamkeit benötigt
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {needsApprovals && (
+                <Link
+                  href="/admin/approvals"
+                  className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 border border-orange-200 dark:border-orange-700/50 px-4 py-3 hover:shadow-md transition-all"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30 shrink-0">
+                    <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
+                      {pendingApprovals} ausstehende Anfrage{(pendingApprovals ?? 0) > 1 ? 'n' : ''}
+                    </p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400">
+                      Jetzt bearbeiten und Mitglieder aktivieren
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-orange-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              )}
+              {needsBilling && (
+                <Link
+                  href="/admin/billing"
+                  className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 border border-blue-200 dark:border-blue-700/50 px-4 py-3 hover:shadow-md transition-all"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30 shrink-0">
+                    <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                      Rechnungen ausstehend
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">
+                      Monatsrechnungen für {memberCount ?? 0} Mitglieder erstellen
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* All-clear state when nothing needs attention */}
-      {!needsApprovals && !needsBilling && (
-        <div className="flex items-center gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/30 px-4 py-3">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
-            Alles erledigt — keine offenen Aufgaben.
-          </p>
-        </div>
-      )}
+        {/* All-clear state when nothing needs attention */}
+        {!needsApprovals && !needsBilling && (
+          <div className="flex items-center gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/30 px-4 py-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
+              Alles erledigt — keine offenen Aufgaben.
+            </p>
+          </div>
+        )}
+      </ScrollReveal>
 
       {/* ── Consolidated KPI Summary: 2 cards instead of 4 ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Club Overview */}
-        <Link href="/admin/members">
-          <div className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl hover:border-brand-light/30">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Vereinsübersicht
-                </p>
-                <IconBox
-                  icon={Users}
-                  size="sm"
-                  variant="light"
-                  className="group-hover:scale-105 transition-transform"
-                />
-              </div>
-              <div className="flex items-baseline gap-4">
-                <div>
-                  <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
-                    {memberCount ?? 0}
-                  </span>
-                  <span className="text-xs text-muted-foreground ml-1.5">Mitglieder</span>
+      <ScrollReveal delay={200}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Club Overview */}
+          <Link href="/admin/members">
+            <div className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl hover:border-brand-light/30">
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Vereinsübersicht
+                  </p>
+                  <IconBox
+                    icon={Users}
+                    size="sm"
+                    variant="light"
+                    className="group-hover:scale-105 transition-transform"
+                  />
                 </div>
-                <div className="h-4 w-px bg-border dark:bg-white/10" />
-                <div>
-                  <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
-                    {trainerCount ?? 0}
-                  </span>
-                  <span className="text-xs text-muted-foreground ml-1.5">Trainer</span>
+                <div className="flex items-baseline gap-4">
+                  <div>
+                    <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
+                      {memberCount ?? 0}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-1.5">Mitglieder</span>
+                  </div>
+                  <div className="h-4 w-px bg-border dark:bg-white/10" />
+                  <div>
+                    <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
+                      {trainerCount ?? 0}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-1.5">Trainer</span>
+                  </div>
+                  <div className="h-4 w-px bg-border dark:bg-white/10" />
+                  <div>
+                    <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
+                      {activeSessions ?? 0}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-1.5">Heute</span>
+                  </div>
                 </div>
-                <div className="h-4 w-px bg-border dark:bg-white/10" />
-                <div>
-                  <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
-                    {activeSessions ?? 0}
-                  </span>
-                  <span className="text-xs text-muted-foreground ml-1.5">Heute</span>
+                <div className="mt-2 flex items-center gap-1 text-xs font-medium text-brand-light opacity-0 group-hover:opacity-100 transition-opacity">
+                  Mitglieder verwalten <ChevronRight className="h-3 w-3" />
                 </div>
-              </div>
-              <div className="mt-2 flex items-center gap-1 text-xs font-medium text-brand-light opacity-0 group-hover:opacity-100 transition-opacity">
-                Mitglieder verwalten <ChevronRight className="h-3 w-3" />
               </div>
             </div>
-          </div>
-        </Link>
+          </Link>
 
-        {/* Finances */}
-        <Link href="/admin/billing">
-          <div className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl hover:border-orange-200 dark:hover:border-orange-700/50">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Finanzen
-                </p>
-                <IconBox
-                  icon={CreditCard}
-                  size="sm"
-                  variant="orange"
-                  className="group-hover:scale-105 transition-transform"
-                />
-              </div>
-              <div className="flex items-baseline gap-4">
-                <div>
-                  <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
-                    {monthlyRevenue > 0
-                      ? new Intl.NumberFormat('de-DE', {
-                          style: 'currency',
-                          currency: 'EUR',
-                          maximumFractionDigits: 0,
-                        }).format(monthlyRevenue)
-                      : '—'}
-                  </span>
-                  <span className="text-xs text-muted-foreground ml-1.5">
-                    Umsatz {new Date().toLocaleDateString('de-DE', { month: 'short' })}
-                  </span>
+          {/* Finances */}
+          <Link href="/admin/billing">
+            <div className="border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl hover:border-orange-200 dark:hover:border-orange-700/50">
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Finanzen
+                  </p>
+                  <IconBox
+                    icon={CreditCard}
+                    size="sm"
+                    variant="orange"
+                    className="group-hover:scale-105 transition-transform"
+                  />
                 </div>
-                <div className="h-4 w-px bg-border dark:bg-white/10" />
-                <div>
-                  <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
-                    {totalInvoiceCount ?? 0}
-                  </span>
-                  <span className="text-xs text-muted-foreground ml-1.5">Rechnungen</span>
+                <div className="flex items-baseline gap-4">
+                  <div>
+                    <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
+                      {monthlyRevenue > 0
+                        ? new Intl.NumberFormat('de-DE', {
+                            style: 'currency',
+                            currency: 'EUR',
+                            maximumFractionDigits: 0,
+                          }).format(monthlyRevenue)
+                        : '—'}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-1.5">
+                      Umsatz {new Date().toLocaleDateString('de-DE', { month: 'short' })}
+                    </span>
+                  </div>
+                  <div className="h-4 w-px bg-border dark:bg-white/10" />
+                  <div>
+                    <span className="text-2xl font-bold text-foreground dark:text-white tabular-nums">
+                      {totalInvoiceCount ?? 0}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-1.5">Rechnungen</span>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-2 flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                Abrechnung öffnen <ChevronRight className="h-3 w-3" />
+                <div className="mt-2 flex items-center gap-1 text-xs font-medium text-orange-600 dark:text-orange-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  Abrechnung öffnen <ChevronRight className="h-3 w-3" />
+                </div>
               </div>
             </div>
-          </div>
-        </Link>
-      </div>
+          </Link>
+        </div>
+      </ScrollReveal>
 
       {/* ── Merged Panel: Heute im Verein (Sessions + Aktivität) ── */}
-      <Card className="border border-border dark:border-white/10 shadow-sm p-0">
-        <CardHeader className="px-5 pt-5 pb-0">
-          <CardTitle className="text-sm font-semibold flex items-center justify-between text-foreground dark:text-white">
-            <div className="flex items-center gap-2">
-              <IconBox icon={Calendar} size="xs" variant="light" />
-              Heute im Verein
-            </div>
-            <Link
-              href="/admin/seasons"
-              className="text-xs font-normal text-brand-light hover:underline flex items-center gap-1"
+      <ScrollReveal delay={300}>
+        <Card className="border border-border dark:border-white/10 shadow-sm p-0">
+          <CardHeader className="px-5 pt-5 pb-0">
+            <CardTitle className="text-sm font-semibold flex items-center justify-between text-foreground dark:text-white">
+              <div className="flex items-center gap-2">
+                <IconBox icon={Calendar} size="xs" variant="light" />
+                Heute im Verein
+              </div>
+              <Link
+                href="/admin/seasons"
+                className="text-xs font-normal text-brand-light hover:underline flex items-center gap-1"
+              >
+                Alle Sessions <ChevronRight className="h-3 w-3" />
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            <DashboardTabs
+              tabs={[
+                { key: 'sessions', label: 'Sessions', count: activeSessions ?? 0 },
+                { key: 'activity', label: 'Aktivität', count: recentActivity.length },
+              ]}
             >
-              Alle Sessions <ChevronRight className="h-3 w-3" />
-            </Link>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5">
-          <DashboardTabs
-            tabs={[
-              { key: 'sessions', label: 'Sessions', count: activeSessions ?? 0 },
-              { key: 'activity', label: 'Aktivität', count: recentActivity.length },
-            ]}
-          >
-            {/* Tab 0: Today's Sessions */}
-            <div className="pt-3">
-              {(todaySessions ?? []).length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <IconBox icon={Calendar} size="lg" variant="gray" className="mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground">Keine Sessions heute</p>
-                  <p className="text-xs text-muted-foreground mt-1">Schau morgen wieder vorbei</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border dark:divide-white/5">
-                  {(todaySessions ?? []).map((s: Record<string, unknown>) => {
-                    const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
-                    const trainer = Array.isArray(s.trainers) ? s.trainers[0] : s.trainers;
-                    return (
-                      <div key={s.id as string} className="flex items-center gap-3 py-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-light/10 shrink-0">
-                          <Clock className="h-4 w-4 text-brand-light" />
+              {/* Tab 0: Today's Sessions */}
+              <div className="pt-3">
+                {(todaySessions ?? []).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <IconBox icon={Calendar} size="lg" variant="gray" className="mb-3" />
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Keine Sessions heute
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Schau morgen wieder vorbei</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border dark:divide-white/5">
+                    {(todaySessions ?? []).map((s: Record<string, unknown>) => {
+                      const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
+                      const trainer = Array.isArray(s.trainers) ? s.trainers[0] : s.trainers;
+                      return (
+                        <div key={s.id as string} className="flex items-center gap-3 py-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-light/10 shrink-0">
+                            <Clock className="h-4 w-4 text-brand-light" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground dark:text-white truncate">
+                              {(court as Record<string, string>)?.name ?? 'Platz'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatTime(s.timeslot_start as string)} –{' '}
+                              {formatTime(s.timeslot_end as string)}
+                              {(trainer as Record<string, string>)?.name && (
+                                <span className="ml-2 text-muted-foreground">
+                                  · {(trainer as Record<string, string>).name}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <Badge className="shrink-0 text-[11px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700/30">
+                            Aktiv
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tab 1: Recent Activity */}
+              <div className="pt-3">
+                {recentActivity.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <IconBox icon={Activity} size="lg" variant="gray" className="mb-3" />
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Noch keine Aktivitäten
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border dark:divide-white/5">
+                    {recentActivity.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3 py-2.5">
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
+                            item.type === 'join'
+                              ? 'bg-blue-100 dark:bg-blue-900/30'
+                              : 'bg-brand-light/10'
+                          }`}
+                        >
+                          <span
+                            className={`text-xs font-semibold ${
+                              item.type === 'join'
+                                ? 'text-blue-700 dark:text-blue-300'
+                                : 'text-brand-light'
+                            }`}
+                          >
+                            {item.name.charAt(0).toUpperCase()}
+                          </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground dark:text-white truncate">
-                            {(court as Record<string, string>)?.name ?? 'Platz'}
+                            {item.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {formatTime(s.timeslot_start as string)} –{' '}
-                            {formatTime(s.timeslot_end as string)}
-                            {(trainer as Record<string, string>)?.name && (
-                              <span className="ml-2 text-muted-foreground">
-                                · {(trainer as Record<string, string>).name}
-                              </span>
-                            )}
+                            {item.sub} · {formatRelativeTime(item.created_at)}
                           </p>
                         </div>
-                        <Badge className="shrink-0 text-[11px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700/30">
-                          Aktiv
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Tab 1: Recent Activity */}
-            <div className="pt-3">
-              {recentActivity.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <IconBox icon={Activity} size="lg" variant="gray" className="mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Noch keine Aktivitäten
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border dark:divide-white/5">
-                  {recentActivity.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 py-2.5">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
-                          item.type === 'join'
-                            ? 'bg-blue-100 dark:bg-blue-900/30'
-                            : 'bg-brand-light/10'
-                        }`}
-                      >
-                        <span
-                          className={`text-xs font-semibold ${
+                        <div
+                          className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
                             item.type === 'join'
-                              ? 'text-blue-700 dark:text-blue-300'
-                              : 'text-brand-light'
+                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                              : 'bg-brand-light/10 text-brand-light'
                           }`}
                         >
-                          {item.name.charAt(0).toUpperCase()}
-                        </span>
+                          {item.type === 'join' ? 'Beitritt' : 'Buchung'}
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground dark:text-white truncate">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.sub} · {formatRelativeTime(item.created_at)}
-                        </p>
-                      </div>
-                      <div
-                        className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                          item.type === 'join'
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                            : 'bg-brand-light/10 text-brand-light'
-                        }`}
-                      >
-                        {item.type === 'join' ? 'Beitritt' : 'Buchung'}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </DashboardTabs>
-        </CardContent>
-      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </DashboardTabs>
+          </CardContent>
+        </Card>
+      </ScrollReveal>
 
       {/* ── Smart Contextual Actions ── */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-          Schnellaktionen
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {smartActions.map((action) => (
-            <Link key={action.href + action.label} href={action.href}>
-              <div
-                className={`border shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl h-full ${
-                  action.urgent
-                    ? 'border-orange-200 dark:border-orange-700/40 hover:border-orange-300 dark:hover:border-orange-600/50'
-                    : 'border-border dark:border-white/10 hover:border-brand-light/30'
-                }`}
-              >
-                <div className="p-4 flex items-start gap-3 h-full">
-                  <IconBox
-                    icon={action.icon}
-                    size="sm"
-                    variant={action.variant}
-                    className="group-hover:scale-105 transition-transform shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground dark:text-white truncate">
-                        {action.label}
+      <ScrollReveal delay={400}>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+            Schnellaktionen
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {smartActions.map((action) => (
+              <Link key={action.href + action.label} href={action.href}>
+                <div
+                  className={`border shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl h-full ${
+                    action.urgent
+                      ? 'border-orange-200 dark:border-orange-700/40 hover:border-orange-300 dark:hover:border-orange-600/50'
+                      : 'border-border dark:border-white/10 hover:border-brand-light/30'
+                  }`}
+                >
+                  <div className="p-4 flex items-start gap-3 h-full">
+                    <IconBox
+                      icon={action.icon}
+                      size="sm"
+                      variant={action.variant}
+                      className="group-hover:scale-105 transition-transform shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground dark:text-white truncate">
+                          {action.label}
+                        </p>
+                        {action.urgent && (
+                          <span className="shrink-0 h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {action.description}
                       </p>
-                      {action.urgent && (
-                        <span className="shrink-0 h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                      {action.description}
-                    </p>
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-brand-light group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 mt-0.5" />
                   </div>
-                  <ArrowUpRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-brand-light group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 mt-0.5" />
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      </ScrollReveal>
     </div>
   );
 }

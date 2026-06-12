@@ -11,6 +11,9 @@ const Sidebar = dynamic(() => import('@/components/layout/sidebar').then((m) => 
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { SkipToContent } from '@/lib/accessibility';
 import { KeyboardShortcutsDialog } from '@/components/keyboard-shortcuts-dialog';
+import { CommandPalette } from '@/components/command-palette';
+import { PageTransition } from '@/components/animations';
+import { RouteProgressBar } from '@/components/route-progress-bar';
 import { useGlobalKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { ErrorBoundary } from '@/components/error-boundary';
 
@@ -50,6 +53,7 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
     // ─── Admin / Superadmin layout: Left sidebar + header ───
     return (
       <div className="flex min-h-screen flex-col">
+        <RouteProgressBar />
         <SkipToContent />
         <Header user={user} onMenuClick={() => setSidebarOpen((prev) => !prev)} />
         <div className="flex flex-1 relative">
@@ -78,7 +82,9 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
             role="main"
           >
             <div className="mx-auto max-w-7xl">
-              <ErrorBoundary>{children}</ErrorBoundary>
+              <ErrorBoundary>
+                <PageTransition>{children}</PageTransition>
+              </ErrorBoundary>
             </div>
           </main>
         </div>
@@ -88,6 +94,7 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
           onMenuClick={() => setSidebarOpen((prev) => !prev)}
           className="md:hidden"
         />
+        <CommandPalette />
         <KeyboardShortcutsDialog />
       </div>
     );
@@ -96,16 +103,20 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
   // ─── Trainer / Member layout: No sidebar, persistent bottom tab bar ───
   return (
     <div className="flex min-h-screen flex-col">
+      <RouteProgressBar />
       <SkipToContent />
       <Header user={user} />
       <main id="main-content" className="flex-1 bg-background p-4 md:p-6 pb-20" role="main">
         {' '}
         <div className="mx-auto max-w-3xl">
-          <ErrorBoundary>{children}</ErrorBoundary>
+          <ErrorBoundary>
+            <PageTransition>{children}</PageTransition>
+          </ErrorBoundary>
         </div>
       </main>
       {/* Always-visible bottom tab bar for trainer/member */}
       <MobileBottomNav roles={user.roles ?? []} persistent />
+      <CommandPalette />
       <KeyboardShortcutsDialog />
     </div>
   );

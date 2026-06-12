@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, Check, Clock, Loader2 } from 'lucide-react';
+import { Bell, Check, CheckCheck, Clock, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -201,14 +202,36 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         )}
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="justify-center">
+        <div className="flex items-center justify-between px-3 py-1.5">
+          {unreadCount > 0 && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await apiFetch('/api/user/notifications/mark-all-read', {
+                    method: 'POST',
+                  });
+                  if (res.ok) {
+                    setUnreadCount(0);
+                    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+                    toast.success('Alle als gelesen markiert');
+                  }
+                } catch {
+                  /* non-critical */
+                }
+              }}
+              className="text-xs font-medium text-brand-light hover:text-brand-primary transition-colors"
+            >
+              <CheckCheck className="h-3.5 w-3.5 inline mr-1" />
+              Alle lesen
+            </button>
+          )}
           <Link
             href="/notifications"
-            className="text-xs font-medium text-brand-light hover:text-brand-primary"
+            className="text-xs font-medium text-brand-light hover:text-brand-primary ml-auto"
           >
             Alle anzeigen
           </Link>
-        </DropdownMenuItem>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
