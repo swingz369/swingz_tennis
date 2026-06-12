@@ -24,6 +24,7 @@ export interface Session {
   courtId?: string; // For admin court calendar
   courtName?: string; // Court display name for member training schedule
   rsvpStatus?: string | null; // Current user's RSVP status for the session
+  bookerNames?: string[]; // Names of members who booked this session
 }
 
 export function useSessions(clubId: string | null) {
