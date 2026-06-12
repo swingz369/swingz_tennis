@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Eye,
   UserCheck,
@@ -25,6 +26,7 @@ import {
   Square,
   LayoutGrid,
   List,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
@@ -66,6 +68,70 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [planningFilter, setPlanningFilter] = useState<string>('all'); // 'all' | 'included' | 'excluded'
 
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkDeactivating, setBulkDeactivating] = useState(false);
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredMembers.map((m) => m.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkDeactivate = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkDeactivating(true);
+    let successCount = 0;
+    let failCount = 0;
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const res = await apiFetch(`/api/members/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_active: false }),
+          });
+          if (res.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch {
+          failCount++;
+        }
+      })
+    );
+    if (successCount > 0) {
+      toast.success(`${successCount} Mitglied${successCount !== 1 ? 'er' : ''} deaktiviert`);
+      setMembers((prev) =>
+        prev.map((m) => (selectedIds.has(m.id) ? { ...m, is_active: false } : m))
+      );
+    }
+    if (failCount > 0) {
+      toast.error(
+        `${failCount} Mitglied${failCount !== 1 ? 'er' : ''} konnte${failCount === 1 ? 'te' : 'n'} nicht deaktiviert werden`
+      );
+    }
+    setSelectedIds(new Set());
+    setBulkConfirmOpen(false);
+    setBulkDeactivating(false);
+  };
+
   // Filter members (client-side for role/status/planning; search is server-side)
   const filteredMembers = members.filter((member) => {
     const matchesRole = roleFilter === 'all' || member.role === roleFilter;
@@ -81,6 +147,10 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
   // Paginated display (client-side within current page)
   const paginatedMembers = filteredMembers;
+
+  const allSelected =
+    filteredMembers.length > 0 && filteredMembers.every((m) => selectedIds.has(m.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
 
   const handleTogglePlanning = async (memberId: string, currentValue: boolean) => {
     try {
@@ -225,7 +295,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             className="pl-10"
           />
         </div>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
+        <Select
+          value={roleFilter}
+          onValueChange={(v) => {
+            setRoleFilter(v);
+            setSelectedIds(new Set());
+          }}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue />
           </SelectTrigger>
@@ -235,7 +311,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             <SelectItem value="admin">Admin</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => {
+            setStatusFilter(v);
+            setSelectedIds(new Set());
+          }}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue />
           </SelectTrigger>
@@ -245,7 +327,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             <SelectItem value="inactive">Inaktiv</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={planningFilter} onValueChange={setPlanningFilter}>
+        <Select
+          value={planningFilter}
+          onValueChange={(v) => {
+            setPlanningFilter(v);
+            setSelectedIds(new Set());
+          }}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue />
           </SelectTrigger>
@@ -289,6 +377,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             <table className="w-full">
               <thead className="bg-muted dark:bg-muted">
                 <tr>
+                  <th className="w-10 px-2 py-3">
+                    <Checkbox
+                      checked={allSelected || (someSelected ? 'indeterminate' : false)}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Alle auswählen"
+                    />
+                  </th>
                   <th className="px-2 md:px-3 py-3 text-center text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
                     Planung
                   </th>
@@ -316,7 +411,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                 {filteredMembers.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 md:px-6 py-8 text-center text-muted-foreground dark:text-muted-foreground"
                     >
                       Keine Mitglieder gefunden
@@ -328,6 +423,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                       key={member.id}
                       className="hover:bg-muted dark:hover:bg-background/5 transition-colors"
                     >
+                      <td className="w-10 px-2 py-4">
+                        <Checkbox
+                          checked={selectedIds.has(member.id)}
+                          onCheckedChange={() => toggleSelect(member.id)}
+                          aria-label={`${member.full_name} auswählen`}
+                        />
+                      </td>
                       <td className="px-2 md:px-3 py-4 text-center">
                         {member.role === 'member' ? (
                           <button
@@ -507,6 +609,76 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       <div className="text-sm text-muted-foreground dark:text-muted-foreground">
         {pagination.totalCount > 0 ? `${pagination.totalCount} Mitglieder` : '0 Mitglieder'}
       </div>
+
+      {/* Bulk Selection Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-3 shadow-lg">
+          <span className="text-sm font-medium">
+            {selectedIds.size} Mitglied{selectedIds.size !== 1 ? 'er' : ''} ausgewählt
+          </span>
+          <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+            Auswahl aufheben
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setBulkConfirmOpen(true)}>
+            <UserX className="h-4 w-4 mr-1.5" />
+            Ausgewählte deaktivieren
+          </Button>
+        </div>
+      )}
+
+      {/* Bulk Deactivate Confirmation Dialog */}
+      {bulkConfirmOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-red-600">
+                {selectedIds.size} Mitglied{selectedIds.size !== 1 ? 'er' : ''} deaktivieren?
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Folgende Mitglieder werden deaktiviert und verlieren den Zugang zum Vereinsportal:
+              </p>
+              <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-muted/50 p-2 space-y-1">
+                {Array.from(selectedIds).map((id) => {
+                  const m = members.find((mem) => mem.id === id);
+                  if (!m) return null;
+                  return (
+                    <div key={id} className="flex items-center justify-between text-xs">
+                      <span className="font-medium">{m.full_name}</span>
+                      <span className="text-muted-foreground">{m.email}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Diese Aktion kann über den Aktivieren-Button rückgängig gemacht werden.
+              </p>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setBulkConfirmOpen(false)}
+                  disabled={bulkDeactivating}
+                >
+                  Abbrechen
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDeactivate}
+                  disabled={bulkDeactivating}
+                >
+                  {bulkDeactivating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <UserX className="h-4 w-4 mr-2" />
+                  )}
+                  {selectedIds.size} deaktivieren
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Invite Dialog */}
       {showInviteDialog && (
