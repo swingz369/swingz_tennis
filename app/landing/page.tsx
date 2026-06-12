@@ -22,9 +22,7 @@ import {
   Zap,
   ChevronRight,
   Play,
-  Star,
   CheckCircle2,
-  Quote,
   CreditCard,
   MessageCircle,
 } from 'lucide-react';
@@ -117,40 +115,6 @@ function StatItem({
 }
 
 /* ── Testimonial Data ── */
-const TESTIMONIALS = [
-  {
-    name: 'Dr. Markus Weber',
-    role: 'Vorsitzender TC Grün-Weiss',
-    avatar: 'MW',
-    text: 'Seit wir SWINGZ nutzen, hat sich unsere Trainingsplanung komplett verändert. Die KI-Optimierung spart uns 15 Stunden pro Woche an manueller Arbeit.',
-    rating: 5,
-    highlight: '15h/Woche gespart',
-  },
-  {
-    name: 'Sabine Kohl',
-    role: 'Sportwartin TC Blau-Gold',
-    avatar: 'SK',
-    text: 'Die intuitive Bedienung hat selbst unsere älteren Mitglieder überzeugt. Die Saisonplanung war noch nie so einfach und transparent.',
-    rating: 5,
-    highlight: '100% Zufriedenheit',
-  },
-  {
-    name: 'Thomas Bergmann',
-    role: 'Head Coach Tennis-Akademie',
-    avatar: 'TB',
-    text: 'Die KI-generierten Trainingspläne sind erstaunlich präzise. Meine Trainer lieben die automatische Konfliktvermeidung und die Auslastungs-Analytics.',
-    rating: 5,
-    highlight: '+47% Auslastung',
-  },
-  {
-    name: 'Laura Schneider',
-    role: 'Geschäftsführerin Tennis-Park',
-    avatar: 'LS',
-    text: 'Endlich eine Software, die mit unserem Wachstum mithalten kann. Die Multi-Club-Funktion ist für unseren Verband unverzichtbar geworden.',
-    rating: 5,
-    highlight: '5 Clubs verwaltet',
-  },
-];
 
 /* ── Feature Data ── */
 const FEATURES = [
@@ -188,88 +152,49 @@ const FEATURES = [
     description:
       'Verwalte Mitglieder, Gruppen und Buchungen zentral. Mit personalisierten Zugängen für jedes Mitglied.',
     gradient: 'from-green-500 to-green-700',
-    stat: '85K+',
-    statLabel: 'Mitglieder',
+    stat: '',
+    statLabel: '',
   },
   {
     icon: Shield,
     title: 'Sicher & Skalierbar',
-    description:
-      'Enterprise-Grade Security mit Role-Based Access und Multi-Club-Support — für Vereine jeder Größe.',
+    description: 'Role-Based Access und Multi-Club-Support — von Anfang an für Wachstum gebaut.',
     gradient: 'from-indigo-500 to-indigo-700',
-    stat: 'SOC 2',
-    statLabel: 'Zertifiziert',
+    stat: '',
+    statLabel: '',
   },
   {
     icon: Zap,
     title: 'Integrationen & API',
     description:
-      'Nahtlose Anbindung über REST-API, Webhooks und Zapier — für maximale Flexibilität im Tech-Stack.',
+      'REST-API für nahtlose Anbindung an euren bestehenden Tech-Stack und eure Vereinswebsite.',
     gradient: 'from-amber-500 to-amber-700',
-    stat: '50+',
-    statLabel: 'Integrationen',
+    stat: '',
+    statLabel: '',
   },
 ];
 
 /* ── PRICING ── */
 const PRICING_PLANS = [
   {
-    name: 'Starter',
-    subtitle: 'Für kleine Vereine',
-    price: '29',
-    period: '/Monat',
-    description: 'Ideale Lösung für Vereine mit bis zu 50 Mitgliedern.',
+    name: 'Early Access',
+    subtitle: 'Für Pioniere',
+    price: '0',
+    period: '/6 Monate',
+    description: 'Sei einer der ersten Clubs und gestalte SWINGZ mit.',
     features: [
-      'Bis zu 50 Mitglieder',
-      '5 aktive Trainer',
-      'Basis-Stundenplan',
-      'Einfache Buchungsverwaltung',
-      'E-Mail-Support',
-    ],
-    cta: 'Jetzt wählen',
-    popular: false,
-    iconColor: 'text-green-600',
-    borderHover: 'hover:border-green-200',
-  },
-  {
-    name: 'Professional',
-    subtitle: 'Für wachsende Clubs',
-    price: '79',
-    period: '/Monat',
-    description: 'Die optimale Ausstattung für Clubs mit bis zu 200 Mitgliedern.',
-    features: [
-      'Bis zu 200 Mitglieder',
+      'Alle Features inklusive',
+      'Unbegrenzte Mitglieder',
       'Unbegrenzte Trainer',
-      'KI-gestützte Optimierung',
-      'Echtzeit-Analytics',
-      'Drag & Drop Kalender',
-      'Mitglieder-Management',
-      'Prioritäts-Support',
+      'Persönliches Onboarding',
+      'Direkter Draht zum Entwicklerteam',
+      'Einfluss auf den Produktroadmap',
+      '6 Monate komplett kostenlos',
     ],
-    cta: 'Jetzt starten',
+    cta: 'Early Access anfragen',
     popular: true,
     iconColor: 'text-brand-primary',
     borderHover: 'hover:border-brand-light/40',
-  },
-  {
-    name: 'Enterprise',
-    subtitle: 'Für Verbände',
-    price: '199',
-    period: '/Monat',
-    description: 'Maximale Skalierbarkeit für große Anlagen und Verbände.',
-    features: [
-      'Unbegrenzte Mitglieder',
-      'Multi-Club-Support',
-      'Individuelle API-Integration',
-      'White-Label-Option',
-      'SLA-Garantie (99,9%)',
-      'Dedizierter Account-Manager',
-      'Individuelle Schulungen',
-    ],
-    cta: 'Kontakt aufnehmen',
-    popular: false,
-    iconColor: 'text-brand-accent',
-    borderHover: 'hover:border-orange-200',
   },
 ];
 
@@ -390,12 +315,12 @@ export default function LandingPage() {
             {/* Text Column */}
             <div className="text-center lg:text-left">
               <div className="animate-in animate-in-delay-1">
-                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-background/10 backdrop-blur-md border border-white/20 text-white/90 text-sm font-medium mb-8">
+                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-brand-accent/20 backdrop-blur-md border border-brand-accent/40 text-white/90 text-sm font-medium mb-8">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent" />
                   </span>
-                  KI-gestützte Saisonplanung
+                  Early Access Beta
                 </div>
               </div>
 
@@ -415,9 +340,9 @@ export default function LandingPage() {
               </h1>
 
               <p className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-white/65 leading-relaxed max-w-xl mx-auto lg:mx-0 animate-in animate-in-delay-3">
-                Die KI-gesteuerte Scheduler-Plattform für Tennisclubs. Automatisiere die
-                Trainingsplanung, erhöhe die Auslastung und biete deinen Mitgliedern ein{' '}
-                <span className="text-white font-semibold">Premium-Erlebnis</span>.
+                Die KI-gesteuerte Plattform für Tennisclub-Management. Wir bauen an der Zukunft der
+                Trainingsplanung — und suchen Early Adopter, die uns auf diesem Weg{' '}
+                <span className="text-white font-semibold">begleiten</span>.
               </p>
 
               <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start animate-in animate-in-delay-4">
@@ -431,7 +356,9 @@ export default function LandingPage() {
                   >
                     <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                     <Sparkles className="h-5 w-5 relative z-10" />
-                    <span className="relative z-10">{heroCtaVariant || 'Testzugang anfragen'}</span>
+                    <span className="relative z-10">
+                      {heroCtaVariant || 'Early Access anfragen'}
+                    </span>
                     <ChevronRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </Link>
@@ -442,31 +369,27 @@ export default function LandingPage() {
                     onClick={() => analytics.featureUsed('landing_learn_more')}
                   >
                     <Play className="h-5 w-5" />
-                    Kontakt aufnehmen
+                    Demo ansehen
                   </button>
                 </Link>
               </div>
 
               <div className="mt-10 sm:mt-12 flex items-center gap-6 sm:gap-8 justify-center lg:justify-start animate-in animate-in-delay-5">
-                <div className="flex -space-x-3">
-                  {['TC', 'BG', 'TA', 'TP'].map((tag, i) => (
-                    <div
-                      key={i}
-                      className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-gradient-to-br from-brand-light to-brand-primary border-2 border-brand-950 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-lg"
-                    >
-                      {tag}
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-brand-accent fill-brand-accent" />
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-3">
+                    {['🎾', '🏆', '📊'].map((emoji, i) => (
+                      <div
+                        key={i}
+                        className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-gradient-to-br from-brand-light to-brand-primary border-2 border-brand-950 flex items-center justify-center text-lg shadow-lg"
+                      >
+                        {emoji}
+                      </div>
                     ))}
                   </div>
-                  <p className="text-white font-semibold text-sm">
-                    1.200+ Vereine vertrauen auf SWINGZ
-                  </p>
+                  <div>
+                    <p className="text-white font-semibold text-sm">Werde einer der ersten Clubs</p>
+                    <p className="text-white/50 text-xs">Early Access Plätze limitiert</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -597,62 +520,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════ TRUST BAR ═══════════ */}
-      <section className="relative z-10 bg-background py-10 border-b border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-6">
-            Vertraut von führenden Tennisclubs
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50">
-            {[
-              'TC Grün-Weiss',
-              'TC Blau-Gold',
-              'Tennis-Akademie Berlin',
-              'Tennis-Park München',
-              'TC Rot-Weiss',
-            ].map((name) => (
-              <span key={name} className="text-muted-foreground font-bold text-sm tracking-wide">
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ STATS ═══════════ */}
+      {/* ═══════════ VISION ═══════════ */}
       <section ref={statsRef} className="relative z-10 bg-background py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
+          <div className="text-center mb-12">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 text-brand-accent text-sm font-semibold mb-5">
+              <Zap className="h-3.5 w-3.5" /> Unsere Vision
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
+              Was wir{' '}
+              <span className="text-gradient-accent bg-clip-text text-transparent">vorhaben</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
             <StatItem
-              value={1200}
+              value={100}
               suffix="+"
-              label="Aktive Vereine"
+              label="Vereine in Year 1"
               icon={Shield}
               color="from-brand-primary to-brand-light"
               visible={statsVisible}
             />
             <StatItem
-              value={50000}
-              suffix="+"
-              label="Trainings geplant"
-              icon={Calendar}
-              color="from-brand-accent to-orange-600"
-              visible={statsVisible}
-            />
-            <StatItem
-              value={85000}
-              suffix="+"
-              label="Mitglieder aktiv"
-              icon={Users}
-              color="from-brand-secondary to-blue-700"
-              visible={statsVisible}
-            />
-            <StatItem
-              value={47}
+              value={50}
               suffix="%"
-              label="Effizienzsteigerung"
+              label="Weniger Planungsaufwand"
               icon={Brain}
               color="from-green-500 to-green-700"
+              visible={statsVisible}
+            />
+            <StatItem
+              value={10000}
+              suffix="+"
+              label="Trainings optimiert"
+              icon={Calendar}
+              color="from-brand-accent to-orange-600"
               visible={statsVisible}
             />
           </div>
@@ -700,12 +602,14 @@ export default function LandingPage() {
                 <p className="text-muted-foreground leading-relaxed text-sm">
                   {feature.description}
                 </p>
-                <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
-                  <span className="text-2xl font-extrabold text-foreground">{feature.stat}</span>
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    {feature.statLabel}
-                  </span>
-                </div>
+                {feature.stat && (
+                  <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
+                    <span className="text-2xl font-extrabold text-foreground">{feature.stat}</span>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {feature.statLabel}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -733,21 +637,23 @@ export default function LandingPage() {
               {
                 step: '01',
                 icon: MessageCircle,
-                title: 'Registrieren',
-                description: 'Erstelle deinen Club in unter 2 Minuten. Keine Kreditkarte nötig.',
+                title: 'Early Access anfragen',
+                description:
+                  'Fülle das Formular aus und erzähle uns von deinem Club. Wir melden uns persönlich.',
               },
               {
                 step: '02',
                 icon: Calendar,
-                title: 'Konfigurieren',
+                title: 'Zugang erhalten',
                 description:
-                  'Plätze, Trainer und Mitglieder anlegen. Die KI lernt automatisch mit.',
+                  'Wir richten deinen Club persönlich ein und begleiten dich beim Onboarding.',
               },
               {
                 step: '03',
                 icon: Sparkles,
-                title: 'Optimieren',
-                description: 'KI-generierte Trainingspläne prüfen, anpassen und live schalten.',
+                title: 'Mitgestalten',
+                description:
+                  'Nutze die Plattform und gib Feedback — deine Ideen formen das Produkt.',
               },
             ].map((item, idx) => (
               <div key={idx} className="relative text-center group">
@@ -759,57 +665,6 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{item.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ TESTIMONIALS ═══════════ */}
-      <section className="bg-muted py-20 sm:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid opacity-[0.3]" />
-
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center mb-16 sm:mb-20">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-5">
-              <Star className="h-3.5 w-3.5 fill-brand-primary" /> Stimmen
-            </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
-              Das sagen{' '}
-              <span className="text-gradient-primary bg-clip-text text-transparent">
-                unsere Kunden
-              </span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {TESTIMONIALS.map((t, idx) => (
-              <div
-                key={idx}
-                className="bg-background rounded-3xl p-6 shadow-elegant border border-border hover:shadow-premium hover:-translate-y-1 transition-all duration-500 flex flex-col"
-              >
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(t.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-brand-accent fill-brand-accent" />
-                  ))}
-                </div>
-                <Quote className="h-8 w-8 text-brand-primary/15 mb-3 flex-shrink-0" />
-                <p className="text-muted-foreground text-sm leading-relaxed flex-1 mb-5">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                <div className="flex items-center gap-3 pt-4 border-t border-border">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white text-sm font-bold shadow-md flex-shrink-0">
-                    {t.avatar}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
-                  <CheckCircle2 className="h-3 w-3" />
-                  {t.highlight}
-                </div>
               </div>
             ))}
           </div>
@@ -836,11 +691,11 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="flex justify-center">
             {PRICING_PLANS.map((plan, idx) => (
               <div
                 key={idx}
-                className={`relative flex flex-col bg-background rounded-3xl border border-border shadow-elegant transition-all duration-500 hover:shadow-premium hover:-translate-y-2 overflow-hidden ${plan.popular ? 'ring-2 ring-brand-primary/30 scale-[1.03] z-10' : ''} ${plan.borderHover}`}
+                className={`relative flex flex-col bg-background rounded-3xl border border-border shadow-elegant transition-all duration-500 hover:shadow-premium hover:-translate-y-2 overflow-hidden max-w-lg w-full ${plan.popular ? 'ring-2 ring-brand-primary/30 z-10' : ''} ${plan.borderHover}`}
               >
                 {plan.popular && (
                   <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-brand-primary to-brand-light text-white text-center text-sm font-bold py-2.5 tracking-wide">
@@ -893,7 +748,7 @@ export default function LandingPage() {
             ))}
           </div>
           <p className="mt-12 text-center text-sm text-muted-foreground">
-            Alle Preise zzgl. MwSt. · Keine versteckten Kosten · Jederzeit kündbar
+            Early Access ist kostenlos und unverbindlich · Keine Kreditkarte erforderlich
           </p>
         </div>
       </section>
@@ -916,14 +771,11 @@ export default function LandingPage() {
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
             Bereit für die{' '}
-            <span className="text-gradient-accent bg-clip-text text-transparent">
-              nächste Saison
-            </span>
-            ?
+            <span className="text-gradient-accent bg-clip-text text-transparent">Zukunft</span>?
           </h2>
           <p className="mt-5 sm:mt-6 text-lg sm:text-xl text-white/65 max-w-2xl mx-auto leading-relaxed">
-            Starte jetzt kostenlos und erlebe die Zukunft des Vereinsmanagements — ohne Risiko, ohne
-            versteckte Kosten.
+            Werde Early Adopter und hilf uns, die beste Plattform für Tennisclub-Management zu bauen
+            — kostenlos, unverbindlich, mit direktem Einfluss auf die Produktentwicklung.
           </p>
 
           <div className="mt-9 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
@@ -933,7 +785,7 @@ export default function LandingPage() {
                 className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[52px] shadow-glow-accent"
               >
                 <Sparkles className="h-5 w-5" />
-                Jetzt testen
+                Early Access anfragen
                 <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
@@ -943,13 +795,13 @@ export default function LandingPage() {
                 className="inline-flex items-center justify-center gap-2.5 rounded-full bg-background/10 backdrop-blur-sm border border-white/20 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-background/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[52px]"
               >
                 <ArrowRight className="h-5 w-5" />
-                Mehr erfahren
+                Kontakt
               </button>
             </Link>
           </div>
 
           <p className="mt-8 text-white/45 text-sm">
-            Keine Kreditkarte erforderlich — 30 Tage unverbindlich testen.
+            Kostenlos und unverbindlich — begleite uns von Anfang an.
           </p>
         </div>
       </section>
@@ -993,7 +845,7 @@ export default function LandingPage() {
               </button>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 SWINGZ — Alle Rechte vorbehalten.
+              © 2026 SWINGZ — Alle Rechte vorbehalten.
             </p>
           </div>
         </div>

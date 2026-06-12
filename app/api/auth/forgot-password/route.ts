@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       // The URL the user lands on after clicking the reset link.
       // /reset-password handles both PKCE (?code=) and implicit (#access_token=) flows.
       options: {
-        redirectTo: `${env.NEXT_PUBLIC_APP_URL || 'https://swingz.app'}/reset-password`,
+        redirectTo: `${env.NEXT_PUBLIC_APP_URL || 'https://swingz.cloud'}/reset-password`,
       },
     });
 

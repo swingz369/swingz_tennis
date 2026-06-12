@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Trophy, KeyRound, Mail, ArrowLeft, CheckCircle2, Shield } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Trophy, Mail, CheckCircle2, Shield } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
 export default function ForgotPasswordPage() {
@@ -41,51 +42,73 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-brand-secondary">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <nav className="flex h-20 items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center">
-                <Trophy className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-white">SWINGZ</span>
-            </Link>
-            <div className="flex items-center gap-3">
-              <Link href="/login">
-                <Button
-                  variant="ghost"
-                  className="text-white/90 hover:text-white hover:bg-background/10"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück zum Login
-                </Button>
-              </Link>
-            </div>
-          </nav>
+    <div className="min-h-screen flex relative overflow-hidden">
+      {/* ── Left: Brand Panel ── */}
+      <div className="hidden lg:flex lg:flex-1 relative">
+        <div className="absolute inset-0">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `
+                radial-gradient(ellipse 100% 100% at 30% 0%, hsl(var(--brand-primary-light) / 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 80% at 70% 100%, hsl(var(--brand-accent) / 0.18) 0%, transparent 50%),
+                linear-gradient(135deg, hsl(150 55% 10%) 0%, hsl(var(--brand-primary)) 50%, hsl(150 30% 8%) 100%)
+              `,
+            }}
+          />
+          <div className="absolute inset-0 noise opacity-[0.015]" />
+          <div className="absolute top-20 left-20 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
+          <div
+            className="absolute bottom-20 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
+            style={{ animationDelay: '5s' }}
+          />
         </div>
-      </header>
 
-      {/* Hero */}
-      <section className="bg-muted py-16 sm:py-20">
-        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 text-center">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-4">
-            <KeyRound className="h-4 w-4" /> Passwort zurücksetzen
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
-            Passwort vergessen?
+        <div className="relative z-10 flex flex-col justify-center p-16 text-white">
+          <div className="absolute top-6 right-6">
+            <ThemeToggle className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-background/10" />
+          </div>
+          <div className="flex items-center gap-3 mb-12 group">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <Trophy className="h-7 w-7 text-white" />
+            </div>
+            <span className="text-2xl font-bold font-display">SWINGZ</span>
+          </div>
+
+          <h1 className="text-4xl font-extrabold leading-tight max-w-md">
+            Kein Problem.{' '}
+            <span className="text-gradient-primary bg-clip-text text-transparent">
+              Wir helfen dir.
+            </span>
           </h1>
-          <p className="mt-4 text-muted-foreground">
-            Kein Problem. Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum
-            Zurücksetzen deines Passworts.
+
+          <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
+            Gib deine E-Mail-Adresse ein und wir senden dir einen sicheren Link zum Zurücksetzen
+            deines Passworts.
           </p>
         </div>
-      </section>
+      </div>
 
-      {/* Form */}
-      <section className="py-16 sm:py-20">
-        <div className="mx-auto max-w-md px-4 sm:px-6 lg:px-8">
+      {/* ── Right: Form ── */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-background dark:bg-card relative">
+        <div className="absolute top-4 right-4 z-10">
+          <ThemeToggle className="h-9 w-9 rounded-full" />
+        </div>
+        <div className="absolute inset-0 bg-grid opacity-[0.15]" />
+
+        <div className="relative w-full max-w-md animate-fade-in-up">
+          {/* Mobile logo */}
+          <div className="lg:hidden mb-8 text-center">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
+                <Trophy className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold text-foreground dark:text-white font-display">
+                SWINGZ
+              </span>
+            </div>
+          </div>
+
           <Card variant="elevated" className="p-6 sm:p-8 border-0 shadow-premium">
             {submitted ? (
               <div className="text-center space-y-4">
@@ -174,8 +197,13 @@ export default function ForgotPasswordPage() {
             )}
           </Card>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            <Shield className="inline h-3.5 w-3.5 mr-1" />
+          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5" /> DSGVO-konform · Daten in der EU
+            </span>
+          </div>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
             Deine Daten werden gemäß unserer{' '}
             <Link href="/datenschutz" className="hover:underline">
               Datenschutzerklärung
@@ -183,28 +211,7 @@ export default function ForgotPasswordPage() {
             verarbeitet.
           </p>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-brand-secondary py-8 border-t border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-sm text-muted-foreground">
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
-            <Link href="/about" className="hover:text-white transition-colors">
-              Über uns
-            </Link>
-            <Link href="/contact" className="hover:text-white transition-colors">
-              Kontakt
-            </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
-              Nutzungsbedingungen
-            </Link>
-            <Link href="/datenschutz" className="hover:text-white transition-colors">
-              Datenschutz
-            </Link>
-          </div>
-          <p>© 2026 SWINGZ – Premium Tennis Club Management</p>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }

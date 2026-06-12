@@ -35,13 +35,13 @@ const FAQ = [
   },
   {
     q: 'Wie kann ich meinen Account löschen?',
-    a: 'Sende eine E-Mail an datenschutz@swingz.app mit dem Betreff „Account-Löschung". Wir löschen deine Daten innerhalb von 30 Tagen gemäß DSGVO.',
-    href: 'mailto:datenschutz@swingz.app',
+    a: 'Sende eine E-Mail an datenschutz@swingz.cloud mit dem Betreff „Account-Löschung". Wir löschen deine Daten innerhalb von 30 Tagen gemäß DSGVO.',
+    href: 'mailto:datenschutz@swingz.cloud',
     cta: 'E-Mail senden',
   },
   {
     q: 'Wie kontaktiere ich den Support?',
-    a: 'Du erreichst unser Support-Team per E-Mail unter support@swingz.app oder über das Kontaktformular. Wir antworten innerhalb von 24 Stunden an Werktagen.',
+    a: 'Du erreichst unser Support-Team per E-Mail unter support@swingz.cloud oder über das Kontaktformular. Wir antworten innerhalb von 24 Stunden an Werktagen.',
     href: '/contact',
     cta: 'Kontakt aufnehmen',
   },
@@ -51,9 +51,9 @@ const CHANNELS = [
   {
     icon: <Mail className="h-6 w-6" />,
     title: 'E-Mail',
-    description: 'support@swingz.app',
+    description: 'support@swingz.cloud',
     note: 'Antwort innerhalb von 24h (Werktage)',
-    href: 'mailto:support@swingz.app',
+    href: 'mailto:support@swingz.cloud',
     color: 'text-brand-primary',
     bg: 'bg-brand-primary/10',
   },
@@ -177,7 +177,7 @@ export default function SupportPage() {
               icon={<Bug className="h-5 w-5" />}
               title="Bug melden"
               description="Hast du einen Fehler gefunden? Sag uns Bescheid."
-              href="mailto:bugs@swingz.app"
+              href="mailto:bugs@swingz.cloud"
               color="bg-red-50 text-red-600"
             />
           </div>

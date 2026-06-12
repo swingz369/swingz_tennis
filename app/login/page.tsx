@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Trophy, Sparkles, ArrowRight, Eye, EyeOff, Shield, CheckCircle2 } from 'lucide-react';
+import { Trophy, Sparkles, ArrowRight, Eye, EyeOff, Shield, Zap } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -86,14 +86,15 @@ export default function LoginPage() {
             </div>
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
-              Willkommen zurück bei{' '}
+              Die Zukunft des{' '}
               <span className="text-gradient-primary bg-clip-text text-transparent">
-                Premium Tennis Club Management
+                Tennisclub-Managements
               </span>
             </h1>
 
             <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
-              Verwalte deinen Tennisverein mit modernster KI-Technologie und intuitivem Design.
+              KI-gestützte Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb —
+              gerade im Early Access.
             </p>
           </div>
 
@@ -104,25 +105,26 @@ export default function LoginPage() {
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="font-semibold">KI-optimierte Planung</p>
-                <p className="text-white/60 text-sm">+47% Effizienzsteigerung</p>
+                <p className="font-semibold">KI-gestützte Saisonplanung</p>
+                <p className="text-white/60 text-sm">Automatisch optimierte Trainingspläne</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { value: '1.2K+', label: 'Vereine' },
-                { value: '50K+', label: 'Trainings' },
-                { value: '85K+', label: 'Mitglieder' },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 text-center hover:bg-background/8 transition-colors"
-                >
-                  <p className="text-xl font-bold">{stat.value}</p>
-                  <p className="text-white/55 text-xs mt-0.5">{stat.label}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="h-4 w-4 text-brand-accent" />
+                  <p className="font-semibold text-sm">Early Access</p>
                 </div>
-              ))}
+                <p className="text-white/55 text-xs">6 Monate kostenlos</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="h-4 w-4 text-brand-light" />
+                  <p className="font-semibold text-sm">DSGVO-konform</p>
+                </div>
+                <p className="text-white/55 text-xs">Daten in der EU</p>
+              </div>
             </div>
           </div>
         </div>
@@ -153,7 +155,7 @@ export default function LoginPage() {
             <div className="text-center mb-8">
               <h2 className="text-2xl font-extrabold text-foreground">Anmelden</h2>
               <p className="mt-2 text-muted-foreground">
-                Willkommen zurück — wir haben dich vermisst
+                Melde dich an, um deinen Club zu verwalten
               </p>
             </div>
 
@@ -272,13 +274,10 @@ export default function LoginPage() {
             </div>
           </Card>
 
-          {/* Trust badges */}
+          {/* Trust badge */}
           <div className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5" /> SOC 2
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5" /> DSGVO-konform
+              <Shield className="h-3.5 w-3.5" /> DSGVO-konform · Daten in der EU
             </span>
           </div>
 
