@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DollarSign, Plus, FileText, Loader2, Trash2, Send } from 'lucide-react';
+import { DollarSign, Plus, FileText, Loader2, Trash2, Send, Sparkles } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
 import { PaginationNav } from '@/components/ui/pagination-nav';
@@ -120,6 +120,28 @@ export default function BillingClient({
     return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
   });
   const [generatingInvoices, setGeneratingInvoices] = useState(false);
+
+  // Invoice generation preview
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    members: {
+      memberId: string;
+      memberName: string;
+      email: string;
+      amount: number;
+      subtotal: number;
+      taxAmount: number;
+    }[];
+    alreadyBilled: { memberId: string; memberName: string }[];
+    feeAmount: number;
+    feeName: string | null;
+    currency: string;
+    taxRate: number;
+    month: string;
+    warning?: string;
+  } | null>(null);
+  const [previewExcluded, setPreviewExcluded] = useState<Set<string>>(new Set());
 
   // Invoice type filter
   const [invoiceTypeFilter, setInvoiceTypeFilter] = useState<InvoiceTypeFilter>('all');
@@ -343,28 +365,48 @@ export default function BillingClient({
   /** Re-fetch data after mutations by refreshing the server component */
   const refreshData = () => router.refresh();
 
-  const handleGenerateInvoices = async () => {
+  const handleOpenPreview = async () => {
+    setPreviewLoading(true);
+    setPreviewExcluded(new Set());
+    try {
+      const res = await apiFetch('/api/billing/generate-invoices');
+      const data = await res.json();
+      if (res.ok) {
+        setPreviewData(data);
+        setPreviewOpen(true);
+        if (data.warning === 'NO_FEE_CONFIGURED') {
+          toast.warning('Keine aktive Mitgliedsgebühr konfiguriert');
+        }
+      } else {
+        toast.error(data.error ?? 'Fehler beim Laden der Vorschau');
+      }
+    } catch {
+      toast.error('Netzwerkfehler');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleConfirmGenerate = async () => {
+    if (!previewData) return;
     setGeneratingInvoices(true);
     try {
+      const excludeMemberIds = Array.from(previewExcluded);
       const res = await apiFetch('/api/billing/generate-invoices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ excludeMemberIds }),
       });
       const data = await res.json();
       if (res.ok) {
-        if (data.warning === 'NO_FEE_CONFIGURED') {
-          toast.warning(data.message ?? 'Keine aktive Mitgliedsgebühr');
-        } else {
-          toast.success(data.message ?? `${data.created} Rechnung(en) erstellt`);
-        }
-        // Switch to membership invoice filter — useEffect handles the API fetch
+        toast.success(data.message ?? `${data.created} Rechnung(en) erstellt`);
         setInvoiceTypeFilter('membership');
+        setPreviewOpen(false);
+        setPreviewData(null);
       } else {
         toast.error(data.error ?? 'Fehler beim Generieren der Rechnungen');
       }
-    } catch (err) {
-      console.error('Failed to generate invoices:', err);
+    } catch {
       toast.error('Netzwerkfehler');
     } finally {
       setGeneratingInvoices(false);
@@ -380,8 +422,8 @@ export default function BillingClient({
           <p className="text-muted-foreground">Rechnungen und Abrechnungen verwalten</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleGenerateInvoices} disabled={generatingInvoices}>
-            {generatingInvoices ? (
+          <Button variant="outline" onClick={handleOpenPreview} disabled={previewLoading}>
+            {previewLoading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
               <FileText className="h-4 w-4 mr-2" />
@@ -698,6 +740,187 @@ export default function BillingClient({
               <Trash2 className="h-4 w-4 mr-2" />
             )}
             Löschen
+          </Button>
+        </div>
+      </CenteredModal>
+
+      {/* Invoice Generation Preview Modal */}
+      <CenteredModal
+        open={previewOpen}
+        onClose={() => {
+          setPreviewOpen(false);
+          setPreviewData(null);
+        }}
+      >
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-brand-primary" />
+            Rechnungen generieren
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {previewData ? (
+              <>
+                Vorschau für{' '}
+                <strong>
+                  {new Date(previewData.month + '-01').toLocaleDateString('de-DE', {
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </strong>
+              </>
+            ) : (
+              'Lade Vorschau...'
+            )}
+          </p>
+        </div>
+
+        {previewData && (
+          <div className="space-y-4 py-2">
+            {/* Fee info */}
+            {previewData.warning === 'NO_FEE_CONFIGURED' ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-800 font-medium">
+                  Keine aktive Mitgliedsgebühr konfiguriert.
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Bitte zuerst eine Gebühr vom Typ „Mitgliedschaft" anlegen.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between text-sm bg-muted/50 rounded-lg p-3">
+                  <span className="text-muted-foreground">Gebühr:</span>
+                  <span className="font-medium">
+                    {previewData.feeName || 'Mitgliedsbeitrag'} — {previewData.feeAmount.toFixed(2)}{' '}
+                    {previewData.currency}
+                    {previewData.taxRate > 0 ? ` (+ ${previewData.taxRate}% MwSt.)` : ''}
+                  </span>
+                </div>
+
+                {/* Already billed notice */}
+                {previewData.alreadyBilled.length > 0 && (
+                  <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
+                    <span className="font-medium">
+                      {previewData.alreadyBilled.length} Mitglied
+                      {previewData.alreadyBilled.length !== 1 ? 'er' : ''} bereits abgerechnet
+                    </span>
+                    <span className="ml-1">(werden übersprungen)</span>
+                  </div>
+                )}
+
+                {/* Member list with checkboxes */}
+                {previewData.members.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <p className="text-sm">
+                      Alle Mitglieder wurden bereits für diesen Monat abgerechnet.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        {previewData.members.length - previewExcluded.size} von{' '}
+                        {previewData.members.length} Mitgliedern ausgewählt
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => {
+                          if (previewExcluded.size === 0) {
+                            setPreviewExcluded(new Set(previewData.members.map((m) => m.memberId)));
+                          } else {
+                            setPreviewExcluded(new Set());
+                          }
+                        }}
+                      >
+                        {previewExcluded.size === 0 ? 'Alle abwählen' : 'Alle auswählen'}
+                      </Button>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto rounded-md border border-border divide-y divide-border/50">
+                      {previewData.members.map((m) => {
+                        const excluded = previewExcluded.has(m.memberId);
+                        return (
+                          <label
+                            key={m.memberId}
+                            className={`flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer transition-colors ${
+                              excluded ? 'bg-muted/30 opacity-60' : 'hover:bg-muted/20'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={!excluded}
+                              onCheckedChange={() => {
+                                setPreviewExcluded((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(m.memberId)) {
+                                    next.delete(m.memberId);
+                                  } else {
+                                    next.add(m.memberId);
+                                  }
+                                  return next;
+                                });
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <span className="font-medium truncate block">{m.memberName}</span>
+                              <span className="text-xs text-muted-foreground">{m.email}</span>
+                            </div>
+                            <span className="font-mono text-xs font-medium tabular-nums whitespace-nowrap">
+                              {m.amount.toFixed(2)} {previewData.currency}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    {/* Total */}
+                    <div className="flex items-center justify-between text-sm font-semibold pt-1 border-t">
+                      <span>
+                        Gesamt ({previewData.members.length - previewExcluded.size} Rechnungen)
+                      </span>
+                      <span className="tabular-nums">
+                        {previewData.members
+                          .filter((m) => !previewExcluded.has(m.memberId))
+                          .reduce((sum, m) => sum + m.amount, 0)
+                          .toFixed(2)}{' '}
+                        {previewData.currency}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-2 justify-end">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPreviewOpen(false);
+              setPreviewData(null);
+            }}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            onClick={handleConfirmGenerate}
+            disabled={
+              generatingInvoices ||
+              !previewData ||
+              previewData.members.length === 0 ||
+              previewData.members.length - previewExcluded.size === 0 ||
+              previewData.warning === 'NO_FEE_CONFIGURED'
+            }
+          >
+            {generatingInvoices ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-2" />
+            )}
+            {previewData
+              ? `${previewData.members.length - previewExcluded.size} Rechnung${previewData.members.length - previewExcluded.size !== 1 ? 'en' : ''} erstellen`
+              : 'Generieren'}
           </Button>
         </div>
       </CenteredModal>
