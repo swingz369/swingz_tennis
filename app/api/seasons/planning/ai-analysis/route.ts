@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${aiKey}`,
           ...(isOpenRouter
             ? {
-                'HTTP-Referer': env.NEXT_PUBLIC_APP_URL || 'https://swingz.app',
+                'HTTP-Referer': env.NEXT_PUBLIC_APP_URL || 'https://swingz.cloud',
                 'X-Title': 'SwingZ Season Planning',
               }
             : {}),
