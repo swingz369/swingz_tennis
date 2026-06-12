@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import {
   Table,
   TableBody,
@@ -13,36 +13,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
-import { CreditCard, DollarSign, Plus, Eye, FileText, Loader2, Trash2, Send } from 'lucide-react';
+import { DollarSign, Plus, FileText, Loader2, Trash2, Send } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { buildPageUrl } from '@/lib/pagination';
 import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
-
-export type Subscription = {
-  id: string;
-  memberId: string;
-  memberName: string;
-  memberEmail: string;
-  plan: 'free' | 'pro' | 'enterprise';
-  status: 'active' | 'canceled' | 'past_due' | 'unpaid';
-  currentPeriodEnd: string;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-};
 
 export type Invoice = {
   id: string;
@@ -114,46 +96,14 @@ function InvoiceTypeBadge({ type }: { type: string }) {
 }
 
 interface BillingClientProps {
-  initialSubscriptions: Subscription[];
   initialInvoices: Invoice[];
-  members: { id: string; name: string; email: string }[];
+  members: { id: string; name: string; email: string; role?: string }[];
   clubId?: string | null;
   invoicePagination?: PaginationMeta;
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
-// Demo members for the subscription assignment dialog
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'active':
-    case 'paid':
-      return 'bg-green-100 text-green-700';
-    case 'canceled':
-      return 'bg-muted text-foreground';
-    case 'past_due':
-      return 'bg-yellow-100 text-yellow-700';
-    case 'unpaid':
-      return 'bg-red-100 text-red-700';
-    default:
-      return 'bg-muted text-foreground';
-  }
-}
-
-function getPlanLabel(plan: string) {
-  switch (plan) {
-    case 'free':
-      return 'Free';
-    case 'pro':
-      return 'Pro';
-    case 'enterprise':
-      return 'Enterprise';
-    default:
-      return plan;
-  }
-}
-
 export default function BillingClient({
-  initialSubscriptions,
   initialInvoices,
   members,
   clubId,
@@ -161,13 +111,14 @@ export default function BillingClient({
   searchParams,
 }: BillingClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'invoices'>('invoices');
-  const subscriptions = initialSubscriptions;
-  const clubMembers = members;
+  const clubMembers = members as ((typeof members)[number] & { role?: string })[];
+  const [memberSearch, setMemberSearch] = useState('');
+  const filteredMembers = clubMembers.filter((m) => {
+    if (!memberSearch.trim()) return true;
+    const q = memberSearch.toLowerCase();
+    return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
+  });
   const [generatingInvoices, setGeneratingInvoices] = useState(false);
-  const [showAssignDialog, setShowAssignDialog] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<{ id: string; name: string } | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<Subscription['plan']>('pro');
 
   // Invoice type filter
   const [invoiceTypeFilter, setInvoiceTypeFilter] = useState<InvoiceTypeFilter>('all');
@@ -197,7 +148,7 @@ export default function BillingClient({
   const adhocTotal = adhocItems.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2);
 
   useEffect(() => {
-    if (!clubId || activeTab !== 'invoices') return;
+    if (!clubId) return;
     // Skip re-fetch when no type filter is active — use server-paginated initial data
     if (invoiceTypeFilter === 'all') {
       setInvoices(initialInvoices);
@@ -232,9 +183,12 @@ export default function BillingClient({
       })
       .catch(() => toast.error('Fehler beim Laden der Rechnungen'))
       .finally(() => setLoadingInvoices(false));
-  }, [clubId, activeTab, invoiceTypeFilter, initialInvoices]);
+  }, [clubId, invoiceTypeFilter, initialInvoices]);
 
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const handleSendInvoice = async (invoiceId: string) => {
     setSendingInvoiceId(invoiceId);
@@ -298,35 +252,31 @@ export default function BillingClient({
     }
   };
 
-  /** Re-fetch data after mutations by refreshing the server component */
-  const refreshData = () => router.refresh();
-
-  const handleAssignPlan = async () => {
-    if (!selectedMember) return;
+  const handleDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+    setDeletingInvoiceId(invoiceToDelete.id);
     try {
-      const res = await apiFetch('/api/admin/billing/subscriptions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          memberId: selectedMember.id,
-          plan: selectedPlan,
-        }),
+      const res = await apiFetch(`/api/billing/invoices/${invoiceToDelete.id}`, {
+        method: 'DELETE',
       });
-
       if (res.ok) {
-        toast.success('Abonnement erfolgreich zugewiesen');
-        setShowAssignDialog(false);
-        setSelectedMember(null);
-        refreshData();
+        toast.success('Rechnung gelöscht');
+        setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceToDelete.id));
+        setDeleteConfirmOpen(false);
+        setInvoiceToDelete(null);
       } else {
-        const error = await res.json();
-        toast.error(`Fehler: ${error.error || 'Unbekannter Fehler'}`);
+        const err = await res.json();
+        toast.error(err.error ?? 'Fehler beim Löschen');
       }
-    } catch (err) {
-      console.error('Failed to assign plan:', err);
-      toast.error('Fehler bei der Zuweisung');
+    } catch {
+      toast.error('Netzwerkfehler beim Löschen');
+    } finally {
+      setDeletingInvoiceId(null);
     }
   };
+
+  /** Re-fetch data after mutations by refreshing the server component */
+  const refreshData = () => router.refresh();
 
   const handleGenerateInvoices = async () => {
     setGeneratingInvoices(true);
@@ -343,8 +293,7 @@ export default function BillingClient({
         } else {
           toast.success(data.message ?? `${data.created} Rechnung(en) erstellt`);
         }
-        // Switch to invoices tab with membership filter — useEffect handles the API fetch
-        setActiveTab('invoices');
+        // Switch to membership invoice filter — useEffect handles the API fetch
         setInvoiceTypeFilter('membership');
       } else {
         toast.error(data.error ?? 'Fehler beim Generieren der Rechnungen');
@@ -363,7 +312,7 @@ export default function BillingClient({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Abrechnung</h1>
-          <p className="text-muted-foreground">Mitgliederabonnements und Rechnungen</p>
+          <p className="text-muted-foreground">Rechnungen und Abrechnungen verwalten</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleGenerateInvoices} disabled={generatingInvoices}>
@@ -376,116 +325,11 @@ export default function BillingClient({
           </Button>
           <CreateInvoiceDialog onSuccess={refreshData} members={clubMembers} />
           <PaymentImportDialog />
-          <Button onClick={() => setShowAssignDialog(true)}>
-            <span className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Abonnement zuweisen
-            </span>
-          </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b">
-        <button
-          onClick={() => setActiveTab('subscriptions')}
-          className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'subscriptions'
-              ? 'border-brand-primary text-brand-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Plattform-Abos ({subscriptions.length})
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab('invoices')}
-          className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'invoices'
-              ? 'border-brand-primary text-brand-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            Rechnungen ({invoices.length})
-          </div>
-        </button>
-      </div>
-
-      {/* Subscriptions Tab */}
-      {activeTab === 'subscriptions' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Mitgliederabonnements</CardTitle>
-            <CardDescription>Übersicht aller aktiven und vergangenen Abonnements</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {subscriptions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>Noch keine Abonnements vorhanden</p>
-                <Button variant="link" onClick={() => setShowAssignDialog(true)}>
-                  Erstes Abonnement zuweisen
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mitglied</TableHead>
-                    <TableHead>Tarif</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Nächste Verlängerung</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {subscriptions.map((sub) => (
-                    <TableRow key={sub.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{sub.memberName}</div>
-                          <div className="text-sm text-muted-foreground">{sub.memberEmail}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {getPlanLabel(sub.plan)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={`capitalize ${getStatusColor(sub.status)}`}>
-                          {sub.status === 'active'
-                            ? 'Aktiv'
-                            : sub.status === 'canceled'
-                              ? 'Gekündigt'
-                              : sub.status === 'past_due'
-                                ? 'Überfällig'
-                                : sub.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(sub.currentPeriodEnd).toLocaleDateString('de-DE')}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Invoices Tab */}
-      {activeTab === 'invoices' && (
+      {/* Invoices */}
+      {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -621,6 +465,19 @@ export default function BillingClient({
                           >
                             <FileText className="h-3 w-3" />
                           </Button>
+                          {invoice.status !== 'paid' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setInvoiceToDelete(invoice);
+                                setDeleteConfirmOpen(true);
+                              }}
+                              title="Rechnung löschen"
+                            >
+                              <Trash2 className="h-3 w-3 text-red-400" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -630,11 +487,10 @@ export default function BillingClient({
             )}
           </CardContent>
         </Card>
-      )}
+      }
 
       {/* Invoice Pagination (only when no type filter — filtered data comes from unpaginated API) */}
-      {activeTab === 'invoices' &&
-        invoiceTypeFilter === 'all' &&
+      {invoiceTypeFilter === 'all' &&
         invoicePagination &&
         invoicePagination.totalPages > 1 &&
         searchParams && (
@@ -646,62 +502,48 @@ export default function BillingClient({
           />
         )}
 
-      {/* Assign Subscription Dialog */}
-      <CenteredModal open={showAssignDialog} onClose={() => setShowAssignDialog(false)}>
+      {/* Delete Confirmation Dialog */}
+      <CenteredModal
+        open={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setInvoiceToDelete(null);
+        }}
+      >
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold">Abonnement zuweisen</h2>
-          <p className="text-sm text-muted-foreground">Weise einem Mitglied einen Tarif zu</p>
+          <h2 className="text-lg font-bold text-red-600">Rechnung löschen?</h2>
+          <p className="text-sm text-muted-foreground">
+            Möchtest du Rechnung <strong>{invoiceToDelete?.invoiceNumber}</strong> wirklich löschen?
+            {invoiceToDelete && !['draft', 'open'].includes(invoiceToDelete.status) && (
+              <span className="block mt-1 text-amber-600 font-medium">
+                ⚠️ Diese Rechnung wurde bereits versendet oder hat Zahlungen erhalten.
+              </span>
+            )}
+            <span className="block mt-1">Diese Aktion kann nicht rückgängig gemacht werden.</span>
+          </p>
         </div>
-        <div className="space-y-4 py-4">
-          <div>
-            <Label htmlFor="member">Mitglied</Label>
-            <Select
-              value={selectedMember?.id || ''}
-              onValueChange={(v) => {
-                const member = clubMembers.find((m) => m.id === v);
-                setSelectedMember(member || null);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Mitglied wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {clubMembers.length > 0 ? (
-                  clubMembers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name} ({member.email})
-                    </SelectItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-4 text-sm text-muted-foreground">
-                    Keine Mitglieder gefunden
-                  </div>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="plan">Tarif</Label>
-            <Select
-              value={selectedPlan}
-              onValueChange={(v) => setSelectedPlan(v as Subscription['plan'])}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="free">Free (0€)</SelectItem>
-                <SelectItem value="pro">Pro (29,99€/Monat)</SelectItem>
-                <SelectItem value="enterprise">Enterprise (99€/Monat)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex gap-2 pt-2 justify-end">
-          <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+        <div className="flex gap-2 pt-4 justify-end">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDeleteConfirmOpen(false);
+              setInvoiceToDelete(null);
+            }}
+          >
             Abbrechen
           </Button>
-          <Button onClick={handleAssignPlan}>Zuweisen</Button>
+          <Button
+            variant="destructive"
+            onClick={handleDeleteInvoice}
+            disabled={!!deletingInvoiceId}
+          >
+            {deletingInvoiceId ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 mr-2" />
+            )}
+            Löschen
+          </Button>
         </div>
       </CenteredModal>
 
@@ -715,20 +557,71 @@ export default function BillingClient({
         </div>
         <div className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-4">
+            {' '}
             <div>
-              <Label htmlFor="adhoc-member">Mitglied *</Label>
-              <Select value={adhocMemberId} onValueChange={setAdhocMemberId}>
-                <SelectTrigger id="adhoc-member">
-                  <SelectValue placeholder="Mitglied wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clubMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name} ({m.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="adhoc-member">Mitglied / Trainer *</Label>
+              <div className="relative">
+                <Input
+                  id="adhoc-member"
+                  placeholder="Name oder E-Mail suchen..."
+                  value={
+                    adhocMemberId
+                      ? (clubMembers.find((m) => m.id === adhocMemberId)?.name ?? '')
+                      : memberSearch
+                  }
+                  onChange={(e) => {
+                    setAdhocMemberId('');
+                    setMemberSearch(e.target.value);
+                  }}
+                  onBlur={() => setTimeout(() => setMemberSearch(''), 200)}
+                />
+                {adhocMemberId && (
+                  <button
+                    onClick={() => {
+                      setAdhocMemberId('');
+                      setMemberSearch('');
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              {!adhocMemberId && memberSearch.trim().length > 0 && (
+                <div className="mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-md">
+                  {filteredMembers.length > 0 ? (
+                    filteredMembers.slice(0, 20).map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => {
+                          setAdhocMemberId(m.id);
+                          setMemberSearch('');
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center justify-between"
+                      >
+                        <span>
+                          {m.name} <span className="text-muted-foreground">({m.email})</span>
+                        </span>
+                        {m.role && (
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              m.role === 'trainer'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {m.role === 'trainer' ? 'Trainer' : 'Mitglied'}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                      Keine Ergebnisse für „{memberSearch}"
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="adhoc-due">Fälligkeitsdatum *</Label>

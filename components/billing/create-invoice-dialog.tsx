@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Search } from 'lucide-react';
 import { addDays } from 'date-fns';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -28,13 +28,25 @@ interface InvoiceItem {
 
 interface CreateInvoiceDialogProps {
   onSuccess?: () => void;
-  members: { id: string; name: string; email: string }[];
+  members: { id: string; name: string; email: string; role?: string }[];
 }
 
 export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoiceDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [memberId, setMemberId] = useState('');
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberSearchOpen, setMemberSearchOpen] = useState(false);
+  // Close search dropdown when clicking outside
+  const handleSearchBlur = () => {
+    // Small delay to allow button clicks inside dropdown to register
+    setTimeout(() => setMemberSearchOpen(false), 150);
+  };
+  const filteredMembers = members.filter((m) => {
+    if (!memberSearch.trim()) return true;
+    const q = memberSearch.toLowerCase();
+    return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
+  });
   const [dueDate, setDueDate] = useState(addDays(new Date(), 14).toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<InvoiceItem[]>([
@@ -46,8 +58,6 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
       itemType: 'other',
     },
   ]);
-
-  const hasMembers = members.length > 0;
 
   const addItem = () => {
     setItems([
@@ -165,27 +175,78 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
         </div>
 
         <div className="space-y-6 py-4">
-          {/* Member Selection */}
+          {/* Member Selection with Live Search */}
           <div>
-            <Label htmlFor="member">Mitglied</Label>
-            <Select value={memberId} onValueChange={setMemberId}>
-              <SelectTrigger id="member">
-                <SelectValue placeholder="Mitglied wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {hasMembers ? (
-                  members.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name} ({member.email})
-                    </SelectItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-4 text-sm text-muted-foreground">
-                    Keine Mitglieder gefunden
-                  </div>
+            <Label htmlFor="member">Mitglied / Trainer</Label>
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="member"
+                  placeholder="Name oder E-Mail suchen..."
+                  className="pl-8"
+                  value={
+                    memberId ? (members.find((m) => m.id === memberId)?.name ?? '') : memberSearch
+                  }
+                  onChange={(e) => {
+                    setMemberId('');
+                    setMemberSearch(e.target.value);
+                    setMemberSearchOpen(true);
+                  }}
+                  onFocus={() => setMemberSearchOpen(true)}
+                  onBlur={handleSearchBlur}
+                />
+                {memberId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMemberId('');
+                      setMemberSearch('');
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-sm"
+                  >
+                    ×
+                  </button>
                 )}
-              </SelectContent>
-            </Select>
+              </div>
+              {memberSearchOpen && !memberId && (
+                <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-md">
+                  {filteredMembers.length > 0 ? (
+                    filteredMembers.slice(0, 20).map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setMemberId(m.id);
+                          setMemberSearch('');
+                          setMemberSearchOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center justify-between"
+                      >
+                        <span>
+                          {m.name} <span className="text-muted-foreground">({m.email})</span>
+                        </span>
+                        {m.role && (
+                          <span
+                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              m.role === 'trainer'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {m.role === 'trainer' ? 'Trainer' : 'Mitglied'}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                      Keine Ergebnisse für „{memberSearch}"
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Due Date */}

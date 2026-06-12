@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
 
 const UpdateSchema = z.object({
   status: z.enum(['sent', 'cancelled', 'overdue', 'reminder_sent']),
@@ -71,4 +72,53 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .single();
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
   return NextResponse.json({ data: updated });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { supabase, user } = await requireAuth(request);
+
+  // Fetch invoice to check ownership and status
+  const { data: invoice, error: fetchErr } = await (supabase as any)
+    .from('invoices')
+    .select('club_id, status')
+    .eq('id', id)
+    .single();
+  if (fetchErr || !invoice) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Only admin/superadmin can delete
+  const { data: membership } = await (supabase as any)
+    .from('user_club_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('club_id', invoice.club_id)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (!membership || !['admin', 'superadmin'].includes(membership.role))
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  // Prevent deleting paid invoices (safety guard)
+  if (invoice.status === 'paid') {
+    return NextResponse.json(
+      {
+        error:
+          'Bezahlte Rechnungen können nicht gelöscht werden. Bitte stornieren Sie die Rechnung stattdessen.',
+      },
+      { status: 400 }
+    );
+  }
+
+  // Use service client for cascade deletes (bypasses RLS delete policies)
+  const serviceSb = createServiceClient();
+  await serviceSb.from('invoice_items').delete().eq('invoice_id', id);
+  await serviceSb.from('invoice_installments').delete().eq('invoice_id', id);
+
+  // Delete the invoice itself
+  const { error: deleteErr } = await serviceSb.from('invoices').delete().eq('id', id);
+
+  if (deleteErr) return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+  return NextResponse.json({ success: true });
 }

@@ -49,7 +49,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         invoice,
         clubName: clubData?.name || 'SWINGZ Tennis Club',
         clubAddress: clubData?.address || '',
-        clubEmail: clubData?.email || 'info@swingz.app',
+        clubEmail: clubData?.email || 'info@swingz.cloud',
         clubPhone: clubData?.phone || '',
         memberName: auth.user.user_metadata?.full_name || 'Mitglied',
         memberAddress: '',

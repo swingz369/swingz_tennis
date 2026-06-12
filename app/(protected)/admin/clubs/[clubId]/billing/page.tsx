@@ -2,7 +2,7 @@ import dynamicImport from 'next/dynamic';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Subscription, Invoice } from '@/app/(protected)/admin/billing/billing-client';
+import type { Invoice } from '@/app/(protected)/admin/billing/billing-client';
 
 const BillingClient = dynamicImport(
   () => import('@/app/(protected)/admin/billing/billing-client'),
@@ -52,47 +52,25 @@ export default async function ClubBillingPage({ params }: { params: Promise<{ cl
     );
   }
 
-  // --- Fetch subscriptions + members ---
-  let subscriptions: Subscription[] = [];
-  let members: { id: string; name: string; email: string }[] = [];
+  // --- Fetch members (members + trainers) ---
+  let members: { id: string; name: string; email: string; role?: string }[] = [];
 
   const { data: clubMemberships } = await supabase
     .from('user_club_memberships')
     .select(
       `
         user_id,
+        role,
         users (
           id,
           email,
-          full_name,
-          subscription_tier,
-          subscription_status,
-          stripe_customer_id,
-          current_period_end
+          full_name
         )
       `
     )
     .eq('club_id', clubId)
     .eq('is_active', true)
-    .eq('role', 'member');
-
-  subscriptions = (clubMemberships || [])
-    .map((m: Record<string, unknown>) => {
-      const user = m.users as Record<string, unknown> | null;
-      if (!user) return null;
-      return {
-        id: `sub-${user.id}`,
-        memberId: String(user.id),
-        memberName: String(user.full_name || 'N/A'),
-        memberEmail: String(user.email || ''),
-        plan: String(user.subscription_tier || 'free') as Subscription['plan'],
-        status: String(user.subscription_status || 'active') as Subscription['status'],
-        currentPeriodEnd: String(user.current_period_end || new Date().toISOString()),
-        stripeCustomerId: user.stripe_customer_id as string | undefined,
-        stripeSubscriptionId: user.stripe_subscription_id as string | undefined,
-      } as Subscription;
-    })
-    .filter((s): s is Subscription => s !== null);
+    .in('role', ['member', 'trainer']);
 
   members = (clubMemberships || [])
     .map((m: Record<string, unknown>) => {
@@ -102,9 +80,10 @@ export default async function ClubBillingPage({ params }: { params: Promise<{ cl
         id: String(user.id),
         name: String(user.full_name || 'N/A'),
         email: String(user.email || ''),
+        role: String(m.role || 'member'),
       };
     })
-    .filter((m): m is { id: string; name: string; email: string } => m !== null);
+    .filter((m): m is { id: string; name: string; email: string; role: string } => m !== null);
 
   // --- Fetch invoices ---
   let invoices: Invoice[] = [];
@@ -175,11 +154,7 @@ export default async function ClubBillingPage({ params }: { params: Promise<{ cl
         </div>
       </div>
 
-      <BillingClient
-        initialSubscriptions={subscriptions}
-        initialInvoices={invoices}
-        members={members}
-      />
+      <BillingClient initialInvoices={invoices} members={members} />
     </div>
   );
 }

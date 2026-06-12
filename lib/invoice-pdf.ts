@@ -21,7 +21,18 @@ export interface Invoice {
   taxRate: number;
   taxAmount: number;
   total: number;
-  status: 'paid' | 'pending' | 'overdue';
+  status:
+    | 'paid'
+    | 'pending'
+    | 'overdue'
+    | 'cancelled'
+    | 'refunded'
+    | 'open'
+    | 'sent'
+    | 'draft'
+    | 'partially_paid'
+    | 'dunning'
+    | 'reminder_sent';
   notes?: string;
 }
 

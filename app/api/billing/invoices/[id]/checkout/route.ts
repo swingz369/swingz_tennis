@@ -40,8 +40,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       }
 
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || _request.nextUrl.origin;
-      const successUrl = `${baseUrl}/billing/invoices/${invoiceId}?payment=success`;
-      const cancelUrl = `${baseUrl}/billing/invoices/${invoiceId}?payment=cancelled`;
+      const successUrl = `${baseUrl}/billing?payment=success`;
+      const cancelUrl = `${baseUrl}/billing?payment=cancelled`;
 
       const checkoutData: {
         invoiceId: string;

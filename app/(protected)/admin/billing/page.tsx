@@ -5,7 +5,7 @@ import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BillingCategoriesTabs } from './billing-tabs-wrapper';
 import { AlertTriangle } from 'lucide-react';
-import type { Subscription, Invoice } from './billing-client';
+import type { Invoice } from './billing-client';
 
 const BillingClient = dynamicImport(() => import('./billing-client'), {
   loading: () => <Skeleton className="h-96 w-full rounded-xl" />,
@@ -49,46 +49,25 @@ export default async function BillingPage({
     (fc) => fc.type === 'membership' && fc.is_active
   );
 
-  // --- Fetch subscriptions + members ---
+  // --- Fetch members (members + trainers) ---
   const { data: clubMemberships } = await supabase
     .from('user_club_memberships')
     .select(
       `
         user_id,
+        role,
         users (
           id,
           email,
-          full_name,
-          subscription_tier,
-          subscription_status,
-          stripe_customer_id,
-          current_period_end
+          full_name
         )
       `
     )
     .eq('club_id', clubId)
     .eq('is_active', true)
-    .eq('role', 'member');
+    .in('role', ['member', 'trainer']);
 
-  const subscriptions: Subscription[] = (clubMemberships || [])
-    .map((m: Record<string, unknown>) => {
-      const user = m.users as Record<string, unknown> | null;
-      if (!user) return null;
-      return {
-        id: `sub-${user.id}`,
-        memberId: String(user.id),
-        memberName: String(user.full_name || 'N/A'),
-        memberEmail: String(user.email || ''),
-        plan: String(user.subscription_tier || 'free') as Subscription['plan'],
-        status: String(user.subscription_status || 'active') as Subscription['status'],
-        currentPeriodEnd: String(user.current_period_end || new Date().toISOString()),
-        stripeCustomerId: user.stripe_customer_id as string | undefined,
-        stripeSubscriptionId: user.stripe_subscription_id as string | undefined,
-      } as Subscription;
-    })
-    .filter((s): s is Subscription => s !== null);
-
-  // Build members list from the same query result
+  // Build members list
   const members = (clubMemberships || [])
     .map((m: Record<string, unknown>) => {
       const user = m.users as Record<string, unknown> | null;
@@ -97,9 +76,10 @@ export default async function BillingPage({
         id: String(user.id),
         name: String(user.full_name || 'N/A'),
         email: String(user.email || ''),
+        role: String(m.role || 'member'),
       };
     })
-    .filter((m): m is { id: string; name: string; email: string } => m !== null);
+    .filter((m): m is { id: string; name: string; email: string; role: string } => m !== null);
 
   // --- Fetch invoices (server-paginated) ---
   const [{ data: invoicesData, error: invoicesError }, { count: invoiceCount, error: countError }] =
@@ -182,7 +162,6 @@ export default async function BillingPage({
         </div>
       )}
       <BillingClient
-        initialSubscriptions={subscriptions}
         initialInvoices={invoices}
         members={members}
         clubId={clubId}

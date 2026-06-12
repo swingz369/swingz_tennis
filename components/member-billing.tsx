@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
+import { useFamilyAccounts } from '@/hooks/use-family-accounts';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
 import type { Invoice } from '@/lib/invoice-pdf';
@@ -26,11 +28,27 @@ export default function MemberBilling() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
 
+  const searchParams = useSearchParams();
   const { data: clubData } = useUserClub();
   const { data: memberData } = useUserMember();
+  const family = useFamilyAccounts();
+  const isMinorAccount = family.effectiveIsMinor;
 
   const clubId = clubData?.clubId ?? null;
   const memberId = memberData?.memberId ?? null;
+
+  // Show payment success/cancel notification on return from Stripe
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast.success('Zahlung erfolgreich! Deine Rechnung wurde bezahlt.');
+      // Clean URL — remove ?payment=success without page reload
+      window.history.replaceState({}, '', '/billing');
+    } else if (paymentStatus === 'cancelled') {
+      toast.info('Zahlung abgebrochen. Du kannst jederzeit erneut bezahlen.');
+      window.history.replaceState({}, '', '/billing');
+    }
+  }, [searchParams]);
 
   const { data: sessions = [], isLoading } = useSessions(clubId);
 
@@ -91,72 +109,6 @@ export default function MemberBilling() {
 
   const monthSessions = getMonthSessions();
 
-  const generateMonthlyInvoice = async () => {
-    if (monthSessions.length === 0) {
-      toast.error('Keine Sessions für diesen Monat gefunden');
-      return;
-    }
-
-    if (!clubId) {
-      toast.error('Vereins-Kontext fehlt');
-      return;
-    }
-
-    try {
-      const rate = clubData?.club?.defaultHourlyRate ?? 15.0;
-      const subtotal = monthSessions.length * rate;
-      const tax = subtotal * 0.19;
-
-      const body = {
-        clubId,
-        memberId,
-        amount: subtotal + tax,
-        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        items: monthSessions.map((s: Session) => ({
-          description:
-            `Training ${s.timeslotStart ? format(new Date(s.timeslotStart), 'dd. MMMM yyyy', { locale: de }) : ''}`.trim(),
-          quantity: 1,
-          unit_price: rate,
-          total: rate,
-        })),
-      };
-
-      const res = await apiFetch('/api/billing/invoices/create', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error ?? 'Fehler beim Erstellen der Rechnung');
-      }
-
-      const created = await res.json();
-      const inv = created.invoice ?? created;
-      const newInvoice: Invoice = {
-        id: inv.id as string,
-        invoiceNumber: (inv.invoice_number ?? inv.invoiceNumber ?? '') as string,
-        issueDate: new Date((inv.created_at ?? inv.issueDate ?? Date.now()) as string | number),
-        dueDate: new Date((inv.due_date ?? inv.dueDate ?? Date.now()) as string | number),
-        customerName: (inv.customer_name ?? inv.customerName ?? '') as string,
-        customerEmail: (inv.customer_email ?? inv.customerEmail ?? '') as string,
-        items: (inv.items as Invoice['items']) ?? [],
-        subtotal,
-        taxRate: 19,
-        taxAmount: tax,
-        total: subtotal + tax,
-        status: 'pending',
-      };
-      setInvoices((prev) => [newInvoice, ...prev]);
-      toast.success('Rechnung generiert');
-    } catch (err) {
-      console.error('Invoice creation error:', err);
-      toast.error(err instanceof Error ? err.message : 'Rechnung konnte nicht erstellt werden');
-    }
-  };
-
   const handleDownloadInvoice = async (invoice: Invoice) => {
     try {
       const res = await apiFetch(`/api/invoices/${invoice.id}/pdf`, {
@@ -186,20 +138,70 @@ export default function MemberBilling() {
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToToday = () => setCurrentMonth(new Date());
 
-  const getInvoiceStatus = (invoice: Invoice) => {
-    const now = new Date();
-    if (invoice.status === 'paid') {
-      return { label: 'Bezahlt', color: 'bg-green-100 text-green-700' };
+  // ── Pay invoice via Stripe Checkout ──
+  const handlePayInvoice = async (invoice: Invoice) => {
+    try {
+      const res = await apiFetch(`/api/billing/invoices/${invoice.id}/checkout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          (err as { error?: string }).error ?? 'Zahlung konnte nicht gestartet werden'
+        );
+      }
+      const { checkoutUrl } = await res.json();
+      if (checkoutUrl) {
+        window.open(checkoutUrl, '_self');
+      } else {
+        throw new Error('Keine Checkout-URL erhalten');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Zahlung fehlgeschlagen');
     }
-    if (invoice.dueDate < now) {
-      return { label: 'Überfällig', color: 'bg-red-100 text-red-700' };
-    }
-    return { label: 'Ausstehend', color: 'bg-yellow-100 text-yellow-700' };
   };
 
+  const getInvoiceStatus = (invoice: Invoice) => {
+    const now = new Date();
+    const status = invoice.status;
+    if (status === 'paid') {
+      return {
+        label: 'Bezahlt',
+        color: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+        isPaid: true,
+      };
+    }
+    if (status === 'cancelled' || status === 'refunded') {
+      return {
+        label: status === 'cancelled' ? 'Storniert' : 'Erstattet',
+        color: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+        isPaid: true,
+      };
+    }
+    if (invoice.dueDate && invoice.dueDate < now) {
+      return {
+        label: 'Überfällig',
+        color: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+        isPaid: false,
+      };
+    }
+    return {
+      label: 'Ausstehend',
+      color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+      isPaid: false,
+    };
+  };
+
+  // Only pay invoices that are open/sent/partially_paid/overdue
+  const canPayInvoice = (invoice: Invoice) => {
+    return ['open', 'sent', 'partially_paid', 'overdue'].includes(invoice.status ?? '');
+  };
+
+  const hourlyRate = clubData?.club?.defaultHourlyRate ?? 15.0;
   const calculateMonthlyTotal = () => {
-    const rate = clubData?.club?.defaultHourlyRate || 15.0;
-    return monthSessions.length * rate;
+    return monthSessions.length * hourlyRate;
   };
 
   const monthlyTotal = calculateMonthlyTotal();
@@ -211,6 +213,24 @@ export default function MemberBilling() {
     return (
       <div className="p-6">
         <div className="text-center py-12 text-muted-foreground">Laden...</div>
+      </div>
+    );
+  }
+
+  // Minor accounts cannot access billing — show a message instead
+  if (isMinorAccount) {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="h-16 w-16 rounded-2xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center mb-4">
+            <AlertCircle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Zugang eingeschränkt</h2>
+          <p className="text-muted-foreground max-w-md">
+            Rechnungen und Zahlungen werden von deinen Eltern verwaltet. Bitte wende dich an deine
+            Eltern oder Erziehungsberechtigten.
+          </p>
+        </div>
       </div>
     );
   }
@@ -238,7 +258,6 @@ export default function MemberBilling() {
           </Button>
         </div>
       </div>
-
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -265,12 +284,12 @@ export default function MemberBilling() {
             <div className="text-2xl font-bold">
               €
               {invoices
-                .filter((inv) => inv.status === 'pending')
+                .filter((inv) => !getInvoiceStatus(inv).isPaid)
                 .reduce((sum, inv) => sum + inv.total, 0)
                 .toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {invoices.filter((inv) => inv.status === 'pending').length} Rechnungen
+              {invoices.filter((inv) => !getInvoiceStatus(inv).isPaid).length} Rechnungen
             </p>
           </CardContent>
         </Card>
@@ -293,8 +312,7 @@ export default function MemberBilling() {
             </p>
           </CardContent>
         </Card>
-      </div>
-
+      </div>{' '}
       {/* Current Month Summary */}
       <Card>
         <CardHeader>
@@ -306,33 +324,24 @@ export default function MemberBilling() {
               Keine Trainings für diesen Monat gebucht
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                <div>
-                  <div className="font-semibold">Trainingssessions</div>
-                  <div className="text-sm text-muted-foreground">
-                    {monthSessions.length} Sessions × €15.00 = €{monthlyTotal.toFixed(2)}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-                  <div className="text-sm text-muted-foreground">zzgl. 19% MwSt</div>
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+              <div>
+                <div className="font-semibold">Trainingssessions</div>
+                <div className="text-sm text-muted-foreground">
+                  {monthSessions.length} Sessions × €{hourlyRate.toFixed(2)} = €
+                  {monthlyTotal.toFixed(2)}
                 </div>
               </div>
-
-              <Button
-                onClick={generateMonthlyInvoice}
-                className="w-full"
-                disabled={monthSessions.length === 0}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Rechnung generieren
-              </Button>
+              <div className="text-right">
+                <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
+                <div className="text-sm text-muted-foreground">
+                  zzgl. {clubData?.club?.taxRate ?? 0}% MwSt
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
-
       {/* Invoices List */}
       <Card>
         <CardHeader>
@@ -375,14 +384,26 @@ export default function MemberBilling() {
                           {status.label}
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadInvoice(invoice)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        PDF
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {!status.isPaid && canPayInvoice(invoice) && (
+                          <Button
+                            size="sm"
+                            onClick={() => handlePayInvoice(invoice)}
+                            className="gap-1.5"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            Bezahlen
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadInvoice(invoice)}
+                        >
+                          <Download className="h-4 w-4" />
+                          PDF
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -391,7 +412,6 @@ export default function MemberBilling() {
           )}
         </CardContent>
       </Card>
-
       {/* Payment Info */}
       <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
@@ -413,8 +433,8 @@ export default function MemberBilling() {
             </p>
             <p className="mt-4 text-muted-foreground">
               Bei Fragen zu deinen Rechnungen kontaktiere bitte unsere Buchhaltung unter{' '}
-              <a href="mailto:billing@swingz.app" className="text-brand-primary hover:underline">
-                billing@swingz.app
+              <a href="mailto:billing@swingz.cloud" className="text-brand-primary hover:underline">
+                billing@swingz.cloud
               </a>
             </p>
           </div>

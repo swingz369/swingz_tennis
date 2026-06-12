@@ -501,7 +501,7 @@ export default function SEPAMandateSigning() {
                 <li>Dieses Mandat gilt für alle Zahlungen an SwingZ Tennis Club</li>
                 <li>Du kannst dieses Mandat jederzeit schriftlich widerrufen</li>
                 <li>Die Gläubiger-Identifikationsnummer: DE98ZZZ00000000000</li>
-                <li>Bei Fragen kontaktiere uns unter info@swingz.app</li>
+                <li>Bei Fragen kontaktiere uns unter info@swingz.cloud</li>
               </ul>
             </div>
           </div>
