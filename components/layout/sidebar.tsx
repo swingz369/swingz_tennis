@@ -10,6 +10,8 @@ import { useClubFeatures } from '@/hooks/use-club-features';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { AdminSection } from './admin-section';
+import { FamilySwitcher } from './family-switcher';
+import { useFamilyAccounts } from '@/hooks/use-family-accounts';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   Home,
@@ -28,6 +30,7 @@ import {
   UserPlus,
   DollarSign,
   Shield,
+  MessageSquare,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -144,6 +147,9 @@ export function Sidebar({
   // Active club for display
   const activeClub = clubs?.find((c) => c.id === selectedClubId) ?? clubs?.[0] ?? null;
   const hasMultipleClubs = (clubs?.length ?? 0) > 1;
+
+  // Family accounts — parent/child switching
+  const family = useFamilyAccounts();
 
   // Fetch notification and approval counts from API
   const [approvalCount, setApprovalCount] = useState(0);
@@ -316,6 +322,7 @@ export function Sidebar({
   // Secondary navigation — shown consistently for both admin & superadmin
   const secondaryNav: NavItem[] = [
     { name: 'Mein Profil', href: '/profile', icon: User },
+    { name: 'Nachrichten', href: '/messages', icon: MessageSquare },
     ...(!isAdmin && !isSuperAdmin
       ? [{ name: 'Meine Rechnungen', href: '/billing', icon: CreditCard }]
       : []),
@@ -380,6 +387,19 @@ export function Sidebar({
           </div>
           <div className="h-px bg-gradient-to-r from-transparent via-gray-200/50 dark:via-white/10 to-transparent" />
         </div>
+
+        {/* Family Account Switcher — for parents with minor children */}
+        {family.isParent && (
+          <FamilySwitcher
+            isParent={family.isParent}
+            childMembers={family.children}
+            activeChild={family.activeChild ?? null}
+            isParentViewingChild={family.isParentViewingChild}
+            switchToChild={family.switchToChild}
+            switchToOwnAccount={family.switchToOwnAccount}
+            colors={colors}
+          />
+        )}
 
         {/* Superadmin Club Switcher */}
         {isSuperAdmin && hasMultipleClubs && (

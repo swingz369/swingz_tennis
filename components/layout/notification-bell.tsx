@@ -61,17 +61,26 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // Poll unread count
+  // Poll unread count (notifications + messages combined)
   useEffect(() => {
     if (!userId) return;
 
     const fetchCount = async () => {
       try {
-        const res = await apiFetch('/api/user/notifications/count');
-        if (res.ok) {
-          const { count } = await res.json();
-          setUnreadCount(count ?? 0);
+        const [notifRes, msgRes] = await Promise.all([
+          apiFetch('/api/user/notifications/count'),
+          apiFetch('/api/messages?folder=inbox&countOnly=true'),
+        ]);
+        let total = 0;
+        if (notifRes.ok) {
+          const data = await notifRes.json();
+          total += data?.count ?? 0;
         }
+        if (msgRes.ok) {
+          const data = await msgRes.json();
+          total += data?.unreadCount ?? 0;
+        }
+        setUnreadCount(total);
       } catch {
         // Silent fail
       }
