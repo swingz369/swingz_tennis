@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Menu, User, LogOut, Settings, Trophy, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { Menu, LogOut, Settings, Trophy, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { useTenant } from '@/lib/tenant-context';
 import { GlobalSearch } from '@/components/layout/global-search';
 import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';
@@ -17,7 +18,7 @@ interface HeaderProps {
     id?: string;
     name?: string;
     email?: string;
-    memberId?: string | null;
+    avatarUrl?: string | null;
     roles?: string[];
   };
   onMenuClick?: () => void;
@@ -26,8 +27,11 @@ interface HeaderProps {
 export function Header({ user, onMenuClick }: HeaderProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { branding } = useTenant();
+  const clubLogoUrl = branding.logos.light || branding.logos.dark;
 
   // Close user menu on outside click
   useEffect(() => {
@@ -83,7 +87,19 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"
               aria-hidden="true"
             />
-            <IconBox icon={Trophy} size="md" variant="gradient-primary" />
+            {clubLogoUrl && !imgFailed ? (
+              // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions
+              <img
+                key={clubLogoUrl}
+                src={clubLogoUrl}
+                alt="Club Logo"
+                className="h-8 w-8 object-contain relative"
+                onError={() => setImgFailed(true)}
+                onLoad={() => setImgFailed(false)}
+              />
+            ) : (
+              <IconBox icon={Trophy} size="md" variant="gradient-primary" />
+            )}
           </div>
           <span className="hidden sm:inline text-xl font-bold tracking-tight text-foreground dark:text-white">
             SWINGZ
@@ -118,6 +134,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               aria-label="Benutzermenü öffnen"
             >
               <Avatar className="h-7 w-7 ring-2 ring-brand-light/20 ring-offset-1 ring-offset-transparent transition-shadow duration-300 group-hover:ring-brand-light/40">
+                <AvatarImage src={user?.avatarUrl || undefined} alt={user?.name || 'User'} />
                 <AvatarFallback className="bg-gradient-to-br from-brand-light to-brand-primary text-white text-xs font-semibold">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
@@ -166,17 +183,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 >
                   <LayoutDashboard className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   Dashboard
-                </Link>
-                <Link
-                  href={user?.memberId ? `/members/${user.memberId}` : '/profile'}
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/5 transition-colors"
-                  role="menuitem"
-                >
-                  <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                  Profil
                 </Link>
                 {isAdmin && (
                   <Link

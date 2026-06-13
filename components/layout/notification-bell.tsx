@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, Check, CheckCheck, Clock, Loader2 } from 'lucide-react';
+import { Bell, Check, CheckCheck, Clock, Loader2, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,7 @@ interface Notification {
   type: string;
   is_read: boolean;
   created_at: string;
+  link?: string;
 }
 
 interface NotificationBellProps {
@@ -43,6 +44,8 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   booking: Clock,
   invoice: Check,
   system: Bell,
+  message_received: MessageSquare,
+  message: MessageSquare,
 };
 
 function timeAgo(dateStr: string): string {
@@ -92,16 +95,61 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     return () => clearInterval(interval);
   }, [userId]);
 
-  // Fetch notifications when dropdown opens
-  const fetchNotifications = useCallback(async () => {
+  // Fetch notifications + messages when dropdown opens
+  const fetchAlerts = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
     try {
-      const res = await apiFetch('/api/user/notifications?limit=5');
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications ?? []);
+      const [notifRes, msgRes] = await Promise.all([
+        apiFetch('/api/user/notifications?limit=5'),
+        apiFetch('/api/messages?folder=inbox'),
+      ]);
+
+      const items: Notification[] = [];
+
+      if (notifRes.ok) {
+        const data = await notifRes.json();
+        const raw: unknown[] = data.notifications ?? [];
+        for (const n of raw) {
+          const entry = n as Record<string, unknown>;
+          const type = String(entry.type ?? 'system');
+          // Skip message_received notifications — messages are shown directly below
+          if (type === 'message_received') continue;
+          items.push({
+            id: String(entry.id),
+            title: String(entry.title ?? ''),
+            message: entry.message ? String(entry.message) : undefined,
+            type,
+            is_read: Boolean(entry.read),
+            created_at: String(entry.created_at ?? ''),
+            link: entry.action_url ? String(entry.action_url) : undefined,
+          });
+        }
       }
+
+      // Also fetch inbox messages and merge them in
+      if (msgRes.ok) {
+        const data = await msgRes.json();
+        const messages: unknown[] = data.messages ?? [];
+        for (const m of messages) {
+          const msg = m as Record<string, unknown>;
+          const sender = msg.sender as Record<string, unknown> | undefined;
+          const senderName = (sender?.full_name as string) || 'Unbekannt';
+          items.push({
+            id: `msg-${String(msg.id)}`,
+            title: `Nachricht von ${senderName}`,
+            message: String(msg.subject ?? msg.content ?? ''),
+            type: 'message',
+            is_read: Boolean(msg.is_read),
+            created_at: String(msg.created_at ?? ''),
+            link: '/messages',
+          });
+        }
+      }
+
+      // Sort by date descending and take top 8
+      items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setNotifications(items.slice(0, 8));
     } catch {
       // Silent fail
     } finally {
@@ -110,8 +158,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   }, [userId]);
 
   useEffect(() => {
-    if (open) fetchNotifications();
-  }, [open, fetchNotifications]);
+    if (open) fetchAlerts();
+  }, [open, fetchAlerts]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -164,7 +212,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                   )}
                   asChild
                 >
-                  <Link href="/notifications">
+                  <Link href={n.link || '/notifications'}>
                     <div
                       className={cn(
                         'flex h-7 w-7 items-center justify-center rounded-lg shrink-0 mt-0.5',
@@ -207,13 +255,22 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             <button
               onClick={async () => {
                 try {
-                  const res = await apiFetch('/api/user/notifications/mark-all-read', {
-                    method: 'POST',
-                  });
-                  if (res.ok) {
+                  // Mark both notifications AND messages as read (independently)
+                  const [notifRes, msgRes] = await Promise.all([
+                    apiFetch('/api/user/notifications/mark-all-read', { method: 'POST' }),
+                    apiFetch('/api/messages/mark-all-read', { method: 'POST' }),
+                  ]);
+                  const notifOk = notifRes.ok;
+                  const msgOk = msgRes.ok;
+                  if (notifOk || msgOk) {
                     setUnreadCount(0);
-                    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-                    toast.success('Alle als gelesen markiert');
+                    setNotifications((prev) =>
+                      prev.map((n) => {
+                        if (n.type === 'message') return msgOk ? { ...n, is_read: true } : n;
+                        return notifOk ? { ...n, is_read: true } : n;
+                      })
+                    );
+                    toast.success('Alle Benachrichtigungen und Nachrichten als gelesen markiert');
                   }
                 } catch {
                   /* non-critical */

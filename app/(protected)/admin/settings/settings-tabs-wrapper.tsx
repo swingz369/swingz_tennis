@@ -2,16 +2,12 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Settings, Palette, MapPin, ShieldAlert } from 'lucide-react';
+import { Settings, Palette, ShieldAlert } from 'lucide-react';
 
 const BrandingSettingsClient = dynamic(() => import('../branding/branding-client'), { ssr: false });
-const CourtTypesClient = dynamic(
-  () => import('../court-types/court-types-client').then((m) => ({ default: m.CourtTypesClient })),
-  { ssr: false }
-);
 const AuditLogsList = dynamic(() => import('./audit-logs-tab'), { ssr: false });
 
-type SettingsTab = 'general' | 'branding' | 'court-types' | 'audit-logs';
+type SettingsTab = 'general' | 'branding' | 'audit-logs';
 
 const tabs: {
   id: SettingsTab;
@@ -20,7 +16,6 @@ const tabs: {
 }[] = [
   { id: 'general', label: 'Allgemein', icon: Settings },
   { id: 'branding', label: 'Branding', icon: Palette },
-  { id: 'court-types', label: 'Platztypen', icon: MapPin },
   { id: 'audit-logs', label: 'Audit-Logs', icon: ShieldAlert },
 ];
 
@@ -58,7 +53,6 @@ export function SettingsTabsWrapper({
       {/* Tab content */}
       {activeTab === 'general' && children}
       {activeTab === 'branding' && <BrandingSettingsClient clubId={clubId} />}
-      {activeTab === 'court-types' && <CourtTypesClient />}
       {activeTab === 'audit-logs' && <AuditLogsList clubId={clubId} />}
     </div>
   );

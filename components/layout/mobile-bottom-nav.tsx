@@ -13,9 +13,9 @@ import {
   Users,
   BarChart3,
   Building2,
-  BookOpen,
   CreditCard,
   Clock,
+  MessageSquare,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
@@ -57,22 +57,20 @@ export function MobileBottomNav({
       { name: 'Profil', href: '/profile', icon: User },
     ];
   } else if (isTrainer) {
-    // Trainer: 5 tabs (reduced from 7 — Gamification + Stunden accessible via dashboard)
+    // Trainer: 4 tabs (Profil accessible via user menu in header)
     navItems = [
       { name: 'Übersicht', href: '/trainer', icon: Home },
       { name: 'Einheiten', href: '/scheduler', icon: Calendar },
       { name: 'Anwesenheit', href: '/attendance-history', icon: Clock },
       { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Calendar },
-      { name: 'Profil', href: '/profile', icon: User },
     ];
   } else {
-    // Member: 5 tabs (core actions — rest accessible via dashboard quick actions)
+    // Member: 4 tabs (Profil accessible via user menu in header)
     navItems = [
       { name: 'Home', href: '/member', icon: Home },
       { name: 'Buchen', href: '/bookings', icon: Calendar },
-      { name: 'Training', href: '/training-schedule', icon: BookOpen },
-      { name: 'Abrechnung', href: '/billing', icon: CreditCard },
-      { name: 'Profil', href: '/profile', icon: User },
+      { name: 'Chat', href: '/messages', icon: MessageSquare },
+      { name: 'Rechnungen', href: '/billing', icon: CreditCard },
     ];
   }
 

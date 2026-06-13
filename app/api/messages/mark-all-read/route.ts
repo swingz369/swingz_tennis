@@ -1,0 +1,32 @@
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { withApiAuth, verifyRole } from '@/lib/api-auth';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * POST /api/messages/mark-all-read
+ * Marks all unread inbox messages for the authenticated user as read.
+ */
+export async function POST(request: NextRequest) {
+  return withApiAuth(request, async (auth) => {
+    if (!(await verifyRole(auth, 'member'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const sb = auth.supabase as any;
+    const user = auth.user;
+
+    const { error } = await sb
+      .from('messages')
+      .update({ is_read: true })
+      .eq('receiver_id', user.id)
+      .eq('is_read', false);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  });
+}

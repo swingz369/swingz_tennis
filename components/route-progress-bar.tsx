@@ -23,10 +23,18 @@ export function RouteProgressBar() {
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const isActiveRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  // Clear all pending timers
+  const clearTimers = useCallback(() => {
+    timerRef.current.forEach((t) => clearTimeout(t));
+    timerRef.current = [];
+  }, []);
 
   const startProgress = useCallback(() => {
     if (isActiveRef.current) return;
     isActiveRef.current = true;
+    clearTimers();
     setVisible(true);
     setProgress(0);
 
@@ -43,26 +51,30 @@ export function RouteProgressBar() {
     const timers: ReturnType<typeof setTimeout>[] = [];
     steps.forEach(({ delay, value }) => {
       const t = setTimeout(() => {
-        if (isActiveRef.current) {
+        if (isActiveRef.current && isMountedRef.current) {
           setProgress(value);
         }
       }, delay);
       timers.push(t);
     });
     timerRef.current = timers;
-  }, []);
+  }, [clearTimers]);
 
   const completeProgress = useCallback(() => {
     if (!isActiveRef.current) return;
     isActiveRef.current = false;
+    clearTimers();
+    if (!isMountedRef.current) return;
     setProgress(100);
     // Fade out after reaching 100%
     const t = setTimeout(() => {
-      setVisible(false);
-      setProgress(0);
+      if (isMountedRef.current) {
+        setVisible(false);
+        setProgress(0);
+      }
     }, 300);
-    timerRef.current.push(t);
-  }, []);
+    timerRef.current = [t];
+  }, [clearTimers]);
 
   // Patch history API to detect navigation start
   useEffect(() => {
@@ -96,9 +108,11 @@ export function RouteProgressBar() {
     completeProgress();
   }, [pathname, completeProgress]);
 
-  // Cleanup timers on unmount
+  // Track mount state and cleanup timers on unmount
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
+      isMountedRef.current = false;
       timerRef.current.forEach((t) => clearTimeout(t));
     };
   }, []);

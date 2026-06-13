@@ -184,11 +184,9 @@ export default async function MemberPage() {
           </p>
           <MemberHeroActions />
         </div>
-        <Link href="/profile">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold text-sm shadow-sm">
-            {firstName.charAt(0).toUpperCase()}
-          </div>
-        </Link>
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold text-sm shadow-sm">
+          {firstName.charAt(0).toUpperCase()}
+        </div>
       </div>
 
       {/* ── Next Session (Hero Card) ── */}

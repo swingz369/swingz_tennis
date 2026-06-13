@@ -42,12 +42,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ unreadCount: count ?? 0 });
     }
 
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '10', 10) || 10));
+
     const { data: messages, error } = await sb
       .from('messages')
       .select('*')
       .eq(column, user.id)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(limit);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -103,29 +105,83 @@ export async function POST(request: NextRequest) {
 
     const user = auth.user;
     const body = await request.json();
-    const { receiverId, subject, content, clubId, repliedToId, broadcastType } = body as {
-      receiverId?: string;
-      subject?: string;
-      content?: string;
-      clubId?: string;
-      repliedToId?: string;
-      broadcastType?: 'all' | 'trainers' | 'members';
-    };
+    const { receiverId, receiverIds, subject, content, clubId, repliedToId, broadcastType } =
+      body as {
+        receiverId?: string;
+        receiverIds?: string[];
+        subject?: string;
+        content?: string;
+        clubId?: string;
+        repliedToId?: string;
+        broadcastType?: 'all' | 'trainers' | 'members';
+      };
 
     if (!subject?.trim() || !content?.trim()) {
       return NextResponse.json({ error: 'subject und content sind erforderlich' }, { status: 400 });
     }
 
-    if (!broadcastType && !receiverId) {
+    if (!broadcastType && !receiverId && (!receiverIds || receiverIds.length === 0)) {
       return NextResponse.json(
-        { error: 'receiverId oder broadcastType erforderlich' },
+        { error: 'receiverId, receiverIds oder broadcastType erforderlich' },
         { status: 400 }
       );
     }
 
-    // Use service client for broadcast (bypasses RLS for cross-user inserts)
+    // Use service client for broadcast/multi (bypasses RLS for cross-user inserts)
     // but user-scoped client for direct messages (RLS checks sender_id)
-    const sb = broadcastType ? createServiceClient() : (auth.supabase as any);
+    const sb =
+      broadcastType || (receiverIds && receiverIds.length > 1)
+        ? createServiceClient()
+        : (auth.supabase as any);
+
+    // ── Multi-recipient message ──
+    if (receiverIds && receiverIds.length > 0 && !broadcastType) {
+      const targetIds = receiverIds.filter((id) => id !== user.id);
+      if (targetIds.length === 0) {
+        return NextResponse.json(
+          { message: null, count: 0, note: 'Keine Empfänger angegeben' },
+          { status: 201 }
+        );
+      }
+
+      const messageRows = targetIds.map((rid) => ({
+        sender_id: user.id,
+        receiver_id: rid,
+        club_id: clubId || null,
+        subject: subject.trim(),
+        content: content.trim(),
+        replied_to_id: repliedToId || null,
+      }));
+
+      const { data: insertedMessages, error: insertError } = await sb
+        .from('messages')
+        .insert(messageRows)
+        .select('id, receiver_id');
+
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+
+      // Create notifications for all recipients (fire-and-forget)
+      try {
+        const notificationRows = targetIds.map((rid) => ({
+          user_id: rid,
+          club_id: clubId || null,
+          type: 'message_received',
+          title: 'Neue Nachricht',
+          message: subject.trim(),
+          action_url: '/messages',
+        }));
+        await sb.from('notifications').insert(notificationRows);
+      } catch {
+        /* non-critical */
+      }
+
+      return NextResponse.json(
+        { message: insertedMessages?.[0], count: targetIds.length },
+        { status: 201 }
+      );
+    }
 
     // ── Direct message (1:1) ──
     if (!broadcastType && receiverId) {
@@ -154,7 +210,7 @@ export async function POST(request: NextRequest) {
           type: 'message_received',
           title: 'Neue Nachricht',
           message: subject.trim(),
-          link: '/messages',
+          action_url: '/messages',
         });
       } catch {
         /* non-critical */
@@ -256,7 +312,7 @@ export async function POST(request: NextRequest) {
           type: 'message_received',
           title: broadcastType === 'all' ? 'Neue Rundnachricht' : 'Neue Nachricht an Trainer',
           message: subject.trim(),
-          link: '/messages',
+          action_url: '/messages',
         }));
         await serviceSb.from('notifications').insert(notificationRows);
       } catch {

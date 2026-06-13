@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
@@ -39,6 +39,13 @@ import {
   ToggleRight,
   ArrowLeft,
   X,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Users,
+  Sun,
+  DollarSign,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -51,7 +58,21 @@ import {
 } from '@/components/ui/select';
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 import type { Court } from '@/lib/types/court-booking';
+import { CenteredModal } from '@/components/ui/centered-modal';
 import { apiFetch } from '@/lib/api-fetch';
+
+interface CourtType {
+  id: string;
+  name: string;
+  description?: string;
+  surface_type: 'clay' | 'hard' | 'grass' | 'carpet' | 'artificial_grass';
+  is_indoor: boolean;
+  is_outdoor: boolean;
+  requires_lighting: boolean;
+  max_players: number;
+  hourly_rate: number;
+  is_active: boolean;
+}
 
 interface CourtsManageClientProps {
   initialCourts: Court[];
@@ -96,6 +117,149 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
+
+  // ── Court Types State ──
+  const [courtTypesList, setCourtTypesList] = useState<CourtType[]>([]);
+  const [showCourtTypes, setShowCourtTypes] = useState(false);
+  const [courtTypesLoading, setCourtTypesLoading] = useState(false);
+  const [showCTCreate, setShowCTCreate] = useState(false);
+  const [showCTEdit, setShowCTEdit] = useState(false);
+  const [showCTDelete, setShowCTDelete] = useState(false);
+  const [selectedCT, setSelectedCT] = useState<CourtType | null>(null);
+  const [ctSubmitting, setCtSubmitting] = useState(false);
+  const [ctForm, setCtForm] = useState({
+    name: '',
+    description: '',
+    surface_type: 'hard' as CourtType['surface_type'],
+    is_indoor: false,
+    is_outdoor: true,
+    requires_lighting: false,
+    max_players: 4,
+    hourly_rate: 0,
+    is_active: true,
+  });
+
+  const loadCourtTypes = useCallback(async () => {
+    setCourtTypesLoading(true);
+    try {
+      const res = await apiFetch('/api/court-types?limit=100');
+      if (!res.ok) throw new Error('Fehler beim Laden');
+      const data = await res.json();
+      setCourtTypesList(data.courtTypes ?? []);
+    } catch {
+      toast.error('Fehler beim Laden der Platz-Typen');
+    } finally {
+      setCourtTypesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showCourtTypes && courtTypesList.length === 0 && !courtTypesLoading) {
+      loadCourtTypes();
+    }
+  }, [showCourtTypes, courtTypesList.length, courtTypesLoading, loadCourtTypes]);
+
+  const resetCTForm = () => {
+    setCtForm({
+      name: '',
+      description: '',
+      surface_type: 'hard',
+      is_indoor: false,
+      is_outdoor: true,
+      requires_lighting: false,
+      max_players: 4,
+      hourly_rate: 0,
+      is_active: true,
+    });
+  };
+
+  const handleCTCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCtSubmitting(true);
+    try {
+      const res = await apiFetch('/api/court-types', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ctForm),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Erstellen');
+      }
+      toast.success('Platz-Typ erfolgreich erstellt');
+      setShowCTCreate(false);
+      resetCTForm();
+      await loadCourtTypes();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Erstellen');
+    } finally {
+      setCtSubmitting(false);
+    }
+  };
+
+  const handleCTEdit = (type: CourtType) => {
+    setSelectedCT(type);
+    setCtForm({
+      name: type.name,
+      description: type.description || '',
+      surface_type: type.surface_type,
+      is_indoor: type.is_indoor,
+      is_outdoor: type.is_outdoor,
+      requires_lighting: type.requires_lighting,
+      max_players: type.max_players,
+      hourly_rate: type.hourly_rate,
+      is_active: type.is_active,
+    });
+    setShowCTEdit(true);
+  };
+
+  const handleCTUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCT) return;
+    setCtSubmitting(true);
+    try {
+      const res = await apiFetch(`/api/court-types/${selectedCT.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ctForm),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Aktualisieren');
+      }
+      toast.success('Platz-Typ erfolgreich aktualisiert');
+      setShowCTEdit(false);
+      setSelectedCT(null);
+      resetCTForm();
+      await loadCourtTypes();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Aktualisieren');
+    } finally {
+      setCtSubmitting(false);
+    }
+  };
+
+  const handleCTDelete = async () => {
+    if (!selectedCT) return;
+    setCtSubmitting(true);
+    try {
+      const res = await apiFetch(`/api/court-types/${selectedCT.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Löschen');
+      }
+      toast.success('Platz-Typ deaktiviert');
+      setShowCTDelete(false);
+      setSelectedCT(null);
+      await loadCourtTypes();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Löschen');
+    } finally {
+      setCtSubmitting(false);
+    }
+  };
 
   // Filter courts
   const filteredCourts = courts.filter((court) => {
@@ -271,8 +435,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
     resetForm();
   };
 
-  // Reusable court form fields
-  const CourtFormFields = () => (
+  // Reusable court form fields (render function, not a component)
+  const renderCourtFormFields = () => (
     <div className="grid gap-4 py-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -390,6 +554,117 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
     </div>
   );
 
+  // Reusable court type form fields (render function, not a component)
+  const renderCourtTypeFormFields = () => (
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="ct-name">Name *</Label>
+          <Input
+            id="ct-name"
+            value={ctForm.name}
+            onChange={(e) => setCtForm({ ...ctForm, name: e.target.value })}
+            placeholder="z.B. Sandplatz"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ct-surface">Belag *</Label>
+          <Select
+            value={ctForm.surface_type}
+            onValueChange={(v) =>
+              setCtForm({ ...ctForm, surface_type: v as CourtType['surface_type'] })
+            }
+          >
+            <SelectTrigger id="ct-surface">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="clay">Sand (Clay)</SelectItem>
+              <SelectItem value="hard">Hartplatz (Hard)</SelectItem>
+              <SelectItem value="grass">Rasen (Grass)</SelectItem>
+              <SelectItem value="carpet">Teppich (Carpet)</SelectItem>
+              <SelectItem value="artificial_grass">Kunstrasen</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ct-description">Beschreibung</Label>
+        <Input
+          id="ct-description"
+          value={ctForm.description}
+          onChange={(e) => setCtForm({ ...ctForm, description: e.target.value })}
+          placeholder="Optionale Beschreibung"
+        />
+      </div>
+      <div className="flex items-center gap-6 flex-wrap">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={ctForm.is_indoor}
+            onChange={(e) => setCtForm({ ...ctForm, is_indoor: e.target.checked })}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label className="cursor-pointer">Halle</Label>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={ctForm.is_outdoor}
+            onChange={(e) => setCtForm({ ...ctForm, is_outdoor: e.target.checked })}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label className="cursor-pointer">Freiluft</Label>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={ctForm.requires_lighting}
+            onChange={(e) => setCtForm({ ...ctForm, requires_lighting: e.target.checked })}
+            className="h-4 w-4 rounded border-border"
+          />
+          <Label className="flex items-center gap-1 cursor-pointer">
+            <Lightbulb className="h-4 w-4" /> Flutlicht
+          </Label>
+        </label>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="ct-max-players">Max. Spieler</Label>
+          <Input
+            id="ct-max-players"
+            type="number"
+            min="1"
+            max="10"
+            value={ctForm.max_players}
+            onChange={(e) => setCtForm({ ...ctForm, max_players: parseInt(e.target.value) || 4 })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ct-hourly-rate">Std-Preis (€)</Label>
+          <Input
+            id="ct-hourly-rate"
+            type="number"
+            step="0.5"
+            min="0"
+            value={ctForm.hourly_rate}
+            onChange={(e) => setCtForm({ ...ctForm, hourly_rate: parseFloat(e.target.value) || 0 })}
+          />
+        </div>
+      </div>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={ctForm.is_active}
+          onChange={(e) => setCtForm({ ...ctForm, is_active: e.target.checked })}
+          className="h-4 w-4 rounded border-border"
+        />
+        <Label className="cursor-pointer">Aktiv</Label>
+      </label>
+    </div>
+  );
+
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
@@ -444,7 +719,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           </CardHeader>
           <CardContent>
             <form onSubmit={showInlineForm === 'create' ? handleCreate : handleUpdate}>
-              <CourtFormFields />
+              {renderCourtFormFields()}
               <div className="flex gap-3 pt-4 border-t border-border dark:border-white/10">
                 <Button type="button" variant="outline" onClick={handleCloseForm}>
                   Abbrechen
@@ -746,7 +1021,203 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
         </>
       )}
 
-      {/* Deactivate Confirmation Dialog */}
+      {/* ── Court Types Section ── */}
+      {!showInlineForm && (
+        <Card className="mt-2">
+          <button
+            onClick={() => setShowCourtTypes(!showCourtTypes)}
+            className="w-full flex items-center justify-between px-4 md:px-6 py-4 text-left hover:bg-muted/50 transition-colors rounded-t-xl"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-primary/10">
+                <MapPin className="h-5 w-5 text-brand-primary" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Platztypen verwalten</h2>
+                <p className="text-xs text-muted-foreground">
+                  {courtTypesList.length} Typ{courtTypesList.length !== 1 ? 'en' : ''} · Beläge,
+                  Ausstattung & Preise
+                </p>
+              </div>
+            </div>
+            {showCourtTypes ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </button>
+
+          {showCourtTypes && (
+            <div className="px-4 md:px-6 pb-4 md:pb-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div />
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    resetCTForm();
+                    setShowCTCreate(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Neuer Typ
+                </Button>
+              </div>
+
+              {courtTypesLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-brand-light" />
+                </div>
+              ) : courtTypesList.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-8">
+                  Noch keine Platz-Typen angelegt.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {courtTypesList.map((type) => (
+                    <Card
+                      key={type.id}
+                      className={cn(
+                        'relative transition-all hover:shadow-sm',
+                        !type.is_active && 'opacity-60'
+                      )}
+                    >
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-semibold truncate">{type.name}</h3>
+                            {type.description && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {type.description}
+                              </p>
+                            )}
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleCTEdit(type)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Bearbeiten
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => {
+                                  setSelectedCT(type);
+                                  setShowCTDelete(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Deaktivieren
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge variant="outline" className="text-xs">
+                            {getSurfaceLabel(type.surface_type)}
+                          </Badge>
+                          {type.is_indoor && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Users className="h-3 w-3" /> Halle
+                            </Badge>
+                          )}
+                          {type.is_outdoor && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <Sun className="h-3 w-3" /> Freiluft
+                            </Badge>
+                          )}
+                          {type.requires_lighting && (
+                            <Badge variant="outline" className="text-xs gap-1 text-yellow-600">
+                              <Lightbulb className="h-3 w-3" /> Flutlicht
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3 w-3" /> {type.max_players} Spieler
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" /> {type.hourly_rate.toFixed(2)} €/h
+                          </span>
+                          <Badge
+                            variant={type.is_active ? 'default' : 'secondary'}
+                            className={cn(
+                              'text-xs',
+                              type.is_active
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-muted text-foreground'
+                            )}
+                          >
+                            {type.is_active ? 'Aktiv' : 'Inaktiv'}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Court Type Create Dialog */}
+      <CenteredModal open={showCTCreate} onClose={() => setShowCTCreate(false)}>
+        <form onSubmit={handleCTCreate}>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-bold">Neuen Platz-Typ anlegen</h2>
+            <p className="text-sm text-muted-foreground">
+              Definiere einen neuen Platz-Typ mit Belag und Preiseinstellungen.
+            </p>
+          </div>
+          {renderCourtTypeFormFields()}
+          <div className="flex gap-2 pt-2 justify-end">
+            <Button type="button" variant="outline" onClick={() => setShowCTCreate(false)}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={ctSubmitting}>
+              {ctSubmitting ? 'Wird erstellt...' : 'Erstellen'}
+            </Button>
+          </div>
+        </form>
+      </CenteredModal>
+
+      {/* Court Type Edit Dialog */}
+      <CenteredModal open={showCTEdit} onClose={() => setShowCTEdit(false)}>
+        <form onSubmit={handleCTUpdate}>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-bold">Platz-Typ bearbeiten</h2>
+            <p className="text-sm text-muted-foreground">Ändere die Details des Platz-Typs.</p>
+          </div>
+          {renderCourtTypeFormFields()}
+          <div className="flex gap-2 pt-2 justify-end">
+            <Button type="button" variant="outline" onClick={() => setShowCTEdit(false)}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={ctSubmitting}>
+              {ctSubmitting ? 'Wird gespeichert...' : 'Speichern'}
+            </Button>
+          </div>
+        </form>
+      </CenteredModal>
+
+      {/* Court Type Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showCTDelete}
+        onOpenChange={setShowCTDelete}
+        title="Platz-Typ deaktivieren"
+        description={`Möchtest du den Platz-Typ "${selectedCT?.name}" wirklich deaktivieren? Bestehende Plätze mit diesem Typ bleiben erhalten.`}
+        confirmLabel={ctSubmitting ? 'Wird deaktiviert…' : 'Deaktivieren'}
+        variant="danger"
+        loading={ctSubmitting}
+        onConfirm={handleCTDelete}
+      />
+
+      {/* Deactivate Court Confirmation Dialog */}
       <ConfirmDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
