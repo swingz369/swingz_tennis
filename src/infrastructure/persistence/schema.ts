@@ -573,7 +573,7 @@ export const seasons = pgTable(
     end_date: timestamp('end_date', { mode: 'date' }).notNull(),
 
     // Planning status
-    planning_status: varchar('planning_status', { length: 20 }).notNull().default('draft'),
+    planning_status: varchar('planning_status', { length: 30 }).notNull().default('draft'),
 
     // Preferences collection
     preferences_deadline: timestamp('preferences_deadline', { mode: 'date' }),
