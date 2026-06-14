@@ -54,6 +54,9 @@ export default async function AnalyticsPage({
     effectiveClubId = clubIdFromParams;
   }
 
+  let analyticsData: AnalyticsData | null = null;
+  let fetchError = false;
+
   try {
     // Fetch analytics data directly via Supabase
     const [{ count: totalMembers }, { count: totalBookings }, { data: sessionsData }] =
@@ -155,7 +158,7 @@ export default async function AnalyticsPage({
           : 0,
     }));
 
-    const analyticsData: AnalyticsData = {
+    analyticsData = {
       totalMembers: totalMembers ?? 0,
       totalBookings: totalBookings ?? 0,
       totalRevenue: 0,
@@ -167,26 +170,12 @@ export default async function AnalyticsPage({
       sessionsPerTrainer,
       capacityUtilization,
     };
-
-    return (
-      <AnalyticsTabsClient>
-        <div className="p-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-brand-primary">Vereinsanalyse</h1>
-              <p className="text-muted-foreground">
-                {clubs.find((c) => c.id === effectiveClubId)?.name}
-              </p>
-            </div>
-            {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
-          </div>
-
-          <AnalyticsClient data={analyticsData} />
-        </div>
-      </AnalyticsTabsClient>
-    );
   } catch (error) {
     console.error('Error loading analytics:', error);
+    fetchError = true;
+  }
+
+  if (fetchError || !analyticsData) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Analytics</h1>
@@ -196,4 +185,22 @@ export default async function AnalyticsPage({
       </div>
     );
   }
+
+  return (
+    <AnalyticsTabsClient>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-brand-primary">Vereinsanalyse</h1>
+            <p className="text-muted-foreground">
+              {clubs.find((c) => c.id === effectiveClubId)?.name}
+            </p>
+          </div>
+          {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
+        </div>
+
+        <AnalyticsClient data={analyticsData} />
+      </div>
+    </AnalyticsTabsClient>
+  );
 }

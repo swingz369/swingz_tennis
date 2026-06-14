@@ -24,10 +24,6 @@ export default function SuperadminTenantsPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchClubs();
-  }, []);
-
   const fetchClubs = async () => {
     try {
       const supabase = createClient();
@@ -91,12 +87,17 @@ export default function SuperadminTenantsPage() {
     }
   };
 
+  useEffect(() => {
+    fetchClubs();
+  }, []);
+
   const switchToClub = (clubId: string, clubName: string) => {
     if (typeof document === 'undefined') return;
 
     // Set cookie for club context (24h expiry)
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
+    // eslint-disable-next-line react-hooks/immutability
     document.cookie = `admin_club_id=${clubId}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
 
     toast.success(`Gewechselt zu: ${clubName}`);

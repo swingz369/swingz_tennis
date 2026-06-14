@@ -99,33 +99,6 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
   const [absenceReason, setAbsenceReason] = useState('vacation');
   const [absenceSaving, setAbsenceSaving] = useState(false);
 
-  useEffect(() => {
-    loadTrainer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trainerId]);
-
-  const loadTrainer = async () => {
-    try {
-      setIsLoading(true);
-      const res = await apiFetch(`/api/trainer-profiles/${trainerId}`);
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        const detail = errBody.error || `HTTP ${res.status}`;
-        throw new Error(`Failed to load trainer: ${detail}`);
-      }
-      const data = await res.json();
-      setTrainer(data.trainerProfile);
-      if (data.trainerProfile?.userId) {
-        loadAllSlots(data.trainerProfile.userId);
-      }
-    } catch (err) {
-      console.error('Failed to load trainer:', err);
-      toast.error('Fehler beim Laden des Trainerprofils');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const loadAllSlots = async (userId: string) => {
     setAvailLoading(true);
     setWeeklyLoading(true);
@@ -154,6 +127,33 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
       setWeeklyLoading(false);
     }
   };
+
+  const loadTrainer = async () => {
+    try {
+      setIsLoading(true);
+      const res = await apiFetch(`/api/trainer-profiles/${trainerId}`);
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const detail = errBody.error || `HTTP ${res.status}`;
+        throw new Error(`Failed to load trainer: ${detail}`);
+      }
+      const data = await res.json();
+      setTrainer(data.trainerProfile);
+      if (data.trainerProfile?.userId) {
+        loadAllSlots(data.trainerProfile.userId);
+      }
+    } catch (err) {
+      console.error('Failed to load trainer:', err);
+      toast.error('Fehler beim Laden des Trainerprofils');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTrainer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trainerId]);
 
   const handleEdit = () => {
     if (!trainer) return;
