@@ -72,7 +72,6 @@ export async function createBookingAction(
     }
 
     revalidatePath('/dashboard/bookings');
-    revalidatePath('/admin/bookings');
 
     return { success: true, data: { id: booking.id } };
   } catch (error) {
