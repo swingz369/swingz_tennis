@@ -32,7 +32,7 @@ export function RouteProgressBar() {
   }, []);
 
   const startProgress = useCallback(() => {
-    if (isActiveRef.current) return;
+    if (isActiveRef.current || !isMountedRef.current) return;
     isActiveRef.current = true;
     clearTimers();
     setVisible(true);
@@ -83,17 +83,19 @@ export function RouteProgressBar() {
 
     history.pushState = function (...args: Parameters<typeof originalPushState>) {
       const result = originalPushState(...args);
-      startProgress();
+      // Defer to avoid "useInsertionEffect must not schedule updates" —
+      // Next.js router calls pushState/replaceState inside useInsertionEffect.
+      queueMicrotask(() => startProgress());
       return result;
     };
 
     history.replaceState = function (...args: Parameters<typeof originalReplaceState>) {
       const result = originalReplaceState(...args);
-      startProgress();
+      queueMicrotask(() => startProgress());
       return result;
     };
 
-    const onPopState = () => startProgress();
+    const onPopState = () => queueMicrotask(() => startProgress());
     window.addEventListener('popstate', onPopState);
 
     return () => {
