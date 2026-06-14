@@ -4,6 +4,9 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { buildPaginationMeta } from '@/lib/pagination';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:clubs');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -45,11 +48,11 @@ export async function GET(req: NextRequest) {
         const userClubIds = auth.memberships
           .map((m) => m.club_id)
           .filter((id): id is string => id !== null);
-        console.log('[API /clubs] Non-superadmin user, filtering to clubs:', userClubIds);
+        log.info('Non-superadmin user, filtering to clubs', { clubIds: userClubIds });
         clubsQuery = clubsQuery.in('id', userClubIds);
         countQuery = countQuery.in('id', userClubIds);
       } else {
-        console.log('[API /clubs] Superadmin user, returning all clubs');
+        log.info('Superadmin user, returning all clubs');
       }
 
       const [{ data: clubs, error }, { count }] = await Promise.all([
@@ -80,7 +83,7 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      console.log('[API /clubs] Returning', clubs?.length || 0, 'clubs for user role:', auth.role);
+      log.info('Returning clubs', { count: clubs?.length || 0, role: auth.role });
 
       const pagination = buildPaginationMeta(page, limit, count);
 
@@ -150,7 +153,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create club' }, { status: 500 });
       }
 
-      console.log('[API /clubs] Club created:', newClub.id, newClub.name);
+      log.info('Club created', { clubId: newClub.id, name: newClub.name });
 
       return NextResponse.json(
         {

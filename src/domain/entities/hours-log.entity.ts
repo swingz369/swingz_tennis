@@ -29,6 +29,15 @@ export interface AttendanceRecord {
   checkInTime?: string;
   checkOutTime?: string;
   notes?: string;
+  // Confirmation fields (Stundenbestätigung)
+  trainerConfirmed: boolean;
+  trainerConfirmedAt?: string;
+  memberStatus: 'pending' | 'confirmed' | 'disputed';
+  memberConfirmedAt?: string;
+  disputeReason?: string;
+  disputeResolvedAt?: string;
+  disputeResolvedBy?: string;
+  durationMinutes?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -73,6 +82,33 @@ export interface UpdateAttendanceRecordInput {
   checkInTime?: string;
   checkOutTime?: string;
   notes?: string;
+  trainerConfirmed?: boolean;
+  trainerConfirmedAt?: string;
+  memberStatus?: 'pending' | 'confirmed' | 'disputed';
+  memberConfirmedAt?: string;
+  disputeReason?: string;
+  disputeResolvedAt?: string;
+  disputeResolvedBy?: string;
+  durationMinutes?: number;
+}
+
+export interface AttendanceHoursSummary {
+  memberId: string;
+  memberName: string;
+  trainerId?: string;
+  trainerName?: string;
+  totalSessions: number;
+  attendedSessions: number;
+  missedSessions: number;
+  excusedSessions: number;
+  lateSessions: number;
+  trainerConfirmedCount: number;
+  memberConfirmedCount: number;
+  disputedCount: number;
+  pendingConfirmationCount: number;
+  totalAttendedMinutes: number;
+  totalScheduledMinutes: number;
+  attendanceRate: number;
 }
 
 export interface HoursSummary {

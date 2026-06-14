@@ -54,6 +54,7 @@
 - **Clean Architecture** mit 4 Schichten (`domain`, `application`, `infrastructure`, `presentation`)
 - **Drizzle-Schema** konsolidiert in `src/infrastructure/persistence/schema.ts`
 - **Multi-Tenant** via `club_id` + RLS auf allen Tabellen
+- **Tenant-Hierarchie**: Superadmin (Tennisschulen-Chef) → Vereine (Admins) → Mitglieder/Trainer. Superadmin ist keinem Club zugeordnet, sondern überblickt alle Vereine und kann via Club-Switcher in einzelne Vereine wechseln.
 - **Auth**: `lib/api-auth.ts` (API) + `lib/auth/guards.ts` (Pages) — keine `middleware.ts`
 - **DI**: tsyringe 4.10 installiert
 

@@ -33,6 +33,10 @@ export default defineConfig({
       name: 'mobile-safari',
       use: { ...devices['iPhone 13'] },
     },
+    {
+      name: 'ipad',
+      use: { ...devices['iPad (gen 7)'] },
+    },
   ],
   webServer: {
     command: 'DISABLE_RATE_LIMITING=true npm run dev',

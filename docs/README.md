@@ -14,12 +14,13 @@ SWINGZ ist eine moderne, vollständige Management-Lösung für Tennisclubs. Das 
 ## ✨ Features
 
 - **Multi-Club-Support**: Verwalte mehrere Tennisclubs in einer Installation
+- **Multi-Tenant mit Tennisschulen-Konzept**: Ein Superadmin (Tennisschulen-Chef) verwaltet übergeordnet alle zugehörigen Vereine. Vereins-Admins verwalten jeweils ihren eigenen Verein. Club-Isolation via `club_id` + RLS auf allen Tabellen.
 - **Booking-Management**: dynamische Kapazitätsplanung, automatische Doppelbuchungs-Prüfung, Status-Maschine (Confirmed, Cancelled, Completed)
 - **Member-Verwaltung**: Vollständige Member-Profile, Aktivierung/Deaktivierung, Club-Mitgliedschaften, Rollenverwaltung (Member/Trainer/Admin/Superadmin),成员 einladen
 - **Session-Planung**: Trainer-Zuordnung, Capacity-Limits, wiederkehrende Sessions
 - **Analytics Dashboard**: Kapazitätsauslastung, Buchungsstatistiken, Trainer-Performance
 - **Responsive UI**: Mobile-first Design mit Tailwind CSS und shadcn/ui
-- **Role-Based Access**: Admin- und Member-Ansichten, geschützte Routen
+- **Role-Based Access**: 4 Rollen (Superadmin > Admin > Trainer > Member) mit rollenspezifischen Dashboards, geschützten Routen und granularer Sidebar/Bottom-Nav pro Rolle
 - **Email Notifications**: Automatische Benachrichtigungen für Buchungen, Stornierungen, Rollenänderungen und Einladungen
 - **Audit Logging**: Vollständige Nachvollziehbarkeit aller kritischen Aktionen
 - **Dark Mode**: Systemweiter Dark-Mode Support

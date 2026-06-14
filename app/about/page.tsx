@@ -1,6 +1,13 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
+
+export const metadata: Metadata = {
+  title: 'Über uns — SWINGZ',
+  description:
+    'SWINGZ ist ein Early-Access-Startup: Trainingsplanung soll einfach, intelligent und für jeden Club zugänglich sein.',
+};
 import {
   Trophy,
   ArrowRight,

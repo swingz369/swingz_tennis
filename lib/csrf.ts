@@ -21,9 +21,11 @@ export async function generateCSRFToken(): Promise<string> {
   const token = randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
   const cookieStore = await cookies();
 
-  // Set the CSRF token as a cookie
+  // Set the CSRF token as a readable cookie (NOT httpOnly)
+  // so the client can read it via document.cookie and send it
+  // back in the x-csrf-token header (double-submit cookie pattern).
   cookieStore.set(CSRF_TOKEN_COOKIE, token, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60, // 1 hour

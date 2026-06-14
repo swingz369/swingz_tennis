@@ -351,11 +351,11 @@ export default function TrainerAvailabilityManager() {
     });
   }, []);
 
-  const addCustomSlot = (weekday: number, now: number = Date.now()) => {
+  const addCustomSlot = (weekday: number) => {
     setSlots((prev) => [
       ...prev,
       {
-        id: `custom-${now}`,
+        id: `custom-${Date.now()}`,
         weekday,
         fromTime: '08:00',
         untilTime: '10:00',
@@ -658,7 +658,7 @@ export default function TrainerAvailabilityManager() {
                           variant="ghost"
                           size="sm"
                           className="text-xs gap-1"
-                          onClick={() => addCustomSlot(value, Date.now())}
+                          onClick={() => addCustomSlot(value)}
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Benutzerdefiniert

@@ -25,6 +25,9 @@ import {
   resolveBundeslandCode,
   type Holiday,
 } from '@/lib/season-planning/holidays';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:confirm-plan');
 import type {
   ConfirmPlanRequest,
   ConfirmPlanResponse,
@@ -154,9 +157,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
           if (club?.bundesland) {
             const code = resolveBundeslandCode(club.bundesland);
             holidays = getHolidaysForState(code);
-            console.log(
-              `[Confirm] Club bundesland: ${club.bundesland} → code: ${code} → ${holidays.length} holidays loaded`
-            );
+            log.info('Club bundesland resolved', {
+              bundesland: club.bundesland,
+              code,
+              holidayCount: holidays.length,
+            });
           }
         } catch (err) {
           console.error('[Confirm] Failed to load holidays, proceeding without:', err);
@@ -198,14 +203,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
           );
           const totalSeasonWeeks = Math.max(1, Math.ceil(seasonLengthDays / 7));
 
-          console.log(
-            `[Confirm] Season: ${season.name || 'unnamed'} (${season.id})`,
-            `| start=${seasonStart.toISOString().substring(0, 10)}`,
-            `| end=${seasonEnd.toISOString().substring(0, 10)}`,
-            `| days=${seasonLengthDays}`,
-            `| weeks=${totalSeasonWeeks}`,
-            `| entries=${entries.length}`
-          );
+          log.info('Publishing season', {
+            seasonId: season.id,
+            name: season.name || 'unnamed',
+            startDate: seasonStart.toISOString().substring(0, 10),
+            endDate: seasonEnd.toISOString().substring(0, 10),
+            weeks: totalSeasonWeeks,
+            entries: entries.length,
+          });
 
           // 3. Create recurring weekly sessions for each plan entry
           for (const entry of entries) {
@@ -274,13 +279,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 ? entry.ends_at_week
                 : totalSeasonWeeks;
 
-            console.log(
-              `[Confirm] Entry ${entry.id}: day=${entry.day_of_week}`,
-              `| startsWeek=${startWeek}`,
-              `| endsWeek=${endWeek}`,
-              `| dbEndsWeek=${entry.ends_at_week}`,
-              `| totalWeeks=${totalSeasonWeeks}`
-            );
+            log.info('Processing plan entry', {
+              entryId: entry.id,
+              dayOfWeek: entry.day_of_week,
+              startsWeek: startWeek,
+              endsWeek: endWeek,
+            });
             const createdSessionIds: string[] = [];
 
             for (let week = startWeek; week <= endWeek && week <= totalSeasonWeeks; week++) {
@@ -379,9 +383,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
             const { seasonBillingService } = await import('@/lib/billing/season-billing.service');
             const result = await seasonBillingService.generateInvoices(seasonId);
             invoicesCreated = result.created.length;
-            console.log(
-              `[Confirm] Created ${invoicesCreated} season invoices, ${result.skipped.length} skipped (already invoiced)`
-            );
+            log.info('Season invoices created', {
+              created: invoicesCreated,
+              skipped: result.skipped.length,
+            });
           } catch (invoiceError) {
             console.error('[Confirm] Season invoice generation failed:', invoiceError);
           }
@@ -414,12 +419,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
               });
               notificationsSent = emailResult.sent;
               emailFailures = emailResult.failed;
-              console.log(
-                `[Confirm] Season confirmation emails: ${emailResult.sent} sent, ${emailResult.failed} failed ` +
-                  `(of ${recipients.length} members). Errors: ${JSON.stringify(emailResult.errors.slice(0, 3))}`
-              );
+              log.info('Season confirmation emails sent', {
+                sent: emailResult.sent,
+                failed: emailResult.failed,
+                total: recipients.length,
+              });
             } else {
-              console.log('[Confirm] No recipients to notify');
+              log.info('No recipients to notify');
             }
           } catch (emailError) {
             console.error('[Confirm] Email notification batch failed:', emailError);

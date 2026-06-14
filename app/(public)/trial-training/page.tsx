@@ -1,7 +1,13 @@
 import PublicTrialBooking from '@/components/public-trial-booking';
 import Link from 'next/link';
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import { Sparkles } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Probetraining buchen — SWINGZ',
+  description: 'Buche jetzt ein kostenloses Probetraining bei deinem Tennisclub über SWINGZ.',
+};
 import { eq } from 'drizzle-orm';
 import { db } from '@/infrastructure/persistence/db';
 import { clubs } from '@/infrastructure/persistence/schema';

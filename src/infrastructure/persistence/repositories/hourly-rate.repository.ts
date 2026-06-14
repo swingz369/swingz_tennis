@@ -25,7 +25,7 @@ export class HourlyRateTierRepository implements IHourlyRateTierRepository {
       const now = new Date();
       const [tier] = await db
         .insert(hourlyRateTiers)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         .values({
           name: input.name,
           description: input.description,
@@ -175,7 +175,7 @@ export class TrainerHourlyRateRepository implements ITrainerHourlyRateRepository
 
       const [rate] = await db
         .insert(trainerHourlyRates)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         .values({
           trainerId: input.trainerId,
           trainerName: input.trainerName,
@@ -370,7 +370,7 @@ export class RateHistoryRepository implements IRateHistoryRepository {
       const now = new Date();
       const [historyEntry] = await db
         .insert(rateHistory)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         .values({
           trainerId: entry.trainerId,
           trainerName: entry.trainerName,

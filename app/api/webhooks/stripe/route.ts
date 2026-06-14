@@ -4,6 +4,9 @@ import type Stripe from 'stripe';
 import { constructStripeEvent, stripe as getStripeClient } from '@/lib/stripe/stripe-client';
 import { billingEngine } from '@/lib/billing-engine';
 import { createAdminClient } from '@/lib/supabase/server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('webhook:stripe');
 
 export async function POST(_request: NextRequest) {
   try {
@@ -28,7 +31,7 @@ export async function POST(_request: NextRequest) {
         .maybeSingle();
 
       if (isNew === false) {
-        console.log(`[Stripe Webhook] Event ${event.id} already processed — skipping`);
+        log.info('Event already processed — skipping', { eventId: event.id });
         return NextResponse.json({ received: true, deduplicated: true });
       }
     } catch (idempotencyError) {
@@ -39,7 +42,7 @@ export async function POST(_request: NextRequest) {
       );
     }
 
-    console.log(`Received Stripe event: ${event.type} (${event.id})`);
+    log.info('Received Stripe event', { type: event.type, eventId: event.id });
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -65,7 +68,7 @@ export async function POST(_request: NextRequest) {
 
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log('[Stripe Webhook] Payment intent succeeded:', paymentIntent.id);
+        log.info('Payment intent succeeded', { paymentIntentId: paymentIntent.id });
         // SEPA Direct Debit payments arrive here (not via checkout.session.completed)
         // Look up the checkout session from the payment intent to find metadata
         await handlePaymentIntentSucceeded(paymentIntent);
@@ -74,7 +77,7 @@ export async function POST(_request: NextRequest) {
 
       case 'charge.refunded': {
         const charge = event.data.object as Stripe.Charge;
-        console.log('[Stripe Webhook] Charge refunded:', charge.id);
+        log.info('Charge refunded', { chargeId: charge.id });
         await handleChargeRefunded(charge);
         break;
       }
@@ -97,7 +100,7 @@ export async function POST(_request: NextRequest) {
       }
 
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        log.info('Unhandled event type', { type: event.type });
     }
 
     return NextResponse.json({ received: true });
@@ -132,7 +135,7 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
     .maybeSingle();
 
   if (existingPayment) {
-    console.log(`Payment for session ${session.id} already processed — skipping`);
+    log.info('Payment for session already processed — skipping', { sessionId: session.id });
     return;
   }
 
@@ -147,7 +150,7 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
   // Mark as 'pending' so payment_intent.succeeded can promote it later.
   const isAsync = isAsyncPaymentMethod(session);
   await billingEngine.updatePaymentStatus(payment.id, isAsync ? 'pending' : 'completed');
-  console.log(`Payment ${isAsync ? 'awaiting' : 'completed'} for invoice ${invoiceId}`);
+  log.info('Payment processed', { async: isAsync, invoiceId });
 }
 
 // --- Booking payment handling ---
@@ -168,7 +171,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
   }
 
   if (booking.payment_status === 'paid') {
-    console.log(`[Stripe Webhook] Booking ${bookingId} already paid — skipping`);
+    log.info('Booking already paid — skipping', { bookingId });
     return;
   }
 
@@ -230,7 +233,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
   }
 
   if (order.payment_status === 'paid') {
-    console.log(`[Stripe Webhook] Shop order ${orderId} already paid — skipping`);
+    log.info('Shop order already paid — skipping', { orderId });
     return;
   }
 
@@ -266,9 +269,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
     }
   }
 
-  console.log(
-    `[Stripe Webhook] Shop order ${orderId} ${isAsyncShop ? 'awaiting payment' : 'payment completed'}`
-  );
+  log.info('Shop order payment processed', { orderId, async: isAsyncShop });
 }
 
 /**
@@ -293,10 +294,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     .maybeSingle();
 
   if (!payment) {
-    console.log(
-      `[Stripe Webhook] No payment record for PI ${paymentIntent.id} — ` +
-        'likely already handled by checkout.session.completed'
-    );
+    log.info('No payment record for PI — likely already handled', {
+      paymentIntentId: paymentIntent.id,
+    });
     return;
   }
 
@@ -307,7 +307,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 
   // SEPA or other async method: promote to completed
   await billingEngine.updatePaymentStatus(payment.id, 'completed');
-  console.log(`[Stripe Webhook] Payment ${payment.id} promoted to completed (SEPA async)`);
+  log.info('Payment promoted to completed (SEPA async)', { paymentId: payment.id });
 
   // Also update associated booking/shop order if still pending
   const stripeClient = getStripeClient();

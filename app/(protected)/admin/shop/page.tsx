@@ -604,6 +604,7 @@ export default function AdminShopPage() {
                       {imageMode === 'upload' ? (
                         <>
                           {/* Drop zone */}
+                          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- file upload drop zone requires drag events on label */}
                           <label
                             htmlFor="prod-image-upload"
                             onDragOver={(e) => {

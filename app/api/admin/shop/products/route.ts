@@ -2,33 +2,11 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { deleteStorageFile } from '@/lib/supabase/storage-utils';
 import { buildPaginationMeta } from '@/lib/pagination';
 
 const STORAGE_BUCKET = 'swingz-files';
-
-/**
- * Extract the storage path from a Supabase Storage public URL.
- * Returns null if the URL is not a Supabase Storage URL.
- */
-function extractStoragePath(url: string): string | null {
-  try {
-    // Supabase storage URLs look like:
-    // https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
-    const parsed = new URL(url);
-    const publicPrefix = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
-    if (parsed.pathname.startsWith(publicPrefix)) {
-      return parsed.pathname.slice(publicPrefix.length);
-    }
-    // Alternative: /storage/v1/object/sign/<bucket>/<path>
-    const signPrefix = `/storage/v1/object/sign/${STORAGE_BUCKET}/`;
-    if (parsed.pathname.startsWith(signPrefix)) {
-      return parsed.pathname.slice(signPrefix.length).split('?')[0];
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
+const UPLOAD_PREFIX = 'shop-products';
 
 /**
  * GET /api/admin/shop/products
@@ -219,19 +197,13 @@ export async function DELETE(request: NextRequest) {
 
     // Clean up Storage file if the product had a Supabase Storage image
     if (existingProduct?.image_url) {
-      const storagePath = extractStoragePath(existingProduct.image_url);
-      if (storagePath) {
-        try {
-          const serviceClient = createServiceClient();
-          await serviceClient.storage.from(STORAGE_BUCKET).remove([storagePath]);
-        } catch (cleanupErr) {
-          // Non-critical: log but don't fail the deletion
-          console.warn(
-            `[Shop Delete] Could not delete storage file for product ${id}:`,
-            cleanupErr
-          );
-        }
-      }
+      const serviceClient = createServiceClient();
+      await deleteStorageFile(
+        serviceClient,
+        existingProduct.image_url,
+        STORAGE_BUCKET,
+        UPLOAD_PREFIX
+      );
     }
 
     return NextResponse.json({ success: true });

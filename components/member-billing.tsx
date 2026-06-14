@@ -14,7 +14,10 @@ import {
   Calendar,
   CreditCard,
   AlertCircle,
+  Receipt,
+  CheckCircle2,
 } from 'lucide-react';
+import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { toast } from 'sonner';
 import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
@@ -235,84 +238,144 @@ export default function MemberBilling() {
     );
   }
 
+  const openAmount = invoices
+    .filter((inv) => !getInvoiceStatus(inv).isPaid)
+    .reduce((sum, inv) => sum + inv.total, 0);
+  const paidAmount = invoices
+    .filter((inv) => inv.status === 'paid')
+    .reduce((sum, inv) => sum + inv.total, 0);
+  const openCount = invoices.filter((inv) => !getInvoiceStatus(inv).isPaid).length;
+  const paidCount = invoices.filter((inv) => inv.status === 'paid').length;
+
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Rechnungen & Zahlungen</h1>
-          <p className="text-muted-foreground">Verwalte deine Rechnungen und Zahlungen</p>
+      {/* ── Hero Header ── */}
+      <ScrollReveal>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+          <div className="absolute inset-0 bg-noise opacity-5" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
+          <div className="relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-white/70 mb-1">Finanzen</p>
+                <h1 className="text-2xl md:text-3xl font-bold">Rechnungen & Zahlungen</h1>
+                <p className="text-white/70 mt-2">Verwalte deine Rechnungen und Zahlungen</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToToday}
+                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
+                  >
+                    Heute
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={goToPreviousMonth}
+                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="min-w-[130px] text-center font-medium text-sm">
+                    {format(currentMonth, 'MMMM yyyy', { locale: de })}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={goToNextMonth}
+                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goToToday}>
-            Heute
-          </Button>
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[150px] text-center font-medium text-sm md:text-base">
-            {format(currentMonth, 'MMMM yyyy', { locale: de })}
-          </span>
-          <Button variant="outline" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+      </ScrollReveal>
+
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ScrollReveal delay={0}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Diesen Monat</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    €{monthlyTotal.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{monthSessions.length} Sessions</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <Calendar className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={80}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Ausstehend</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    €{openAmount.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{openCount} Rechnungen</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={160}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Bezahlt</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    €{paidAmount.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{paidCount} Rechnungen</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={240}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Gesamt</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={invoices.length} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">Rechnungen</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <Receipt className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
       </div>
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Diesen Monat
-            </CardTitle>
-            <Calendar className="h-4 w-4 text-brand-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {monthSessions.length} Sessions gebucht
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Ausstehend</CardTitle>
-            <CreditCard className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              €
-              {invoices
-                .filter((inv) => !getInvoiceStatus(inv).isPaid)
-                .reduce((sum, inv) => sum + inv.total, 0)
-                .toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {invoices.filter((inv) => !getInvoiceStatus(inv).isPaid).length} Rechnungen
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Bezahlt</CardTitle>
-            <FileText className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              €
-              {invoices
-                .filter((inv) => inv.status === 'paid')
-                .reduce((sum, inv) => sum + inv.total, 0)
-                .toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {invoices.filter((inv) => inv.status === 'paid').length} Rechnungen
-            </p>
-          </CardContent>
-        </Card>
-      </div>{' '}
       {/* Current Month Summary */}
       <Card>
         <CardHeader>
@@ -433,8 +496,11 @@ export default function MemberBilling() {
             </p>
             <p className="mt-4 text-muted-foreground">
               Bei Fragen zu deinen Rechnungen kontaktiere bitte unsere Buchhaltung unter{' '}
-              <a href="mailto:billing@swingz.cloud" className="text-brand-primary hover:underline">
-                billing@swingz.cloud
+              <a
+                href="mailto:billing@mail.swingz.cloud"
+                className="text-brand-primary hover:underline"
+              >
+                billing@mail.swingz.cloud
               </a>
             </p>
           </div>

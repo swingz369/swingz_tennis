@@ -106,6 +106,7 @@ interface FeeCategory {
   billing_cycle: string;
 }
 
+/* eslint-disable react-hooks/preserve-manual-memoization -- complex multi-step form, compiler cannot preserve memoization */
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);

@@ -28,7 +28,7 @@ export function generateICS(events: CalendarEvent[]): string {
 
   events.forEach((event) => {
     lines.push('BEGIN:VEVENT');
-    lines.push(`UID:${event.id}@swingz.cloud`);
+    lines.push(`UID:${event.id}@mail.swingz.cloud`);
     lines.push(`DTSTAMP:${formatICSDate(new Date())}`);
     lines.push(`DTSTART:${formatICSDate(event.start)}`);
     lines.push(`DTEND:${formatICSDate(event.end)}`);
@@ -176,7 +176,7 @@ export function sessionToCalendarEvent(
     organizer: session.trainerName
       ? {
           name: session.trainerName,
-          email: `${session.trainerName.toLowerCase().replace(/\s+/g, '.')}@swingz.cloud`,
+          email: `${session.trainerName.toLowerCase().replace(/\s+/g, '.')}@mail.swingz.cloud`,
         }
       : undefined,
   };

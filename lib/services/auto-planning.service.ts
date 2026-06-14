@@ -25,6 +25,9 @@ import type {
 } from '@/lib/types/season-planning';
 import { aiScheduleServiceV2 } from '@/lib/ai/schedule-generator-v2';
 import type { ScheduleGenerationInput } from '@/lib/ai/schedule-generator-v2';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auto-planning');
 
 type CourtRow = InferSelectModel<typeof courts>;
 type GroupRow = InferSelectModel<typeof groups>;
@@ -259,7 +262,7 @@ export class AutoPlanningService {
       .where(and(eq(courts.club_id, season.club_id), eq(courts.is_active, true)));
 
     if (!aiScheduleServiceV2.isAvailable()) {
-      console.log('[AutoPlanning] AI not available, using deterministic algorithm');
+      log.info('AI not available, using deterministic algorithm');
       const result = await this.generatePlan(seasonId, config, dryRun);
       return { ...result, aiEnhanced: false, modelUsed: 'none' };
     }

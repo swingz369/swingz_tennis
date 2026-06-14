@@ -33,6 +33,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
+import { useTenant } from '@/lib/tenant-context';
 
 interface Club {
   id: string;
@@ -150,6 +151,9 @@ export function Sidebar({
 
   // Family accounts — parent/child switching
   const family = useFamilyAccounts();
+  const { branding } = useTenant();
+  const [imgFailed, setImgFailed] = useState(false);
+  const clubLogoUrl = branding.logos.light || branding.logos.dark;
 
   // Fetch notification and approval counts from API
   const [approvalCount, setApprovalCount] = useState(0);
@@ -369,10 +373,22 @@ export function Sidebar({
             <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="relative">
                 <div className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                <Trophy className="h-5 w-5 text-foreground dark:text-foreground relative" />
+                {clubLogoUrl && !imgFailed ? (
+                  // eslint-disable-next-line @next/next/no-img-element,jsx-a11y/no-noninteractive-element-interactions -- external dynamic logo URL
+                  <img
+                    key={clubLogoUrl}
+                    src={clubLogoUrl}
+                    alt={activeClub?.name || 'Club Logo'}
+                    className="h-5 w-5 object-contain relative"
+                    onError={() => setImgFailed(true)}
+                    onLoad={() => setImgFailed(false)}
+                  />
+                ) : (
+                  <Trophy className="h-5 w-5 text-foreground dark:text-foreground relative" />
+                )}
               </div>
               <span className="text-sm font-bold tracking-tight text-foreground dark:text-white">
-                SWINGZ
+                {activeClub?.name || 'SWINGZ'}
               </span>
             </Link>
             <span

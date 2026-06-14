@@ -148,9 +148,9 @@ export default function TermsPage() {
               Du hast das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu
               widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsschlusses.
               Um dein Widerrufsrecht auszuüben, musst du uns (SWINGZ GmbH, Musterstraße 1, 12345
-              Musterstadt, E-Mail: widerruf@swingz.cloud) mittels einer eindeutigen Erklärung (z.B.
-              ein mit der Post versandter Brief oder E-Mail) über deinen Entschluss, diesen Vertrag
-              zu widerrufen, informieren.
+              Musterstadt, E-Mail: widerruf@mail.swingz.cloud) mittels einer eindeutigen Erklärung
+              (z.B. ein mit der Post versandter Brief oder E-Mail) über deinen Entschluss, diesen
+              Vertrag zu widerrufen, informieren.
             </p>
             <p>
               Zur Wahrung der Widerrufsfrist reicht es aus, dass du die Mitteilung über die Ausübung

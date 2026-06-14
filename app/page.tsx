@@ -1,5 +1,12 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'SWINGZ — KI-gestütztes Tennisclub-Management',
+  description:
+    'Die Plattform für intelligente Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb. Early Access jetzt kostenlos.',
+};
 
 export default async function RootPage() {
   // Check if user is authenticated - if yes, redirect to dashboard
@@ -12,9 +19,8 @@ export default async function RootPage() {
     if (user) {
       redirect('/dashboard');
     }
-  } catch (_error) {
+  } catch {
     // Supabase not available or user not authenticated, show landing page
-    console.log('User not authenticated, showing landing page');
   }
 
   // Not authenticated - show landing page

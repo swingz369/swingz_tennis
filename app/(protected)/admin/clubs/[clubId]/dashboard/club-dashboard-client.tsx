@@ -9,11 +9,13 @@ import {
   Calendar,
   BarChart3,
   ArrowRight,
-  Settings,
+  LayoutGrid,
   Activity,
 } from 'lucide-react';
-import { ScrollReveal } from '@/components/animations';
+import { ScrollReveal, AnimatedCounter } from '@/components/animations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomizableDashboard } from '@/components/customizable-dashboard';
+import type { DashboardWidget } from '@/lib/dashboard-widgets';
 
 interface ClubStats {
   members: number;
@@ -49,8 +51,9 @@ export function ClubDashboardClient({
 }) {
   const router = useRouter();
 
-  const kpiCards = [
+  const KPI_CONFIGS = [
     {
+      type: 'kpi_members',
       label: 'Mitglieder',
       value: stats.members,
       icon: Users,
@@ -58,6 +61,7 @@ export function ClubDashboardClient({
       href: `/admin/members?clubId=${clubId}`,
     },
     {
+      type: 'kpi_trainers',
       label: 'Trainer',
       value: stats.trainers,
       icon: UserCheck,
@@ -65,13 +69,110 @@ export function ClubDashboardClient({
       href: `/admin/trainers?clubId=${clubId}`,
     },
     {
+      type: 'kpi_courts',
       label: 'Plätze',
       value: stats.courts,
       icon: Building2,
       gradient: 'from-purple-500 to-purple-700',
       href: `/admin/courts?clubId=${clubId}`,
     },
-  ];
+  ] as const;
+
+  const renderWidget = (widget: DashboardWidget) => {
+    // KPI Cards
+    const kpiConfig = KPI_CONFIGS.find((c) => c.type === widget.type);
+    if (kpiConfig) {
+      const Icon = kpiConfig.icon;
+      const idx = KPI_CONFIGS.indexOf(kpiConfig);
+      return (
+        <ScrollReveal delay={idx * 100}>
+          <Card
+            variant="elevated"
+            className="group cursor-pointer hover-lift transition-all duration-300"
+            role="link"
+            tabIndex={0}
+            aria-label={`${kpiConfig.label}: ${kpiConfig.value} — Verwalten`}
+            onClick={() => router.push(kpiConfig.href)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                router.push(kpiConfig.href);
+              }
+            }}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">{kpiConfig.label}</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white tabular-nums">
+                    <AnimatedCounter value={kpiConfig.value} />
+                  </p>
+                </div>
+                <div
+                  className={`p-3.5 rounded-2xl bg-gradient-to-br ${kpiConfig.gradient} text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl`}
+                >
+                  <Icon className="h-6 w-6" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-light opacity-0 group-hover:opacity-100 transition-opacity">
+                Verwalten
+                <ArrowRight className="h-3 w-3" />
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+      );
+    }
+
+    // Management Menu
+    if (widget.type === 'management_menu') {
+      return (
+        <ScrollReveal delay={200}>
+          <Card
+            variant="bordered"
+            className="overflow-hidden border-0 shadow-sm bg-background dark:bg-card/5 backdrop-blur-sm"
+          >
+            <CardHeader className="border-b border-border dark:border-white/10 bg-muted/50 dark:bg-card/[0.02]">
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-brand-primary to-brand-dark text-white shadow-sm">
+                  <LayoutGrid className="h-4 w-4" />
+                </div>
+                <span>Verwaltung</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {menuItems.map((item) => {
+                  const ItemIcon = iconMap[item.icon] || Users;
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="group flex items-start gap-4 p-5 rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card/[0.02] hover:border-brand-light/30 hover:shadow-lg hover:shadow-brand-light/5 transition-all duration-300 hover:-translate-y-0.5"
+                    >
+                      <div className="shrink-0 h-12 w-12 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center group-hover:bg-brand-light group-hover:text-white transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
+                        <ItemIcon className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-base font-semibold text-foreground dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
+                          {item.label}
+                        </h3>
+                        <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="space-y-8">
@@ -97,83 +198,8 @@ export function ClubDashboardClient({
         </div>
       </ScrollReveal>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {kpiCards.map((kpi, i) => (
-          <ScrollReveal key={kpi.label} delay={i * 100}>
-            <Card
-              variant="elevated"
-              className="group cursor-pointer hover-lift transition-all duration-300"
-              onClick={() => router.push(kpi.href)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">
-                      {kpi.label}
-                    </p>
-                    <p className="text-3xl font-bold text-foreground dark:text-white tabular-nums">
-                      {kpi.value}
-                    </p>
-                  </div>
-                  <div
-                    className={`p-3.5 rounded-2xl bg-gradient-to-br ${kpi.gradient} text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl`}
-                  >
-                    <kpi.icon className="h-6 w-6" />
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-light opacity-0 group-hover:opacity-100 transition-opacity">
-                  Verwalten
-                  <ArrowRight className="h-3 w-3" />
-                </div>
-              </CardContent>
-            </Card>
-          </ScrollReveal>
-        ))}
-      </div>
-
-      {/* Management Menu */}
-      <ScrollReveal delay={200}>
-        <Card
-          variant="bordered"
-          className="overflow-hidden border-0 shadow-sm bg-background dark:bg-card/5 backdrop-blur-sm"
-        >
-          <CardHeader className="border-b border-border dark:border-white/10 bg-muted/50 dark:bg-card/[0.02]">
-            <CardTitle className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-brand-primary to-brand-dark text-white shadow-sm">
-                <Settings className="h-4 w-4" />
-              </div>
-              <span>Verwaltung</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {menuItems.map((item) => {
-                const ItemIcon = iconMap[item.icon] || Users;
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="group flex items-start gap-4 p-5 rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card/[0.02] hover:border-brand-light/30 hover:shadow-lg hover:shadow-brand-light/5 transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    <div className="shrink-0 h-12 w-12 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center group-hover:bg-brand-light group-hover:text-white transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg">
-                      <ItemIcon className="h-6 w-6" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="text-base font-semibold text-foreground dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-light transition-colors">
-                        {item.label}
-                      </h3>
-                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
-                        {item.desc}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </ScrollReveal>
+      {/* Customizable Widget Grid */}
+      <CustomizableDashboard dashboardType="club" clubId={clubId} renderWidget={renderWidget} />
     </div>
   );
 }

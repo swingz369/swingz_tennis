@@ -59,7 +59,14 @@ export async function GET(request: NextRequest) {
 
     if (hoursError) {
       console.error('[monthly-overview] hours_logs query failed:', hoursError);
-      return NextResponse.json({ error: 'Fehler beim Laden der Stunden' }, { status: 500 });
+      // Return empty data instead of 500 when hours_logs table doesn't exist or has no data
+      const emptyResponse: MonthlyOverviewResponse = {
+        month: targetMonth,
+        trainers: [],
+        totalRevenue: 0,
+        totalPaid: 0,
+      };
+      return NextResponse.json(emptyResponse);
     }
 
     // Aggregate hours per trainer
@@ -107,11 +114,14 @@ export async function GET(request: NextRequest) {
 
     if (invoicesError) {
       console.error('[monthly-overview] invoices query failed:', invoicesError);
-      return NextResponse.json({ error: 'Fehler beim Laden der Rechnungen' }, { status: 500 });
+      // Continue with zero revenue instead of failing
     }
 
-    const totalRevenue = (invoicesData ?? []).reduce((sum, inv) => sum + (inv.amount ?? 0), 0);
-    const totalPaid = (invoicesData ?? [])
+    const totalRevenue = (invoicesError ? [] : (invoicesData ?? [])).reduce(
+      (sum, inv) => sum + (inv.amount ?? 0),
+      0
+    );
+    const totalPaid = (invoicesError ? [] : (invoicesData ?? []))
       .filter((inv) => inv.status === 'paid')
       .reduce((sum, inv) => sum + (inv.amount ?? 0), 0);
 

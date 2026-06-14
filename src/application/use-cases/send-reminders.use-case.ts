@@ -3,6 +3,9 @@ import type {
   SendRemindersInput,
   ReminderResult,
 } from '@/application/validation/schemas/reminders.schema';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('reminders');
 
 export interface Session {
   id: string;
@@ -61,7 +64,7 @@ export class ReminderService {
     const sessions = await this.sessionRepository.findSessionsForDateRange(tomorrow, tomorrowEnd);
 
     if (!sessions || sessions.length === 0) {
-      console.log('No sessions found for tomorrow');
+      log.info('No sessions found for tomorrow');
       return results;
     }
 
@@ -71,7 +74,7 @@ export class ReminderService {
     const bookings = await this.bookingRepository.findConfirmedBookingsForSessions(sessionIds);
 
     if (!bookings || bookings.length === 0) {
-      console.log('No confirmed bookings for tomorrow');
+      log.info('No confirmed bookings for tomorrow');
       return results;
     }
 

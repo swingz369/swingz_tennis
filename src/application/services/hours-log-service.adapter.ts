@@ -19,6 +19,7 @@ import type {
   CreateAttendanceRecordInput,
   UpdateAttendanceRecordInput,
   HoursSummary,
+  AttendanceHoursSummary,
 } from '@/domain/entities/hours-log.entity';
 import { DrizzleHoursLogRepository } from '@/infrastructure/persistence/repositories/hours-log.repository';
 import { DrizzleAttendanceRecordRepository } from '@/infrastructure/persistence/repositories/attendance-record.repository';
@@ -125,6 +126,43 @@ class HoursLogServiceAdapter {
   async deleteAttendanceRecord(id: string): Promise<boolean> {
     await this.attendanceRepo.delete(id);
     return true;
+  }
+
+  async batchConfirmAttendance(ids: string[], trainerId: string): Promise<number> {
+    return this.attendanceRepo.batchConfirmByTrainer(ids, trainerId);
+  }
+
+  async memberConfirmAttendance(
+    id: string,
+    participantId: string
+  ): Promise<AttendanceRecord | null> {
+    return this.attendanceRepo.memberConfirm(id, participantId);
+  }
+
+  async memberDisputeAttendance(
+    id: string,
+    participantId: string,
+    reason: string
+  ): Promise<AttendanceRecord | null> {
+    return this.attendanceRepo.memberDispute(id, participantId, reason);
+  }
+
+  async resolveAttendanceDispute(
+    id: string,
+    resolvedBy: string,
+    resolution: 'confirmed' | 'absent'
+  ): Promise<AttendanceRecord | null> {
+    return this.attendanceRepo.resolveDispute(id, resolvedBy, resolution);
+  }
+
+  async getAttendanceHoursSummaryForMember(
+    memberId: string
+  ): Promise<AttendanceHoursSummary | null> {
+    return this.attendanceRepo.getHoursSummaryForMember(memberId);
+  }
+
+  async getAttendanceHoursSummaryForClub(clubId: string): Promise<AttendanceHoursSummary[]> {
+    return this.attendanceRepo.getHoursSummaryForClub(clubId);
   }
 }
 

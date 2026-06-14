@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth:login');
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,10 +66,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No session created' }, { status: 500 });
     }
 
-    console.log('✅ Login successful:', {
+    log.info('Login successful', {
       userId: data.user.id,
       email: data.user.email,
-      expiresAt: new Date(data.session.expires_at! * 1000).toISOString(),
     });
 
     return response;

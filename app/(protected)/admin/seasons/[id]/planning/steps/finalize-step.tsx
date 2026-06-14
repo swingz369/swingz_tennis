@@ -38,6 +38,7 @@ import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service'
 import { apiFetch } from '@/lib/api-fetch';
 import { DryRunPanel } from '@/components/admin/dry-run-panel';
 
+/* eslint-disable react-hooks/preserve-manual-memoization -- complex wizard step, compiler cannot preserve memoization */
 export function FinalizeStep() {
   const { state, confirmPlan, detectConflicts } = useWizard();
   const [isLoading, setIsLoading] = useState(false);

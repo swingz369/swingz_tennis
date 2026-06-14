@@ -444,11 +444,53 @@ export default function BillingClient({
                 <CardTitle>Rechnungen</CardTitle>
                 <CardDescription>Alle generierten Rechnungen</CardDescription>
               </div>
-              <Button size="sm" onClick={() => setShowAdhocDialog(true)}>
-                <Plus className="h-4 w-4 mr-1" />
-                Neue Zusatz-Rechnung
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  onClick={() => {
+                    const allDeletable = invoices
+                      .filter((inv) => inv.status !== 'paid')
+                      .map((inv) => inv.id);
+                    if (allDeletable.length === 0) {
+                      toast.warning('Keine löschbaren Rechnungen vorhanden');
+                      return;
+                    }
+                    setSelectedIds(new Set(allDeletable));
+                    setBulkDeleteConfirmOpen(true);
+                  }}
+                  disabled={invoices.filter((inv) => inv.status !== 'paid').length === 0}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Alle löschen ({invoices.filter((inv) => inv.status !== 'paid').length})
+                </Button>
+                <Button size="sm" onClick={() => setShowAdhocDialog(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Neue Zusatz-Rechnung
+                </Button>
+              </div>
             </div>
+            {/* Bulk actions bar — inline when invoices are selected */}
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-3 mt-3 p-3 rounded-lg bg-brand-primary/5 border border-brand-primary/20">
+                <span className="text-sm font-medium text-brand-primary">
+                  {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} ausgewählt
+                </span>
+                <div className="flex-1" />
+                <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+                  Auswahl aufheben
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setBulkDeleteConfirmOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1.5" />
+                  Ausgewählte löschen
+                </Button>
+              </div>
+            )}
             {/* Invoice type filter tabs */}
             <div className="flex gap-3 border-b mt-4">
               {(['all', 'season', 'membership', 'adhoc'] as InvoiceTypeFilter[]).map((t) => {
@@ -629,22 +671,6 @@ export default function BillingClient({
             className="mt-2"
           />
         )}
-
-      {/* Bulk Selection Action Bar */}
-      {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-3 shadow-lg">
-          <span className="text-sm font-medium">
-            {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} ausgewählt
-          </span>
-          <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
-            Auswahl aufheben
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => setBulkDeleteConfirmOpen(true)}>
-            <Trash2 className="h-4 w-4 mr-1.5" />
-            Ausgewählte löschen
-          </Button>
-        </div>
-      )}
 
       {/* Bulk Delete Confirmation Dialog */}
       <CenteredModal open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)}>

@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest) {
     const { data: userProfile } = await (auth.supabase as any)
       .from('users')
       .select(
-        'id, full_name, email, phone, address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth'
+        'id, full_name, email, phone, address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth, avatar_url'
       )
       .eq('id', auth.user.id)
       .maybeSingle();
@@ -30,6 +30,7 @@ export async function GET(_req: NextRequest) {
       memberId: auth.user.id,
       fullName: userProfile?.full_name || auth.user.user_metadata?.full_name || '',
       email: userProfile?.email || auth.user.email || '',
+      avatarUrl: userProfile?.avatar_url || null,
       phone: userProfile?.phone || '',
       address: userProfile?.address || '',
       city: userProfile?.city || '',

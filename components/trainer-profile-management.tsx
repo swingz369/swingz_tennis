@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
 
 export interface TrainerAvailabilitySlot {
   id: string;
@@ -119,11 +120,6 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const [inviteName, setInviteName] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  useEffect(() => {
-    loadTrainers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const loadTrainers = async () => {
     try {
       setIsLoading(true);
@@ -140,6 +136,10 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadTrainers();
+  }, []);
 
   const handleInviteTrainer = async () => {
     if (!inviteEmail) {
@@ -271,6 +271,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <TrainerImportDialog onImportComplete={loadTrainers} />
           <Button size="md" variant="gradient" onClick={() => setShowInviteForm(true)}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Neuer Trainer</span>

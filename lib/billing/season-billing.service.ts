@@ -34,6 +34,9 @@
  */
 
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('billing:season');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -235,7 +238,7 @@ export class SeasonBillingService {
           tax_rate: 0,
           cost_split_method: 'per_participant',
         });
-        console.log('[SeasonBilling] Auto-created default billing config for season', seasonId);
+        log.info('Auto-created default billing config for season', { seasonId });
       } catch (err) {
         console.warn(
           '[SeasonBilling] Could not auto-create config, using in-memory defaults:',

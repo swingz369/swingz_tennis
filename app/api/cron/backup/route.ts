@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { env } from '@/lib/env';
 
 const log = createLogger('cron:backup');
 
@@ -90,10 +91,14 @@ const BACKUP_TABLES = [
  *  - Only accessible via Vercel Cron or authenticated requests
  */
 export async function GET(request: NextRequest) {
-  // Verify Vercel cron secret
+  // Verify Vercel cron secret to prevent unauthorized invocation
   const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  const cronSecret = env.CRON_SECRET;
+  if (!cronSecret) {
+    log.error('CRON_SECRET not configured — rejecting request');
+    return NextResponse.json({ error: 'Service misconfigured' }, { status: 500 });
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     log.warn('Unauthorized backup attempt');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
+import { createLogger } from '@/lib/logger';
 
+const log = createLogger('stripe:client');
 let stripeInstance: Stripe | null = null;
 
 function getStripeClient(): Stripe {
@@ -9,7 +11,7 @@ function getStripeClient(): Stripe {
       throw new Error('STRIPE_SECRET_KEY is not configured');
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: '2026-05-27.dahlia',
+      apiVersion: '2026-04-22.dahlia',
     });
   }
   return stripeInstance;
@@ -80,7 +82,7 @@ export async function handleStripeWebhook(event: Stripe.Event): Promise<void> {
       await handlePaymentIntentFailed(failedPaymentIntent);
       break;
     default:
-      console.log(`Unhandled event type ${event.type}`);
+      log.info('Unhandled event type', { type: event.type });
   }
 }
 
@@ -105,11 +107,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
 }
 
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-  console.log('Payment succeeded:', paymentIntent.id);
+  log.info('Payment succeeded', { paymentIntentId: paymentIntent.id });
 }
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-  console.log('Payment failed:', paymentIntent.id);
+  log.info('Payment failed', { paymentIntentId: paymentIntent.id });
 
   const { billingEngine } = await import('../billing-engine');
 

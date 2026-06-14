@@ -33,7 +33,10 @@ import {
   MessageSquare,
   Calendar as CalendarIcon,
   MapPin,
-  GraduationCap,
+  CalendarCheck,
+  CheckCircle2,
+  Timer,
+  Award,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
@@ -46,8 +49,9 @@ import {
   type Session,
 } from '@/hooks/use-sessions';
 import FeedbackModal from '@/components/feedback/feedback-modal';
+import { AnimatedCounter, ScrollReveal } from '@/components/animations';
+import { Card, CardContent } from '@/components/ui/card';
 import UnifiedCourtCalendar from '@/components/unified-court-calendar';
-import MemberTrainingSchedule from '@/components/member-training-schedule';
 
 export default function BookingsPage() {
   return (
@@ -80,7 +84,7 @@ function BookingsContent() {
   // Update tab when URL param changes
   useEffect(() => {
     const tab = searchParams?.get('tab');
-    if (tab && (tab === 'bookings' || tab === 'courts' || tab === 'training')) {
+    if (tab && (tab === 'bookings' || tab === 'courts')) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -221,230 +225,335 @@ function BookingsContent() {
     );
   }
 
+  // Stat calculations
+  const totalSessions = sessions.length;
+  const myBookings = sessions.filter((s: Session) => s.bookedByUser).length;
+  const confirmedBookings = sessions.filter(
+    (s: Session) => s.bookedByUser && s.bookingStatus === 'confirmed'
+  ).length;
+  const availableSlots = sessions.filter((s: Session) => !s.bookedByUser).length;
+
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Buchungen & Kalender</h1>
-          <p className="text-muted-foreground">
-            Platzverfügbarkeit, Training und Buchungen verwalten
-          </p>
-        </div>
-        {/* Button to create court booking */}
-        <Button asChild>
-          <a href="/dashboard/bookings/new">Neue Platzbuchung</a>
-        </Button>
-      </div>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
-          <TabsTrigger value="courts" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            <span>Platz-Kalender</span>
-          </TabsTrigger>
-          <TabsTrigger value="training" className="flex items-center gap-2">
-            <GraduationCap className="h-4 w-4" />
-            <span>Training</span>
-          </TabsTrigger>
-          <TabsTrigger value="bookings" className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            <span>Meine Buchungen</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Bookings Tab */}
-        <TabsContent value="bookings" className="mt-6">
-          <div className="space-y-4">
-            {/* Calendar Controls */}
-            <div className="flex items-center justify-between gap-2">
-              <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
-                <Download className="h-4 w-4" />
-                Export CSV
-              </Button>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-                  <ChevronLeft className="h-4 w-4" />
+    <div className="space-y-6">
+      {/* ── Hero Header ── */}
+      <ScrollReveal>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+          <div className="absolute inset-0 bg-noise opacity-5" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
+          <div className="relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-white/70 mb-1">Buchungen</p>
+                <h1 className="text-2xl md:text-3xl font-bold">Kalender & Reservierungen</h1>
+                <p className="text-white/70 mt-2">
+                  Platzverfügbarkeit, Training und Buchungen verwalten
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  asChild
+                  className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
+                >
+                  <a href="/dashboard/bookings/new">Neue Platzbuchung</a>
                 </Button>
-                <span className="min-w-[100px] text-center font-medium text-sm md:text-base">
-                  {format(currentMonth, 'MMMM yyyy', { locale: de })}
-                </span>
-                <Button variant="outline" size="icon" onClick={goToNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
+                  <Award className="h-5 w-5 text-brand-accent" />
+                  <span className="text-sm font-medium">
+                    <AnimatedCounter value={totalSessions} /> Sessions
+                  </span>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
+      </ScrollReveal>
 
-            {/* Calendar Grid */}
-            {isLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Laden...</div>
-            ) : (
-              <div className="overflow-x-auto -mx-4 px-4">
-                <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-lg overflow-hidden min-w-[600px]">
-                  {/* Day headers */}
-                  {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
-                    <div
-                      key={day}
-                      className="bg-muted dark:bg-muted p-2 md:p-3 text-center font-semibold text-foreground dark:text-foreground text-xs md:text-sm"
-                    >
-                      {day}
-                    </div>
-                  ))}
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ScrollReveal delay={0}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Sessions</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={totalSessions} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">diesen Monat</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <CalendarIcon className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
 
-                  {/* Calendar days */}
-                  {calendarDays.map((day, idx) => {
-                    const daySessions = getSessionsForDay(day);
-                    const isCurrentMonth = isSameMonth(day, currentMonth);
+        <ScrollReveal delay={80}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Meine Buchungen</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={myBookings} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">reserviert</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <CalendarCheck className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
 
-                    return (
+        <ScrollReveal delay={160}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Bestätigt</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={confirmedBookings} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">aktive Buchungen</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={240}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Frei</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={availableSlots} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">verfügbare Plätze</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <Timer className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+      </div>
+
+      {/* ── Tabs ── */}
+      <ScrollReveal delay={300}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="courts" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              <span>Platz-Kalender</span>
+            </TabsTrigger>
+            <TabsTrigger value="bookings" className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span>Buchungen</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Bookings Tab */}
+          <TabsContent value="bookings" className="mt-6">
+            <div className="space-y-4">
+              {/* Calendar Controls */}
+              <div className="flex items-center justify-between gap-2">
+                <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="min-w-[100px] text-center font-medium text-sm md:text-base">
+                    {format(currentMonth, 'MMMM yyyy', { locale: de })}
+                  </span>
+                  <Button variant="outline" size="icon" onClick={goToNextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Calendar Grid */}
+              {isLoading ? (
+                <div className="text-center py-12 text-muted-foreground">Laden...</div>
+              ) : (
+                <div className="overflow-x-auto -mx-4 px-4">
+                  <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-lg overflow-hidden min-w-[600px]">
+                    {/* Day headers */}
+                    {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                       <div
-                        key={idx}
-                        className={`min-h-[5rem] md:min-h-[6.25rem] bg-background dark:bg-card p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                        key={day}
+                        className="bg-muted dark:bg-muted p-2 md:p-3 text-center font-semibold text-foreground dark:text-foreground text-xs md:text-sm"
                       >
-                        <div className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mb-1">
-                          {format(day, 'd')}
-                        </div>
-                        <div className="space-y-1">
-                          {daySessions.map((session) => (
-                            <div
-                              key={session.id}
-                              className={`p-1 rounded text-xs transition-colors cursor-pointer ${
-                                session.bookedByUser
-                                  ? 'bg-red-50 text-red-800 border border-red-200'
-                                  : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
-                              }`}
-                              role="button"
-                              tabIndex={session.bookedByUser ? -1 : 0}
-                              onKeyDown={(e) => {
-                                if ((e.key === 'Enter' || e.key === ' ') && !session.bookedByUser) {
-                                  e.preventDefault();
-                                  handleBooking(session.id);
-                                }
-                              }}
-                              onClick={() => !session.bookedByUser && handleBooking(session.id)}
-                            >
-                              <div className="flex items-start justify-between gap-1">
-                                <div className="font-medium truncate">{session.startTime}</div>
-                                {session.bookedByUser && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (session.bookingId) {
-                                        handleCancelBooking(session.id, session.bookingId);
-                                      }
-                                    }}
-                                    className="ml-1 p-0.5 rounded hover:bg-red-100 text-red-600 transition-colors"
-                                    title="Buchung stornieren"
-                                  >
-                                    <svg
-                                      className="h-3 w-3"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                      />
-                                    </svg>
-                                  </button>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 text-[11px]">
-                                <Clock className="h-3 w-3" />
-                                <span className="truncate">
-                                  {session.trainerName || session.trainerId}
-                                </span>
-                              </div>
-                              {session.bookedByUser && session.bookingStatus && (
-                                <div className="flex flex-col gap-1 mt-0.5">
-                                  <div className="flex items-center gap-1">
-                                    <span
-                                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
-                                        session.bookingStatus === 'confirmed'
-                                          ? 'bg-green-100 text-green-700'
-                                          : session.bookingStatus === 'cancelled'
-                                            ? 'bg-red-100 text-red-700'
-                                            : session.bookingStatus === 'no_show'
-                                              ? 'bg-muted text-foreground'
-                                              : 'bg-yellow-100 text-yellow-700'
-                                      }`}
-                                    >
-                                      {getBookingStatusLabel(session.bookingStatus)}
-                                    </span>
-                                    {(userRoles.includes('admin') ||
-                                      userRoles.includes('superadmin') ||
-                                      userRoles.includes('trainer')) && (
-                                      <Select
-                                        value={session.bookingStatus}
-                                        onValueChange={(v) =>
-                                          session.bookingId &&
-                                          handleStatusChange(
-                                            session.bookingId,
-                                            v as 'pending' | 'confirmed' | 'cancelled' | 'no_show'
-                                          )
-                                        }
-                                      >
-                                        <SelectTrigger className="h-6 text-[11px] px-1 py-0">
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="pending">Ausstehend</SelectItem>
-                                          <SelectItem value="confirmed">Bestätigt</SelectItem>
-                                          <SelectItem value="cancelled">Storniert</SelectItem>
-                                          <SelectItem value="no_show">Nicht erschienen</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    )}
-                                  </div>
-                                  {(() => {
-                                    const sessionDateTime = new Date(day);
-                                    const [hours, minutes] = session.endTime.split(':');
-                                    sessionDateTime.setHours(parseInt(hours), parseInt(minutes));
-                                    return (
-                                      isPast(sessionDateTime) &&
-                                      session.bookingStatus === 'confirmed'
-                                    );
-                                  })() && (
+                        {day}
+                      </div>
+                    ))}
+
+                    {/* Calendar days */}
+                    {calendarDays.map((day, idx) => {
+                      const daySessions = getSessionsForDay(day);
+                      const isCurrentMonth = isSameMonth(day, currentMonth);
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`min-h-[5rem] md:min-h-[6.25rem] bg-background dark:bg-card p-1 md:p-2 ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                        >
+                          <div className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mb-1">
+                            {format(day, 'd')}
+                          </div>
+                          <div className="space-y-1">
+                            {daySessions.map((session) => (
+                              <div
+                                key={session.id}
+                                className={`p-1 rounded text-xs transition-colors cursor-pointer ${
+                                  session.bookedByUser
+                                    ? 'bg-red-50 text-red-800 border border-red-200'
+                                    : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
+                                }`}
+                                role="button"
+                                tabIndex={session.bookedByUser ? -1 : 0}
+                                onKeyDown={(e) => {
+                                  if (
+                                    (e.key === 'Enter' || e.key === ' ') &&
+                                    !session.bookedByUser
+                                  ) {
+                                    e.preventDefault();
+                                    handleBooking(session.id);
+                                  }
+                                }}
+                                onClick={() => !session.bookedByUser && handleBooking(session.id)}
+                              >
+                                <div className="flex items-start justify-between gap-1">
+                                  <div className="font-medium truncate">{session.startTime}</div>
+                                  {session.bookedByUser && (
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        openFeedbackModal(session, day);
+                                        if (session.bookingId) {
+                                          handleCancelBooking(session.id, session.bookingId);
+                                        }
                                       }}
-                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
-                                      title="Feedback geben"
+                                      className="ml-1 p-0.5 rounded hover:bg-red-100 text-red-600 transition-colors"
+                                      title="Buchung stornieren"
                                     >
-                                      <MessageSquare className="h-3 w-3" />
-                                      Feedback
+                                      <svg
+                                        className="h-3 w-3"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M6 18L18 6M6 6l12 12"
+                                        />
+                                      </svg>
                                     </button>
                                   )}
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                                <div className="flex items-center gap-1 text-[11px]">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="truncate">
+                                    {session.trainerName || session.trainerId}
+                                  </span>
+                                </div>
+                                {session.bookedByUser && session.bookingStatus && (
+                                  <div className="flex flex-col gap-1 mt-0.5">
+                                    <div className="flex items-center gap-1">
+                                      <span
+                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
+                                          session.bookingStatus === 'confirmed'
+                                            ? 'bg-green-100 text-green-700'
+                                            : session.bookingStatus === 'cancelled'
+                                              ? 'bg-red-100 text-red-700'
+                                              : session.bookingStatus === 'no_show'
+                                                ? 'bg-muted text-foreground'
+                                                : 'bg-yellow-100 text-yellow-700'
+                                        }`}
+                                      >
+                                        {getBookingStatusLabel(session.bookingStatus)}
+                                      </span>
+                                      {(userRoles.includes('admin') ||
+                                        userRoles.includes('superadmin') ||
+                                        userRoles.includes('trainer')) && (
+                                        <Select
+                                          value={session.bookingStatus}
+                                          onValueChange={(v) =>
+                                            session.bookingId &&
+                                            handleStatusChange(
+                                              session.bookingId,
+                                              v as 'pending' | 'confirmed' | 'cancelled' | 'no_show'
+                                            )
+                                          }
+                                        >
+                                          <SelectTrigger className="h-6 text-[11px] px-1 py-0">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="pending">Ausstehend</SelectItem>
+                                            <SelectItem value="confirmed">Bestätigt</SelectItem>
+                                            <SelectItem value="cancelled">Storniert</SelectItem>
+                                            <SelectItem value="no_show">
+                                              Nicht erschienen
+                                            </SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      )}
+                                    </div>
+                                    {(() => {
+                                      const sessionDateTime = new Date(day);
+                                      const [hours, minutes] = session.endTime.split(':');
+                                      sessionDateTime.setHours(parseInt(hours), parseInt(minutes));
+                                      return (
+                                        isPast(sessionDateTime) &&
+                                        session.bookingStatus === 'confirmed'
+                                      );
+                                    })() && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openFeedbackModal(session, day);
+                                        }}
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                                        title="Feedback geben"
+                                      >
+                                        <MessageSquare className="h-3 w-3" />
+                                        Feedback
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </TabsContent>
+              )}
+            </div>
+          </TabsContent>
 
-        {/* Training Tab */}
-        <TabsContent value="training" className="mt-6">
-          <MemberTrainingSchedule />
-        </TabsContent>
-
-        {/* Courts Tab */}
-        <TabsContent value="courts" className="mt-6">
-          <UnifiedCourtCalendar />
-        </TabsContent>
-      </Tabs>
+          {/* Courts Tab */}
+          <TabsContent value="courts" className="mt-6">
+            <UnifiedCourtCalendar />
+          </TabsContent>
+        </Tabs>
+      </ScrollReveal>
 
       {/* Feedback Modal */}
       <FeedbackModal

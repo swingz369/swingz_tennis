@@ -11,7 +11,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   // Fetch user profile
   const { data: memberData } = await supabase
     .from('users')
-    .select('id, email, full_name')
+    .select('id, email, full_name, avatar_url')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -54,6 +54,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     id: user.id,
     name: memberData?.full_name || user.user_metadata?.full_name || 'User',
     email: user.email || '',
+    avatarUrl: memberData?.avatar_url || null,
     memberId: memberData?.id || null,
     club: primaryClub ? { id: primaryClub.id as string, name: primaryClub.name as string } : null,
     clubs: uniqueClubs,

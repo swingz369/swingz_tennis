@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (auth.supabase as any)
       .from('registration_requests')
       .select('id', { count: 'exact', head: true })

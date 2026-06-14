@@ -1,6 +1,13 @@
 import PublicRegistrationForm from '@/components/public-registration-form';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Trophy, ArrowLeft } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Registrierung — SWINGZ',
+  description:
+    'Registriere dich für den Early Access von SWINGZ — KI-gestütztes Tennisclub-Management.',
+};
 import { IconBox } from '@/components/ui/icon-box';
 import { ThemeToggleWrapper } from './theme-toggle-wrapper';
 

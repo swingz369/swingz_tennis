@@ -3,7 +3,7 @@ dotenv.config({ path: '.env.local' });
 import { Resend } from 'resend';
 
 const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>';
+const from = process.env.EMAIL_FROM || 'SwingZ <noreply@mail.swingz.cloud>';
 const to = process.argv[2] || 'mike.swinger@gmx.de';
 
 if (!apiKey) {
@@ -34,7 +34,7 @@ resend.emails
       </div>
       <div style="background:#f9f9f9;padding:32px 24px;">
         <h2 style="margin-top:0;color:#1B4332;">Domain-Verifizierung erfolgreich!</h2>
-        <p>Diese Test-E-Mail bestätigt, dass <strong>noreply@swingz.cloud</strong> korrekt konfiguriert ist.</p>
+        <p>Diese Test-E-Mail bestätigt, dass <strong>noreply@mail.swingz.cloud</strong> korrekt konfiguriert ist.</p>
         <div style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:20px 0;">
           <p style="margin:0;"><strong>✅ Von:</strong> ${from}</p>
           <p style="margin:8px 0 0;"><strong>✅ Domain:</strong> swingz.cloud</p>
@@ -49,7 +49,7 @@ resend.emails
     </div>
   </body>
 </html>`,
-    text: `SwingZ Test-E-Mail\n\nDomain-Verifizierung erfolgreich!\n\nnoreply@swingz.cloud ist korrekt konfiguriert.\nVon: ${from}\nDomain: swingz.cloud\nProvider: Resend\n\n© ${year} SwingZ`,
+    text: `SwingZ Test-E-Mail\n\nDomain-Verifizierung erfolgreich!\n\nnoreply@mail.swingz.cloud ist korrekt konfiguriert.\nVon: ${from}\nDomain: swingz.cloud\nProvider: Resend\n\n© ${year} SwingZ`,
   })
   .then(({ data, error }) => {
     if (error) {

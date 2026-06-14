@@ -78,7 +78,7 @@ test.describe('Sidebar Navigation by Role', () => {
       await expect(bottomNav.getByRole('link', { name: /Übersicht/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Einheiten/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Anwesenheit/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Abrechnung/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Verfügbarkeit/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Profil/i })).toBeVisible();
     });
   });
@@ -98,9 +98,9 @@ test.describe('Sidebar Navigation by Role', () => {
       await expect(bottomNav).toBeVisible({ timeout: 10000 });
       await expect(bottomNav.getByRole('link', { name: /Home/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Buchen/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Training/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /News/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Profil/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Chat/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Rechnungen/i })).toBeVisible();
+      // Profil removed — accessible via user menu in header
     });
   });
 

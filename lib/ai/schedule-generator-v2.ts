@@ -14,6 +14,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { env } from '@/lib/env';
 import { AI_PROMPTS } from '@/lib/ai-prompts';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('ai:schedule-generator');
 
 // =============================================================================
 // Types
@@ -153,13 +156,13 @@ export class AIScheduleServiceV2 {
     if (this.preferredModel === 'claude' && this.anthropic) {
       result = await this.generateWithClaude(input, planningData);
       if (!result.success && this.openai) {
-        console.log('[AIScheduleV2] Claude failed, falling back to OpenAI');
+        log.info('Claude failed, falling back to OpenAI');
         result = await this.generateWithOpenAI(input, planningData);
       }
     } else if (this.openai) {
       result = await this.generateWithOpenAI(input, planningData);
       if (!result.success && this.anthropic) {
-        console.log('[AIScheduleV2] OpenAI failed, falling back to Claude');
+        log.info('OpenAI failed, falling back to Claude');
         result = await this.generateWithClaude(input, planningData);
       }
     } else if (this.anthropic) {

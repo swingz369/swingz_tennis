@@ -233,7 +233,7 @@ describe('getCalendarLegendItems', () => {
   it('returns 5 items for non-admin (member)', () => {
     const items = getCalendarLegendItems(false);
     expect(items).toHaveLength(5);
-    expect(items.map((i) => i.label)).toContain('Belegt');
+    expect(items.map((i) => i.label)).toContain('Belegt (gebucht)');
     expect(items.map((i) => i.label)).toContain('Deine Buchung');
   });
 

@@ -385,12 +385,6 @@ export async function POST(req: NextRequest) {
             }`
           : `Alle ${skipped} Mitglieder wurden bereits für ${monthLabel} abgerechnet — 0 neue Rechnungen erstellt`;
 
-      if (created === 0 && skipped > 0) {
-        console.log(
-          `[GenerateInvoices] All ${skipped} members already billed for ${monthStr} (club=${clubId})`
-        );
-      }
-
       return NextResponse.json({
         created,
         skipped,

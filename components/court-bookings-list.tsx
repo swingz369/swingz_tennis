@@ -110,6 +110,20 @@ interface CourtBookingsListProps {
   isAdmin: boolean;
 }
 
+const SortIcon = ({
+  field,
+  sortField: currentSortField,
+}: {
+  field: SortField;
+  sortField: SortField;
+}) => (
+  <ArrowUpDown
+    className={`h-3.5 w-3.5 ml-1 inline-block transition-colors ${
+      currentSortField === field ? 'text-brandPrimary' : 'text-muted-foreground/40'
+    }`}
+  />
+);
+
 export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsListProps) {
   const queryClient = useQueryClient();
   const { data: courts = [] } = useCourts(clubId);
@@ -218,14 +232,6 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
     }
     setPage(0);
   };
-
-  const SortIcon = ({ field }: { field: SortField }) => (
-    <ArrowUpDown
-      className={`h-3.5 w-3.5 ml-1 inline-block transition-colors ${
-        sortField === field ? 'text-brandPrimary' : 'text-muted-foreground/40'
-      }`}
-    />
-  );
 
   // ── Admin action ──
   const handleAdminAction = useCallback(
@@ -404,19 +410,19 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                   className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('session_start_time')}
                 >
-                  Datum / Zeit <SortIcon field="session_start_time" />
+                  Datum / Zeit <SortIcon field="session_start_time" sortField={sortField} />
                 </th>
                 <th
                   className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('member_name')}
                 >
-                  Mitglied <SortIcon field="member_name" />
+                  Mitglied <SortIcon field="member_name" sortField={sortField} />
                 </th>
                 <th
                   className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('court_name')}
                 >
-                  Platz <SortIcon field="court_name" />
+                  Platz <SortIcon field="court_name" sortField={sortField} />
                 </th>
                 <th className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                   Herkunft
@@ -428,7 +434,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                   className="text-left p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer hover:text-foreground transition-colors whitespace-nowrap"
                   onClick={() => toggleSort('status')}
                 >
-                  Status <SortIcon field="status" />
+                  Status <SortIcon field="status" sortField={sortField} />
                 </th>
                 <th className="text-right p-3 font-semibold text-xs uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                   Details

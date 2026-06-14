@@ -23,6 +23,7 @@ export interface UserClubData {
 export interface UserMemberData {
   memberId: string | null;
   fullName?: string;
+  avatarUrl?: string | null;
   firstName?: string;
   lastName?: string;
   email?: string;

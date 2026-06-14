@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Palette, Image as ImageIcon, Globe } from 'lucide-react';
+import { LogoUpload } from '@/components/ui/logo-upload';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -66,11 +67,7 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
             secondaryColor: branding.secondaryColor,
             accentColor: branding.accentColor,
           },
-          logos: {
-            light: branding.logoLightUrl || null,
-            dark: branding.logoDarkUrl || null,
-            favicon: null,
-          },
+          // Logos are persisted directly by LogoUpload via /api/club-logo/upload
           customDomain: branding.customDomain || null,
         }),
       });
@@ -169,28 +166,34 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
         </TabsContent>
 
         <TabsContent value="logos" className="space-y-4">
-          <Card className="p-6 space-y-4">
-            <div className="space-y-2">
-              <Label>Logo (Light Version)</Label>
-              <Input
-                placeholder="https://..."
-                value={branding.logoLightUrl}
-                onChange={(e) => setBranding({ ...branding, logoLightUrl: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Logo (Dark Version)</Label>
-              <Input
-                placeholder="https://..."
-                value={branding.logoDarkUrl}
-                onChange={(e) => setBranding({ ...branding, logoDarkUrl: e.target.value })}
-              />
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button onClick={saveBranding} disabled={saving}>
-                {saving ? 'Wird gespeichert...' : 'Speichern'}
-              </Button>
-            </div>
+          <Card className="p-6 space-y-6">
+            <LogoUpload
+              logoUrl={branding.logoLightUrl}
+              variant="light"
+              label="Logo (Light Mode)"
+              clubId={clubId}
+              onLogoChange={(url) => setBranding({ ...branding, logoLightUrl: url || '' })}
+            />
+            <LogoUpload
+              logoUrl={branding.logoDarkUrl}
+              variant="dark"
+              label="Logo (Dark Mode)"
+              clubId={clubId}
+              onLogoChange={(url) => setBranding({ ...branding, logoDarkUrl: url || '' })}
+            />
+            <LogoUpload
+              logoUrl={null}
+              variant="favicon"
+              label="Favicon (Vereinssymbol)"
+              clubId={clubId}
+              onLogoChange={(url) => {
+                if (url) {
+                  // Update favicon immediately in browser
+                  const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+                  if (link) link.href = url;
+                }
+              }}
+            />
           </Card>
         </TabsContent>
 

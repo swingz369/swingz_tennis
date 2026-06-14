@@ -1134,6 +1134,17 @@ export const attendanceRecords = pgTable(
     check_in_time: varchar('check_in_time', { length: 5 }), // HH:MM format
     check_out_time: varchar('check_out_time', { length: 5 }), // HH:MM format
     notes: text('notes'),
+    // Confirmation fields (Stundenbestätigung)
+    trainer_confirmed: boolean('trainer_confirmed').notNull().default(false),
+    trainer_confirmed_at: timestamp('trainer_confirmed_at', { withTimezone: true }),
+    member_status: varchar('member_status', { length: 20 }).notNull().default('pending'),
+    member_confirmed_at: timestamp('member_confirmed_at', { withTimezone: true }),
+    dispute_reason: text('dispute_reason'),
+    dispute_resolved_at: timestamp('dispute_resolved_at', { withTimezone: true }),
+    dispute_resolved_by: uuid('dispute_resolved_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    duration_minutes: integer('duration_minutes'),
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -1142,6 +1153,14 @@ export const attendanceRecords = pgTable(
     trainer_idx: index('attendance_records_trainer_idx').on(table.trainer_id),
     participant_idx: index('attendance_records_participant_idx').on(table.participant_id),
     date_idx: index('attendance_records_date_idx').on(table.date),
+    trainer_confirmed_idx: index('attendance_records_trainer_confirmed_idx').on(
+      table.trainer_confirmed
+    ),
+    member_status_idx: index('attendance_records_member_status_idx').on(table.member_status),
+    participant_member_status_idx: index('attendance_records_participant_member_status_idx').on(
+      table.participant_id,
+      table.member_status
+    ),
   })
 );
 

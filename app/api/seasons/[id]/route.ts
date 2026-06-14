@@ -159,7 +159,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           'auto_plan_config',
         ] as const;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updates: any = { updated_at: new Date().toISOString() };
         for (const field of allowed) {
           if (body[field] !== undefined) {

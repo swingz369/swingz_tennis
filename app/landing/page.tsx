@@ -819,30 +819,18 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8 text-sm text-muted-foreground">
-              <button
-                type="button"
-                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-muted-foreground text-sm"
-              >
+              <Link href="/impressum" className="hover:text-white transition-colors">
                 Impressum
-              </button>
-              <button
-                type="button"
-                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-muted-foreground text-sm"
-              >
+              </Link>
+              <Link href="/datenschutz" className="hover:text-white transition-colors">
                 Datenschutz
-              </button>
-              <button
-                type="button"
-                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-muted-foreground text-sm"
-              >
+              </Link>
+              <Link href="/terms" className="hover:text-white transition-colors">
                 AGB
-              </button>
-              <button
-                type="button"
-                className="hover:text-white transition-colors bg-transparent border-none cursor-pointer text-muted-foreground text-sm"
-              >
+              </Link>
+              <Link href="/contact" className="hover:text-white transition-colors">
                 Kontakt
-              </button>
+              </Link>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2026 SWINGZ — Alle Rechte vorbehalten.

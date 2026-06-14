@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { format } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
@@ -26,8 +26,18 @@ import {
   GraduationCap,
   UserCheck,
   Search,
+  X,
+  Check,
+  ChevronsUpDown,
+  MailOpen,
+  MessageSquare,
+  CheckCircle2,
 } from 'lucide-react';
+import { AnimatedCounter, ScrollReveal } from '@/components/animations';
+import { Card, CardContent } from '@/components/ui/card';
+import { RichTextEditor } from '@/components/messages/RichTextEditor';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useUserClub } from '@/hooks/use-user-data';
@@ -63,6 +73,11 @@ interface ClubMember {
 }
 
 type Folder = 'inbox' | 'sent';
+
+/** Strip HTML tags from a string for plain-text display. */
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').trim();
+}
 
 /* ─────────────────── Main Component ─────────────────── */
 
@@ -118,7 +133,7 @@ export default function MessagesPage() {
       (m) =>
         m.subject.toLowerCase().includes(q) ||
         m.sender.full_name.toLowerCase().includes(q) ||
-        m.content.toLowerCase().includes(q)
+        stripHtml(m.content).toLowerCase().includes(q)
     );
   }, [messages, searchQuery]);
 
@@ -130,95 +145,209 @@ export default function MessagesPage() {
     }
   };
 
+  // ── Stat calculations ──
+  const totalMessages = messages.length;
+  const readMessages = messages.filter((m) => m.is_read).length;
+
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Nachrichten</h1>
-          <p className="text-sm text-muted-foreground">
-            Verwalte deine Nachrichten und Kommunikation
-          </p>
-        </div>
-        <Button onClick={() => setComposeOpen(true)} className="gap-2">
-          <PenSquare className="h-4 w-4" />
-          Neue Nachricht
-        </Button>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Sidebar: Folders + Search */}
-        <div className="lg:w-56 shrink-0 space-y-3">
-          {/* Folder tabs */}
-          <div className="flex lg:flex-col gap-1">
-            <button
-              onClick={() => {
-                setFolder('inbox');
-                setSelectedMessage(null);
-              }}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
-                folder === 'inbox'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              <Inbox className="h-4 w-4" />
-              Posteingang
-              {unreadCount > 0 && (
-                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => {
-                setFolder('sent');
-                setSelectedMessage(null);
-              }}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
-                folder === 'sent'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              <Send className="h-4 w-4" />
-              Gesendet
-            </button>
-          </div>
-
-          {/* Search */}
+    <div className="space-y-6">
+      {/* ── Hero Header ── */}
+      <ScrollReveal>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+          <div className="absolute inset-0 bg-noise opacity-5" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-9 text-sm"
-            />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-white/70 mb-1">Kommunikation</p>
+                <h1 className="text-2xl md:text-3xl font-bold">Nachrichten</h1>
+                <p className="text-white/70 mt-2">Verwalte deine Nachrichten und Kommunikation</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={() => setComposeOpen(true)}
+                  className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25 gap-2"
+                >
+                  <PenSquare className="h-4 w-4" />
+                  Neue Nachricht
+                </Button>
+                {unreadCount > 0 && (
+                  <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
+                    <Mail className="h-5 w-5 text-brand-accent" />
+                    <span className="text-sm font-medium">
+                      <AnimatedCounter value={unreadCount} /> ungelesen
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+      </ScrollReveal>
 
-        {/* Message List + Detail */}
-        <div className="flex-1 min-w-0">
-          {selectedMessage ? (
-            <MessageDetail
-              message={selectedMessage}
-              onBack={() => setSelectedMessage(null)}
-              onReply={() => {
-                setComposeOpen(true);
-              }}
-              folder={folder}
-            />
-          ) : (
-            <MessageList
-              messages={filteredMessages}
-              loading={loading}
-              folder={folder}
-              onSelect={handleMessageClick}
-            />
-          )}
-        </div>
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ScrollReveal delay={0}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Ungelesen</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={unreadCount} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">im Posteingang</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <Mail className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={80}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {folder === 'inbox' ? 'Posteingang' : 'Gesendet'}
+                  </p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={totalMessages} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">Nachrichten</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={160}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Gelesen</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={readMessages} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">Nachrichten</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={240}>
+          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Leserate</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter
+                      value={
+                        totalMessages > 0 ? Math.round((readMessages / totalMessages) * 100) : 0
+                      }
+                      suffix="%"
+                    />
+                  </p>
+                  <p className="text-xs text-muted-foreground">gelesen</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <MailOpen className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
       </div>
+
+      {/* ── Folder Tabs + Message Content ── */}
+      <ScrollReveal delay={300}>
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Sidebar: Folders + Search */}
+          <div className="lg:w-56 shrink-0 space-y-3">
+            {/* Folder tabs */}
+            <div className="flex lg:flex-col gap-1">
+              <button
+                onClick={() => {
+                  setFolder('inbox');
+                  setSelectedMessage(null);
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                  folder === 'inbox'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <Inbox className="h-4 w-4" />
+                Posteingang
+                {unreadCount > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setFolder('sent');
+                  setSelectedMessage(null);
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                  folder === 'sent'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <Send className="h-4 w-4" />
+                Gesendet
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Message List + Detail */}
+          <div className="flex-1 min-w-0">
+            {selectedMessage ? (
+              <MessageDetail
+                message={selectedMessage}
+                onBack={() => setSelectedMessage(null)}
+                onReply={() => {
+                  setComposeOpen(true);
+                }}
+                folder={folder}
+              />
+            ) : (
+              <MessageList
+                messages={filteredMessages}
+                loading={loading}
+                folder={folder}
+                onSelect={handleMessageClick}
+              />
+            )}
+          </div>
+        </div>
+      </ScrollReveal>
 
       {/* Compose Dialog */}
       {composeOpen && (
@@ -313,7 +442,7 @@ function MessageList({
                 {msg.subject}
               </p>
               <p className="text-xs text-muted-foreground/70 truncate mt-0.5">
-                {msg.content.substring(0, 80)}
+                {stripHtml(msg.content).substring(0, 80)}
               </p>
             </div>
           </button>
@@ -358,11 +487,18 @@ function MessageDetail({
         </Button>
       </div>
 
-      {/* Content */}
+      {/* Content — render HTML from TipTap, fall back to plain text */}
       <div className="px-4 py-4">
-        <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
-          {message.content}
-        </div>
+        {/<[a-z][\s\S]*>/i.test(message.content) ? (
+          <div
+            className="prose prose-sm max-w-none text-foreground dark:prose-invert [&_script]:hidden [&_iframe]:hidden"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.content) }}
+          />
+        ) : (
+          <div className="prose prose-sm max-w-none text-foreground whitespace-pre-wrap">
+            {message.content}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -389,17 +525,36 @@ function ComposeDialog({
     replyTo?.subject.startsWith('Re:') ? replyTo.subject : `Re: ${replyTo?.subject ?? ''}`
   );
   const [content, setContent] = useState('');
-  const [recipientMode, setRecipientMode] = useState<'individual' | 'all' | 'trainers'>(
+  const [recipientMode, setRecipientMode] = useState<'individual' | 'all' | 'trainers' | 'multi'>(
     'individual'
   );
   const [receiverId, setReceiverId] = useState(replyTo?.sender_id ?? '');
+  const [selectedReceiverIds, setSelectedReceiverIds] = useState<string[]>(
+    replyTo?.sender_id ? [replyTo.sender_id] : []
+  );
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberDropdownOpen, setMemberDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!memberDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setMemberDropdownOpen(false);
+        setMemberSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [memberDropdownOpen]);
 
   // Fetch club members for recipient selection
   useEffect(() => {
-    if (!clubId || recipientMode !== 'individual') return;
+    if (!clubId || (recipientMode !== 'individual' && recipientMode !== 'multi')) return;
     setMembersLoading(true);
     apiFetch(`/api/members?clubId=${clubId}&limit=100&active=true`)
       .then((res) => res.json())
@@ -420,14 +575,37 @@ function ComposeDialog({
       .finally(() => setMembersLoading(false));
   }, [clubId, recipientMode, replyTo?.sender_id]);
 
+  const toggleReceiver = (id: string) => {
+    setSelectedReceiverIds((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+    );
+  };
+
+  const filteredMembers = useMemo(() => {
+    if (!memberSearch.trim()) return members;
+    const q = memberSearch.toLowerCase();
+    return members.filter(
+      (m) =>
+        m.full_name.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q) ||
+        m.role.toLowerCase().includes(q)
+    );
+  }, [members, memberSearch]);
+
   const handleSend = async () => {
-    if (!subject.trim() || !content.trim()) {
+    // Strip HTML tags to check if content is actually empty
+    const textContent = stripHtml(content);
+    if (!subject.trim() || !textContent) {
       toast.error('Betreff und Nachricht sind erforderlich');
       return;
     }
 
     if (recipientMode === 'individual' && !receiverId) {
       toast.error('Bitte wähle einen Empfänger');
+      return;
+    }
+    if (recipientMode === 'multi' && selectedReceiverIds.length === 0) {
+      toast.error('Bitte wähle mindestens einen Empfänger');
       return;
     }
 
@@ -441,6 +619,9 @@ function ComposeDialog({
 
       if (recipientMode === 'individual') {
         payload.receiverId = receiverId;
+        if (replyTo) payload.repliedToId = replyTo.id;
+      } else if (recipientMode === 'multi') {
+        payload.receiverIds = selectedReceiverIds;
         if (replyTo) payload.repliedToId = replyTo.id;
       } else {
         payload.broadcastType = recipientMode;
@@ -486,11 +667,26 @@ function ComposeDialog({
               <Button
                 variant={recipientMode === 'individual' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setRecipientMode('individual')}
+                onClick={() => {
+                  setRecipientMode('individual');
+                  setSelectedReceiverIds([]);
+                }}
                 className="gap-1.5"
               >
                 <UserCheck className="h-3.5 w-3.5" />
                 Einzeln
+              </Button>
+              <Button
+                variant={recipientMode === 'multi' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setRecipientMode('multi');
+                  setReceiverId('');
+                }}
+                className="gap-1.5"
+              >
+                <Users className="h-3.5 w-3.5" />
+                Mehrere
               </Button>
               <Button
                 variant={recipientMode === 'all' ? 'default' : 'outline'}
@@ -539,9 +735,153 @@ function ComposeDialog({
           </div>
         )}
 
+        {/* Multi-recipient select */}
+        {isAdmin && recipientMode === 'multi' && (
+          <div className="space-y-2">
+            <Label>Empfänger auswählen</Label>
+            {membersLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Lade Mitglieder...
+              </div>
+            ) : (
+              <>
+                {/* Selected recipients as badges */}
+                {selectedReceiverIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedReceiverIds.map((id) => {
+                      const member = members.find((m) => m.id === id);
+                      if (!member) return null;
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium"
+                        >
+                          {member.full_name}
+                          <button
+                            type="button"
+                            onClick={() => toggleReceiver(id)}
+                            className="hover:bg-primary/20 rounded-sm p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedReceiverIds([])}
+                      className="text-xs text-muted-foreground hover:text-foreground underline"
+                    >
+                      Alle entfernen
+                    </button>
+                  </div>
+                )}
+
+                {/* Searchable member dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setMemberDropdownOpen(!memberDropdownOpen)}
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-muted-foreground">
+                      {selectedReceiverIds.length > 0
+                        ? `${selectedReceiverIds.length} ausgewählt`
+                        : 'Mitglieder suchen & auswählen...'}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                  </button>
+
+                  {memberDropdownOpen && (
+                    <div className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-background shadow-lg">
+                      <div className="p-2 border-b border-border">
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Name, E-Mail oder Rolle suchen..."
+                            value={memberSearch}
+                            onChange={(e) => setMemberSearch(e.target.value)}
+                            className="border-0 bg-muted/50 pl-8 pr-3 py-1.5 h-8 text-sm focus-visible:ring-1"
+                            // eslint-disable-next-line jsx-a11y/no-autofocus -- search input needs focus on dropdown open
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto p-1">
+                        {/* Quick actions */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const memberIds = members
+                              .filter((m) => m.role === 'member')
+                              .map((m) => m.id);
+                            setSelectedReceiverIds(memberIds);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-md hover:bg-muted transition-colors font-medium text-primary"
+                        >
+                          <Users className="h-4 w-4" />
+                          Alle Mitglieder auswählen
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trainerIds = members
+                              .filter((m) => m.role === 'trainer')
+                              .map((m) => m.id);
+                            setSelectedReceiverIds(trainerIds);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-md hover:bg-muted transition-colors font-medium text-primary"
+                        >
+                          <GraduationCap className="h-4 w-4" />
+                          Alle Trainer auswählen
+                        </button>
+                        <div className="h-px bg-border my-1" />
+
+                        {/* Member list */}
+                        {filteredMembers.map((m) => {
+                          const isSelected = selectedReceiverIds.includes(m.id);
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => toggleReceiver(m.id)}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left rounded-md hover:bg-muted transition-colors ${
+                                isSelected ? 'bg-primary/5' : ''
+                              }`}
+                            >
+                              <div
+                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                                  isSelected
+                                    ? 'bg-primary border-primary text-primary-foreground'
+                                    : 'border-border'
+                                }`}
+                              >
+                                {isSelected && <Check className="h-3 w-3" />}
+                              </div>
+                              <span className="flex-1 truncate">{m.full_name}</span>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {m.role === 'trainer' ? 'Trainer' : 'Mitglied'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                        {filteredMembers.length === 0 && (
+                          <p className="px-3 py-4 text-sm text-muted-foreground text-center">
+                            Keine Mitglieder gefunden
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Broadcast info */}
-        {isAdmin && recipientMode !== 'individual' && (
-          <div className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2 text-sm text-blue-800">
+        {isAdmin && recipientMode !== 'individual' && recipientMode !== 'multi' && (
+          <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/30 px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
             {recipientMode === 'all' &&
               '📣 Nachricht wird an alle aktiven Vereinsmitglieder gesendet.'}
             {recipientMode === 'trainers' &&
@@ -560,16 +900,14 @@ function ComposeDialog({
           />
         </div>
 
-        {/* Content */}
+        {/* Content — Rich Text Editor */}
         <div className="space-y-2">
-          <Label htmlFor="content">Nachricht</Label>
-          <textarea
-            id="content"
+          <Label>Nachricht</Label>
+          <RichTextEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Deine Nachricht..."
-            rows={6}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y"
+            onChange={setContent}
+            placeholder="Deine Nachricht schreiben..."
+            minHeight="180px"
           />
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,10 +15,6 @@ export default function ClubsAdminPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [newClub, setNewClub] = useState({ name: '', maxMembers: 500 });
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchClubs();
-  }, []);
 
   const fetchClubs = async () => {
     try {

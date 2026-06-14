@@ -64,7 +64,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       const [profile] = await db
         .insert(trainerProfiles)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         .values({
           club_id: input.clubId,
           user_id: input.userId,
@@ -263,7 +263,7 @@ export class TrainerProfileRepository implements ITrainerProfileRepository {
 
       const [updated] = await db
         .update(trainerProfiles)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         .set({
           ...rest,
           ...(contractedHourlyRate !== undefined

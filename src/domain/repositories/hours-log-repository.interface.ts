@@ -7,6 +7,7 @@ import type {
   CreateAttendanceRecordInput,
   UpdateAttendanceRecordInput,
   HoursSummary,
+  AttendanceHoursSummary,
 } from '../entities/hours-log.entity';
 
 export type {
@@ -17,6 +18,7 @@ export type {
   CreateAttendanceRecordInput,
   UpdateAttendanceRecordInput,
   HoursSummary,
+  AttendanceHoursSummary,
 } from '../entities/hours-log.entity';
 
 /**
@@ -132,4 +134,42 @@ export interface AttendanceRecordRepository {
    * Delete an attendance record
    */
   delete(id: string): Promise<void>;
+
+  /**
+   * Batch confirm attendance records by trainer
+   */
+  batchConfirmByTrainer(ids: string[], trainerId: string): Promise<number>;
+
+  /**
+   * Member confirms their attendance
+   */
+  memberConfirm(id: string, participantId: string): Promise<AttendanceRecord | null>;
+
+  /**
+   * Member disputes their attendance
+   */
+  memberDispute(
+    id: string,
+    participantId: string,
+    reason: string
+  ): Promise<AttendanceRecord | null>;
+
+  /**
+   * Admin resolves a dispute
+   */
+  resolveDispute(
+    id: string,
+    resolvedBy: string,
+    resolution: 'confirmed' | 'absent'
+  ): Promise<AttendanceRecord | null>;
+
+  /**
+   * Get attendance hours summary for a member
+   */
+  getHoursSummaryForMember(memberId: string): Promise<AttendanceHoursSummary | null>;
+
+  /**
+   * Get attendance hours summary for all members in a club
+   */
+  getHoursSummaryForClub(clubId: string): Promise<AttendanceHoursSummary[]>;
 }

@@ -8,6 +8,9 @@ import { seasons } from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
 import { AutoPlanningService } from '@/lib/services/auto-planning.service';
 import type { AutoPlanRequest } from '@/lib/types/season-planning';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:auto-plan');
 
 interface RouteContext {
   params: Promise<{
@@ -106,9 +109,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         // Run auto-planning algorithm (AI or deterministic)
-        console.log(
-          `Starting auto-planning for season ${seasonId} (dry_run: ${dryRun}, ai: ${useAI})`
-        );
+        log.info('Starting auto-planning', { seasonId, dryRun, useAI });
         const startTime = Date.now();
 
         let result;
@@ -140,9 +141,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         const endTime = Date.now();
-        console.log(
-          `Auto-planning completed in ${endTime - startTime}ms (ai: ${aiEnhanced}, model: ${modelUsed})`
-        );
+        log.info('Auto-planning completed', {
+          durationMs: endTime - startTime,
+          aiEnhanced,
+          modelUsed,
+        });
 
         // Build warnings
         const warnings: string[] = [];

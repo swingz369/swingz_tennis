@@ -21,6 +21,7 @@ interface AppUser {
   id?: string;
   name?: string;
   email?: string;
+  avatarUrl?: string | null;
   memberId?: string | null;
   roles?: string[];
   club?: { id: string; name: string } | null;

@@ -56,6 +56,7 @@ function toLocalDateString(d: Date) {
   return d.toISOString().split('T')[0];
 }
 
+/* eslint-disable react-hooks/preserve-manual-memoization -- fetchSlots used as useEffect dependency */
 export default function MemberTrainerBookingPage() {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [loadingTrainers, setLoadingTrainers] = useState(true);

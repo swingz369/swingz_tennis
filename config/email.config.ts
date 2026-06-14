@@ -3,7 +3,7 @@ export const emailConfig = {
   service: {
     provider: 'resend',
     apiKey: process.env.RESEND_API_KEY,
-    from: process.env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>',
+    from: process.env.EMAIL_FROM || 'SwingZ <noreply@mail.swingz.cloud>',
     replyTo: process.env.EMAIL_REPLY_TO,
   },
 
@@ -12,7 +12,7 @@ export const emailConfig = {
     name: process.env.CLUB_NAME || 'SwingZ Tennis Club',
     address: process.env.CLUB_ADDRESS || '',
     phone: process.env.CLUB_PHONE || '',
-    email: process.env.CLUB_EMAIL || 'info@swingz.cloud',
+    email: process.env.CLUB_EMAIL || 'info@mail.swingz.cloud',
     website: process.env.NEXT_PUBLIC_APP_URL || 'https://swingz.cloud',
   },
 

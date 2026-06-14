@@ -104,26 +104,30 @@ export function PieChart({
     );
   }
 
-  let cumulative = 0;
-  const segments = data
-    .filter((d) => d.value > 0)
-    .map((d, i) => {
-      const fraction = d.value / total;
-      const dashLength = fraction * circumference;
-      const dashGap = circumference - dashLength;
-      const offset = -((cumulative / total) * circumference);
-      cumulative += d.value;
-      const stroke = resolveColor(d.color, i);
-      return {
-        key: d.key,
-        label: d.label,
-        value: d.value,
-        color: stroke,
-        fraction,
-        dashArray: `${dashLength} ${dashGap}`,
-        dashOffset: offset,
-      };
-    });
+  const positiveData = data.filter((d) => d.value > 0);
+  // Pre-compute cumulative sums immutably (no reassignment during render)
+  const cumulativeSums = positiveData.reduce<number[]>((acc, d, i) => {
+    acc.push((acc[i - 1] ?? 0) + d.value);
+    return acc;
+  }, []);
+
+  const segments = positiveData.map((d, i) => {
+    const fraction = d.value / total;
+    const dashLength = fraction * circumference;
+    const dashGap = circumference - dashLength;
+    const prevCumulative = i > 0 ? cumulativeSums[i - 1] : 0;
+    const offset = -((prevCumulative / total) * circumference);
+    const stroke = resolveColor(d.color, i);
+    return {
+      key: d.key,
+      label: d.label,
+      value: d.value,
+      color: stroke,
+      fraction,
+      dashArray: `${dashLength} ${dashGap}`,
+      dashOffset: offset,
+    };
+  });
 
   return (
     <div className={cn('relative inline-flex items-center justify-center', className)}>
@@ -168,10 +172,10 @@ export function PieChart({
         ) : (
           // Solid pie fallback (not currently used, but kept for completeness)
           <g>
-            {segments.map((s) => {
-              const startAngle = ((cumulative - s.value) / total) * Math.PI * 2;
-              const endAngle = (cumulative / total) * Math.PI * 2;
-              cumulative += s.value;
+            {segments.map((s, i) => {
+              const prevCumulative = i > 0 ? cumulativeSums[i - 1] : 0;
+              const startAngle = (prevCumulative / total) * Math.PI * 2;
+              const endAngle = ((prevCumulative + s.value) / total) * Math.PI * 2;
               const x1 = radius + radius * Math.sin(startAngle);
               const y1 = radius - radius * Math.cos(startAngle);
               const x2 = radius + radius * Math.sin(endAngle);

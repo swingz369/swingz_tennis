@@ -25,7 +25,9 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const onReadyRef = useRef(onReady);
-  onReadyRef.current = onReady;
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  }, [onReady]);
 
   useEffect(() => {
     if (!clubId) return;

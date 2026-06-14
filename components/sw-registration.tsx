@@ -18,8 +18,8 @@ export function ServiceWorkerRegistration() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
-        .then((registration) => {
-          console.log('[SW] Registered:', registration.scope);
+        .then(() => {
+          // Service worker registered successfully
         })
         .catch((error) => {
           console.error('[SW] Registration failed:', error);

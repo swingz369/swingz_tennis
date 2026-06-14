@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,11 +24,7 @@ export default function SuperadminTenantsPage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchClubs();
-  }, []);
-
-  const fetchClubs = async () => {
+  const fetchClubs = useCallback(async () => {
     try {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -89,7 +85,11 @@ export default function SuperadminTenantsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchClubs();
+  }, [fetchClubs]);
 
   const switchToClub = (clubId: string, clubName: string) => {
     if (typeof document === 'undefined') return;
@@ -97,7 +97,7 @@ export default function SuperadminTenantsPage() {
     // Set cookie for club context (24h expiry)
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
-    document.cookie = `admin_club_id=${clubId}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`;
+    document.cookie = `admin_club_id=${clubId}; path=/; expires=${expires.toUTCString()}; SameSite=Lax`; // eslint-disable-line react-hooks/immutability -- intentional side effect in click handler
 
     toast.success(`Gewechselt zu: ${clubName}`);
     router.push('/admin/members');

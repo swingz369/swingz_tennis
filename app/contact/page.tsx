@@ -1,6 +1,13 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Trophy, ArrowRight, Mail, MapPin, Sparkles, Zap } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Kontakt — SWINGZ',
+  description:
+    'Early Access anfragen und SWINGZ als Early Adopter testen. 6 Monate kostenlos, kein Risiko.',
+};
 import { IconBox } from '@/components/ui/icon-box';
 import { ContactFormClient } from './contact-form-client';
 
@@ -68,10 +75,10 @@ export default function ContactPage() {
                     <div>
                       <p className="font-medium text-foreground">E-Mail</p>
                       <a
-                        href="mailto:info@swingz.cloud"
+                        href="mailto:info@mail.swingz.cloud"
                         className="text-brand-primary hover:underline"
                       >
-                        info@swingz.cloud
+                        info@mail.swingz.cloud
                       </a>
                       <p className="text-sm text-muted-foreground mt-1">
                         Wir antworten persönlich innerhalb von 24h

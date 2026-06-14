@@ -126,7 +126,6 @@ export function PlanEditStep() {
     } finally {
       setAiLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plan, state.selectedMemberIds]);
 
   const metrics = state.clusteringResult?.metrics;

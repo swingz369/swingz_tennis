@@ -31,8 +31,10 @@ import {
   Trash2,
   Pin,
   Send,
+  Newspaper,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
+import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 
 export interface NewsItem {
   id: string;
@@ -230,11 +232,13 @@ export default function NewsAnnouncements({
     }
   };
 
+  // Compute cutoff once using useState lazy initializer (avoids Date.now() during render for purity rule)
+  const [weekAgoTimestamp] = useState(() => Date.now() - 7 * 24 * 60 * 60 * 1000);
+
   const filteredNews = news.filter((item) => {
     if (filter === 'pinned' && !item.isPinned) return false;
     if (filter === 'recent') {
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      return new Date(item.publishedAt) >= weekAgo;
+      return new Date(item.publishedAt).getTime() >= weekAgoTimestamp;
     }
     if (selectedType !== 'all' && item.type !== selectedType) return false;
     return true;
@@ -261,20 +265,129 @@ export default function NewsAnnouncements({
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">News & Ankündigungen</h1>
-          <p className="text-muted-foreground">
-            Bleib auf dem Laufenden über Neuigkeiten und Updates
-          </p>
+      {/* ── Hero Header ── */}
+      <ScrollReveal>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+          <div className="absolute inset-0 bg-noise opacity-5" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
+          <div className="relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-white/70 mb-1">Informationen</p>
+                <h1 className="text-2xl md:text-3xl font-bold">News & Ankündigungen</h1>
+                <p className="text-white/70 mt-2">
+                  Bleib auf dem Laufenden über Neuigkeiten und Updates
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                {canManage && (
+                  <Button
+                    onClick={() => setComposeOpen(true)}
+                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25 gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Neue Nachricht
+                  </Button>
+                )}
+                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
+                  <Newspaper className="h-5 w-5 text-brand-accent" />
+                  <span className="text-sm font-medium">
+                    <AnimatedCounter value={news.length} /> Nachrichten
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        {canManage && (
-          <Button onClick={() => setComposeOpen(true)} className="gap-2 self-start sm:self-auto">
-            <Plus className="h-4 w-4" />
-            Neue Nachricht verfassen
-          </Button>
-        )}
+      </ScrollReveal>
+
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ScrollReveal delay={0}>
+          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Gesamt</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={news.length} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">Nachrichten</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <Bell className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={80}>
+          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Angepinnt</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter value={news.filter((n) => n.isPinned).length} />
+                  </p>
+                  <p className="text-xs text-muted-foreground">wichtige Nachrichten</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <CheckCircle className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={160}>
+          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Dringend</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter
+                      value={
+                        news.filter((n) => n.priority === 'urgent' || n.priority === 'high').length
+                      }
+                    />
+                  </p>
+                  <p className="text-xs text-muted-foreground">Priorität hoch+</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
+
+        <ScrollReveal delay={240}>
+          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Diese Woche</p>
+                  <p className="text-3xl font-bold text-foreground dark:text-white">
+                    <AnimatedCounter
+                      value={
+                        news.filter((n) => new Date(n.publishedAt).getTime() >= weekAgoTimestamp)
+                          .length
+                      }
+                    />
+                  </p>
+                  <p className="text-xs text-muted-foreground">neue Beiträge</p>
+                </div>
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </ScrollReveal>
       </div>
 
       {/* Filters */}
@@ -447,66 +560,6 @@ export default function NewsAnnouncements({
             );
           })
         )}
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">Gesamt</div>
-                <div className="text-2xl font-bold">{news.length}</div>
-              </div>
-              <Bell className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">Angepinnt</div>
-                <div className="text-2xl font-bold">{news.filter((n) => n.isPinned).length}</div>
-              </div>
-              <CheckCircle className="h-8 w-8 text-brand-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">Dringend</div>
-                <div className="text-2xl font-bold">
-                  {news.filter((n) => n.priority === 'urgent' || n.priority === 'high').length}
-                </div>
-              </div>
-              <AlertTriangle className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-muted-foreground">Diese Woche</div>
-                <div className="text-2xl font-bold">
-                  {
-                    news.filter((n) => {
-                      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                      return new Date(n.publishedAt) >= weekAgo;
-                    }).length
-                  }
-                </div>
-              </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Compose Dialog (admin only) — migrated to CenteredModal for

@@ -314,6 +314,8 @@ export class HoursLogService {
       checkInTime: input.checkInTime,
       checkOutTime: input.checkOutTime,
       notes: input.notes,
+      trainerConfirmed: false,
+      memberStatus: 'pending',
       createdAt: now,
       updatedAt: now,
     };

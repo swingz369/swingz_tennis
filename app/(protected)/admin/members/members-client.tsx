@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
+import MemberImportDialog from '@/components/admin/member-import-dialog';
 import type { Member } from './member.types';
 import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
@@ -265,10 +266,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
             Verwalte deine Vereinsmitglieder
           </p>
         </div>
-        <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
-          <UserPlus className="h-4 w-4" />
-          Mitglied einladen
-        </Button>
+        <div className="flex gap-2">
+          <MemberImportDialog onImportComplete={() => router.refresh()} />
+          <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Mitglied einladen
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

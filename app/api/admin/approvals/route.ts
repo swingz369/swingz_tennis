@@ -4,7 +4,10 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { EmailService } from '@/src/application/services/email.service';
 import { EmailService as InfraEmailService } from '@/src/infrastructure/email/email.service';
+import { createLogger } from '@/lib/logger';
 import crypto from 'crypto';
+
+const log = createLogger('api:approvals');
 
 /**
  * Note: 'registration_requests' is not in the generated Database type.
@@ -87,7 +90,7 @@ export async function PATCH(request: NextRequest) {
           if (existingAuthUser) {
             // Auth user already exists — reuse it
             newUserId = existingAuthUser.id;
-            console.log('[Approval] Auth user already exists, reusing:', newUserId);
+            log.info('Auth user already exists, reusing', { userId: newUserId });
           } else {
             // Create new auth user
             const tempPassword = crypto.randomBytes(24).toString('base64url');
@@ -132,12 +135,10 @@ export async function PATCH(request: NextRequest) {
             if (ghostProfile) {
               // Ghost profile has a different ID than the auth user.
               // Migrate memberships to the auth user's ID, then delete the ghost.
-              console.log(
-                '[Approval] Ghost profile found (id=' +
-                  ghostProfile.id +
-                  '), migrating to auth user id=' +
-                  newUserId
-              );
+              log.info('Ghost profile found, migrating to auth user', {
+                ghostId: ghostProfile.id,
+                authUserId: newUserId,
+              });
               await (adminClient as any)
                 .from('user_club_memberships')
                 .update({ user_id: newUserId })
@@ -227,7 +228,7 @@ export async function PATCH(request: NextRequest) {
                 notes: 'Automatisch erstellt bei Mitgliedsantritt',
               });
             } else {
-              console.log('[Approval] No fee configuration found — skipping auto-invoice');
+              log.info('No fee configuration found — skipping auto-invoice');
             }
           }
         } catch (invoiceError) {

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User,
@@ -19,14 +19,28 @@ import {
   Phone,
   MapPin,
   Edit,
-  ChevronRight,
+  Award,
 } from 'lucide-react';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { toast } from 'sonner';
 import { useUserMember } from '@/hooks/use-user-data';
 import { apiFetch } from '@/lib/api-fetch';
+import { ScrollReveal } from '@/components/animations';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 export default function MemberProfile() {
   const { data: memberData, isLoading } = useUserMember();
+  const router = useRouter();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  const handleAvatarChange = useCallback(
+    (url: string | null) => {
+      setAvatarUrl(url);
+      // Refresh server layout to propagate avatar URL to the header
+      router.refresh();
+    },
+    [router]
+  );
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -54,6 +68,7 @@ export default function MemberProfile() {
         emergencyContact: memberData.emergencyContact || '',
         emergencyPhone: memberData.emergencyPhone || '',
       });
+      setAvatarUrl(memberData.avatarUrl || null);
     }
   }, [memberData]);
 
@@ -143,24 +158,54 @@ export default function MemberProfile() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-in">
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-      <nav className="mb-4 flex items-center gap-1.5 text-sm">
-        <span className="text-muted-foreground">Mein Profil</span>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-        <span className="font-medium text-foreground truncate">
-          {formData.fullName || 'Mitglied'}
-        </span>
-      </nav>
+      <Breadcrumb items={[{ label: formData.fullName || 'Mein Profil' }]} />
+
+      {/* ── Hero Header ── */}
+      <ScrollReveal>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+          <div className="absolute inset-0 bg-noise opacity-5" />
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
+          <div className="relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <AvatarUpload
+                  userName={formData.fullName}
+                  avatarUrl={avatarUrl}
+                  size="lg"
+                  onAvatarChange={handleAvatarChange}
+                  editable={false}
+                />
+                <div>
+                  <p className="text-sm font-medium text-white/70 mb-1">Mein Profil</p>
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    {formData.fullName || 'Mitglied'}
+                  </h1>
+                  <p className="text-white/70 mt-1">{formData.email}</p>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
+                <Award className="h-5 w-5 text-brand-accent" />
+                <span className="text-sm font-medium">Aktives Mitglied</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 flex items-center justify-center shrink-0">
-                <User className="h-6 w-6 text-brandPrimary" />
-              </div>
+              <AvatarUpload
+                userName={formData.fullName}
+                avatarUrl={avatarUrl}
+                size="md"
+                onAvatarChange={handleAvatarChange}
+              />
               <div className="min-w-0">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
                   {formData.fullName || 'Mitglied'}
@@ -171,9 +216,6 @@ export default function MemberProfile() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="success" size="lg">
-                Aktives Mitglied
-              </Badge>
               {!isEditing && (
                 <Button
                   onClick={() => setIsEditing(true)}

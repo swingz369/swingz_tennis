@@ -102,7 +102,7 @@ export class DunningService {
 
     const resend = new Resend(apiKey);
     await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'SWINGZ <noreply@swingz.cloud>',
+      from: process.env.EMAIL_FROM || 'SWINGZ <noreply@mail.swingz.cloud>',
       to: memberEmail,
       subject: `${levelLabel}: Rechnung ${invoiceNumber} ist überfällig`,
       html: `
