@@ -99,8 +99,18 @@ async function buildAuthContext(
       }
     }
   } else {
-    // Admin always sees their own club (no ClubSwitcher — only superadmin has that)
-    effectiveClubId = effectiveMembership.club_id ?? null;
+    // Admin: honor ADMIN_CLUB_COOKIE to allow club switching across managed clubs.
+    // This matches the behavior in lib/admin-context.ts (requireAdminClub).
+    if (cookieValue) {
+      const isValid = memberships.some((m) => m.role === 'admin' && m.club_id === cookieValue);
+      if (isValid) {
+        effectiveClubId = cookieValue;
+      }
+    }
+    // Fallback: first admin membership
+    if (!effectiveClubId) {
+      effectiveClubId = effectiveMembership.club_id ?? null;
+    }
 
     // FIX P0-3: Re-resolve role for the specific club.
     // If user is admin in Club A but trainer in Club B, accessing Club B should give role=trainer.

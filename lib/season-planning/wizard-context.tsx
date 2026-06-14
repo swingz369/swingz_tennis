@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useCallback, type ReactNode } from 'react';
-import { csrfHeaders } from '@/lib/csrf-client';
+import { apiFetch } from '@/lib/api-fetch';
 import type {
   WizardState,
   WizardStep,
@@ -248,9 +248,8 @@ export function WizardProvider({
     async (dryRun: boolean = false) => {
       dispatch({ type: 'SET_PROCESSING', isProcessing: true });
       try {
-        const res = await fetch(`/api/seasons/${state.seasonId}/planning/cluster`, {
+        const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/cluster`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
           body: JSON.stringify({
             seasonId: state.seasonId,
             config: state.planningConfig,
@@ -276,9 +275,8 @@ export function WizardProvider({
   const detectConflicts = useCallback(async () => {
     dispatch({ type: 'SET_PROCESSING', isProcessing: true });
     try {
-      const res = await fetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
+      const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
         method: 'POST',
-        headers: csrfHeaders(),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -298,9 +296,8 @@ export function WizardProvider({
   const confirmPlan = useCallback(async (): Promise<ConfirmPlanResponse> => {
     dispatch({ type: 'SET_PROCESSING', isProcessing: true });
     try {
-      const res = await fetch(`/api/seasons/${state.seasonId}/planning/confirm`, {
+      const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/confirm`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({
           seasonId: state.seasonId,
           acceptedWarnings: state.conflicts

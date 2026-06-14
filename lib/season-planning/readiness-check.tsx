@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Check, ArrowRight } from 'lucide-react';
+import { apiFetch } from '@/lib/api-fetch';
 
 type CheckItem = {
   key: string;
@@ -32,9 +33,7 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
   useEffect(() => {
     if (!clubId) return;
     async function check() {
-      const res = await fetch(`/api/clubs/${clubId}/planning-readiness?seasonId=${seasonId}`, {
-        headers: { 'x-csrf-token': '1' },
-      });
+      const res = await apiFetch(`/api/clubs/${clubId}/planning-readiness?seasonId=${seasonId}`);
       if (!res.ok) {
         setLoading(false);
         return;

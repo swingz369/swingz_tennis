@@ -83,12 +83,6 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
     load();
   }, [id, router]);
 
-  const getCsrfToken = () =>
-    document.cookie
-      .split('; ')
-      .find((c) => c.startsWith('csrf-token='))
-      ?.split('=')[1];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.start_date || !formData.end_date) {
@@ -97,10 +91,8 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
     }
     setLoading(true);
     try {
-      const csrf = getCsrfToken();
       const res = await apiFetch(`/api/seasons/${id}`, {
         method: 'PATCH',
-        headers: { ...(csrf ? { 'x-csrf-token': csrf } : {}) },
         body: JSON.stringify(formData),
       });
       if (!res.ok) {
@@ -123,10 +115,8 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
     }
     setDeleting(true);
     try {
-      const csrf = getCsrfToken();
       const res = await apiFetch(`/api/seasons/${id}`, {
         method: 'DELETE',
-        headers: csrf ? { 'x-csrf-token': csrf } : {},
       });
       if (!res.ok) {
         const err = await res.json();
