@@ -31,7 +31,7 @@ const CSRF_EXCLUDED_PATHS = [
   '/api/csrf-token',
   '/api/auth/login',
   '/api/auth/logout',
-  '/api/debug',
+
   '/api/health',
 ];
 

@@ -22,7 +22,9 @@ function getResend(): Resend | null {
   if (!resendInstance) {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      console.warn('RESEND_API_KEY not set, email sending disabled');
+      if (process.env.NODE_ENV !== 'test') {
+        console.warn('RESEND_API_KEY not set, email sending disabled');
+      }
       return null;
     }
     resendInstance = new Resend(apiKey);
@@ -437,10 +439,12 @@ export class EmailService implements IEmailService {
   ): Promise<void> {
     const resend = getResend();
     if (!resend) {
-      console.log('Email skipped: RESEND_API_KEY not configured', {
-        to,
-        subject: template.subject,
-      });
+      if (process.env.NODE_ENV !== 'test') {
+        console.log('Email skipped: RESEND_API_KEY not configured', {
+          to,
+          subject: template.subject,
+        });
+      }
       return;
     }
 

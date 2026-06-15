@@ -9,7 +9,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 import { analytics } from '@/lib/analytics';
-import { getVariant } from '@/lib/experiments';
+import { useExperiment } from '@/lib/experiments';
 import {
   Trophy,
   BarChart3,
@@ -200,7 +200,7 @@ const PRICING_PLANS = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const heroCtaVariant = getVariant('landing_hero_cta');
+  const { variant: heroCtaVariant } = useExperiment('landing_hero_cta');
 
   const { ref: statsRef, visible: statsVisible } = useRevealOnScroll();
 
@@ -357,7 +357,7 @@ export default function LandingPage() {
                     <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                     <Sparkles className="h-5 w-5 relative z-10" />
                     <span className="relative z-10">
-                      {heroCtaVariant || 'Early Access anfragen'}
+                      {heroCtaVariant === 'kostenlos_testen' ? 'Kostenlos testen' : 'Demo starten'}
                     </span>
                     <ChevronRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
                   </button>

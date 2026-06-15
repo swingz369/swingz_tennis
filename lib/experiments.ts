@@ -16,21 +16,19 @@ export interface ExperimentDefinition {
   enabled: boolean;
 }
 
-// Example experiment definitions
+// Experiment definitions
 export const experiments: Record<string, ExperimentDefinition> = {
-  // Example: Test two hero CTA button texts
-  // landing_hero_cta: {
-  //   key: 'landing_hero_cta',
-  //   variants: ['demo_starten', 'kostenlos_testen'],
-  //   weights: [0.5, 0.5],
-  //   enabled: true,
-  // },
-  // Example: Pricing page layout
-  // pricing_layout: {
-  //   key: 'pricing_layout',
-  //   variants: ['standard', 'highlighted'],
-  //   enabled: false,
-  // },
+  /**
+   * Landing page hero CTA text test.
+   * Goal: measure which CTA phrasing drives more trial-training signups.
+   * Variants are consumed in the landing page hero component.
+   */
+  landing_hero_cta: {
+    key: 'landing_hero_cta',
+    variants: ['demo_starten', 'kostenlos_testen'],
+    weights: [0.5, 0.5],
+    enabled: true,
+  },
 };
 
 /**

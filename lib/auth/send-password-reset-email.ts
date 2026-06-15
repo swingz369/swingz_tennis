@@ -117,7 +117,9 @@ export async function sendPasswordResetEmail(
 ): Promise<boolean> {
   const resend = getResend();
   if (!resend) {
-    console.warn('[sendPasswordResetEmail] RESEND_API_KEY not configured — email skipped');
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('[sendPasswordResetEmail] RESEND_API_KEY not configured — email skipped');
+    }
     return false;
   }
 

@@ -257,7 +257,7 @@ export class SeasonConfirmationEmailService {
 
     const resend = this.getResend();
     if (!resend) {
-      log.warn('RESEND_API_KEY not configured, skipping season confirmation emails');
+      log.info('RESEND_API_KEY not configured, skipping season confirmation emails');
       return result;
     }
 

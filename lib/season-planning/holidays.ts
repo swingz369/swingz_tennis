@@ -242,82 +242,114 @@ const HOLIDAYS_2026: Record<string, Holiday[]> = {
  * In practice, the two maps cover different date ranges so conflicts are rare.
  */
 function mergeHolidays(a: Holiday[], b: Holiday[]): Holiday[] {
-  // Concatenate both years — holidays from different years never overlap
-  // date-wise, so name-based dedup would incorrectly drop 2026 entries
-  // (e.g. "Sommerferien" exists in both 2025 and 2026 with different dates).
   return [...a, ...b].sort((x, y) => x.start.localeCompare(y.start));
 }
 
 // ============================================
-// 2027 PLACEHOLDER DATA (estimated from 2026, +1 year shift)
+// 2027 SCHOOL HOLIDAYS — OFFICIAL KMK DATES
 // ============================================
-// These are approximate dates for summer 2027 planning.
-// Official KMK dates are typically published ~1 year in advance.
+// Source: Kultusministerkonferenz (KMK) Ferienkalender 2026/2027
+// https://www.kmk.org/service/ferienregelung/ferienkalender.html
 
 const HOLIDAYS_2027: Record<string, Holiday[]> = {
   BW: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-10' },
+    { name: 'Osterferien', start: '2027-03-30', end: '2027-04-03' },
+    { name: 'Pfingstferien', start: '2027-05-18', end: '2027-05-29' },
     { name: 'Sommerferien', start: '2027-07-29', end: '2027-09-11' },
+    { name: 'Herbstferien', start: '2027-11-02', end: '2027-11-06' },
   ],
   BY: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
-    { name: 'Sommerferien', start: '2027-07-30', end: '2027-09-13' },
+    { name: 'Frühjahrsferien', start: '2027-02-08', end: '2027-02-12' },
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-02' },
+    { name: 'Pfingstferien', start: '2027-05-18', end: '2027-05-28' },
+    { name: 'Sommerferien', start: '2027-08-02', end: '2027-09-13' },
+    { name: 'Herbstferien', start: '2027-11-02', end: '2027-11-05' },
   ],
   BE: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
-    { name: 'Sommerferien', start: '2027-07-15', end: '2027-08-27' },
+    { name: 'Winterferien', start: '2027-02-01', end: '2027-02-06' },
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-02' },
+    { name: 'Sommerferien', start: '2027-07-01', end: '2027-08-14' },
+    { name: 'Herbstferien', start: '2027-10-11', end: '2027-10-23' },
   ],
   BB: [
-    { name: 'Osterferien', start: '2027-03-31', end: '2027-04-10' },
-    { name: 'Sommerferien', start: '2027-07-15', end: '2027-08-27' },
+    { name: 'Winterferien', start: '2027-02-01', end: '2027-02-06' },
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
+    { name: 'Sommerferien', start: '2027-07-01', end: '2027-08-14' },
+    { name: 'Herbstferien', start: '2027-10-11', end: '2027-10-23' },
   ],
   HB: [
+    { name: 'Winterferien', start: '2027-02-01', end: '2027-02-02' },
     { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
-    { name: 'Sommerferien', start: '2027-07-01', end: '2027-08-11' },
+    { name: 'Sommerferien', start: '2027-07-08', end: '2027-08-18' },
+    { name: 'Herbstferien', start: '2027-10-18', end: '2027-10-30' },
   ],
   HH: [
-    { name: 'Osterferien', start: '2027-03-08', end: '2027-03-19' },
-    { name: 'Sommerferien', start: '2027-07-15', end: '2027-08-25' },
+    { name: 'Osterferien', start: '2027-03-01', end: '2027-03-12' },
+    { name: 'Pfingstferien', start: '2027-05-07', end: '2027-05-14' },
+    { name: 'Sommerferien', start: '2027-07-01', end: '2027-08-11' },
+    { name: 'Herbstferien', start: '2027-10-11', end: '2027-10-22' },
   ],
   HE: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-10' },
-    { name: 'Sommerferien', start: '2027-07-05', end: '2027-08-13' },
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-02' },
+    { name: 'Sommerferien', start: '2027-06-28', end: '2027-08-06' },
+    { name: 'Herbstferien', start: '2027-10-04', end: '2027-10-16' },
   ],
   MV: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-07' },
-    { name: 'Sommerferien', start: '2027-07-26', end: '2027-09-04' },
+    { name: 'Winterferien', start: '2027-02-08', end: '2027-02-19' },
+    { name: 'Osterferien', start: '2027-03-24', end: '2027-04-02' },
+    { name: 'Pfingstferien', start: '2027-05-07', end: '2027-05-18' },
+    { name: 'Sommerferien', start: '2027-07-05', end: '2027-08-14' },
+    { name: 'Herbstferien', start: '2027-10-14', end: '2027-10-23' },
   ],
   NI: [
+    { name: 'Winterferien', start: '2027-02-01', end: '2027-02-02' },
     { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
-    { name: 'Sommerferien', start: '2027-07-01', end: '2027-08-11' },
+    { name: 'Sommerferien', start: '2027-07-08', end: '2027-08-18' },
+    { name: 'Herbstferien', start: '2027-10-16', end: '2027-10-30' },
   ],
   NW: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-10' },
-    { name: 'Sommerferien', start: '2027-07-12', end: '2027-08-24' },
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
+    { name: 'Pfingstferien', start: '2027-05-18', end: '2027-05-18' },
+    { name: 'Sommerferien', start: '2027-07-19', end: '2027-08-31' },
+    { name: 'Herbstferien', start: '2027-10-23', end: '2027-11-06' },
   ],
   RP: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
-    { name: 'Sommerferien', start: '2027-07-05', end: '2027-08-13' },
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-02' },
+    { name: 'Sommerferien', start: '2027-06-28', end: '2027-08-06' },
+    { name: 'Herbstferien', start: '2027-10-04', end: '2027-10-15' },
   ],
   SL: [
-    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
-    { name: 'Sommerferien', start: '2027-07-05', end: '2027-08-13' },
+    { name: 'Winterferien', start: '2027-02-08', end: '2027-02-12' },
+    { name: 'Osterferien', start: '2027-03-30', end: '2027-04-09' },
+    { name: 'Sommerferien', start: '2027-06-28', end: '2027-08-06' },
+    { name: 'Herbstferien', start: '2027-10-04', end: '2027-10-15' },
   ],
   SN: [
-    { name: 'Osterferien', start: '2027-04-02', end: '2027-04-09' },
-    { name: 'Sommerferien', start: '2027-06-26', end: '2027-08-06' },
+    { name: 'Winterferien', start: '2027-02-08', end: '2027-02-19' },
+    { name: 'Osterferien', start: '2027-03-26', end: '2027-04-02' },
+    { name: 'Pfingstferien', start: '2027-05-07', end: '2027-05-18' },
+    { name: 'Sommerferien', start: '2027-07-10', end: '2027-08-20' },
+    { name: 'Herbstferien', start: '2027-10-11', end: '2027-10-23' },
   ],
   ST: [
-    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
-    { name: 'Sommerferien', start: '2027-06-26', end: '2027-08-06' },
+    { name: 'Winterferien', start: '2027-02-01', end: '2027-02-06' },
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-03-27' },
+    { name: 'Pfingstferien', start: '2027-05-15', end: '2027-05-22' },
+    { name: 'Sommerferien', start: '2027-07-10', end: '2027-08-20' },
+    { name: 'Herbstferien', start: '2027-10-18', end: '2027-10-23' },
   ],
   SH: [
-    { name: 'Osterferien', start: '2027-03-26', end: '2027-04-09' },
-    { name: 'Sommerferien', start: '2027-07-12', end: '2027-08-21' },
+    { name: 'Osterferien', start: '2027-03-30', end: '2027-04-10' },
+    { name: 'Pfingstferien', start: '2027-05-07', end: '2027-05-07' },
+    { name: 'Sommerferien', start: '2027-07-03', end: '2027-08-14' },
+    { name: 'Herbstferien', start: '2027-10-11', end: '2027-10-23' },
   ],
   TH: [
+    { name: 'Winterferien', start: '2027-02-01', end: '2027-02-06' },
     { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
-    { name: 'Sommerferien', start: '2027-06-26', end: '2027-08-06' },
+    { name: 'Pfingstferien', start: '2027-05-07', end: '2027-05-07' },
+    { name: 'Sommerferien', start: '2027-07-10', end: '2027-08-20' },
+    { name: 'Herbstferien', start: '2027-10-09', end: '2027-10-23' },
   ],
 };
 

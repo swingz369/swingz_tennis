@@ -1,399 +1,110 @@
-'use client';
+import { requireAuth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import TrainerDashboardClient from './trainer-dashboard-client';
+import type { TrainerSession, TrainerStats } from './trainer-dashboard-client';
 
-import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
-import {
-  Calendar,
-  Users,
-  Clock,
-  TrendingUp,
-  ChevronRight,
-  CheckCircle,
-  XCircle,
-  ClipboardCheck,
-  BarChart3,
-  Bell,
-  Timer,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { QuickActions } from '@/components/ui/quick-actions';
-import { TrainerRsvpList } from '@/components/trainer-rsvp-list';
-import { apiFetch } from '@/lib/api-fetch';
-import { AnimatedCounter, ScrollReveal } from '@/components/animations';
-import { Button } from '@/components/ui/button';
+export const dynamic = 'force-dynamic';
 
-interface Session {
-  id: string;
-  startTime: string;
-  endTime: string;
-  timeslot_start?: string;
-  timeslot_end?: string;
-  status?: string;
-  maxParticipants?: number;
-  attendees?: Array<{ bookingId: string; memberName: string; status: string }>;
-  courts?: { name: string } | { name: string }[];
-  groups?: { name: string } | { name: string }[];
-}
+export default async function TrainerPage() {
+  const { supabase, user } = await requireAuth();
 
-interface TrainerStats {
-  totalSessions: number;
-  upcomingSessions: number;
-  thisWeekSessions: number;
-  attendanceRate: number;
-}
+  // Get trainer record
+  const { data: trainerRecord } = await supabase
+    .from('trainers')
+    .select('id, name')
+    .ilike('email', user.email!)
+    .eq('is_active', true)
+    .maybeSingle();
 
-export default function TrainerPage() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [stats, setStats] = useState<TrainerStats>({
-    totalSessions: 0,
-    upcomingSessions: 0,
-    thisWeekSessions: 0,
-    attendanceRate: 0,
-  });
+  if (!trainerRecord) {
+    redirect('/member');
+  }
 
-  // Calculate today's sessions from the fetched data
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const todaySessions = sessions.filter((s) => {
-    const iso = s.startTime || s.timeslot_start || '';
-    return iso.substring(0, 10) === todayStr;
-  });
+  // Fetch sessions with bookings
+  const { data: rawSessions } = await supabase
+    .from('sessions')
+    .select(
+      `id, timeslot_start, timeslot_end, max_participants,
+       courts(name), groups(name),
+       bookings(id, status, member_id)`
+    )
+    .eq('trainer_id', trainerRecord.id)
+    .order('timeslot_start', { ascending: true });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await apiFetch('/api/trainer/me', {
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        if (res.status === 403 || res.status === 404) {
-          setError(
-            errData.error ?? 'Kein Trainer-Profil gefunden. Bitte wende dich an den Administrator.'
-          );
-          return;
-        }
-        throw new Error(errData.error ?? 'Fehler beim Laden der Trainer-Daten');
-      }
-      const data = await res.json();
-      setSessions(data.sessions ?? []);
-      const statsData = data.stats ?? data;
-      setStats({
-        totalSessions: statsData.totalSessions ?? data.sessions?.length ?? 0,
-        upcomingSessions: statsData.upcomingSessions ?? 0,
-        thisWeekSessions: statsData.sessionsThisWeek ?? statsData.thisWeekSessions ?? 0,
-        attendanceRate: statsData.attendanceRate ?? 0,
-      });
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
-        setError(e.message ?? 'Unbekannter Fehler');
-      }
-    } finally {
-      setLoading(false);
+  // Collect all member_ids from bookings for name lookup
+  const memberIds = new Set<string>();
+  for (const s of rawSessions ?? []) {
+    const bookings = (s as Record<string, unknown>).bookings as Array<{
+      member_id: string | null;
+    }> | null;
+    for (const b of bookings ?? []) {
+      if (b.member_id) memberIds.add(b.member_id);
     }
-  }, []);
+  }
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // Batch-fetch member names
+  let memberNames: Record<string, string> = {};
+  if (memberIds.size > 0) {
+    const { data: users } = await supabase
+      .from('users')
+      .select('id, full_name, email')
+      .in('id', [...memberIds]);
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('de-DE', {
-      weekday: 'short',
-      day: '2-digit',
-      month: '2-digit',
-    });
-
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-
-  // Loading state with skeleton
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Skeleton className="h-7 w-48" />
-          <Skeleton className="h-4 w-28 mt-2" />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl border p-5 space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-8 w-16" />
-            </div>
-          ))}
-        </div>
-        <div className="rounded-2xl border">
-          <div className="px-5 pt-5 pb-3">
-            <Skeleton className="h-5 w-36" />
-          </div>
-          <div className="px-5 pb-5 space-y-0">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 py-4 border-t border-border dark:border-white/10"
-              >
-                <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-3 w-48" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    memberNames = Object.fromEntries(
+      (users ?? []).map((u) => [u.id, u.full_name || u.email || 'Unbekannt'])
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-          <XCircle className="h-8 w-8 text-red-400" />
-        </div>
-        <p className="text-sm text-muted-foreground">{error}</p>
-        <button
-          onClick={fetchData}
-          className="text-sm font-medium text-brand-light hover:underline underline-offset-4"
-        >
-          Erneut versuchen
-        </button>
-      </div>
-    );
-  }
+  // Transform sessions
+  const sessions: TrainerSession[] = (rawSessions ?? []).map((s) => {
+    const record = s as Record<string, unknown>;
+    const court = record.courts as { name: string } | { name: string }[] | null;
+    const group = record.groups as { name: string } | { name: string }[] | null;
+    const bookings = record.bookings as Array<{
+      id: string;
+      status: string;
+      member_id: string | null;
+    }> | null;
 
-  return (
-    <div className="space-y-6">
-      {/* ── Hero Header ── */}
-      <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Trainer-Bereich</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Willkommen zurück</h1>
-                <p className="text-white/70 mt-2">
-                  Deine Übersicht über Sessions, Anwesenheit und mehr
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  asChild
-                  className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25"
-                >
-                  <Link href="/scheduler">Alle Einheiten</Link>
-                </Button>
-                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
-                  <Clock className="h-5 w-5 text-brand-accent" />
-                  <span className="text-sm font-medium">
-                    {todaySessions.length > 0 ? (
-                      <>{todaySessions.length} Sessions heute</>
-                    ) : (
-                      <>
-                        <AnimatedCounter value={stats.upcomingSessions} /> kommende
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ScrollReveal>
+    const courtName = Array.isArray(court) ? court[0]?.name : court?.name;
+    const groupName = Array.isArray(group) ? group[0]?.name : group?.name;
 
-      {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ScrollReveal delay={0}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Gesamt Sessions</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.totalSessions} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">alle Zeiten</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Calendar className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+    return {
+      id: record.id as string,
+      startTime: record.timeslot_start as string,
+      endTime: record.timeslot_end as string,
+      maxParticipants: record.max_participants as number | undefined,
+      courtName: courtName ?? undefined,
+      groupName: groupName ?? undefined,
+      attendees: (bookings ?? []).map((b) => ({
+        bookingId: b.id,
+        memberName: memberNames[b.member_id ?? ''] ?? 'Unbekannt',
+        status: b.status,
+      })),
+    };
+  });
 
-        <ScrollReveal delay={80}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Kommende</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.upcomingSessions} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">anstehende Einheiten</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <TrendingUp className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+  // Calculate stats
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        <ScrollReveal delay={160}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Diese Woche</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.thisWeekSessions} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Einheiten geplant</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Timer className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+  const upcomingSessions = sessions.filter((s) => new Date(s.startTime) >= now).length;
+  const thisWeekSessions = sessions.filter((s) => new Date(s.startTime) >= weekAgo).length;
 
-        <ScrollReveal delay={240}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Anwesenheit</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={stats.attendanceRate} suffix="%" />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Quote</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <CheckCircle className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-      </div>
-
-      {/* ── Upcoming sessions ── */}
-      <ScrollReveal delay={300}>
-        <Card className="p-0 border border-border dark:border-white/10 overflow-hidden">
-          <CardHeader className="px-5 pt-5 pb-3 border-b border-border dark:border-white/10">
-            <CardTitle className="text-sm font-semibold flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-brand-light/10 text-brand-light">
-                  <Calendar className="h-4 w-4" />
-                </div>
-                <span>Kommende Einheiten</span>
-              </div>
-              <Link
-                href="/scheduler"
-                className="text-xs text-brand-light hover:underline font-normal flex items-center gap-1 group"
-              >
-                Alle anzeigen
-                <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-5 pb-5">
-            {sessions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
-                  <Calendar className="h-7 w-7 text-muted-foreground/50" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Keine bevorstehenden Sessions
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Sobald dir Einheiten zugewiesen werden, erscheinen sie hier
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border dark:divide-white/5">
-                {sessions.slice(0, 5).map((session) => {
-                  const court = Array.isArray(session.courts) ? session.courts[0] : session.courts;
-                  const group = Array.isArray(session.groups) ? session.groups[0] : session.groups;
-                  const startIso = session.startTime || session.timeslot_start || '';
-                  const endIso = session.endTime || session.timeslot_end || '';
-                  return (
-                    <div
-                      key={session.id}
-                      className="flex items-center gap-3 py-3.5 hover:bg-muted/50 transition-colors rounded-lg -mx-2 px-2 group/item"
-                    >
-                      <div className="h-10 w-10 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
-                        <Calendar className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground dark:text-white truncate">
-                          {group?.name || court?.name || 'Training'}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {formatDate(startIso)} · {formatTime(startIso)}–{formatTime(endIso)}
-                        </p>
-                      </div>
-                      <Link
-                        href={`/attendance-history?session=${session.id}`}
-                        className="flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-xl bg-brand-light/10 hover:bg-brand-light/20 transition-all text-brand-light text-xs font-medium"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ClipboardCheck className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Anwesenheit</span>
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </ScrollReveal>
-
-      {/* ── Session RSVPs & Check-in ── */}
-      <ScrollReveal delay={350}>
-        <TrainerRsvpList sessions={sessions} />
-      </ScrollReveal>
-
-      {/* ── Quick Actions ── */}
-      <ScrollReveal delay={400}>
-        <QuickActions
-          label="Schnellzugriff"
-          actions={[
-            { label: 'Einheiten', href: '/scheduler', icon: Calendar, variant: 'light' },
-            {
-              label: 'Anwesenheit',
-              href: '/attendance-history',
-              icon: ClipboardCheck,
-              variant: 'blue',
-            },
-            {
-              label: 'Verfügbarkeit',
-              href: '/trainer/availability',
-              icon: Clock,
-              variant: 'purple',
-            },
-            { label: 'Profil', href: '/trainer/profile', icon: Users, variant: 'green' },
-            { label: 'Abrechnung', href: '/billing', icon: BarChart3, variant: 'amber' },
-            { label: 'Nachrichten', href: '/notifications', icon: Bell, variant: 'blue' },
-          ]}
-        />
-      </ScrollReveal>
-    </div>
+  const totalAttendees = sessions.reduce((sum, s) => sum + (s.attendees?.length ?? 0), 0);
+  const noShowCount = sessions.reduce(
+    (sum, s) => sum + (s.attendees?.filter((a) => a.status === 'no_show').length ?? 0),
+    0
   );
+  const attendanceRate =
+    totalAttendees > 0 ? Math.round(((totalAttendees - noShowCount) / totalAttendees) * 100) : 0;
+
+  const stats: TrainerStats = {
+    totalSessions: sessions.length,
+    upcomingSessions,
+    thisWeekSessions,
+    attendanceRate,
+  };
+
+  return <TrainerDashboardClient sessions={sessions} stats={stats} />;
 }

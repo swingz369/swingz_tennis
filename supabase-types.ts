@@ -1,6 +1,11 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '14.5';
+  };
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -138,6 +143,66 @@ export type Database = {
           },
         ];
       };
+      background_jobs: {
+        Row: {
+          completed_at: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          error_message: string | null;
+          id: string;
+          job_name: string;
+          job_type: string;
+          max_retries: number | null;
+          payload: Json | null;
+          priority: number;
+          result: Json | null;
+          retry_count: number | null;
+          schedule_expression: string | null;
+          scheduled_at: string | null;
+          started_at: string | null;
+          status: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          error_message?: string | null;
+          id?: string;
+          job_name: string;
+          job_type: string;
+          max_retries?: number | null;
+          payload?: Json | null;
+          priority?: number;
+          result?: Json | null;
+          retry_count?: number | null;
+          schedule_expression?: string | null;
+          scheduled_at?: string | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          error_message?: string | null;
+          id?: string;
+          job_name?: string;
+          job_type?: string;
+          max_retries?: number | null;
+          payload?: Json | null;
+          priority?: number;
+          result?: Json | null;
+          retry_count?: number | null;
+          schedule_expression?: string | null;
+          scheduled_at?: string | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       billing_line_items: {
         Row: {
           amount: number;
@@ -234,6 +299,7 @@ export type Database = {
           max_bookings_per_week: number | null;
           min_booking_duration_minutes: number | null;
           name: string;
+          require_payment: boolean;
           updated_at: string | null;
         };
         Insert: {
@@ -250,6 +316,7 @@ export type Database = {
           max_bookings_per_week?: number | null;
           min_booking_duration_minutes?: number | null;
           name?: string;
+          require_payment?: boolean;
           updated_at?: string | null;
         };
         Update: {
@@ -266,6 +333,7 @@ export type Database = {
           max_bookings_per_week?: number | null;
           min_booking_duration_minutes?: number | null;
           name?: string;
+          require_payment?: boolean;
           updated_at?: string | null;
         };
         Relationships: [
@@ -420,26 +488,34 @@ export type Database = {
       };
       clubs: {
         Row: {
+          accent_color: string | null;
           address: string | null;
           billing_unit_minutes: number;
           bundesland: string | null;
           city: string | null;
           created_at: string;
+          custom_domain: string | null;
           datev_creditor_number: string | null;
           default_hourly_rate: number | null;
           default_payment_method: string;
           default_session_duration_minutes: number | null;
           description: string | null;
           email: string | null;
+          favicon_url: string | null;
+          features: Json;
           founding_date: string | null;
           hourly_rate: number | null;
           id: string;
           invoice_number_prefix: string;
+          logo_dark_url: string | null;
+          logo_light_url: string | null;
           logo_url: string | null;
           max_members: number;
           name: string;
           opening_hours: Json;
           phone: string | null;
+          primary_color: string | null;
+          secondary_color: string | null;
           setup_completed_at: string | null;
           slug: string | null;
           status: string;
@@ -449,26 +525,34 @@ export type Database = {
           website: string | null;
         };
         Insert: {
+          accent_color?: string | null;
           address?: string | null;
           billing_unit_minutes?: number;
           bundesland?: string | null;
           city?: string | null;
           created_at?: string;
+          custom_domain?: string | null;
           datev_creditor_number?: string | null;
           default_hourly_rate?: number | null;
           default_payment_method?: string;
           default_session_duration_minutes?: number | null;
           description?: string | null;
           email?: string | null;
+          favicon_url?: string | null;
+          features?: Json;
           founding_date?: string | null;
           hourly_rate?: number | null;
           id?: string;
           invoice_number_prefix?: string;
+          logo_dark_url?: string | null;
+          logo_light_url?: string | null;
           logo_url?: string | null;
           max_members?: number;
           name: string;
           opening_hours: Json;
           phone?: string | null;
+          primary_color?: string | null;
+          secondary_color?: string | null;
           setup_completed_at?: string | null;
           slug?: string | null;
           status?: string;
@@ -478,26 +562,34 @@ export type Database = {
           website?: string | null;
         };
         Update: {
+          accent_color?: string | null;
           address?: string | null;
           billing_unit_minutes?: number;
           bundesland?: string | null;
           city?: string | null;
           created_at?: string;
+          custom_domain?: string | null;
           datev_creditor_number?: string | null;
           default_hourly_rate?: number | null;
           default_payment_method?: string;
           default_session_duration_minutes?: number | null;
           description?: string | null;
           email?: string | null;
+          favicon_url?: string | null;
+          features?: Json;
           founding_date?: string | null;
           hourly_rate?: number | null;
           id?: string;
           invoice_number_prefix?: string;
+          logo_dark_url?: string | null;
+          logo_light_url?: string | null;
           logo_url?: string | null;
           max_members?: number;
           name?: string;
           opening_hours?: Json;
           phone?: string | null;
+          primary_color?: string | null;
+          secondary_color?: string | null;
           setup_completed_at?: string | null;
           slug?: string | null;
           status?: string;
@@ -505,6 +597,42 @@ export type Database = {
           timezone?: string | null;
           updated_at?: string;
           website?: string | null;
+        };
+        Relationships: [];
+      };
+      contact_requests: {
+        Row: {
+          club_name: string | null;
+          created_at: string;
+          email: string;
+          first_name: string;
+          id: string;
+          last_name: string;
+          message: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          club_name?: string | null;
+          created_at?: string;
+          email: string;
+          first_name: string;
+          id?: string;
+          last_name: string;
+          message: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          club_name?: string | null;
+          created_at?: string;
+          email?: string;
+          first_name?: string;
+          id?: string;
+          last_name?: string;
+          message?: string;
+          status?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -608,6 +736,76 @@ export type Database = {
             columns: ['court_id'];
             isOneToOne: false;
             referencedRelation: 'courts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      court_closures: {
+        Row: {
+          auto_generated: boolean;
+          club_id: string;
+          court_id: string;
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          end_date: string | null;
+          id: string;
+          is_active: boolean;
+          reason: string;
+          start_date: string;
+          updated_at: string;
+          weather_condition: string | null;
+        };
+        Insert: {
+          auto_generated?: boolean;
+          club_id: string;
+          court_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          end_date?: string | null;
+          id?: string;
+          is_active?: boolean;
+          reason: string;
+          start_date: string;
+          updated_at?: string;
+          weather_condition?: string | null;
+        };
+        Update: {
+          auto_generated?: boolean;
+          club_id?: string;
+          court_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          end_date?: string | null;
+          id?: string;
+          is_active?: boolean;
+          reason?: string;
+          start_date?: string;
+          updated_at?: string;
+          weather_condition?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'court_closures_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'court_closures_court_id_fkey';
+            columns: ['court_id'];
+            isOneToOne: false;
+            referencedRelation: 'courts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'court_closures_created_by_fkey';
+            columns: ['created_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -932,21 +1130,27 @@ export type Database = {
           created_at: string | null;
           family_group_id: string;
           id: string;
+          parent_pin_hash: string | null;
           relationship: string | null;
+          role: string | null;
           user_id: string;
         };
         Insert: {
           created_at?: string | null;
           family_group_id: string;
           id?: string;
+          parent_pin_hash?: string | null;
           relationship?: string | null;
+          role?: string | null;
           user_id: string;
         };
         Update: {
           created_at?: string | null;
           family_group_id?: string;
           id?: string;
+          parent_pin_hash?: string | null;
           relationship?: string | null;
+          role?: string | null;
           user_id?: string;
         };
         Relationships: [
@@ -1238,6 +1442,7 @@ export type Database = {
           end_time: string;
           id: string;
           notes: string | null;
+          rejection_reason: string | null;
           session_id: string | null;
           start_time: string;
           status: string;
@@ -1256,6 +1461,7 @@ export type Database = {
           end_time: string;
           id?: string;
           notes?: string | null;
+          rejection_reason?: string | null;
           session_id?: string | null;
           start_time: string;
           status?: string;
@@ -1274,6 +1480,7 @@ export type Database = {
           end_time?: string;
           id?: string;
           notes?: string | null;
+          rejection_reason?: string | null;
           session_id?: string | null;
           start_time?: string;
           status?: string;
@@ -1517,6 +1724,171 @@ export type Database = {
           },
         ];
       };
+      job_execution_log: {
+        Row: {
+          created_at: string | null;
+          error_message: string | null;
+          execution_completed_at: string | null;
+          execution_duration_ms: number | null;
+          execution_started_at: string;
+          id: string;
+          job_id: string;
+          result: Json | null;
+          stack_trace: string | null;
+          success: boolean;
+        };
+        Insert: {
+          created_at?: string | null;
+          error_message?: string | null;
+          execution_completed_at?: string | null;
+          execution_duration_ms?: number | null;
+          execution_started_at?: string;
+          id?: string;
+          job_id: string;
+          result?: Json | null;
+          stack_trace?: string | null;
+          success?: boolean;
+        };
+        Update: {
+          created_at?: string | null;
+          error_message?: string | null;
+          execution_completed_at?: string | null;
+          execution_duration_ms?: number | null;
+          execution_started_at?: string;
+          id?: string;
+          job_id?: string;
+          result?: Json | null;
+          stack_trace?: string | null;
+          success?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'job_execution_log_job_id_fkey';
+            columns: ['job_id'];
+            isOneToOne: false;
+            referencedRelation: 'background_jobs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      leagues: {
+        Row: {
+          age_group: string | null;
+          club_id: string;
+          created_at: string;
+          division: string | null;
+          id: string;
+          last_synced_at: string | null;
+          league_type: string;
+          name: string;
+          notes: string | null;
+          nuliga_url: string | null;
+          season_year: number;
+          sport: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          age_group?: string | null;
+          club_id: string;
+          created_at?: string;
+          division?: string | null;
+          id?: string;
+          last_synced_at?: string | null;
+          league_type?: string;
+          name: string;
+          notes?: string | null;
+          nuliga_url?: string | null;
+          season_year: number;
+          sport?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          age_group?: string | null;
+          club_id?: string;
+          created_at?: string;
+          division?: string | null;
+          id?: string;
+          last_synced_at?: string | null;
+          league_type?: string;
+          name?: string;
+          notes?: string | null;
+          nuliga_url?: string | null;
+          season_year?: number;
+          sport?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'leagues_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      match_days: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_home: boolean;
+          league_id: string;
+          matchday_number: number;
+          notes: string | null;
+          opponent: string;
+          result: string | null;
+          scheduled_date: string | null;
+          score_away: number | null;
+          score_home: number | null;
+          status: string;
+          updated_at: string;
+          venue: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_home?: boolean;
+          league_id: string;
+          matchday_number: number;
+          notes?: string | null;
+          opponent: string;
+          result?: string | null;
+          scheduled_date?: string | null;
+          score_away?: number | null;
+          score_home?: number | null;
+          status?: string;
+          updated_at?: string;
+          venue?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_home?: boolean;
+          league_id?: string;
+          matchday_number?: number;
+          notes?: string | null;
+          opponent?: string;
+          result?: string | null;
+          scheduled_date?: string | null;
+          score_away?: number | null;
+          score_home?: number | null;
+          status?: string;
+          updated_at?: string;
+          venue?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'match_days_league_id_fkey';
+            columns: ['league_id'];
+            isOneToOne: false;
+            referencedRelation: 'leagues';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       member_balance_entries: {
         Row: {
           amount: number;
@@ -1670,6 +2042,80 @@ export type Database = {
           },
         ];
       };
+      messages: {
+        Row: {
+          broadcast_type: string | null;
+          club_id: string | null;
+          content: string;
+          created_at: string;
+          id: string;
+          is_read: boolean;
+          read_at: string | null;
+          receiver_id: string;
+          replied_to_id: string | null;
+          sender_id: string;
+          subject: string;
+          updated_at: string;
+        };
+        Insert: {
+          broadcast_type?: string | null;
+          club_id?: string | null;
+          content: string;
+          created_at?: string;
+          id?: string;
+          is_read?: boolean;
+          read_at?: string | null;
+          receiver_id: string;
+          replied_to_id?: string | null;
+          sender_id: string;
+          subject: string;
+          updated_at?: string;
+        };
+        Update: {
+          broadcast_type?: string | null;
+          club_id?: string | null;
+          content?: string;
+          created_at?: string;
+          id?: string;
+          is_read?: boolean;
+          read_at?: string | null;
+          receiver_id?: string;
+          replied_to_id?: string | null;
+          sender_id?: string;
+          subject?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'messages_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'messages_receiver_id_fkey';
+            columns: ['receiver_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'messages_replied_to_id_fkey';
+            columns: ['replied_to_id'];
+            isOneToOne: false;
+            referencedRelation: 'messages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'messages_sender_id_fkey';
+            columns: ['sender_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       news_comments: {
         Row: {
           content: string;
@@ -1813,6 +2259,191 @@ export type Database = {
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      nuliga_sync_log: {
+        Row: {
+          club_id: string;
+          completed_at: string;
+          created_at: string;
+          duration_ms: number | null;
+          error_message: string | null;
+          id: string;
+          league_id: string;
+          matches_created: number;
+          matches_updated: number;
+          nuliga_championship: string | null;
+          nuliga_group_name: string | null;
+          nuliga_url: string;
+          started_at: string;
+          status: string;
+          teams_created: number;
+          teams_updated: number;
+          trigger: string;
+        };
+        Insert: {
+          club_id: string;
+          completed_at?: string;
+          created_at?: string;
+          duration_ms?: number | null;
+          error_message?: string | null;
+          id?: string;
+          league_id: string;
+          matches_created?: number;
+          matches_updated?: number;
+          nuliga_championship?: string | null;
+          nuliga_group_name?: string | null;
+          nuliga_url: string;
+          started_at: string;
+          status?: string;
+          teams_created?: number;
+          teams_updated?: number;
+          trigger?: string;
+        };
+        Update: {
+          club_id?: string;
+          completed_at?: string;
+          created_at?: string;
+          duration_ms?: number | null;
+          error_message?: string | null;
+          id?: string;
+          league_id?: string;
+          matches_created?: number;
+          matches_updated?: number;
+          nuliga_championship?: string | null;
+          nuliga_group_name?: string | null;
+          nuliga_url?: string;
+          started_at?: string;
+          status?: string;
+          teams_created?: number;
+          teams_updated?: number;
+          trigger?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'nuliga_sync_log_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'nuliga_sync_log_league_id_fkey';
+            columns: ['league_id'];
+            isOneToOne: false;
+            referencedRelation: 'leagues';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      open_match_participants: {
+        Row: {
+          id: string;
+          joined_at: string;
+          match_id: string;
+          role: string;
+          status: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          joined_at?: string;
+          match_id: string;
+          role?: string;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          id?: string;
+          joined_at?: string;
+          match_id?: string;
+          role?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'open_match_participants_match_id_fkey';
+            columns: ['match_id'];
+            isOneToOne: false;
+            referencedRelation: 'open_matches';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      open_matches: {
+        Row: {
+          club_id: string;
+          court_id: string | null;
+          created_at: string;
+          creator_id: string;
+          current_players: number;
+          description: string | null;
+          end_time: string;
+          id: string;
+          is_public: boolean;
+          match_date: string;
+          match_type: string;
+          max_players: number;
+          skill_level: string;
+          start_time: string;
+          status: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          club_id: string;
+          court_id?: string | null;
+          created_at?: string;
+          creator_id: string;
+          current_players?: number;
+          description?: string | null;
+          end_time: string;
+          id?: string;
+          is_public?: boolean;
+          match_date: string;
+          match_type?: string;
+          max_players?: number;
+          skill_level?: string;
+          start_time: string;
+          status?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          club_id?: string;
+          court_id?: string | null;
+          created_at?: string;
+          creator_id?: string;
+          current_players?: number;
+          description?: string | null;
+          end_time?: string;
+          id?: string;
+          is_public?: boolean;
+          match_date?: string;
+          match_type?: string;
+          max_players?: number;
+          skill_level?: string;
+          start_time?: string;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'open_matches_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'open_matches_court_id_fkey';
+            columns: ['court_id'];
+            isOneToOne: false;
+            referencedRelation: 'courts';
             referencedColumns: ['id'];
           },
         ];
@@ -2065,6 +2696,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'pricing_rules_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          club_id: string;
+          created_at: string;
+          endpoint: string;
+          id: string;
+          is_active: boolean;
+          p256dh: string;
+          updated_at: string;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          auth: string;
+          club_id: string;
+          created_at?: string;
+          endpoint: string;
+          id?: string;
+          is_active?: boolean;
+          p256dh: string;
+          updated_at?: string;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          auth?: string;
+          club_id?: string;
+          created_at?: string;
+          endpoint?: string;
+          id?: string;
+          is_active?: boolean;
+          p256dh?: string;
+          updated_at?: string;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'push_subscriptions_club_id_fkey';
             columns: ['club_id'];
             isOneToOne: false;
             referencedRelation: 'clubs';
@@ -2582,6 +3260,7 @@ export type Database = {
         Row: {
           ai_clustering_enabled: boolean;
           avoid_high_failure_slots: boolean;
+          backtrack_depth: number;
           club_id: string;
           created_at: string;
           group_max_size: number;
@@ -2597,12 +3276,15 @@ export type Database = {
           slot_duration_minutes: number;
           slot_failure_rate_threshold_pct: number;
           trainer_utilization_max_pct: number;
+          treat_high_failure_as_hard: boolean;
+          unassigned_rate_threshold: number;
           updated_at: string;
           waitlist_priority_rule: string;
         };
         Insert: {
           ai_clustering_enabled?: boolean;
           avoid_high_failure_slots?: boolean;
+          backtrack_depth?: number;
           club_id: string;
           created_at?: string;
           group_max_size?: number;
@@ -2618,12 +3300,15 @@ export type Database = {
           slot_duration_minutes?: number;
           slot_failure_rate_threshold_pct?: number;
           trainer_utilization_max_pct?: number;
+          treat_high_failure_as_hard?: boolean;
+          unassigned_rate_threshold?: number;
           updated_at?: string;
           waitlist_priority_rule?: string;
         };
         Update: {
           ai_clustering_enabled?: boolean;
           avoid_high_failure_slots?: boolean;
+          backtrack_depth?: number;
           club_id?: string;
           created_at?: string;
           group_max_size?: number;
@@ -2639,6 +3324,8 @@ export type Database = {
           slot_duration_minutes?: number;
           slot_failure_rate_threshold_pct?: number;
           trainer_utilization_max_pct?: number;
+          treat_high_failure_as_hard?: boolean;
+          unassigned_rate_threshold?: number;
           updated_at?: string;
           waitlist_priority_rule?: string;
         };
@@ -3378,6 +4065,110 @@ export type Database = {
             columns: ['updated_by'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      team_members: {
+        Row: {
+          created_at: string;
+          id: string;
+          is_active: boolean;
+          member_id: string;
+          position_number: number | null;
+          role: string;
+          team_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          member_id: string;
+          position_number?: number | null;
+          role?: string;
+          team_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          is_active?: boolean;
+          member_id?: string;
+          position_number?: number | null;
+          role?: string;
+          team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'team_members_team_id_fkey';
+            columns: ['team_id'];
+            isOneToOne: false;
+            referencedRelation: 'teams';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      teams: {
+        Row: {
+          captain_id: string | null;
+          club_id: string;
+          created_at: string;
+          id: string;
+          league_id: string;
+          matches_drawn: number;
+          matches_lost: number;
+          matches_played: number;
+          matches_won: number;
+          name: string;
+          notes: string | null;
+          points: number;
+          position: number | null;
+          updated_at: string;
+        };
+        Insert: {
+          captain_id?: string | null;
+          club_id: string;
+          created_at?: string;
+          id?: string;
+          league_id: string;
+          matches_drawn?: number;
+          matches_lost?: number;
+          matches_played?: number;
+          matches_won?: number;
+          name: string;
+          notes?: string | null;
+          points?: number;
+          position?: number | null;
+          updated_at?: string;
+        };
+        Update: {
+          captain_id?: string | null;
+          club_id?: string;
+          created_at?: string;
+          id?: string;
+          league_id?: string;
+          matches_drawn?: number;
+          matches_lost?: number;
+          matches_played?: number;
+          matches_won?: number;
+          name?: string;
+          notes?: string | null;
+          points?: number;
+          position?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'teams_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'teams_league_id_fkey';
+            columns: ['league_id'];
+            isOneToOne: false;
+            referencedRelation: 'leagues';
             referencedColumns: ['id'];
           },
         ];
@@ -4694,6 +5485,7 @@ export type Database = {
           created_at: string;
           current_period_end: string | null;
           date_of_birth: string | null;
+          dtb_id: string | null;
           email: string;
           emergency_contact: string | null;
           emergency_phone: string | null;
@@ -4719,6 +5511,7 @@ export type Database = {
           created_at?: string;
           current_period_end?: string | null;
           date_of_birth?: string | null;
+          dtb_id?: string | null;
           email: string;
           emergency_contact?: string | null;
           emergency_phone?: string | null;
@@ -4744,6 +5537,7 @@ export type Database = {
           created_at?: string;
           current_period_end?: string | null;
           date_of_birth?: string | null;
+          dtb_id?: string | null;
           email?: string;
           emergency_contact?: string | null;
           emergency_phone?: string | null;
@@ -4820,9 +5614,147 @@ export type Database = {
           },
         ];
       };
+      work_duties: {
+        Row: {
+          assigned_to: string | null;
+          club_id: string;
+          created_at: string;
+          description: string | null;
+          duty_type: string;
+          end_time: string | null;
+          id: string;
+          max_participants: number | null;
+          notes: string | null;
+          priority: string;
+          scheduled_date: string | null;
+          season_year: number | null;
+          start_time: string | null;
+          status: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          assigned_to?: string | null;
+          club_id: string;
+          created_at?: string;
+          description?: string | null;
+          duty_type: string;
+          end_time?: string | null;
+          id?: string;
+          max_participants?: number | null;
+          notes?: string | null;
+          priority?: string;
+          scheduled_date?: string | null;
+          season_year?: number | null;
+          start_time?: string | null;
+          status?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          assigned_to?: string | null;
+          club_id?: string;
+          created_at?: string;
+          description?: string | null;
+          duty_type?: string;
+          end_time?: string | null;
+          id?: string;
+          max_participants?: number | null;
+          notes?: string | null;
+          priority?: string;
+          scheduled_date?: string | null;
+          season_year?: number | null;
+          start_time?: string | null;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'work_duties_club_id_fkey';
+            columns: ['club_id'];
+            isOneToOne: false;
+            referencedRelation: 'clubs';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      work_duty_assignments: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          duty_id: string;
+          id: string;
+          member_id: string;
+          notes: string | null;
+          status: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          duty_id: string;
+          id?: string;
+          member_id: string;
+          notes?: string | null;
+          status?: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          duty_id?: string;
+          id?: string;
+          member_id?: string;
+          notes?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'work_duty_assignments_duty_id_fkey';
+            columns: ['duty_id'];
+            isOneToOne: false;
+            referencedRelation: 'work_duties';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
-      [_ in never]: never;
+      cron_job_health: {
+        Row: {
+          active: boolean | null;
+          failures_24h: number | null;
+          jobid: number | null;
+          jobname: string | null;
+          last_run_at: string | null;
+          last_run_message: string | null;
+          last_run_status: string | null;
+          runs_24h: number | null;
+          schedule: string | null;
+        };
+        Insert: {
+          active?: boolean | null;
+          failures_24h?: never;
+          jobid?: number | null;
+          jobname?: string | null;
+          last_run_at?: never;
+          last_run_message?: never;
+          last_run_status?: never;
+          runs_24h?: never;
+          schedule?: string | null;
+        };
+        Update: {
+          active?: boolean | null;
+          failures_24h?: never;
+          jobid?: number | null;
+          jobname?: string | null;
+          last_run_at?: never;
+          last_run_message?: never;
+          last_run_status?: never;
+          runs_24h?: never;
+          schedule?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       add_balance_entry_atomic: {
@@ -4903,6 +5835,10 @@ export type Database = {
           status: string;
         }[];
       };
+      complete_job: {
+        Args: { p_job_id: string; p_result?: Json };
+        Returns: boolean;
+      };
       create_booking_safe: {
         Args: {
           p_club_id: string;
@@ -4916,7 +5852,41 @@ export type Database = {
         Args: { p_invoice: Json; p_items: Json[] };
         Returns: string;
       };
+      enqueue_job: {
+        Args: {
+          p_job_name: string;
+          p_job_type: string;
+          p_payload?: Json;
+          p_priority?: number;
+          p_schedule_expression?: string;
+          p_scheduled_at?: string;
+        };
+        Returns: string;
+      };
+      fail_job: {
+        Args: {
+          p_error_message: string;
+          p_job_id: string;
+          p_stack_trace?: string;
+        };
+        Returns: boolean;
+      };
       generate_invoice_number: { Args: { p_club_id: string }; Returns: string };
+      generate_weekly_club_reports: {
+        Args: { week_ago: string };
+        Returns: {
+          club_id: string;
+          club_name: string;
+          new_members_week: number;
+          open_invoices: number;
+          overdue_total: number;
+          pending_approvals: number;
+          rsvps_week: number;
+          sessions_week: number;
+          total_members: number;
+          trial_requests_week: number;
+        }[];
+      };
       get_active_rate_tiers: {
         Args: { p_club_id: string };
         Returns: {
@@ -4970,11 +5940,13 @@ export type Database = {
           availability: Json;
           bio: string | null;
           club_id: string;
+          contracted_hourly_rate: number | null;
           created_at: string;
           date_of_birth: string;
           email: string;
           emergency_contact: Json;
           experience: Json;
+          extra_hours_rate: number | null;
           first_name: string;
           hourly_rate: number | null;
           id: string;
@@ -4996,11 +5968,30 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      get_cron_failures: {
+        Args: { hours_back?: number };
+        Returns: {
+          error_message: string;
+          job_id: number;
+          job_name: string;
+          run_time: string;
+        }[];
+      };
       get_current_trainer_rate: {
         Args: { p_trainer_id: string };
         Returns: number;
       };
       get_my_trainer_id: { Args: never; Returns: string };
+      get_pending_jobs: {
+        Args: { p_limit?: number };
+        Returns: {
+          job_id: string;
+          job_name: string;
+          job_type: string;
+          payload: Json;
+          priority: number;
+        }[];
+      };
       get_session_end_time: { Args: { p_session_id: string }; Returns: string };
       get_setting_value: {
         Args: { p_club_id?: string; p_key: string };
@@ -5103,6 +6094,7 @@ export type Database = {
       is_superadmin: { Args: never; Returns: boolean };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { '': string }; Returns: string[] };
+      start_job: { Args: { p_job_id: string }; Returns: boolean };
       timeslots_overlap: {
         Args: {
           day1: number;
@@ -5128,6 +6120,456 @@ export type Database = {
     };
     Enums: {
       [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+  storage: {
+    Tables: {
+      buckets: {
+        Row: {
+          allowed_mime_types: string[] | null;
+          avif_autodetection: boolean | null;
+          created_at: string | null;
+          file_size_limit: number | null;
+          id: string;
+          name: string;
+          owner: string | null;
+          owner_id: string | null;
+          public: boolean | null;
+          type: Database['storage']['Enums']['buckettype'];
+          updated_at: string | null;
+        };
+        Insert: {
+          allowed_mime_types?: string[] | null;
+          avif_autodetection?: boolean | null;
+          created_at?: string | null;
+          file_size_limit?: number | null;
+          id: string;
+          name: string;
+          owner?: string | null;
+          owner_id?: string | null;
+          public?: boolean | null;
+          type?: Database['storage']['Enums']['buckettype'];
+          updated_at?: string | null;
+        };
+        Update: {
+          allowed_mime_types?: string[] | null;
+          avif_autodetection?: boolean | null;
+          created_at?: string | null;
+          file_size_limit?: number | null;
+          id?: string;
+          name?: string;
+          owner?: string | null;
+          owner_id?: string | null;
+          public?: boolean | null;
+          type?: Database['storage']['Enums']['buckettype'];
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      buckets_analytics: {
+        Row: {
+          created_at: string;
+          deleted_at: string | null;
+          format: string;
+          id: string;
+          name: string;
+          type: Database['storage']['Enums']['buckettype'];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          deleted_at?: string | null;
+          format?: string;
+          id?: string;
+          name: string;
+          type?: Database['storage']['Enums']['buckettype'];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          deleted_at?: string | null;
+          format?: string;
+          id?: string;
+          name?: string;
+          type?: Database['storage']['Enums']['buckettype'];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      buckets_vectors: {
+        Row: {
+          created_at: string;
+          id: string;
+          type: Database['storage']['Enums']['buckettype'];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id: string;
+          type?: Database['storage']['Enums']['buckettype'];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          type?: Database['storage']['Enums']['buckettype'];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      migrations: {
+        Row: {
+          executed_at: string | null;
+          hash: string;
+          id: number;
+          name: string;
+        };
+        Insert: {
+          executed_at?: string | null;
+          hash: string;
+          id: number;
+          name: string;
+        };
+        Update: {
+          executed_at?: string | null;
+          hash?: string;
+          id?: number;
+          name?: string;
+        };
+        Relationships: [];
+      };
+      objects: {
+        Row: {
+          bucket_id: string | null;
+          created_at: string | null;
+          id: string;
+          last_accessed_at: string | null;
+          metadata: Json | null;
+          name: string | null;
+          owner: string | null;
+          owner_id: string | null;
+          path_tokens: string[] | null;
+          updated_at: string | null;
+          user_metadata: Json | null;
+          version: string | null;
+        };
+        Insert: {
+          bucket_id?: string | null;
+          created_at?: string | null;
+          id?: string;
+          last_accessed_at?: string | null;
+          metadata?: Json | null;
+          name?: string | null;
+          owner?: string | null;
+          owner_id?: string | null;
+          path_tokens?: string[] | null;
+          updated_at?: string | null;
+          user_metadata?: Json | null;
+          version?: string | null;
+        };
+        Update: {
+          bucket_id?: string | null;
+          created_at?: string | null;
+          id?: string;
+          last_accessed_at?: string | null;
+          metadata?: Json | null;
+          name?: string | null;
+          owner?: string | null;
+          owner_id?: string | null;
+          path_tokens?: string[] | null;
+          updated_at?: string | null;
+          user_metadata?: Json | null;
+          version?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'objects_bucketId_fkey';
+            columns: ['bucket_id'];
+            isOneToOne: false;
+            referencedRelation: 'buckets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      s3_multipart_uploads: {
+        Row: {
+          bucket_id: string;
+          created_at: string;
+          id: string;
+          in_progress_size: number;
+          key: string;
+          metadata: Json | null;
+          owner_id: string | null;
+          upload_signature: string;
+          user_metadata: Json | null;
+          version: string;
+        };
+        Insert: {
+          bucket_id: string;
+          created_at?: string;
+          id: string;
+          in_progress_size?: number;
+          key: string;
+          metadata?: Json | null;
+          owner_id?: string | null;
+          upload_signature: string;
+          user_metadata?: Json | null;
+          version: string;
+        };
+        Update: {
+          bucket_id?: string;
+          created_at?: string;
+          id?: string;
+          in_progress_size?: number;
+          key?: string;
+          metadata?: Json | null;
+          owner_id?: string | null;
+          upload_signature?: string;
+          user_metadata?: Json | null;
+          version?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 's3_multipart_uploads_bucket_id_fkey';
+            columns: ['bucket_id'];
+            isOneToOne: false;
+            referencedRelation: 'buckets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      s3_multipart_uploads_parts: {
+        Row: {
+          bucket_id: string;
+          created_at: string;
+          etag: string;
+          id: string;
+          key: string;
+          owner_id: string | null;
+          part_number: number;
+          size: number;
+          upload_id: string;
+          version: string;
+        };
+        Insert: {
+          bucket_id: string;
+          created_at?: string;
+          etag: string;
+          id?: string;
+          key: string;
+          owner_id?: string | null;
+          part_number: number;
+          size?: number;
+          upload_id: string;
+          version: string;
+        };
+        Update: {
+          bucket_id?: string;
+          created_at?: string;
+          etag?: string;
+          id?: string;
+          key?: string;
+          owner_id?: string | null;
+          part_number?: number;
+          size?: number;
+          upload_id?: string;
+          version?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 's3_multipart_uploads_parts_bucket_id_fkey';
+            columns: ['bucket_id'];
+            isOneToOne: false;
+            referencedRelation: 'buckets';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 's3_multipart_uploads_parts_upload_id_fkey';
+            columns: ['upload_id'];
+            isOneToOne: false;
+            referencedRelation: 's3_multipart_uploads';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      vector_indexes: {
+        Row: {
+          bucket_id: string;
+          created_at: string;
+          data_type: string;
+          dimension: number;
+          distance_metric: string;
+          id: string;
+          metadata_configuration: Json | null;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          bucket_id: string;
+          created_at?: string;
+          data_type: string;
+          dimension: number;
+          distance_metric: string;
+          id?: string;
+          metadata_configuration?: Json | null;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          bucket_id?: string;
+          created_at?: string;
+          data_type?: string;
+          dimension?: number;
+          distance_metric?: string;
+          id?: string;
+          metadata_configuration?: Json | null;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vector_indexes_bucket_id_fkey';
+            columns: ['bucket_id'];
+            isOneToOne: false;
+            referencedRelation: 'buckets_vectors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      allow_any_operation: {
+        Args: { expected_operations: string[] };
+        Returns: boolean;
+      };
+      allow_only_operation: {
+        Args: { expected_operation: string };
+        Returns: boolean;
+      };
+      can_insert_object: {
+        Args: { bucketid: string; metadata: Json; name: string; owner: string };
+        Returns: undefined;
+      };
+      extension: { Args: { name: string }; Returns: string };
+      filename: { Args: { name: string }; Returns: string };
+      foldername: { Args: { name: string }; Returns: string[] };
+      get_common_prefix: {
+        Args: { p_delimiter: string; p_key: string; p_prefix: string };
+        Returns: string;
+      };
+      get_size_by_bucket: {
+        Args: never;
+        Returns: {
+          bucket_id: string;
+          size: number;
+        }[];
+      };
+      list_multipart_uploads_with_delimiter: {
+        Args: {
+          bucket_id: string;
+          delimiter_param: string;
+          max_keys?: number;
+          next_key_token?: string;
+          next_upload_token?: string;
+          prefix_param: string;
+        };
+        Returns: {
+          created_at: string;
+          id: string;
+          key: string;
+        }[];
+      };
+      list_objects_with_delimiter: {
+        Args: {
+          _bucket_id: string;
+          delimiter_param: string;
+          max_keys?: number;
+          next_token?: string;
+          prefix_param: string;
+          sort_order?: string;
+          start_after?: string;
+        };
+        Returns: {
+          created_at: string;
+          id: string;
+          last_accessed_at: string;
+          metadata: Json;
+          name: string;
+          updated_at: string;
+        }[];
+      };
+      operation: { Args: never; Returns: string };
+      search: {
+        Args: {
+          bucketname: string;
+          levels?: number;
+          limits?: number;
+          offsets?: number;
+          prefix: string;
+          search?: string;
+          sortcolumn?: string;
+          sortorder?: string;
+        };
+        Returns: {
+          created_at: string;
+          id: string;
+          last_accessed_at: string;
+          metadata: Json;
+          name: string;
+          updated_at: string;
+        }[];
+      };
+      search_by_timestamp: {
+        Args: {
+          p_bucket_id: string;
+          p_level: number;
+          p_limit: number;
+          p_prefix: string;
+          p_sort_column: string;
+          p_sort_column_after: string;
+          p_sort_order: string;
+          p_start_after: string;
+        };
+        Returns: {
+          created_at: string;
+          id: string;
+          key: string;
+          last_accessed_at: string;
+          metadata: Json;
+          name: string;
+          updated_at: string;
+        }[];
+      };
+      search_v2: {
+        Args: {
+          bucket_name: string;
+          levels?: number;
+          limits?: number;
+          prefix: string;
+          sort_column?: string;
+          sort_column_after?: string;
+          sort_order?: string;
+          start_after?: string;
+        };
+        Returns: {
+          created_at: string;
+          id: string;
+          key: string;
+          last_accessed_at: string;
+          metadata: Json;
+          name: string;
+          updated_at: string;
+        }[];
+      };
+    };
+    Enums: {
+      buckettype: 'STANDARD' | 'ANALYTICS' | 'VECTOR';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -5256,5 +6698,10 @@ export const Constants = {
   },
   public: {
     Enums: {},
+  },
+  storage: {
+    Enums: {
+      buckettype: ['STANDARD', 'ANALYTICS', 'VECTOR'],
+    },
   },
 } as const;
