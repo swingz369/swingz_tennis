@@ -205,38 +205,34 @@ test.afterAll(() => {
         2
       )
     );
-    // eslint-disable-next-line no-console
+
     console.log(`\n[E2E-BENCH] Report written to ${reportPath}`);
 
     // Console summary table
     if (labels.length > 0) {
-      // eslint-disable-next-line no-console
       console.log('\n┌────────────────────────────────┬──────────┬──────────┐');
-      // eslint-disable-next-line no-console
+
       console.log('│ Configuration                  │ E2E ms   │ API ms   │');
-      // eslint-disable-next-line no-console
+
       console.log('├────────────────────────────────┼──────────┼──────────┤');
       for (const lbl of labels) {
         const r = BENCH_RESULTS[lbl];
         const padded = lbl.padEnd(30);
         const e2e = r.endToEndMs ? r.endToEndMs.toFixed(0).padStart(8) : '   error';
         const api = r.apiRuntimeMs ? r.apiRuntimeMs.toFixed(0).padStart(8) : '   error';
-        // eslint-disable-next-line no-console
+
         console.log(`│ ${padded} │ ${e2e} │ ${api} │`);
       }
-      // eslint-disable-next-line no-console
+
       console.log('└────────────────────────────────┴──────────┴──────────┘');
       if (Object.keys(speedups).length > 0) {
-        // eslint-disable-next-line no-console
         console.log('\nSpeedups vs baseline:');
         for (const [k, v] of Object.entries(speedups)) {
-          // eslint-disable-next-line no-console
           console.log(`  ${k}: ${v}`);
         }
       }
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('[E2E-BENCH] Failed to write report:', err);
   }
 });
@@ -258,7 +254,7 @@ test.describe('Clustering Performance E2E — 200 Members / 8 Trainer / 5 Courts
       throw new Error('Admin login failed — check TEST_ADMIN_EMAIL / TEST_ADMIN_PASSWORD');
     }
     authed = true;
-    // eslint-disable-next-line no-console
+
     console.log(`[E2E-BENCH] Logged in as ${ADMIN_EMAIL} (club=${login.clubId ?? '?'})`);
 
     // Step 2: Find seeded season
@@ -266,7 +262,7 @@ test.describe('Clustering Performance E2E — 200 Members / 8 Trainer / 5 Courts
     if (!seasonId) {
       throw new Error('No seeded season found. Run: npx tsx scripts/seed-perf-test.ts first');
     }
-    // eslint-disable-next-line no-console
+
     console.log(`[E2E-BENCH] Found season: ${seasonId}`);
   });
 
@@ -289,7 +285,7 @@ test.describe('Clustering Performance E2E — 200 Members / 8 Trainer / 5 Courts
     expect(entry.totalGroups).toBeGreaterThan(0);
     expect(entry.totalMembers).toBeGreaterThanOrEqual(200);
     expect(entry.endToEndMs).toBeLessThan(60_000); // E2E should finish in < 60s
-    // eslint-disable-next-line no-console
+
     console.log(
       `[E2E-BENCH] (1) baseline: ${entry.endToEndMs}ms | groups=${entry.totalGroups} ` +
         `members=${entry.totalMembers} match=${entry.avgNiveauMatch?.toFixed(1)}% ` +
@@ -318,7 +314,7 @@ test.describe('Clustering Performance E2E — 200 Members / 8 Trainer / 5 Courts
     }
 
     expect(entry.endToEndMs).toBeLessThan(60_000);
-    // eslint-disable-next-line no-console
+
     console.log(
       `[E2E-BENCH] (2) with caching: ${entry.endToEndMs}ms | groups=${entry.totalGroups} ` +
         `members=${entry.totalMembers}`
@@ -345,7 +341,7 @@ test.describe('Clustering Performance E2E — 200 Members / 8 Trainer / 5 Courts
     // Backtracking with 200 members + greedy solution is already good may finish faster
     // than the time budget, so we don't enforce a strict upper bound.
     expect(entry.endToEndMs).toBeLessThan(300_000); // < 5 min
-    // eslint-disable-next-line no-console
+
     console.log(
       `[E2E-BENCH] (3) backtracking: ${entry.endToEndMs}ms | groups=${entry.totalGroups} ` +
         `members=${entry.totalMembers} unassigned=${entry.unassignedCount} ` +

@@ -23,7 +23,7 @@ import { useUserClub, useUserMember } from '@/hooks/use-user-data';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
 import type { Session } from '@/hooks/use-sessions';
 import { useSessions } from '@/hooks/use-sessions';
-import type { Invoice } from '@/lib/invoice-pdf';
+import type { Invoice, InvoiceItem } from '@/lib/invoice-pdf';
 import { apiFetch } from '@/lib/api-fetch';
 
 export default function MemberBilling() {
@@ -376,33 +376,115 @@ export default function MemberBilling() {
           </Card>
         </ScrollReveal>
       </div>
-      {/* Current Month Summary */}
+      {/* Current Month Summary — Enhanced Kosten-Monatsübersicht (QW3) */}
       <Card>
         <CardHeader>
-          <CardTitle>Monatsübersicht {format(currentMonth, 'MMMM yyyy', { locale: de })}</CardTitle>
+          <CardTitle>
+            Kosten-Monatsübersicht {format(currentMonth, 'MMMM yyyy', { locale: de })}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {monthSessions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Keine Trainings für diesen Monat gebucht
-            </div>
-          ) : (
-            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-              <div>
-                <div className="font-semibold">Trainingssessions</div>
-                <div className="text-sm text-muted-foreground">
-                  {monthSessions.length} Sessions × €{hourlyRate.toFixed(2)} = €
-                  {monthlyTotal.toFixed(2)}
+        <CardContent className="space-y-4">
+          {(() => {
+            const taxRate = clubData?.club?.taxRate ?? 0;
+            // Categorize invoices for this month
+            const monthInvoices = invoices.filter((inv) => {
+              const d = inv.issueDate;
+              return d >= startOfMonth(currentMonth) && d <= endOfMonth(currentMonth);
+            });
+            // API returns items with item_type/itemType — access via bracket notation since InvoiceItem type doesn't include it
+            const isMembershipFee = (it: InvoiceItem) =>
+              (it as unknown as { itemType?: string; item_type?: string }).itemType ===
+                'membership_fee' ||
+              (it as unknown as { itemType?: string; item_type?: string }).item_type ===
+                'membership_fee';
+            const membershipCosts = monthInvoices
+              .filter((inv) => inv.items?.some(isMembershipFee))
+              .reduce((sum, inv) => sum + inv.subtotal, 0);
+            const trainingCosts = monthSessions.length * hourlyRate;
+            const otherCosts = monthInvoices
+              .filter((inv) => !inv.items?.some(isMembershipFee))
+              .reduce((sum, inv) => sum + inv.subtotal, 0);
+            const totalBeforeTax = membershipCosts + trainingCosts + otherCosts;
+            const taxAmount = totalBeforeTax * (taxRate / 100);
+            const totalWithTax = totalBeforeTax + taxAmount;
+
+            if (monthSessions.length === 0 && monthInvoices.length === 0) {
+              return (
+                <div className="text-center py-8 text-muted-foreground">
+                  Keine Kosten für diesen Monat
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold">€{monthlyTotal.toFixed(2)}</div>
-                <div className="text-sm text-muted-foreground">
-                  zzgl. {clubData?.club?.taxRate ?? 0}% MwSt
+              );
+            }
+
+            return (
+              <>
+                <div className="grid gap-3">
+                  {membershipCosts > 0 && (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40">
+                          <CreditCard className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Mitgliedsbeitrag</div>
+                          <div className="text-xs text-muted-foreground">Monatlicher Beitrag</div>
+                        </div>
+                      </div>
+                      <div className="text-right font-semibold">€{membershipCosts.toFixed(2)}</div>
+                    </div>
+                  )}
+                  {trainingCosts > 0 && (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/40">
+                          <Calendar className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Training</div>
+                          <div className="text-xs text-muted-foreground">
+                            {monthSessions.length} Sessions × €{hourlyRate.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right font-semibold">€{trainingCosts.toFixed(2)}</div>
+                    </div>
+                  )}
+                  {otherCosts > 0 && (
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/40">
+                          <Receipt className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">Sonstiges</div>
+                          <div className="text-xs text-muted-foreground">
+                            Shop, Platzgebühren, etc.
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right font-semibold">€{otherCosts.toFixed(2)}</div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-          )}
+                <div className="border-t pt-3 space-y-1.5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Zwischensumme</span>
+                    <span className="font-medium">€{totalBeforeTax.toFixed(2)}</span>
+                  </div>
+                  {taxRate > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">MwSt ({taxRate}%)</span>
+                      <span className="font-medium">€{taxAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <span>Gesamt</span>
+                    <span>€{totalWithTax.toFixed(2)}</span>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
       {/* Invoices List */}

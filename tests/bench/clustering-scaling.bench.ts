@@ -378,7 +378,7 @@ function recordRun(label: string, elapsedMs: number, result: any, numMembers: nu
     unassignedCount: result.unassignedMembers.length,
     wishPartnerRate: result.metrics.wishPartnerRate,
   };
-  // eslint-disable-next-line no-console
+
   console.log(
     `\n[SCALING] ${label}: ${elapsedMs.toFixed(1)} ms | members=${numMembers} ` +
       `groups=${result.groups.length} unassigned=${result.unassignedMembers.length}`
@@ -403,7 +403,7 @@ function writeReport() {
         2
       )
     );
-    // eslint-disable-next-line no-console
+
     console.log(`\n[SCALING] Report written to ${reportPath}`);
   } catch (err) {
     console.error('[SCALING] Failed to write report:', err);
@@ -413,7 +413,6 @@ function writeReport() {
 // ═══ Scaling Benchmarks ══════════════════════════════════════════════════
 describe('Clustering Scaling Benchmark — 200/500/1000/2000 Members', () => {
   beforeAll(() => {
-    // eslint-disable-next-line no-console
     console.log(
       `\n[SCALING] Will test sizes: ${DATASET_SIZES.join(', ')} members ` +
         `(${NUM_TRAINERS} trainers, ${NUM_COURTS} courts)`
@@ -426,21 +425,20 @@ describe('Clustering Scaling Benchmark — 200/500/1000/2000 Members', () => {
     // Print summary table
     const labels = Object.keys(SCALING_RESULTS);
     if (labels.length > 0) {
-      // eslint-disable-next-line no-console
       console.log('\n┌─────────────────────────────────────┬─────────┬──────────┐');
-      // eslint-disable-next-line no-console
+
       console.log('│ Configuration                       │ Members │ Runtime  │');
-      // eslint-disable-next-line no-console
+
       console.log('├─────────────────────────────────────┼─────────┼──────────┤');
       for (const lbl of labels) {
         const r = SCALING_RESULTS[lbl];
         const padded = lbl.padEnd(37);
         const mem = String(r.numMembers).padStart(7);
         const ms = `${r.meanMs.toFixed(1)} ms`.padStart(8);
-        // eslint-disable-next-line no-console
+
         console.log(`│ ${padded} │ ${mem} │ ${ms} │`);
       }
-      // eslint-disable-next-line no-console
+
       console.log('└─────────────────────────────────────┴─────────┴──────────┘');
     }
   });

@@ -33,7 +33,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
 
       // Fetch club info for PDF header
-      const clubId = auth.clubId ?? '';
+      const clubId = auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+      }
       let clubData: {
         name?: string | null;
         address?: string | null;

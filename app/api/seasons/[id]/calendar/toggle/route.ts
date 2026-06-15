@@ -70,6 +70,10 @@ async function handle(request: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'is_active (boolean) erforderlich' }, { status: 400 });
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       if (isBulk) {
         const mondays = (body.week_mondays ?? []).filter(
@@ -84,7 +88,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ id: str
         const result = await bulkToggleGroupWeeks(
           auth.supabase as unknown as Parameters<typeof bulkToggleGroupWeeks>[0],
           seasonId,
-          auth.clubId ?? '',
+          auth.clubId,
           {
             groupId,
             weekMondaYs: mondays,
@@ -103,7 +107,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ id: str
       const result = await toggleGroupWeek(
         auth.supabase as unknown as Parameters<typeof toggleGroupWeek>[0],
         seasonId,
-        auth.clubId ?? '',
+        auth.clubId,
         {
           groupId,
           weekMonday: body.week_monday,

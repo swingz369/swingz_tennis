@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
-import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env.local with explicit path resolution and override to ensure vars are always injected
+config({ path: resolve(__dirname, '.env.local'), override: true });
 
 export default defineConfig({
   testDir: './tests/e2e',

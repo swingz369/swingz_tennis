@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest) {
     const { data: userProfile } = await (auth.supabase as any)
       .from('users')
       .select(
-        'id, full_name, email, phone, address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth, avatar_url'
+        'id, full_name, email, phone, address, city, postal_code, bio, emergency_contact, emergency_phone, date_of_birth, avatar_url, dtb_id'
       )
       .eq('id', auth.user.id)
       .maybeSingle();
@@ -39,6 +39,7 @@ export async function GET(_req: NextRequest) {
       emergencyContact: userProfile?.emergency_contact || '',
       emergencyPhone: userProfile?.emergency_phone || '',
       dateOfBirth: userProfile?.date_of_birth || '',
+      dtbId: userProfile?.dtb_id || '',
     });
   });
 }
@@ -57,8 +58,17 @@ export async function PATCH(_req: NextRequest) {
 
     try {
       const body = await _req.json();
-      const { fullName, phone, address, city, postalCode, bio, emergencyContact, emergencyPhone } =
-        body;
+      const {
+        fullName,
+        phone,
+        address,
+        city,
+        postalCode,
+        bio,
+        emergencyContact,
+        emergencyPhone,
+        dtbId,
+      } = body;
 
       const updateData: Record<string, string | null> = {};
       if (fullName !== undefined) updateData.full_name = fullName;
@@ -69,6 +79,7 @@ export async function PATCH(_req: NextRequest) {
       if (bio !== undefined) updateData.bio = bio;
       if (emergencyContact !== undefined) updateData.emergency_contact = emergencyContact;
       if (emergencyPhone !== undefined) updateData.emergency_phone = emergencyPhone;
+      if (dtbId !== undefined) updateData.dtb_id = dtbId || null;
 
       const { error } = await (auth.supabase as any)
         .from('users')

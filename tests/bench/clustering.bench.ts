@@ -403,7 +403,7 @@ function recordRun(label: string, elapsedMs: number, result: any) {
       NUM_COURTS,
     },
   };
-  // eslint-disable-next-line no-console
+
   console.log(
     `\n[BENCH] ${label}: ${elapsedMs.toFixed(1)} ms | groups=${result.groups.length} ` +
       `unassigned=${result.unassignedMembers.length} wish%=${result.metrics.wishPartnerRate.toFixed(1)}`
@@ -428,7 +428,7 @@ function writeReport() {
         2
       )
     );
-    // eslint-disable-next-line no-console
+
     console.log(`\n[BENCH] Report written to ${reportPath}`);
   } catch (err) {
     console.error('[BENCH] Failed to write report:', err);
@@ -439,7 +439,7 @@ function writeReport() {
 describe('Clustering Benchmark — 200 Members / 8 Trainer / 5 Courts', () => {
   beforeAll(() => {
     seedMockData();
-    // eslint-disable-next-line no-console
+
     console.log(
       `\n[BENCH] Seeded: ${NUM_MEMBERS} members, ${NUM_TRAINERS} trainers, ${NUM_COURTS} courts`
     );
@@ -451,20 +451,19 @@ describe('Clustering Benchmark — 200 Members / 8 Trainer / 5 Courts', () => {
     // Print summary table
     const labels = Object.keys(BENCH_RESULTS);
     if (labels.length > 0) {
-      // eslint-disable-next-line no-console
       console.log('\n┌────────────────────────────────┬───────────┐');
-      // eslint-disable-next-line no-console
+
       console.log('│ Configuration                  │ Runtime   │');
-      // eslint-disable-next-line no-console
+
       console.log('├────────────────────────────────┼───────────┤');
       for (const lbl of labels) {
         const r = BENCH_RESULTS[lbl];
         const padded = lbl.padEnd(30);
         const ms = `${r.meanMs.toFixed(1)} ms`.padStart(9);
-        // eslint-disable-next-line no-console
+
         console.log(`│ ${padded} │ ${ms} │`);
       }
-      // eslint-disable-next-line no-console
+
       console.log('└────────────────────────────────┴───────────┘');
 
       // Speedup calculation
@@ -474,7 +473,7 @@ describe('Clustering Benchmark — 200 Members / 8 Trainer / 5 Courts', () => {
           if (lbl === '(1) baseline greedy') continue;
           const r = BENCH_RESULTS[lbl];
           const speedup = (baseline.meanMs / r.meanMs).toFixed(2);
-          // eslint-disable-next-line no-console
+
           console.log(
             `[BENCH] Speedup ${lbl} vs baseline: ${speedup}× (${r.meanMs.toFixed(1)} ms)`
           );

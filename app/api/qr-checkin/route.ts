@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 /**
  * QR Code Check-in API
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
     // Award gamification points (non-blocking, uses admin client for RLS bypass)
     let pointsAwarded = false;
     try {
-      const adminSupabase = await createAdminClient();
+      const adminSupabase = createServiceClient();
       const { data: existingPoints } = await (adminSupabase as any)
         .from('gamification_points')
         .select('points')

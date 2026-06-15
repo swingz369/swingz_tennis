@@ -94,8 +94,8 @@ const MONTH_NAMES_DE = [
 ];
 
 /**
- * Build the Sep→Jul week list for a season. Falls back to season.start_date
- * if the season starts before September of the season's year.
+ * Build the week list for a season using the actual season start/end dates.
+ * Works for both winter seasons (Sep→Jul) and summer seasons (Apr→Sep).
  */
 export function buildSeasonWeeks(
   seasonStartIso: string,
@@ -105,20 +105,11 @@ export function buildSeasonWeeks(
   const startDate = new Date(seasonStartIso);
   const endDate = new Date(seasonEndIso);
 
-  // Derive the "Sep of the season year" — use season's start year if Sep,
-  // otherwise clamp to a sensible Sep→Jul span that covers the season.
-  const startYear = startDate.getUTCFullYear();
-  const startMonth = startDate.getUTCMonth(); // 0-indexed
-  // If season starts in Sep-Dec → use that year's Sep
-  // If season starts in Jan-Jul → use previous year's Sep
-  // If season starts in Aug → use that year's Sep
-  const sepYear = startMonth >= 8 ? startYear : startYear - 1;
-  const rangeStart = new Date(Date.UTC(sepYear, 8, 1));
-  const rangeEnd = new Date(Date.UTC(sepYear + 1, 6, 31));
-
-  // Constrain to actual season boundaries if narrower
-  const effectiveStart = rangeStart < startDate ? startDate : rangeStart;
-  const effectiveEnd = rangeEnd > endDate ? endDate : rangeEnd;
+  // Use the actual season boundaries — no artificial Sep→Jul capping.
+  // This correctly handles summer seasons (Apr–Sep) that would otherwise
+  // be clipped at Jul 31 by the old Sep→Jul range logic.
+  const effectiveStart = startDate;
+  const effectiveEnd = endDate;
 
   const baseWeeks = getWeeks(
     effectiveStart.toISOString().slice(0, 10),

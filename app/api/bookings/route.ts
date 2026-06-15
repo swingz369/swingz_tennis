@@ -41,13 +41,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
     }
 
-    // Check booking_rules — how many bookings this week?
-    const { data: rules } = await supabase
+    // Check booking_rules — how many bookings this week + payment required?
+    const { data: rules } = await (supabase as any)
       .from('booking_rules')
-      .select('max_bookings_per_week, cancellation_hours_before')
+      .select('max_bookings_per_week, cancellation_hours_before, require_payment')
       .eq('club_id', clubId)
       .eq('applies_to_role', 'member')
       .maybeSingle();
+
+    const requiresPayment = rules?.require_payment === true;
 
     if (rules?.max_bookings_per_week) {
       const sessionDate = new Date(session.timeslot_start);
@@ -128,7 +130,14 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { bookingId: result.bookingId, sessionId, memberId: userId, status: 'confirmed' },
+      {
+        bookingId: result.bookingId,
+        sessionId,
+        memberId: userId,
+        status: 'confirmed',
+        payment_status: requiresPayment ? 'pending' : null,
+        requiresPayment,
+      },
       { status: 201 }
     );
   });

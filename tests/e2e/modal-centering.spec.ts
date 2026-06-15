@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
+import { navigateToFirstSeason } from '../helpers/navigation';
 
 /**
  * Modal Centering Regression Test
@@ -130,20 +131,8 @@ test.describe('Modal Centering Regression', () => {
   });
 
   test('Seasons: navigate to a season → open GroupChange → centered', async ({ page }) => {
-    await page.goto('/admin/seasons', { waitUntil: 'networkidle', timeout: 20000 });
-
-    // Drill into the first season to reach the GroupChange dialog
-    const firstSeason = page
-      .getByRole('link', {
-        name: /sommer|winter|saison|herbst|frühling|summer|spring|fall|autumn/i,
-      })
-      .first();
-    try {
-      await firstSeason.click({ timeout: 3000 });
-      await page.waitForURL(/\/admin\/seasons\/[a-f0-9-]+/, { timeout: 8000 });
-    } catch {
-      test.skip(true, 'No season found on /admin/seasons to drill into');
-    }
+    const seasonId = await navigateToFirstSeason(page);
+    test.skip(!seasonId, 'No season found via API to navigate to');
 
     const opened = await tryOpenModalByButton(page, [
       /gruppe.*ändern|gruppe.*wechseln|group.*change/i,

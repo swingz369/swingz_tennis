@@ -161,55 +161,79 @@ const HOLIDAYS_2026: Record<string, Holiday[]> = {
   BW: [
     { name: 'Osterferien', start: '2026-03-30', end: '2026-04-11' },
     { name: 'Pfingstferien', start: '2026-05-26', end: '2026-06-05' },
+    { name: 'Sommerferien', start: '2026-07-30', end: '2026-09-12' },
   ],
   BY: [
     { name: 'Frühjahrsferien', start: '2026-02-16', end: '2026-02-20' },
     { name: 'Osterferien', start: '2026-03-30', end: '2026-04-10' },
     { name: 'Pfingstferien', start: '2026-05-26', end: '2026-06-05' },
+    { name: 'Sommerferien', start: '2026-08-01', end: '2026-09-15' },
   ],
   BE: [
     { name: 'Winterferien', start: '2026-02-02', end: '2026-02-07' },
     { name: 'Osterferien', start: '2026-03-30', end: '2026-04-10' },
+    { name: 'Sommerferien', start: '2026-07-16', end: '2026-08-28' },
   ],
   BB: [
     { name: 'Winterferien', start: '2026-02-02', end: '2026-02-07' },
     { name: 'Osterferien', start: '2026-04-01', end: '2026-04-11' },
+    { name: 'Sommerferien', start: '2026-07-16', end: '2026-08-28' },
   ],
   HB: [
     { name: 'Winterferien', start: '2026-02-02', end: '2026-02-03' },
     { name: 'Osterferien', start: '2026-03-23', end: '2026-04-04' },
+    { name: 'Sommerferien', start: '2026-07-02', end: '2026-08-12' },
   ],
   HH: [
     { name: 'Osterferien', start: '2026-03-09', end: '2026-03-20' },
     { name: 'Pfingstferien', start: '2026-05-12', end: '2026-05-16' },
+    { name: 'Sommerferien', start: '2026-07-16', end: '2026-08-26' },
   ],
-  HE: [{ name: 'Osterferien', start: '2026-03-30', end: '2026-04-11' }],
+  HE: [
+    { name: 'Osterferien', start: '2026-03-30', end: '2026-04-11' },
+    { name: 'Sommerferien', start: '2026-07-06', end: '2026-08-14' },
+  ],
   MV: [
     { name: 'Winterferien', start: '2026-02-02', end: '2026-02-14' },
     { name: 'Osterferien', start: '2026-03-30', end: '2026-04-08' },
+    { name: 'Sommerferien', start: '2026-07-27', end: '2026-09-05' },
   ],
   NI: [
     { name: 'Winterferien', start: '2026-02-02', end: '2026-02-03' },
     { name: 'Osterferien', start: '2026-03-23', end: '2026-04-04' },
+    { name: 'Sommerferien', start: '2026-07-02', end: '2026-08-12' },
   ],
-  NW: [{ name: 'Osterferien', start: '2026-03-30', end: '2026-04-11' }],
-  RP: [{ name: 'Osterferien', start: '2026-03-30', end: '2026-04-10' }],
+  NW: [
+    { name: 'Osterferien', start: '2026-03-30', end: '2026-04-11' },
+    { name: 'Sommerferien', start: '2026-07-13', end: '2026-08-25' },
+  ],
+  RP: [
+    { name: 'Osterferien', start: '2026-03-30', end: '2026-04-10' },
+    { name: 'Sommerferien', start: '2026-07-06', end: '2026-08-14' },
+  ],
   SL: [
     { name: 'Winterferien', start: '2026-02-16', end: '2026-02-24' },
     { name: 'Osterferien', start: '2026-03-30', end: '2026-04-10' },
+    { name: 'Sommerferien', start: '2026-07-06', end: '2026-08-14' },
   ],
   SN: [
     { name: 'Winterferien', start: '2026-02-09', end: '2026-02-21' },
     { name: 'Osterferien', start: '2026-04-03', end: '2026-04-10' },
+    { name: 'Sommerferien', start: '2026-06-27', end: '2026-08-07' },
   ],
   ST: [
     { name: 'Winterferien', start: '2026-01-26', end: '2026-01-30' },
     { name: 'Osterferien', start: '2026-03-23', end: '2026-04-04' },
+    { name: 'Sommerferien', start: '2026-06-27', end: '2026-08-07' },
   ],
-  SH: [{ name: 'Osterferien', start: '2026-03-27', end: '2026-04-10' }],
+  SH: [
+    { name: 'Osterferien', start: '2026-03-27', end: '2026-04-10' },
+    { name: 'Sommerferien', start: '2026-07-13', end: '2026-08-22' },
+  ],
   TH: [
     { name: 'Winterferien', start: '2026-02-02', end: '2026-02-07' },
     { name: 'Osterferien', start: '2026-03-23', end: '2026-04-04' },
+    { name: 'Sommerferien', start: '2026-06-27', end: '2026-08-07' },
   ],
 };
 
@@ -218,21 +242,95 @@ const HOLIDAYS_2026: Record<string, Holiday[]> = {
  * In practice, the two maps cover different date ranges so conflicts are rare.
  */
 function mergeHolidays(a: Holiday[], b: Holiday[]): Holiday[] {
-  const map = new Map<string, Holiday>();
-  for (const h of a) map.set(h.name, h);
-  for (const h of b) {
-    if (!map.has(h.name)) map.set(h.name, h);
-  }
-  return Array.from(map.values()).sort((x, y) => x.start.localeCompare(y.start));
+  // Concatenate both years — holidays from different years never overlap
+  // date-wise, so name-based dedup would incorrectly drop 2026 entries
+  // (e.g. "Sommerferien" exists in both 2025 and 2026 with different dates).
+  return [...a, ...b].sort((x, y) => x.start.localeCompare(y.start));
 }
 
+// ============================================
+// 2027 PLACEHOLDER DATA (estimated from 2026, +1 year shift)
+// ============================================
+// These are approximate dates for summer 2027 planning.
+// Official KMK dates are typically published ~1 year in advance.
+
+const HOLIDAYS_2027: Record<string, Holiday[]> = {
+  BW: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-10' },
+    { name: 'Sommerferien', start: '2027-07-29', end: '2027-09-11' },
+  ],
+  BY: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
+    { name: 'Sommerferien', start: '2027-07-30', end: '2027-09-13' },
+  ],
+  BE: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
+    { name: 'Sommerferien', start: '2027-07-15', end: '2027-08-27' },
+  ],
+  BB: [
+    { name: 'Osterferien', start: '2027-03-31', end: '2027-04-10' },
+    { name: 'Sommerferien', start: '2027-07-15', end: '2027-08-27' },
+  ],
+  HB: [
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
+    { name: 'Sommerferien', start: '2027-07-01', end: '2027-08-11' },
+  ],
+  HH: [
+    { name: 'Osterferien', start: '2027-03-08', end: '2027-03-19' },
+    { name: 'Sommerferien', start: '2027-07-15', end: '2027-08-25' },
+  ],
+  HE: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-10' },
+    { name: 'Sommerferien', start: '2027-07-05', end: '2027-08-13' },
+  ],
+  MV: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-07' },
+    { name: 'Sommerferien', start: '2027-07-26', end: '2027-09-04' },
+  ],
+  NI: [
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
+    { name: 'Sommerferien', start: '2027-07-01', end: '2027-08-11' },
+  ],
+  NW: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-10' },
+    { name: 'Sommerferien', start: '2027-07-12', end: '2027-08-24' },
+  ],
+  RP: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
+    { name: 'Sommerferien', start: '2027-07-05', end: '2027-08-13' },
+  ],
+  SL: [
+    { name: 'Osterferien', start: '2027-03-29', end: '2027-04-09' },
+    { name: 'Sommerferien', start: '2027-07-05', end: '2027-08-13' },
+  ],
+  SN: [
+    { name: 'Osterferien', start: '2027-04-02', end: '2027-04-09' },
+    { name: 'Sommerferien', start: '2027-06-26', end: '2027-08-06' },
+  ],
+  ST: [
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
+    { name: 'Sommerferien', start: '2027-06-26', end: '2027-08-06' },
+  ],
+  SH: [
+    { name: 'Osterferien', start: '2027-03-26', end: '2027-04-09' },
+    { name: 'Sommerferien', start: '2027-07-12', end: '2027-08-21' },
+  ],
+  TH: [
+    { name: 'Osterferien', start: '2027-03-22', end: '2027-04-03' },
+    { name: 'Sommerferien', start: '2027-06-26', end: '2027-08-06' },
+  ],
+};
+
 /**
- * Full holiday data — all 16 Bundesländer, 2025 + early 2026.
+ * Full holiday data — all 16 Bundesländer, 2025 + 2026 + 2027 (estimated).
  */
 export const HOLIDAYS: Record<string, Holiday[]> = Object.fromEntries(
   Object.keys(HOLIDAYS_2025).map((state) => [
     state,
-    mergeHolidays(HOLIDAYS_2025[state] || [], HOLIDAYS_2026[state] || []),
+    mergeHolidays(
+      mergeHolidays(HOLIDAYS_2025[state] || [], HOLIDAYS_2026[state] || []),
+      HOLIDAYS_2027[state] || []
+    ),
   ])
 );
 

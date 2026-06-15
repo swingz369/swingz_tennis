@@ -71,6 +71,30 @@ export async function POST(request: NextRequest) {
     const { data: existingUsers } = await adminSupabase.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find((u: { email?: string }) => u.email === email);
 
+    // Enforce: an admin can only be assigned to ONE club
+    if (role === 'admin' && existingUser) {
+      const { data: adminMemberships } = await adminSupabase
+        .from('user_club_memberships')
+        .select('id, club_id, clubs(name)')
+        .eq('user_id', existingUser.id)
+        .eq('role', 'admin')
+        .eq('is_active', true)
+        .neq('club_id', targetClubId);
+
+      if (adminMemberships && adminMemberships.length > 0) {
+        const otherClub = (adminMemberships[0] as Record<string, unknown>).clubs as Record<
+          string,
+          unknown
+        > | null;
+        return NextResponse.json(
+          {
+            error: `Dieser Benutzer ist bereits Admin von "${(otherClub?.name as string) ?? 'einem anderen Verein'}". Ein Admin kann nur einem Verein zugeordnet sein.`,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     let invitedUserId: string;
 
     if (existingUser) {

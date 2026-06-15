@@ -12,6 +12,7 @@ import {
 } from '@/application/use-cases/send-reminders.use-case';
 import { EmailService } from '@/infrastructure/email/email.service';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
+import { pushNotificationService } from '@/lib/push-notification.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
 
 class TempSessionRepository implements ISessionRepository {
@@ -109,6 +110,26 @@ export async function POST(_request: NextRequest) {
 
       const sentCount = results.filter((r) => r.status === 'sent').length;
       const failedCount = results.filter((r) => r.status === 'failed').length;
+
+      // Fire-and-forget: send push notifications for each successful reminder
+      const sentResults = results.filter((r) => r.status === 'sent');
+      for (const r of sentResults) {
+        const time = new Date(r.sessionStart).toLocaleTimeString('de-DE', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const court = r.courtName || 'Platz';
+        pushNotificationService
+          .sendToUser(r.memberId, {
+            title: 'Training morgen',
+            body: `${time} Uhr — ${court}${r.trainerName ? ` mit ${r.trainerName}` : ''}`,
+            url: '/bookings',
+            tag: `reminder-${r.sessionId}`,
+          })
+          .catch(() => {
+            /* non-blocking */
+          });
+      }
 
       return NextResponse.json({
         success: true,

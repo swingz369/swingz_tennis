@@ -10,7 +10,7 @@ const createFeeConfigSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   type: z.enum(['membership', 'training', 'court', 'other']),
-  amount: z.number().positive(),
+  amount: z.number().nonnegative(),
   currency: z.string().default('EUR'),
   billingCycle: z.enum(['monthly', 'quarterly', 'yearly', 'one_time']),
   validFrom: z.string().optional(),
@@ -31,6 +31,11 @@ export async function POST(_request: NextRequest) {
       return rateLimitError;
     }
 
+    const clubId = auth.clubId;
+    if (!clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     try {
       const body = await _request.json();
 
@@ -43,7 +48,8 @@ export async function POST(_request: NextRequest) {
       }
 
       const feeConfiguration = await feeConfigurationService.createFeeConfiguration(
-        validation.data as CreateFeeConfigurationInput
+        validation.data as CreateFeeConfigurationInput,
+        clubId
       );
 
       return NextResponse.json({ success: true, feeConfiguration });

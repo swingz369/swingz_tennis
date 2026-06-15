@@ -4,7 +4,13 @@ import { PlanningWizardClient } from './planning-wizard-client';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PlanningWizardPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlanningWizardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ step?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -50,6 +56,11 @@ export default async function PlanningWizardPage({ params }: { params: Promise<{
     redirect('/admin/seasons');
   }
 
+  const resolvedSearchParams = await searchParams;
+  const initialStep = resolvedSearchParams.step
+    ? parseInt(resolvedSearchParams.step, 10)
+    : undefined;
+
   return (
     <PlanningWizardClient
       seasonId={seasonId}
@@ -58,6 +69,7 @@ export default async function PlanningWizardPage({ params }: { params: Promise<{
       seasonType={season.season_type}
       seasonYear={season.year}
       planningStatus={season.planning_status}
+      initialStep={initialStep}
     />
   );
 }

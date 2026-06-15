@@ -44,6 +44,10 @@ import {
   List,
   Users,
   AlertTriangle,
+  CloudRain,
+  Cloud,
+  Sun,
+  Snowflake,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import CourtBookingsList from '@/components/court-bookings-list';
@@ -505,10 +509,32 @@ export default function UnifiedCourtCalendar({
   const [blockCourtId, setBlockCourtId] = useState<string>('');
   const [blockDate, setBlockDate] = useState<Date>(new Date());
   const [blockTimeSlot, setBlockTimeSlot] = useState<string>('');
-  const [blockType, setBlockType] = useState<'event' | 'maintenance'>('event');
+  const [blockType, setBlockType] = useState<'event' | 'maintenance' | 'weather'>('event');
   const [blockReason, setBlockReason] = useState('');
   const [blockLoading, setBlockLoading] = useState(false);
   const [blockDuration, setBlockDuration] = useState(1);
+
+  // ── Weather & Court Closures state ──
+  const [weatherData, setWeatherData] = useState<{
+    temperature: number;
+    condition: string;
+    description: string;
+    windSpeed: number;
+    precipitation: number;
+    recommendation: 'green' | 'yellow' | 'red';
+    city: string;
+  } | null>(null);
+  const [courtClosures, setCourtClosures] = useState<
+    {
+      id: string;
+      court_id: string;
+      reason: string;
+      description: string | null;
+      start_date: string;
+      end_date: string | null;
+      weather_condition: string | null;
+    }[]
+  >([]);
 
   // ── User context ──
   const { data: clubData } = useUserClub();
@@ -575,6 +601,30 @@ export default function UnifiedCourtCalendar({
   // ── Touch swipe ref (mobile day-pill navigation) ──
   const touchStartRef = useRef({ x: 0, y: 0 });
   const swipeContainerRef = useRef<HTMLDivElement>(null);
+
+  // ── Fetch weather & closures (admin only) ──
+  useEffect(() => {
+    if (!clubId || !isAdmin) return;
+    const fetchWeather = async () => {
+      try {
+        const [weatherRes, closuresRes] = await Promise.all([
+          apiFetch('/api/weather/check'),
+          apiFetch('/api/weather/closures?active=true'),
+        ]);
+        if (weatherRes.ok) {
+          const data = await weatherRes.json();
+          setWeatherData(data.weather ? { ...data.weather, city: data.city ?? 'Berlin' } : null);
+        }
+        if (closuresRes.ok) {
+          const data = await closuresRes.json();
+          setCourtClosures(data.closures ?? []);
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    fetchWeather();
+  }, [clubId, isAdmin]);
 
   // ── Fetch active season ──
   useEffect(() => {
@@ -738,8 +788,8 @@ export default function UnifiedCourtCalendar({
           startTime: blockTimeSlot,
           endTime,
           clubId,
-          blockType,
-          reason: blockReason || undefined,
+          blockType: blockType === 'weather' ? 'maintenance' : blockType,
+          reason: blockReason || (blockType === 'weather' ? 'Wetterbedingungen' : undefined),
         }),
       });
       if (!res.ok) {
@@ -747,7 +797,8 @@ export default function UnifiedCourtCalendar({
         toast.error(err.error ?? 'Sperrung fehlgeschlagen');
         return;
       }
-      const blockLabel = blockType === 'event' ? 'Veranstaltung' : 'Wartung';
+      const blockLabel =
+        blockType === 'event' ? 'Veranstaltung' : blockType === 'weather' ? 'Wetter' : 'Wartung';
       toast.success(`${blockLabel}-Sperre gesetzt`);
       setBlockDialogOpen(false);
       void queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -1710,6 +1761,78 @@ export default function UnifiedCourtCalendar({
         )}
       </CourtCalendarHeader>
 
+      {/* Weather banner (admin only) */}
+      {isAdmin && weatherData && (
+        <div
+          className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
+            weatherData.recommendation === 'red'
+              ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300'
+              : weatherData.recommendation === 'yellow'
+                ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300'
+                : 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300'
+          }`}
+        >
+          {weatherData.condition === 'Rain' || weatherData.condition === 'Drizzle' ? (
+            <CloudRain className="h-5 w-5 flex-shrink-0" />
+          ) : weatherData.condition === 'Snow' ? (
+            <Snowflake className="h-5 w-5 flex-shrink-0" />
+          ) : weatherData.condition === 'Thunderstorm' ? (
+            <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+          ) : weatherData.condition === 'Clear' ? (
+            <Sun className="h-5 w-5 flex-shrink-0" />
+          ) : (
+            <Cloud className="h-5 w-5 flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <span className="font-bold">{weatherData.city}</span>
+            <span className="ml-2">
+              {Math.round(weatherData.temperature)}°C · {weatherData.description}
+            </span>
+            <span className="ml-2 text-xs opacity-75">
+              ({weatherData.windSpeed} m/s, {weatherData.precipitation} mm)
+            </span>
+          </div>
+          {weatherData.recommendation !== 'green' && (
+            <span className="font-semibold text-xs whitespace-nowrap">
+              {weatherData.recommendation === 'red' ? '⚠️ Außenplätze sperren' : '⚡ Platz prüfen'}
+            </span>
+          )}
+          <Link
+            href="/admin/weather"
+            className="text-xs font-medium underline opacity-75 hover:opacity-100 transition-opacity whitespace-nowrap"
+          >
+            Details →
+          </Link>
+        </div>
+      )}
+
+      {/* Active closure indicators */}
+      {isAdmin && courtClosures.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {courtClosures.map((c) => {
+            const courtName = courts.find((ct) => ct.id === c.court_id)?.name ?? 'Platz';
+            return (
+              <div
+                key={c.id}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-xs font-medium dark:bg-orange-950/30 dark:border-orange-800 dark:text-orange-300"
+              >
+                <Lock className="h-3 w-3" />
+                <span>{courtName}</span>
+                <span className="opacity-70">
+                  ·{' '}
+                  {c.reason === 'weather'
+                    ? '🌧️ Wetter'
+                    : c.reason === 'maintenance'
+                      ? '🔧 Wartung'
+                      : c.reason}
+                </span>
+                {c.description && <span className="opacity-60">· {c.description}</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Zero-sessions warning (admin view) */}
       {isAdmin && visibleSessions.length === 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -1784,6 +1907,22 @@ export default function UnifiedCourtCalendar({
               <Wrench className="h-4 w-4" />
               Wartung
             </Button>
+            <Button
+              variant={blockType === 'weather' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                setBlockType('weather');
+                if (weatherData && !blockReason) {
+                  setBlockReason(
+                    `${weatherData.description} (${Math.round(weatherData.temperature)}°C)`
+                  );
+                }
+              }}
+              className="gap-1.5"
+            >
+              <CloudRain className="h-4 w-4" />
+              Wetter
+            </Button>
           </div>
         </div>
 
@@ -1808,7 +1947,11 @@ export default function UnifiedCourtCalendar({
           <Input
             id="block-reason"
             placeholder={
-              blockType === 'event' ? 'z.B. Firmenevent, Turnier...' : 'z.B. Platzreparatur...'
+              blockType === 'event'
+                ? 'z.B. Firmenevent, Turnier...'
+                : blockType === 'weather'
+                  ? 'z.B. Regen, Frost, Sturm...'
+                  : 'z.B. Platzreparatur...'
             }
             value={blockReason}
             onChange={(e) => setBlockReason(e.target.value)}

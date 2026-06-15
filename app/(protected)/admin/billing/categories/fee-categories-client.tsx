@@ -198,6 +198,8 @@ export default function FeeCategoriesClient({
                 <SelectContent>
                   <SelectItem value="training">Training</SelectItem>
                   <SelectItem value="membership">Mitgliedschaft</SelectItem>
+                  <SelectItem value="court">Platz</SelectItem>
+                  <SelectItem value="other">Sonstiges</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -263,6 +265,8 @@ export default function FeeCategoriesClient({
                             <SelectContent>
                               <SelectItem value="training">Training</SelectItem>
                               <SelectItem value="membership">Mitgliedschaft</SelectItem>
+                              <SelectItem value="court">Platz</SelectItem>
+                              <SelectItem value="other">Sonstiges</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -326,8 +330,13 @@ export default function FeeCategoriesClient({
                       <div>
                         <p className="text-sm font-medium">{cat.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {cat.type === 'training' ? 'Training' : 'Mitgliedschaft'} ·{' '}
-                          {cat.amount.toFixed(2)} € ·{' '}
+                          {{
+                            training: 'Training',
+                            membership: 'Mitgliedschaft',
+                            court: 'Platz',
+                            other: 'Sonstiges',
+                          }[cat.type] ?? cat.type}{' '}
+                          · {cat.amount.toFixed(2)} € ·{' '}
                           {cat.billing_cycle === 'yearly'
                             ? 'Jährlich'
                             : cat.billing_cycle === 'monthly'

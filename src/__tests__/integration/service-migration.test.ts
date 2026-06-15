@@ -34,7 +34,6 @@ let memberUserId: string;
 let testClubId: string;
 
 describeIntegration('Phase 2 Service Migration Integration Tests', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let supabase: ReturnType<typeof createClient<any>>;
   let testCourtId: string;
   let testCourtName: string;

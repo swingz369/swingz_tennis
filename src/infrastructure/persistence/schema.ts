@@ -57,6 +57,9 @@ export const clubs = pgTable(
       tournaments: false,
       trial_training: false,
       ai_matchmaking: false,
+      weather_integration: false,
+      league_lineup: false,
+      work_duty: false,
     }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     created_at: timestamp('created_at').notNull().defaultNow(),
@@ -329,6 +332,8 @@ export const users = pgTable(
     skill_level: varchar('skill_level', { length: 20 }).default('beginner'),
     // Superadmin onboarding completion flag (person-bound, not club-bound)
     superadmin_setup_completed_at: timestamp('superadmin_setup_completed_at'),
+    // DTB-ID: Deutsche Tennis Bund Spielernummer für tennis.de Integration
+    dtb_id: varchar('dtb_id', { length: 20 }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -1970,3 +1975,266 @@ export const memberSchedulePreferencesRelations = relations(
     }),
   })
 );
+
+// ==============================================================================
+// Weather Court Closures (SP4: Wetter-Integration)
+// ==============================================================================
+
+export const courtClosures = pgTable(
+  'court_closures',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    court_id: uuid('court_id')
+      .notNull()
+      .references(() => courts.id, { onDelete: 'cascade' }),
+    reason: varchar('reason', { length: 50 }).notNull(), // 'weather', 'maintenance', 'event', 'other'
+    description: text('description'),
+    start_date: timestamp('start_date', { withTimezone: true }).notNull(),
+    end_date: timestamp('end_date', { withTimezone: true }),
+    is_active: boolean('is_active').notNull().default(true),
+    weather_condition: varchar('weather_condition', { length: 50 }), // 'rain', 'frost', 'extreme_heat', 'snow'
+    auto_generated: boolean('auto_generated').notNull().default(false),
+    created_by: uuid('created_by').references(() => users.id),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('court_closures_club_idx').on(table.club_id),
+    court_idx: index('court_closures_court_idx').on(table.court_id),
+    active_idx: index('court_closures_active_idx').on(table.is_active),
+    date_range_idx: index('court_closures_date_range_idx').on(table.start_date, table.end_date),
+    reason_idx: index('court_closures_reason_idx').on(table.reason),
+  })
+);
+
+export const courtClosuresRelations = relations(courtClosures, ({ one }) => ({
+  club: one(clubs, {
+    fields: [courtClosures.club_id],
+    references: [clubs.id],
+  }),
+  court: one(courts, {
+    fields: [courtClosures.court_id],
+    references: [courts.id],
+  }),
+  creator: one(users, {
+    fields: [courtClosures.created_by],
+    references: [users.id],
+  }),
+}));
+
+// ==============================================================================
+// League & Team Lineup (SP5: Liga/Mannschaftsaufstellung)
+// ==============================================================================
+
+export const leagues = pgTable(
+  'leagues',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 200 }).notNull(),
+    season_year: integer('season_year').notNull(),
+    league_type: varchar('league_type', { length: 50 }).notNull().default('regular'), // 'regular', 'playoff', 'friendly'
+    division: varchar('division', { length: 100 }), // e.g. 'Bezirksliga', 'Kreisklasse'
+    sport: varchar('sport', { length: 50 }).notNull().default('tennis'), // 'tennis', 'squash', 'badminton'
+    age_group: varchar('age_group', { length: 50 }), // 'Herren', 'Damen', 'Jugend U14', etc.
+    status: varchar('status', { length: 20 }).notNull().default('active'), // 'active', 'completed', 'archived'
+    notes: text('notes'),
+    // nuLiga integration
+    nuliga_url: text('nuliga_url'),
+    last_synced_at: timestamp('last_synced_at', { withTimezone: true }),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('leagues_club_idx').on(table.club_id),
+    season_idx: index('leagues_season_idx').on(table.season_year),
+    status_idx: index('leagues_status_idx').on(table.status),
+  })
+);
+
+export const teams = pgTable(
+  'teams',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    league_id: uuid('league_id')
+      .notNull()
+      .references(() => leagues.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 200 }).notNull(),
+    captain_id: uuid('captain_id'),
+    position: integer('position'), // current league position
+    matches_played: integer('matches_played').notNull().default(0),
+    matches_won: integer('matches_won').notNull().default(0),
+    matches_lost: integer('matches_lost').notNull().default(0),
+    matches_drawn: integer('matches_drawn').notNull().default(0),
+    points: integer('points').notNull().default(0),
+    notes: text('notes'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('teams_club_idx').on(table.club_id),
+    league_idx: index('teams_league_idx').on(table.league_id),
+    position_idx: index('teams_position_idx').on(table.league_id, table.position),
+  })
+);
+
+export const teamMembers = pgTable(
+  'team_members',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    team_id: uuid('team_id')
+      .notNull()
+      .references(() => teams.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id').notNull(),
+    role: varchar('role', { length: 20 }).notNull().default('player'), // 'captain', 'player', 'substitute'
+    position_number: integer('position_number'), // playing position (1 = first singles, etc.)
+    is_active: boolean('is_active').notNull().default(true),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    team_idx: index('team_members_team_idx').on(table.team_id),
+    member_idx: index('team_members_member_idx').on(table.member_id),
+    team_member_unique: { unique: true, columns: [table.team_id, table.member_id] },
+  })
+);
+
+export const matchDays = pgTable(
+  'match_days',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    league_id: uuid('league_id')
+      .notNull()
+      .references(() => leagues.id, { onDelete: 'cascade' }),
+    matchday_number: integer('matchday_number').notNull(),
+    scheduled_date: timestamp('scheduled_date', { withTimezone: true }),
+    opponent: varchar('opponent', { length: 200 }).notNull(),
+    is_home: boolean('is_home').notNull().default(true),
+    venue: text('venue'),
+    result: varchar('result', { length: 20 }), // 'win', 'loss', 'draw', null = not played
+    score_home: integer('score_home'),
+    score_away: integer('score_away'),
+    notes: text('notes'),
+    status: varchar('status', { length: 20 }).notNull().default('scheduled'), // 'scheduled', 'in_progress', 'completed', 'cancelled'
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    league_idx: index('match_days_league_idx').on(table.league_id),
+    date_idx: index('match_days_date_idx').on(table.scheduled_date),
+    status_idx: index('match_days_status_idx').on(table.status),
+  })
+);
+
+export const leaguesRelations = relations(leagues, ({ one, many }) => ({
+  club: one(clubs, {
+    fields: [leagues.club_id],
+    references: [clubs.id],
+  }),
+  teams: many(teams),
+  matchDays: many(matchDays),
+}));
+
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  club: one(clubs, {
+    fields: [teams.club_id],
+    references: [clubs.id],
+  }),
+  league: one(leagues, {
+    fields: [teams.league_id],
+    references: [leagues.id],
+  }),
+  members: many(teamMembers),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamMembers.team_id],
+    references: [teams.id],
+  }),
+}));
+
+export const matchDaysRelations = relations(matchDays, ({ one }) => ({
+  league: one(leagues, {
+    fields: [matchDays.league_id],
+    references: [leagues.id],
+  }),
+}));
+
+// ==============================================================================
+// Work Duty Management (LP7: Arbeitsdienst-Verwaltung)
+// ==============================================================================
+
+export const workDuties = pgTable(
+  'work_duties',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
+    duty_type: varchar('duty_type', { length: 50 }).notNull(), // 'court_maintenance', 'event_support', 'bar_duty', 'cleaning', 'coaching_assist', 'other'
+    scheduled_date: timestamp('scheduled_date', { withTimezone: true }),
+    start_time: varchar('start_time', { length: 5 }), // HH:MM
+    end_time: varchar('end_time', { length: 5 }), // HH:MM
+    max_participants: integer('max_participants').default(1),
+    status: varchar('status', { length: 20 }).notNull().default('open'), // 'open', 'assigned', 'completed', 'cancelled'
+    assigned_to: uuid('assigned_to'), // primary assignee
+    priority: varchar('priority', { length: 20 }).notNull().default('medium'), // 'low', 'medium', 'high'
+    season_year: integer('season_year'),
+    notes: text('notes'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    club_idx: index('work_duties_club_idx').on(table.club_id),
+    status_idx: index('work_duties_status_idx').on(table.status),
+    assigned_idx: index('work_duties_assigned_idx').on(table.assigned_to),
+    date_idx: index('work_duties_date_idx').on(table.scheduled_date),
+    type_idx: index('work_duties_type_idx').on(table.duty_type),
+  })
+);
+
+export const workDutyAssignments = pgTable(
+  'work_duty_assignments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    duty_id: uuid('duty_id')
+      .notNull()
+      .references(() => workDuties.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id').notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('assigned'), // 'assigned', 'completed', 'excused', 'no_show'
+    completed_at: timestamp('completed_at', { withTimezone: true }),
+    notes: text('notes'),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    duty_idx: index('work_duty_assignments_duty_idx').on(table.duty_id),
+    member_idx: index('work_duty_assignments_member_idx').on(table.member_id),
+    status_idx: index('work_duty_assignments_status_idx').on(table.status),
+    duty_member_unique: { unique: true, columns: [table.duty_id, table.member_id] },
+  })
+);
+
+export const workDutiesRelations = relations(workDuties, ({ one, many }) => ({
+  club: one(clubs, {
+    fields: [workDuties.club_id],
+    references: [clubs.id],
+  }),
+  assignments: many(workDutyAssignments),
+}));
+
+export const workDutyAssignmentsRelations = relations(workDutyAssignments, ({ one }) => ({
+  duty: one(workDuties, {
+    fields: [workDutyAssignments.duty_id],
+    references: [workDuties.id],
+  }),
+}));

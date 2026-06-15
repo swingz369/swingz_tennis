@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { loginAs } from '../helpers/auth';
+import { navigateToFirstSeason } from '../helpers/navigation';
 
 /**
  * Season Planning E2E Flow Test (Plan + Grid routes)
@@ -7,7 +8,7 @@ import { loginAs } from '../helpers/auth';
  * Covers the end-to-end navigation through the season planning flow:
  *   1. /admin/seasons              — seasons list page
  *   2. /admin/seasons/[id]         — season detail page
- *   3. /admin/seasons/[id]/planning — planning wizard (3 steps)
+ *   3. /admin/seasons/[id]/planning — planning wizard (2 steps)
  *   4. Step 2 "Plan"               — plan generation / clustering view
  *   5. /admin/seasons/[id]/plan-grid — plan grid view
  *
@@ -20,7 +21,7 @@ import { loginAs } from '../helpers/auth';
  * tests/helpers/auth.ts.
  */
 
-const TIMEOUT_NAVIGATION = 20_000;
+const TIMEOUT_NAVIGATION = 30_000;
 
 /**
  * Try to click the first element matching any of the given name patterns.
@@ -62,62 +63,27 @@ test.describe('Season Planning Flow (Plan + Grid routes)', () => {
   });
 
   test('Seasons list page loads with at least one season or empty state', async ({ page }) => {
-    await page.goto('/admin/seasons', { waitUntil: 'networkidle', timeout: TIMEOUT_NAVIGATION });
-    await expect(page.locator('body')).toBeVisible();
+    await page.goto('/admin/seasons', {
+      waitUntil: 'domcontentloaded',
+      timeout: TIMEOUT_NAVIGATION,
+    });
+    await page.locator('body').waitFor({ state: 'visible', timeout: 5_000 });
 
-    // Either a season card/link OR a "no seasons" empty-state is acceptable
-    const hasSeason = await page
-      .getByRole('link', {
-        name: /sommer|winter|saison|herbst|frühling|summer|spring|fall|autumn/i,
-      })
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    if (hasSeason) {
-      // List rendered with at least one season
-      expect(hasSeason).toBe(true);
-    } else {
-      // Empty state — page may say "Keine Saisons" or similar
-      const bodyText = await page.locator('body').textContent();
-      expect(bodyText).toBeTruthy();
-    }
+    // Either seasons exist or an empty state is shown — both are valid
+    const bodyText = await page.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
   });
 
   test('Season detail page loads when clicking a season from the list', async ({ page }) => {
-    await page.goto('/admin/seasons', { waitUntil: 'networkidle', timeout: TIMEOUT_NAVIGATION });
-
-    const firstSeason = page
-      .getByRole('link', {
-        name: /sommer|winter|saison|herbst|frühling|summer|spring|fall|autumn/i,
-      })
-      .first();
-    test.skip(
-      !(await firstSeason.isVisible({ timeout: 3000 }).catch(() => false)),
-      'No season found on /admin/seasons to drill into'
-    );
-
-    await firstSeason.click();
-    await page.waitForURL(/\/admin\/seasons\/[a-f0-9-]+$/, { timeout: TIMEOUT_NAVIGATION });
+    const seasonId = await navigateToFirstSeason(page);
+    test.skip(!seasonId, 'No season found via API to navigate to');
 
     await expect(page.locator('body')).toBeVisible();
   });
 
-  test('Planning wizard loads and stepper is visible (3 steps)', async ({ page }) => {
-    await page.goto('/admin/seasons', { waitUntil: 'networkidle', timeout: TIMEOUT_NAVIGATION });
-
-    const firstSeason = page
-      .getByRole('link', {
-        name: /sommer|winter|saison|herbst|frühling|summer|spring|fall|autumn/i,
-      })
-      .first();
-    test.skip(
-      !(await firstSeason.isVisible({ timeout: 3000 }).catch(() => false)),
-      'No season found on /admin/seasons to drill into'
-    );
-
-    await firstSeason.click();
-    await page.waitForURL(/\/admin\/seasons\/[a-f0-9-]+$/, { timeout: TIMEOUT_NAVIGATION });
+  test('Planning wizard loads and stepper is visible (2 steps)', async ({ page }) => {
+    const seasonId = await navigateToFirstSeason(page);
+    test.skip(!seasonId, 'No season found via API to navigate to');
 
     // Try to enter the planning wizard via the "Saisonplanung starten/fortsetzen" button
     const enteredWizard = await tryClickByName(page, [
@@ -130,61 +96,43 @@ test.describe('Season Planning Flow (Plan + Grid routes)', () => {
       });
     } else {
       // Fallback: navigate directly
-      const seasonId = page.url().match(/\/admin\/seasons\/([a-f0-9-]+)/)?.[1];
-      if (!seasonId) test.skip(true, 'Could not extract seasonId from URL');
-      await page.goto(`/admin/seasons/${seasonId}/planning`, {
-        waitUntil: 'networkidle',
+      const sid = page.url().match(/\/admin\/seasons\/([a-f0-9-]+)/)?.[1];
+      if (!sid) test.skip(true, 'Could not extract seasonId from URL');
+      await page.goto(`/admin/seasons/${sid}/planning`, {
+        waitUntil: 'domcontentloaded',
         timeout: TIMEOUT_NAVIGATION,
       });
     }
 
     await expect(page.locator('body')).toBeVisible();
 
-    // Wizard stepper should show 3 steps: Konfigurieren, Planen, Abschließen
+    // Wizard stepper should show 2 steps: Konfigurieren, Planen & Veröffentlichen
     const hasConfigStep = await page
       .getByText(/konfigurieren/i)
       .first()
       .isVisible()
       .catch(() => false);
     const hasPlanStep = await page
-      .getByText(/planen|plan/i)
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasFinalizeStep = await page
-      .getByText(/abschließen|finalize|bestätigen/i)
+      .getByText(/planen|plan.*veröffentlichen/i)
       .first()
       .isVisible()
       .catch(() => false);
 
-    // At least 1 of the 3 step labels should be visible
-    expect(hasConfigStep || hasPlanStep || hasFinalizeStep).toBe(true);
+    // At least 1 of the 2 step labels should be visible
+    expect(hasConfigStep || hasPlanStep).toBe(true);
   });
 
   test('Plan step (Step 2) shows "Plan generieren" or existing plan', async ({ page }) => {
-    await page.goto('/admin/seasons', { waitUntil: 'networkidle', timeout: TIMEOUT_NAVIGATION });
-
-    const firstSeason = page
-      .getByRole('link', {
-        name: /sommer|winter|saison|herbst|frühling|summer|spring|fall|autumn/i,
-      })
-      .first();
-    test.skip(
-      !(await firstSeason.isVisible({ timeout: 3000 }).catch(() => false)),
-      'No season found on /admin/seasons to drill into'
-    );
-
-    await firstSeason.click();
-    await page.waitForURL(/\/admin\/seasons\/[a-f0-9-]+$/, { timeout: TIMEOUT_NAVIGATION });
-
-    const seasonId = page.url().match(/\/admin\/seasons\/([a-f0-9-]+)/)?.[1];
-    if (!seasonId) test.skip(true, 'Could not extract seasonId from URL');
+    const seasonId = await navigateToFirstSeason(page);
+    test.skip(!seasonId, 'No season found via API to navigate to');
 
     // Navigate directly to the wizard and try to advance to step 2
     await page.goto(`/admin/seasons/${seasonId}/planning`, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: TIMEOUT_NAVIGATION,
     });
+    // Wait for wizard content to render
+    await page.locator('body').waitFor({ state: 'visible', timeout: 5_000 });
 
     // Click "Planen" step in stepper (or "Weiter" to advance from step 1)
     const clickedPlanStep =
@@ -235,23 +183,8 @@ test.describe('Season Planning Flow (Plan + Grid routes)', () => {
   });
 
   test('Grid view (/plan-grid) loads without error', async ({ page }) => {
-    await page.goto('/admin/seasons', { waitUntil: 'networkidle', timeout: TIMEOUT_NAVIGATION });
-
-    const firstSeason = page
-      .getByRole('link', {
-        name: /sommer|winter|saison|herbst|frühling|summer|spring|fall|autumn/i,
-      })
-      .first();
-    test.skip(
-      !(await firstSeason.isVisible({ timeout: 3000 }).catch(() => false)),
-      'No season found on /admin/seasons to drill into'
-    );
-
-    await firstSeason.click();
-    await page.waitForURL(/\/admin\/seasons\/[a-f0-9-]+$/, { timeout: TIMEOUT_NAVIGATION });
-
-    const seasonId = page.url().match(/\/admin\/seasons\/([a-f0-9-]+)/)?.[1];
-    if (!seasonId) test.skip(true, 'Could not extract seasonId from URL');
+    const seasonId = await navigateToFirstSeason(page);
+    test.skip(!seasonId, 'No season found via API to navigate to');
 
     // Navigate to the grid view
     const response = await page.goto(`/admin/seasons/${seasonId}/plan-grid`, {

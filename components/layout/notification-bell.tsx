@@ -283,7 +283,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             </button>
           )}
           <Link
-            href="/notifications"
+            href="/messages"
             className="text-xs font-medium text-brand-light hover:text-brand-primary ml-auto"
           >
             Alle anzeigen

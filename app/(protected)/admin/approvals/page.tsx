@@ -1,5 +1,5 @@
-import AdminApprovals from '@/components/admin-approvals';
+import { redirect } from 'next/navigation';
 
 export default function AdminApprovalsPage() {
-  return <AdminApprovals />;
+  redirect('/admin/members?tab=approvals');
 }

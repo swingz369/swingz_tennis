@@ -35,6 +35,7 @@ export interface UserMemberData {
   emergencyContact?: string;
   emergencyPhone?: string;
   dateOfBirth?: string;
+  dtbId?: string;
   memberType?: 'member' | 'trial' | 'inactive';
   membershipStatus?: 'active' | 'inactive' | 'suspended' | 'terminated';
   membershipStart?: string;

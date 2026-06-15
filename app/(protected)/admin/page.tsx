@@ -87,12 +87,11 @@ export default async function AdminPage() {
       .eq('club_id', clubId)
       .eq('role', 'trainer')
       .eq('is_active', true),
-    supabase
-      .from('user_club_memberships')
+    (supabase as any)
+      .from('registration_requests')
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
-      .eq('is_active', false)
-      .not('role', 'in', '(trainer,superadmin)'),
+      .eq('status', 'pending'),
     // Today's session count (filtered via schedules → club_id)
     supabase
       .from('sessions')
@@ -201,7 +200,7 @@ export default async function AdminPage() {
     smartActions.push({
       label: `${pendingApprovals} Anfrage${(pendingApprovals ?? 0) > 1 ? 'n' : ''} genehmigen`,
       description: 'Neue Mitgliedsanfragen warten auf dich',
-      href: '/admin/approvals',
+      href: '/admin/members?tab=approvals',
       icon: UserPlus,
       variant: 'orange',
       urgent: true,
@@ -266,7 +265,7 @@ export default async function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {needsApprovals && (
                 <Link
-                  href="/admin/approvals"
+                  href="/admin/members?tab=approvals"
                   className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 border border-orange-200 dark:border-orange-700/50 px-4 py-3 hover:shadow-md transition-all"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30 shrink-0">

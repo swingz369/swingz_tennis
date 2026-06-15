@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
 import { requireAuth } from '@/lib/auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
@@ -24,6 +24,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const roles: string[] = (memberships ?? []).map((m: any) => m.role);
   const isSuperAdmin = roles.includes('superadmin');
+  const isAdmin = roles.includes('admin');
 
   // Collect all clubs (non-null club_ids)
   const allClubs: { id: string; name: string }[] = (memberships ?? [])
@@ -36,13 +37,51 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const uniqueClubs = allClubs.filter((c, i, self) => i === self.findIndex((x) => x.id === c.id));
 
-  // Primary club: for admin/trainer/member = their assigned club
-  // For superadmin: the cookie-selected club (if any)
+  // Resolve the active club from ADMIN_CLUB_COOKIE (for both superadmin and admin).
+  // This matches the logic in lib/admin-context.ts and lib/api-auth.ts.
   const cookieStore = await cookies();
-  const selectedClubId = isSuperAdmin ? cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null : null;
+  let selectedClubId: string | null = null;
 
-  // Find non-null primary club for non-superadmin
-  const primaryMembership = (memberships ?? []).find((m: any) => m.club_id);
+  if (isSuperAdmin) {
+    selectedClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+  } else if (isAdmin) {
+    const cookieValue = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+    if (
+      cookieValue &&
+      (memberships ?? []).some((m: any) => m.role === 'admin' && m.club_id === cookieValue)
+    ) {
+      selectedClubId = cookieValue;
+    } else {
+      // Fallback: first admin membership's club
+      const adminMembership = (memberships ?? []).find((m: any) => m.role === 'admin' && m.club_id);
+      selectedClubId = adminMembership?.club_id ?? null;
+    }
+  }
+
+  // Auto-set ADMIN_CLUB_COOKIE for regular admins so API routes resolve the same club.
+  // Previously the cookie was only set by the superadmin club-switcher, causing a mismatch
+  // between the layout's selectedClubId and buildAuthContext's effectiveClubId in api-auth.ts.
+  if (isAdmin && selectedClubId) {
+    const existingCookie = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
+    if (existingCookie !== selectedClubId) {
+      try {
+        cookieStore.set(ADMIN_CLUB_COOKIE, selectedClubId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: ADMIN_CLUB_COOKIE_MAX_AGE,
+          path: '/',
+        });
+      } catch {
+        // Read-only cookie context — safe to ignore
+      }
+    }
+  }
+
+  // Find primary club: prefer selectedClubId, fallback to first membership with a club
+  const primaryMembership = selectedClubId
+    ? (memberships ?? []).find((m: any) => m.club_id === selectedClubId)
+    : (memberships ?? []).find((m: any) => m.club_id);
   const primaryClubRaw = primaryMembership?.clubs ?? null;
   const primaryClub = primaryClubRaw
     ? Array.isArray(primaryClubRaw)

@@ -27,8 +27,8 @@ export class FeeConfigurationService {
       errors.push('Name muss mindestens 2 Zeichen lang sein');
     }
 
-    if (!input.amount || input.amount < 0) {
-      errors.push('Betrag muss positiv sein');
+    if (input.amount == null || input.amount < 0) {
+      errors.push('Betrag darf nicht negativ sein');
     }
 
     if (!input.type) {

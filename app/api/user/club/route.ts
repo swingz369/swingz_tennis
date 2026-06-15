@@ -15,21 +15,28 @@ export async function GET(_req: NextRequest) {
       return rateLimitError;
     }
 
-    const { data: memberships, error: membershipError } = await auth.supabase
-      .from('user_club_memberships')
-      .select(
-        'club_id, clubs (id, name, max_members, default_hourly_rate, status, bundesland, billing_unit_minutes, tax_rate, default_payment_method, invoice_number_prefix)'
-      )
-      .eq('user_id', auth.user.id)
-      .eq('is_active', true)
-      .limit(1);
-
-    if (membershipError || !memberships || memberships.length === 0) {
-      return NextResponse.json({ error: 'No club membership found' }, { status: 404 });
+    // Use auth.clubId which respects ADMIN_CLUB_COOKIE (same as Server Components).
+    // Previously this route queried user_club_memberships with limit(1), returning
+    // an arbitrary club. That caused 403s when the client used the wrong clubId
+    // for subsequent calls to /api/clubs/${id}/features etc.
+    const targetClubId = auth.clubId;
+    if (!targetClubId) {
+      return NextResponse.json({ error: 'No club context available' }, { status: 404 });
     }
 
-    const membership = memberships[0];
-    const club = membership.clubs as unknown as {
+    const { data: clubRows, error: clubError } = await auth.supabase
+      .from('clubs')
+      .select(
+        'id, name, max_members, default_hourly_rate, status, bundesland, billing_unit_minutes, tax_rate, default_payment_method, invoice_number_prefix'
+      )
+      .eq('id', targetClubId)
+      .limit(1);
+
+    if (clubError || !clubRows || clubRows.length === 0) {
+      return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+    }
+
+    const club = clubRows[0] as unknown as {
       id: string;
       name: string;
       max_members: number;
@@ -42,7 +49,7 @@ export async function GET(_req: NextRequest) {
       invoice_number_prefix: string | null;
     };
     return NextResponse.json({
-      clubId: membership.club_id,
+      clubId: targetClubId,
       club: {
         id: club.id,
         name: club.name,

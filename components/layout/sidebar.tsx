@@ -17,7 +17,6 @@ import {
   Home,
   Users,
   Settings,
-  Newspaper,
   GraduationCap,
   Trophy,
   X,
@@ -31,6 +30,9 @@ import {
   DollarSign,
   Shield,
   MessageSquare,
+  Flag,
+  HardHat,
+  Shuffle,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { useTenant } from '@/lib/tenant-context';
@@ -155,22 +157,7 @@ export function Sidebar({
   const [imgFailed, setImgFailed] = useState(false);
   const clubLogoUrl = branding.logos.light || branding.logos.dark;
 
-  // Fetch notification and approval counts from API
-  const [approvalCount, setApprovalCount] = useState(0);
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    // Fetch pending approval count (admin only)
-    if (isAdmin) {
-      apiFetch('/api/admin/approvals/count', { signal: abortController.signal })
-        .then((res) => res.json())
-        .then((data) => setApprovalCount(data?.count ?? 0))
-        .catch(() => {});
-    }
-
-    return () => abortController.abort();
-  }, [isAdmin]);
+  // Approval count is now fetched inside the MembersTabs component
 
   const handleSwitchClub = async (clubId: string) => {
     setClubSwitcherOpen(false);
@@ -217,10 +204,7 @@ export function Sidebar({
         {
           label: 'Mitglieder',
           icon: Users,
-          subItems: [
-            { name: 'Alle Mitglieder', href: '/admin/members' },
-            { name: 'Genehmigungen', href: '/admin/approvals', badge: approvalCount },
-          ],
+          subItems: [{ name: 'Alle Mitglieder', href: '/admin/members' }],
           extraAction: onInvite
             ? {
                 label: 'Einladen',
@@ -254,8 +238,35 @@ export function Sidebar({
             ...(!hiddenSections.has('ai_matchmaking')
               ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
               : []),
+            ...(!hiddenSections.has('weather_integration')
+              ? [{ name: 'Wetter & Platzsperren', href: '/admin/weather' }]
+              : []),
           ],
         },
+        ...(!hiddenSections.has('league_lineup')
+          ? [
+              {
+                label: 'Liga & Mannschaft',
+                icon: Flag,
+                subItems: [
+                  { name: 'Ligen & Teams', href: '/admin/leagues' },
+                  { name: 'Spieltage', href: '/admin/leagues/matchdays' },
+                ],
+              },
+            ]
+          : []),
+        ...(!hiddenSections.has('work_duty')
+          ? [
+              {
+                label: 'Arbeitsdienst',
+                icon: HardHat,
+                subItems: [
+                  { name: 'Dienste verwalten', href: '/admin/work-duties' },
+                  { name: 'Zuweisungen', href: '/admin/work-duties/assignments' },
+                ],
+              },
+            ]
+          : []),
         {
           label: 'Finanzen',
           icon: DollarSign,
@@ -272,8 +283,6 @@ export function Sidebar({
             ...(!hiddenSections.has('shop')
               ? [{ name: 'Shop verwalten', href: '/admin/shop' }]
               : []),
-            { name: 'Audit-Logs', href: '/admin/audit-logs' },
-            { name: 'Performance-Verlauf', href: '/admin/perf-history' },
           ],
         },
       ];
@@ -304,7 +313,6 @@ export function Sidebar({
           subItems: [
             { name: 'Billing-Verwaltung', href: '/admin/billing' },
             { name: 'System-Einstellungen', href: '/admin/settings' },
-            { name: 'Audit-Logs', href: '/admin/audit-logs' },
           ],
         },
       ];
@@ -328,9 +336,17 @@ export function Sidebar({
     { name: 'Mein Profil', href: '/profile', icon: User },
     { name: 'Nachrichten', href: '/messages', icon: MessageSquare },
     ...(!isAdmin && !isSuperAdmin
+      ? [{ name: 'Matchmaking', href: '/matchmaking', icon: Shuffle }]
+      : []),
+    ...(!isAdmin && !isSuperAdmin
+      ? [{ name: 'Offene Spiele', href: '/matches', icon: Users }]
+      : []),
+    ...(!isAdmin && !isSuperAdmin
       ? [{ name: 'Meine Rechnungen', href: '/billing', icon: CreditCard }]
       : []),
-    { name: 'News & Updates', href: '/news', icon: Newspaper },
+    ...(!isAdmin && !isSuperAdmin
+      ? [{ name: 'Arbeitsdienste', href: '/member/work-duties', icon: HardHat }]
+      : []),
   ];
 
   const dashboardHref = isSuperAdmin ? '/superadmin' : '/admin';

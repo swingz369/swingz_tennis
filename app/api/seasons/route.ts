@@ -210,8 +210,8 @@ export async function POST(request: NextRequest) {
           description: body.description || null,
           notes: body.notes || null,
           created_by: auth.user?.id,
-          planning_status: 'draft',
-          preferences_open: false,
+          planning_status: 'collecting_preferences',
+          preferences_open: true,
           is_active: false,
           auto_plan_enabled: true,
         })

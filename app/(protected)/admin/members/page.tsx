@@ -1,6 +1,6 @@
 import { requireAdminClub } from '@/lib/admin-context';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
-import { MembersClient } from './members-client';
+import { MembersTabs } from './members-tabs';
 import type { Member } from './member.types';
 
 export const dynamic = 'force-dynamic';
@@ -43,7 +43,7 @@ export default async function MembersPage({
     } else {
       // No matches — return empty
       return (
-        <MembersClient
+        <MembersTabs
           initialMembers={[]}
           clubId={clubId}
           pagination={buildPaginationMeta(page, limit, 0)}
@@ -114,5 +114,5 @@ export default async function MembersPage({
 
   const pagination = buildPaginationMeta(page, limit, count);
 
-  return <MembersClient initialMembers={initialMembers} clubId={clubId} pagination={pagination} />;
+  return <MembersTabs initialMembers={initialMembers} clubId={clubId} pagination={pagination} />;
 }

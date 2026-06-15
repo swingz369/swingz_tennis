@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { constructStripeEvent, stripe as getStripeClient } from '@/lib/stripe/stripe-client';
 import { billingEngine } from '@/lib/billing-engine';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('webhook:stripe');
@@ -20,7 +20,7 @@ export async function POST(_request: NextRequest) {
     const event = constructStripeEvent(body, signature);
 
     // ── Idempotency: atomic check-and-record (race-condition safe) ──
-    const supabase = await createAdminClient();
+    const supabase = createServiceClient();
     try {
       // Cast needed until stripe_events table is in generated Supabase types
       const { data: isNew } = await (supabase as any)
@@ -85,7 +85,7 @@ export async function POST(_request: NextRequest) {
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         // Look up payment by external_id (stripe payment intent id)
-        const supabase = await createAdminClient();
+        const supabase = createServiceClient();
         const { data: payment } = await supabase
           .from('payments')
           .select('id')
@@ -127,7 +127,7 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
     return;
   }
 
-  const supabase = await createAdminClient();
+  const supabase = createServiceClient();
   const { data: existingPayment } = await supabase
     .from('payments')
     .select('id')
@@ -156,7 +156,7 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
 // --- Booking payment handling ---
 
 async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId: string) {
-  const supabase = await createAdminClient();
+  const supabase = createServiceClient();
   const { userId, clubId } = session.metadata || {};
 
   const { data: booking } = await supabase
@@ -218,7 +218,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
 // --- Shop order payment handling ---
 
 async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId: string) {
-  const supabase = await createAdminClient();
+  const supabase = createServiceClient();
 
   // Check for idempotency
   const { data: order } = await supabase
@@ -284,7 +284,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
  * promotes any still-pending payments to 'completed' once funds arrive.
  */
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  const supabase = await createAdminClient();
+  const supabase = createServiceClient();
 
   // Find the payment record created by checkout.session.completed
   const { data: payment } = await supabase
@@ -373,7 +373,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
  * Handles charge.refunded events — marks the associated payment as refunded.
  */
 async function handleChargeRefunded(charge: Stripe.Charge) {
-  const supabase = await createAdminClient();
+  const supabase = createServiceClient();
 
   // Find the payment by external_id (payment intent)
   const paymentIntentId = charge.payment_intent as string;
@@ -392,7 +392,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 
 async function handleBookingPaymentFailed(paymentIntentId: string) {
   const stripeClient = getStripeClient();
-  const supabase = await createAdminClient();
+  const supabase = createServiceClient();
 
   try {
     const sessions = await stripeClient.checkout.sessions.list({

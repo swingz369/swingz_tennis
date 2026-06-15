@@ -20,6 +20,7 @@ import {
   Clock,
   CheckCircle,
   Trash2,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -351,6 +352,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [quickStarting, setQuickStarting] = useState(false);
 
   const fetchSeason = useCallback(async () => {
     try {
@@ -412,6 +414,32 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
     }
   };
 
+  const handleQuickStart = async () => {
+    setQuickStarting(true);
+    try {
+      // Auto-Plan with intelligent defaults, then redirect to wizard
+      const response = await apiFetch(`/api/seasons/${id}/auto-plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun: false }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        toast.error(err.error ?? 'Auto-Plan fehlgeschlagen');
+        setQuickStarting(false);
+        return;
+      }
+
+      toast.success('Planung erstellt — Weiterleitung...');
+      setQuickStarting(false);
+      router.push(`/admin/seasons/${id}/planning?step=2`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Auto-Plan');
+      setQuickStarting(false);
+    }
+  };
+
   const handleDelete = async () => {
     setDeleteConfirmOpen(false);
     setDeleting(true);
@@ -464,6 +492,9 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
   const canOpenPreferences = season.planning_status === 'draft';
   const canPublish = season.planning_status === 'manual_review';
+  const canQuickStart =
+    ['draft', 'collecting_preferences', 'manual_review'].includes(season.planning_status ?? '') &&
+    season.submitted_preferences > 0;
 
   return (
     <div className="space-y-6">
@@ -512,16 +543,26 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {canQuickStart && (
+            <Button variant="default" onClick={handleQuickStart} disabled={quickStarting}>
+              {quickStarting ? (
+                <Clock className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Zap className="mr-2 h-4 w-4" />
+              )}
+              Schnellstart
+            </Button>
+          )}
           <Link href={`/admin/seasons/${id}/planning`}>
-            <Button>
+            <Button variant={canQuickStart ? 'outline' : 'default'}>
               <Play className="mr-2 h-4 w-4" />
               {['published', 'active', 'completed', 'archived'].includes(
                 season.planning_status ?? ''
               )
                 ? 'Saisonplanung ansehen'
                 : season.planning_status === 'draft'
-                  ? 'Saisonplanung starten'
-                  : 'Saisonplanung fortsetzen'}
+                  ? 'Wizard öffnen'
+                  : 'Planung fortsetzen'}
             </Button>
           </Link>
           <Button variant="outline" onClick={() => router.push(`/admin/seasons/${id}/edit`)}>
@@ -617,69 +658,87 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="preferences">
-            Präferenzen ({season.submitted_preferences})
-          </TabsTrigger>
-          <TabsTrigger value="plan">Plan ({season.planned_entries})</TabsTrigger>
-          <TabsTrigger value="conflicts">Konflikte ({season.open_conflicts})</TabsTrigger>
-          <TabsTrigger value="group-change">Gruppenwechsel</TabsTrigger>
-          <TabsTrigger value="calendar">Saisonkalender</TabsTrigger>
-        </TabsList>
+      {/* Tabs — only show planning-related tabs after the plan is published */}
+      <SeasonTabs season={season} seasonId={id} />
+    </div>
+  );
+}
 
-        <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Season Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Status</p>
-                  <p className="text-lg">{season.planning_status}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Saison-Typ</p>
-                  <p className="text-lg capitalize">{season.season_type}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Jahr</p>
-                  <p className="text-lg">{season.year}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Gruppen abgedeckt</p>
-                  <p className="text-lg">{season.groups_covered}</p>
-                </div>
+/* Extracted tabs component so the IIFE is not needed */
+function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: string }) {
+  const router = useRouter();
+  const isPublished = ['published', 'active', 'completed', 'archived'].includes(
+    season.planning_status ?? ''
+  );
+
+  return (
+    <Tabs defaultValue="overview" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="overview">Übersicht</TabsTrigger>
+        {isPublished && (
+          <>
+            <TabsTrigger value="preferences">
+              Präferenzen ({season.submitted_preferences})
+            </TabsTrigger>
+            <TabsTrigger value="plan">Plan ({season.planned_entries})</TabsTrigger>
+            <TabsTrigger value="conflicts">Konflikte ({season.open_conflicts})</TabsTrigger>
+            <TabsTrigger value="group-change">Gruppenwechsel</TabsTrigger>
+          </>
+        )}
+        <TabsTrigger value="calendar">Saisonkalender</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="overview" className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Season Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-lg">{season.planning_status}</p>
               </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Saison-Typ</p>
+                <p className="text-lg capitalize">{season.season_type}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Jahr</p>
+                <p className="text-lg">{season.year}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Gruppen abgedeckt</p>
+                <p className="text-lg">{season.groups_covered}</p>
+              </div>
+            </div>
 
-              {season.description && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Beschreibung</p>
-                  <p className="mt-1 text-sm">{season.description}</p>
-                </div>
-              )}
+            {season.description && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Beschreibung</p>
+                <p className="mt-1 text-sm">{season.description}</p>
+              </div>
+            )}
 
-              {season.preferences_deadline && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Präferenz-Deadline</p>
-                  <p className="mt-1 text-sm">
-                    {new Date(season.preferences_deadline).toLocaleDateString('de-DE', {
-                      day: '2-digit',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            {season.preferences_deadline && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Präferenz-Deadline</p>
+                <p className="mt-1 text-sm">
+                  {new Date(season.preferences_deadline).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <SeasonInvoiceGenerator seasonId={id} clubId={season.club_id ?? ''} />
-        </TabsContent>
+        <SeasonInvoiceGenerator seasonId={seasonId} clubId={season.club_id ?? ''} />
+      </TabsContent>
 
+      {isPublished && (
         <TabsContent value="preferences">
           <Card>
             <CardHeader>
@@ -689,25 +748,30 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => router.push(`/admin/seasons/${id}/preferences`)}>
+              <Button onClick={() => router.push(`/admin/seasons/${seasonId}/preferences`)}>
                 Alle Präferenzen anzeigen
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
+      )}
 
-        <TabsContent value="plan">
+      <TabsContent value="plan">
+        {isPublished ? (
           <Card>
             <CardHeader>
               <CardTitle>Trainingsplan</CardTitle>
               <CardDescription>Geplante Training-Sessions für diese Season</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button onClick={() => router.push(`/admin/seasons/${id}/plan`)}>
+              <Button onClick={() => router.push(`/admin/seasons/${seasonId}/plan`)}>
                 Plan anzeigen
               </Button>
               <div>
-                <Button variant="outline" onClick={() => router.push(`/admin/season-plan/${id}`)}>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/admin/season-plan/${seasonId}`)}
+                >
                   Stundenplan (Grid-Ansicht)
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">
@@ -716,8 +780,20 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Play className="h-12 w-12 mx-auto mb-3 text-muted-foreground/40" />
+              <p className="font-medium text-muted-foreground">Noch keine Planung veröffentlicht</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Starte den Wizard, um eine Planung zu erstellen und zu veröffentlichen.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </TabsContent>
 
+      {isPublished && (
         <TabsContent value="conflicts">
           <Card>
             <CardHeader>
@@ -732,14 +808,16 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
                   <p className="text-sm text-muted-foreground">Die Planung ist konfliktfrei</p>
                 </div>
               ) : (
-                <Button onClick={() => router.push(`/admin/seasons/${id}/conflicts`)}>
+                <Button onClick={() => router.push(`/admin/seasons/${seasonId}/conflicts`)}>
                   Konflikte anzeigen ({season.open_conflicts})
                 </Button>
               )}
             </CardContent>
           </Card>
         </TabsContent>
+      )}
 
+      {isPublished && (
         <TabsContent value="group-change">
           <Card>
             <CardHeader>
@@ -750,15 +828,15 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <GroupMembersPanel seasonId={id} clubId={season.club_id ?? ''} />
+              <GroupMembersPanel seasonId={seasonId} clubId={season.club_id ?? ''} />
             </CardContent>
           </Card>
         </TabsContent>
+      )}
 
-        <TabsContent value="calendar">
-          <SeasonCalendarTab seasonId={id} clubId={season.club_id ?? ''} />
-        </TabsContent>
-      </Tabs>
-    </div>
+      <TabsContent value="calendar">
+        <SeasonCalendarTab seasonId={seasonId} clubId={season.club_id ?? ''} />
+      </TabsContent>
+    </Tabs>
   );
 }

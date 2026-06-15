@@ -43,6 +43,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+    }
+
     const { data, error } = await auth.supabase
       .from('news_posts')
       .insert({
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest) {
         is_pinned: body.is_pinned || false,
         is_published: true,
         author_id: auth.user.id,
-        club_id: auth.clubId ?? '',
+        club_id: auth.clubId,
         published_at: new Date().toISOString(),
       })
       .select()

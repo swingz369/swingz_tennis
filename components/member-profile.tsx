@@ -52,6 +52,7 @@ export default function MemberProfile() {
     bio: '',
     emergencyContact: '',
     emergencyPhone: '',
+    dtbId: '',
   });
 
   // Sync form fields when memberData loads
@@ -67,6 +68,7 @@ export default function MemberProfile() {
         bio: memberData.bio || '',
         emergencyContact: memberData.emergencyContact || '',
         emergencyPhone: memberData.emergencyPhone || '',
+        dtbId: memberData.dtbId || '',
       });
       setAvatarUrl(memberData.avatarUrl || null);
     }
@@ -358,6 +360,37 @@ export default function MemberProfile() {
                         />
                       ) : (
                         <div className="font-medium">{formData.city || '—'}</div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">DTB-Spielernummer</Label>
+                      {isEditing ? (
+                        <Input
+                          name="dtbId"
+                          value={formData.dtbId}
+                          onChange={handleChange}
+                          placeholder="z.B. 12345678"
+                        />
+                      ) : formData.dtbId ? (
+                        <div className="font-medium flex items-center gap-2">
+                          <Award className="h-4 w-4 text-brand-primary" />
+                          <a
+                            href={`https://www.tennis.de/vereinsspielbetrieb/spieler/${formData.dtbId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-primary hover:underline"
+                          >
+                            {formData.dtbId}
+                          </a>
+                          <span className="text-xs text-muted-foreground">(tennis.de)</span>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          Nicht gesetzt —{' '}
+                          <span className="text-xs">
+                            wird für Ligaergebnisse auf tennis.de benötigt
+                          </span>
+                        </div>
                       )}
                     </div>
                   </div>

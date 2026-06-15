@@ -28,6 +28,8 @@ import { ConfigStep } from './steps/config-step';
 import { PlanEditStep } from './steps/plan-edit-step';
 import { FinalizeStep } from './steps/finalize-step';
 
+// Step 2 = PlanEditStep + FinalizeStep combined (finalize is embedded inside plan edit)
+
 // ============================================
 // STEP DEFINITIONS
 // ============================================
@@ -78,8 +80,12 @@ class StepErrorBoundary extends Component<
 
 const STEPS = [
   { number: 1, label: 'Konfigurieren', icon: Settings, hint: 'Daten prüfen & einstellen' },
-  { number: 2, label: 'Planen', icon: LayoutGrid, hint: 'Generieren & bearbeiten' },
-  { number: 3, label: 'Abschließen', icon: ClipboardCheck, hint: 'Prüfen & veröffentlichen' },
+  {
+    number: 2,
+    label: 'Planen & Veröffentlichen',
+    icon: LayoutGrid,
+    hint: 'Generieren, bearbeiten & abschließen',
+  },
 ];
 
 // ============================================
@@ -93,6 +99,7 @@ interface PlanningWizardClientProps {
   seasonType: string;
   seasonYear: number;
   planningStatus: string;
+  initialStep?: number;
 }
 
 // ============================================
@@ -117,17 +124,20 @@ function WizardContent({
       case 1:
         return <ConfigStep />;
       case 2:
-        return <PlanEditStep />;
-      case 3:
-        return <FinalizeStep />;
+        return (
+          <>
+            <PlanEditStep />
+            <FinalizeStep />
+          </>
+        );
       default:
         return <ConfigStep />;
     }
   };
 
-  const canGoNext = currentStep < 3 && !(currentStep === 1 && !state.isReady);
+  const canGoNext = currentStep < 2 && !(currentStep === 1 && !state.isReady);
   const canGoPrev = currentStep > 1;
-  const isLast = currentStep === 3;
+  const isLast = currentStep === 2;
 
   return (
     <div className="space-y-6">
@@ -193,7 +203,7 @@ function WizardContent({
       <div className="h-1.5 w-full rounded-full bg-muted dark:bg-muted overflow-hidden">
         <div
           className="h-full rounded-full bg-brand-primary transition-all duration-500"
-          style={{ width: `${(currentStep / 3) * 100}%` }}
+          style={{ width: `${(currentStep / 2) * 100}%` }}
         />
       </div>
 
@@ -241,7 +251,7 @@ function WizardContent({
               </Button>
             </>
           ) : (
-            <Button onClick={() => router.push('/admin/seasons')} variant="brand">
+            <Button onClick={() => router.push(`/admin/seasons/${state.seasonId}`)} variant="brand">
               <ClipboardCheck className="mr-2 h-4 w-4" />
               Zur Saisonübersicht
             </Button>
@@ -262,9 +272,10 @@ export function PlanningWizardClient({
   seasonName,
   seasonType,
   seasonYear,
+  initialStep,
 }: PlanningWizardClientProps) {
   return (
-    <WizardProvider seasonId={seasonId} clubId={clubId}>
+    <WizardProvider seasonId={seasonId} clubId={clubId} initialStep={initialStep}>
       <WizardContent seasonName={seasonName} seasonType={seasonType} seasonYear={seasonYear} />
     </WizardProvider>
   );

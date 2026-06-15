@@ -65,8 +65,9 @@ export default function NewSeasonPage() {
       }
 
       const data = await response.json();
-      toast.success('Season erfolgreich erstellt');
-      router.push(`/admin/seasons/${data.season.id}`);
+      toast.success('Saison erstellt — Planung startet jetzt');
+      // Auto-redirect to planning wizard (preferences are auto-opened by the API)
+      router.push(`/admin/seasons/${data.season.id}/planning`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler beim Erstellen');
     } finally {

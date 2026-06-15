@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
       // Accept both field name conventions (approval workflow sends recipientEmail/recipientName)
       const email: string = body.recipientEmail ?? body.email;
       const firstName: string = body.recipientName ?? body.firstName;
-      const clubId: string = body.clubId ?? auth.clubId ?? '';
+      const clubId: string | null = body.clubId ?? auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+      }
 
       if (!email) {
         return NextResponse.json({ error: 'Email required' }, { status: 400 });

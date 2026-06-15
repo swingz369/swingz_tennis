@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Sparkles,
   ClipboardCheck,
+  HardHat,
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -381,6 +382,12 @@ export default async function MemberPage() {
           },
           { label: 'Turniere', href: '/member/tournaments', icon: Trophy, variant: 'amber' },
           { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
+          {
+            label: 'Dienste',
+            href: '/member/work-duties',
+            icon: HardHat,
+            variant: 'amber',
+          },
           {
             label: 'Präferenzen',
             href: '/member/preferences',

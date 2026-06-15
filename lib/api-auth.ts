@@ -37,7 +37,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import type { Database } from '@/types/supabase';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 import { hasRole, getHighestRole } from '@/lib/auth-common';
 
 export interface AuthContext {
@@ -209,7 +209,26 @@ export async function withAuth(
 ): Promise<NextResponse> {
   try {
     const auth = await requireAuth(request);
-    return await handler(auth);
+    const response = await handler(auth);
+
+    // Auto-set ADMIN_CLUB_COOKIE for admins who don't have it yet.
+    // Previously only the superadmin club-switcher set this cookie,
+    // causing regular admins to get 403 on club-scoped API endpoints.
+    if (
+      auth.clubId &&
+      auth.role !== 'superadmin' &&
+      !request.cookies.get(ADMIN_CLUB_COOKIE)?.value
+    ) {
+      response.cookies.set(ADMIN_CLUB_COOKIE, auth.clubId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: ADMIN_CLUB_COOKIE_MAX_AGE,
+        path: '/',
+      });
+    }
+
+    return response;
   } catch (error) {
     if (error instanceof NextResponse) return error;
     return unauthorizedResponse(error instanceof Error ? error.message : 'Authentication failed');

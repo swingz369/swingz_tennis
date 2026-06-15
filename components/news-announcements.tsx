@@ -54,6 +54,8 @@ interface NewsAnnouncementsProps {
   canManage?: boolean;
   /** Server-rendered initial list (so first paint is fast) */
   initialNews?: NewsItem[];
+  /** Compact mode: hide hero header and stat cards (for embedding in other pages) */
+  compact?: boolean;
 }
 
 const TYPE_OPTIONS: NewsItem['type'][] = ['announcement', 'update', 'maintenance', 'event'];
@@ -62,6 +64,7 @@ const PRIORITY_OPTIONS: NewsItem['priority'][] = ['low', 'medium', 'high', 'urge
 export default function NewsAnnouncements({
   canManage = false,
   initialNews = [],
+  compact = false,
 }: NewsAnnouncementsProps) {
   const [news, setNews] = useState<NewsItem[]>(initialNews);
   const [isLoading, setIsLoading] = useState(false);
@@ -264,131 +267,146 @@ export default function NewsAnnouncements({
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className={compact ? 'space-y-4' : 'p-4 md:p-6 space-y-6'}>
       {/* ── Hero Header ── */}
-      <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Informationen</p>
-                <h1 className="text-2xl md:text-3xl font-bold">News & Ankündigungen</h1>
-                <p className="text-white/70 mt-2">
-                  Bleib auf dem Laufenden über Neuigkeiten und Updates
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                {canManage && (
-                  <Button
-                    onClick={() => setComposeOpen(true)}
-                    className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25 gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Neue Nachricht
-                  </Button>
-                )}
-                <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
-                  <Newspaper className="h-5 w-5 text-brand-accent" />
-                  <span className="text-sm font-medium">
-                    <AnimatedCounter value={news.length} /> Nachrichten
-                  </span>
+      {!compact && (
+        <ScrollReveal>
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+            <div className="absolute inset-0 bg-noise opacity-5" />
+            <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
+            <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
+            <div className="relative">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-white/70 mb-1">Informationen</p>
+                  <h1 className="text-2xl md:text-3xl font-bold">News & Ankündigungen</h1>
+                  <p className="text-white/70 mt-2">
+                    Bleib auf dem Laufenden über Neuigkeiten und Updates
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {canManage && (
+                    <Button
+                      onClick={() => setComposeOpen(true)}
+                      className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25 gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Neue Nachricht
+                    </Button>
+                  )}
+                  <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
+                    <Newspaper className="h-5 w-5 text-brand-accent" />
+                    <span className="text-sm font-medium">
+                      <AnimatedCounter value={news.length} /> Nachrichten
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </ScrollReveal>
+        </ScrollReveal>
+      )}
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ScrollReveal delay={0}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Gesamt</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={news.length} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Nachrichten</p>
+      {!compact && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <ScrollReveal delay={0}>
+            <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Gesamt</p>
+                    <p className="text-3xl font-bold text-foreground dark:text-white">
+                      <AnimatedCounter value={news.length} />
+                    </p>
+                    <p className="text-xs text-muted-foreground">Nachrichten</p>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                    <Bell className="h-5 w-5" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Bell className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
 
-        <ScrollReveal delay={80}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Angepinnt</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={news.filter((n) => n.isPinned).length} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">wichtige Nachrichten</p>
+          <ScrollReveal delay={80}>
+            <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Angepinnt</p>
+                    <p className="text-3xl font-bold text-foreground dark:text-white">
+                      <AnimatedCounter value={news.filter((n) => n.isPinned).length} />
+                    </p>
+                    <p className="text-xs text-muted-foreground">wichtige Nachrichten</p>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                    <CheckCircle className="h-5 w-5" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <CheckCircle className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
 
-        <ScrollReveal delay={160}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Dringend</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter
-                      value={
-                        news.filter((n) => n.priority === 'urgent' || n.priority === 'high').length
-                      }
-                    />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Priorität hoch+</p>
+          <ScrollReveal delay={160}>
+            <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Dringend</p>
+                    <p className="text-3xl font-bold text-foreground dark:text-white">
+                      <AnimatedCounter
+                        value={
+                          news.filter((n) => n.priority === 'urgent' || n.priority === 'high')
+                            .length
+                        }
+                      />
+                    </p>
+                    <p className="text-xs text-muted-foreground">Priorität hoch+</p>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <AlertTriangle className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
 
-        <ScrollReveal delay={240}>
-          <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Diese Woche</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter
-                      value={
-                        news.filter((n) => new Date(n.publishedAt).getTime() >= weekAgoTimestamp)
-                          .length
-                      }
-                    />
-                  </p>
-                  <p className="text-xs text-muted-foreground">neue Beiträge</p>
+          <ScrollReveal delay={240}>
+            <Card className="group hover-lift transition-all duration-300 border border-border dark:border-white/10">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Diese Woche</p>
+                    <p className="text-3xl font-bold text-foreground dark:text-white">
+                      <AnimatedCounter
+                        value={
+                          news.filter((n) => new Date(n.publishedAt).getTime() >= weekAgoTimestamp)
+                            .length
+                        }
+                      />
+                    </p>
+                    <p className="text-xs text-muted-foreground">neue Beiträge</p>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <TrendingUp className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-      </div>
+              </CardContent>
+            </Card>
+          </ScrollReveal>
+        </div>
+      )}
+
+      {/* Compact: admin create button */}
+      {compact && canManage && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={() => setComposeOpen(true)} className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            Neue Nachricht
+          </Button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2">

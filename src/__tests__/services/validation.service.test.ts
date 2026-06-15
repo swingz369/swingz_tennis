@@ -51,9 +51,8 @@ describe('ValidationService', () => {
     });
 
     it('should throw if monday hours are missing', () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { monday, ...rest } = defaultOpeningHours;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       expect(() => ValidationService.validateOpeningHours(rest as any)).toThrow(
         'Opening hours for monday are required'
       );

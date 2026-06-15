@@ -1,0 +1,82 @@
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+
+/**
+ * PATCH /api/leagues/[id]/matchdays/[matchdayId] — Update a match day (e.g. record result)
+ * DELETE /api/leagues/[id]/matchdays/[matchdayId] — Delete a match day
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; matchdayId: string }> }
+) {
+  return withApiAuth(request, async (auth) => {
+    const hasRole = await verifyRole(auth, 'admin');
+    if (!hasRole) return forbiddenResponse('Admin access required');
+
+    const { id: leagueId, matchdayId } = await params;
+    const body = await request.json();
+
+    // Verify league belongs to club
+    const { data: league } = await (auth.supabase as any)
+      .from('leagues')
+      .select('id')
+      .eq('id', leagueId)
+      .eq('club_id', auth.clubId)
+      .single();
+
+    if (!league) {
+      return NextResponse.json({ error: 'League not found' }, { status: 404 });
+    }
+
+    const { data, error } = await (auth.supabase as any)
+      .from('match_days')
+      .update({ ...body, updated_at: new Date().toISOString() })
+      .eq('id', matchdayId)
+      .eq('league_id', leagueId)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to update match day' }, { status: 500 });
+    }
+
+    return NextResponse.json({ match_day: data });
+  });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; matchdayId: string }> }
+) {
+  return withApiAuth(request, async (auth) => {
+    const hasRole = await verifyRole(auth, 'admin');
+    if (!hasRole) return forbiddenResponse('Admin access required');
+
+    const { id: leagueId, matchdayId } = await params;
+
+    // Verify league belongs to club
+    const { data: league } = await (auth.supabase as any)
+      .from('leagues')
+      .select('id')
+      .eq('id', leagueId)
+      .eq('club_id', auth.clubId)
+      .single();
+
+    if (!league) {
+      return NextResponse.json({ error: 'League not found' }, { status: 404 });
+    }
+
+    const { error } = await (auth.supabase as any)
+      .from('match_days')
+      .delete()
+      .eq('id', matchdayId)
+      .eq('league_id', leagueId);
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to delete match day' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  });
+}

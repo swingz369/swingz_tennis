@@ -72,6 +72,37 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Sync club_city to system_settings so weather API can find it
+    if (updates.city !== undefined) {
+      const cityValue = updates.city ? String(updates.city) : null;
+      if (cityValue) {
+        const now = new Date().toISOString();
+        const { data: existingSetting } = await auth.supabase
+          .from('system_settings')
+          .select('id')
+          .eq('club_id', id)
+          .eq('key', 'club_city')
+          .limit(1);
+        if (existingSetting && existingSetting.length > 0) {
+          await auth.supabase
+            .from('system_settings')
+            .update({ value: cityValue, updated_at: now })
+            .eq('id', existingSetting[0].id);
+        } else {
+          await auth.supabase
+            .from('system_settings')
+            .insert({
+              club_id: id,
+              key: 'club_city',
+              value: cityValue,
+              category: 'general',
+              type: 'string',
+              updated_at: now,
+            });
+        }
+      }
+    }
+
     return NextResponse.json({ success: true });
   });
 }

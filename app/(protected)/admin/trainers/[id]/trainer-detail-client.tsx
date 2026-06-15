@@ -45,6 +45,9 @@ import {
   Trash2,
   Euro,
   Lock,
+  Sparkles,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -99,6 +102,44 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
   const [absenceReason, setAbsenceReason] = useState('vacation');
   const [absenceSaving, setAbsenceSaving] = useState(false);
 
+  // Trial training state
+  interface TrialTraining {
+    id: string;
+    participant: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      dateOfBirth: string;
+    };
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    trainer: { id: string; name: string };
+    court: { id: string; name: string };
+    status: string;
+    notes?: string;
+    createdAt: string;
+  }
+  const [trialTrainings, setTrialTrainings] = useState<TrialTraining[]>([]);
+  const [trialsLoading, setTrialsLoading] = useState(false);
+
+  const loadTrialTrainings = async (trainerUserId: string) => {
+    setTrialsLoading(true);
+    try {
+      const res = await apiFetch(`/api/trial-trainings`);
+      if (res.ok) {
+        const data = await res.json();
+        const all: TrialTraining[] = data.trialTrainings || [];
+        setTrialTrainings(all.filter((t) => t.trainer?.id === trainerUserId));
+      }
+    } catch {
+      // non-critical
+    } finally {
+      setTrialsLoading(false);
+    }
+  };
+
   const loadAllSlots = async (userId: string) => {
     setAvailLoading(true);
     setWeeklyLoading(true);
@@ -141,6 +182,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
       setTrainer(data.trainerProfile);
       if (data.trainerProfile?.userId) {
         loadAllSlots(data.trainerProfile.userId);
+        loadTrialTrainings(data.trainerProfile.userId);
       }
     } catch (err) {
       console.error('Failed to load trainer:', err);
@@ -597,6 +639,12 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Verfügbarkeit ({weeklySlots.length + availabilitySlots.length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="trials"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+              >
+                Probetrainings ({trialTrainings.length})
               </TabsTrigger>
             </TabsList>
 
@@ -1386,6 +1434,115 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                     <p className="text-sm text-muted-foreground">
                       Keine bevorzugten Zeiten angegeben
                     </p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Trial Trainings Tab ───────────────────────────────────── */}
+            <TabsContent value="trials" className="space-y-5 animate-in">
+              <Card variant="flat">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2 text-base">
+                      <Sparkles className="h-4 w-4 text-brandAccent" />
+                      Probetrainings
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => trainer && loadTrialTrainings(trainer.userId)}
+                      disabled={trialsLoading}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${trialsLoading ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
+                  {trialsLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  ) : trialTrainings.length > 0 ? (
+                    <div className="space-y-3">
+                      {trialTrainings.map((trial) => (
+                        <div
+                          key={trial.id}
+                          className={`p-4 rounded-lg border text-sm ${
+                            trial.status === 'requested'
+                              ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-800'
+                              : trial.status === 'scheduled'
+                                ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800'
+                                : 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0 space-y-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold">
+                                  {trial.participant.firstName} {trial.participant.lastName}
+                                </span>
+                                <Badge
+                                  className={`text-xs ${
+                                    trial.status === 'requested'
+                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                      : trial.status === 'scheduled'
+                                        ? 'bg-green-100 text-green-700 border-green-200'
+                                        : 'bg-red-100 text-red-700 border-red-200'
+                                  }`}
+                                >
+                                  {trial.status === 'requested'
+                                    ? 'Angefragt'
+                                    : trial.status === 'scheduled'
+                                      ? 'Geplant'
+                                      : 'Abgelehnt'}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-4 text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  {format(parseISO(trial.scheduledDate), 'dd. MMMM yyyy', {
+                                    locale: de,
+                                  })}{' '}
+                                  um {trial.scheduledTime} Uhr
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  {trial.duration} Min.
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Mail className="h-3 w-3" />
+                                  {trial.participant.email}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  {trial.participant.phone}
+                                </span>
+                                {trial.court?.name && (
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {trial.court.name}
+                                  </span>
+                                )}
+                              </div>
+                              {trial.notes && (
+                                <p className="text-xs text-muted-foreground bg-background/50 p-2 rounded border border-border/50">
+                                  {trial.notes}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">Keine Probetrainings zugewiesen</p>
+                    </div>
                   )}
                 </CardContent>
               </Card>

@@ -32,6 +32,12 @@ import type {
   ConflictTypeCode,
 } from '@/lib/season-planning/types';
 import type { GroupAssignment } from '@/lib/season-planning/types';
+import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
+
+/** Convert 1-indexed dayOfWeek (1=Mo..7=So) to German weekday name */
+function dayName(dow: number): string {
+  return DAY_LABELS[dow - 1] ?? `Tag ${dow}`;
+}
 
 // ============================================
 // CONFLICT DEFINITIONS
@@ -135,7 +141,7 @@ const CONFLICT_RULES: ConflictRule[] = [
             id: `conflict_tdb_${groupAssignments[0].trainerId}_${groupAssignments[0].dayOfWeek}_${groupAssignments[0].startTime}`,
             type: 'trainer_double_booking',
             severity: 'critical',
-            description: `Trainer ${groupAssignments[0].trainerName} ist ${groupAssignments.length}-fach belegt am Tag ${groupAssignments[0].dayOfWeek} um ${groupAssignments[0].startTime} (Gruppen: ${groupAssignments.map((g) => g.groupName).join(', ')})`,
+            description: `Trainer ${groupAssignments[0].trainerName} ist ${groupAssignments.length}-fach belegt am ${dayName(groupAssignments[0].dayOfWeek)} um ${groupAssignments[0].startTime} (Gruppen: ${groupAssignments.map((g) => g.groupName).join(', ')})`,
             suggestedResolution:
               'Weisen Sie eine der Gruppen einem anderen Trainer oder Zeitslot zu.',
             affectedEntities: {
@@ -310,7 +316,7 @@ const CONFLICT_RULES: ConflictRule[] = [
             id: `conflict_cu_${groupAssignments[0].courtId}_${groupAssignments[0].dayOfWeek}_${groupAssignments[0].startTime}`,
             type: 'court_unavailable',
             severity: 'critical',
-            description: `Court ${courtName} ist ${groupAssignments.length}-fach belegt am Tag ${groupAssignments[0].dayOfWeek} um ${groupAssignments[0].startTime}`,
+            description: `Court ${courtName} ist ${groupAssignments.length}-fach belegt am ${dayName(groupAssignments[0].dayOfWeek)} um ${groupAssignments[0].startTime}`,
             suggestedResolution:
               'Weisen Sie eine der Gruppen einem anderen Court oder Zeitslot zu.',
             affectedEntities: {
@@ -406,7 +412,7 @@ const CONFLICT_RULES: ConflictRule[] = [
             id: `conflict_hfr_${slotKey}`,
             type: 'high_failure_rate_slot',
             severity: 'info',
-            description: `Zeitslot ${assignment.startTime} am Tag ${assignment.dayOfWeek} hat eine historische Ausfallrate von ${(failureRate * 100).toFixed(0)}% (Schwelle: ${params.config.slotFailureThreshold}%). Betrifft Gruppe ${assignment.groupName}`,
+            description: `Zeitslot ${assignment.startTime} am ${dayName(assignment.dayOfWeek)} hat eine historische Ausfallrate von ${(failureRate * 100).toFixed(0)}% (Schwelle: ${params.config.slotFailureThreshold}%). Betrifft Gruppe ${assignment.groupName}`,
             suggestedResolution:
               'Erwägen Sie einen alternativen Zeitslot. Falls nicht möglich, bestätigen Sie bewusst.',
             affectedEntities: {

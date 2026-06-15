@@ -72,13 +72,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Check booking rules (max bookings per week)
+    // 2. Check booking rules (max bookings per week + payment)
     const { data: rules } = await serviceClient
       .from('booking_rules')
-      .select('max_bookings_per_week')
+      .select('max_bookings_per_week, require_payment')
       .eq('club_id', clubId)
       .eq('applies_to_role', 'member')
       .maybeSingle();
+
+    const requiresPayment = rules?.require_payment === true;
 
     if (rules?.max_bookings_per_week) {
       const sessionDate = new Date(timeslotStart);
@@ -183,6 +185,8 @@ export async function POST(req: NextRequest) {
         sessionId: session.id,
         memberId: auth.user.id,
         status: 'confirmed',
+        payment_status: requiresPayment ? 'pending' : null,
+        requiresPayment,
       },
       { status: 201 }
     );

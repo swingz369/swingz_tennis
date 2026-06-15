@@ -228,7 +228,7 @@ export class SeasonBillingService {
     let config = await this.getConfig(seasonId);
     if (!config) {
       try {
-        config = await this.upsertConfig(season.club_id, season.club_id, {
+        config = await this.upsertConfig(seasonId, season.club_id, {
           trainer_hourly_rate: 50.0,
           use_trainer_profile_rate: false,
           include_membership_fee: true,

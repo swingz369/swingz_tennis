@@ -32,6 +32,7 @@ import {
   MailOpen,
   MessageSquare,
   CheckCircle2,
+  Newspaper,
 } from 'lucide-react';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent } from '@/components/ui/card';
@@ -41,6 +42,7 @@ import DOMPurify from 'dompurify';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useUserClub } from '@/hooks/use-user-data';
+import NewsAnnouncements from '@/components/news-announcements';
 
 /* ─────────────────── Types ─────────────────── */
 
@@ -72,7 +74,7 @@ interface ClubMember {
   role: string;
 }
 
-type Folder = 'inbox' | 'sent';
+type Folder = 'inbox' | 'sent' | 'news';
 
 /** Strip HTML tags from a string for plain-text display. */
 function stripHtml(html: string): string {
@@ -111,8 +113,10 @@ export default function MessagesPage() {
   }, [folder]);
 
   useEffect(() => {
-    fetchMessages();
-  }, [fetchMessages]);
+    if (folder !== 'news') {
+      fetchMessages();
+    }
+  }, [fetchMessages, folder]);
 
   // ── Mark as read ──
   const markAsRead = useCallback(async (messageId: string) => {
@@ -312,6 +316,20 @@ export default function MessagesPage() {
                 <Send className="h-4 w-4" />
                 Gesendet
               </button>
+              <button
+                onClick={() => {
+                  setFolder('news');
+                  setSelectedMessage(null);
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                  folder === 'news'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                <Newspaper className="h-4 w-4" />
+                News
+              </button>
             </div>
 
             {/* Search */}
@@ -326,9 +344,11 @@ export default function MessagesPage() {
             </div>
           </div>
 
-          {/* Message List + Detail */}
+          {/* Message List + Detail / News Feed */}
           <div className="flex-1 min-w-0">
-            {selectedMessage ? (
+            {folder === 'news' ? (
+              <NewsAnnouncements canManage={isAdmin} compact />
+            ) : selectedMessage ? (
               <MessageDetail
                 message={selectedMessage}
                 onBack={() => setSelectedMessage(null)}

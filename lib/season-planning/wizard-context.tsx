@@ -18,12 +18,13 @@ import type {
 // INITIAL STATE
 // ============================================
 
-function createInitialState(seasonId: string, clubId: string): WizardState {
+function createInitialState(seasonId: string, clubId: string, initialStep?: number): WizardState {
+  const step = initialStep && initialStep >= 1 && initialStep <= 3 ? initialStep : 1;
   return {
     seasonId,
     clubId,
-    currentStep: 1 as WizardStep,
-    maxReachedStep: 1 as WizardStep,
+    currentStep: Math.min(step, 2) as WizardStep,
+    maxReachedStep: Math.min(step, 2) as WizardStep,
     isReady: false,
     isProcessing: false,
     error: null,
@@ -159,7 +160,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         clusteringResult: action.result,
         scheduleSlots: [],
-        maxReachedStep: 3 as WizardStep,
+        maxReachedStep: 2 as WizardStep,
         isProcessing: false,
       };
 
@@ -209,19 +210,24 @@ export function WizardProvider({
   children,
   seasonId,
   clubId,
+  initialStep,
 }: {
   children: ReactNode;
   seasonId: string;
   clubId: string;
+  initialStep?: number;
 }) {
-  const [state, dispatch] = useReducer(wizardReducer, createInitialState(seasonId, clubId));
+  const [state, dispatch] = useReducer(
+    wizardReducer,
+    createInitialState(seasonId, clubId, initialStep)
+  );
 
   const goToStep = useCallback((step: WizardStep) => {
     dispatch({ type: 'SET_STEP', step });
   }, []);
 
   const nextStep = useCallback(() => {
-    const next = Math.min(3, state.currentStep + 1) as WizardStep;
+    const next = Math.min(2, state.currentStep + 1) as WizardStep;
     dispatch({ type: 'SET_STEP', step: next });
   }, [state.currentStep]);
 

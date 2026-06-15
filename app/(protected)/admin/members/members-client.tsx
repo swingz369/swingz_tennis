@@ -51,6 +51,11 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Sync members when server re-renders with new page data (pagination fix)
+  useEffect(() => {
+    setMembers(initialMembers);
+  }, [initialMembers]);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') ?? '');
 
   // Sync searchQuery when URL params change (e.g. back/forward navigation)

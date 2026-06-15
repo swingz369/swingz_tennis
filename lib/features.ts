@@ -110,6 +110,33 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     sidebarSection: 'ai_matchmaking',
     order: 8,
   },
+  {
+    key: 'weather_integration',
+    label: 'Wetter-Integration',
+    description: 'Automatische Platzsperren bei Regen und Schlechtwetter.',
+    icon: 'CloudRain',
+    category: 'optional',
+    sidebarSection: 'weather_integration',
+    order: 9,
+  },
+  {
+    key: 'league_lineup',
+    label: 'Liga & Mannschaft',
+    description: 'Mannschaftsaufstellung, Liga-Verwaltung und Spieltag-Planung.',
+    icon: 'Flag',
+    category: 'optional',
+    sidebarSection: 'league_lineup',
+    order: 10,
+  },
+  {
+    key: 'work_duty',
+    label: 'Arbeitsdienst',
+    description: 'Gemeinschaftsdienst-Verwaltung mit Zuweisung und Nachverfolgung.',
+    icon: 'HardHat',
+    category: 'optional',
+    sidebarSection: 'work_duty',
+    order: 11,
+  },
 ] as const;
 
 export type FeatureKey = (typeof CLUB_FEATURES)[number]['key'];

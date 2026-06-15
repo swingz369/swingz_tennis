@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Calendar, Clock, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, Clock, Loader2, Sun, Snowflake, Layers, Leaf } from 'lucide-react';
+import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
@@ -107,21 +108,47 @@ export function CourtBookings({ clubId }: Props) {
   const handleBook = async (courtId: string, time: string) => {
     setBookingSlot({ courtId, time });
     try {
-      const startTime = `${dateStr}T${time}:00`;
       const [h, m] = time.split(':').map(Number);
       const endMinutes = h * 60 + m + bookingDuration;
       const endHour = Math.floor(endMinutes / 60);
       const endMin = endMinutes % 60;
-      const endTime = `${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`;
+      const endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
 
-      const res = await apiFetch('/api/bookings/court', {
+      const res = await apiFetch('/api/bookings/direct', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ courtId, clubId, startTime, endTime, bookingType: 'court' }),
+        body: JSON.stringify({ courtId, clubId, date: dateStr, startTime: time, endTime }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Buchung fehlgeschlagen');
+
+      // If the club requires payment, redirect to Stripe checkout
+      if (data.bookingId && data.requiresPayment) {
+        toast.loading('Weiterleitung zur Zahlung…', { id: 'payment-redirect' });
+        try {
+          const payRes = await apiFetch('/api/stripe/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              type: 'booking',
+              bookingId: data.bookingId,
+              clubId,
+              description: 'Platzreservierung',
+            }),
+          });
+          const payData = await payRes.json();
+          toast.dismiss('payment-redirect');
+          if (payData.url) {
+            window.location.assign(payData.url);
+            return;
+          }
+        } catch {
+          toast.dismiss('payment-redirect');
+        }
+      }
+
       toast.success('Platz erfolgreich gebucht!');
       // Refresh schedule for this court
       const schedRes = await apiFetch(
@@ -199,9 +226,40 @@ export function CourtBookings({ clubId }: Props) {
                         <MapPin className="h-4 w-4 text-brand-light" />
                         {court.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {court.surface_type} · {court.is_indoor ? 'Indoor' : 'Outdoor'}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            court.surface_type === 'clay'
+                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                              : court.surface_type === 'grass'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                : court.surface_type === 'artificial_grass'
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                          }`}
+                        >
+                          {court.surface_type === 'clay' || court.surface_type === 'grass' ? (
+                            <Leaf className="h-3 w-3" />
+                          ) : (
+                            <Layers className="h-3 w-3" />
+                          )}
+                          {getSurfaceLabel(court.surface_type || 'hard')}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            court.is_indoor
+                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          }`}
+                        >
+                          {court.is_indoor ? (
+                            <Snowflake className="h-3 w-3" />
+                          ) : (
+                            <Sun className="h-3 w-3" />
+                          )}
+                          {court.is_indoor ? 'Indoor' : 'Outdoor'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">

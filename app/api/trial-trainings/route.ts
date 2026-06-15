@@ -93,7 +93,10 @@ export async function GET(_request: NextRequest) {
       const startDate = searchParams.get('startDate');
       const endDate = searchParams.get('endDate');
 
-      const clubId = auth.clubId ?? '';
+      const clubId = auth.clubId;
+      if (!clubId) {
+        return NextResponse.json({ error: 'Kein Verein zugeordnet' }, { status: 400 });
+      }
 
       if (email) {
         const trialTrainings = await trialTrainingService.getTrialTrainingsByParticipantEmail(

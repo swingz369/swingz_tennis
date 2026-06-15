@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { pushNotificationService } from '@/lib/push-notification.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: insertError.message }, { status: 500 });
       }
 
-      // Create notifications for all recipients (fire-and-forget)
+      // Create notifications + push for all recipients (fire-and-forget)
       try {
         const notificationRows = targetIds.map((rid) => ({
           user_id: rid,
@@ -173,6 +174,19 @@ export async function POST(request: NextRequest) {
           action_url: '/messages',
         }));
         await sb.from('notifications').insert(notificationRows);
+        // Push notifications
+        for (const rid of targetIds) {
+          pushNotificationService
+            .sendToUser(rid, {
+              title: 'Neue Nachricht',
+              body: `${subject.trim()} — ${content.trim().substring(0, 80)}`,
+              url: '/messages',
+              tag: `msg-${insertedMessages?.[0]?.id ?? 'new'}`,
+            })
+            .catch(() => {
+              /* non-blocking */
+            });
+        }
       } catch {
         /* non-critical */
       }
@@ -202,7 +216,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      // Create notification for receiver (non-blocking)
+      // Create notification + push for receiver (non-blocking)
       try {
         await sb.from('notifications').insert({
           user_id: receiverId,
@@ -212,6 +226,16 @@ export async function POST(request: NextRequest) {
           message: subject.trim(),
           action_url: '/messages',
         });
+        pushNotificationService
+          .sendToUser(receiverId, {
+            title: 'Neue Nachricht',
+            body: `${subject.trim()} — ${content.trim().substring(0, 80)}`,
+            url: '/messages',
+            tag: `msg-${data?.id ?? 'new'}`,
+          })
+          .catch(() => {
+            /* non-blocking */
+          });
       } catch {
         /* non-critical */
       }
