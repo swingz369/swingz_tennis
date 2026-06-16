@@ -10,6 +10,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:stripe:checkout');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -160,7 +163,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ url: session.url, sessionId: session.id });
     } catch (error) {
-      console.error('[Stripe Checkout] Error:', error);
+      log.error('[Stripe Checkout] Error:', error);
       return NextResponse.json(
         { error: 'Fehler beim Erstellen der Checkout-Session' },
         { status: 500 }

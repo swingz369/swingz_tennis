@@ -12,6 +12,9 @@ import {
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import type { UpdatePlanEntryRequest } from '@/lib/types/season-planning';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:plan-entries:[entryId]');
 
 interface RouteContext {
   params: Promise<{
@@ -75,7 +78,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         entry: entryWithDetails,
       });
     } catch (error) {
-      console.error(`GET /api/seasons/[id]/plan-entries/${entryId} error:`, error);
+      log.error(`GET /api/seasons/[id]/plan-entries/${entryId} error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch plan entry' },
         { status: 500 }
@@ -228,7 +231,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           message: 'Plan entry updated successfully',
         });
       } catch (error) {
-        console.error(`PATCH /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
+        log.error(`PATCH /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to update plan entry' },
           { status: 500 }
@@ -293,7 +296,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           message: 'Plan entry deleted successfully',
         });
       } catch (error) {
-        console.error(`DELETE /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
+        log.error(`DELETE /api/seasons/${seasonId}/plan-entries/${entryId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to delete plan entry' },
           { status: 500 }

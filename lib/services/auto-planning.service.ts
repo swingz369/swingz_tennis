@@ -354,7 +354,7 @@ export class AutoPlanningService {
     const aiResult = await aiScheduleServiceV2.generateSchedule(aiInput, planningData);
 
     if (!aiResult.success) {
-      console.warn('[AutoPlanning] AI generation failed, using fallback:', aiResult.reasoning);
+      log.warn('AI generation failed, using fallback', { reasoning: aiResult.reasoning });
       const result = await this.generatePlan(seasonId, config, dryRun);
       return {
         ...result,

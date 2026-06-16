@@ -18,6 +18,9 @@ import {
 export const metadata = {
   title: 'Support – SWINGZ',
   description: 'Hilfe und Support für die SWINGZ-Plattform.',
+  alternates: {
+    canonical: '/support',
+  },
 };
 
 const FAQ = [

@@ -20,8 +20,11 @@ import {
   UserPlus,
   AlertCircle,
   Sparkles,
+  TrendingUp,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
+import { toast } from 'sonner';
 
 interface MatchCandidate {
   userId: string;
@@ -73,13 +76,28 @@ function getLevelColor(level: string): string {
   return levelColors[level] || 'bg-muted text-foreground border-border';
 }
 
-export function MatchmakingPanel() {
+interface MatchmakingPanelProps {
+  showAdminBadge?: boolean;
+}
+
+export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {}) {
   const [data, setData] = useState<MatchmakingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
+  const [challengingId, setChallengingId] = useState<string | null>(null);
+  const [clubId, setClubId] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Fetch clubId for open match creation
+  useEffect(() => {
+    apiFetch('/api/user/club')
+      .then((res) => res.json())
+      .then((d) => setClubId(d.clubId ?? null))
+      .catch(() => {});
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -359,7 +377,14 @@ export function MatchmakingPanel() {
 
                           {/* Action buttons */}
                           <div className="flex gap-2 pt-1">
-                            <Button size="sm" className="h-8 text-xs gap-1.5 flex-1">
+                            <Button
+                              size="sm"
+                              className="h-8 text-xs gap-1.5 flex-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/messages?compose=${match.userId}`);
+                              }}
+                            >
                               <MessageSquare className="h-3.5 w-3.5" />
                               Nachricht
                             </Button>
@@ -367,8 +392,52 @@ export function MatchmakingPanel() {
                               variant="outline"
                               size="sm"
                               className="h-8 text-xs gap-1.5 flex-1"
+                              disabled={challengingId === match.userId}
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!clubId) {
+                                  toast.error('Kein aktiver Verein gefunden');
+                                  return;
+                                }
+                                setChallengingId(match.userId);
+                                try {
+                                  const tomorrow = new Date();
+                                  tomorrow.setDate(tomorrow.getDate() + 1);
+                                  const dateStr = tomorrow.toISOString().split('T')[0];
+                                  const res = await apiFetch('/api/open-matches', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({
+                                      clubId,
+                                      title: `Match gegen ${match.name}`,
+                                      description: `KI-Matchmaking: ${match.reasons.join(', ')}`,
+                                      matchDate: dateStr,
+                                      startTime: '10:00',
+                                      endTime: '11:30',
+                                      skillLevel: match.playingLevel,
+                                      matchType: 'singles',
+                                      maxPlayers: 2,
+                                    }),
+                                  });
+                                  if (!res.ok) {
+                                    const err = await res.json().catch(() => ({}));
+                                    throw new Error(err.error || 'Erstellung fehlgeschlagen');
+                                  }
+                                  toast.success(`Offenes Spiel gegen ${match.name} erstellt!`);
+                                  router.push('/matches');
+                                } catch (err) {
+                                  toast.error(err instanceof Error ? err.message : 'Fehler');
+                                } finally {
+                                  setChallengingId(null);
+                                }
+                              }}
                             >
-                              <UserPlus className="h-3.5 w-3.5" />
+                              {challengingId === match.userId ? (
+                                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <UserPlus className="h-3.5 w-3.5" />
+                              )}
                               Herausfordern
                             </Button>
                           </div>
@@ -402,10 +471,18 @@ export function MatchmakingPanel() {
                   Top {Math.min(10, data.matches.length)} Ergebnisse
                 </span>
               </div>
-              <Badge variant="outline" className="text-[10px] gap-1">
-                <Shuffle className="h-3 w-3" />
-                KI-gestützt
-              </Badge>
+              <div className="flex items-center gap-2">
+                {showAdminBadge && (
+                  <Badge variant="secondary" className="text-[10px] gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    Admin-Ansicht
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <Shuffle className="h-3 w-3" />
+                  KI-gestützt
+                </Badge>
+              </div>
             </div>
           )}
         </>

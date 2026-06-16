@@ -5,6 +5,9 @@ import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:groups:[id]:members');
 
 const groupRepo = new DrizzleGroupRepository();
 
@@ -43,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ success: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error adding member to group:', message);
+      log.error('Error adding member to group:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

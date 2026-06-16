@@ -90,7 +90,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
   const invoiceId = session.metadata?.invoiceId;
 
   if (!invoiceId) {
-    console.error('No invoice ID in session metadata');
+    log.error('No invoice ID in session metadata');
     return;
   }
 

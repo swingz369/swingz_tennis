@@ -5,6 +5,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:tournaments');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -26,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query;
     if (error) {
-      console.error('tournaments GET error:', error);
+      log.error('tournaments GET error:', error);
       return NextResponse.json({ error: 'Failed to fetch tournaments' }, { status: 500 });
     }
 
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('tournaments POST error:', error);
+      log.error('tournaments POST error:', error);
       return NextResponse.json({ error: 'Failed to create tournament' }, { status: 500 });
     }
 

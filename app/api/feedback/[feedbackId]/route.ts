@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { feedbackRepository, type Feedback } from '@/lib/repositories/feedback-repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:feedback:[feedbackId]');
 
 /**
  * @swagger
@@ -57,7 +60,7 @@ export async function GET(
 
       return NextResponse.json(feedback);
     } catch (error) {
-      console.error('Error fetching feedback:', error);
+      log.error('Error fetching feedback:', error);
       return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
     }
   });
@@ -144,7 +147,7 @@ export async function PATCH(
 
       return NextResponse.json(updated);
     } catch (error) {
-      console.error('Error updating feedback:', error);
+      log.error('Error updating feedback:', error);
       return NextResponse.json({ error: 'Failed to update feedback' }, { status: 500 });
     }
   });
@@ -204,7 +207,7 @@ export async function DELETE(
 
       return new NextResponse(null, { status: 204 });
     } catch (error) {
-      console.error('Error deleting feedback:', error);
+      log.error('Error deleting feedback:', error);
       return NextResponse.json({ error: 'Failed to delete feedback' }, { status: 500 });
     }
   });

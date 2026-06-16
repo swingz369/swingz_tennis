@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { EmailService } from '@/src/application/services/email.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trial-trainings:[id]:convert');
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -69,7 +72,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
           clubEmail: settings['club_email'] ?? '',
         });
       } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
+        log.error('Failed to send welcome email:', emailError);
       }
 
       return NextResponse.json({
@@ -78,7 +81,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         message: 'Trial training converted to member successfully',
       });
     } catch (error) {
-      console.error('Trial training conversion error:', error);
+      log.error('Trial training conversion error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

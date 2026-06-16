@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:attendance-records');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -61,7 +64,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, attendanceRecord });
     } catch (error) {
-      console.error('Attendance record creation error:', error);
+      log.error('Attendance record creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -119,7 +122,7 @@ export async function GET(_request: NextRequest) {
       const attendanceRecords = await hoursLogService.getAllAttendanceRecords();
       return NextResponse.json({ attendanceRecords });
     } catch (error) {
-      console.error('Attendance record fetch error:', error);
+      log.error('Attendance record fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

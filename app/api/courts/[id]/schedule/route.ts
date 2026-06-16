@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { courtBookingEngine } from '@/lib/court-booking-engine';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:courts:[id]:schedule');
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
@@ -58,7 +61,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
       return NextResponse.json(schedule);
     } catch (error) {
-      console.error('Error fetching court schedule:', error);
+      log.error('Error fetching court schedule:', error);
       const isDevelopment = process.env.NODE_ENV === 'development';
       const message =
         isDevelopment && error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';

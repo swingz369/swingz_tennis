@@ -5,6 +5,9 @@ import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:groups:[id]');
 
 const groupRepo = new DrizzleGroupRepository();
 
@@ -50,7 +53,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching group:', message);
+      log.error('Error fetching group:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -121,7 +124,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error updating group:', message);
+      log.error('Error updating group:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -152,7 +155,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ success: true, message: 'Group deactivated' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error deleting group:', message);
+      log.error('Error deleting group:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

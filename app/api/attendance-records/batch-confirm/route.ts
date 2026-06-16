@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:attendance-records:batch-confirm');
 
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -32,7 +35,7 @@ export async function POST(request: NextRequest) {
       const confirmed = await hoursLogService.batchConfirmAttendance(recordIds, auth.user.id);
       return NextResponse.json({ success: true, confirmed });
     } catch (error) {
-      console.error('Batch confirm error:', error);
+      log.error('Batch confirm error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

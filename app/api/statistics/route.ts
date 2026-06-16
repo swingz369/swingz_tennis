@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { StatisticsService } from '@/src/application/services/statistics.service';
 import { withApiAuth } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:statistics');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (_auth) => {
@@ -27,7 +30,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(statistics);
     } catch (error) {
-      console.error('Error generating statistics:', error);
+      log.error('Error generating statistics:', error);
       return NextResponse.json({ error: 'Failed to generate statistics' }, { status: 500 });
     }
   });

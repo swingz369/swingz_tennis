@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:leagues:[id]:sync-history');
 
 /**
  * GET /api/leagues/[id]/sync-history — Get nuLiga sync history for a league
@@ -24,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .limit(limit);
 
     if (error) {
-      console.error('[Sync History GET] Error:', error);
+      log.error('[Sync History GET] Error:', error);
       return NextResponse.json({ error: 'Failed to fetch sync history' }, { status: 500 });
     }
 

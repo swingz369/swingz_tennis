@@ -5,6 +5,9 @@ import { Trophy, FileText, Mail, MapPin, Globe } from 'lucide-react';
 export const metadata = {
   title: 'Impressum – SWINGZ',
   description: 'Impressum der SWINGZ-Plattform gemäß § 5 TMG.',
+  alternates: {
+    canonical: '/impressum',
+  },
 };
 
 export default function ImpressumPage() {

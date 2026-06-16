@@ -7,6 +7,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:booking-rules');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -40,7 +43,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      console.error('[BookingRules GET]', error);
+      log.error('[BookingRules GET]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -117,7 +120,7 @@ export async function POST(req: NextRequest) {
         .select()
         .single();
       if (error) {
-        console.error('[BookingRules PATCH]', error);
+        log.error('[BookingRules PATCH]', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
       result = data;
@@ -139,7 +142,7 @@ export async function POST(req: NextRequest) {
         .select()
         .single();
       if (error) {
-        console.error('[BookingRules POST]', error);
+        log.error('[BookingRules POST]', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
       result = data;

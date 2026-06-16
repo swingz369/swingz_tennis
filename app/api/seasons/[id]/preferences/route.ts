@@ -7,6 +7,9 @@ import { db } from '@/src/infrastructure/persistence/db';
 import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/persistence/schema';
 import { and, eq, desc } from 'drizzle-orm';
 import type { SubmitPreferencesRequest } from '@/lib/types/season-planning';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:preferences');
 
 interface RouteContext {
   params: Promise<{
@@ -100,7 +103,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         count: preferences.length,
       });
     } catch (error) {
-      console.error(`GET /api/seasons/[id]/preferences error:`, error);
+      log.error(`GET /api/seasons/[id]/preferences error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch preferences' },
         { status: 500 }
@@ -234,7 +237,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           );
         }
       } catch (error) {
-        console.error(`POST /api/seasons/[id]/preferences error:`, error);
+        log.error(`POST /api/seasons/[id]/preferences error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to submit preferences' },
           { status: 500 }

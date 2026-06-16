@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:qr-checkin');
 
 /**
  * QR Code Check-in API
@@ -112,7 +115,7 @@ export async function POST(request: NextRequest) {
         .upsert({ user_id: user.id, points: currentPoints + 10 }, { onConflict: 'user_id' });
       pointsAwarded = true;
     } catch (e) {
-      console.error('Gamification points award failed:', e);
+      log.error('Gamification points award failed:', e);
     }
 
     return NextResponse.json({

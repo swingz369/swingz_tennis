@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:leagues:[id]:teams');
 
 /**
  * GET /api/leagues/[id]/teams — List teams for a league
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .order('position', { ascending: true, nullsFirst: true });
 
     if (error) {
-      console.error('[Teams GET] Error:', error);
+      log.error('[Teams GET] Error:', error);
       return NextResponse.json({ error: 'Failed to fetch teams' }, { status: 500 });
     }
 
@@ -105,7 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (error) {
-      console.error('[Teams POST] Error:', error);
+      log.error('[Teams POST] Error:', error);
       return NextResponse.json({ error: 'Failed to create team' }, { status: 500 });
     }
 

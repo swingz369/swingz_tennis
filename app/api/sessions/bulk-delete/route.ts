@@ -4,6 +4,9 @@ import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:sessions:bulk-delete');
 
 const bulkDeleteSchema = z.object({
   sessionIds: z.array(z.string().uuid()).min(1).max(50),
@@ -71,7 +74,7 @@ export async function DELETE(request: NextRequest) {
       const { data: deleted, error } = await query.select('id');
 
       if (error) {
-        console.error('Bulk delete sessions error:', error);
+        log.error('Bulk delete sessions error:', error);
         return NextResponse.json({ error: 'Failed to delete sessions' }, { status: 500 });
       }
 
@@ -95,7 +98,7 @@ export async function DELETE(request: NextRequest) {
         message: `${deleted?.length || 0} sessions deleted successfully`,
       });
     } catch (error) {
-      console.error('Bulk delete sessions error:', error);
+      log.error('Bulk delete sessions error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

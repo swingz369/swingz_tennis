@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer-profiles:[id]:qualifications');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -26,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ qualifications: profile.qualifications || [] });
     } catch (error) {
-      console.error('Qualifications fetch error:', error);
+      log.error('Qualifications fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -78,7 +81,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
       return NextResponse.json({ success: true, trainerProfile: updated });
     } catch (error) {
-      console.error('Qualification addition error:', error);
+      log.error('Qualification addition error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

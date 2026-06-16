@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { InvoiceStatus } from '@/lib/types/billing';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:invoices:overview');
 
 export const dynamic = 'force-dynamic';
 
@@ -112,7 +115,7 @@ export async function GET(_request: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Error getting invoice overview:', error);
+      log.error('Error getting invoice overview:', error);
       // Return empty result instead of 500 when billing engine fails
       return NextResponse.json({
         invoices: [],

@@ -9,6 +9,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons');
 
 function isTableNotFound(error: { code?: string; message?: string }): boolean {
   return (
@@ -97,7 +100,7 @@ export async function GET(request: NextRequest) {
           error.message?.includes('relation') ||
           error.message?.includes('does not exist')
         ) {
-          console.warn('⚠️  Seasons table not found. Run required migration.');
+          log.warn('⚠️  Seasons table not found. Run required migration.');
           return NextResponse.json({
             success: true,
             seasons: [],
@@ -105,7 +108,7 @@ export async function GET(request: NextRequest) {
             warning: 'Season planning feature not yet available. Database migration required.',
           });
         }
-        console.error('GET /api/seasons error:', error);
+        log.error('GET /api/seasons error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
@@ -115,7 +118,7 @@ export async function GET(request: NextRequest) {
         count: (seasonsData ?? []).length,
       });
     } catch (error) {
-      console.error('GET /api/seasons error:', error);
+      log.error('GET /api/seasons error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch seasons' },
         { status: 500 }
@@ -219,7 +222,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (insertError) {
-        console.error('POST /api/seasons insert error:', insertError);
+        log.error('POST /api/seasons insert error:', insertError);
         // Table may not exist yet — return graceful error instead of 500
         if (isTableNotFound(insertError)) {
           return migrationRequiredResponse();
@@ -229,7 +232,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ success: true, season: newSeason }, { status: 201 });
     } catch (error) {
-      console.error('POST /api/seasons error:', error);
+      log.error('POST /api/seasons error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to create season' },
         { status: 500 }

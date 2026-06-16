@@ -13,6 +13,9 @@ import { withApiAuth } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { getDefaultLayout } from '@/lib/dashboard-widgets';
 import type { DashboardLayout } from '@/lib/dashboard-widgets';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:dashboard:preferences');
 
 // Supabase client type with the user_dashboard_preferences table.
 // The table was added after the last type generation, so we extend inline.
@@ -50,7 +53,7 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      console.error('Dashboard preferences fetch error:', error);
+      log.error('Dashboard preferences fetch error:', error);
       return NextResponse.json({ error: 'Failed to fetch preferences' }, { status: 500 });
     }
 
@@ -106,7 +109,7 @@ export async function PUT(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Dashboard preferences save error:', error);
+      log.error('Dashboard preferences save error:', error);
       return NextResponse.json({ error: 'Failed to save preferences' }, { status: 500 });
     }
 

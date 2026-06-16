@@ -19,6 +19,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:sessions:block');
 
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -114,7 +117,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (sessionError || !session) {
-      console.error('[Sessions Block] Failed to create blocked session:', sessionError);
+      log.error('[Sessions Block] Failed to create blocked session:', sessionError);
       if (sessionError?.code === '23P01' || sessionError?.message?.includes('exclusion')) {
         return NextResponse.json(
           { error: 'Dieser Platz ist in diesem Zeitraum bereits belegt' },

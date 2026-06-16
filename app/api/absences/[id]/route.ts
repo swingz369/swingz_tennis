@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { absenceService } from '@/src/application/services/absence-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:absences:[id]');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -26,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ absence });
     } catch (error) {
-      console.error('Absence fetch error:', error);
+      log.error('Absence fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -69,7 +72,7 @@ export async function PATCH(
 
       return NextResponse.json({ success: true, absence: updated });
     } catch (error) {
-      console.error('Absence update error:', error);
+      log.error('Absence update error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -104,7 +107,7 @@ export async function DELETE(
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Absence delete error:', error);
+      log.error('Absence delete error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

@@ -7,6 +7,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:clubs:[id]:onboarding-settings');
 
 const ALLOWED_KEYS = ['language', 'email_from_name', 'email_from_address'] as const;
 
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .upsert(rows, { onConflict: 'club_id, key' });
 
     if (error) {
-      console.error('[Onboarding Settings POST]', error);
+      log.error('[Onboarding Settings POST]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

@@ -6,6 +6,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:tournaments:[id]');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -34,7 +37,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .order('registration_date', { ascending: true });
 
     if (rError) {
-      console.error('tournament registrations fetch error:', rError);
+      log.error('tournament registrations fetch error:', rError);
     }
 
     return NextResponse.json({
@@ -91,7 +94,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
 
     if (error) {
-      console.error('tournament PATCH error:', error);
+      log.error('tournament PATCH error:', error);
       return NextResponse.json({ error: 'Failed to update tournament' }, { status: 500 });
     }
 
@@ -116,7 +119,7 @@ export async function DELETE(
     const { error } = await supabase.from('tournaments').delete().eq('id', id);
 
     if (error) {
-      console.error('tournament DELETE error:', error);
+      log.error('tournament DELETE error:', error);
       return NextResponse.json({ error: 'Failed to delete tournament' }, { status: 500 });
     }
 

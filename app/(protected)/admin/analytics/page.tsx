@@ -158,13 +158,25 @@ export default async function AnalyticsPage({
           : 0,
     }));
 
+    // Fetch revenue from paid invoices for the selected club
+    const { data: paidInvoices } = await supabase
+      .from('invoices')
+      .select('amount')
+      .eq('club_id', effectiveClubId)
+      .eq('status', 'paid');
+
+    const totalRevenue = (paidInvoices ?? []).reduce(
+      (sum: number, inv: { amount: number | null }) => sum + (Number(inv.amount) || 0),
+      0
+    );
+
     analyticsData = {
       totalMembers: totalMembers ?? 0,
       totalBookings: totalBookings ?? 0,
-      totalRevenue: 0,
+      totalRevenue,
       totalSessions: totalSessionCount,
       revenueByClub: [
-        { club: clubs.find((c) => c.id === effectiveClubId)?.name ?? '', revenue: 0 },
+        { club: clubs.find((c) => c.id === effectiveClubId)?.name ?? '', revenue: totalRevenue },
       ],
       bookingsOverTime,
       sessionsPerTrainer,

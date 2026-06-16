@@ -12,6 +12,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:bookings:direct');
 
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -135,7 +138,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (sessionError || !session) {
-      console.error('[Bookings Direct] Failed to create walk-in session:', sessionError);
+      log.error('[Bookings Direct] Failed to create walk-in session:', sessionError);
       // Exclusion constraint violation = overlapping session
       if (sessionError?.code === '23P01' || sessionError?.message?.includes('exclusion')) {
         return NextResponse.json(
@@ -168,7 +171,7 @@ export async function POST(req: NextRequest) {
     if (bookingError || !booking) {
       // Rollback: delete the session if booking fails
       await serviceClient.from('sessions').delete().eq('id', session.id);
-      console.error('[Bookings Direct] Failed to create booking:', bookingError);
+      log.error('[Bookings Direct] Failed to create booking:', bookingError);
 
       if (bookingError?.code === '23505') {
         return NextResponse.json(

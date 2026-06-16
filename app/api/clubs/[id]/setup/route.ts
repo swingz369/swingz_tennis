@@ -9,6 +9,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:clubs:[id]:setup');
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
@@ -68,7 +71,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .eq('id', id);
 
     if (error) {
-      console.error('[Club Setup PATCH]', error);
+      log.error('[Club Setup PATCH]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -89,16 +92,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             .update({ value: cityValue, updated_at: now })
             .eq('id', existingSetting[0].id);
         } else {
-          await auth.supabase
-            .from('system_settings')
-            .insert({
-              club_id: id,
-              key: 'club_city',
-              value: cityValue,
-              category: 'general',
-              type: 'string',
-              updated_at: now,
-            });
+          await auth.supabase.from('system_settings').insert({
+            club_id: id,
+            key: 'club_city',
+            value: cityValue,
+            category: 'general',
+            type: 'string',
+            updated_at: now,
+          });
         }
       }
     }

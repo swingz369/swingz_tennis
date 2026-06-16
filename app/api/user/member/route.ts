@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:user:member');
 
 export async function GET(_req: NextRequest) {
   return withApiAuth(_req, async (auth) => {
@@ -87,13 +90,13 @@ export async function PATCH(_req: NextRequest) {
         .eq('id', auth.user.id);
 
       if (error) {
-        console.error('Profile update error:', error);
+        log.error('Profile update error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Profile PATCH error:', error);
+      log.error('Profile PATCH error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

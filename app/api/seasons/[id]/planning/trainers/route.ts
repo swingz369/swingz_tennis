@@ -18,6 +18,9 @@ import {
 import { seasonPlanningConfigs } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, and } from 'drizzle-orm';
 import type { TrainerAvailabilitySummary } from '@/lib/season-planning/types';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:trainers');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -205,7 +208,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
       return NextResponse.json({ success: true, summary });
     } catch (error) {
-      console.error('GET trainers error:', error);
+      log.error('GET trainers error:', error);
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });

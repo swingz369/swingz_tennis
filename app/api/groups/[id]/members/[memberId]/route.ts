@@ -4,6 +4,9 @@ import { DrizzleGroupRepository } from '@/infrastructure/persistence/repositorie
 import { GroupId, MemberId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:groups:[id]:members:[memberId]');
 
 const groupRepo = new DrizzleGroupRepository();
 
@@ -28,7 +31,7 @@ export async function DELETE(
       return NextResponse.json({ success: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error removing member from group:', message);
+      log.error('Error removing member from group:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

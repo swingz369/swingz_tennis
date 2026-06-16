@@ -103,12 +103,28 @@ export default async function SuperadminDashboardPage() {
     }
   });
 
+  // Fetch revenue per club from paid invoices (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: invoices } = await supabase
+    .from('invoices')
+    .select('club_id, amount')
+    .in('club_id', clubIds)
+    .eq('status', 'paid')
+    .gte('paid_at', thirtyDaysAgo.toISOString());
+
+  const revenueMap = new Map<string, number>();
+  invoices?.forEach((inv: { club_id: string; amount: number }) => {
+    revenueMap.set(inv.club_id, (revenueMap.get(inv.club_id) || 0) + Number(inv.amount));
+  });
+
   const clubsData = clubs.map((club: { id: string; name: string }) => ({
     id: club.id,
     name: club.name,
     members: clubStats[club.id]?.members ?? 0,
     trainers: clubStats[club.id]?.trainers ?? 0,
-    revenue: 0,
+    revenue: revenueMap.get(club.id) ?? 0,
   }));
 
   const data = {

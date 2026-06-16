@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { auditLogService } from '@/src/application/services/audit-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:audit-logs:[id]');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -28,7 +31,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ auditLog });
     } catch (error) {
-      console.error('Audit log fetch error:', error);
+      log.error('Audit log fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

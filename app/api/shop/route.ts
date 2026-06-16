@@ -1,20 +1,29 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { withApiAuth } from '@/lib/api-auth';
 import { createClient } from '@/lib/supabase/server';
+import { createLogger } from '@/lib/logger';
 
-// GET: List active products
-export async function GET() {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await (supabase as any)
-      .from('shop_products')
-      .select('*')
-      .eq('is_active', true)
-      .order('category');
+const log = createLogger('api:shop');
 
-    if (error) throw error;
+// GET: List active products (requires authentication)
+export async function GET(request: NextRequest) {
+  return withApiAuth(request, async (_auth) => {
+    try {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from('shop_products')
+        .select('*')
+        .eq('is_active', true)
+        .order('category');
 
-    return NextResponse.json({ products: data });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+      if (error) throw error;
+
+      return NextResponse.json({ products: data });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      log.error('Shop products fetch error', error instanceof Error ? error : undefined);
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  });
 }

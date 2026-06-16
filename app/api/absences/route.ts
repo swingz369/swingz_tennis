@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import { absenceService } from '@/src/application/services/absence-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:absences');
+
 import {
   CreateAbsenceSchema,
   validateRequestBody,
@@ -41,7 +45,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ success: true, absence });
     } catch (error) {
-      console.error('Absence creation error:', error);
+      log.error('Absence creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -106,7 +110,7 @@ export async function GET(request: NextRequest) {
       const absences = await absenceService.getAllAbsences();
       return NextResponse.json({ absences });
     } catch (error) {
-      console.error('Absence fetch error:', error);
+      log.error('Absence fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

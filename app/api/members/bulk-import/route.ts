@@ -5,6 +5,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { parseMemberCsv, validateMemberRecords } from '@/lib/csv/member-import';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:members:bulk-import');
 
 interface ImportResult {
   success: boolean;
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
     try {
       records = parseMemberCsv(csvContent, defaultRole);
     } catch (parseErr) {
-      console.error('CSV parse error:', parseErr);
+      log.error('CSV parse error:', parseErr);
       return NextResponse.json(
         { error: 'CSV-Datei konnte nicht gelesen werden. Bitte prüfe das Format.' },
         { status: 400 }

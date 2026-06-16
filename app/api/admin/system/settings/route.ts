@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:system:settings');
 
 const SYSTEM_SETTINGS_KEYS = [
   'appName',
@@ -72,7 +75,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json(finalSettings);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
-      console.error('Error fetching system settings:', error);
+      log.error('Error fetching system settings:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -129,7 +132,7 @@ export async function PUT(_request: NextRequest) {
       return NextResponse.json({ success: true, message: 'System settings saved' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
-      console.error('Error saving system settings:', error);
+      log.error('Error saving system settings:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

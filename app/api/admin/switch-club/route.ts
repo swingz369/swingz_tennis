@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:switch-club');
 
 /**
  * POST /api/admin/switch-club
@@ -62,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('[Switch Club] Error:', error);
+    log.error('[Switch Club] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -81,7 +84,7 @@ export async function DELETE() {
       message: 'Club selection cleared',
     });
   } catch (error) {
-    console.error('[Switch Club] Error clearing club:', error);
+    log.error('[Switch Club] Error clearing club:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

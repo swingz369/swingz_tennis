@@ -1,157 +1,78 @@
-'use client';
+import { requireAdminClub } from '@/lib/admin-context';
+import { getPagination, buildPaginationMeta } from '@/lib/pagination';
+import { ClubsClient } from './clubs-client';
+import type { ClubItem } from './clubs-client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
-import { PaginationNav } from '@/components/ui/pagination-nav';
-import type { PaginationMeta } from '@/lib/pagination';
-import type { Club, ClubsResponse } from '@/lib/clubs';
-import { apiFetch } from '@/lib/api-fetch';
+export const dynamic = 'force-dynamic';
 
-const CLUBS_PER_PAGE = 20;
+export default async function ClubsAdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { supabase, clubId, isSuperadmin } = await requireAdminClub();
+  const params = await searchParams;
+  const { page, offset, limit } = getPagination(params, 20);
 
-export default function ClubsAdminPage() {
-  const [clubs, setClubs] = useState<Club[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [showDialog, setShowDialog] = useState(false);
-  const [newClub, setNewClub] = useState({ name: '', maxMembers: 500 });
-  const [error, setError] = useState<string | null>(null);
+  let initialClubs: ClubItem[] = [];
+  let pagination = buildPaginationMeta(page, limit, 0);
+  let errorMsg: string | null = null;
 
-  const fetchClubs = useCallback(async (p: number = 1) => {
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/api/clubs?page=${p}&limit=${CLUBS_PER_PAGE}`);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch clubs: ${res.status}`);
-      }
-      const data: ClubsResponse = await res.json();
-      setClubs(data.clubs ?? []);
-      setPagination(data.pagination ?? null);
-    } catch (err) {
-      console.error('Failed to fetch clubs:', err);
-      setClubs([]);
-      setError('Fehler beim Laden der Vereine');
-    } finally {
-      setLoading(false);
+  try {
+    // Scope clubs based on role — superadmin sees all, admin sees own club
+    let clubsQuery = supabase
+      .from('clubs')
+      .select('id, name, status, max_members, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (!isSuperadmin) {
+      clubsQuery = clubsQuery.eq('id', clubId);
     }
-  }, []);
 
-  useEffect(() => {
-    fetchClubs(page);
-  }, [fetchClubs, page]);
+    const { data: clubs, error, count } = await clubsQuery;
 
-  const handleCreateClub = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      const res = await apiFetch('/api/clubs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newClub),
-      });
-      if (res.ok) {
-        setShowDialog(false);
-        setNewClub({ name: '', maxMembers: 500 });
-        fetchClubs(page);
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        const errorMessage = errorData.error || `Fehler ${res.status}: ${res.statusText}`;
-        setError(errorMessage);
+    if (error) {
+      errorMsg = error.message;
+    } else {
+      pagination = buildPaginationMeta(page, limit, count);
+
+      // Fetch member counts for displayed clubs
+      const displayedClubIds = (clubs ?? []).map((c: { id: string }) => c.id);
+      const memberCounts: Record<string, number> = {};
+
+      if (displayedClubIds.length > 0) {
+        const { data: memberships } = await supabase
+          .from('user_club_memberships')
+          .select('club_id')
+          .in('club_id', displayedClubIds)
+          .eq('is_active', true);
+
+        (memberships ?? []).forEach((m: { club_id: string | null }) => {
+          if (m.club_id) {
+            memberCounts[m.club_id] = (memberCounts[m.club_id] || 0) + 1;
+          }
+        });
       }
-    } catch (err) {
-      console.error('Failed to create club:', err);
-      setError('Netzwerkfehler. Bitte versuchen Sie es erneut.');
-    }
-  };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[30vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
-      </div>
-    );
+      initialClubs = (clubs ?? []).map(
+        (c: { id: string; name: string; status: string | null; max_members: number | null }) => ({
+          id: c.id,
+          name: c.name,
+          status: c.status || 'active',
+          memberCount: memberCounts[c.id] || 0,
+          maxMembers: c.max_members || 100,
+        })
+      );
+    }
+  } catch (err) {
+    console.error('[ClubsAdminPage] Unexpected error:', err);
+    errorMsg = err instanceof Error ? err.message : 'Unbekannter Fehler';
   }
 
-  return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Vereine verwalten</h1>
-        <Button onClick={() => setShowDialog(true)}>Neuer Verein</Button>
-      </div>
+  if (errorMsg) {
+    return <div className="p-6 text-red-600">Fehler beim Laden der Vereine: {errorMsg}</div>;
+  }
 
-      {showDialog && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Neuen Verein anlegen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateClub} className="space-y-4">
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={newClub.name}
-                  onChange={(e) => setNewClub({ ...newClub, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="maxMembers">Max. Mitglieder</Label>
-                <Input
-                  id="maxMembers"
-                  type="number"
-                  value={newClub.maxMembers}
-                  onChange={(e) => setNewClub({ ...newClub, maxMembers: parseInt(e.target.value) })}
-                  required
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit">Erstellen</Button>
-                <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
-                  Abbrechen
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {clubs.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <p className="text-muted-foreground">Keine Vereine gefunden.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {clubs.map((club) => (
-            <Card key={club.id}>
-              <CardHeader>
-                <CardTitle>{club.name}</CardTitle>
-                <CardDescription>Status: {club.status}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">
-                  Mitglieder: {club.memberCount} / {club.maxMembers}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {pagination && <PaginationNav meta={pagination} compact onPageChange={setPage} />}
-    </div>
-  );
+  return <ClubsClient initialClubs={initialClubs} pagination={pagination} searchParams={params} />;
 }

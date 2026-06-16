@@ -4,6 +4,9 @@ import { absenceService } from '@/src/application/services/absence-service.adapt
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:absences:[id]:approve');
 
 const approveSchema = z.object({
   approvedBy: z.string().min(1, 'Approved by is required'),
@@ -42,7 +45,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
       return NextResponse.json({ success: true, absence: updated });
     } catch (error) {
-      console.error('Absence approval error:', error);
+      log.error('Absence approval error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

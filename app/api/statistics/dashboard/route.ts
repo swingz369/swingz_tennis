@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { StatisticsService } from '@/src/application/services/statistics.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:statistics:dashboard');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -20,7 +23,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json(metrics);
     } catch (error) {
-      console.error('Error fetching dashboard metrics:', error);
+      log.error('Error fetching dashboard metrics:', error);
       return NextResponse.json({ error: 'Failed to fetch dashboard metrics' }, { status: 500 });
     }
   });

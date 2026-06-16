@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:branding');
 
 const BrandingUpdateSchema = z.object({
   brand: z
@@ -69,7 +72,7 @@ export async function GET(request: NextRequest) {
       customDomain: data.custom_domain || null,
     });
   } catch (err) {
-    console.error('GET /api/branding error:', err);
+    log.error('GET /api/branding error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -114,7 +117,7 @@ export async function PUT(request: NextRequest) {
       const { error } = await supabase.from('clubs').update(updates).eq('id', clubId);
 
       if (error) {
-        console.error('Branding update error:', error);
+        log.error('Branding update error:', error);
         return NextResponse.json({ error: 'Failed to update branding' }, { status: 500 });
       }
 

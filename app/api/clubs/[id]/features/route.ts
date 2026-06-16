@@ -7,6 +7,9 @@ import { clubs } from '@/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
 import { sanitizeFeatureFlags } from '@/lib/features';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:clubs:[id]:features');
 
 /**
  * GET /api/clubs/[id]/features
@@ -37,7 +40,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ features: sanitizeFeatureFlags(row.features) });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error getting club features:', error);
+      log.error('Error getting club features:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -81,7 +84,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ features: sanitized });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error updating club features:', error);
+      log.error('Error updating club features:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

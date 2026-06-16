@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { env } from '@/lib/env';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:public:register');
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,7 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (insertError) {
-      console.error('Registration insert error:', insertError);
+      log.error('Registration insert error:', insertError);
       return NextResponse.json(
         { error: 'Fehler beim Speichern der Registrierung' },
         { status: 500 }
@@ -123,7 +126,7 @@ export async function POST(request: NextRequest) {
         });
       } catch (emailError) {
         // Non-blocking — log but don't fail the request
-        console.warn('[Register] Email notification failed:', emailError);
+        log.warn('[Register] Email notification failed:', emailError);
       }
     }
 
@@ -132,7 +135,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    log.error('Registration error:', error);
     return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

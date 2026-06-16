@@ -9,6 +9,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createBookingSafe } from '@/lib/booking/safe-booking';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:bookings');
 
 // POST /api/bookings
 export async function POST(req: NextRequest) {
@@ -124,7 +127,7 @@ export async function POST(req: NextRequest) {
             });
           }
         } catch (err) {
-          console.warn('[Bookings] hours_log auto-create failed (non-blocking):', err);
+          log.warn('[Bookings] hours_log auto-create failed (non-blocking):', err);
         }
       })();
     }

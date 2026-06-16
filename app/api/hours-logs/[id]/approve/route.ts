@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { billingEngine } from '@/lib/billing-engine';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:hours-logs:[id]:approve');
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -73,10 +76,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
               });
             }
           } catch (billingErr) {
-            console.warn(
-              '[HoursLog Approve] invoice auto-create failed (non-blocking):',
-              billingErr
-            );
+            log.warn('[HoursLog Approve] invoice auto-create failed (non-blocking):', billingErr);
           }
         })();
       }
@@ -87,7 +87,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         message: 'Stundennachweis genehmigt',
       });
     } catch (error) {
-      console.error('Approve hours log error:', error);
+      log.error('Approve hours log error:', error);
       return NextResponse.json(
         { success: false, error: 'Fehler bei der Genehmigung' },
         { status: 500 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ import DOMPurify from 'dompurify';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useUserClub } from '@/hooks/use-user-data';
+import { useMessagesRealtime } from '@/hooks/use-messages-realtime';
 import NewsAnnouncements from '@/components/news-announcements';
 
 /* ─────────────────── Types ─────────────────── */
@@ -84,12 +86,39 @@ function stripHtml(html: string): string {
 /* ─────────────────── Main Component ─────────────────── */
 
 export default function MessagesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <MessagesContent />
+    </Suspense>
+  );
+}
+
+function MessagesContent() {
   const [folder, setFolder] = useState<Folder>('inbox');
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [composeRecipientId, setComposeRecipientId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  // Auto-open compose dialog when navigated with ?compose={userId}
+  useEffect(() => {
+    const composeUserId = searchParams.get('compose');
+    if (composeUserId) {
+      setComposeRecipientId(composeUserId);
+      setComposeOpen(true);
+      // Clean up URL without page reload
+      window.history.replaceState(null, '', '/messages');
+    }
+  }, [searchParams]);
   const [searchQuery, setSearchQuery] = useState('');
 
   const { isAdmin } = useUserRole();
@@ -117,6 +146,22 @@ export default function MessagesPage() {
       fetchMessages();
     }
   }, [fetchMessages, folder]);
+
+  // Supabase Realtime — live message updates
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  useEffect(() => {
+    import('@/src/infrastructure/external/supabase/client').then(({ createClient }) => {
+      createClient()
+        .auth.getUser()
+        .then(({ data }) => {
+          setCurrentUserId(data.user?.id);
+        });
+    });
+  }, []);
+  const handleRealtimeUpdate = useCallback(() => {
+    if (folder !== 'news') fetchMessages();
+  }, [folder, fetchMessages]);
+  useMessagesRealtime(currentUserId, handleRealtimeUpdate);
 
   // ── Mark as read ──
   const markAsRead = useCallback(async (messageId: string) => {
@@ -373,12 +418,17 @@ export default function MessagesPage() {
       {composeOpen && (
         <ComposeDialog
           open={composeOpen}
-          onClose={() => setComposeOpen(false)}
+          onClose={() => {
+            setComposeOpen(false);
+            setComposeRecipientId(null);
+          }}
           clubId={clubId}
           isAdmin={isAdmin}
           replyTo={selectedMessage}
+          initialReceiverId={composeRecipientId}
           onSent={() => {
             setComposeOpen(false);
+            setComposeRecipientId(null);
             fetchMessages();
           }}
         />
@@ -532,6 +582,7 @@ function ComposeDialog({
   clubId,
   isAdmin,
   replyTo,
+  initialReceiverId,
   onSent,
 }: {
   open: boolean;
@@ -539,6 +590,7 @@ function ComposeDialog({
   clubId: string | null;
   isAdmin: boolean;
   replyTo: Message | null;
+  initialReceiverId?: string | null;
   onSent: () => void;
 }) {
   const [subject, setSubject] = useState(
@@ -548,9 +600,9 @@ function ComposeDialog({
   const [recipientMode, setRecipientMode] = useState<'individual' | 'all' | 'trainers' | 'multi'>(
     'individual'
   );
-  const [receiverId, setReceiverId] = useState(replyTo?.sender_id ?? '');
+  const [receiverId, setReceiverId] = useState(replyTo?.sender_id ?? initialReceiverId ?? '');
   const [selectedReceiverIds, setSelectedReceiverIds] = useState<string[]>(
-    replyTo?.sender_id ? [replyTo.sender_id] : []
+    replyTo?.sender_id ? [replyTo.sender_id] : initialReceiverId ? [initialReceiverId] : []
   );
   const [members, setMembers] = useState<ClubMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
@@ -587,13 +639,14 @@ function ComposeDialog({
         }));
         setMembers(items);
         // Auto-set receiverId for reply if it's in the list
-        if (replyTo?.sender_id && items.some((m: ClubMember) => m.id === replyTo.sender_id)) {
-          setReceiverId(replyTo.sender_id);
+        const targetId = replyTo?.sender_id ?? initialReceiverId;
+        if (targetId && items.some((m: ClubMember) => m.id === targetId)) {
+          setReceiverId(targetId);
         }
       })
       .catch(() => {})
       .finally(() => setMembersLoading(false));
-  }, [clubId, recipientMode, replyTo?.sender_id]);
+  }, [clubId, recipientMode, replyTo?.sender_id, initialReceiverId]);
 
   const toggleReceiver = (id: string) => {
     setSelectedReceiverIds((prev) =>

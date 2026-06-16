@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -98,7 +101,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         },
       });
     } catch (error) {
-      console.error(`GET /api/seasons/[id] error:`, error);
+      log.error(`GET /api/seasons/[id] error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch season' },
         { status: 500 }
@@ -174,7 +177,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           .single();
 
         if (updateError) {
-          console.error(`PATCH /api/seasons/[id] supabase error:`, JSON.stringify(updateError));
+          log.error(`PATCH /api/seasons/[id] supabase error:`, JSON.stringify(updateError));
           return NextResponse.json(
             { error: updateError.message || updateError.details || JSON.stringify(updateError) },
             { status: 500 }
@@ -183,7 +186,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
         return NextResponse.json({ season: updated });
       } catch (error) {
-        console.error(`PATCH /api/seasons/[id] error:`, error);
+        log.error(`PATCH /api/seasons/[id] error:`, error);
         return NextResponse.json(
           {
             error:
@@ -238,7 +241,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
         return NextResponse.json({ success: true });
       } catch (error) {
-        console.error(`DELETE /api/seasons/[id] error:`, error);
+        log.error(`DELETE /api/seasons/[id] error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to delete season' },
           { status: 500 }

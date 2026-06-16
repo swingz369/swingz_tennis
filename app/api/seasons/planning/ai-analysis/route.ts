@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { AI_PROMPTS } from '@/lib/ai-prompts';
 import { apiFetch } from '@/lib/api-fetch';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:planning:ai-analysis');
 
 const env = process.env;
 
@@ -72,7 +75,7 @@ export async function POST(request: NextRequest) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('AI API error:', response.status, errorText);
+        log.error('AI API error', { status: response.status, errorText });
         return NextResponse.json({
           analysis:
             'KI-Analyse konnte nicht abgerufen werden (API-Fehler). Bitte versuche es später erneut.',
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ analysis });
     } catch (error) {
-      console.error('AI analysis route error:', error);
+      log.error('AI analysis route error:', error);
       return NextResponse.json({
         analysis: 'KI-Analyse momentan nicht verfügbar.',
       });

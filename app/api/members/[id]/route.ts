@@ -4,6 +4,9 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { memberService } from '@/src/application/services/member-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:members:[id]');
 
 // Service role client for updating the users table (bypasses RLS)
 const serviceClient = createServiceClient();
@@ -42,7 +45,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ member });
     } catch (error) {
-      console.error('Member fetch error:', error);
+      log.error('Member fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -139,7 +142,7 @@ export async function PATCH(
             .eq('id', membership.user_id);
 
           if (userUpdateError) {
-            console.error('Failed to update user profile:', userUpdateError);
+            log.error('Failed to update user profile:', userUpdateError);
           }
         }
       }
@@ -157,7 +160,7 @@ export async function PATCH(
 
       return NextResponse.json({ success: true, member: updated });
     } catch (error) {
-      console.error('Member update error:', error);
+      log.error('Member update error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -213,7 +216,7 @@ export async function DELETE(
         .eq('id', id);
 
       if (updateError) {
-        console.error('Error deactivating member:', updateError);
+        log.error('Error deactivating member:', updateError);
         return NextResponse.json(
           { error: 'Failed to deactivate member', details: updateError.message },
           { status: 500 }
@@ -238,7 +241,7 @@ export async function DELETE(
           user_agent: _request.headers.get('user-agent'),
         } as any);
       } catch (auditError) {
-        console.error('Audit logging failed:', auditError);
+        log.error('Audit logging failed:', auditError);
       }
 
       return NextResponse.json({
@@ -246,7 +249,7 @@ export async function DELETE(
         message: 'Member deactivated successfully (soft delete)',
       });
     } catch (error) {
-      console.error('Member delete error:', error);
+      log.error('Member delete error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

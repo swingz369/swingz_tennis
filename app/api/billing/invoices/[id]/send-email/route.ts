@@ -11,6 +11,9 @@ import { billingEngine } from '@/lib/billing-engine';
 import { generateInvoicePDF, getInvoiceFileName } from '@/lib/pdf/invoice-pdf-utils';
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:invoices:[id]:send-email');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -138,7 +141,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       });
 
       if (emailError) {
-        console.error('[SendInvoiceEmail] Resend error:', emailError);
+        log.error('[SendInvoiceEmail] Resend error:', emailError);
         return NextResponse.json(
           { error: `E-Mail-Versand fehlgeschlagen: ${emailError.message}` },
           { status: 500 }
@@ -153,7 +156,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         message: `Rechnung ${invoice.invoice_number} an ${memberEmail} versendet`,
       });
     } catch (error) {
-      console.error('[SendInvoiceEmail] Error:', error);
+      log.error('[SendInvoiceEmail] Error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to send invoice email' },
         { status: 500 }

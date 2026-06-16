@@ -5,6 +5,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer:availability');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) {
       // RLS blocks non-trainer/non-superadmin users — return empty instead of 500
-      console.warn('trainer availability GET (likely RLS):', error.message);
+      log.warn('trainer availability GET (likely RLS):', error.message);
       return NextResponse.json({ slots: [] });
     }
     return NextResponse.json({ slots: data ?? [] });
@@ -93,7 +96,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('trainer availability POST error:', error);
+      log.error('trainer availability POST error:', error);
       return NextResponse.json({ error: 'Failed to create slot' }, { status: 500 });
     }
 

@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer-absences');
 
 export async function POST(request: NextRequest) {
   return withAuth(request, async (auth) => {
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error creating absence:', error);
+      log.error('Error creating absence:', error);
       return NextResponse.json({ error: 'Failed to create absence' }, { status: 500 });
     }
 
@@ -86,7 +89,7 @@ export async function GET(request: NextRequest) {
     const { data: absences, error } = await query.order('start_date', { ascending: true });
 
     if (error) {
-      console.error('Error fetching absences:', error);
+      log.error('Error fetching absences:', error);
       return NextResponse.json({ error: 'Failed to fetch absences' }, { status: 500 });
     }
 

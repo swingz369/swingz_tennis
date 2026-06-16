@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:monthly-overview');
 
 const supabase = createServiceClient();
 
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
       .lt('date', monthEnd);
 
     if (hoursError) {
-      console.error('[monthly-overview] hours_logs query failed:', hoursError);
+      log.error('[monthly-overview] hours_logs query failed:', hoursError);
       // Return empty data instead of 500 when hours_logs table doesn't exist or has no data
       const emptyResponse: MonthlyOverviewResponse = {
         month: targetMonth,
@@ -113,7 +116,7 @@ export async function GET(request: NextRequest) {
       .lt('created_at', monthEnd);
 
     if (invoicesError) {
-      console.error('[monthly-overview] invoices query failed:', invoicesError);
+      log.error('[monthly-overview] invoices query failed:', invoicesError);
       // Continue with zero revenue instead of failing
     }
 

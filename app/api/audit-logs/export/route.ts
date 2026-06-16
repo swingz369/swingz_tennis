@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { format } from 'date-fns';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:audit-logs:export');
 
 /**
  * @swagger
@@ -104,7 +107,7 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Error exporting audit logs:', error);
+      log.error('Error exporting audit logs:', error);
       return NextResponse.json({ error: 'Failed to export audit logs' }, { status: 500 });
     }
   });

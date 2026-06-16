@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:contact');
 
 export async function POST(request: NextRequest) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error('[Contact] Insert error:', insertError);
+      log.error('[Contact] Insert error:', insertError);
       return NextResponse.json(
         { error: 'Speichern fehlgeschlagen. Bitte versuche es erneut.' },
         { status: 500 }
@@ -87,13 +90,13 @@ export async function POST(request: NextRequest) {
         });
       } catch (emailError) {
         // Non-blocking — log but don't fail the request
-        console.warn('[Contact] Email notification failed:', emailError);
+        log.warn('[Contact] Email notification failed:', emailError);
       }
     }
 
     return NextResponse.json({ success: true, id: contactRequest?.id }, { status: 201 });
   } catch (error) {
-    console.error('[Contact] Unexpected error:', error);
+    log.error('[Contact] Unexpected error:', error);
     return NextResponse.json(
       { error: 'Ein unerwarteter Fehler ist aufgetreten.' },
       { status: 500 }

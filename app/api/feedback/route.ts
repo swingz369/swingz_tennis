@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { feedbackRepository } from '@/lib/repositories/feedback-repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:feedback');
 
 /**
  * @swagger
@@ -103,7 +106,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(feedback, { status: 201 });
     } catch (error) {
-      console.error('Error creating feedback:', error);
+      log.error('Error creating feedback:', error);
       return NextResponse.json({ error: 'Failed to create feedback' }, { status: 500 });
     }
   });
@@ -180,7 +183,7 @@ export async function GET(request: NextRequest) {
         offset,
       });
     } catch (error) {
-      console.error('Error fetching feedback:', error);
+      log.error('Error fetching feedback:', error);
       return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
     }
   });

@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:hourly-rates:tiers');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -35,7 +38,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, rateTier });
     } catch (error) {
-      console.error('Hourly rate tier creation error:', error);
+      log.error('Hourly rate tier creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -68,7 +71,7 @@ export async function GET(_request: NextRequest) {
       const rateTiers = await hourlyRateService.getAllHourlyRateTiers();
       return NextResponse.json({ rateTiers });
     } catch (error) {
-      console.error('Hourly rate tier fetch error:', error);
+      log.error('Hourly rate tier fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

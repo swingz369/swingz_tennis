@@ -11,6 +11,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:generate-invoices');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -241,7 +244,7 @@ export async function GET(req: NextRequest) {
         warning: data.warning,
       });
     } catch (err) {
-      console.error('[GenerateInvoices GET] preview error:', err);
+      log.error('[GenerateInvoices GET] preview error:', err);
       return NextResponse.json(
         { error: err instanceof Error ? err.message : 'Preview failed' },
         { status: 500 }
@@ -348,7 +351,7 @@ export async function POST(req: NextRequest) {
           .select('id, member_id');
 
         if (insertError) {
-          console.error('[GenerateInvoices] insert error:', insertError);
+          log.error('[GenerateInvoices] insert error:', insertError);
           return NextResponse.json({ error: insertError.message }, { status: 500 });
         }
 
@@ -368,7 +371,7 @@ export async function POST(req: NextRequest) {
             .from('invoice_items')
             .insert(lineItems as any);
           if (itemsError) {
-            console.error('[GenerateInvoices] line items insert error:', itemsError);
+            log.error('[GenerateInvoices] line items insert error:', itemsError);
           }
         }
       }
@@ -392,7 +395,7 @@ export async function POST(req: NextRequest) {
         message,
       });
     } catch (err) {
-      console.error('[GenerateInvoices POST] error:', err);
+      log.error('[GenerateInvoices POST] error:', err);
       return NextResponse.json(
         { error: err instanceof Error ? err.message : 'Invoice generation failed' },
         { status: 500 }

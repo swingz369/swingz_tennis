@@ -28,6 +28,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth');
 
 /**
  * Creates a Supabase server client with cookie access.
@@ -101,7 +104,7 @@ export async function requireAuth() {
   const supabase = await createSupabaseServerClient(cookieStore);
 
   if (!supabase) {
-    console.warn('Supabase credentials not configured.');
+    log.warn('Supabase credentials not configured');
     redirect('/login');
   }
 
@@ -112,13 +115,16 @@ export async function requireAuth() {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      console.error('Auth error in requireAuth:', error);
+      log.error('Auth error in requireAuth', error instanceof Error ? error : undefined);
       redirect('/login');
     }
 
     return { supabase, user };
   } catch (err) {
-    console.error('Failed to initialize Supabase client:', err);
+    log.error(
+      'Failed to initialize Supabase client',
+      err instanceof Error ? err : new Error(String(err))
+    );
     redirect('/login');
   }
 }

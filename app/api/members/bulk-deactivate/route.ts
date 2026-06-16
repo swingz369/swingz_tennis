@@ -4,6 +4,9 @@ import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:members:bulk-deactivate');
 
 const bulkDeactivateSchema = z.object({
   memberIds: z.array(z.string().uuid()).min(1).max(100),
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
         .select('id, user_id');
 
       if (error) {
-        console.error('Bulk deactivation error:', error);
+        log.error('Bulk deactivation error:', error);
         return NextResponse.json({ error: 'Failed to deactivate members' }, { status: 500 });
       }
 
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
         message: `${deactivated?.length || 0} members deactivated successfully`,
       });
     } catch (error) {
-      console.error('Bulk deactivate error:', error);
+      log.error('Bulk deactivate error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

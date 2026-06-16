@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/supabase-types';
+import type { Database } from '@/types/supabase';
 import { createClient } from '@/lib/supabase/server';
 import type { GroupChangeParams, GroupChangeCreditResult } from '@/lib/types/billing.types';
 import { getOrCreateMemberBalance, addBalanceEntry } from './member-balance.service';

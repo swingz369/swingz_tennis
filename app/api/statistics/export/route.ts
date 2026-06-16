@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { StatisticsService } from '@/src/application/services/statistics.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:statistics:export');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -56,7 +59,7 @@ export async function GET(req: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Error exporting statistics:', error);
+      log.error('Error exporting statistics:', error);
       return NextResponse.json({ error: 'Failed to export statistics' }, { status: 500 });
     }
   });

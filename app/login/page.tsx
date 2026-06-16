@@ -94,7 +94,7 @@ export default function LoginPage() {
 
             <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
               KI-gestützte Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb —
-              gerade im Early Access.
+              ab sofort verfügbar.
             </p>
           </div>
 
@@ -114,9 +114,9 @@ export default function LoginPage() {
               <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="h-4 w-4 text-brand-accent" />
-                  <p className="font-semibold text-sm">Early Access</p>
+                  <p className="font-semibold text-sm">Kostenlos testen</p>
                 </div>
-                <p className="text-white/55 text-xs">6 Monate kostenlos</p>
+                <p className="text-white/55 text-xs">14 Tage Probezeit</p>
               </div>
               <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">

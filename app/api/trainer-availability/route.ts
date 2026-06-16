@@ -4,6 +4,9 @@ import { trainerAvailabilityService } from '@/src/application/services/trainer-a
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer-availability');
 
 /**
  * GET /api/trainer-availability
@@ -82,7 +85,7 @@ export async function GET(request: NextRequest) {
         availabilities: allAvailabilities.flat(),
       });
     } catch (error) {
-      console.error('Trainer availability GET error:', error);
+      log.error('Trainer availability GET error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -152,7 +155,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ availability }, { status: 201 });
     } catch (error) {
-      console.error('Trainer availability POST error:', error);
+      log.error('Trainer availability POST error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -218,7 +221,7 @@ export async function DELETE(request: NextRequest) {
       await trainerAvailabilityService.deleteTrainerAvailability(availabilityId);
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Trainer availability DELETE error:', error);
+      log.error('Trainer availability DELETE error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

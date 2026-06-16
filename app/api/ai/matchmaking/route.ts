@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:ai:matchmaking');
 
 interface MatchCandidate {
   userId: string;
@@ -206,7 +209,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Matchmaking error:', error);
+      log.error('Matchmaking error:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { trainerAvailabilityService } from '@/src/application/services/trainer-availability-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer-availability:conflicts');
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -34,7 +37,7 @@ export async function GET(_request: NextRequest) {
       );
       return NextResponse.json({ conflicts });
     } catch (error) {
-      console.error('Availability conflicts fetch error:', error);
+      log.error('Availability conflicts fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

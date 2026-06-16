@@ -5,6 +5,9 @@ import { Trophy, FileText, Scale, AlertCircle, CreditCard, LogOut } from 'lucide
 export const metadata = {
   title: 'Nutzungsbedingungen – SWINGZ',
   description: 'Allgemeine Geschäftsbedingungen (AGB) der SWINGZ-Plattform.',
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsPage() {

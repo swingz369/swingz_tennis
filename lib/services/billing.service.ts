@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/supabase-types';
+import type { Database } from '@/types/supabase';
 import { createClient } from '@/lib/supabase/server';
 import type { Invoice, GenerateSeasonInvoiceParams } from '@/lib/types/billing.types';
 import { seasonBillingService } from '@/lib/billing/season-billing.service';

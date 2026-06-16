@@ -11,6 +11,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { db } from '@/infrastructure/persistence/db';
 import { sql } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:health');
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -51,7 +54,7 @@ export async function GET() {
       await db.execute(sql`SELECT 1 as health`);
       checks.database = 'ok';
     } catch (dbError) {
-      console.error('[Health] Database check failed:', dbError);
+      log.error('[Health] Database check failed:', dbError);
       checks.database = 'error';
     }
 
@@ -61,13 +64,13 @@ export async function GET() {
       const { error } = await supabase.from('clubs').select('id').limit(1);
 
       if (error) {
-        console.error('[Health] Supabase check failed:', error);
+        log.error('[Health] Supabase check failed:', error);
         checks.supabase = 'error';
       } else {
         checks.supabase = 'ok';
       }
     } catch (supabaseError) {
-      console.error('[Health] Supabase check failed:', supabaseError);
+      log.error('[Health] Supabase check failed:', supabaseError);
       checks.supabase = 'error';
     }
 
@@ -83,7 +86,7 @@ export async function GET() {
         await redis.ping();
         checks.redis = 'ok';
       } catch (redisError) {
-        console.error('[Health] Redis check failed:', redisError);
+        log.error('[Health] Redis check failed:', redisError);
         checks.redis = 'error';
       }
     } else {
@@ -129,7 +132,7 @@ export async function GET() {
   } catch (error) {
     const responseTime = Date.now() - startTime;
 
-    console.error('[Health] Health check failed:', error);
+    log.error('[Health] Health check failed:', error);
 
     const errorResponse: HealthCheckResponse = {
       status: 'error',

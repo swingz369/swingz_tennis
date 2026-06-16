@@ -4,6 +4,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:tournaments:[id]:register');
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (error) {
-      console.error('tournament register error:', error);
+      log.error('tournament register error:', error);
       return NextResponse.json({ error: 'Anmeldung fehlgeschlagen' }, { status: 500 });
     }
 

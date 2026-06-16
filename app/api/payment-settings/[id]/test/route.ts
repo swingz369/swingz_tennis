@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { paymentSettingsService } from '@/src/application/services/payment-settings-service.adapter';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:payment-settings:[id]:test');
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -26,7 +29,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
       return NextResponse.json({ success: true, message: result.message });
     } catch (error) {
-      console.error('Payment settings test error:', error);
+      log.error('Payment settings test error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

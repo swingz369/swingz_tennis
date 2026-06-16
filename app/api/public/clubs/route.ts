@@ -4,6 +4,9 @@ import { db } from '@/infrastructure/persistence/db';
 import { clubs } from '@/infrastructure/persistence/schema';
 import { asc } from 'drizzle-orm';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:public:clubs');
 
 /**
  * GET /api/public/clubs — Public club listing (no auth required)
@@ -27,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ clubs: data });
   } catch (error) {
-    console.error('[api/public/clubs] Error:', error);
+    log.error('[api/public/clubs] Error:', error);
     return NextResponse.json({ error: 'Failed to fetch clubs' }, { status: 500 });
   }
 }

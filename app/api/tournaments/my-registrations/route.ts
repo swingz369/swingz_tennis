@@ -4,6 +4,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:tournaments:my-registrations');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -19,7 +22,7 @@ export async function GET(request: NextRequest) {
       .order('registration_date', { ascending: false });
 
     if (error) {
-      console.error('my-registrations GET error:', error);
+      log.error('my-registrations GET error:', error);
       return NextResponse.json({ error: 'Failed to fetch registrations' }, { status: 500 });
     }
 

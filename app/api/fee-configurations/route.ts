@@ -5,6 +5,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 import type { CreateFeeConfigurationInput } from '@/src/domain/entities/fee-configuration.entity';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:fee-configurations');
 
 const createFeeConfigSchema = z.object({
   name: z.string().min(1),
@@ -54,7 +57,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, feeConfiguration });
     } catch (error) {
-      console.error('Fee configuration creation error:', error);
+      log.error('Fee configuration creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -114,7 +117,7 @@ export async function GET(_request: NextRequest) {
       const allConfigs = await feeConfigurationService.getAllFeeConfigurations();
       return NextResponse.json({ feeConfigurations: allConfigs });
     } catch (error) {
-      console.error('Fee configurations fetch error:', error);
+      log.error('Fee configurations fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { paymentSettingsService } from '@/src/application/services/payment-settings-service.adapter';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:payment-settings');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -47,7 +50,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, paymentSettings });
     } catch (error) {
-      console.error('Payment settings creation error:', error);
+      log.error('Payment settings creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -99,7 +102,7 @@ export async function GET(_request: NextRequest) {
       const paymentSettings = await paymentSettingsService.getAllPaymentSettings();
       return NextResponse.json({ paymentSettings });
     } catch (error) {
-      console.error('Payment settings fetch error:', error);
+      log.error('Payment settings fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

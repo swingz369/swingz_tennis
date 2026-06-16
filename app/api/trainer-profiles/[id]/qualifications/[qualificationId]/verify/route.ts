@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { trainerProfileService } from '@/src/application/services/trainer-profile-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer-profiles:[id]:qualifications:[qualificationId]:verify');
 
 export async function POST(
   _request: NextRequest,
@@ -43,7 +46,7 @@ export async function POST(
 
       return NextResponse.json({ success: true, trainerProfile: updated });
     } catch (error) {
-      console.error('Qualification verification error:', error);
+      log.error('Qualification verification error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

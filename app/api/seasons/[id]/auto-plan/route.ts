@@ -218,7 +218,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return NextResponse.json(response, { status: 200 });
       } catch (error) {
         const { id: _id } = await context.params;
-        console.error(`POST /api/seasons/[id]/auto-plan error (season ${_id}):`, error);
+        log.error(
+          `POST auto-plan error (season ${_id})`,
+          error instanceof Error ? error : undefined
+        );
         return NextResponse.json(
           {
             error: error instanceof Error ? error.message : 'Auto-planning failed',
@@ -270,7 +273,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         },
       });
     } catch (error) {
-      console.error(`GET /api/seasons/[id]/auto-plan/status error:`, error);
+      log.error('GET auto-plan/status error', error instanceof Error ? error : undefined);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch status' },
         { status: 500 }

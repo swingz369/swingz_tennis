@@ -17,6 +17,9 @@ import {
   seasonWaitlists,
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:members');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -145,7 +148,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         submittedCount: members.filter((m) => m.isSubmitted).length,
       });
     } catch (error) {
-      console.error('GET /api/seasons/[id]/planning/members error:', error);
+      log.error('GET /api/seasons/[id]/planning/members error:', error);
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });

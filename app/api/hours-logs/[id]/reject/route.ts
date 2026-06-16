@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:hours-logs:[id]:reject');
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -40,7 +43,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         message: 'Stundennachweis abgelehnt',
       });
     } catch (error) {
-      console.error('Reject hours log error:', error);
+      log.error('Reject hours log error:', error);
       return NextResponse.json(
         { success: false, error: 'Fehler bei der Ablehnung' },
         { status: 500 }

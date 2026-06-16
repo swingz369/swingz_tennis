@@ -5,6 +5,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { CreateCourtTypeSchema } from '@/lib/types/court-booking';
 import { buildPaginationMeta } from '@/lib/pagination';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:court-types');
 
 // GET /api/court-types – Alle Platz-Typen abrufen (mit serverseitiger Pagination)
 export async function GET(req: NextRequest) {
@@ -33,7 +36,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ courtTypes: result.data, pagination });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching court types:', message);
+      log.error('Error fetching court types:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -68,7 +71,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, courtType }, { status: 201 });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error creating court type:', message);
+      log.error('Error creating court type:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

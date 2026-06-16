@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
 import { deleteStorageFile } from '@/lib/supabase/storage-utils';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:club-logo:upload');
 
 const STORAGE_BUCKET = 'swingz-files';
 const UPLOAD_PREFIX = 'club-logos';
@@ -137,7 +140,7 @@ export async function POST(request: NextRequest) {
         .eq('id', clubId);
 
       if (updateError) {
-        console.error('Club logo URL update error:', updateError);
+        log.error('Club logo URL update error:', updateError);
       }
 
       return NextResponse.json({

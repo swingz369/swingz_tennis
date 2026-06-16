@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { db } from '@/infrastructure/persistence/db';
 import { sql } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:cron-health');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -40,7 +43,7 @@ export async function GET(req: NextRequest) {
         checked_at: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('[CronHealth] Error:', error);
+      log.error('[CronHealth] Error:', error);
       return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
   });

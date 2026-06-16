@@ -12,6 +12,9 @@ import { NextResponse } from 'next/server';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:attendance-records:[id]:member-confirm');
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(request, async (auth) => {
@@ -77,7 +80,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       return NextResponse.json({ success: true, record });
     } catch (error) {
-      console.error('Member confirm error:', error);
+      log.error('Member confirm error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

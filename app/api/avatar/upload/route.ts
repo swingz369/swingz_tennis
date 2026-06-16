@@ -4,6 +4,9 @@ import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
 import { deleteStorageFile } from '@/lib/supabase/storage-utils';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:avatar:upload');
 
 const STORAGE_BUCKET = 'swingz-files';
 const UPLOAD_PREFIX = 'avatars';
@@ -122,7 +125,7 @@ export async function POST(request: NextRequest) {
         .eq('id', userId);
 
       if (updateError) {
-        console.error('Avatar URL update error:', updateError);
+        log.error('Avatar URL update error:', updateError);
         // Don't fail — image is uploaded, just the DB update failed
       }
 

@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { pushNotificationService } from '@/lib/push-notification.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:messages');
 
 export const dynamic = 'force-dynamic';
 
@@ -293,7 +296,7 @@ export async function POST(request: NextRequest) {
       const { data: recipients, error: recipientsError } = await recipientQuery;
 
       if (recipientsError) {
-        console.error('[Messages] Broadcast recipient fetch error:', recipientsError);
+        log.error('[Messages] Broadcast recipient fetch error:', recipientsError);
         return NextResponse.json({ error: 'Fehler beim Laden der Empfänger' }, { status: 500 });
       }
 
@@ -324,7 +327,7 @@ export async function POST(request: NextRequest) {
         .select('id, receiver_id');
 
       if (insertError) {
-        console.error('[Messages] Broadcast insert error:', insertError);
+        log.error('[Messages] Broadcast insert error:', insertError);
         return NextResponse.json({ error: insertError.message }, { status: 500 });
       }
 

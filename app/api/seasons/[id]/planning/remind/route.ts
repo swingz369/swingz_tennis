@@ -11,6 +11,9 @@ import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/pe
 import { eq, and } from 'drizzle-orm';
 import { env } from '@/lib/env';
 import { EmailService } from '@/src/infrastructure/email/email.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:remind');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -96,7 +99,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             await emailService.sendBatchEmails(templates);
             sentCount = templates.length;
           } catch (emailError) {
-            console.error('[Remind] Email batch failed:', emailError);
+            log.error('[Remind] Email batch failed:', emailError);
           }
         }
 
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
               : 'Keine ausstehenden Präferenzen',
         });
       } catch (error) {
-        console.error('POST remind error:', error);
+        log.error('POST remind error:', error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Reminder failed' },
           { status: 500 }

@@ -10,6 +10,9 @@ import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { clubs } from '@/infrastructure/persistence/schema';
 import { db } from '@/infrastructure/persistence/db';
 import { eq } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:clubs:[id]');
 
 const clubRepo = new DrizzleClubRepository();
 const auditService = new AuditServiceImpl();
@@ -62,7 +65,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error getting club:', error);
+      log.error('Error getting club:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -146,13 +149,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             details: input as unknown as Record<string, unknown>,
           });
         } catch (auditError) {
-          console.warn('Failed to record audit log:', auditError);
+          log.warn('Failed to record audit log:', auditError);
         }
 
         return NextResponse.json({ success: true });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('Error updating club:', error);
+        log.error('Error updating club:', error);
         return NextResponse.json({ error: message }, { status: 400 });
       }
     })(req);
@@ -189,13 +192,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
           details: {},
         });
       } catch (auditError) {
-        console.warn('Audit log failed:', auditError);
+        log.warn('Audit log failed:', auditError);
       }
 
       return NextResponse.json({ success: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error deleting club:', error);
+      log.error('Error deleting club:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

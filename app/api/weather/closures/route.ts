@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:weather:closures');
 
 /**
  * GET /api/weather/closures — List court closures for the club
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query;
     if (error) {
-      console.error('[Closures GET] Error:', error);
+      log.error('[Closures GET] Error:', error);
       return NextResponse.json({ error: 'Failed to fetch closures' }, { status: 500 });
     }
 
@@ -77,7 +80,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Closures POST] Error:', error);
+      log.error('[Closures POST] Error:', error);
       return NextResponse.json({ error: 'Failed to create closure' }, { status: 500 });
     }
 

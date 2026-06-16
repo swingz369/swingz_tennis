@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:work-duties');
 
 /**
  * GET /api/work-duties — List work duties for the club
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await query;
     if (error) {
-      console.error('[WorkDuties GET] Error:', error);
+      log.error('[WorkDuties GET] Error:', error);
       return NextResponse.json({ error: 'Failed to fetch duties' }, { status: 500 });
     }
 
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[WorkDuties POST] Error:', error);
+      log.error('[WorkDuties POST] Error:', error);
       return NextResponse.json({ error: 'Failed to create duty' }, { status: 500 });
     }
 

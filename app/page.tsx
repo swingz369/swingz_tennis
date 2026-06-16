@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'SWINGZ — KI-gestütztes Tennisclub-Management',
   description:
     'Die Plattform für intelligente Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb. Early Access jetzt kostenlos.',
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default async function RootPage() {

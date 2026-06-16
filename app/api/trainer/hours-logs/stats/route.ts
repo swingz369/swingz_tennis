@@ -21,6 +21,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer:hours-logs:stats');
 
 interface PeriodStats {
   totalHours: number;
@@ -110,7 +113,7 @@ export async function GET(_request: NextRequest) {
           .lt('date', endExclusive);
 
         if (error) {
-          console.error('Period stats fetch error:', error);
+          log.error('Period stats fetch error:', error);
           return emptyStats();
         }
 
@@ -250,7 +253,7 @@ export async function GET(_request: NextRequest) {
         dailyBreakdown,
       });
     } catch (error) {
-      console.error('Hours stats fetch error:', error);
+      log.error('Hours stats fetch error:', error);
       return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
     }
   });

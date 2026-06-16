@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:work-duties:bulk');
 
 /**
  * POST /api/work-duties/bulk
@@ -152,7 +155,7 @@ export async function POST(request: NextRequest) {
           .select('id, scheduled_date');
 
         if (error) {
-          console.error('[WorkDuties Bulk POST] Error:', error);
+          log.error('[WorkDuties Bulk POST] Error:', error);
           return NextResponse.json({ error: 'Failed to create duties' }, { status: 500 });
         }
 
@@ -164,7 +167,7 @@ export async function POST(request: NextRequest) {
           { status: 201 }
         );
       } catch (err) {
-        console.error('[WorkDuties Bulk POST] Error:', err);
+        log.error('[WorkDuties Bulk POST] Error:', err);
         return NextResponse.json(
           { error: err instanceof Error ? err.message : 'Failed' },
           { status: 500 }

@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api-auth';
 import { createClient } from '@/infrastructure/external/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:tenants');
 
 export async function GET(request: NextRequest) {
   return withAuth(request, async (auth) => {
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
         .order('name');
 
       if (error) {
-        console.error('Error fetching clubs:', error);
+        log.error('Error fetching clubs:', error);
         throw new Error('Failed to fetch clubs');
       }
 
@@ -79,7 +82,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ clubs: clubsWithStats });
     } catch (error) {
-      console.error('Tenant fetch error:', error);
+      log.error('Tenant fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

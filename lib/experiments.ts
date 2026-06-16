@@ -29,6 +29,39 @@ export const experiments: Record<string, ExperimentDefinition> = {
     weights: [0.5, 0.5],
     enabled: true,
   },
+
+  /**
+   * Register page CTA text test.
+   * Goal: measure which phrasing drives more completed registrations.
+   */
+  register_cta: {
+    key: 'register_cta',
+    variants: ['verein_erstellen', 'kostenlos_registrieren'],
+    weights: [0.5, 0.5],
+    enabled: true,
+  },
+
+  /**
+   * Pricing section layout test.
+   * Goal: measure which pricing presentation drives more clicks.
+   */
+  pricing_layout: {
+    key: 'pricing_layout',
+    variants: ['cards', 'comparison_table'],
+    weights: [0.5, 0.5],
+    enabled: false,
+  },
+
+  /**
+   * Onboarding flow length test.
+   * Goal: measure completion rate with shorter vs. longer onboarding.
+   */
+  onboarding_flow: {
+    key: 'onboarding_flow',
+    variants: ['quick_3_step', 'detailed_5_step'],
+    weights: [0.5, 0.5],
+    enabled: true,
+  },
 };
 
 /**

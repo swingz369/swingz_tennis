@@ -6,6 +6,14 @@ import { ThemeProvider } from 'next-themes';
 import { AnalyticsProvider } from '@/components/analytics-provider';
 import { TenantProvider } from '@/lib/tenant-context';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { NextIntlClientProvider } from 'next-intl';
+import deMessages from '@/i18n/dictionaries/de.json';
+import enMessages from '@/i18n/dictionaries/en.json';
+
+const messages: Record<string, typeof deMessages> = {
+  de: deMessages,
+  en: enMessages,
+};
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -20,16 +28,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
+  const locale =
+    typeof document !== 'undefined'
+      ? (document.cookie.match(/NEXT_LOCALE=([^;]+)/)?.[1] ?? 'de')
+      : 'de';
+
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <TenantProvider>
-        <QueryClientProvider client={queryClient}>
-          <ErrorBoundary>{children}</ErrorBoundary>
-        </QueryClientProvider>
-        <Suspense fallback={null}>
-          <AnalyticsProvider />
-        </Suspense>
-      </TenantProvider>
-    </ThemeProvider>
+    <NextIntlClientProvider locale={locale} messages={messages[locale] ?? deMessages}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <TenantProvider>
+          <QueryClientProvider client={queryClient}>
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </QueryClientProvider>
+          <Suspense fallback={null}>
+            <AnalyticsProvider />
+          </Suspense>
+        </TenantProvider>
+      </ThemeProvider>
+    </NextIntlClientProvider>
   );
 }

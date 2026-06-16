@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:audit-logs');
 
 /**
  * @swagger
@@ -98,7 +101,7 @@ export async function GET(request: NextRequest) {
         offset,
       });
     } catch (error) {
-      console.error('Error fetching audit logs:', error);
+      log.error('Error fetching audit logs:', error);
       return NextResponse.json({ error: 'Failed to fetch audit logs' }, { status: 500 });
     }
   });

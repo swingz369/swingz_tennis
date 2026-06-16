@@ -14,13 +14,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
+import { useNotificationsRealtime } from '@/hooks/use-notifications-realtime';
 
 /**
  * Enhanced NotificationBell with dropdown panel.
  *
  * Shows a bell icon with unread count badge.
  * Clicking opens a dropdown with the last 5 notifications.
- * Polls every 30s for new notifications.
+ * Uses Supabase Realtime for instant updates, falls back to 30s polling.
  *
  * @example
  * <NotificationBell userId={user.id} />
@@ -65,35 +66,35 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // Poll unread count (notifications + messages combined)
-  useEffect(() => {
+  // Fetch unread count (notifications + messages combined)
+  const fetchCount = useCallback(async () => {
     if (!userId) return;
-
-    const fetchCount = async () => {
-      try {
-        const [notifRes, msgRes] = await Promise.all([
-          apiFetch('/api/user/notifications/count'),
-          apiFetch('/api/messages?folder=inbox&countOnly=true'),
-        ]);
-        let total = 0;
-        if (notifRes.ok) {
-          const data = await notifRes.json();
-          total += data?.count ?? 0;
-        }
-        if (msgRes.ok) {
-          const data = await msgRes.json();
-          total += data?.unreadCount ?? 0;
-        }
-        setUnreadCount(total);
-      } catch {
-        // Silent fail
+    try {
+      const [notifRes, msgRes] = await Promise.all([
+        apiFetch('/api/user/notifications/count'),
+        apiFetch('/api/messages?folder=inbox&countOnly=true'),
+      ]);
+      let total = 0;
+      if (notifRes.ok) {
+        const data = await notifRes.json();
+        total += data?.count ?? 0;
       }
-    };
-
-    fetchCount();
-    const interval = setInterval(fetchCount, 30_000);
-    return () => clearInterval(interval);
+      if (msgRes.ok) {
+        const data = await msgRes.json();
+        total += data?.unreadCount ?? 0;
+      }
+      setUnreadCount(total);
+    } catch {
+      // Silent fail
+    }
   }, [userId]);
+
+  // Initial fetch + Supabase Realtime for instant updates (fallback: 30s polling)
+  useEffect(() => {
+    fetchCount();
+  }, [fetchCount]);
+
+  useNotificationsRealtime(userId, fetchCount);
 
   // Fetch notifications + messages when dropdown opens
   const fetchAlerts = useCallback(async () => {

@@ -8,6 +8,9 @@ import { db } from '@/src/infrastructure/persistence/db';
 import { seasons, userTrainingPreferences, courts } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import type { WeeklyAvailability } from '@/lib/types/season-planning';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:schedule:optimize');
 
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -177,7 +180,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Scheduling failed';
-      console.error('[Optimize API] Error:', message);
+      log.error('[Optimize API] Error:', message);
       return NextResponse.json({ success: false, error: message }, { status: 500 });
     }
   });

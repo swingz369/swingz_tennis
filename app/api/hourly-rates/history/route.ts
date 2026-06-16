@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { hourlyRateService } from '@/src/application/services/hourly-rate-service.adapter';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:hourly-rates:history');
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -28,7 +31,7 @@ export async function GET(_request: NextRequest) {
       const history = await hourlyRateService.getAllRateHistory();
       return NextResponse.json({ history });
     } catch (error) {
-      console.error('Rate history fetch error:', error);
+      log.error('Rate history fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

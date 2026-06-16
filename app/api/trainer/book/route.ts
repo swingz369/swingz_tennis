@@ -5,6 +5,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer:book');
 
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -49,7 +52,7 @@ export async function POST(request: NextRequest) {
       .eq('id', slot.id);
 
     if (updateError) {
-      console.error('trainer book update error:', updateError);
+      log.error('trainer book update error:', updateError);
       return NextResponse.json({ error: 'Buchung fehlgeschlagen' }, { status: 500 });
     }
 
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (bookingError) {
-      console.warn('Could not create bookings record (non-fatal):', bookingError.message);
+      log.warn('Could not create bookings record (non-fatal):', bookingError.message);
     }
 
     return NextResponse.json({ success: true, slotId: slot.id, bookingId: booking?.id ?? null });

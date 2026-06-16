@@ -110,9 +110,7 @@ export class ReminderService {
           }
 
           if (input.dryRun) {
-            console.log(
-              `[DRY RUN] Would send reminder to ${member.email} for session ${session.id}`
-            );
+            log.info(`[DRY RUN] Would send reminder to ${member.email} for session ${session.id}`);
             const emailData: {
               memberName: string;
               sessionStartFormatted: string;

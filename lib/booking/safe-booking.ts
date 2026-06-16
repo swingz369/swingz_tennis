@@ -10,6 +10,9 @@
  */
 
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('booking:safe');
 
 const supabase = createServiceClient();
 
@@ -78,7 +81,7 @@ export async function createBookingSafe(
       success: true,
     };
   } catch (error) {
-    console.error('Error in createBookingSafe:', error);
+    log.error('Error in createBookingSafe', error instanceof Error ? error : undefined);
     return {
       bookingId: '',
       success: false,
@@ -99,7 +102,7 @@ export async function getSessionBookingCount(sessionId: string): Promise<number>
     .in('status', ['confirmed', 'pending']);
 
   if (error) {
-    console.error('Error getting booking count:', error);
+    log.error('Error getting booking count', error instanceof Error ? error : undefined);
     return 0;
   }
 
@@ -119,7 +122,7 @@ export async function hasExistingBooking(memberId: string, sessionId: string): P
     .maybeSingle();
 
   if (error) {
-    console.error('Error checking existing booking:', error);
+    log.error('Error checking existing booking', error instanceof Error ? error : undefined);
     return false;
   }
 

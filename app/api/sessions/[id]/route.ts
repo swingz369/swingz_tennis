@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:sessions:[id]');
 
 // PATCH /api/sessions/[id] – Session verschieben (Reschedule)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -150,14 +153,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .single();
 
       if (updateErr) {
-        console.error('Session update error:', updateErr);
+        log.error('Session update error:', updateErr);
         return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
       }
 
       return NextResponse.json({ success: true, session: updated });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error updating session:', error);
+      log.error('Error updating session:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -214,14 +217,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       const { error: deleteErr } = await supabase.from('sessions').delete().eq('id', id);
 
       if (deleteErr) {
-        console.error('Session delete error:', deleteErr);
+        log.error('Session delete error:', deleteErr);
         return NextResponse.json({ error: 'Failed to delete session' }, { status: 500 });
       }
 
       return NextResponse.json({ success: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error deleting session:', error);
+      log.error('Error deleting session:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

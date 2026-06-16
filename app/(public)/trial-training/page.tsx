@@ -7,6 +7,9 @@ import { Sparkles } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Probetraining buchen — SWINGZ',
   description: 'Buche jetzt ein kostenloses Probetraining bei deinem Tennisclub über SWINGZ.',
+  alternates: {
+    canonical: '/trial-training',
+  },
 };
 import { eq } from 'drizzle-orm';
 import { db } from '@/infrastructure/persistence/db';

@@ -6,6 +6,9 @@ import { billingEngine } from '@/lib/billing-engine';
 import type { CsvPaymentRecord } from '@/lib/csv/payment-import';
 import { parsePaymentCsv, validatePaymentRecords } from '@/lib/csv/payment-import';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:payments:import');
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_RECORDS = 1000;
@@ -147,7 +150,7 @@ export async function POST(_request: NextRequest) {
           if (invoiceId) {
             results.matched++;
           } else {
-            console.warn(
+            log.warn(
               `[payment-import] No invoice match for record: memberId=${memberId}, amount=${record.amount}, date=${record.paymentDate}, paymentId=${payment.id}`
             );
             results.unmatched++;
@@ -176,7 +179,7 @@ export async function POST(_request: NextRequest) {
         unmatchedPayments: results.unmatchedPayments,
       });
     } catch (error) {
-      console.error('Error importing payments:', error);
+      log.error('Error importing payments:', error);
       const isDevelopment = process.env.NODE_ENV === 'development';
       const message =
         isDevelopment && error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';

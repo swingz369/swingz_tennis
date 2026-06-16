@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:clubs:[id]:planning-readiness');
 
 /**
  * GET /api/clubs/[id]/planning-readiness?seasonId=xxx
@@ -94,7 +97,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         preferenceCount: preferenceCount ?? 0,
       });
     } catch (error) {
-      console.error('Planning readiness check error:', error);
+      log.error('Planning readiness check error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

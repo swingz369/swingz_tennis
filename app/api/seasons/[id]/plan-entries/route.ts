@@ -13,6 +13,9 @@ import {
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq, sql, inArray } from 'drizzle-orm';
 import type { CreatePlanEntryRequest } from '@/lib/types/season-planning';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:plan-entries');
 
 interface RouteContext {
   params: Promise<{
@@ -115,7 +118,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         count: entriesWithDetails.length,
       });
     } catch (error) {
-      console.error(`GET /api/seasons/[id]/plan-entries error:`, error);
+      log.error(`GET /api/seasons/[id]/plan-entries error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch plan entries' },
         { status: 500 }
@@ -271,7 +274,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           { status: 201 }
         );
       } catch (error) {
-        console.error(`POST /api/seasons/[id]/plan-entries error:`, error);
+        log.error(`POST /api/seasons/[id]/plan-entries error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to create plan entry' },
           { status: 500 }

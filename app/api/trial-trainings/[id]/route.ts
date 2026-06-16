@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ trialTraining });
     } catch (error) {
-      console.error('Trial training fetch error:', error);
+      log.error('Trial training fetch error', error instanceof Error ? error : undefined);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -125,13 +125,13 @@ export async function PATCH(
           }
         } catch (joinErr) {
           // Non-fatal: log but don't fail the trial training update
-          console.error('[TrialTraining] Auto-join failed:', joinErr);
+          log.error('Auto-join failed', joinErr instanceof Error ? joinErr : undefined);
         }
       }
 
       return NextResponse.json({ success: true, trialTraining: updated });
     } catch (error) {
-      console.error('Trial training update error:', error);
+      log.error('Trial training update error', error instanceof Error ? error : undefined);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -165,7 +165,7 @@ export async function DELETE(
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Trial training delete error:', error);
+      log.error('Trial training delete error', error instanceof Error ? error : undefined);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

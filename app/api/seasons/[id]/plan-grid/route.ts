@@ -11,6 +11,9 @@ import {
   trainingGroups,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:plan-grid');
 
 const GROUP_COLORS = [
   '#2563eb',
@@ -46,7 +49,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
-        console.error('plan-grid: season query failed:', msg, stack);
+        log.error(
+          'plan-grid: season query failed',
+          err instanceof Error ? err : { message: msg, stack }
+        );
         return NextResponse.json(
           { error: `Database error loading season: ${msg}` },
           { status: 500 }
@@ -68,7 +74,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
-        console.error('plan-grid: trainingGroups query failed:', msg, stack);
+        log.error(
+          'plan-grid: trainingGroups query failed',
+          err instanceof Error ? err : { message: msg, stack }
+        );
         return NextResponse.json(
           { error: `Database error loading groups: ${msg}` },
           { status: 500 }
@@ -90,7 +99,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
-        console.error('plan-grid: courts query failed:', msg, stack);
+        log.error(
+          'plan-grid: courts query failed',
+          err instanceof Error ? err : { message: msg, stack }
+        );
         return NextResponse.json(
           { error: `Database error loading courts: ${msg}` },
           { status: 500 }
@@ -116,7 +128,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
-        console.error('plan-grid: entries query failed:', msg, stack);
+        log.error(
+          'plan-grid: entries query failed',
+          err instanceof Error ? err : { message: msg, stack }
+        );
         return NextResponse.json(
           { error: `Database error loading plan entries: ${msg}` },
           { status: 500 }
@@ -157,7 +172,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       const stack = error instanceof Error ? error.stack : '';
-      console.error('GET /api/seasons/[id]/plan-grid error:', msg, stack);
+      log.error(
+        'GET /api/seasons/[id]/plan-grid error',
+        error instanceof Error ? error : { message: msg, stack }
+      );
       return NextResponse.json({ error: `Failed to fetch plan grid: ${msg}` }, { status: 500 });
     }
   });

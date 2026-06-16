@@ -5,6 +5,9 @@ import type { TrainerProfile } from '@/domain/entities/trainer.entity';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer-profiles');
 
 /**
  * POST /api/trainer-profiles
@@ -66,7 +69,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, trainerProfile: profile });
     } catch (error) {
-      console.error('Trainer profile creation error:', error);
+      log.error('Trainer profile creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -128,7 +131,7 @@ export async function GET(_request: NextRequest) {
       try {
         profiles = await trainerProfileService.getTrainerProfilesByClubId(clubId);
       } catch (drizzleErr) {
-        console.warn(
+        log.warn(
           '[trainer-profiles GET] Drizzle query failed, falling back to service client:',
           drizzleErr instanceof Error ? drizzleErr.message : drizzleErr
         );
@@ -138,7 +141,7 @@ export async function GET(_request: NextRequest) {
           .eq('club_id', clubId)
           .order('created_at', { ascending: false });
         if (fallbackError) {
-          console.error(
+          log.error(
             '[trainer-profiles GET] Service client fallback also failed:',
             fallbackError.message
           );
@@ -188,7 +191,7 @@ export async function GET(_request: NextRequest) {
         .eq('is_active', true);
 
       if (membershipError) {
-        console.error('[trainer-profiles GET] Membership query error:', membershipError.message);
+        log.error('[trainer-profiles GET] Membership query error:', membershipError.message);
       }
 
       if (memberships && memberships.length > 0) {
@@ -226,7 +229,7 @@ export async function GET(_request: NextRequest) {
                 });
                 break; // success
               } catch (createErr) {
-                console.warn(
+                log.warn(
                   `[trainer-profiles GET] Auto-create attempt ${attempt + 1} failed for userId=${userId}:`,
                   createErr instanceof Error ? createErr.message : createErr
                 );
@@ -273,7 +276,7 @@ export async function GET(_request: NextRequest) {
                   updatedAt: new Date().toISOString(),
                 });
               } else {
-                console.warn(
+                log.warn(
                   `[trainer-profiles GET] Skipping ghost membership userId=${userId} (user not in users table)`
                 );
               }
@@ -299,7 +302,10 @@ export async function GET(_request: NextRequest) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       const stack = error instanceof Error ? error.stack : '';
-      console.error('[trainer-profiles GET] Error:', message, '\nStack:', stack, '\nRaw:', error);
+      log.error(
+        '[trainer-profiles GET] Error',
+        error instanceof Error ? error : { message, stack }
+      );
       return NextResponse.json({ error: `Failed to load trainers: ${message}` }, { status: 500 });
     }
   });

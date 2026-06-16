@@ -23,17 +23,38 @@ class Logger {
     Sentry.setUser(null);
   }
 
-  private log(level: LogLevel, message: string, context?: LogContext) {
-    if (typeof window !== 'undefined') {
+  private log(level: LogLevel, message: string, context?: LogContext, originalError?: Error) {
+    const isServer = typeof window === 'undefined';
+
+    // Output to appropriate console method on both server and client
+    if (isServer) {
+      const ts = new Date().toISOString();
+      const prefix = context ? JSON.stringify(context) : '';
+      switch (level) {
+        case LogLevel.ERROR:
+        case LogLevel.FATAL:
+          console.error(`[${ts}] [${level.toUpperCase()}] ${message}`, prefix);
+          break;
+        case LogLevel.WARN:
+          console.warn(`[${ts}] [${level.toUpperCase()}] ${message}`, prefix);
+          break;
+        default:
+          console.log(`[${ts}] [${level.toUpperCase()}] ${message}`, prefix);
+      }
+    } else {
+      // Client-side: use console.log for all levels
       console.log(`[${level.toUpperCase()}]`, message, context);
     }
 
+    // Sentry integration
     if (level === LogLevel.ERROR || level === LogLevel.FATAL) {
-      Sentry.captureException(new Error(message));
+      if (originalError) {
+        Sentry.captureException(originalError);
+      } else {
+        Sentry.captureException(new Error(message));
+      }
     } else if (level === LogLevel.WARN) {
-      Sentry.captureMessage(message, {
-        level: 'warning',
-      });
+      Sentry.captureMessage(message, { level: 'warning' });
     }
   }
 
@@ -49,12 +70,20 @@ class Logger {
     this.log(LogLevel.WARN, message, context);
   }
 
-  error(message: string, context?: LogContext) {
-    this.log(LogLevel.ERROR, message, context);
+  error(message: string, contextOrError?: LogContext | Error) {
+    if (contextOrError instanceof Error) {
+      this.log(LogLevel.ERROR, message, undefined, contextOrError);
+    } else {
+      this.log(LogLevel.ERROR, message, contextOrError);
+    }
   }
 
-  fatal(message: string, context?: LogContext) {
-    this.log(LogLevel.FATAL, message, context);
+  fatal(message: string, contextOrError?: LogContext | Error) {
+    if (contextOrError instanceof Error) {
+      this.log(LogLevel.FATAL, message, undefined, contextOrError);
+    } else {
+      this.log(LogLevel.FATAL, message, contextOrError);
+    }
   }
 
   trackEvent(eventName: string, properties?: Record<string, unknown>) {
@@ -97,9 +126,19 @@ export function createLogger(context: string) {
       logger.info(message, { ...(data as Record<string, unknown>), context }),
     warn: (message: string, data?: unknown) =>
       logger.warn(message, { ...(data as Record<string, unknown>), context }),
-    error: (message: string, data?: unknown) =>
-      logger.error(message, { ...(data as Record<string, unknown>), context }),
-    fatal: (message: string, data?: unknown) =>
-      logger.fatal(message, { ...(data as Record<string, unknown>), context }),
+    error: (message: string, dataOrError?: unknown) => {
+      if (dataOrError instanceof Error) {
+        logger.error(message, dataOrError);
+      } else {
+        logger.error(message, { ...(dataOrError as Record<string, unknown>), context });
+      }
+    },
+    fatal: (message: string, dataOrError?: unknown) => {
+      if (dataOrError instanceof Error) {
+        logger.fatal(message, dataOrError);
+      } else {
+        logger.fatal(message, { ...(dataOrError as Record<string, unknown>), context });
+      }
+    },
   };
 }

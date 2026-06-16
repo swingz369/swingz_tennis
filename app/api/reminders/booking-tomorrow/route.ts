@@ -14,6 +14,9 @@ import { EmailService } from '@/infrastructure/email/email.service';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { pushNotificationService } from '@/lib/push-notification.service';
 import { sendRemindersSchema } from '@/application/validation/schemas/reminders.schema';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:reminders:booking-tomorrow');
 
 class TempSessionRepository implements ISessionRepository {
   async findSessionsForDateRange(startDate: Date, endDate: Date): Promise<Session[]> {
@@ -141,7 +144,7 @@ export async function POST(_request: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error sending reminders:', error);
+      log.error('Error sending reminders:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

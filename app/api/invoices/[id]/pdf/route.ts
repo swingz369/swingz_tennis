@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import { generateInvoicePDF, getInvoiceFileName } from '@/lib/pdf/invoice-pdf-utils';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:invoices:[id]:pdf');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -64,7 +67,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         },
       });
     } catch (error) {
-      console.error('Error generating invoice PDF:', error);
+      log.error('Error generating invoice PDF:', error);
       return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
     }
   });

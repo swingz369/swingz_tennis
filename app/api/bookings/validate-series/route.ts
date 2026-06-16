@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:bookings:validate-series');
 
 interface ValidateSeriesRequest {
   club_id: string;
@@ -83,7 +86,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Validation error:', error);
+    log.error('Validation error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

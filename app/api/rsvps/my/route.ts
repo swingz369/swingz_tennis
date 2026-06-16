@@ -6,6 +6,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:rsvps:my');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -72,7 +75,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ rsvps: result });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('My RSVPs error:', error);
+      log.error('My RSVPs error:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

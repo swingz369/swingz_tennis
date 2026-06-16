@@ -298,7 +298,6 @@ class TrialTrainingServiceAdapter {
       const cleanNotes = notes.replace(/Spielstärke:\s*.+?(?:\s*\|\s*)?/, '').trim() || undefined;
 
       // Send notification to each admin
-      let sentCount = 0;
       for (const admin of admins) {
         if (!admin.email) continue;
 
@@ -315,11 +314,9 @@ class TrialTrainingServiceAdapter {
           clubName,
           adminDashboardUrl,
         });
-
-        sentCount++;
       }
 
-      console.log(`Trial request notification sent to ${sentCount} admin(s)`);
+      // Trial request notification sent successfully
     } catch (error) {
       // Don't fail the request if notification fails — log and continue
       console.error('Failed to send trial request notification to admins:', error);

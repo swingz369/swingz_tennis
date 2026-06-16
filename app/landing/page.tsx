@@ -177,30 +177,69 @@ const FEATURES = [
 /* ── PRICING ── */
 const PRICING_PLANS = [
   {
-    name: 'Early Access',
-    subtitle: 'Für Pioniere',
-    price: '0',
-    period: '/6 Monate',
-    description: 'Sei einer der ersten Clubs und gestalte SWINGZ mit.',
+    name: 'Starter',
+    subtitle: 'Für kleine Vereine',
+    price: '29',
+    period: '/Monat',
+    description: 'Alles was du brauchst, um deinen Verein digital zu verwalten.',
     features: [
-      'Alle Features inklusive',
+      'Bis zu 50 Mitglieder',
+      'Bis zu 3 Trainer',
+      'Buchungs-Management',
+      'Mitgliederverwaltung',
+      'E-Mail-Support',
+      'Sichere EU-Hosting',
+    ],
+    cta: 'Kostenlos testen',
+    popular: false,
+    iconColor: 'text-brand-secondary',
+    borderHover: 'hover:border-brand-secondary/40',
+  },
+  {
+    name: 'Professional',
+    subtitle: 'Für wachsende Vereine',
+    price: '79',
+    period: '/Monat',
+    description: 'KI-gestützte Planung und erweiterte Analytics für maximale Performance.',
+    features: [
       'Unbegrenzte Mitglieder',
       'Unbegrenzte Trainer',
-      'Persönliches Onboarding',
-      'Direkter Draht zum Entwicklerteam',
-      'Einfluss auf den Produktroadmap',
-      '6 Monate komplett kostenlos',
+      'KI-Scheduling-Optimierung',
+      'Erweiterte Analytics & Reports',
+      'Saisonplanungs-Wizard',
+      'Shop-Modul',
+      'Priority-Support',
+      'API-Zugang',
     ],
-    cta: 'Early Access anfragen',
+    cta: 'Kostenlos testen',
     popular: true,
     iconColor: 'text-brand-primary',
     borderHover: 'hover:border-brand-light/40',
   },
 ];
 
+/* ── Platform Stats Hook ── */
+function usePlatformStats() {
+  const [stats, setStats] = useState({ clubs: 0, sessions: 0, members: 0 });
+
+  useEffect(() => {
+    fetch('/api/public/stats')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setStats(data);
+      })
+      .catch(() => {
+        /* silent fail — keeps default values */
+      });
+  }, []);
+
+  return stats;
+}
+
 export default function LandingPage() {
   const router = useRouter();
   const { variant: heroCtaVariant } = useExperiment('landing_hero_cta');
+  const platformStats = usePlatformStats();
 
   const { ref: statsRef, visible: statsVisible } = useRevealOnScroll();
 
@@ -223,9 +262,16 @@ export default function LandingPage() {
   }, [heroCtaVariant]);
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden" suppressHydrationWarning>
+    <div
+      id="main-content"
+      className="min-h-screen bg-background overflow-hidden"
+      suppressHydrationWarning
+    >
       {/* ═══════════ HERO ═══════════ */}
-      <section className="relative min-h-[100svh] flex items-center overflow-hidden">
+      <section
+        className="relative min-h-[100svh] flex items-center overflow-hidden"
+        aria-labelledby="hero-heading"
+      >
         {/* Background Layers */}
         <div className="absolute inset-0">
           <div
@@ -320,11 +366,11 @@ export default function LandingPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent" />
                   </span>
-                  Early Access Beta
+                  Jetzt verfügbar
                 </div>
               </div>
 
-              <h1 className="animate-in animate-in-delay-2">
+              <h1 id="hero-heading" className="animate-in animate-in-delay-2">
                 <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight">
                   Optimale
                 </span>
@@ -340,13 +386,13 @@ export default function LandingPage() {
               </h1>
 
               <p className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-white/65 leading-relaxed max-w-xl mx-auto lg:mx-0 animate-in animate-in-delay-3">
-                Die KI-gesteuerte Plattform für Tennisclub-Management. Wir bauen an der Zukunft der
-                Trainingsplanung — und suchen Early Adopter, die uns auf diesem Weg{' '}
-                <span className="text-white font-semibold">begleiten</span>.
+                Die KI-gesteuerte Plattform für Tennisclub-Management. Optimiere Trainingspläne,
+                verwalte Mitglieder und steigere die Effizienz deines Vereins —{' '}
+                <span className="text-white font-semibold">ab sofort verfügbar</span>.
               </p>
 
               <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start animate-in animate-in-delay-4">
-                <Link href="/contact">
+                <Link href="/register">
                   <button
                     type="button"
                     className="group relative inline-flex items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-brand-primary via-brand-primary/85 to-brand-light px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2 focus:ring-offset-brand-950 overflow-hidden min-h-[52px] shadow-glow-primary"
@@ -387,8 +433,8 @@ export default function LandingPage() {
                     ))}
                   </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">Werde einer der ersten Clubs</p>
-                    <p className="text-white/50 text-xs">Early Access Plätze limitiert</p>
+                    <p className="text-white font-semibold text-sm">Starte jetzt kostenlos</p>
+                    <p className="text-white/50 text-xs">14 Tage Probezeit</p>
                   </div>
                 </div>
               </div>
@@ -518,25 +564,31 @@ export default function LandingPage() {
             />
           </svg>
         </div>
-      </section>
-
+      </section>{' '}
       {/* ═══════════ VISION ═══════════ */}
-      <section ref={statsRef} className="relative z-10 bg-background py-20 sm:py-28">
+      <section
+        ref={statsRef}
+        className="relative z-10 bg-background py-20 sm:py-28"
+        aria-labelledby="vision-heading"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 text-brand-accent text-sm font-semibold mb-5">
               <Zap className="h-3.5 w-3.5" /> Unsere Vision
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
+            <h2
+              id="vision-heading"
+              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight"
+            >
               Was wir{' '}
               <span className="text-gradient-accent bg-clip-text text-transparent">vorhaben</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
             <StatItem
-              value={100}
+              value={platformStats.clubs || 1}
               suffix="+"
-              label="Vereine in Year 1"
+              label="Aktive Vereine"
               icon={Shield}
               color="from-brand-primary to-brand-light"
               visible={statsVisible}
@@ -550,9 +602,9 @@ export default function LandingPage() {
               visible={statsVisible}
             />
             <StatItem
-              value={10000}
+              value={platformStats.sessions || 10}
               suffix="+"
-              label="Trainings optimiert"
+              label="Trainings geplant"
               icon={Calendar}
               color="from-brand-accent to-orange-600"
               visible={statsVisible}
@@ -560,9 +612,11 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* ═══════════ FEATURES ═══════════ */}
-      <section className="bg-muted py-20 sm:py-32 relative overflow-hidden">
+      <section
+        className="bg-muted py-20 sm:py-32 relative overflow-hidden"
+        aria-labelledby="features-heading"
+      >
         <div className="absolute top-0 right-0 w-full h-full bg-grid opacity-[0.4]" />
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-gray-100/50 to-transparent" />
 
@@ -571,7 +625,10 @@ export default function LandingPage() {
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-5">
               <Sparkles className="h-3.5 w-3.5" /> Features
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
+            <h2
+              id="features-heading"
+              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight"
+            >
               Warum{' '}
               <span className="text-gradient-primary bg-clip-text text-transparent">SWINGZ</span>?
             </h2>
@@ -615,7 +672,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* ═══════════ HOW IT WORKS ═══════════ */}
       <section className="bg-background py-20 sm:py-32 relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
@@ -637,9 +693,9 @@ export default function LandingPage() {
               {
                 step: '01',
                 icon: MessageCircle,
-                title: 'Early Access anfragen',
+                title: 'Jetzt registrieren',
                 description:
-                  'Fülle das Formular aus und erzähle uns von deinem Club. Wir melden uns persönlich.',
+                  'Erstelle deinen Club in wenigen Minuten und starte mit der KI-Optimierung.',
               },
               {
                 step: '02',
@@ -651,9 +707,8 @@ export default function LandingPage() {
               {
                 step: '03',
                 icon: Sparkles,
-                title: 'Mitgestalten',
-                description:
-                  'Nutze die Plattform und gib Feedback — deine Ideen formen das Produkt.',
+                title: 'Durchstarten',
+                description: 'Plane Trainingseinheiten, verwalte Buchungen und optimiere mit KI.',
               },
             ].map((item, idx) => (
               <div key={idx} className="relative text-center group">
@@ -670,7 +725,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* ═══════════ PRICING ═══════════ */}
       <section className="bg-background py-20 sm:py-32 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-gray-50 to-transparent" />
@@ -692,67 +746,68 @@ export default function LandingPage() {
           </div>
 
           <div className="flex justify-center">
-            {PRICING_PLANS.map((plan, idx) => (
-              <div
-                key={idx}
-                className={`relative flex flex-col bg-background rounded-3xl border border-border shadow-elegant transition-all duration-500 hover:shadow-premium hover:-translate-y-2 overflow-hidden max-w-lg w-full ${plan.popular ? 'ring-2 ring-brand-primary/30 z-10' : ''} ${plan.borderHover}`}
-              >
-                {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-brand-primary to-brand-light text-white text-center text-sm font-bold py-2.5 tracking-wide">
-                    Am beliebtesten
-                  </div>
-                )}
-                <div className={`p-8 ${plan.popular ? 'pt-16' : 'pt-10'}`}>
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{plan.subtitle}</p>
-                    <div className="mt-6 flex items-baseline justify-center gap-1">
-                      <span className="text-5xl font-extrabold text-foreground tracking-tight">
-                        €{plan.price}
-                      </span>
-                      <span className="text-muted-foreground text-sm font-medium">
-                        {plan.period}
-                      </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl w-full">
+              {PRICING_PLANS.map((plan, idx) => (
+                <div
+                  key={idx}
+                  className={`relative flex flex-col bg-background rounded-3xl border border-border shadow-elegant transition-all duration-500 hover:shadow-premium hover:-translate-y-2 overflow-hidden max-w-lg w-full ${plan.popular ? 'ring-2 ring-brand-primary/30 z-10' : ''} ${plan.borderHover}`}
+                >
+                  {plan.popular && (
+                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-brand-primary to-brand-light text-white text-center text-sm font-bold py-2.5 tracking-wide">
+                      Am beliebtesten
                     </div>
-                    <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-                      {plan.description}
-                    </p>
-                  </div>
+                  )}
+                  <div className={`p-8 ${plan.popular ? 'pt-16' : 'pt-10'}`}>
+                    <div className="text-center">
+                      <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{plan.subtitle}</p>
+                      <div className="mt-6 flex items-baseline justify-center gap-1">
+                        <span className="text-5xl font-extrabold text-foreground tracking-tight">
+                          €{plan.price}
+                        </span>
+                        <span className="text-muted-foreground text-sm font-medium">
+                          {plan.period}
+                        </span>
+                      </div>
+                      <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+                        {plan.description}
+                      </p>
+                    </div>
 
-                  <ul className="mt-8 space-y-3.5">
-                    {plan.features.map((feature, fIdx) => (
-                      <li key={fIdx} className="flex items-start gap-3">
-                        <CheckCircle2
-                          className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.iconColor}`}
-                        />
-                        <span className="text-sm text-muted-foreground">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                    <ul className="mt-8 space-y-3.5">
+                      {plan.features.map((feature, fIdx) => (
+                        <li key={fIdx} className="flex items-start gap-3">
+                          <CheckCircle2
+                            className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.iconColor}`}
+                          />
+                          <span className="text-sm text-muted-foreground">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
 
-                  <div className="mt-8">
-                    <Link
-                      href="/contact"
-                      className={`group flex items-center justify-center gap-2 w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] ${
-                        plan.popular
-                          ? 'bg-gradient-to-r from-brand-primary to-brand-light text-white shadow-lg hover:shadow-xl hover:brightness-105'
-                          : 'bg-brand-secondary text-white hover:bg-brand-secondary/90 shadow-sm'
-                      }`}
-                    >
-                      {plan.cta}
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                    <div className="mt-8">
+                      <Link
+                        href="/register"
+                        className={`group flex items-center justify-center gap-2 w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] ${
+                          plan.popular
+                            ? 'bg-gradient-to-r from-brand-primary to-brand-light text-white shadow-lg hover:shadow-xl hover:brightness-105'
+                            : 'bg-brand-secondary text-white hover:bg-brand-secondary/90 shadow-sm'
+                        }`}
+                      >
+                        {plan.cta}
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
           <p className="mt-12 text-center text-sm text-muted-foreground">
-            Early Access ist kostenlos und unverbindlich · Keine Kreditkarte erforderlich
+            14 Tage kostenlos testen · Keine Kreditkarte erforderlich · Jederzeit kündbar
           </p>
         </div>
       </section>
-
       {/* ═══════════ CTA ═══════════ */}
       <section className="relative py-24 sm:py-36 overflow-hidden">
         <div className="absolute inset-0">
@@ -774,22 +829,22 @@ export default function LandingPage() {
             <span className="text-gradient-accent bg-clip-text text-transparent">Zukunft</span>?
           </h2>
           <p className="mt-5 sm:mt-6 text-lg sm:text-xl text-white/65 max-w-2xl mx-auto leading-relaxed">
-            Werde Early Adopter und hilf uns, die beste Plattform für Tennisclub-Management zu bauen
-            — kostenlos, unverbindlich, mit direktem Einfluss auf die Produktentwicklung.
+            Starte jetzt mit SWINGZ und revolutioniere die Trainingsplanung in deinem Verein —
+            KI-gestützt, einfach zu bedienen, sofort einsatzbereit.
           </p>
 
           <div className="mt-9 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-            <Link href="/login">
+            <Link href="/register">
               <button
                 type="button"
                 className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-brand-accent via-orange-400 to-orange-300 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[52px] shadow-glow-accent"
               >
                 <Sparkles className="h-5 w-5" />
-                Early Access anfragen
+                Kostenlos registrieren
                 <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
-            <Link href="/login">
+            <Link href="/contact">
               <button
                 type="button"
                 className="inline-flex items-center justify-center gap-2.5 rounded-full bg-background/10 backdrop-blur-sm border border-white/20 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-background/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[52px]"
@@ -801,11 +856,10 @@ export default function LandingPage() {
           </div>
 
           <p className="mt-8 text-white/45 text-sm">
-            Kostenlos und unverbindlich — begleite uns von Anfang an.
+            14 Tage kostenlos testen — keine Kreditkarte erforderlich.
           </p>
         </div>
       </section>
-
       {/* ═══════════ FOOTER ═══════════ */}
       <footer className="bg-brand-secondary py-14 sm:py-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-gray-950" />

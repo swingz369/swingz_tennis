@@ -9,6 +9,9 @@ import { db } from '@/src/infrastructure/persistence/db';
 import { seasons } from '@/src/infrastructure/persistence/schema';
 import { seasonPlanningConfigs } from '@/src/infrastructure/persistence/season-planning-schema';
 import { and, eq } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:config');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -76,7 +79,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         },
       });
     } catch (error) {
-      console.error('GET planning config error:', error);
+      log.error('GET planning config error:', error);
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });
@@ -180,7 +183,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         config: result,
       });
     } catch (error) {
-      console.error('PUT planning config error:', error);
+      log.error('PUT planning config error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal error' },
         { status: 500 }

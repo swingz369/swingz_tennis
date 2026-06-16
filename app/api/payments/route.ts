@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { CreatePayment } from '@/lib/types/billing';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:payments');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -39,7 +42,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ payment }, { status: 201 });
     } catch (error) {
-      console.error('Error creating payment:', error);
+      log.error('Error creating payment:', error);
       return NextResponse.json({ error: 'Failed to create payment' }, { status: 500 });
     }
   });
@@ -85,7 +88,7 @@ export async function GET(_request: NextRequest) {
         { status: 400 }
       );
     } catch (error) {
-      console.error('Error getting payments:', error);
+      log.error('Error getting payments:', error);
       return NextResponse.json({ error: 'Failed to get payments' }, { status: 500 });
     }
   });

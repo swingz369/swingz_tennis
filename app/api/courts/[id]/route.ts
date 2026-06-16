@@ -8,6 +8,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:courts:[id]');
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
@@ -72,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .single();
 
     if (error) {
-      console.error('[Courts PATCH]', error);
+      log.error('[Courts PATCH]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -83,7 +86,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         .update(updates as any)
         .eq('id', courtId);
       if (updateError) {
-        console.error('[Courts PATCH update]', updateError);
+        log.error('[Courts PATCH update]', updateError);
         return NextResponse.json({ error: updateError.message }, { status: 500 });
       }
     }

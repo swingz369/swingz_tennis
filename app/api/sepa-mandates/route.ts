@@ -5,6 +5,10 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import type { ZodError } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:sepa-mandates');
+
 import {
   CreateSEPAMandateSchema,
   validateRequestBody,
@@ -56,7 +60,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, mandate });
       } catch (error) {
-        console.error('SEPA mandate creation error:', error);
+        log.error('SEPA mandate creation error:', error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Internal server error' },
           { status: 500 }
@@ -105,7 +109,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ error: 'Member ID or Mandate ID is required' }, { status: 400 });
     } catch (error) {
-      console.error('SEPA mandate fetch error:', error);
+      log.error('SEPA mandate fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

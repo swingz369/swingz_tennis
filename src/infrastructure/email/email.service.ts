@@ -440,7 +440,7 @@ export class EmailService implements IEmailService {
     const resend = getResend();
     if (!resend) {
       if (process.env.NODE_ENV !== 'test') {
-        console.log('Email skipped: RESEND_API_KEY not configured', {
+        console.warn('Email skipped: RESEND_API_KEY not configured', {
           to,
           subject: template.subject,
         });
@@ -457,7 +457,7 @@ export class EmailService implements IEmailService {
         text: template.text,
         ...(config.replyTo ? { replyTo: config.replyTo } : {}),
       });
-      console.log('Email sent:', { to, subject: template.subject });
+      // Email sent successfully
     } catch (error) {
       console.error('Failed to send email:', error);
     }

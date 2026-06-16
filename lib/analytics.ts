@@ -31,10 +31,7 @@ export function trackEvent(eventName: string, properties?: Record<string, unknow
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push(event);
   } else {
-    // Dev mode: just log
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Analytics]', eventName, properties || '');
-    }
+    // Dev mode: silent — analytics events are non-critical in dev
   }
 }
 

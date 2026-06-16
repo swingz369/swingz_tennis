@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:attendance-records:hours-summary');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -49,7 +52,7 @@ export async function GET(request: NextRequest) {
       const summary = await hoursLogService.getAttendanceHoursSummaryForMember(auth.user.id);
       return NextResponse.json({ summary });
     } catch (error) {
-      console.error('Hours summary error:', error);
+      log.error('Hours summary error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

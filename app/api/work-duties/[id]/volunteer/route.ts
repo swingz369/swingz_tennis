@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:work-duties:[id]:volunteer');
 
 /**
  * POST /api/work-duties/[id]/volunteer — Member self-assigns to an open work duty
@@ -76,7 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (assignError) {
-      console.error('[Volunteer POST] Error:', assignError);
+      log.error('[Volunteer POST] Error:', assignError);
       return NextResponse.json({ error: 'Fehler beim Eintragen' }, { status: 500 });
     }
 
@@ -134,7 +137,7 @@ export async function DELETE(
       .eq('id', assignment.id);
 
     if (deleteError) {
-      console.error('[Volunteer DELETE] Error:', deleteError);
+      log.error('[Volunteer DELETE] Error:', deleteError);
       return NextResponse.json({ error: 'Fehler beim Austragen' }, { status: 500 });
     }
 

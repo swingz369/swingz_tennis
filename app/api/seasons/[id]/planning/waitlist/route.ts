@@ -10,6 +10,9 @@ import { db } from '@/src/infrastructure/persistence/db';
 import { seasons, users } from '@/src/infrastructure/persistence/schema';
 import { seasonWaitlists } from '@/src/infrastructure/persistence/season-planning-schema';
 import { eq, asc } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:waitlist');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -49,7 +52,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         waitingCount: waitlist.filter((w) => w.entry.status === 'waiting').length,
       });
     } catch (error) {
-      console.error('GET waitlist error:', error);
+      log.error('GET waitlist error:', error);
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           message: `Mitglied von Warteliste in Gruppe verschoben`,
         });
       } catch (error) {
-        console.error('POST waitlist promote error:', error);
+        log.error('POST waitlist promote error:', error);
         return NextResponse.json({ error: 'Internal error' }, { status: 500 });
       }
     });

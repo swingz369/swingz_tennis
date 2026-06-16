@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import { EmailService } from '@/src/application/services/email.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trial-trainings:[id]:reminder');
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -62,7 +65,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
       return NextResponse.json({ success: true, message: 'Reminder sent successfully' });
     } catch (error) {
-      console.error('Trial training reminder error:', error);
+      log.error('Trial training reminder error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

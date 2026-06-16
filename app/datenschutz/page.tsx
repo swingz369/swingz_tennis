@@ -5,6 +5,9 @@ import { Trophy, Shield, Mail, Database, Lock, Eye, Trash2, FileText } from 'luc
 export const metadata = {
   title: 'Datenschutzerklärung – SWINGZ',
   description: 'Datenschutzerklärung der SWINGZ-Plattform gemäß DSGVO.',
+  alternates: {
+    canonical: '/datenschutz',
+  },
 };
 
 export default function DatenschutzPage() {

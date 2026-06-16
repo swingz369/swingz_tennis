@@ -16,8 +16,11 @@ import {
   type DefaultUserShape,
   type DefaultTrainerShape,
 } from '@/lib/typed-helpers';
-import type { Database } from '@/supabase-types';
+import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:bookings');
 
 // Row type aliases from generated Supabase types
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
@@ -176,7 +179,7 @@ export async function GET(req: NextRequest) {
     const { data: bookings, error, count } = await query;
 
     if (error) {
-      console.error('Admin bookings fetch error:', error);
+      log.error('Admin bookings fetch error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -276,7 +279,7 @@ export async function GET(req: NextRequest) {
       const { data: rawSessions, error: sessionErr } = await sessionQuery;
 
       if (sessionErr) {
-        console.error('Season sessions fetch error:', sessionErr);
+        log.error('Season sessions fetch error:', sessionErr);
       } else if (rawSessions) {
         const typedRawSessions = rawSessions as SessionWithJoins[];
         // Only include sessions that have no bookings (not already shown)
@@ -327,7 +330,7 @@ export async function GET(req: NextRequest) {
           });
       }
     } catch (err) {
-      console.error('Season sessions fetch exception:', err);
+      log.error('Season sessions fetch exception:', err);
     }
 
     // Merge bookings and season plan entries

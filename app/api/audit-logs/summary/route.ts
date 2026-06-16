@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { auditLogService } from '@/src/application/services/audit-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:audit-logs:summary');
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -30,7 +33,7 @@ export async function GET(_request: NextRequest) {
 
       return NextResponse.json(summary);
     } catch (error) {
-      console.error('Error fetching audit log summary:', error);
+      log.error('Error fetching audit log summary:', error);
       return NextResponse.json({ error: 'Failed to fetch audit log summary' }, { status: 500 });
     }
   });

@@ -12,6 +12,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:open-matches');
 
 // ─── GET /api/open-matches?clubId=xxx ─────────────────────────────────
 
@@ -56,7 +59,7 @@ export async function GET(req: NextRequest) {
       .limit(limit);
 
     if (error) {
-      console.error('[OpenMatches GET]', error);
+      log.error('[OpenMatches GET]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -192,7 +195,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[OpenMatches POST]', error);
+      log.error('[OpenMatches POST]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

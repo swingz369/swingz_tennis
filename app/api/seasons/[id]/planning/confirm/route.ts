@@ -164,7 +164,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
             });
           }
         } catch (err) {
-          console.error('[Confirm] Failed to load holidays, proceeding without:', err);
+          log.warn(
+            'Failed to load holidays, proceeding without',
+            err instanceof Error ? err : undefined
+          );
         }
 
         // ── Publish transaction ──────────────────────────────────────────
@@ -388,7 +391,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
               skipped: result.skipped.length,
             });
           } catch (invoiceError) {
-            console.error('[Confirm] Season invoice generation failed:', invoiceError);
+            log.error(
+              'Season invoice generation failed',
+              invoiceError instanceof Error ? invoiceError : undefined
+            );
           }
         }
 
@@ -428,7 +434,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
               log.info('No recipients to notify');
             }
           } catch (emailError) {
-            console.error('[Confirm] Email notification batch failed:', emailError);
+            log.error(
+              'Email notification batch failed',
+              emailError instanceof Error ? emailError : undefined
+            );
             emailFailures = 1;
           }
         }
@@ -449,7 +458,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         return NextResponse.json(response);
       } catch (error) {
-        console.error('POST confirm error:', error);
+        log.error('POST confirm error', error instanceof Error ? error : undefined);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Confirmation failed' },
           { status: 500 }

@@ -10,6 +10,9 @@ import { seasons } from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
 import { SeasonClusteringEngine } from '@/lib/season-planning/clustering-engine';
 import type { RunClusteringRequest } from '@/lib/season-planning/types';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:cluster');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         },
       });
     } catch (error) {
-      console.error('POST cluster error:', error);
+      log.error('POST cluster error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Clustering failed' },
         { status: 500 }

@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:trainers:[id]');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -24,7 +27,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ trainerBilling });
     } catch (error) {
-      console.error('Trainer billing fetch error:', error);
+      log.error('Trainer billing fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -64,7 +67,7 @@ export async function PATCH(
 
       return NextResponse.json({ success: true, trainerBilling: updated });
     } catch (error) {
-      console.error('Trainer billing update error:', error);
+      log.error('Trainer billing update error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }

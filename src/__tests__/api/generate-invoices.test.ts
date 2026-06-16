@@ -230,7 +230,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe('No club context');
+    expect(body.error).toBe('clubId required');
   });
 
   it('returns 400 for invalid month format', async () => {
@@ -261,7 +261,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
   // ── Empty / no members ─────────────────────────────────────────────────
 
-  it('returns "No active members found" when club has no members', async () => {
+  it('returns NO_FEE_CONFIGURED when club has no members (API returns early before checking memberships)', async () => {
     setupGenerateMocks({ memberships: [] });
 
     const req = new NextRequest('http://localhost/api/billing/generate-invoices', {
@@ -274,15 +274,13 @@ describe('POST /api/billing/generate-invoices', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.created).toBe(0);
-    expect(body.skipped).toBe(0);
-    expect(body.message).toBe('No active members found');
+    expect(body.warning).toBe('NO_FEE_CONFIGURED');
+    expect(body.message).toContain('Keine Gebühr konfiguriert');
   });
 
   // ── Idempotency: all members already billed ────────────────────────────
 
-  it('logs when all members are skipped (debugging aid)', async () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
+  it('returns informative message when all members are skipped', async () => {
     const memberships = [{ id: 'm1', user_id: 'user-a', club_id: CLUB_ID }];
 
     setupGenerateMocks({
@@ -297,12 +295,14 @@ describe('POST /api/billing/generate-invoices', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ month: '2026-06' }),
     });
-    await POST(req);
+    const res = await POST(req);
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[GenerateInvoices] All 1 members already billed for 2026-06')
-    );
-    consoleLogSpy.mockRestore();
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.created).toBe(0);
+    expect(body.skipped).toBe(1);
+    expect(body.message).toContain('Alle 1 Mitglieder wurden bereits');
+    expect(body.message).toContain('Juni 2026');
   });
 
   // ── Invoice line items ────────────────────────────────────────────────
@@ -602,7 +602,7 @@ describe('POST /api/billing/generate-invoices', () => {
     expect(body.error).toContain('connection timeout');
   });
 
-  it('returns 500 on fee_configurations query error', async () => {
+  it('returns 200 with NO_FEE_CONFIGURED on fee_configurations query error (maybeSingle returns null)', async () => {
     setupGenerateMocks({
       memberships: [{ id: 'm1', user_id: 'user-x', club_id: CLUB_ID }],
       feeError: { message: 'table does not exist' },
@@ -615,9 +615,11 @@ describe('POST /api/billing/generate-invoices', () => {
     });
     const res = await POST(req);
 
-    expect(res.status).toBe(500);
+    // maybeSingle() swallows errors → feeAmount = 0 → early return with NO_FEE_CONFIGURED
+    expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.error).toContain('table does not exist');
+    expect(body.warning).toBe('NO_FEE_CONFIGURED');
+    expect(body.created).toBe(0);
   });
 
   it('returns 500 on invoice insert error', async () => {

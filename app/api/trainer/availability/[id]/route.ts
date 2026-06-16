@@ -4,6 +4,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainer:availability:[id]');
 
 export async function DELETE(
   request: NextRequest,
@@ -45,7 +48,7 @@ export async function DELETE(
     const { error } = await supabase.from('trainer_availabilities').delete().eq('id', id);
 
     if (error) {
-      console.error('trainer availability DELETE error:', error);
+      log.error('trainer availability DELETE error:', error);
       return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
     }
 

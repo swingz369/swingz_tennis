@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { feedbackRepository } from '@/lib/repositories/feedback-repository';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainers:[trainerId]:feedback');
 
 /**
  * @swagger
@@ -82,7 +85,7 @@ export async function GET(
         stats,
       });
     } catch (error) {
-      console.error('Error fetching trainer feedback:', error);
+      log.error('Error fetching trainer feedback:', error);
       return NextResponse.json({ error: 'Failed to fetch trainer feedback' }, { status: 500 });
     }
   });

@@ -9,6 +9,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/src/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:sessions:[id]:rsvp');
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
@@ -98,7 +101,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ rsvp: result });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('RSVP error:', error);
+      log.error('RSVP error:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -142,7 +145,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ rsvps: rsvps || [] });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('RSVP GET error:', error);
+      log.error('RSVP GET error:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

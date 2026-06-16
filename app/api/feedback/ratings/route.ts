@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:feedback:ratings');
 
 // GET /api/feedback/ratings - Get trainer rating summaries
 export async function GET(req: NextRequest) {
@@ -38,14 +41,14 @@ export async function GET(req: NextRequest) {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Failed to fetch rating summaries:', error);
+        log.error('Failed to fetch rating summaries:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
       return NextResponse.json(data);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching rating summaries:', error);
+      log.error('Error fetching rating summaries:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

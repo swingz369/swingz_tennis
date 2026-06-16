@@ -5,6 +5,9 @@ import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
 import { assignSubscriptionSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:billing:subscriptions');
 
 // const memberRepo = new DrizzleMemberRepository(); // Will be used in future for advanced member queries
 const auditService = new AuditServiceImpl();
@@ -72,7 +75,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json(subscriptions);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
-      console.error('Error fetching subscriptions:', error);
+      log.error('Error fetching subscriptions:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -143,7 +146,7 @@ export async function POST(_request: NextRequest) {
       })(_request);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
-      console.error('Error assigning subscription:', error);
+      log.error('Error assigning subscription:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

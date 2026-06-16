@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:line-items');
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -32,7 +35,7 @@ export async function GET(_request: NextRequest) {
       const billingLineItems = await BillingService.getAllBillingLineItems();
       return NextResponse.json({ billingLineItems });
     } catch (error) {
-      console.error('Billing line items fetch error:', error);
+      log.error('Billing line items fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -57,7 +60,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Billing line items creation error:', error);
+      log.error('Billing line items creation error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

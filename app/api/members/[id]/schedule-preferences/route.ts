@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:members:[id]:schedule-preferences');
 
 /**
  * GET /api/members/[userId]/schedule-preferences?clubId=...
@@ -25,7 +28,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Failed to fetch schedule preferences:', error);
+      log.error('Failed to fetch schedule preferences:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -51,7 +54,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       },
     });
   } catch (error) {
-    console.error('Schedule preferences GET error:', error);
+    log.error('Schedule preferences GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -131,13 +134,13 @@ export async function PUT(_request: NextRequest, { params }: { params: Promise<{
     }
 
     if (result.error) {
-      console.error('Failed to save schedule preferences:', result.error);
+      log.error('Failed to save schedule preferences:', result.error);
       return NextResponse.json({ error: result.error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, preferences: result.data });
   } catch (error) {
-    console.error('Schedule preferences PUT error:', error);
+    log.error('Schedule preferences PUT error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import type { Database } from '@/types/supabase';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:ai:churn-prediction');
 
 type AttendanceRow = Database['public']['Tables']['attendance_records']['Row'];
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
@@ -186,7 +189,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Churn prediction error:', error);
+      log.error('Churn prediction error:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

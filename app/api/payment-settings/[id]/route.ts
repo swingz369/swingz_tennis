@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { paymentSettingsService } from '@/src/application/services/payment-settings-service.adapter';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:payment-settings:[id]');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -26,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ paymentSettings });
     } catch (error) {
-      console.error('Payment settings fetch error:', error);
+      log.error('Payment settings fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -81,7 +84,7 @@ export async function PATCH(
 
       return NextResponse.json({ success: true, paymentSettings: updated });
     } catch (error) {
-      console.error('Payment settings update error:', error);
+      log.error('Payment settings update error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -115,7 +118,7 @@ export async function DELETE(
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Payment settings delete error:', error);
+      log.error('Payment settings delete error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
                 });
               });
             } catch (error) {
-              console.error('Cookie setting error:', error);
+              log.error('Cookie setting error:', error);
             }
           },
         },
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('Login error:', error.message);
+      log.error('Login error:', error.message);
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Unexpected login error:', error);
+    log.error('Unexpected login error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Login failed' },
       { status: 500 }

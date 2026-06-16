@@ -6,6 +6,10 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import type { ZodError } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:members');
+
 import {
   CreateMemberSchema,
   MemberQuerySchema,
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, member });
       } catch (error) {
-        console.error('Member creation error:', error);
+        log.error('Member creation error:', error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Internal server error' },
           { status: 500 }
@@ -137,7 +141,7 @@ export async function GET(request: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Member fetch error:', error);
+      log.error('Member fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

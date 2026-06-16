@@ -4,6 +4,9 @@ import { searchQuerySchema } from '@/application/validation/schemas';
 import { validateQuery } from '@/application/validation/validator';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:search');
 
 export interface SearchResult {
   id: string;
@@ -53,7 +56,7 @@ export async function GET(req: NextRequest) {
         }
       }
     } catch (e) {
-      console.warn('Member search error:', e);
+      log.warn('Member search error:', e);
     }
 
     try {
@@ -77,7 +80,7 @@ export async function GET(req: NextRequest) {
         }
       }
     } catch (e) {
-      console.warn('Booking search error:', e);
+      log.warn('Booking search error:', e);
     }
 
     try {
@@ -100,7 +103,7 @@ export async function GET(req: NextRequest) {
         }
       }
     } catch (e) {
-      console.warn('Trainer search error:', e);
+      log.warn('Trainer search error:', e);
     }
 
     try {
@@ -122,7 +125,7 @@ export async function GET(req: NextRequest) {
         }
       }
     } catch (e) {
-      console.warn('Club search error:', e);
+      log.warn('Club search error:', e);
     }
 
     return NextResponse.json(results.sort((a, b) => b.relevance - a.relevance).slice(0, limit));

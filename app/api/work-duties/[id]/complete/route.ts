@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:work-duties:[id]:complete');
 
 /**
  * POST /api/work-duties/[id]/complete — Member marks their assignment as completed
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .eq('id', assignment.id);
 
     if (updateError) {
-      console.error('[Complete POST] Error:', updateError);
+      log.error('[Complete POST] Error:', updateError);
       return NextResponse.json({ error: 'Fehler beim Aktualisieren' }, { status: 500 });
     }
 

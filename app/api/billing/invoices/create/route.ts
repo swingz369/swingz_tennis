@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { CreateInvoice } from '@/lib/types/billing';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:invoices:create');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -107,7 +110,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json(invoice, { status: 201 });
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      log.error('Error creating invoice:', error);
       const isDevelopment = process.env.NODE_ENV === 'development';
       const message =
         isDevelopment && error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';

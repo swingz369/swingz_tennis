@@ -6,6 +6,9 @@ import { ClubId } from '@/domain/value-objects';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:groups');
 
 const groupRepo = new DrizzleGroupRepository();
 
@@ -53,7 +56,7 @@ export async function GET(req: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching groups:', message);
+      log.error('Error fetching groups:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -111,7 +114,7 @@ export async function POST(req: NextRequest) {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error creating group:', message);
+      log.error('Error creating group:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

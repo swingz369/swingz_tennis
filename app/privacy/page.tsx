@@ -5,6 +5,9 @@ import { Trophy, Shield, ArrowRight, Mail } from 'lucide-react';
 export const metadata = {
   title: 'Datenschutzrichtlinie – SWINGZ',
   description: 'Kurze Übersicht zur Datenverarbeitung bei SWINGZ.',
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 export default function PrivacyPage() {

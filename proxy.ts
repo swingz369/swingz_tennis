@@ -1,4 +1,4 @@
-// middleware.ts (Root-Level)
+// proxy.ts (Root-Level) — Next.js 16 replacement for middleware.ts
 
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -31,6 +31,7 @@ const CSRF_EXCLUDED_PATHS = [
   '/api/csrf-token',
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/auth/register',
 
   '/api/health',
 ];
@@ -50,7 +51,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 /**
  * Validate CSRF token from request headers against cookie
  */
-function validateCSRFTokenMiddleware(request: NextRequest): boolean {
+function validateCSRFTokenProxy(request: NextRequest): boolean {
   const cookieToken = request.cookies.get(CSRF_TOKEN_COOKIE)?.value;
   if (!cookieToken) return false;
 
@@ -72,13 +73,20 @@ const PUBLIC_ROUTES = [
   '/landing', // Also available at /landing
   '/about',
   '/contact',
+  '/support', // Support page — public (DSGVO)
+  '/datenschutz', // Privacy policy — public (DSGVO §5)
+  '/impressum', // Legal notice — public (TMG §5)
+  '/privacy', // Privacy summary — public
+  '/terms', // Terms of service — public
+  '/trial-training', // Public trial booking — no auth required
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/auth/register',
   '/manifest.json', // PWA manifest — must be public for browser parsing
   '/sw.js', // Service Worker
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
@@ -145,7 +153,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/') &&
     ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) &&
     !CSRF_EXCLUDED_PATHS.some((p) => pathname.startsWith(p));
-  if (isApiMutation && !validateCSRFTokenMiddleware(request)) {
+  if (isApiMutation && !validateCSRFTokenProxy(request)) {
     const cookieToken = request.cookies.get(CSRF_TOKEN_COOKIE)?.value;
     const headerToken = request.headers.get(CSRF_TOKEN_HEADER);
     console.warn(

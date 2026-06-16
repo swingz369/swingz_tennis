@@ -36,10 +36,10 @@ export async function POST(_request: NextRequest) {
       }
     } catch (idempotencyError) {
       // Graceful degradation: if stripe_events table/RPC doesn't exist yet, continue processing
-      console.warn(
-        '[Stripe Webhook] Idempotency check unavailable, processing anyway:',
-        idempotencyError
-      );
+      log.warn('Idempotency check unavailable, processing anyway', {
+        error:
+          idempotencyError instanceof Error ? idempotencyError.message : String(idempotencyError),
+      });
     }
 
     log.info('Received Stripe event', { type: event.type, eventId: event.id });
@@ -61,7 +61,7 @@ export async function POST(_request: NextRequest) {
         else if (bookingId) {
           await handleBookingPayment(session, bookingId);
         } else {
-          console.error('No recognized ID in session metadata');
+          log.error('No recognized ID in session metadata');
         }
         break;
       }
@@ -105,7 +105,7 @@ export async function POST(_request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Error handling Stripe webhook:', error);
+    log.error('Error handling Stripe webhook', error instanceof Error ? error : undefined);
     const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -123,7 +123,7 @@ function isAsyncPaymentMethod(session: Stripe.Checkout.Session): boolean {
 async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId: string) {
   const invoice = await billingEngine.getInvoiceById(invoiceId);
   if (!invoice) {
-    console.error(`Invoice ${invoiceId} not found`);
+    log.error(`Invoice ${invoiceId} not found`);
     return;
   }
 
@@ -166,7 +166,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
     .maybeSingle();
 
   if (!booking) {
-    console.error(`[Stripe Webhook] Booking ${bookingId} not found`);
+    log.error(`Booking ${bookingId} not found`);
     return;
   }
 
@@ -186,7 +186,7 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
     .eq('id', bookingId);
 
   if (bookingError) {
-    console.error('[Stripe Webhook] Failed to update booking:', bookingError);
+    log.error('Failed to update booking', bookingError instanceof Error ? bookingError : undefined);
     return;
   }
 
@@ -228,7 +228,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
     .maybeSingle();
 
   if (!order) {
-    console.error(`[Stripe Webhook] Shop order ${orderId} not found`);
+    log.error(`Shop order ${orderId} not found`);
     return;
   }
 
@@ -250,7 +250,10 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
     .eq('id', orderId);
 
   if (updateError) {
-    console.error('[Stripe Webhook] Failed to update shop order:', updateError);
+    log.error(
+      'Failed to update shop order',
+      updateError instanceof Error ? updateError : undefined
+    );
     return;
   }
 
@@ -404,6 +407,6 @@ async function handleBookingPaymentFailed(paymentIntentId: string) {
       await supabase.from('bookings').update({ payment_status: 'failed' }).eq('id', bookingId);
     }
   } catch (err) {
-    console.error('[Stripe Webhook] handleBookingPaymentFailed error:', err);
+    log.error('handleBookingPaymentFailed error', err instanceof Error ? err : undefined);
   }
 }

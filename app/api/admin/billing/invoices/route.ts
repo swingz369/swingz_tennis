@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:billing:invoices');
 
 // GET /api/admin/billing/invoices – All invoices for the current club (Admin/Superadmin)
 export async function GET(_request: NextRequest) {
@@ -65,7 +68,7 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ data: invoices });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Internal server error';
-      console.error('Error fetching invoices:', error);
+      log.error('Error fetching invoices:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

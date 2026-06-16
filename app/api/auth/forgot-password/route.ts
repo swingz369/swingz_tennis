@@ -19,6 +19,9 @@ import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createServiceClient } from '@/lib/supabase/service';
 import { sendPasswordResetEmail } from '@/lib/auth/send-password-reset-email';
 import { env } from '@/lib/env';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:auth:forgot-password');
 
 // ─── Validation ──────────────────────────────────────────────────────────────
 
@@ -76,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       // Log but do NOT expose to client — still return 200.
-      console.warn('[forgot-password] Supabase generateLink error (non-fatal):', error.message);
+      log.warn('[forgot-password] Supabase generateLink error (non-fatal):', error.message);
       return SUCCESS_RESPONSE;
     }
 
@@ -85,11 +88,11 @@ export async function POST(request: NextRequest) {
     if (resetUrl) {
       await sendPasswordResetEmail({ to: email, resetUrl });
     } else {
-      console.warn('[forgot-password] generateLink returned no action_link — email skipped');
+      log.warn('[forgot-password] generateLink returned no action_link — email skipped');
     }
   } catch (err) {
     // Catch-all: log but never expose.
-    console.error('[forgot-password] Unexpected error:', err);
+    log.error('[forgot-password] Unexpected error:', err);
   }
 
   // 4. Always return 200 — indistinguishable whether the account exists.

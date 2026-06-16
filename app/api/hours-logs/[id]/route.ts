@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:hours-logs:[id]');
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -26,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       return NextResponse.json({ hoursLog });
     } catch (error) {
-      console.error('Hours log fetch error:', error);
+      log.error('Hours log fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -72,7 +75,7 @@ export async function PATCH(
 
       return NextResponse.json({ success: true, hoursLog: updated });
     } catch (error) {
-      console.error('Hours log update error:', error);
+      log.error('Hours log update error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -106,7 +109,7 @@ export async function DELETE(
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Hours log delete error:', error);
+      log.error('Hours log delete error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

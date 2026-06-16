@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import { createStripeCheckoutSession } from '@/lib/stripe/stripe-client';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:invoices:[id]:checkout');
 
 export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(_request, async (auth) => {
@@ -68,7 +71,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
       return NextResponse.json({ checkoutUrl });
     } catch (error) {
-      console.error('Error creating Stripe Checkout session:', error);
+      log.error('Error creating Stripe Checkout session:', error);
       const message = error instanceof Error ? error.message : 'Internal server error';
       return NextResponse.json({ error: message }, { status: 500 });
     }

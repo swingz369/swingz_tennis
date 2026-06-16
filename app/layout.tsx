@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import { QueryProvider } from './query-provider';
 import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
+import { SkipToContent } from '@/lib/accessibility';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -34,12 +35,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://swingz.cloud'),
   title: 'SWINGZ - Premium Tennis Club Management',
   description: 'KI-gestützte Trainingplanung für Tennisclubs',
   icons: {
     icon: '/favicon.svg',
   },
   manifest: '/manifest.json',
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -66,6 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body className={`${dmSans.className} antialiased`}>
+        <SkipToContent />
         <ServiceWorkerRegistration />
         <PwaInstallPrompt />
         <QueryProvider>

@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: 'Über uns — SWINGZ',
   description:
     'SWINGZ ist ein Early-Access-Startup: Trainingsplanung soll einfach, intelligent und für jeden Club zugänglich sein.',
+  alternates: {
+    canonical: '/about',
+  },
 };
 import {
   Trophy,

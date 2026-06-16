@@ -7,8 +7,9 @@
 'use client';
 
 import * as React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, Mail, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createLogger } from '@/lib/logger';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -52,15 +53,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error Boundary caught error:', error, errorInfo);
+    // Use structured logger which reports to Sentry in production
+    const log = createLogger('error-boundary');
+    log.error('Error Boundary caught error', error);
 
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
-
-    // Log to error tracking service (Sentry, etc.)
-    // if (process.env.NODE_ENV === 'production') {
-    //   reportErrorToService(error, errorInfo);
-    // }
   }
 
   resetError = () => {
@@ -104,16 +102,33 @@ function DefaultErrorFallback({
   resetError: () => void;
   showDetails?: boolean;
 }) {
+  const [copied, setCopied] = React.useState(false);
+
   const handleGoHome = () => {
     window.location.href = '/dashboard';
   };
 
+  const handleCopyDetails = async () => {
+    const details = `${error.name}: ${error.message}\n${error.stack ?? ''}`;
+    try {
+      await navigator.clipboard.writeText(details);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable — user can manually copy from details above
+    }
+  };
+
   return (
-    <div className="flex min-h-[400px] flex-col items-center justify-center p-8">
+    <div
+      className="flex min-h-[400px] flex-col items-center justify-center p-8"
+      role="alert"
+      aria-live="assertive"
+    >
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-destructive/10 p-4">
-            <AlertTriangle className="h-12 w-12 text-destructive" />
+            <AlertTriangle className="h-12 w-12 text-destructive" aria-hidden="true" />
           </div>
         </div>
 
@@ -151,6 +166,26 @@ function DefaultErrorFallback({
             <Home className="h-4 w-4" />
             Zur Startseite
           </Button>
+
+          {showDetails && (
+            <Button onClick={handleCopyDetails} variant="ghost" size="sm" className="gap-2">
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Kopiert' : 'Details kopieren'}
+            </Button>
+          )}
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground mb-2">
+            Falls das Problem bestehen bleibt, kontaktiere uns bitte:
+          </p>
+          <a
+            href="mailto:support@swingz.cloud?subject=Fehler%20in%20SWINGZ"
+            className="inline-flex items-center gap-1.5 text-sm text-brand-primary hover:text-brand-light transition-colors font-medium"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            support@swingz.cloud
+          </a>
         </div>
       </div>
     </div>

@@ -6,6 +6,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:hours-logs');
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -66,7 +69,7 @@ export async function GET(_request: NextRequest) {
         if (error.code === '42P01' || error.message?.includes('does not exist')) {
           return NextResponse.json({ hoursLogs: [] });
         }
-        console.error('Hours logs fetch error:', error);
+        log.error('Hours logs fetch error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
@@ -105,7 +108,7 @@ export async function GET(_request: NextRequest) {
 
       return NextResponse.json({ hoursLogs });
     } catch (error) {
-      console.error('Hours log fetch error:', error);
+      log.error('Hours log fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -171,13 +174,13 @@ export async function POST(_request: NextRequest) {
         .single();
 
       if (error) {
-        console.error('Hours log creation error:', error);
+        log.error('Hours log creation error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
       return NextResponse.json({ hoursLog }, { status: 201 });
     } catch (error) {
-      console.error('Hours log creation error:', error);
+      log.error('Hours log creation error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

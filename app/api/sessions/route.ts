@@ -8,8 +8,11 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import type { Database } from '@/supabase-types';
+import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:sessions');
 
 // Row type aliases from generated Supabase types
 type SessionRow = Database['public']['Tables']['sessions']['Row'];
@@ -66,7 +69,7 @@ export async function GET(req: NextRequest) {
         .order('timeslot_start', { ascending: true });
 
       if (sessionsError) {
-        console.error('[Sessions API]', sessionsError);
+        log.error('[Sessions API]', sessionsError);
         return NextResponse.json({ error: sessionsError.message }, { status: 500 });
       }
 
@@ -156,7 +159,7 @@ export async function GET(req: NextRequest) {
 
         if (rsvpError) {
           // Non-fatal: log and continue without RSVP data
-          console.warn('[Sessions API] RSVP fetch failed:', rsvpError.message);
+          log.warn('[Sessions API] RSVP fetch failed:', rsvpError.message);
         } else {
           ((rsvps ?? []) as Pick<SessionRsvpRow, 'session_id' | 'status' | 'member_id'>[]).forEach(
             (r) => {
@@ -206,7 +209,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json(result);
     } catch (err) {
-      console.error('[Sessions API] Unexpected error:', err);
+      log.error('[Sessions API] Unexpected error:', err);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -267,7 +270,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Sessions POST]', error);
+      log.error('[Sessions POST]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

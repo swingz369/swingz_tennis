@@ -14,6 +14,9 @@ import {
 import { eq } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
 import type { GroupAssignment } from '@/lib/season-planning/types';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:conflicts');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -88,7 +91,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         summary,
       });
     } catch (error) {
-      console.error('GET conflicts error:', error);
+      log.error('GET conflicts error:', error);
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });
@@ -156,7 +159,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         status: newStatus,
       });
     } catch (error) {
-      console.error('PATCH conflicts error:', error);
+      log.error('PATCH conflicts error:', error);
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });

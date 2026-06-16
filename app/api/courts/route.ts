@@ -9,6 +9,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:courts');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -47,7 +50,7 @@ export async function GET(req: NextRequest) {
       .order('name', { ascending: true });
 
     if (error) {
-      console.error('[Courts GET]', error);
+      log.error('[Courts GET]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -117,7 +120,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      console.error('[Courts POST]', error);
+      log.error('[Courts POST]', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

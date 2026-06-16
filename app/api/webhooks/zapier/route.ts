@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { apiFetch } from '@/lib/api-fetch';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:webhooks:zapier');
 
 // Type guard: validates URL format and protocol
 function isValidUrl(url: string | undefined): url is string {
@@ -22,7 +25,7 @@ function isValidUrl(url: string | undefined): url is string {
 function verifyZapierSignature(request: NextRequest, body: string): boolean {
   // Skip verification in development for easier testing
   if (process.env.NODE_ENV !== 'production') {
-    console.log('[DEV] Skipping Zapier signature verification');
+    // Signature verification skipped in non-production environments
     return true;
   }
 
@@ -30,7 +33,7 @@ function verifyZapierSignature(request: NextRequest, body: string): boolean {
   const secret = process.env.ZAPIER_WEBHOOK_SECRET;
 
   if (!signature || !secret) {
-    console.error('Missing signature or secret for Zapier webhook');
+    log.error('Missing signature or secret for Zapier webhook');
     return false;
   }
 
@@ -41,7 +44,7 @@ function verifyZapierSignature(request: NextRequest, body: string): boolean {
     // Use timing-safe comparison to prevent timing attacks
     return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   } catch (error) {
-    console.error('Error verifying Zapier signature:', error);
+    log.error('Error verifying Zapier signature:', error);
     return false;
   }
 }
@@ -59,7 +62,7 @@ export async function POST(_request: NextRequest) {
 
     // Verify signature before processing
     if (!verifyZapierSignature(_request, body)) {
-      console.error('Invalid Zapier webhook signature');
+      log.error('Invalid Zapier webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
@@ -82,7 +85,7 @@ export async function POST(_request: NextRequest) {
 
     return NextResponse.json({ received: true, event: event.type });
   } catch (error) {
-    console.error('Webhook error:', error);
+    log.error('Webhook error:', error);
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }
@@ -109,7 +112,7 @@ async function handleBookingCreated(booking: Record<string, unknown>) {
         }),
       });
     } catch (err) {
-      console.error('Failed to forward to Zapier:', err);
+      log.error('Failed to forward to Zapier:', err);
     }
   }
 }
@@ -135,7 +138,7 @@ async function handleBookingUpdated(booking: Record<string, unknown>) {
         }),
       });
     } catch (err) {
-      console.error('Failed to forward to Zapier:', err);
+      log.error('Failed to forward to Zapier:', err);
     }
   }
 }
@@ -163,7 +166,7 @@ async function handleBookingCancelled(booking: Record<string, unknown>) {
         }),
       });
     } catch (err) {
-      console.error('Failed to forward to Zapier:', err);
+      log.error('Failed to forward to Zapier:', err);
     }
   }
 }

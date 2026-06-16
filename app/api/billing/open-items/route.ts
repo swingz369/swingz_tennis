@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { InvoiceStatus } from '@/lib/types/billing';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:open-items');
 
 export async function GET(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -113,7 +116,7 @@ export async function GET(_request: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Error getting open items:', error);
+      log.error('Error getting open items:', error);
       return NextResponse.json({ error: 'Failed to get open items' }, { status: 500 });
     }
   });

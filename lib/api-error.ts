@@ -6,6 +6,9 @@
  */
 
 import { NextResponse } from 'next/server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api-error');
 
 export enum ErrorCode {
   // Authentication & Authorization
@@ -66,7 +69,7 @@ export function createErrorResponse(options: ApiErrorOptions): NextResponse<ApiE
 
   // Log error for monitoring
   if (cause) {
-    console.error('[API Error]', {
+    log.error('API Error', {
       code,
       message,
       status,
@@ -151,7 +154,7 @@ export function withErrorHandler<T extends (...args: never[]) => Promise<NextRes
       }
 
       // Handle unexpected errors
-      console.error('[Unhandled API Error]', error);
+      log.error('Unhandled API Error', error instanceof Error ? error : undefined);
       return createErrorResponse({
         code: ErrorCode.INTERNAL_SERVER_ERROR,
         message: 'An unexpected error occurred',

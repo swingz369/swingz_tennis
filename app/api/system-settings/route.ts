@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { systemSettingsService } from '@/src/application/services/system-settings-service.adapter';
 import type { SystemSettings } from '@/src/domain/entities/system-settings.entity';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:system-settings');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -55,7 +58,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, systemSetting });
     } catch (error) {
-      console.error('System setting creation error:', error);
+      log.error('System setting creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -130,7 +133,7 @@ export async function GET(_request: NextRequest) {
       const systemSettings = await systemSettingsService.getAllSystemSettings(effectiveClubId);
       return NextResponse.json({ systemSettings });
     } catch (error) {
-      console.error('System settings fetch error:', error);
+      log.error('System settings fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

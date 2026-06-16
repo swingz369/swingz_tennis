@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:dashboard:kpis');
 
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
@@ -79,7 +82,7 @@ export async function GET(req: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching dashboard KPIs:', error);
+      log.error('Error fetching dashboard KPIs:', error);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

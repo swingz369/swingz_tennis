@@ -7,6 +7,9 @@ import { db } from '@/src/infrastructure/persistence/db';
 import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/persistence/schema';
 import { and, eq } from 'drizzle-orm';
 import type { UpdatePreferencesRequest } from '@/lib/types/season-planning';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:preferences:[userId]');
 
 interface RouteContext {
   params: Promise<{
@@ -74,7 +77,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         },
       });
     } catch (error) {
-      console.error(`GET /api/seasons/[id]/preferences/${userId} error:`, error);
+      log.error(`GET /api/seasons/[id]/preferences/${userId} error:`, error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Failed to fetch preference' },
         { status: 500 }
@@ -184,7 +187,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           message: 'Preference updated successfully',
         });
       } catch (error) {
-        console.error(`PATCH /api/seasons/[id]/preferences/${userId} error:`, error);
+        log.error(`PATCH /api/seasons/[id]/preferences/${userId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to update preference' },
           { status: 500 }
@@ -243,7 +246,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
           message: 'Preference deleted successfully',
         });
       } catch (error) {
-        console.error(`DELETE /api/seasons/${seasonId}/preferences/${userId} error:`, error);
+        log.error(`DELETE /api/seasons/${seasonId}/preferences/${userId} error:`, error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Failed to delete preference' },
           { status: 500 }

@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { BillingService } from '@/src/application/services/billing.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:trainers');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -57,7 +60,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, trainerBilling });
     } catch (error) {
-      console.error('Trainer billing creation error:', error);
+      log.error('Trainer billing creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -112,7 +115,7 @@ export async function GET(_request: NextRequest) {
       const trainerBillings = await BillingService.getAllTrainerBillings();
       return NextResponse.json({ trainerBillings });
     } catch (error) {
-      console.error('Trainer billing fetch error:', error);
+      log.error('Trainer billing fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

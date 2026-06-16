@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: 'Kontakt — SWINGZ',
   description:
     'Early Access anfragen und SWINGZ als Early Adopter testen. 6 Monate kostenlos, kein Risiko.',
+  alternates: {
+    canonical: '/contact',
+  },
 };
 import { IconBox } from '@/components/ui/icon-box';
 import { ContactFormClient } from './contact-form-client';
@@ -46,14 +49,14 @@ export default function ContactPage() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
           <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-sm font-semibold mb-4">
             <Zap className="h-3.5 w-3.5" />
-            Early Access Beta
+            Kostenlos testen
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight">
-            Early Access anfragen
+            Demo anfragen
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Wir suchen Tennisvereine, die SWINGZ als Early Adopter testen und mitgestalten möchten.
-            Melde dich — wir melden uns persönlich bei dir.
+            Erlebe SWINGZ in einer persönlichen Demo. Wir zeigen dir, wie die KI-gestützte
+            Trainingsplanung deinen Verein unterstützt.
           </p>
         </div>
       </section>
@@ -100,19 +103,19 @@ export default function ContactPage() {
 
               <div className="bg-gradient-to-br from-brand-primary to-brand-light rounded-3xl p-8 text-white">
                 <Sparkles className="h-8 w-8 mb-4" />
-                <h3 className="text-xl font-bold mb-2">Warum Early Access?</h3>
+                <h3 className="text-xl font-bold mb-2">Warum SWINGZ?</h3>
                 <ul className="space-y-2 text-white/80 text-sm mb-6">
                   <li className="flex items-start gap-2">
                     <span className="text-white mt-0.5">✓</span>
-                    <span>6 Monate kostenlos — kein Risiko</span>
+                    <span>14 Tage kostenlos testen</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-white mt-0.5">✓</span>
-                    <span>Direkter Draht zum Entwicklerteam</span>
+                    <span>Persönliches Onboarding</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-white mt-0.5">✓</span>
-                    <span>Feature-Wünsche werden priorisiert</span>
+                    <span>Keine Kreditkarte erforderlich</span>
                   </li>
                 </ul>
                 <Link href="#contact-form">
@@ -121,7 +124,7 @@ export default function ContactPage() {
                     size="lg"
                     className="w-full bg-background text-brand-primary hover:bg-background/90"
                   >
-                    Early Access anfragen
+                    Demo anfragen
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>

@@ -9,6 +9,9 @@ import { seasonBillingService } from '@/lib/billing/season-billing.service';
 import { db } from '@/src/infrastructure/persistence/db';
 import { seasons } from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:billing');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const preview = await seasonBillingService.calculatePreview(seasonId);
       return NextResponse.json(preview);
     } catch (error) {
-      console.error('GET billing preview error:', error);
+      log.error('GET billing preview error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Preview failed' },
         { status: 500 }
@@ -52,7 +55,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       const config = await seasonBillingService.upsertConfig(seasonId, season.club_id, body);
       return NextResponse.json(config);
     } catch (error) {
-      console.error('PUT billing config error:', error);
+      log.error('PUT billing config error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Config update failed' },
         { status: 500 }
@@ -75,7 +78,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const result = await seasonBillingService.generateInvoices(seasonId);
       return NextResponse.json(result);
     } catch (error) {
-      console.error('POST generate invoices error:', error);
+      log.error('POST generate invoices error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Invoice generation failed' },
         { status: 500 }

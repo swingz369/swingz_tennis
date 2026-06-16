@@ -1,6 +1,34 @@
 import type { Browser, Page } from 'playwright';
 import { chromium } from 'playwright';
-import { PlaywrightAgent, type WebPageAgentOpt } from '@midscene/web/playwright';
+
+/**
+ * Minimal stub replacing @midscene/web PlaywrightAgent.
+ * Provides the same interface so existing E2E tests compile without @midscene.
+ * AI-powered methods (aiAct, aiQuery, aiAssert) throw — use standard Playwright
+ * methods (page.click, page.locator, etc.) for E2E tests.
+ */
+export class PlaywrightAgent {
+  constructor(_page: Page, _opts?: unknown) {}
+
+  async aiAct(_instruction: string): Promise<void> {
+    throw new Error(
+      '@midscene/web removed — use Playwright page methods directly (page.click, page.fill, etc.)'
+    );
+  }
+
+  async aiQuery<T = unknown>(_instruction: string): Promise<T> {
+    throw new Error(
+      '@midscene/web removed — use Playwright page.locator() or page.evaluate() directly'
+    );
+  }
+
+  async aiAssert(_assertion: string): Promise<void> {
+    throw new Error('@midscene/web removed — use Playwright expect() assertions directly');
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- matches removed @midscene type
+export interface WebPageAgentOpt {}
 
 export interface WebTestContext {
   browser: Browser;
@@ -9,12 +37,12 @@ export interface WebTestContext {
 }
 
 /**
- * WebTest helper for Vitest + Midscene E2E tests.
+ * WebTest helper for Vitest E2E tests.
  *
  * Usage in a Vitest test:
  * ```ts
  * const ctx = await WebTest.start('http://localhost:3000');
- * await ctx.agent.aiAct('click the login button');
+ * // Use ctx.page for Playwright interactions
  * await WebTest.close(ctx);
  * ```
  */
@@ -26,12 +54,9 @@ export class WebTest {
     });
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
-    // networkidle wartet, bis keine Netzwerk-Requests mehr ausstehen (React-Hydration abgeschlossen)
     await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 
-    // playwright-core type mismatch: project pins 1.59.x, @midscene/web brings 1.60.0
-    // Resolved via pnpm.overrides — cast kept as safety net
-    const agent = new PlaywrightAgent(page as never, opts);
+    const agent = new PlaywrightAgent(page, opts);
     return { browser, page, agent };
   }
 

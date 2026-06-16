@@ -6,6 +6,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:pricing-rules');
 
 const repo = new DrizzlePricingRuleRepository();
 
@@ -61,7 +64,7 @@ export async function GET(req: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error fetching pricing rules:', message);
+      log.error('Error fetching pricing rules:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -125,7 +128,7 @@ export async function POST(req: NextRequest) {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error creating pricing rule:', message);
+      log.error('Error creating pricing rule:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -176,7 +179,7 @@ export async function GET_MATCH(req: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error matching pricing rule:', message);
+      log.error('Error matching pricing rule:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

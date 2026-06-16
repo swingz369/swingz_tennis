@@ -4,6 +4,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trainers');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true);
 
     if (error) {
-      console.error('trainers GET error:', error);
+      log.error('trainers GET error:', error);
       return NextResponse.json({ error: 'Failed to fetch trainers' }, { status: 500 });
     }
 

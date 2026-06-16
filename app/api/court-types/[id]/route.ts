@@ -4,6 +4,9 @@ import { courtService } from '@/lib/booking/court.service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:court-types:[id]');
 
 // PATCH /api/court-types/[id] – Platz-Typ aktualisieren
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -59,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ success: true, courtType });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error updating court type:', message);
+      log.error('Error updating court type:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -92,7 +95,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
         .eq('court_type_id', id);
 
       if (refError) {
-        console.error('Error checking court type references:', refError);
+        log.error('Error checking court type references:', refError);
       } else if (count && count > 0) {
         return NextResponse.json(
           { error: `Cannot delete court type: ${count} court(s) are using this type` },
@@ -111,7 +114,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ success: true, message: 'Court type deactivated' });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error deleting court type:', message);
+      log.error('Error deleting court type:', message);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });

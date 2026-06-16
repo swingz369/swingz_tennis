@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       ]);
 
       if (error) {
-        console.error('[API /clubs] Database error:', error);
+        log.error('Database error', error instanceof Error ? error : undefined);
         return NextResponse.json({ error: 'Failed to fetch clubs' }, { status: 500 });
       }
 
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[API /clubs] Error listing clubs:', error);
+      log.error('Error listing clubs', error instanceof Error ? error : undefined);
       return NextResponse.json({ error: message }, { status: 500 });
     }
   });
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
         .single();
 
       if (error) {
-        console.error('[API /clubs] Error creating club:', error);
+        log.error('Error creating club', error instanceof Error ? error : undefined);
         return NextResponse.json({ error: 'Failed to create club' }, { status: 500 });
       }
 
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[API /clubs] Error creating club:', error);
+      log.error('Error creating club', error instanceof Error ? error : undefined);
       return NextResponse.json({ error: message }, { status: 400 });
     }
   });

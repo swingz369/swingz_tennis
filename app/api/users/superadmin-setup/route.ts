@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { withCSRFProtection } from '@/lib/csrf';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:users:superadmin-setup');
 
 /**
  * POST /api/users/superadmin-setup
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
           .eq('id', auth.user.id);
 
         if (updateError) {
-          console.error('superadmin-setup update error:', updateError);
+          log.error('superadmin-setup update error:', updateError);
           return NextResponse.json(
             { error: updateError.message || 'Failed to update' },
             { status: 500 }
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true });
       } catch (error) {
-        console.error('superadmin-setup error:', error);
+        log.error('superadmin-setup error:', error);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Internal error' },
           { status: 500 }

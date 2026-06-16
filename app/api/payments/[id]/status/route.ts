@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { PaymentStatus } from '@/lib/types/billing';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:payments:[id]:status');
 
 export async function PATCH(
   _request: NextRequest,
@@ -33,7 +36,7 @@ export async function PATCH(
 
       return NextResponse.json({ payment });
     } catch (error) {
-      console.error('Error updating payment status:', error);
+      log.error('Error updating payment status:', error);
       return NextResponse.json({ error: 'Failed to update payment status' }, { status: 500 });
     }
   });

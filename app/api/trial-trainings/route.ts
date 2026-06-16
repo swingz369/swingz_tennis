@@ -5,6 +5,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 import type { CreateTrialTrainingInput } from '@/src/domain/entities/trial-training.entity';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:trial-trainings');
 
 const createTrialTrainingSchema = z.object({
   participant: z.object({
@@ -64,7 +67,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ success: true, trialTraining });
     } catch (error) {
-      console.error('Trial training creation error:', error);
+      log.error('Trial training creation error:', error);
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'Internal server error' },
         { status: 500 }
@@ -128,7 +131,7 @@ export async function GET(_request: NextRequest) {
 
       return NextResponse.json({ trialTrainings: allTrainings });
     } catch (error) {
-      console.error('Trial trainings fetch error:', error);
+      log.error('Trial trainings fetch error:', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

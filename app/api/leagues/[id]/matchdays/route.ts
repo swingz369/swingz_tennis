@@ -1,6 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:leagues:[id]:matchdays');
 
 /**
  * GET /api/leagues/[id]/matchdays — List match days for a league
@@ -20,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .order('matchday_number', { ascending: true });
 
     if (error) {
-      console.error('[MatchDays GET] Error:', error);
+      log.error('[MatchDays GET] Error:', error);
       return NextResponse.json({ error: 'Failed to fetch match days' }, { status: 500 });
     }
 
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single();
 
     if (error) {
-      console.error('[MatchDays POST] Error:', error);
+      log.error('[MatchDays POST] Error:', error);
       return NextResponse.json({ error: 'Failed to create match day' }, { status: 500 });
     }
 

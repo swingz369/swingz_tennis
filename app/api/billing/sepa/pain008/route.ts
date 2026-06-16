@@ -4,6 +4,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { billingEngine } from '@/lib/billing-engine';
 import type { SepaPain008Config } from '@/lib/sepa/pain008-generator';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:billing:sepa:pain008');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -124,7 +127,7 @@ export async function POST(_request: NextRequest) {
         },
       });
     } catch (error) {
-      console.error('Error generating SEPA Pain.008 XML:', error);
+      log.error('Error generating SEPA Pain.008 XML:', error);
       const isDevelopment = process.env.NODE_ENV === 'development';
       const message =
         isDevelopment && error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten';

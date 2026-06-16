@@ -4,6 +4,9 @@ import { createServerClient } from '@supabase/ssr';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { z } from 'zod';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:members:invite');
 
 const InviteSchema = z.object({
   email: z.string().email('Ungültige E-Mail-Adresse'),
@@ -144,7 +147,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (inviteError || !inviteData?.user) {
-        console.error('[Invite] Error:', inviteError);
+        log.error('[Invite] Error:', inviteError);
         return NextResponse.json(
           { error: inviteError?.message || 'Einladung konnte nicht gesendet werden' },
           { status: 500 }

@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { trialTrainingService } from '@/src/application/services/trial-training-service.adapter';
 import type { CreateTrialTrainingInput } from '@/src/domain/entities/trial-training.entity';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:public:trial-training');
 
 const publicTrialTrainingSchema = z.object({
   firstName: z.string().min(2, 'Vorname muss mindestens 2 Zeichen lang sein'),
@@ -81,7 +84,7 @@ export async function POST(request: NextRequest) {
     // Notify club admins — fire-and-forget (don't block the response)
     trialTrainingService
       .notifyAdminsOfNewRequest(trialTraining, clubId || '')
-      .catch((err) => console.error('Admin notification failed:', err));
+      .catch((err) => log.error('Admin notification failed:', err));
 
     return NextResponse.json(
       {
@@ -93,7 +96,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Public trial training creation error:', error);
+    log.error('Public trial training creation error:', error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Interner Serverfehler',

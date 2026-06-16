@@ -11,6 +11,9 @@ import { seasonStatistics } from '@/src/infrastructure/persistence/season-planni
 import { eq, and } from 'drizzle-orm';
 import type { PreferencesSummary } from '@/lib/season-planning/types';
 import type { SkillLevel } from '@/lib/types/season-planning';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:seasons:[id]:planning:preferences-summary');
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -135,7 +138,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
       return NextResponse.json({ success: true, summary });
     } catch (error) {
-      console.error('GET preferences-summary error:', error);
+      log.error('GET preferences-summary error:', error);
       return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });

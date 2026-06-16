@@ -6,6 +6,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withAuth, verifyRole, forbiddenResponse, type AuthContext } from '@/lib/api-auth';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:admin:memberships:[id]');
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -139,7 +142,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         .single();
 
       if (updateError) {
-        console.error('Error updating membership:', updateError);
+        log.error('Error updating membership:', updateError);
         return NextResponse.json(
           { error: 'Failed to update membership', details: updateError.message },
           { status: 500 }
@@ -184,7 +187,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         } as any);
       } catch (auditError) {
         // Don't fail the request if audit logging fails
-        console.error('Audit logging failed:', auditError);
+        log.error('Audit logging failed:', auditError);
       }
 
       return NextResponse.json({
@@ -195,7 +198,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           : 'Membership updated successfully',
       });
     } catch (error) {
-      console.error('Error in PATCH /api/admin/memberships/[id]:', error);
+      log.error('Error in PATCH /api/admin/memberships/[id]:', error);
       return NextResponse.json(
         {
           error: 'Internal server error',
@@ -256,7 +259,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         .eq('id', id);
 
       if (updateError) {
-        console.error('Error deactivating membership:', updateError);
+        log.error('Error deactivating membership:', updateError);
         return NextResponse.json(
           { error: 'Failed to deactivate membership', details: updateError.message },
           { status: 500 }
@@ -280,7 +283,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
           user_agent: request.headers.get('user-agent'),
         } as any);
       } catch (auditError) {
-        console.error('Audit logging failed:', auditError);
+        log.error('Audit logging failed:', auditError);
       }
 
       return NextResponse.json({
@@ -288,7 +291,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         message: 'Membership deactivated successfully',
       });
     } catch (error) {
-      console.error('Error in DELETE /api/admin/memberships/[id]:', error);
+      log.error('Error in DELETE /api/admin/memberships/[id]:', error);
       return NextResponse.json(
         {
           error: 'Internal server error',

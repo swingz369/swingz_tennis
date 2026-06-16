@@ -9,6 +9,9 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:shop:checkout');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
@@ -138,7 +141,7 @@ export async function POST(_request: NextRequest) {
         .single();
 
       if (orderError || !order) {
-        console.error('[Shop Checkout] Order creation failed:', orderError);
+        log.error('[Shop Checkout] Order creation failed:', orderError);
         return NextResponse.json(
           { error: 'Fehler beim Erstellen der Bestellung' },
           { status: 500 }
@@ -163,7 +166,7 @@ export async function POST(_request: NextRequest) {
 
       return NextResponse.json({ url: session.url, orderId: order.id });
     } catch (error) {
-      console.error('[Shop Checkout] Error:', error);
+      log.error('[Shop Checkout] Error:', error);
       const message =
         error instanceof Error ? error.message : 'Fehler beim Erstellen der Checkout-Session';
       return NextResponse.json({ error: message }, { status: 500 });
