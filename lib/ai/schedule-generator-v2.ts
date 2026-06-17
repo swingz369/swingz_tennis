@@ -10,8 +10,7 @@
  * 6. Streaming support for real-time feedback
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import OpenAI from 'openai';
+// Google Gemini via OpenAI-compatible endpoint — kein extra Package nötig
 import { env } from '@/lib/env';
 import { AI_PROMPTS } from '@/lib/ai-prompts';
 import { createLogger } from '@/lib/logger';
@@ -50,7 +49,7 @@ export interface ScheduleGenerationResult {
   sessions: GeneratedSession[];
   reasoning: string;
   warnings?: string[];
-  modelUsed: 'claude' | 'openai' | 'none';
+  modelUsed: 'gemini' | 'none';
   success: boolean;
 }
 
@@ -115,21 +114,14 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 // =============================================================================
 
 export class AIScheduleServiceV2 {
-  private anthropic: Anthropic | null = null;
-  private openai: OpenAI | null = null;
-  private preferredModel: 'claude' | 'openai' = 'claude';
+  private geminiKey: string | null = null;
 
   constructor() {
-    if (env.ANTHROPIC_API_KEY) {
-      this.anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-    }
-    if (env.OPENAI_API_KEY) {
-      this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-    }
+    this.geminiKey = env.GOOGLE_GENERATIVE_AI_API_KEY ?? null;
   }
 
   isAvailable(): boolean {
-    return this.anthropic !== null || this.openai !== null;
+    return this.geminiKey !== null;
   }
 
   // =============================================================================
@@ -150,32 +142,17 @@ export class AIScheduleServiceV2 {
       };
     }
 
-    // Try primary model, fall back to secondary
-    let result: ScheduleGenerationResult;
-
-    if (this.preferredModel === 'claude' && this.anthropic) {
-      result = await this.generateWithClaude(input, planningData);
-      if (!result.success && this.openai) {
-        log.info('Claude failed, falling back to OpenAI');
-        result = await this.generateWithOpenAI(input, planningData);
-      }
-    } else if (this.openai) {
-      result = await this.generateWithOpenAI(input, planningData);
-      if (!result.success && this.anthropic) {
-        log.info('OpenAI failed, falling back to Claude');
-        result = await this.generateWithClaude(input, planningData);
-      }
-    } else if (this.anthropic) {
-      result = await this.generateWithClaude(input, planningData);
-    } else {
+    if (!this.geminiKey) {
       return {
         success: false,
         sessions: [],
-        reasoning: 'No AI model configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY.',
+        reasoning: 'Kein KI-Modell konfiguriert. GOOGLE_GENERATIVE_AI_API_KEY setzen.',
         modelUsed: 'none',
-        warnings: ['AI features disabled'],
+        warnings: ['KI-Features deaktiviert'],
       };
     }
+
+    const result = await this.generateWithGemini(input, planningData);
 
     // Cache successful results
     if (result.success) {
@@ -189,92 +166,36 @@ export class AIScheduleServiceV2 {
   // Model-specific implementations
   // =============================================================================
 
-  private async generateWithClaude(
+  private async generateWithGemini(
     input: ScheduleGenerationInput,
     planningData: PlanningData
   ): Promise<ScheduleGenerationResult> {
-    if (!this.anthropic) {
-      return {
-        success: false,
-        sessions: [],
-        reasoning: 'Claude not configured',
-        modelUsed: 'claude',
-        warnings: [],
-      };
-    }
-
     const userPrompt = this.buildUserPrompt(input, planningData);
 
     try {
-      const response = await this.retryWithBackoff(() =>
-        this.anthropic!.messages.create({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 4096,
-          temperature: 0.5, // Lower temperature for more consistent scheduling
-          system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: userPrompt }],
+      const res = await this.retryWithBackoff(() =>
+        fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.geminiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gemini-2.0-flash',
+            max_tokens: 4096,
+            temperature: 0.5,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: userPrompt },
+            ],
+          }),
         })
       );
 
-      const content = response.content[0];
-      if (content.type !== 'text') {
-        throw new Error('Unexpected response format from Claude');
-      }
-
-      const parsed = this.parseResponse(content.text);
-      return {
-        success: true,
-        sessions: parsed.sessions,
-        reasoning: parsed.reasoning,
-        warnings: parsed.warnings,
-        modelUsed: 'claude',
-      };
-    } catch (error) {
-      console.error('[AIScheduleV2] Claude generation failed:', error);
-      return {
-        success: false,
-        sessions: [],
-        reasoning: 'Claude generation failed',
-        warnings: [error instanceof Error ? error.message : 'Unknown error'],
-        modelUsed: 'claude',
-      };
-    }
-  }
-
-  private async generateWithOpenAI(
-    input: ScheduleGenerationInput,
-    planningData: PlanningData
-  ): Promise<ScheduleGenerationResult> {
-    if (!this.openai) {
-      return {
-        success: false,
-        sessions: [],
-        reasoning: 'OpenAI not configured',
-        modelUsed: 'openai',
-        warnings: [],
-      };
-    }
-
-    const userPrompt = this.buildUserPrompt(input, planningData);
-
-    try {
-      const response = await this.retryWithBackoff(() =>
-        this.openai!.chat.completions.create({
-          model: 'gpt-4o',
-          max_tokens: 4096,
-          temperature: 0.5,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: userPrompt },
-          ],
-          response_format: { type: 'json_object' },
-        })
-      );
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('Empty response from OpenAI');
-      }
+      if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error('Leere Antwort von Gemini');
 
       const parsed = this.parseResponse(content);
       return {
@@ -282,16 +203,16 @@ export class AIScheduleServiceV2 {
         sessions: parsed.sessions,
         reasoning: parsed.reasoning,
         warnings: parsed.warnings,
-        modelUsed: 'openai',
+        modelUsed: 'gemini',
       };
     } catch (error) {
-      console.error('[AIScheduleV2] OpenAI generation failed:', error);
+      log.error('Gemini generation failed', error instanceof Error ? error : undefined);
       return {
         success: false,
         sessions: [],
-        reasoning: 'OpenAI generation failed',
+        reasoning: 'Gemini generation failed',
         warnings: [error instanceof Error ? error.message : 'Unknown error'],
-        modelUsed: 'openai',
+        modelUsed: 'gemini',
       };
     }
   }

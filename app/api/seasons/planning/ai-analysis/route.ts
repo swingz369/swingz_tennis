@@ -28,50 +28,32 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
       }
 
-      // Try to use OpenRouter or direct AI API
-      const aiKey = env.OPENROUTER_API_KEY || env.OPENAI_API_KEY;
+      // Google Gemini Flash — kostenlos, OpenAI-kompatibler Endpoint
+      const aiKey = env.GOOGLE_GENERATIVE_AI_API_KEY;
       if (!aiKey) {
-        // Graceful fallback — return a placeholder analysis
         return NextResponse.json({
           analysis:
-            `Der Trainingsplan wurde automatisch generiert. ` +
-            `Eine KI-gestützte Detailanalyse steht aktuell nicht zur Verfügung (kein KI-API-Key konfiguriert). ` +
-            `Bitte prüfe die Gruppenzusammensetzung, Trainerzuweisungen und Zeitslots manuell auf Plausibilität.`,
+            'Der Trainingsplan wurde automatisch generiert. ' +
+            'KI-Analyse nicht verfügbar (GOOGLE_GENERATIVE_AI_API_KEY nicht konfiguriert).',
         });
       }
 
-      const isOpenRouter = !!env.OPENROUTER_API_KEY;
-      const apiUrl = isOpenRouter
-        ? 'https://openrouter.ai/api/v1/chat/completions'
-        : 'https://api.openai.com/v1/chat/completions';
-      const model = isOpenRouter
-        ? env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet'
-        : env.OPENAI_MODEL || 'gpt-4o-mini';
-
-      const response = await apiFetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${aiKey}`,
-          ...(isOpenRouter
-            ? {
-                'HTTP-Referer': env.NEXT_PUBLIC_APP_URL || 'https://swingz.cloud',
-                'X-Title': 'SwingZ Season Planning',
-              }
-            : {}),
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: 'system',
-              content: AI_PROMPTS.PLAN_ANALYSIS,
-            },
-            { role: 'user', content: prompt },
-          ],
-          max_tokens: 300,
-          temperature: 0.7,
-        }),
-      });
+      const response = await apiFetch(
+        'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${aiKey}` },
+          body: JSON.stringify({
+            model: 'gemini-2.0-flash',
+            messages: [
+              { role: 'system', content: AI_PROMPTS.PLAN_ANALYSIS },
+              { role: 'user', content: prompt },
+            ],
+            max_tokens: 300,
+            temperature: 0.7,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
