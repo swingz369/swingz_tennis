@@ -71,10 +71,10 @@ export default function DatenschutzPage() {
             <p>
               E-Mail:{' '}
               <a
-                href="mailto:datenschutz@mail.swingz.cloud"
+                href="mailto:datenschutz@swingz.cloud"
                 className="text-brand-primary hover:underline"
               >
-                datenschutz@mail.swingz.cloud
+                datenschutz@swingz.cloud
               </a>
             </p>
           </Section>
@@ -84,10 +84,10 @@ export default function DatenschutzPage() {
             <p>
               E-Mail:{' '}
               <a
-                href="mailto:datenschutz@mail.swingz.cloud"
+                href="mailto:datenschutz@swingz.cloud"
                 className="text-brand-primary hover:underline"
               >
-                datenschutz@mail.swingz.cloud
+                datenschutz@swingz.cloud
               </a>
             </p>
           </Section>
@@ -195,10 +195,10 @@ export default function DatenschutzPage() {
             <p>
               Zur Ausübung dieser Rechte kannst du dich jederzeit an{' '}
               <a
-                href="mailto:datenschutz@mail.swingz.cloud"
+                href="mailto:datenschutz@swingz.cloud"
                 className="text-brand-primary hover:underline"
               >
-                datenschutz@mail.swingz.cloud
+                datenschutz@swingz.cloud
               </a>{' '}
               wenden.
             </p>
@@ -234,10 +234,10 @@ export default function DatenschutzPage() {
             <p>
               Konto-Löschung:{' '}
               <a
-                href="mailto:datenschutz@mail.swingz.cloud"
+                href="mailto:datenschutz@swingz.cloud"
                 className="text-brand-primary hover:underline"
               >
-                datenschutz@mail.swingz.cloud
+                datenschutz@swingz.cloud
               </a>
             </p>
           </Section>

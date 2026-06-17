@@ -1,12 +1,18 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import { Resend } from 'resend';
 import { constructStripeEvent, stripe as getStripeClient } from '@/lib/stripe/stripe-client';
 import { billingEngine } from '@/lib/billing-engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('webhook:stripe');
+
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  return key ? new Resend(key) : null;
+}
 
 export async function POST(_request: NextRequest) {
   try {
@@ -151,6 +157,27 @@ async function handleInvoicePayment(session: Stripe.Checkout.Session, invoiceId:
   const isAsync = isAsyncPaymentMethod(session);
   await billingEngine.updatePaymentStatus(payment.id, isAsync ? 'pending' : 'completed');
   log.info('Payment processed', { async: isAsync, invoiceId });
+
+  if (!isAsync && invoice.member_id) {
+    const { data: memberData } = await supabase
+      .from('users')
+      .select('email, full_name')
+      .eq('id', invoice.member_id)
+      .maybeSingle();
+
+    if (memberData?.email) {
+      const resend = getResend();
+      const amount = session.amount_total ? (session.amount_total / 100).toFixed(2) : '?';
+      await resend?.emails
+        .send({
+          from: process.env.EMAIL_FROM ?? 'SwingZ <noreply@swingz.cloud>',
+          to: memberData.email,
+          subject: `Zahlung eingegangen – Rechnung #${invoiceId}`,
+          html: `<p>Hallo ${memberData.full_name ?? ''},</p><p>deine Zahlung von ${amount} € wurde erfolgreich verarbeitet. Danke!</p><p>Dein SwingZ-Team</p>`,
+        })
+        .catch(() => {}); // fire-and-forget
+    }
+  }
 }
 
 // --- Booking payment handling ---
@@ -202,6 +229,25 @@ async function handleBookingPayment(session: Stripe.Checkout.Session, bookingId:
       type: 'booking',
       action_url: '/bookings',
     });
+
+    // Fetch user email for confirmation mail
+    const { data: userData } = await supabase
+      .from('users')
+      .select('email, full_name')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (userData?.email) {
+      const resend = getResend();
+      await resend?.emails
+        .send({
+          from: process.env.EMAIL_FROM ?? 'SwingZ <noreply@swingz.cloud>',
+          to: userData.email,
+          subject: 'Buchungsbestätigung – SwingZ',
+          html: `<p>Hallo ${userData.full_name ?? ''},</p><p>deine Buchung wurde erfolgreich bezahlt und ist jetzt bestätigt.</p><p>Bis bald auf dem Platz!</p><p>Dein SwingZ-Team</p>`,
+        })
+        .catch(() => {}); // fire-and-forget
+    }
   } else if (userId && isAsyncBooking) {
     await supabase.from('notifications').insert({
       user_id: userId,
@@ -264,11 +310,18 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, orderId:
     const items = (order.items as any[]) || [];
     for (const item of items) {
       if (!item.product_id || !item.quantity) continue;
-      await (supabase as any)
-        .from('shop_products')
-        .update({ stock: (supabase as any).raw(`stock - ${item.quantity}`) })
+      const { data: product } = await supabase
+        .from('shop_products' as any)
+        .select('stock')
         .eq('id', item.product_id)
-        .gte('stock', item.quantity);
+        .single();
+      if (product && product.stock >= item.quantity) {
+        await supabase
+          .from('shop_products' as any)
+          .update({ stock: product.stock - item.quantity })
+          .eq('id', item.product_id)
+          .gte('stock', item.quantity);
+      }
     }
   }
 

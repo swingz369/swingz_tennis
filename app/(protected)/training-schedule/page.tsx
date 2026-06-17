@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// This page is now integrated as the "Training" tab in /bookings
+// Training is accessible via the courts/bookings page
 export default function MemberTrainingSchedulePage() {
-  redirect('/bookings?tab=training');
+  redirect('/bookings');
 }

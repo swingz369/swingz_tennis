@@ -79,7 +79,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         invoice,
         clubName: clubData?.name || 'SWINGZ Tennis Club',
         clubAddress: clubData?.address || '',
-        clubEmail: clubData?.email || 'info@mail.swingz.cloud',
+        clubEmail: clubData?.email || 'info@swingz.cloud',
         clubPhone: clubData?.phone || '',
         memberName: memberData?.full_name || 'Mitglied',
         memberAddress: '',
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
 
       const resend = new Resend(env.RESEND_API_KEY);
-      const fromEmail = env.EMAIL_FROM || 'SWINGZ <noreply@mail.swingz.cloud>';
+      const fromEmail = env.EMAIL_FROM || 'SWINGZ <noreply@swingz.cloud>';
       const clubName = clubData?.name || 'SWINGZ Tennis Club';
       const fileName = getInvoiceFileName(invoice.invoice_number);
 

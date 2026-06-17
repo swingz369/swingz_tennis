@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/nuliga-sync",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/reminders/booking-tomorrow",
+      "schedule": "0 18 * * *"
     }
   ]
 }

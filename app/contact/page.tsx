@@ -78,10 +78,10 @@ export default function ContactPage() {
                     <div>
                       <p className="font-medium text-foreground">E-Mail</p>
                       <a
-                        href="mailto:info@mail.swingz.cloud"
+                        href="mailto:info@swingz.cloud"
                         className="text-brand-primary hover:underline"
                       >
-                        info@mail.swingz.cloud
+                        info@swingz.cloud
                       </a>
                       <p className="text-sm text-muted-foreground mt-1">
                         Wir antworten persönlich innerhalb von 24h

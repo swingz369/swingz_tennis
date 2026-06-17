@@ -194,7 +194,17 @@ export default function SchedulerPage() {
   }
 
   if (error || !schedule) {
-    return <div className="text-red-500">Kein Stundenplan gefunden.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-center">
+        <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
+          <Clock className="h-7 w-7 text-muted-foreground" />
+        </div>
+        <p className="font-semibold text-brand-primary">Noch kein Stundenplan vorhanden</p>
+        <p className="text-sm text-muted-foreground max-w-xs">
+          Der Stundenplan wird nach der Saisonplanung vom Administrator veröffentlicht.
+        </p>
+      </div>
+    );
   }
 
   return (

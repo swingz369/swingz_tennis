@@ -72,6 +72,13 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     type: 'deactivate' | 'activate' | 'role';
     newRole?: Member['role'];
   }>(null);
+  const [cancelDialog, setCancelDialog] = useState(false);
+  const [cancelForm, setCancelForm] = useState({
+    cancellation_date: '',
+    reason: '',
+    send_confirmation: true,
+  });
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [editForm, setEditForm] = useState({
     phone: '',
     address: '',
@@ -218,6 +225,44 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler';
       toast.error(message);
+    }
+  };
+
+  const handleCancelMembership = async () => {
+    if (!cancelForm.cancellation_date) {
+      toast.error('Bitte Kündigungsdatum angeben');
+      return;
+    }
+    setCancelLoading(true);
+    try {
+      const res = await apiFetch(`/api/members/${member.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cancellation_date: cancelForm.cancellation_date,
+          reason: cancelForm.reason || undefined,
+          send_confirmation: cancelForm.send_confirmation,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error ?? 'Kündigung fehlgeschlagen');
+      }
+      const d = await res.json();
+      toast.success(
+        d.deactivated_immediately
+          ? 'Mitgliedschaft wurde gekündigt und sofort deaktiviert'
+          : `Kündigung zum ${new Date(cancelForm.cancellation_date).toLocaleDateString('de-DE')} vermerkt`
+      );
+      if (d.deactivated_immediately) {
+        setMember((prev) => ({ ...prev, is_active: false }));
+      }
+      setCancelDialog(false);
+      setCancelForm({ cancellation_date: '', reason: '', send_confirmation: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -740,10 +785,69 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   Aktivieren
                 </Button>
               )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setCancelDialog(true)}
+                className="flex-1 sm:flex-initial"
+              >
+                Mitgliedschaft kündigen
+              </Button>
             </div>
           )}
         </div>
       </div>
+
+      {/* ── Cancellation Dialog ──────────────────────────────────────── */}
+      <CenteredModal open={cancelDialog} onClose={() => setCancelDialog(false)}>
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold">Mitgliedschaft kündigen</h2>
+          <p className="text-sm text-muted-foreground">
+            Kündige die Mitgliedschaft von <strong>{member.full_name}</strong> formell. Das Mitglied
+            wird zum angegebenen Datum deaktiviert.
+          </p>
+        </div>
+        <div className="space-y-4 pt-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="cancel-date">Kündigungsdatum</Label>
+            <Input
+              id="cancel-date"
+              type="date"
+              value={cancelForm.cancellation_date}
+              onChange={(e) => setCancelForm({ ...cancelForm, cancellation_date: e.target.value })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cancel-reason">Grund (optional)</Label>
+            <Textarea
+              id="cancel-reason"
+              value={cancelForm.reason}
+              onChange={(e) => setCancelForm({ ...cancelForm, reason: e.target.value })}
+              placeholder="z.B. Umzug, persönliche Gründe..."
+              rows={3}
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={cancelForm.send_confirmation}
+              onChange={(e) =>
+                setCancelForm({ ...cancelForm, send_confirmation: e.target.checked })
+              }
+              className="rounded border-border"
+            />
+            Bestätigungs-E-Mail an Mitglied senden
+          </label>
+        </div>
+        <div className="flex gap-2 pt-4 justify-end">
+          <Button variant="outline" onClick={() => setCancelDialog(false)}>
+            Abbrechen
+          </Button>
+          <Button variant="destructive" onClick={handleCancelMembership} disabled={cancelLoading}>
+            {cancelLoading ? 'Wird verarbeitet...' : 'Kündigung bestätigen'}
+          </Button>
+        </div>
+      </CenteredModal>
 
       {/* ── Confirmation Dialog ──────────────────────────────────────── */}
       <CenteredModal open={!!confirmAction} onClose={() => setConfirmAction(null)}>

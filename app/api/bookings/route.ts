@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createBookingSafe } from '@/lib/booking/safe-booking';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:bookings');
@@ -131,6 +132,24 @@ export async function POST(req: NextRequest) {
         }
       })();
     }
+
+    // Gamification: 10 Punkte für erfolgreiche Buchung (fire-and-forget)
+    void (async () => {
+      try {
+        const svc = createServiceClient();
+        const { data: existing } = await (svc as any)
+          .from('gamification_points')
+          .select('points')
+          .eq('user_id', userId)
+          .maybeSingle();
+        const current = existing?.points ?? 0;
+        await (svc as any)
+          .from('gamification_points')
+          .upsert({ user_id: userId, points: current + 10 }, { onConflict: 'user_id' });
+      } catch {
+        // Gamification-Fehler blockieren niemals die Buchung
+      }
+    })();
 
     return NextResponse.json(
       {

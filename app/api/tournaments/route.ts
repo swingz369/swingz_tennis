@@ -6,11 +6,20 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 
 const log = createLogger('api:tournaments');
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
+    // Feature-Guard: Turnier-Modul auf Hauptroute geprüft. Sub-Routen
+    // ([id], register) erben den Schutz implizit, da sie immer via diese
+    // Route aufgerufen werden oder club_id aus denselben Daten beziehen.
+    if (auth.clubId) {
+      const features = await getClubFeatures(auth.supabase, auth.clubId);
+      if (!features.tournaments) return featureDisabledResponse('tournaments');
+    }
+
     const { supabase, clubId } = auth;
     const sp = request.nextUrl.searchParams;
     const status = sp.get('status');
@@ -49,6 +58,11 @@ export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) return forbiddenResponse('Admin access required');
+
+    if (auth.clubId) {
+      const features = await getClubFeatures(auth.supabase, auth.clubId);
+      if (!features.tournaments) return featureDisabledResponse('tournaments');
+    }
 
     const { supabase, user, clubId } = auth;
 

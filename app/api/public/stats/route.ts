@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/infrastructure/external/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:public:stats');
@@ -12,7 +12,7 @@ const log = createLogger('api:public:stats');
  */
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // Fetch platform-wide stats in parallel
     const [{ count: totalClubs }, { count: totalSessions }, { count: totalMembers }] =

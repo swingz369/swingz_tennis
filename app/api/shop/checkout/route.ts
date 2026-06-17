@@ -10,6 +10,7 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { getStripe } from '@/lib/stripe/client';
 import { createLogger } from '@/lib/logger';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 
 const log = createLogger('api:shop:checkout');
 
@@ -18,6 +19,14 @@ export async function POST(_request: NextRequest) {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) {
       return forbiddenResponse('Authentication required');
+    }
+
+    // Feature-Guard: Shop-Modul muss für den Verein aktiviert sein.
+    // Nur hier geprüft (Checkout ist der Einstiegspunkt). Lesende Routen
+    // (shop/route.ts, orders) laufen durch, da sie auch ohne Payment nützlich sind.
+    if (auth.clubId) {
+      const features = await getClubFeatures(auth.supabase, auth.clubId);
+      if (!features.shop) return featureDisabledResponse('shop');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

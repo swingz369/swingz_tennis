@@ -20,7 +20,9 @@ import {
   MapPin,
   Edit,
   Award,
+  Trash2,
 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
 import { toast } from 'sonner';
 import { useUserMember } from '@/hooks/use-user-data';
@@ -541,6 +543,72 @@ export default function MemberProfile() {
           </div>
         )}
       </div>
+
+      {/* ── Gefahrenzone ─────────────────────────────────────────────────── */}
+      <DeleteAccountSection />
+    </div>
+  );
+}
+
+function DeleteAccountSection() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/user/delete', { method: 'DELETE' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error ?? 'Löschung fehlgeschlagen');
+        setIsDeleting(false);
+        return;
+      }
+      router.push('/login');
+    } catch {
+      alert('Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="mt-8">
+      <div className="border border-destructive/30 dark:border-destructive/20 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 bg-destructive/5 dark:bg-destructive/10 border-b border-destructive/20">
+          <h3 className="text-sm font-semibold text-destructive">Gefahrenzone</h3>
+        </div>
+        <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Konto löschen</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Deine persönlichen Daten werden gemäß DSGVO anonymisiert. Buchungs- und
+              Abrechnungsdaten bleiben aus gesetzlichen Gründen erhalten.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="shrink-0 gap-2"
+            onClick={() => setOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+            Konto löschen
+          </Button>
+        </div>
+      </div>
+
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Konto wirklich löschen?"
+        description="Diese Aktion ist nicht rückgängig zu machen. Deine persönlichen Daten werden unwiderruflich anonymisiert und dein Konto wird deaktiviert."
+        confirmLabel="Ja, Konto löschen"
+        cancelLabel="Abbrechen"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

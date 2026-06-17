@@ -248,10 +248,7 @@ export function Sidebar({
               {
                 label: 'Liga & Mannschaft',
                 icon: Flag,
-                subItems: [
-                  { name: 'Ligen & Teams', href: '/admin/leagues' },
-                  { name: 'Spieltage', href: '/admin/leagues/matchdays' },
-                ],
+                subItems: [{ name: 'Ligen & Teams', href: '/admin/leagues' }],
               },
             ]
           : []),
@@ -280,6 +277,7 @@ export function Sidebar({
           icon: Settings,
           subItems: [
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
+            { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
             ...(!hiddenSections.has('shop')
               ? [{ name: 'Shop verwalten', href: '/admin/shop' }]
               : []),

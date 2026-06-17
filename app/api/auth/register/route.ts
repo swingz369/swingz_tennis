@@ -71,9 +71,8 @@ export async function POST(request: NextRequest) {
       email,
       password,
       options: {
-        data: {
-          full_name,
-        },
+        data: { full_name },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/login?verified=1`,
       },
     });
 
@@ -106,6 +105,15 @@ export async function POST(request: NextRequest) {
         name: club_name.trim(),
         city: club_city?.trim() || null,
         status: 'active',
+        opening_hours: {
+          mo: '07:00-22:00',
+          di: '07:00-22:00',
+          mi: '07:00-22:00',
+          do: '07:00-22:00',
+          fr: '07:00-22:00',
+          sa: '08:00-20:00',
+          so: '08:00-20:00',
+        },
       })
       .select('id')
       .single();

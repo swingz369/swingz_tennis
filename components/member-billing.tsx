@@ -578,11 +578,8 @@ export default function MemberBilling() {
             </p>
             <p className="mt-4 text-muted-foreground">
               Bei Fragen zu deinen Rechnungen kontaktiere bitte unsere Buchhaltung unter{' '}
-              <a
-                href="mailto:billing@mail.swingz.cloud"
-                className="text-brand-primary hover:underline"
-              >
-                billing@mail.swingz.cloud
+              <a href="mailto:billing@swingz.cloud" className="text-brand-primary hover:underline">
+                billing@swingz.cloud
               </a>
             </p>
           </div>

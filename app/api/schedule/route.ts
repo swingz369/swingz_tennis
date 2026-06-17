@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     try {
       const clubId = ClubId.fromString(clubIdParam);
       const schedule = await scheduleRepo.findByClubId(clubId);
-      if (!schedule) return NextResponse.json({ error: 'No schedule found' }, { status: 404 });
+      if (!schedule) return NextResponse.json(null, { status: 200 });
 
       const sessionsList = schedule.getSessions().map((s) => {
         const startDay = s.timeslot.getStart().getDay();

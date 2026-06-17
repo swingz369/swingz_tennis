@@ -279,18 +279,37 @@ export default function TrainerProfilePage() {
 
   // ── Error ────────────────────────────────────────────────────────────
   if (error || !profile) {
+    const isNotFound =
+      error?.includes('nicht gefunden') ||
+      error?.includes('not found') ||
+      error?.includes('Profil-ID');
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-          <XCircle className="h-8 w-8 text-red-400" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
+        <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
+          {isNotFound ? (
+            <User className="h-8 w-8 text-muted-foreground" />
+          ) : (
+            <XCircle className="h-8 w-8 text-red-400" />
+          )}
         </div>
-        <p className="text-sm text-muted-foreground">{error ?? 'Profil nicht gefunden'}</p>
-        <button
-          onClick={loadProfile}
-          className="text-sm font-medium text-brand-light hover:underline underline-offset-4"
-        >
-          Erneut versuchen
-        </button>
+        <div className="space-y-1">
+          <p className="font-medium text-sm">
+            {isNotFound ? 'Kein Trainer-Profil vorhanden' : 'Profil konnte nicht geladen werden'}
+          </p>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            {isNotFound
+              ? 'Dein Trainer-Profil wurde noch nicht angelegt. Bitte wende dich an den Administrator.'
+              : (error ?? 'Unbekannter Fehler')}
+          </p>
+        </div>
+        {!isNotFound && (
+          <button
+            onClick={loadProfile}
+            className="text-sm font-medium text-brand-light hover:underline underline-offset-4"
+          >
+            Erneut versuchen
+          </button>
+        )}
       </div>
     );
   }

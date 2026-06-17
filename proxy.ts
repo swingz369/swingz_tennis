@@ -1,4 +1,4 @@
-// proxy.ts (Root-Level) — Next.js 16 replacement for middleware.ts
+// middleware.ts — Next.js App Router auth + CSRF middleware
 
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -82,6 +82,9 @@ const PUBLIC_ROUTES = [
   '/api/auth/login',
   '/api/auth/logout',
   '/api/auth/register',
+  '/api/public', // Public platform stats and trial endpoints
+  '/api/health', // Health check — public for monitoring
+  '/api/csrf-token', // CSRF token fetch — must be public
   '/manifest.json', // PWA manifest — must be public for browser parsing
   '/sw.js', // Service Worker
 ];

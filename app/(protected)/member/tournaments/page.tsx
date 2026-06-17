@@ -48,6 +48,10 @@ export default function MemberTournamentsPage() {
     setError(null);
     try {
       const res = await apiFetch('/api/tournaments');
+      if (res.status === 403) {
+        setTournaments([]);
+        return;
+      }
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
 

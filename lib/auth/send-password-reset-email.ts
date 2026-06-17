@@ -123,7 +123,7 @@ export async function sendPasswordResetEmail(
     return false;
   }
 
-  const from = env.EMAIL_FROM || 'SwingZ <noreply@mail.swingz.cloud>';
+  const from = env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>';
 
   try {
     const { error } = await resend.emails.send({

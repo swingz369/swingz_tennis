@@ -35,6 +35,7 @@ export function useSchedule(clubId: string) {
       return res.json() as Promise<ScheduleData>;
     },
     staleTime: STALE_TIMES.MEDIUM,
+    enabled: !!clubId,
   });
 }
 

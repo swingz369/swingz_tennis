@@ -71,11 +71,8 @@ export default function ImpressumPage() {
           <Section icon={<Mail className="h-5 w-5" />} title="Kontakt">
             <p>
               E-Mail:{' '}
-              <a
-                href="mailto:info@mail.swingz.cloud"
-                className="text-brand-primary hover:underline"
-              >
-                info@mail.swingz.cloud
+              <a href="mailto:info@swingz.cloud" className="text-brand-primary hover:underline">
+                info@swingz.cloud
               </a>
             </p>
             <p>

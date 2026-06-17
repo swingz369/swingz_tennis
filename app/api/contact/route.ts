@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
         const resend = new Resend(env.RESEND_API_KEY);
 
         await resend.emails.send({
-          from: env.EMAIL_FROM || 'SwingZ <noreply@mail.swingz.cloud>',
-          to: 'info@mail.swingz.cloud',
+          from: env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>',
+          to: 'info@swingz.cloud',
           subject: `🎾 Neue Early Access Anfrage von ${firstName} ${lastName}`,
           html: `
             <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px">

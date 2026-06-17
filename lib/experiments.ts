@@ -1,3 +1,7 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
 /**
  * Simple A/B testing framework.
  *
@@ -115,11 +119,16 @@ export function getVariant(experimentKey: string, id?: string): string | null {
  * Returns the current variant for an experiment, re-evaluated when userId changes.
  */
 export function useExperiment(experimentKey: string, id?: string) {
-  const variant = getVariant(experimentKey, id);
+  const [variant, setVariant] = useState<string | null>(null);
+
+  useEffect(() => {
+    setVariant(getVariant(experimentKey, id));
+  }, [experimentKey, id]);
+
   return {
     variant,
     isControl: variant === experiments[experimentKey]?.variants[0],
-    isLoading: false,
+    isLoading: variant === null,
   };
 }
 

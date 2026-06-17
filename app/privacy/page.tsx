@@ -126,10 +126,10 @@ export default function PrivacyPage() {
               Betroffenenrechte:
             </p>
             <a
-              href="mailto:datenschutz@mail.swingz.cloud"
+              href="mailto:datenschutz@swingz.cloud"
               className="text-brand-primary hover:underline font-medium"
             >
-              datenschutz@mail.swingz.cloud
+              datenschutz@swingz.cloud
             </a>
           </div>
         </div>

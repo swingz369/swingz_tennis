@@ -2238,3 +2238,558 @@ export const workDutyAssignmentsRelations = relations(workDutyAssignments, ({ on
     references: [workDuties.id],
   }),
 }));
+
+// ─────────────────────────────────────────────────────────────
+// Tables added from live Supabase schema (W3 fix)
+// ─────────────────────────────────────────────────────────────
+
+export const backgroundJobs = pgTable('background_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  job_name: text('job_name').notNull(),
+  job_type: text('job_type').notNull(),
+  status: text('status').notNull(),
+  priority: integer('priority').notNull(),
+  payload: jsonb('payload'),
+  result: jsonb('result'),
+  error_message: text('error_message'),
+  retry_count: integer('retry_count'),
+  max_retries: integer('max_retries'),
+  schedule_expression: text('schedule_expression'),
+  scheduled_at: text('scheduled_at'),
+  started_at: text('started_at'),
+  completed_at: text('completed_at'),
+  created_by: text('created_by'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const bookingRules = pgTable('booking_rules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id').notNull(),
+  name: text('name').notNull(),
+  is_active: boolean('is_active'),
+  applies_to_role: text('applies_to_role'),
+  max_bookings_per_day: integer('max_bookings_per_day'),
+  max_bookings_per_week: integer('max_bookings_per_week'),
+  max_booking_duration_minutes: integer('max_booking_duration_minutes'),
+  min_booking_duration_minutes: integer('min_booking_duration_minutes'),
+  advance_booking_days: integer('advance_booking_days'),
+  cancellation_hours_before: integer('cancellation_hours_before'),
+  require_payment: boolean('require_payment').notNull(),
+  allow_recurring: boolean('allow_recurring'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const contactRequests = pgTable('contact_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  first_name: text('first_name').notNull(),
+  last_name: text('last_name').notNull(),
+  email: text('email').notNull(),
+  message: text('message').notNull(),
+  club_name: text('club_name'),
+  status: text('status').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const coupons = pgTable('coupons', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id'),
+  code: text('code').notNull(),
+  discount_type: text('discount_type').notNull(),
+  discount_value: integer('discount_value').notNull(),
+  min_amount: integer('min_amount'),
+  max_uses: integer('max_uses'),
+  used_count: integer('used_count'),
+  expires_at: text('expires_at'),
+  is_active: boolean('is_active'),
+  created_by: text('created_by'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const courtAvailability = pgTable('court_availability', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  court_id: uuid('court_id').notNull(),
+  day_of_week: integer('day_of_week').notNull(),
+  start_time: text('start_time').notNull(),
+  end_time: text('end_time').notNull(),
+  is_available: boolean('is_available'),
+  valid_from: text('valid_from'),
+  valid_until: text('valid_until'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const emailCampaigns = pgTable('email_campaigns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id').notNull(),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  target_group: text('target_group'),
+  status: text('status'),
+  recipient_count: integer('recipient_count'),
+  scheduled_at: text('scheduled_at'),
+  created_by: text('created_by'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const emailQueue = pgTable('email_queue', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  campaign_id: uuid('campaign_id'),
+  club_id: uuid('club_id'),
+  recipient_email: text('recipient_email').notNull(),
+  recipient_name: text('recipient_name'),
+  subject: text('subject').notNull(),
+  body: text('body').notNull(),
+  status: text('status'),
+  error_message: text('error_message'),
+  sent_at: timestamp('sent_at'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const familyAccounts = pgTable('family_accounts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  family_group_id: uuid('family_group_id').notNull(),
+  role: text('role'),
+  relationship: text('relationship'),
+  parent_pin_hash: text('parent_pin_hash'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const familyInvites = pgTable('family_invites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  family_group_id: uuid('family_group_id').notNull(),
+  code: text('code').notNull(),
+  is_used: boolean('is_used'),
+  used_by: text('used_by'),
+  expires_at: text('expires_at'),
+  created_by: text('created_by'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const gamificationBadges = pgTable('gamification_badges', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  icon: text('icon'),
+  earned_at: text('earned_at'),
+});
+
+export const gamificationPoints = pgTable('gamification_points', {
+  user_id: uuid('user_id').notNull(),
+  points: integer('points'),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const invoiceInstallments = pgTable('invoice_installments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  invoice_id: uuid('invoice_id').notNull(),
+  installment_number: integer('installment_number').notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  due_date: timestamp('due_date').notNull(),
+  status: text('status').notNull(),
+  paid_at: timestamp('paid_at'),
+  payment_id: uuid('payment_id'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const jobExecutionLog = pgTable('job_execution_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  job_id: uuid('job_id').notNull(),
+  execution_started_at: text('execution_started_at').notNull(),
+  execution_completed_at: text('execution_completed_at'),
+  execution_duration_ms: integer('execution_duration_ms'),
+  success: boolean('success').notNull(),
+  result: jsonb('result'),
+  error_message: text('error_message'),
+  stack_trace: text('stack_trace'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const memberBalances = pgTable('member_balances', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  member_id: uuid('member_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  balance: numeric('balance', { precision: 10, scale: 2 }).notNull(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const memberBalanceEntries = pgTable('member_balance_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  member_balance_id: uuid('member_balance_id').notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  reason: text('reason').notNull(),
+  reference_type: text('reference_type'),
+  reference_id: uuid('reference_id'),
+  created_by: text('created_by'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const messages = pgTable('messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sender_id: uuid('sender_id').notNull(),
+  receiver_id: uuid('receiver_id').notNull(),
+  club_id: uuid('club_id'),
+  subject: text('subject').notNull(),
+  content: text('content').notNull(),
+  is_read: boolean('is_read').notNull(),
+  read_at: text('read_at'),
+  replied_to_id: uuid('replied_to_id'),
+  broadcast_type: text('broadcast_type'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const newsComments = pgTable('news_comments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  post_id: uuid('post_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  content: text('content').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const newsPosts = pgTable('news_posts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id').notNull(),
+  author_id: uuid('author_id'),
+  title: text('title').notNull(),
+  content: text('content'),
+  excerpt: text('excerpt'),
+  is_published: boolean('is_published'),
+  is_pinned: boolean('is_pinned'),
+  published_at: text('published_at'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const notifications = pgTable('notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  club_id: uuid('club_id'),
+  title: text('title').notNull(),
+  message: text('message'),
+  type: text('type'),
+  read: boolean('read'),
+  action_url: text('action_url'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const nuligaSyncLog = pgTable('nuliga_sync_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id').notNull(),
+  league_id: uuid('league_id').notNull(),
+  nuliga_url: text('nuliga_url').notNull(),
+  nuliga_championship: text('nuliga_championship'),
+  nuliga_group_name: text('nuliga_group_name'),
+  status: text('status').notNull(),
+  trigger: text('trigger').notNull(),
+  started_at: text('started_at').notNull(),
+  completed_at: text('completed_at').notNull(),
+  duration_ms: integer('duration_ms'),
+  teams_created: integer('teams_created').notNull(),
+  teams_updated: integer('teams_updated').notNull(),
+  matches_created: integer('matches_created').notNull(),
+  matches_updated: integer('matches_updated').notNull(),
+  error_message: text('error_message'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const openMatches = pgTable('open_matches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id').notNull(),
+  creator_id: uuid('creator_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  match_date: date('match_date').notNull(),
+  start_time: text('start_time').notNull(),
+  end_time: text('end_time').notNull(),
+  court_id: uuid('court_id'),
+  match_type: text('match_type').notNull(),
+  skill_level: text('skill_level').notNull(),
+  max_players: integer('max_players').notNull(),
+  current_players: integer('current_players').notNull(),
+  status: text('status').notNull(),
+  is_public: boolean('is_public').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const openMatchParticipants = pgTable('open_match_participants', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  match_id: uuid('match_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  role: text('role').notNull(),
+  status: text('status').notNull(),
+  joined_at: text('joined_at').notNull(),
+});
+
+export const payments = pgTable('payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  invoice_id: uuid('invoice_id').notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency'),
+  payment_method: text('payment_method'),
+  status: text('status'),
+  external_id: text('external_id'),
+  paid_at: timestamp('paid_at'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  endpoint: text('endpoint').notNull(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  user_agent: text('user_agent'),
+  is_active: boolean('is_active').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const qrCheckins = pgTable('qr_checkins', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  session_id: uuid('session_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  booking_id: uuid('booking_id'),
+  checked_in_at: text('checked_in_at'),
+});
+
+export const registrationRequests = pgTable('registration_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id'),
+  first_name: text('first_name').notNull(),
+  last_name: text('last_name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  street: text('street'),
+  city: text('city'),
+  postal_code: text('postal_code'),
+  playing_level: text('playing_level'),
+  previous_club: text('previous_club'),
+  motivation: text('motivation'),
+  wants_trial_training: boolean('wants_trial_training'),
+  status: text('status'),
+  reviewed_by: text('reviewed_by'),
+  reviewed_at: text('reviewed_at'),
+  rejection_reason: text('rejection_reason'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const schoolHolidays = pgTable('school_holidays', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  bundesland: text('bundesland').notNull(),
+  start_date: date('start_date').notNull(),
+  end_date: date('end_date').notNull(),
+  year: integer('year').notNull(),
+});
+
+export const seasonBillingConfigs = pgTable('season_billing_configs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  season_id: uuid('season_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  cost_split_method: text('cost_split_method').notNull(),
+  trainer_hourly_rate: integer('trainer_hourly_rate').notNull(),
+  tax_rate: integer('tax_rate').notNull(),
+  payment_terms_days: integer('payment_terms_days').notNull(),
+  include_membership_fee: boolean('include_membership_fee').notNull(),
+  membership_fee_type: text('membership_fee_type'),
+  membership_fee_amount: integer('membership_fee_amount'),
+  invoice_notes: text('invoice_notes'),
+  additional_fees: jsonb('additional_fees'),
+  use_trainer_profile_rate: boolean('use_trainer_profile_rate').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const seasonGroupWeeks = pgTable('season_group_weeks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  season_id: uuid('season_id').notNull(),
+  group_id: uuid('group_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  week_number: integer('week_number').notNull(),
+  week_monday: text('week_monday').notNull(),
+  is_active: boolean('is_active').notNull(),
+  reason: text('reason'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const seasonPlanningConfigs = pgTable('season_planning_configs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  season_id: uuid('season_id'),
+  club_id: uuid('club_id').notNull(),
+  group_min_size: integer('group_min_size').notNull(),
+  group_max_size: integer('group_max_size').notNull(),
+  kids_group_min_size: integer('kids_group_min_size').notNull(),
+  kids_group_max_size: integer('kids_group_max_size').notNull(),
+  slot_duration_minutes: integer('slot_duration_minutes').notNull(),
+  ai_clustering_enabled: boolean('ai_clustering_enabled').notNull(),
+  prefer_historic_groups: boolean('prefer_historic_groups').notNull(),
+  backtrack_depth: integer('backtrack_depth').notNull(),
+  waitlist_priority_rule: text('waitlist_priority_rule').notNull(),
+  max_niveau_span_beginner_months: integer('max_niveau_span_beginner_months').notNull(),
+  max_niveau_span_advanced_months: integer('max_niveau_span_advanced_months').notNull(),
+  slot_failure_rate_threshold_pct: integer('slot_failure_rate_threshold_pct').notNull(),
+  avoid_high_failure_slots: boolean('avoid_high_failure_slots').notNull(),
+  treat_high_failure_as_hard: boolean('treat_high_failure_as_hard').notNull(),
+  trainer_utilization_max_pct: integer('trainer_utilization_max_pct').notNull(),
+  proven_group_attendance_threshold_pct: integer('proven_group_attendance_threshold_pct').notNull(),
+  unassigned_rate_threshold: integer('unassigned_rate_threshold').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const seasonStatistics = pgTable('season_statistics', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  season_id: uuid('season_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  total_members_planned: integer('total_members_planned').notNull(),
+  total_groups: integer('total_groups').notNull(),
+  preferences_submitted: integer('preferences_submitted').notNull(),
+  preferences_total: integer('preferences_total').notNull(),
+  total_waitlist_entries: integer('total_waitlist_entries').notNull(),
+  total_conflicts_detected: integer('total_conflicts_detected').notNull(),
+  conflicts_resolved: integer('conflicts_resolved').notNull(),
+  critical_conflicts: integer('critical_conflicts').notNull(),
+  niveau_span_violations: integer('niveau_span_violations').notNull(),
+  groups_below_min_size: integer('groups_below_min_size').notNull(),
+  trainer_burnout_warnings: integer('trainer_burnout_warnings').notNull(),
+  level_upgrades_recommended: integer('level_upgrades_recommended').notNull(),
+  level_upgrades_applied: integer('level_upgrades_applied').notNull(),
+  wish_partner_requests: integer('wish_partner_requests').notNull(),
+  wish_partner_fulfilled: integer('wish_partner_fulfilled').notNull(),
+  avg_group_size: integer('avg_group_size'),
+  avg_niveau_span_months: integer('avg_niveau_span_months'),
+  overall_attendance_quote: integer('overall_attendance_quote'),
+  preference_satisfaction_score: integer('preference_satisfaction_score'),
+  trainer_utilization_avg: integer('trainer_utilization_avg'),
+  waitlist_acceptance_rate: integer('waitlist_acceptance_rate'),
+  wish_partner_fulfillment_rate: integer('wish_partner_fulfillment_rate'),
+  avg_waitlist_duration_days: integer('avg_waitlist_duration_days'),
+  slot_failure_rates: jsonb('slot_failure_rates'),
+  attendance_by_group: jsonb('attendance_by_group'),
+  attendance_by_trainer: jsonb('attendance_by_trainer'),
+  computed_at: text('computed_at').notNull(),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const seasonWaitlists = pgTable('season_waitlists', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  season_id: uuid('season_id').notNull(),
+  group_id: uuid('group_id').notNull(),
+  member_id: uuid('member_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  position: integer('position').notNull(),
+  priority: integer('priority').notNull(),
+  priority_reason: text('priority_reason'),
+  status: text('status').notNull(),
+  registered_at: text('registered_at').notNull(),
+  notified_at: text('notified_at'),
+  accepted_at: text('accepted_at'),
+  alternative_group_id: uuid('alternative_group_id'),
+  alternative_assigned_at: text('alternative_assigned_at'),
+  notes: text('notes'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const shopProducts = pgTable('shop_products', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id'),
+  name: text('name').notNull(),
+  description: text('description'),
+  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
+  stock: integer('stock'),
+  category: text('category'),
+  image_url: text('image_url'),
+  is_active: boolean('is_active'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const shopOrders = pgTable('shop_orders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  items: jsonb('items'),
+  total_amount: integer('total_amount').notNull(),
+  status: text('status'),
+  payment_status: text('payment_status'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const trainerFeedback = pgTable('trainer_feedback', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  trainer_id: uuid('trainer_id').notNull(),
+  member_id: uuid('member_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  season_id: uuid('season_id'),
+  group_id: uuid('group_id'),
+  session_id: uuid('session_id'),
+  rating: integer('rating').notNull(),
+  teaching_quality: integer('teaching_quality'),
+  communication: integer('communication'),
+  punctuality: integer('punctuality'),
+  motivation: integer('motivation'),
+  performance_rating: integer('performance_rating'),
+  attendance_quote: integer('attendance_quote'),
+  comment: text('comment'),
+  notes: text('notes'),
+  strengths: jsonb('strengths'),
+  areas_for_improvement: jsonb('areas_for_improvement'),
+  ready_for_next_level: text('ready_for_next_level'),
+  recommended_level: text('recommended_level'),
+  is_submitted: boolean('is_submitted').notNull(),
+  is_visible: boolean('is_visible'),
+  is_flagged: boolean('is_flagged'),
+  flagged_reason: text('flagged_reason'),
+  submitted_at: text('submitted_at'),
+  moderated_at: text('moderated_at'),
+  moderated_by: text('moderated_by'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+  updated_at: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const trainerRatingSummary = pgTable('trainer_rating_summary', {
+  trainer_id: uuid('trainer_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  average_rating: integer('average_rating'),
+  total_ratings: integer('total_ratings'),
+  rating_1_count: integer('rating_1_count'),
+  rating_2_count: integer('rating_2_count'),
+  rating_3_count: integer('rating_3_count'),
+  rating_4_count: integer('rating_4_count'),
+  rating_5_count: integer('rating_5_count'),
+  avg_teaching_quality: integer('avg_teaching_quality'),
+  avg_communication: integer('avg_communication'),
+  avg_punctuality: integer('avg_punctuality'),
+  avg_motivation: integer('avg_motivation'),
+  last_updated: text('last_updated'),
+});
+
+export const trainingGroupMemberships = pgTable('training_group_memberships', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  training_group_id: uuid('training_group_id').notNull(),
+  member_id: uuid('member_id').notNull(),
+  club_id: uuid('club_id').notNull(),
+  joined_at: text('joined_at').notNull(),
+  left_at: text('left_at'),
+  left_reason: text('left_reason'),
+  created_by: text('created_by'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const waitlistEntries = pgTable('waitlist_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  club_id: uuid('club_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  court_id: uuid('court_id'),
+  start_time: text('start_time').notNull(),
+  end_time: text('end_time').notNull(),
+  priority: integer('priority'),
+  status: text('status'),
+  created_at: timestamp('created_at').notNull().defaultNow(),
+});
