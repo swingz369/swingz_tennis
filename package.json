@@ -13,7 +13,7 @@
     "dev:with-proxy": "npx tsx scripts/anthropic-openai-proxy.ts & next dev --turbopack",
     "build": "next build",
     "prebuild": "rm -rf .next",
-    "postbuild": "npx drizzle-kit migrate",
+    "db:migrate": "npx drizzle-kit migrate",
     "clean": "rm -rf .next .turbo coverage .drizzle node_modules/.vitest .vitest-cache test-results playwright-report .swc .eslintcache *.tsbuildinfo tsconfig.tsbuildinfo .mdx",
     "clean:all": "rm -rf .next .turbo coverage .drizzle node_modules/.vitest .vitest-cache node_modules/.cache .cache .tmp test-results playwright-report .swc .eslintcache *.tsbuildinfo tsconfig.tsbuildinfo .mdx **/.DS_Store **/Thumbs.db **/*~ **/.~lock.* **/npm-debug.log* **/yarn-error.log* **/*.dump **/*.heap **/*.core **/*.mjs.map",
     "predev": "rm -rf .next/cache",
