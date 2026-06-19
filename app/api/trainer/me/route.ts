@@ -34,9 +34,9 @@ export async function GET(_req: NextRequest) {
     const { data: trainerRecord, error: trainerError } = await supabase
       .from('trainers')
       .select('id, email, name')
-      .eq('email', auth.user.email!)
+      .ilike('email', auth.user.email!)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
     if (trainerError || !trainerRecord) {
       return NextResponse.json(

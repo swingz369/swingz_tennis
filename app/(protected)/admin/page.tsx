@@ -63,7 +63,11 @@ export default async function AdminPage() {
   monthStart.setHours(0, 0, 0, 0);
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59);
 
-  // All parallel fetches
+  // All parallel fetches — Promise.resolve wraps PromiseLike so .catch() is available
+  type SafeResult = { count: number | null; data: any; error: any };
+  const safe = (q: PromiseLike<SafeResult>): Promise<SafeResult> =>
+    Promise.resolve(q).catch(() => ({ count: null, data: null, error: null }));
+
   const [
     { count: memberCount },
     { count: trainerCount },
@@ -75,67 +79,79 @@ export default async function AdminPage() {
     { data: paidInvoices },
     { count: totalInvoiceCount },
   ] = await Promise.all([
-    supabase
-      .from('user_club_memberships')
-      .select('id', { count: 'exact', head: true })
-      .eq('club_id', clubId)
-      .eq('is_active', true)
-      .not('role', 'in', '(trainer,superadmin)'),
-    supabase
-      .from('user_club_memberships')
-      .select('id', { count: 'exact', head: true })
-      .eq('club_id', clubId)
-      .eq('role', 'trainer')
-      .eq('is_active', true),
-    (supabase as any)
-      .from('registration_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('club_id', clubId)
-      .eq('status', 'pending'),
-    // Today's session count (filtered via schedules → club_id)
-    supabase
-      .from('sessions')
-      .select('id, schedules!inner(club_id)', { count: 'exact', head: true })
-      .eq('schedules.club_id', clubId)
-      .gte('timeslot_start', todayStart.toISOString())
-      .lte('timeslot_start', todayEnd.toISOString()),
-    // Today's sessions with court + trainer info (filtered via schedules → club_id)
-    supabase
-      .from('sessions')
-      .select(
-        `id, timeslot_start, timeslot_end, courts(name), schedules!inner(club_id), trainers(name)`
-      )
-      .eq('schedules.club_id', clubId)
-      .gte('timeslot_start', todayStart.toISOString())
-      .lte('timeslot_start', todayEnd.toISOString())
-      .order('timeslot_start', { ascending: true })
-      .limit(6),
-    // Recent member joins (exclude trainers and superadmins)
-    supabase
-      .from('user_club_memberships')
-      .select('id, created_at, users(full_name, email)')
-      .eq('club_id', clubId)
-      .eq('is_active', true)
-      .not('role', 'in', '(trainer,superadmin)')
-      .order('created_at', { ascending: false })
-      .limit(5),
-    // Recent bookings (filtered by club_id)
-    supabase
-      .from('bookings')
-      .select('id, created_at, session_start_time, users!bookings_member_id_fkey(full_name)')
-      .eq('club_id', clubId)
-      .order('created_at', { ascending: false })
-      .limit(5),
-    // Monthly revenue from paid invoices (filtered by club_id)
-    supabase
-      .from('invoices')
-      .select('amount')
-      .eq('club_id', clubId)
-      .eq('status', 'paid')
-      .gte('created_at', monthStart.toISOString())
-      .lte('created_at', monthEnd.toISOString()),
-    // Total invoice count for billing alert
-    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId),
+    safe(
+      supabase
+        .from('user_club_memberships')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('is_active', true)
+        .not('role', 'in', '(trainer,superadmin)')
+    ),
+    safe(
+      supabase
+        .from('user_club_memberships')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('role', 'trainer')
+        .eq('is_active', true)
+    ),
+    safe(
+      (supabase as any)
+        .from('registration_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('status', 'pending')
+    ),
+    safe(
+      supabase
+        .from('sessions')
+        .select('id, schedules!inner(club_id)', { count: 'exact', head: true })
+        .eq('schedules.club_id', clubId)
+        .gte('timeslot_start', todayStart.toISOString())
+        .lte('timeslot_start', todayEnd.toISOString())
+    ),
+    safe(
+      supabase
+        .from('sessions')
+        .select(
+          'id, timeslot_start, timeslot_end, courts(name), schedules!inner(club_id), trainers(name)'
+        )
+        .eq('schedules.club_id', clubId)
+        .gte('timeslot_start', todayStart.toISOString())
+        .lte('timeslot_start', todayEnd.toISOString())
+        .order('timeslot_start', { ascending: true })
+        .limit(6)
+    ),
+    safe(
+      supabase
+        .from('user_club_memberships')
+        .select('id, created_at, users(full_name, email)')
+        .eq('club_id', clubId)
+        .eq('is_active', true)
+        .not('role', 'in', '(trainer,superadmin)')
+        .order('created_at', { ascending: false })
+        .limit(5)
+    ),
+    safe(
+      supabase
+        .from('bookings')
+        .select('id, created_at, session_start_time, users!bookings_member_id_fkey(full_name)')
+        .eq('club_id', clubId)
+        .order('created_at', { ascending: false })
+        .limit(5)
+    ),
+    safe(
+      supabase
+        .from('invoices')
+        .select('amount')
+        .eq('club_id', clubId)
+        .eq('status', 'paid')
+        .gte('created_at', monthStart.toISOString())
+        .lte('created_at', monthEnd.toISOString())
+    ),
+    safe(
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId)
+    ),
   ]);
 
   // Calculate monthly revenue

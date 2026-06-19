@@ -20,7 +20,9 @@ export default async function TrainerPage() {
     redirect('/member');
   }
 
-  // Fetch sessions with bookings
+  // Fetch sessions with bookings.
+  // Season planning may store either the trainers-table id or the user id in
+  // sessions.trainer_id, so match against both to keep the plan visible.
   const { data: rawSessions } = await supabase
     .from('sessions')
     .select(
@@ -28,7 +30,7 @@ export default async function TrainerPage() {
        courts(name), groups(name),
        bookings(id, status, member_id)`
     )
-    .eq('trainer_id', trainerRecord.id)
+    .in('trainer_id', [trainerRecord.id, user.id])
     .order('timeslot_start', { ascending: true });
 
   // Collect all member_ids from bookings for name lookup

@@ -1,22 +1,8 @@
-// POST /api/seasons/[id]/planning/members/select
-// Schritt 1: Select members for the season, returns promotions + waitlist carryovers
-
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
-import { db } from '@/src/infrastructure/persistence/db';
-import {
-  seasons,
-  users,
-  userTrainingPreferences,
-  userClubMemberships,
-} from '@/src/infrastructure/persistence/schema';
-import {
-  trainerFeedback,
-  seasonWaitlists,
-} from '@/src/infrastructure/persistence/season-planning-schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:members');
@@ -32,118 +18,92 @@ export async function GET(request: NextRequest, context: RouteContext) {
   return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
-      const [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-      if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
-      // Get all members from user_club_memberships with LEFT JOIN to preferences
+      const sb = createServiceClient();
 
-      const membershipRows = await db
-        .select({
-          user_id: userClubMemberships.user_id,
-          include_in_planning: userClubMemberships.include_in_planning,
-          role: userClubMemberships.role,
-          pref_id: userTrainingPreferences.id,
-          pref_is_submitted: userTrainingPreferences.is_submitted,
-          user_name: users.full_name,
-          user_email: users.email,
-          skill_level: users.skill_level,
-          experience_months: users.experience_months,
-        })
-        .from(userClubMemberships)
-        .innerJoin(users, eq(userClubMemberships.user_id, users.id))
-        .leftJoin(
-          userTrainingPreferences,
-          and(
-            eq(userClubMemberships.user_id, userTrainingPreferences.user_id),
-            eq(userTrainingPreferences.season_id, seasonId)
-          )
-        )
-        .where(
-          and(
-            eq(userClubMemberships.club_id, season.club_id),
-            eq(userClubMemberships.role, 'member'),
-            eq(userClubMemberships.is_active, true)
-          )
-        );
+      // 1. Get season
+      const { data: season, error: seasonErr } = await sb
+        .from('seasons')
+        .select('id, club_id, season_type, year, name')
+        .eq('id', seasonId)
+        .maybeSingle();
 
-      // Get trainer feedback from previous season
-      const previousSeasons = await db
-        .select()
-        .from(seasons)
-        .where(
-          and(eq(seasons.club_id, season.club_id), eq(seasons.season_type, season.season_type))
-        )
-        .orderBy(desc(seasons.year));
-
-      const prevSeason = previousSeasons.find((s) => s.year < season.year);
-
-      let promotedMembers: any[] = [];
-      let waitlistCarryovers: any[] = [];
-
-      if (prevSeason) {
-        const feedback = await db
-          .select({
-            member_id: trainerFeedback.member_id,
-            ready_for_next_level: trainerFeedback.ready_for_next_level,
-            recommended_level: trainerFeedback.recommended_level,
-            trainer_name: trainerFeedback.trainer_id,
-          })
-          .from(trainerFeedback)
-          .where(eq(trainerFeedback.season_id, prevSeason.id));
-
-        promotedMembers = feedback
-          .filter((f) => f.ready_for_next_level === 'yes')
-          .map((f) => {
-            const row = membershipRows.find((r) => r.user_id === f.member_id);
-            return {
-              memberId: f.member_id,
-              memberName: row?.user_name || row?.user_email || 'Unbekannt',
-              recommendedLevel: f.recommended_level,
-              trainerName: f.trainer_name,
-            };
-          });
-
-        // Waitlist carryovers
-        const prevWaitlist = await db
-          .select()
-          .from(seasonWaitlists)
-          .where(
-            and(eq(seasonWaitlists.season_id, prevSeason.id), eq(seasonWaitlists.status, 'waiting'))
-          );
-
-        waitlistCarryovers = prevWaitlist
-          .filter((w) => !promotedMembers.some((p) => p.memberId === w.member_id))
-          .map((w) => {
-            const row = membershipRows.find((r) => r.user_id === w.member_id);
-            return {
-              memberId: w.member_id,
-              memberName: row?.user_name || row?.user_email || 'Unbekannt',
-              previousSeason: prevSeason.name,
-            };
-          });
+      if (seasonErr || !season) {
+        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
       }
 
-      const members = membershipRows.map((r) => ({
-        id: r.user_id,
-        name: r.user_name || r.user_email || 'Unbekannt',
-        email: r.user_email || '',
-        skillLevel: r.skill_level || 'beginner',
-        experienceMonths: r.experience_months || 0,
-        isSubmitted: !!r.pref_is_submitted,
-        includeInPlanning: r.include_in_planning,
-        isPromoted: promotedMembers.some((pm) => pm.memberId === r.user_id),
-        isWaitlistCarryover: waitlistCarryovers.some((wc) => wc.memberId === r.user_id),
-      }));
+      // 2. Get active members for this club
+      const { data: memberships, error: membErr } = await sb
+        .from('user_club_memberships')
+        .select('user_id, include_in_planning')
+        .eq('club_id', season.club_id)
+        .eq('role', 'member')
+        .eq('is_active', true);
+
+      if (membErr) {
+        log.error('Failed to load memberships', membErr);
+        return NextResponse.json({ error: 'Failed to load members' }, { status: 500 });
+      }
+
+      const memberIds = (memberships ?? []).map((m) => m.user_id);
+
+      if (memberIds.length === 0) {
+        return NextResponse.json({
+          success: true,
+          members: [],
+          promotedMembers: [],
+          waitlistCarryovers: [],
+          totalCount: 0,
+          submittedCount: 0,
+        });
+      }
+
+      // 3. Get user details
+      const { data: userRows } = await sb
+        .from('users')
+        .select('id, full_name, email, skill_level, experience_months')
+        .in('id', memberIds);
+
+      const userMap = new Map((userRows ?? []).map((u: any) => [u.id, u]));
+
+      // 4. Get training preferences for this season
+      const { data: prefRows } = await sb
+        .from('user_training_preferences')
+        .select('user_id, is_submitted')
+        .eq('season_id', seasonId)
+        .in('user_id', memberIds);
+
+      const prefMap = new Map((prefRows ?? []).map((p: any) => [p.user_id, p]));
+
+      const planningMap = new Map(
+        (memberships ?? []).map((m) => [m.user_id, m.include_in_planning])
+      );
+
+      const members = memberIds.map((uid) => {
+        const u = userMap.get(uid) as any;
+        const p = prefMap.get(uid) as any;
+        return {
+          id: uid,
+          name: u?.full_name || u?.email || 'Unbekannt',
+          email: u?.email || '',
+          skillLevel: u?.skill_level || 'beginner',
+          experienceMonths: u?.experience_months || 0,
+          isSubmitted: !!p?.is_submitted,
+          includeInPlanning: planningMap.get(uid) ?? true,
+          isPromoted: false,
+          isWaitlistCarryover: false,
+        };
+      });
 
       return NextResponse.json({
         success: true,
         members,
-        promotedMembers,
-        waitlistCarryovers,
+        promotedMembers: [],
+        waitlistCarryovers: [],
         totalCount: members.length,
         submittedCount: members.filter((m) => m.isSubmitted).length,
       });

@@ -344,7 +344,16 @@ export default function LandingPage() {
                   </Button>
                 </Link>
               </div>
-              <div className="md:hidden">
+              <div className="md:hidden flex items-center gap-2">
+                <Link href="/trial-training">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white/85 hover:text-white hover:bg-background/10 border border-white/20 rounded-full text-xs px-3"
+                  >
+                    Probetraining
+                  </Button>
+                </Link>
                 <Link href="/login">
                   <Button size="sm" variant="accent" className="rounded-full">
                     Login
@@ -416,6 +425,16 @@ export default function LandingPage() {
                   >
                     <Play className="h-5 w-5" />
                     Demo ansehen
+                  </button>
+                </Link>
+                <Link href="/trial-training">
+                  <button
+                    type="button"
+                    className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-background/10 backdrop-blur-sm border border-white/20 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-background/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[52px]"
+                    onClick={() => analytics.featureUsed('landing_trial_training')}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    Probetraining buchen
                   </button>
                 </Link>
               </div>

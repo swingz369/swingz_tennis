@@ -355,7 +355,7 @@ export function ConfigStep() {
                   className="text-sm cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                  KI-Optimierung (OpenAI)
+                  KI-Optimierung (Gemini)
                 </label>
               </div>
               <div className="flex items-center space-x-2">
