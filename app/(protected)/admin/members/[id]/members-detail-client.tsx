@@ -43,6 +43,7 @@ import {
   Target,
   ChevronRight,
   Euro,
+  UserX,
 } from 'lucide-react';
 import { PreferencesTab } from './preferences-tab';
 import { InvoicesTab } from './invoices-tab';
@@ -63,10 +64,25 @@ interface BookingData {
   status: string;
 }
 
+interface AbsenceData {
+  id: string;
+  session_start_time: string | null;
+  booked_at: string | null;
+}
+
+interface AbsenceSummary {
+  noShowCount: number;
+  noShows: AbsenceData[];
+  lookbackDays: number;
+}
+
 export function MembersDetailClient({ initialMember, clubId }: Props) {
   const [member, setMember] = useState<Member>(initialMember);
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [absences, setAbsences] = useState<AbsenceSummary | null>(null);
+  const [absencesLoading, setAbsencesLoading] = useState(false);
+  const [notifyingTrainer, setNotifyingTrainer] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<null | {
     type: 'deactivate' | 'activate' | 'role';
@@ -111,12 +127,52 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
         const data = await res.json();
         setBookings(Array.isArray(data) ? data : []);
       }
-    } catch (err) {
-      console.error('Failed to fetch bookings:', err);
+    } catch {
+      // stille Fehlerbehandlung
     } finally {
       setLoading(false);
     }
   }, [member.id, clubId]);
+
+  const fetchAbsences = useCallback(async () => {
+    setAbsencesLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/members/${member.user_id}/absences?clubId=${clubId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAbsences(data);
+      }
+    } catch {
+      // stille Fehlerbehandlung
+    } finally {
+      setAbsencesLoading(false);
+    }
+  }, [member.user_id, clubId]);
+
+  const handleNotifyTrainer = async () => {
+    setNotifyingTrainer(true);
+    try {
+      const res = await apiFetch(`/api/admin/members/${member.user_id}/absences`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clubId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? 'Benachrichtigung fehlgeschlagen');
+      }
+      const data = await res.json();
+      toast.success(
+        data.notifiedTrainers?.length > 0
+          ? `${data.notifiedTrainers.length} Trainer benachrichtigt`
+          : 'Keine Trainer gefunden'
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler');
+    } finally {
+      setNotifyingTrainer(false);
+    }
+  };
 
   useEffect(() => {
     fetchBookings();
@@ -408,6 +464,13 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               >
                 Buchungen
               </TabsTrigger>
+              <TabsTrigger
+                value="fehlzeiten"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                onClick={fetchAbsences}
+              >
+                Fehlzeiten
+              </TabsTrigger>
             </TabsList>
 
             {/* ── Profile Tab ──────────────────────────────────────────── */}
@@ -653,6 +716,83 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                     Alle Rechnungen dieses Mitglieds
                   </p>
                   <InvoicesTab userId={member.user_id} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Fehlzeiten Tab ───────────────────────────────────────── */}
+            <TabsContent value="fehlzeiten" className="space-y-5 animate-in">
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold flex items-center gap-2 text-base">
+                      <UserX className="h-4 w-4 text-destructive" />
+                      Unentschuldigte Fehlzeiten (letzte 60 Tage)
+                    </h3>
+                    {absences && absences.noShowCount >= 3 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNotifyTrainer}
+                        disabled={notifyingTrainer}
+                        className="gap-1.5 text-xs border-destructive/30 text-destructive hover:bg-destructive/5"
+                      >
+                        {notifyingTrainer ? 'Sende…' : 'Trainer benachrichtigen'}
+                      </Button>
+                    )}
+                  </div>
+
+                  {absencesLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  ) : absences === null ? (
+                    <p className="text-sm text-muted-foreground">
+                      Klicke den Tab an um Fehlzeiten zu laden.
+                    </p>
+                  ) : absences.noShowCount === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                      Keine unentschuldigten Fehlzeiten in den letzten {absences.lookbackDays}{' '}
+                      Tagen.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-3 flex items-center gap-2">
+                        <Badge variant={absences.noShowCount >= 3 ? 'error' : 'warning'} size="lg">
+                          {absences.noShowCount}× nicht erschienen
+                        </Badge>
+                        {absences.noShowCount >= 3 && (
+                          <span className="text-xs text-destructive font-medium">
+                            Schwellenwert überschritten
+                          </span>
+                        )}
+                      </div>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Trainingsdatum</TableHead>
+                            <TableHead>Gebucht am</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {absences.noShows.map((a) => (
+                            <TableRow key={a.id}>
+                              <TableCell>
+                                {a.session_start_time
+                                  ? new Date(a.session_start_time).toLocaleString('de-DE')
+                                  : '—'}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {a.booked_at ? formatDate(a.booked_at) : '—'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
