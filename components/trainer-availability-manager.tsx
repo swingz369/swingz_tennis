@@ -126,6 +126,7 @@ export default function TrainerAvailabilityManager() {
   const [saving, setSaving] = useState(false);
   const [applyingToMonth, setApplyingToMonth] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [maxHoursPerWeek, setMaxHoursPerWeek] = useState<number | null>(null);
 
   // ── Week / month state ──────────────────────────────────────────────────
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => getMonday(new Date()));
@@ -160,6 +161,16 @@ export default function TrainerAvailabilityManager() {
     const now = getMonday(new Date());
     return toDateStr(currentWeekStart) === toDateStr(now);
   }, [currentWeekStart]);
+
+  const weeklyHours = useMemo(
+    () =>
+      slots.reduce((sum, s) => {
+        const [fh, fm] = s.fromTime.split(':').map(Number);
+        const [th, tm] = s.untilTime.split(':').map(Number);
+        return sum + (th * 60 + tm - (fh * 60 + fm)) / 60;
+      }, 0),
+    [slots]
+  );
 
   // ── Navigation ───────────────────────────────────────────────────────────
   const goToPreviousWeek = useCallback(
@@ -228,6 +239,7 @@ export default function TrainerAvailabilityManager() {
           isAvailable: s.status === 'available',
         }));
         setSlots(converted);
+        setMaxHoursPerWeek((data as { maxHoursPerWeek?: number | null }).maxHoursPerWeek ?? null);
       } catch (err: unknown) {
         setMessage(getErrorMessage(err));
       } finally {
@@ -550,6 +562,29 @@ export default function TrainerAvailabilityManager() {
           </Button>
         </div>
       </div>
+
+      {/* ── Stunden-Kontext ────────────────────────────────────────────── */}
+      {maxHoursPerWeek !== null && (
+        <div
+          className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-sm ${
+            weeklyHours > maxHoursPerWeek
+              ? 'border-red-200 bg-red-50 text-red-700'
+              : 'border-border bg-muted/30 text-foreground'
+          }`}
+        >
+          <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span>
+            <span className="font-semibold">{weeklyHours.toFixed(1)} Std</span>
+            <span className="text-muted-foreground"> eingetragen diese Woche · Vertrag: </span>
+            <span className="font-semibold">{maxHoursPerWeek} Std/Woche</span>
+          </span>
+          {weeklyHours > maxHoursPerWeek && (
+            <span className="ml-auto font-medium">
+              +{(weeklyHours - maxHoursPerWeek).toFixed(1)} Std über Limit
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ── Month / Week navigation ─────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-muted/30 rounded-lg p-3">

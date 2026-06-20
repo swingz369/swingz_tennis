@@ -35,9 +35,19 @@ export async function GET(request: NextRequest) {
     if (error) {
       // RLS blocks non-trainer/non-superadmin users — return empty instead of 500
       log.warn('trainer availability GET (likely RLS):', error.message);
-      return NextResponse.json({ slots: [] });
+      return NextResponse.json({ slots: [], maxHoursPerWeek: null });
     }
-    return NextResponse.json({ slots: data ?? [] });
+
+    const { data: trainerRecord } = await supabase
+      .from('trainers')
+      .select('max_hours_per_week')
+      .ilike('email', auth.user.email!)
+      .maybeSingle();
+
+    return NextResponse.json({
+      slots: data ?? [],
+      maxHoursPerWeek: trainerRecord?.max_hours_per_week ?? null,
+    });
   });
 }
 

@@ -58,6 +58,7 @@ import { CenteredModal } from '@/components/ui/centered-modal';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
+import { createClient } from '@/lib/supabase/client';
 import { useCourts } from '@/hooks/use-courts';
 import {
   useSessions,
@@ -544,6 +545,22 @@ export default function UnifiedCourtCalendar({
   const clubId = clubData?.clubId ?? initialClubId ?? null;
   const memberId = memberData?.memberId ?? null;
   const isAdmin = userRoles.some((r) => r === 'admin' || r === 'superadmin');
+  const isTrainer = userRoles.some((r) => r === 'trainer');
+
+  // Trainer record ID (trainers.id, not auth user ID) — used to filter own sessions
+  const [trainerRecordId, setTrainerRecordId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isTrainer) return;
+    const sb = createClient();
+    sb.auth.getUser().then(({ data }) => {
+      if (!data.user?.email) return;
+      sb.from('trainers')
+        .select('id')
+        .ilike('email', data.user.email)
+        .maybeSingle()
+        .then(({ data: rec }) => setTrainerRecordId(rec?.id ?? null));
+    });
+  }, [isTrainer]);
 
   // ── Data fetching ──
   const { data: courts = [], isLoading: courtsLoading } = useCourts(clubId);
@@ -554,9 +571,11 @@ export default function UnifiedCourtCalendar({
   // ── Member group filtering (role-based view) ──
   const { data: memberGroupIds = [] } = useMemberGroupIds(clubId);
 
-  /** Sessions visible to the current user. Admin sees all; member sees group sessions + own bookings. */
+  /** Sessions visible to the current user. Admin sees all; trainer sees own sessions; member sees group sessions + own bookings. */
   const visibleSessions = useMemo(() => {
     if (isAdmin) return sessions;
+    if (isTrainer && trainerRecordId)
+      return sessions.filter((s: Session) => s.trainerId === trainerRecordId);
     if (memberGroupIds.length === 0) {
       // No group memberships → only show own bookings + open sessions (no groupIds)
       return sessions.filter(
@@ -572,15 +591,17 @@ export default function UnifiedCourtCalendar({
       // Show sessions that overlap with the member's groups
       return s.groupIds.some((gid: string) => groupSet.has(gid));
     });
-  }, [sessions, isAdmin, memberGroupIds]);
+  }, [sessions, isAdmin, isTrainer, trainerRecordId, memberGroupIds]);
 
-  /** Plan entries visible to the current user. Admin sees all; member sees only their groups. */
+  /** Plan entries visible to the current user. Admin sees all; trainer sees their entries; member sees only their groups. */
   const visiblePlanSlots = useMemo(() => {
     if (isAdmin) return planSlots;
+    if (isTrainer && trainerRecordId)
+      return planSlots.filter((e: PlanEntry) => e.trainer_id === trainerRecordId);
     if (memberGroupIds.length === 0) return []; // No groups → no plan entries visible
     const groupSet = new Set(memberGroupIds);
     return planSlots.filter((e: PlanEntry) => e.group_id && groupSet.has(e.group_id));
-  }, [planSlots, isAdmin, memberGroupIds]);
+  }, [planSlots, isAdmin, isTrainer, trainerRecordId, memberGroupIds]);
 
   // ── Court selection: derive effective court ID ──
   // If courts loaded but selected court no longer exists, fall back to card view
@@ -979,15 +1000,14 @@ export default function UnifiedCourtCalendar({
      Shown when no court is selected. Click a court to see its schedule.
      ═══════════════════════════════════════════════════ */
 
-  if (!effectiveCourtId) {
+  // Admin and trainers go straight to the weekly overview — no court pre-selection required
+  if (!effectiveCourtId && !isAdmin && !isTrainer) {
     return (
       <div className="p-4 md:p-6 space-y-5">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Platz-Kalender</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {isAdmin
-              ? 'Wähle einen Platz, um den Stundenplan zu verwalten'
-              : 'Wähle einen Platz, um die Verfügbarkeit zu sehen und zu buchen'}
+            Wähle einen Platz, um die Verfügbarkeit zu sehen und zu buchen
           </p>
         </div>
 
