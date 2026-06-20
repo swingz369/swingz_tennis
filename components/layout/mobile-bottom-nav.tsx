@@ -16,6 +16,7 @@ import {
   CreditCard,
   Clock,
   MessageSquare,
+  ClipboardList,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
@@ -61,8 +62,8 @@ export function MobileBottomNav({
     navItems = [
       { name: 'Übersicht', href: '/trainer', icon: Home },
       { name: 'Einheiten', href: '/scheduler', icon: Calendar },
-      { name: 'Anwesenheit', href: '/attendance-history', icon: Clock },
-      { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Calendar },
+      { name: 'Verfügbarkeit', href: '/trainer/availability', icon: Clock },
+      { name: 'Saisonplanung', href: '/trainer/planning-preferences', icon: ClipboardList },
     ];
   } else {
     // Member: 4 tabs (Profil accessible via user menu in header)

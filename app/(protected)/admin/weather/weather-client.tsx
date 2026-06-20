@@ -104,6 +104,7 @@ export default function WeatherClient() {
     description: '',
     start_date: '',
     end_date: '',
+    notify_members: false,
   });
 
   const fetchData = useCallback(async () => {
@@ -155,6 +156,7 @@ export default function WeatherClient() {
         description: '',
         start_date: '',
         end_date: '',
+        notify_members: false,
       });
       fetchData();
     } catch {
@@ -258,7 +260,11 @@ export default function WeatherClient() {
                         ? '🌧️ Wetter'
                         : c.reason === 'maintenance'
                           ? '🔧 Wartung'
-                          : '📋 ' + c.reason}
+                          : c.reason === 'tournament'
+                            ? '🏆 Vereinsturnier'
+                            : c.reason === 'event'
+                              ? '📅 Veranstaltung'
+                              : '📋 ' + c.reason}
                       {c.weather_condition && ` · ${c.weather_condition}`}
                       {c.description && ` · ${c.description}`}
                     </div>
@@ -310,6 +316,7 @@ export default function WeatherClient() {
                     <option value="weather">Wetter</option>
                     <option value="maintenance">Wartung</option>
                     <option value="event">Veranstaltung</option>
+                    <option value="tournament">Vereinsturnier</option>
                     <option value="other">Sonstiges</option>
                   </select>
                 </div>
@@ -345,6 +352,25 @@ export default function WeatherClient() {
                 value={newClosure.description}
                 onChange={(e) => setNewClosure({ ...newClosure, description: e.target.value })}
               />
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={newClosure.notify_members || newClosure.reason === 'tournament'}
+                  disabled={newClosure.reason === 'tournament'}
+                  onChange={(e) =>
+                    setNewClosure({ ...newClosure, notify_members: e.target.checked })
+                  }
+                  className="rounded"
+                />
+                <span>
+                  Alle Mitglieder benachrichtigen
+                  {newClosure.reason === 'tournament' && (
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      (bei Vereinsturnier automatisch)
+                    </span>
+                  )}
+                </span>
+              </label>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" size="sm" onClick={() => setShowNewClosure(false)}>
                   Abbrechen

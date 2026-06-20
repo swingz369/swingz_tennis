@@ -204,7 +204,10 @@ export function Sidebar({
         {
           label: 'Mitglieder',
           icon: Users,
-          subItems: [{ name: 'Alle Mitglieder', href: '/admin/members' }],
+          subItems: [
+            { name: 'Alle Mitglieder', href: '/admin/members' },
+            { name: 'Familienkonten', href: '/admin/members/family' },
+          ],
           extraAction: onInvite
             ? {
                 label: 'Einladen',
