@@ -2782,6 +2782,35 @@ export const trainingGroupMemberships = pgTable('training_group_memberships', {
   created_at: timestamp('created_at').notNull().defaultNow(),
 });
 
+// ==============================================================================
+// Trainer-Notizen pro Mitglied (#9)
+// ==============================================================================
+
+/**
+ * Trainer notes per member — only visible to trainers and admins.
+ * One note per (trainer, member) pair (upsert pattern).
+ */
+export const trainerMemberNotes = pgTable(
+  'trainer_member_notes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    trainer_id: uuid('trainer_id')
+      .notNull()
+      .references(() => trainers.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id').notNull(),
+    club_id: uuid('club_id')
+      .notNull()
+      .references(() => clubs.id, { onDelete: 'cascade' }),
+    note: text('note').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    trainer_member_unique: { unique: true, columns: [table.trainer_id, table.member_id] },
+    member_club_idx: index('idx_trainer_notes_member').on(table.member_id, table.club_id),
+  })
+);
+
 export const waitlistEntries = pgTable('waitlist_entries', {
   id: uuid('id').primaryKey().defaultRandom(),
   club_id: uuid('club_id').notNull(),
