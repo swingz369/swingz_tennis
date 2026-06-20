@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import type { Club } from '@/lib/clubs';
 import { parseClubsResponse } from '@/lib/clubs';
 import { apiFetch } from '@/lib/api-fetch';
+import { toast } from 'sonner';
 
 export default function ClubsAdminPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -31,6 +32,23 @@ export default function ClubsAdminPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const [seedingDemo, setSeedingDemo] = useState(false);
+
+  const handleSeedDemo = async () => {
+    setSeedingDemo(true);
+    const res = await apiFetch('/api/clubs/seed-demo', { method: 'POST' });
+    const d = await res.json();
+    if (d.created) {
+      toast.success('TC Demo angelegt! Verein wird in der Liste angezeigt.');
+      fetchClubs();
+    } else if (!d.created && d.clubId) {
+      toast.info('TC Demo existiert bereits.');
+    } else {
+      toast.error(d.error ?? 'Fehler beim Seed');
+    }
+    setSeedingDemo(false);
   };
 
   const handleCreateClub = async (e: React.FormEvent) => {
@@ -63,7 +81,12 @@ export default function ClubsAdminPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Vereine verwalten</h1>
-        <Button onClick={() => setShowDialog(true)}>Neuer Verein</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleSeedDemo} disabled={seedingDemo}>
+            {seedingDemo ? 'Wird erstellt…' : '🎯 TC Demo anlegen'}
+          </Button>
+          <Button onClick={() => setShowDialog(true)}>Neuer Verein</Button>
+        </div>
       </div>
 
       {showDialog && (
