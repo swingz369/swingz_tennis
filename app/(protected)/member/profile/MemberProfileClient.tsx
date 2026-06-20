@@ -18,6 +18,9 @@ import {
   Save,
   Edit,
   AlertCircle,
+  Users,
+  Copy,
+  Plus,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -40,11 +43,65 @@ interface Member {
   emergency_phone: string | null;
 }
 
+interface FamilyMember {
+  userId: string;
+  fullName: string;
+  email: string;
+  role: string;
+  relationship: string;
+  isSelf: boolean;
+}
+
 interface Props {
   member: Member;
 }
 
 export function MemberProfileClient({ member }: Props) {
+  const [family, setFamily] = useState<{ familyGroupId?: string; members: FamilyMember[] } | null>(
+    null
+  );
+  const [inviteCode, setInviteCode] = useState('');
+  const [familyLoading, setFamilyLoading] = useState(false);
+
+  useEffect(() => {
+    apiFetch('/api/family-accounts')
+      .then((r) => r.json())
+      .then((d) => setFamily(d))
+      .catch(() => {});
+  }, []);
+
+  const createFamily = async () => {
+    setFamilyLoading(true);
+    const res = await apiFetch('/api/family-accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const d = await res.json();
+    if (d.inviteCode) {
+      toast.success('Familie erstellt! Code: ' + d.inviteCode);
+      setFamily({ familyGroupId: d.familyGroupId, members: [] });
+    } else toast.error(d.error ?? 'Fehler');
+    setFamilyLoading(false);
+  };
+
+  const joinFamily = async () => {
+    if (!inviteCode.trim()) return;
+    setFamilyLoading(true);
+    const res = await apiFetch('/api/family-accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteCode }),
+    });
+    const d = await res.json();
+    if (d.success) {
+      toast.success('Familie beigetreten!');
+      const r = await apiFetch('/api/family-accounts');
+      setFamily(await r.json());
+    } else toast.error(d.error ?? 'Fehler');
+    setFamilyLoading(false);
+  };
+
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     phone: member.phone || '',
@@ -323,6 +380,87 @@ export function MemberProfileClient({ member }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Familienkonto ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Users className="h-4 w-4 text-brand-light" />
+            Familienkonto
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!family?.familyGroupId ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Verknüpfe dein Konto mit Familienmitgliedern (z.B. Kinder).
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button variant="brand" size="sm" onClick={createFamily} disabled={familyLoading}>
+                  <Plus className="h-4 w-4 mr-1" /> Familie erstellen
+                </Button>
+                <div className="flex gap-2 flex-1">
+                  <input
+                    className="flex-1 rounded-md border border-border px-3 py-1.5 text-sm bg-background"
+                    placeholder="Einladungscode eingeben"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={joinFamily}
+                    disabled={familyLoading || !inviteCode.trim()}
+                  >
+                    Beitreten
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Einladungscode:</span>
+                <code className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
+                  {family.familyGroupId?.slice(0, 8).toUpperCase()}
+                </code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      family.familyGroupId?.slice(0, 8).toUpperCase() ?? ''
+                    );
+                    toast.success('Code kopiert');
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {(family.members ?? []).map((m) => (
+                  <div
+                    key={m.userId}
+                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                  >
+                    <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{m.fullName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {m.role === 'parent'
+                          ? 'Elternteil'
+                          : m.role === 'child'
+                            ? 'Kind'
+                            : 'Mitglied'}
+                        {m.isSelf ? ' (du)' : ''}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

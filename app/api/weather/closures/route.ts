@@ -86,14 +86,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create closure' }, { status: 500 });
     }
 
-    // Send notifications to all active club members when reason=tournament or notify_members=true
-    if (reason === 'tournament' || notify_members === true) {
+    // Notify members for tournament blocks, weather closures, or explicit flag
+    const isWeather = ['rain', 'storm', 'frost', 'heat', 'maintenance', 'weather'].includes(reason);
+    if (reason === 'tournament' || isWeather || notify_members === true) {
       try {
         const serviceSb = createServiceClient();
         const dateStr = new Date(start_date).toLocaleDateString('de-DE');
         const courtName = (data as any).courts?.name ?? 'Platz';
 
-        // Fetch all active members of the club
+        const { title, message, type } =
+          reason === 'tournament'
+            ? {
+                type: 'tournament_block',
+                title: 'Platz gesperrt — Vereinsturnier',
+                message: `Am ${dateStr} findet ein Vereinsturnier statt. Kein reguläres Training auf ${courtName}.`,
+              }
+            : {
+                type: 'weather_closure',
+                title: `Platz gesperrt — ${courtName}`,
+                message: `Am ${dateStr} ist ${courtName} gesperrt (${reason}). Bitte kein Training einplanen.`,
+              };
+
         const { data: members } = await serviceSb
           .from('user_club_memberships')
           .select('user_id')
@@ -104,19 +117,15 @@ export async function POST(request: NextRequest) {
           const notificationRows = members.map((m: { user_id: string }) => ({
             user_id: m.user_id,
             club_id: clubId,
-            type: 'tournament_block',
-            title: 'Platz gesperrt — Vereinsturnier',
-            message: `Am ${dateStr} findet ein Vereinsturnier statt. Kein reguläres Training auf ${courtName}.`,
-            action_url: '/admin/weather',
+            type,
+            title,
+            message,
+            action_url: '/member',
           }));
           await serviceSb.from('notifications').insert(notificationRows);
-          log.info('[Closures POST] Tournament notifications sent', {
-            count: members.length,
-            clubId,
-          });
+          log.info('[Closures POST] Notifications sent', { count: members.length, clubId, reason });
         }
       } catch (notifyErr) {
-        // Non-critical: closure was already created successfully
         log.error(
           '[Closures POST] Notification error:',
           notifyErr instanceof Error ? notifyErr : undefined
