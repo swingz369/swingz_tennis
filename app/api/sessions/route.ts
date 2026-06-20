@@ -59,6 +59,8 @@ export async function GET(req: NextRequest) {
           week_number,
           session_type,
           notes,
+          cancelled_at,
+          cancellation_reason,
           schedules!inner(club_id),
           courts(name)
         `
@@ -73,7 +75,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: sessionsError.message }, { status: 500 });
       }
 
-      const typedSessions = (sessions ?? []) as SessionWithJoins[];
+      const typedSessions = (sessions ?? []) as unknown as SessionWithJoins[];
 
       // Fetch trainer names
       const trainerIds = [
@@ -204,6 +206,8 @@ export async function GET(req: NextRequest) {
           hasActiveBooking: currentBookings > 0,
           currentBookings,
           bookerNames,
+          cancelledAt: (s as any).cancelled_at ?? null,
+          cancellationReason: (s as any).cancellation_reason ?? null,
         };
       });
 

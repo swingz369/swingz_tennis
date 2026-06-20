@@ -266,6 +266,8 @@ export const sessions = pgTable(
     court_id: uuid('court_id').references(() => courts.id),
     max_participants: integer('max_participants').notNull().default(10),
     notes: text('notes'),
+    cancelled_at: timestamp('cancelled_at', { withTimezone: true }),
+    cancellation_reason: text('cancellation_reason'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },

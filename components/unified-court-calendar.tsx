@@ -86,6 +86,7 @@ import {
   CourtCalendarLegend,
 } from '@/components/court-calendar-shared';
 import { apiFetch } from '@/lib/api-fetch';
+import { SessionCancelDialog } from '@/components/session-cancel-dialog';
 
 /* ─────────────────── Types ─────────────────── */
 
@@ -155,15 +156,31 @@ function getBlockPosition(
 
 /* ─────────────────── Draggable Session (Admin) ─────────────────── */
 
-function DraggableSessionCard({ session, isDragging }: { session: Session; isDragging?: boolean }) {
+function DraggableSessionCard({
+  session,
+  isDragging,
+  onCancelSession,
+}: {
+  session: Session;
+  isDragging?: boolean;
+  onCancelSession?: (session: Session) => void;
+}) {
+  const isCancelled = !!session.cancelledAt;
   return (
     <div
-      className={`px-2.5 py-2 rounded-lg text-xs transition-all duration-150 ${
-        isDragging
-          ? 'opacity-40 rotate-1 scale-105 shadow-xl bg-blue-100'
-          : 'bg-gradient-to-b from-blue-50 to-blue-100/80 text-blue-800 hover:shadow-md border-l-[3px] border-blue-500 cursor-grab active:cursor-grabbing'
+      className={`px-2.5 py-2 rounded-lg text-xs transition-all duration-150 group ${
+        isCancelled
+          ? 'bg-red-50 text-red-700 border-l-[3px] border-red-400 opacity-70'
+          : isDragging
+            ? 'opacity-40 rotate-1 scale-105 shadow-xl bg-blue-100'
+            : 'bg-gradient-to-b from-blue-50 to-blue-100/80 text-blue-800 hover:shadow-md border-l-[3px] border-blue-500 cursor-grab active:cursor-grabbing'
       }`}
     >
+      {isCancelled && (
+        <div className="text-[9px] font-semibold text-red-600 uppercase tracking-wide mb-0.5">
+          Abgesagt
+        </div>
+      )}
       <div className="flex items-center gap-1.5">
         <GripVertical className="h-3 w-3 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
         <span className="font-bold truncate text-[11px]">{session.trainerName || 'Trainer'}</span>
@@ -181,6 +198,18 @@ function DraggableSessionCard({ session, isDragging }: { session: Session; isDra
           </span>
         )}
       </div>
+      {onCancelSession && !isCancelled && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCancelSession(session);
+          }}
+          className="mt-1 w-full text-[9px] text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:underline text-left"
+          title="Training absagen"
+        >
+          Training absagen
+        </button>
+      )}
     </div>
   );
 }
@@ -222,6 +251,7 @@ function PositionedSessionBlock({
   onBlock,
   onUnblock,
   onCancel,
+  onCancelSession,
 }: {
   session: Session;
   topPx: number;
@@ -231,6 +261,7 @@ function PositionedSessionBlock({
   onBlock: () => void;
   onUnblock: (sessionId: string) => void;
   onCancel: (sessionId: string, bookingId: string) => void;
+  onCancelSession?: (session: Session) => void;
 }) {
   // Make admin session blocks draggable (click still works — PointerSensor requires 8px movement)
   // useDraggable is always called (hooks rule) but attrs/listeners are only spread for admins.
@@ -240,6 +271,7 @@ function PositionedSessionBlock({
     setNodeRef: setDragRef,
     isDragging,
   } = useDraggable({ id: session.id });
+  const isCancelledSession = !!session.cancelledAt;
   const isBlocked = session.sessionType === 'event' || session.sessionType === 'maintenance';
   const isOwnBooking = session.bookedByUser;
   const isBooked = session.hasActiveBooking && !isOwnBooking;
@@ -252,7 +284,10 @@ function PositionedSessionBlock({
       : isBooked
         ? 'booked'
         : 'session';
-  const { bg: bgColor, accent: accentColor, text: textColor } = DAILY_BLOCK_STYLES[statusKey];
+  const rawStyle = DAILY_BLOCK_STYLES[statusKey];
+  const bgColor = isCancelledSession ? 'bg-red-50' : rawStyle.bg;
+  const accentColor = isCancelledSession ? 'border-red-400' : rawStyle.accent;
+  const textColor = isCancelledSession ? 'text-red-700' : rawStyle.text;
 
   let label = session.trainerName || 'Offene Session';
   let icon = <User className="h-3.5 w-3.5" />;
@@ -312,13 +347,22 @@ function PositionedSessionBlock({
         }
       }}
     >
+      {isCancelledSession && (
+        <div className="text-[9px] font-semibold text-red-600 uppercase tracking-wide mb-0.5">
+          Abgesagt
+        </div>
+      )}
       <div className="flex items-start justify-between gap-1">
         <div className="flex items-center gap-1.5 min-w-0">
-          {isAdmin && !isBlocked && (
+          {isAdmin && !isBlocked && !isCancelledSession && (
             <GripVertical className="h-3 w-3 text-current opacity-0 group-hover/block:opacity-60 transition-opacity flex-shrink-0 -ml-0.5" />
           )}
           {icon}
-          <span className="font-bold text-[11px] truncate">{label}</span>
+          <span
+            className={`font-bold text-[11px] truncate${isCancelledSession ? ' line-through opacity-60' : ''}`}
+          >
+            {label}
+          </span>
         </div>
         {isAdmin && isBlocked && (
           <Unlock className="h-3 w-3 text-zinc-400 opacity-0 group-hover/block:opacity-100 transition-opacity flex-shrink-0" />
@@ -371,6 +415,19 @@ function PositionedSessionBlock({
         <div className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-amber-600 text-white text-[9px] font-bold shadow-sm">
           {session.currentBookings}
         </div>
+      )}
+      {/* Admin: Training-Absage-Button (nur für echte Training-Sessions, nicht für Blocks) */}
+      {isAdmin && !isBlocked && !isCancelledSession && onCancelSession && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCancelSession(session);
+          }}
+          className="absolute bottom-1 right-1 text-[9px] text-red-500 opacity-0 group-hover/block:opacity-100 transition-opacity hover:underline"
+          title="Training absagen"
+        >
+          Absagen
+        </button>
       )}
     </div>
   );
@@ -513,6 +570,25 @@ export default function UnifiedCourtCalendar({
   const [blockReason, setBlockReason] = useState('');
   const [blockLoading, setBlockLoading] = useState(false);
   const [blockDuration, setBlockDuration] = useState(1);
+
+  // ── Session Cancel state ──
+  const [cancelSessionId, setCancelSessionId] = useState<string | null>(null);
+  const [cancelSessionLabel, setCancelSessionLabel] = useState('');
+
+  const handleOpenCancelSession = useCallback((session: Session) => {
+    const start = session.timeslotStart ? new Date(session.timeslotStart) : null;
+    const label = start
+      ? start.toLocaleString('de-DE', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        }) + ' Uhr'
+      : `${session.startTime}–${session.endTime}`;
+    setCancelSessionId(session.id);
+    setCancelSessionLabel(label);
+  }, []);
 
   // ── Weather & Court Closures state ──
   const [weatherData, setWeatherData] = useState<{
@@ -1294,6 +1370,7 @@ export default function UnifiedCourtCalendar({
                                 <DraggableSessionCard
                                   session={session}
                                   isDragging={activeId === session.id}
+                                  onCancelSession={handleOpenCancelSession}
                                 />
                               ) : session.bookedByUser ? (
                                 <div className="flex items-center gap-1 w-full justify-between px-2">
@@ -1611,6 +1688,7 @@ export default function UnifiedCourtCalendar({
                             onBlock={() => openBlockDialog(court.id, targetDate, session.startTime)}
                             onUnblock={handleUnblockSlot}
                             onCancel={handleCancelBooking}
+                            onCancelSession={isAdmin ? handleOpenCancelSession : undefined}
                           />
                         );
                       })}
@@ -1970,6 +2048,19 @@ export default function UnifiedCourtCalendar({
     </CenteredModal>
   );
 
+  const sessionCancelDialogEl = cancelSessionId && (
+    <SessionCancelDialog
+      open={!!cancelSessionId}
+      onClose={() => setCancelSessionId(null)}
+      sessionId={cancelSessionId}
+      sessionLabel={cancelSessionLabel}
+      onSuccess={() => {
+        setCancelSessionId(null);
+        void queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      }}
+    />
+  );
+
   /* ═══════════════════════════════════════════════════
      RENDER: Wrap with DnD for admins
      ═══════════════════════════════════════════════════ */
@@ -1991,11 +2082,13 @@ export default function UnifiedCourtCalendar({
         </DragOverlay>
       </DndContext>
       {blockDialog}
+      {sessionCancelDialogEl}
     </>
   ) : (
     <>
       {content}
       {blockDialog}
+      {sessionCancelDialogEl}
     </>
   );
 

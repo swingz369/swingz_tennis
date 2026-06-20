@@ -21,6 +21,7 @@ import {
   CheckCircle,
   Trash2,
   Zap,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -665,6 +666,117 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 }
 
 /* Extracted tabs component so the IIFE is not needed */
+interface SeasonSummary {
+  id: string;
+  name: string;
+  season_type: string;
+  year: number;
+  planning_status: string;
+}
+
+function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: string }) {
+  const [seasons, setSeasons] = useState<SeasonSummary[]>([]);
+  const [loadingSeasons, setLoadingSeasons] = useState(true);
+  const [sourceSeasonId, setSourceSeasonId] = useState('');
+  const [copying, setCopying] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await apiFetch(`/api/seasons?clubId=${clubId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const all: SeasonSummary[] = data.seasons ?? data ?? [];
+          // Nur abgeschlossene oder veröffentlichte Saisons als Quelle, außer die aktuelle
+          const candidates = all
+            .filter(
+              (s) =>
+                s.id !== seasonId &&
+                ['published', 'active', 'completed', 'archived'].includes(s.planning_status)
+            )
+            .slice(0, 3);
+          setSeasons(candidates);
+        }
+      } finally {
+        setLoadingSeasons(false);
+      }
+    };
+    load();
+  }, [clubId, seasonId]);
+
+  const handleCopy = async () => {
+    if (!sourceSeasonId) return;
+    setCopying(true);
+    try {
+      const res = await apiFetch(`/api/seasons/${seasonId}/copy-groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceSeasonId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? 'Fehler beim Kopieren der Gruppen');
+        return;
+      }
+      toast.success(
+        `${data.copiedGroups} Gruppe${data.copiedGroups !== 1 ? 'n' : ''} mit ${data.copiedMembers} Mitglied${data.copiedMembers !== 1 ? 'ern' : ''} übernommen.`
+      );
+      setSourceSeasonId('');
+    } catch {
+      toast.error('Netzwerkfehler beim Kopieren');
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  if (loadingSeasons) {
+    return <p className="text-sm text-muted-foreground">Lade Saisons…</p>;
+  }
+
+  if (seasons.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Keine abgeschlossenen Saisons als Quelle verfügbar.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        Bestehende Gruppen in dieser Saison werden <strong>nicht gelöscht</strong> — die kopierten
+        Gruppen kommen zusätzlich hinzu.
+      </div>
+
+      <div className="flex items-end gap-3">
+        <div className="flex-1">
+          <Label htmlFor="source-season">Saison als Vorlage wählen</Label>
+          <Select value={sourceSeasonId} onValueChange={setSourceSeasonId}>
+            <SelectTrigger id="source-season" className="mt-1">
+              <SelectValue placeholder="Saison auswählen…" />
+            </SelectTrigger>
+            <SelectContent>
+              {seasons.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name} ({s.year})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={handleCopy} disabled={copying || !sourceSeasonId} className="shrink-0">
+          {copying ? (
+            <Clock className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Copy className="mr-2 h-4 w-4" />
+          )}
+          Gruppen übernehmen
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: string }) {
   const router = useRouter();
   const isPublished = ['published', 'active', 'completed', 'archived'].includes(
@@ -686,6 +798,7 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
           </>
         )}
         <TabsTrigger value="calendar">Saisonkalender</TabsTrigger>
+        <TabsTrigger value="copy-groups">Gruppen übernehmen</TabsTrigger>
       </TabsList>
 
       <TabsContent value="overview" className="space-y-4">
@@ -836,6 +949,21 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
 
       <TabsContent value="calendar">
         <SeasonCalendarTab seasonId={seasonId} clubId={season.club_id ?? ''} />
+      </TabsContent>
+
+      <TabsContent value="copy-groups">
+        <Card>
+          <CardHeader>
+            <CardTitle>Gruppen aus vorheriger Saison übernehmen</CardTitle>
+            <CardDescription>
+              Kopiert Trainingsgruppen inklusive Mitgliederzuordnungen aus einer abgeschlossenen
+              Saison in diese Saison — ohne Neu-Clustering.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CopyGroupsPanel seasonId={seasonId} clubId={season.club_id ?? ''} />
+          </CardContent>
+        </Card>
       </TabsContent>
     </Tabs>
   );

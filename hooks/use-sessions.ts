@@ -25,6 +25,8 @@ export interface Session {
   courtName?: string; // Court display name for member training schedule
   rsvpStatus?: string | null; // Current user's RSVP status for the session
   bookerNames?: string[]; // Names of members who booked this session
+  cancelledAt?: string | null; // ISO date string if session was cancelled
+  cancellationReason?: string | null;
 }
 
 export function useSessions(clubId: string | null) {
