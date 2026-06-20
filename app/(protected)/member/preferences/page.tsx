@@ -152,7 +152,10 @@ export default function MemberPreferencesPage() {
           data
             .map((d) => ({
               id: d.user_id,
-              name: (d.users as { full_name: string } | null)?.full_name || 'Unbekannt',
+              name:
+                (Array.isArray(d.users)
+                  ? (d.users as { full_name: string }[])[0]?.full_name
+                  : (d.users as { full_name: string } | null)?.full_name) || 'Unbekannt',
             }))
             .filter((m) => m.name !== 'Unbekannt')
             .sort((a, b) => a.name.localeCompare(b.name, 'de'))
