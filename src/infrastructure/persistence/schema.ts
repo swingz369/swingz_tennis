@@ -2824,3 +2824,35 @@ export const waitlistEntries = pgTable('waitlist_entries', {
   status: text('status'),
   created_at: timestamp('created_at').notNull().defaultNow(),
 });
+
+// ==============================================================================
+// Session Waitlist — Warteliste für Training-Sessions
+// ==============================================================================
+
+/**
+ * Warteliste für Training-Sessions wenn max_participants erreicht ist.
+ * Bei Absagen rückt automatisch der erste Eintrag nach (via Cancel-API).
+ */
+export const sessionWaitlist = pgTable(
+  'session_waitlist',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    session_id: uuid('session_id')
+      .notNull()
+      .references(() => sessions.id, { onDelete: 'cascade' }),
+    member_id: uuid('member_id').notNull(),
+    club_id: uuid('club_id').notNull(),
+    position: integer('position').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    notified_at: timestamp('notified_at', { withTimezone: true }),
+  },
+  (table) => ({
+    session_position_idx: index('session_waitlist_session_position_idx').on(
+      table.session_id,
+      table.position
+    ),
+    member_idx: index('session_waitlist_member_idx').on(table.member_id),
+    club_idx: index('session_waitlist_club_idx').on(table.club_id),
+    unique_session_member: { unique: true, columns: [table.session_id, table.member_id] },
+  })
+);

@@ -49,6 +49,7 @@ import {
   type Session,
 } from '@/hooks/use-sessions';
 import FeedbackModal from '@/components/feedback/feedback-modal';
+import SessionWaitlistButton from '@/components/session-waitlist-button';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent } from '@/components/ui/card';
 import UnifiedCourtCalendar from '@/components/unified-court-calendar';
@@ -417,23 +418,35 @@ function BookingsContent() {
                             {daySessions.map((session) => (
                               <div
                                 key={session.id}
-                                className={`p-1 rounded text-xs transition-colors cursor-pointer ${
+                                className={`p-1 rounded text-xs transition-colors ${
                                   session.bookedByUser
                                     ? 'bg-red-50 text-red-800 border border-red-200'
-                                    : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
+                                    : (session.currentBookings ?? 0) >= session.maxParticipants
+                                      ? 'bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+                                      : 'bg-blue-50 text-blue-800 hover:bg-blue-100 cursor-pointer'
                                 }`}
                                 role="button"
-                                tabIndex={session.bookedByUser ? -1 : 0}
+                                tabIndex={
+                                  session.bookedByUser ||
+                                  (session.currentBookings ?? 0) >= session.maxParticipants
+                                    ? -1
+                                    : 0
+                                }
                                 onKeyDown={(e) => {
                                   if (
                                     (e.key === 'Enter' || e.key === ' ') &&
-                                    !session.bookedByUser
+                                    !session.bookedByUser &&
+                                    (session.currentBookings ?? 0) < session.maxParticipants
                                   ) {
                                     e.preventDefault();
                                     handleBooking(session.id);
                                   }
                                 }}
-                                onClick={() => !session.bookedByUser && handleBooking(session.id)}
+                                onClick={() =>
+                                  !session.bookedByUser &&
+                                  (session.currentBookings ?? 0) < session.maxParticipants &&
+                                  handleBooking(session.id)
+                                }
                               >
                                 <div className="flex items-start justify-between gap-1">
                                   <div className="font-medium truncate">{session.startTime}</div>
@@ -536,6 +549,18 @@ function BookingsContent() {
                                     )}
                                   </div>
                                 )}
+                                {/* Warteliste: nur wenn Session voll und noch nicht gebucht */}
+                                {!session.bookedByUser &&
+                                  (session.currentBookings ?? 0) >= session.maxParticipants &&
+                                  clubId && (
+                                    <SessionWaitlistButton
+                                      sessionId={session.id}
+                                      clubId={clubId}
+                                      currentBookings={session.currentBookings ?? 0}
+                                      maxParticipants={session.maxParticipants}
+                                      bookedByUser={!!session.bookedByUser}
+                                    />
+                                  )}
                               </div>
                             ))}
                           </div>
