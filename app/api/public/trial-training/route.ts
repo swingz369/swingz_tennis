@@ -84,7 +84,16 @@ export async function POST(request: NextRequest) {
     // Notify club admins — fire-and-forget (don't block the response)
     trialTrainingService
       .notifyAdminsOfNewRequest(trialTraining, clubId || '')
-      .catch((err) => log.error('Admin notification failed:', err));
+      .catch((err) =>
+        log.error('Admin notification failed', err instanceof Error ? err : undefined)
+      );
+
+    // Send confirmation email to the participant — fire-and-forget
+    trialTrainingService
+      .notifyParticipantOfTrialTraining(trialTraining, clubId)
+      .catch((err) =>
+        log.error('Participant confirmation failed', err instanceof Error ? err : undefined)
+      );
 
     return NextResponse.json(
       {

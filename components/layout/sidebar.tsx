@@ -272,6 +272,7 @@ export function Sidebar({
           subItems: [
             { name: 'Abrechnung & Kategorien', href: '/admin/billing' },
             { name: 'Analytics & Berichte', href: '/admin/analytics' },
+            { name: 'Abonnement', href: '/admin/subscription' },
           ],
         },
         {

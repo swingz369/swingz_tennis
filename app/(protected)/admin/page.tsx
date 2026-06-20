@@ -30,7 +30,7 @@ export default async function AdminPage() {
   // Club info
   const { data: club } = await supabase
     .from('clubs')
-    .select('id, name, status')
+    .select('id, name, status, setup_completed_at')
     .eq('id', clubId)
     .maybeSingle();
 
@@ -78,6 +78,7 @@ export default async function AdminPage() {
     { data: recentBookings },
     { data: paidInvoices },
     { count: totalInvoiceCount },
+    { count: seasonCount },
   ] = await Promise.all([
     safe(
       supabase
@@ -152,6 +153,9 @@ export default async function AdminPage() {
     safe(
       supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('club_id', clubId)
     ),
+    safe(
+      supabase.from('seasons').select('id', { count: 'exact', head: true }).eq('club_id', clubId)
+    ),
   ]);
 
   // Calculate monthly revenue
@@ -196,6 +200,23 @@ export default async function AdminPage() {
   ]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8);
+
+  // Onboarding checklist — show within 30 days of setup completion
+  const setupCompletedAt = (club as any).setup_completed_at as string | null;
+  // ponytail: Server Component — Date.now() is fine on server, disable client purity rule
+
+  const daysSinceSetup = setupCompletedAt
+    ? // eslint-disable-next-line react-hooks/purity
+      (Date.now() - new Date(setupCompletedAt).getTime()) / 86400000
+    : null;
+  const showChecklist = daysSinceSetup !== null && daysSinceSetup < 30;
+  const checklistItems = [
+    { label: 'Saison angelegt', done: (seasonCount ?? 0) > 0, href: '/admin/seasons/new' },
+    { label: 'Mitglied eingeladen', done: (memberCount ?? 0) > 0, href: '/admin/members' },
+    { label: 'Trainer zugewiesen', done: (trainerCount ?? 0) > 0, href: '/admin/trainers' },
+    { label: 'Erste Buchung', done: (totalInvoiceCount ?? 0) > 0, href: '/admin/billing' },
+  ];
+  const checklistDone = checklistItems.every((i) => i.done);
 
   // Smart actions: determine which contextual actions to show
   const needsApprovals = (pendingApprovals ?? 0) > 0;
@@ -269,6 +290,56 @@ export default async function AdminPage() {
         trainerCount={trainerCount ?? 0}
         todaySessionCount={activeSessions ?? 0}
       />
+
+      {/* ── Erste Schritte Checklist — nur kurz nach Onboarding ── */}
+      {showChecklist && !checklistDone && (
+        <ScrollReveal delay={50}>
+          <div className="rounded-2xl border border-brand-light/20 bg-brand-light/5 p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-brand-light" />
+              <p className="text-sm font-semibold text-foreground">Erste Schritte</p>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {checklistItems.filter((i) => i.done).length}/{checklistItems.length} erledigt
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {checklistItems.map((item) => (
+                <Link key={item.label} href={item.done ? '#' : item.href}>
+                  <div
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all ${
+                      item.done
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 cursor-default'
+                        : 'bg-background border border-border hover:border-brand-light/40 cursor-pointer'
+                    }`}
+                  >
+                    <div
+                      className={`flex h-6 w-6 items-center justify-center rounded-full shrink-0 ${
+                        item.done ? 'bg-emerald-100 dark:bg-emerald-800' : 'border-2 border-border'
+                      }`}
+                    >
+                      {item.done && (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      )}
+                    </div>
+                    <span
+                      className={`text-sm ${
+                        item.done
+                          ? 'line-through text-muted-foreground'
+                          : 'text-foreground font-medium'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                    {!item.done && (
+                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+      )}
 
       {/* ── Action-First Inbox: only visible when there are actionable tasks ── */}
       <ScrollReveal delay={100}>

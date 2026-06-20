@@ -15,6 +15,9 @@ import { eq, and, or } from 'drizzle-orm';
 import { db } from '@/infrastructure/persistence/db';
 import { userClubMemberships, users, clubs } from '@/infrastructure/persistence/schema';
 import { EmailService } from '@/src/application/services/email.service';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('trial-training-service');
 import type {
   TrialTraining,
   CreateTrialTrainingInput,
@@ -247,7 +250,7 @@ class TrialTrainingServiceAdapter {
    */
   async notifyAdminsOfNewRequest(trialTraining: TrialTraining, clubId: string): Promise<void> {
     if (!clubId) {
-      console.warn('No clubId provided, skipping admin notification');
+      log.info('No clubId provided, skipping admin notification');
       return;
     }
 
@@ -269,7 +272,7 @@ class TrialTrainingServiceAdapter {
         );
 
       if (admins.length === 0) {
-        console.warn(`No admins found for club ${clubId}, skipping notification`);
+        log.info('No admins found for club, skipping notification', { clubId });
         return;
       }
 
@@ -316,10 +319,58 @@ class TrialTrainingServiceAdapter {
         });
       }
 
-      // Trial request notification sent successfully
+      log.info('Admin trial request notifications sent', { clubId, adminCount: admins.length });
     } catch (error) {
       // Don't fail the request if notification fails — log and continue
-      console.error('Failed to send trial request notification to admins:', error);
+      log.error(
+        'Failed to send trial request notification to admins',
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  /**
+   * Send a confirmation email to the participant immediately after their
+   * trial training request is submitted via the public booking page.
+   * Does not block the API response — call fire-and-forget.
+   */
+  async notifyParticipantOfTrialTraining(
+    trialTraining: TrialTraining,
+    clubId?: string
+  ): Promise<void> {
+    const participant = trialTraining.participant;
+
+    try {
+      // Fetch club name if a clubId is provided
+      let clubName = 'SwingZ Tennis Club';
+      if (clubId) {
+        const clubResult = await db
+          .select({ name: clubs.name })
+          .from(clubs)
+          .where(eq(clubs.id, clubId))
+          .limit(1);
+        if (clubResult[0]?.name) {
+          clubName = clubResult[0].name;
+        }
+      }
+
+      const participantName = `${participant.firstName} ${participant.lastName}`;
+
+      await EmailService.sendTrialRequestConfirmation({
+        participantName,
+        participantEmail: participant.email,
+        preferredDate: trialTraining.scheduledDate,
+        preferredTime: trialTraining.scheduledTime,
+        clubName,
+      });
+
+      log.info('Participant trial request confirmation sent', { email: participant.email });
+    } catch (error) {
+      // Don't fail the request if notification fails — log and continue
+      log.error(
+        'Failed to send trial request confirmation to participant',
+        error instanceof Error ? error : undefined
+      );
     }
   }
 }

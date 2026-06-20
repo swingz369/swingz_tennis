@@ -9,6 +9,7 @@ import {
   ChevronRight,
   CheckCircle,
   ArrowLeft,
+  Clock3,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { IconBox } from '@/components/ui/icon-box';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api-fetch';
+import { cn } from '@/lib/utils';
 
 interface Trainer {
   id: string;
@@ -34,6 +36,8 @@ interface Slot {
   status: 'available' | 'booked';
   notes: string | null;
 }
+
+type ActionMode = 'book' | 'waitlist';
 
 function getWeekDays(anchor: Date): Date[] {
   const days: Date[] = [];
@@ -68,9 +72,11 @@ export default function MemberTrainerBookingPage() {
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [confirmSlot, setConfirmSlot] = useState<Slot | null>(null);
+  const [actionMode, setActionMode] = useState<ActionMode>('book');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
 
   const weekDays = getWeekDays(weekAnchor);
   const weekFrom = toLocalDateString(weekDays[0]);
@@ -112,7 +118,10 @@ export default function MemberTrainerBookingPage() {
       );
       if (!res.ok) throw new Error('Fehler beim Laden');
       const data = await res.json();
-      setTrainerSlots((data.slots ?? []).filter((s: Slot) => s.status === 'available'));
+      // Show both available and booked slots — booked ones get a waitlist button
+      setTrainerSlots(
+        (data.slots ?? []).filter((s: Slot) => s.status === 'available' || s.status === 'booked')
+      );
     } catch {
       setTrainerSlots([]);
     } finally {
@@ -151,6 +160,27 @@ export default function MemberTrainerBookingPage() {
     }
   };
 
+  const handleWaitlist = async () => {
+    if (!confirmSlot) return;
+    setBookingLoading(true);
+    setBookingError(null);
+    try {
+      const res = await apiFetch('/api/trainer/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slotId: confirmSlot.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Warteliste-Eintrag fehlgeschlagen');
+      setWaitlistSuccess(true);
+      setConfirmSlot(null);
+    } catch (e: any) {
+      setBookingError(e.message);
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
   const formatWeekRange = () => {
     const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit' };
     return `${weekDays[0].toLocaleDateString('de-DE', opts)} – ${weekDays[6].toLocaleDateString('de-DE', opts)}`;
@@ -175,6 +205,29 @@ export default function MemberTrainerBookingPage() {
           variant="brand"
           onClick={() => {
             setBookingSuccess(false);
+            setSelectedTrainer(null);
+          }}
+        >
+          Zurück zur Übersicht
+        </Button>
+      </div>
+    );
+  }
+
+  if (waitlistSuccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-6">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+          <Clock3 className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+        </div>
+        <h2 className="text-xl font-bold">Auf der Warteliste!</h2>
+        <p className="text-sm text-muted-foreground">
+          Du wirst benachrichtigt, sobald der Slot frei wird.
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setWaitlistSuccess(false);
             setSelectedTrainer(null);
           }}
         >
@@ -311,19 +364,31 @@ export default function MemberTrainerBookingPage() {
                   <div className="text-[11px] font-normal">{day.getDate()}</div>
                 </div>
                 <div className="space-y-1">
-                  {daySlots.map((slot) => (
-                    <button
-                      key={slot.id}
-                      onClick={() => {
-                        setConfirmSlot(slot);
-                        setBookingError(null);
-                      }}
-                      className="w-full text-left rounded-md px-1.5 py-1 text-[11px] leading-tight bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors cursor-pointer"
-                    >
-                      <div className="font-medium">{slot.start_time}</div>
-                      <div className="text-[11px] opacity-75">{slot.end_time}</div>
-                    </button>
-                  ))}
+                  {daySlots.map((slot) => {
+                    const isBooked = slot.status === 'booked';
+                    return (
+                      <button
+                        key={slot.id}
+                        onClick={() => {
+                          setConfirmSlot(slot);
+                          setActionMode(isBooked ? 'waitlist' : 'book');
+                          setBookingError(null);
+                        }}
+                        className={cn(
+                          'w-full text-left rounded-md px-1.5 py-1 text-[11px] leading-tight transition-colors cursor-pointer',
+                          isBooked
+                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/40'
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/40'
+                        )}
+                      >
+                        <div className="font-medium">{slot.start_time}</div>
+                        <div className="text-[11px] opacity-75">{slot.end_time}</div>
+                        {isBooked && (
+                          <div className="text-[10px] opacity-75 mt-0.5">Warteliste</div>
+                        )}
+                      </button>
+                    );
+                  })}
                   {daySlots.length === 0 && (
                     <div className="h-8 rounded-md border-2 border-dashed border-border dark:border-white/5" />
                   )}
@@ -336,27 +401,45 @@ export default function MemberTrainerBookingPage() {
 
       {trainerSlots.length === 0 && !loadingSlots && (
         <p className="text-center text-sm text-muted-foreground py-4">
-          Keine verfügbaren Slots in dieser Woche
+          Keine Slots in dieser Woche
         </p>
       )}
 
-      {/* Confirm booking dialog */}
+      {/* Confirm booking / waitlist dialog */}
       <ConfirmDialog
         open={!!confirmSlot}
         onOpenChange={() => setConfirmSlot(null)}
         title={
           <span className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-brand-light" />
-            Stunde buchen
+            {actionMode === 'waitlist' ? (
+              <Clock3 className="h-4 w-4 text-amber-500" />
+            ) : (
+              <Calendar className="h-4 w-4 text-brand-light" />
+            )}
+            {actionMode === 'waitlist' ? 'Warteliste beitreten' : 'Stunde buchen'}
           </span>
         }
-        confirmLabel={bookingLoading ? 'Buchen…' : 'Jetzt buchen'}
-        variant="brand"
+        confirmLabel={
+          bookingLoading
+            ? actionMode === 'waitlist'
+              ? 'Eintragen…'
+              : 'Buchen…'
+            : actionMode === 'waitlist'
+              ? 'Auf Warteliste setzen'
+              : 'Jetzt buchen'
+        }
+        variant={actionMode === 'waitlist' ? 'outline' : 'brand'}
         loading={bookingLoading}
-        onConfirm={handleBook}
+        onConfirm={actionMode === 'waitlist' ? handleWaitlist : handleBook}
       >
         {confirmSlot && (
           <div className="space-y-3 py-2">
+            {actionMode === 'waitlist' && (
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+                Dieser Slot ist bereits gebucht. Du kannst dich auf die Warteliste setzen und wirst
+                benachrichtigt, wenn er frei wird.
+              </div>
+            )}
             <div className="rounded-xl bg-brand-light/5 p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-brand-light" />

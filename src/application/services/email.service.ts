@@ -1205,4 +1205,196 @@ Dein SwingZ-Team
     const email = this.generateNewTrialRequestEmail(data);
     return this.sendEmail(data.adminEmail, email);
   }
+
+  /**
+   * Generate participant confirmation email for a new trial training request.
+   * Sent immediately after submission — before admin review.
+   */
+  static generateTrialRequestConfirmationEmail(data: {
+    participantName: string;
+    participantEmail: string;
+    preferredDate: string;
+    preferredTime: string;
+    clubName: string;
+  }): EmailTemplate {
+    const { participantName, preferredDate, preferredTime, clubName } = data;
+
+    const subject = `Deine Probetraining-Anfrage bei ${clubName} ist eingegangen`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Probetraining-Anfrage eingegangen</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 26px;
+      font-weight: bold;
+    }
+    .header p {
+      margin: 0;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .content {
+      padding: 30px;
+    }
+    .greeting {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .info-box {
+      background: #f8f9fa;
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .info-box h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #059669;
+    }
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    .info-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .info-table td:first-child {
+      font-weight: bold;
+      color: #555;
+      width: 40%;
+    }
+    .footer {
+      background: #f8f9fa;
+      padding: 20px 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Anfrage eingegangen!</h1>
+      <p>${clubName}</p>
+    </div>
+
+    <div class="content">
+      <p class="greeting">
+        Hallo ${participantName},
+      </p>
+
+      <p>
+        vielen Dank fuer deine Probetraining-Anfrage! Wir haben deine Anfrage erhalten und melden uns
+        in Kuerze mit einer Bestaetigung bei dir.
+      </p>
+
+      <div class="info-box">
+        <h3>Dein Wunschtermin</h3>
+        <table class="info-table">
+          <tr><td>Datum</td><td>${preferredDate}</td></tr>
+          <tr><td>Uhrzeit</td><td>${preferredTime} Uhr</td></tr>
+          <tr><td>Verein</td><td>${clubName}</td></tr>
+        </table>
+      </div>
+
+      <div class="info-box">
+        <h3>Wie geht es weiter?</h3>
+        <p style="font-size: 14px; color: #666;">
+          Unser Team prueft deinen Wunschtermin und weist einen Trainer sowie einen Platz zu.
+          Du erhaeltst eine separate Bestaеtigungs-E-Mail, sobald alles organisiert ist.
+          Bei Rueckfragen antworte einfach auf diese E-Mail.
+        </p>
+      </div>
+
+      <p style="font-size: 14px; color: #555;">
+        Wir freuen uns darauf, dich beim Probetraining begruessen zu duerfen!
+      </p>
+
+      <p style="font-size: 14px; color: #555;">
+        Beste Gruesse,<br>
+        Dein ${clubName}-Team
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von SwingZ generiert.</p>
+      <p>&copy; ${new Date().getFullYear()} SwingZ. Alle Rechte vorbehalten.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const text = `
+Probetraining-Anfrage eingegangen - ${clubName}
+
+Hallo ${participantName},
+
+vielen Dank fuer deine Probetraining-Anfrage! Wir haben deine Anfrage erhalten und melden uns
+in Kuerze mit einer Bestaetigung bei dir.
+
+Dein Wunschtermin:
+- Datum: ${preferredDate}
+- Uhrzeit: ${preferredTime} Uhr
+- Verein: ${clubName}
+
+Wie geht es weiter?
+Unser Team prueft deinen Wunschtermin und weist einen Trainer sowie einen Platz zu.
+Du erhaeltst eine separate Bestaеtigungs-E-Mail, sobald alles organisiert ist.
+
+Wir freuen uns darauf, dich beim Probetraining begruessen zu duerfen!
+
+Beste Gruesse,
+Dein ${clubName}-Team
+    `.trim();
+
+    return { subject, html, text };
+  }
+
+  /**
+   * Send confirmation email to the participant after a trial training request is submitted.
+   */
+  static async sendTrialRequestConfirmation(data: {
+    participantName: string;
+    participantEmail: string;
+    preferredDate: string;
+    preferredTime: string;
+    clubName: string;
+  }): Promise<boolean> {
+    const email = this.generateTrialRequestConfirmationEmail(data);
+    return this.sendEmail(data.participantEmail, email);
+  }
 }
