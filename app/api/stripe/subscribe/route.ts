@@ -18,7 +18,8 @@ const PLAN_PRICE_IDS: Record<string, string | undefined> = {
 
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    const hasPermission = await verifyRole(auth, ['admin', 'superadmin']);
+    const hasPermission = await verifyRole(auth, 'admin');
+
     if (!hasPermission) return forbiddenResponse('Nur Admins können ein Abonnement starten');
 
     if (!STRIPE_CONFIGURED) {
