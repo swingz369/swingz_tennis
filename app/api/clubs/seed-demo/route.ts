@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       {
         user_id: auth.user.id,
         club_id: clubId,
-        role: 'superadmin',
+        role: 'admin',
         is_active: true,
         include_in_planning: false,
       },
