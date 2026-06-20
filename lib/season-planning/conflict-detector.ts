@@ -69,8 +69,7 @@ interface ConflictCheckParams {
   config: {
     trainerUtilizationMaxPct: number;
     slotFailureThreshold: number;
-    maxNiveauSpanBeginner: number;
-    maxNiveauSpanAdvanced: number;
+    maxNiveauLevelSteps: number;
   };
 }
 
@@ -715,8 +714,10 @@ export class ConflictDetector {
       config: {
         trainerUtilizationMaxPct: dbConfig?.trainer_utilization_max_pct || 80,
         slotFailureThreshold: dbConfig?.slot_failure_rate_threshold_pct || 30,
-        maxNiveauSpanBeginner: dbConfig?.max_niveau_span_beginner_months || 4,
-        maxNiveauSpanAdvanced: dbConfig?.max_niveau_span_advanced_months || 8,
+        maxNiveauLevelSteps:
+          (dbConfig as Record<string, unknown>)?.max_niveau_level_steps != null
+            ? Number((dbConfig as Record<string, unknown>).max_niveau_level_steps)
+            : 1,
       },
     };
   }

@@ -227,13 +227,14 @@ export const seasonPlanningConfigs = pgTable(
       .references(() => clubs.id, { onDelete: 'cascade' }),
     season_id: uuid('season_id').references(() => seasons.id, { onDelete: 'cascade' }),
 
-    // Niveau span limits
+    // Niveau limits
     max_niveau_span_beginner_months: integer('max_niveau_span_beginner_months')
       .notNull()
       .default(4),
     max_niveau_span_advanced_months: integer('max_niveau_span_advanced_months')
       .notNull()
       .default(8),
+    max_niveau_level_steps: integer('max_niveau_level_steps').notNull().default(1),
 
     // Trainer load
     trainer_utilization_max_pct: integer('trainer_utilization_max_pct').notNull().default(80),

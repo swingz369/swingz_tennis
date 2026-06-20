@@ -129,8 +129,8 @@ export function ConfigStep() {
               </Label>
               <Input
                 type="number"
-                min={2}
-                max={10}
+                min={1}
+                max={6}
                 value={config.groupMaxSize}
                 onChange={(e) => handleConfigChange('groupMaxSize', Number(e.target.value))}
                 className="h-9"
@@ -203,30 +203,15 @@ export function ConfigStep() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Max. Niveau-Spanne (Anfänger)</Label>
-              <Input
-                type="number"
-                min={1}
-                max={4}
-                value={config.maxNiveauSpanBeginner}
-                onChange={(e) =>
-                  handleConfigChange('maxNiveauSpanBeginner', Number(e.target.value))
-                }
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">
-                Max. Niveau-Spanne (Fortgeschritten)
+                Max. Niveau-Stufen (1 = gleiches Level, 2 = ein Abstand)
               </Label>
               <Input
                 type="number"
-                min={1}
-                max={4}
-                value={config.maxNiveauSpanAdvanced}
-                onChange={(e) =>
-                  handleConfigChange('maxNiveauSpanAdvanced', Number(e.target.value))
-                }
+                min={0}
+                max={3}
+                value={config.maxNiveauLevelSteps}
+                onChange={(e) => handleConfigChange('maxNiveauLevelSteps', Number(e.target.value))}
                 className="h-9"
               />
             </div>

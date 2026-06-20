@@ -59,8 +59,7 @@ export interface WizardState {
   planningConfig: {
     groupMaxSize: number;
     groupMinSize: number;
-    maxNiveauSpanBeginner: number;
-    maxNiveauSpanAdvanced: number;
+    maxNiveauLevelSteps: number;
     trainerUtilizationMaxPct: number;
     preferHistoricGroups: boolean;
     avoidHighFailureSlots: boolean;

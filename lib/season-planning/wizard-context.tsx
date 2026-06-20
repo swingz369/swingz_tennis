@@ -36,16 +36,15 @@ function createInitialState(seasonId: string, clubId: string, initialStep?: numb
     trainerUtilization: {},
     planningConfig: {
       groupMaxSize: 6,
-      groupMinSize: 3,
-      maxNiveauSpanBeginner: 2,
-      maxNiveauSpanAdvanced: 2,
-      trainerUtilizationMaxPct: 80,
+      groupMinSize: 1,
+      maxNiveauLevelSteps: 1,
+      trainerUtilizationMaxPct: 100,
       preferHistoricGroups: true,
       avoidHighFailureSlots: true,
       slotFailureThreshold: 30,
-      slotDurationMinutes: 90,
+      slotDurationMinutes: 60,
       kidsGroupMaxSize: 6,
-      kidsGroupMinSize: 3,
+      kidsGroupMinSize: 1,
       maxIterations: 1000,
       optimizationGoals: ['minimize_conflicts', 'balance_trainer_load', 'maximize_preferences'],
       allowOverbooking: false,
@@ -279,7 +278,7 @@ export function WizardProvider({
   );
 
   const detectConflicts = useCallback(async () => {
-    dispatch({ type: 'SET_PROCESSING', isProcessing: true });
+    // ponytail: no SET_PROCESSING — it unmounts FinalizeStep and resets hasRunCheck local state
     try {
       const res = await apiFetch(`/api/seasons/${state.seasonId}/planning/conflicts`, {
         method: 'POST',

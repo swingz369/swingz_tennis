@@ -42,14 +42,13 @@ import type {
  * tests can reference the exact shape (vs. re-declaring it).
  */
 export interface ClusteringConfig {
-  maxNiveauSpanBeginner: number; // months, default 4
-  maxNiveauSpanAdvanced: number; // months, default 8
-  trainerUtilizationMaxPct: number; // default 80
-  groupMaxSize: number; // default 12
-  groupMinSize: number; // default 3
+  maxNiveauLevelSteps: number; // max skill-level steps within a group, default 1
+  trainerUtilizationMaxPct: number; // default 100 (% of max_hours_per_week)
+  groupMaxSize: number; // default 6
+  groupMinSize: number; // default 1
   kidsGroupMaxSize: number; // default 6
-  kidsGroupMinSize: number; // default 3
-  slotDurationMinutes: number; // default 90
+  kidsGroupMinSize: number; // default 1
+  slotDurationMinutes: number; // default 60
   provenGroupThreshold: number; // attendance pct, default 80
   slotFailureThreshold: number; // pct, default 30
   waitlistPriorityRule: string;
@@ -70,14 +69,13 @@ export interface ClusteringConfig {
 }
 
 const DEFAULT_CONFIG: ClusteringConfig = {
-  maxNiveauSpanBeginner: 4,
-  maxNiveauSpanAdvanced: 8,
-  trainerUtilizationMaxPct: 80,
-  groupMaxSize: 12,
-  groupMinSize: 3,
+  maxNiveauLevelSteps: 1,
+  trainerUtilizationMaxPct: 100,
+  groupMaxSize: 6,
+  groupMinSize: 1,
   kidsGroupMaxSize: 6,
-  kidsGroupMinSize: 3,
-  slotDurationMinutes: 90,
+  kidsGroupMinSize: 1,
+  slotDurationMinutes: 60,
   provenGroupThreshold: 80,
   slotFailureThreshold: 30,
   waitlistPriorityRule: 'registration_time',
@@ -143,6 +141,20 @@ const NEXT_LEVEL: Record<SkillLevel, SkillLevel> = {
   intermediate: 'advanced',
   advanced: 'professional',
   professional: 'professional',
+};
+
+const LEVEL_RANK: Record<SkillLevel, number> = {
+  beginner: 0,
+  intermediate: 1,
+  advanced: 2,
+  professional: 3,
+};
+
+const LEVEL_LABEL: Record<SkillLevel, string> = {
+  beginner: 'Anfänger',
+  intermediate: 'Mittel',
+  advanced: 'Fortgeschritten',
+  professional: 'Profi',
 };
 
 // ============================================
@@ -284,10 +296,10 @@ export class SeasonClusteringEngine {
 
     if (dbConfig) {
       this.config = {
-        maxNiveauSpanBeginner:
-          dbConfig.max_niveau_span_beginner_months ?? DEFAULT_CONFIG.maxNiveauSpanBeginner,
-        maxNiveauSpanAdvanced:
-          dbConfig.max_niveau_span_advanced_months ?? DEFAULT_CONFIG.maxNiveauSpanAdvanced,
+        maxNiveauLevelSteps:
+          (dbConfig as Record<string, unknown>).max_niveau_level_steps != null
+            ? Number((dbConfig as Record<string, unknown>).max_niveau_level_steps)
+            : DEFAULT_CONFIG.maxNiveauLevelSteps,
         trainerUtilizationMaxPct:
           dbConfig.trainer_utilization_max_pct ?? DEFAULT_CONFIG.trainerUtilizationMaxPct,
         groupMaxSize: dbConfig.group_max_size ?? DEFAULT_CONFIG.groupMaxSize,
@@ -763,9 +775,14 @@ export class SeasonClusteringEngine {
           // Capacity check
           if (assignment.memberIds.length >= maxSize) continue;
 
-          // Level compatibility: must match the group's level
+          // Level compatibility: within configured niveau step tolerance
           const groupInfo = candidateGroups.get(assignment.groupId);
-          if (groupInfo && groupInfo.level !== effectiveLevel) continue;
+          if (groupInfo) {
+            const levelDiff = Math.abs(
+              LEVEL_RANK[effectiveLevel] - LEVEL_RANK[groupInfo.level as SkillLevel]
+            );
+            if (levelDiff > this.config.maxNiveauLevelSteps) continue;
+          }
 
           // Age-group compatibility: must match the group's age group
           if (groupInfo && groupInfo.ageGroup && groupInfo.ageGroup !== memberAgeGroup) continue;
@@ -1167,211 +1184,195 @@ export class SeasonClusteringEngine {
     const maxSize = ageGroup === 'kids' ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
     const minSize = ageGroup === 'kids' ? this.config.kidsGroupMinSize : this.config.groupMinSize;
 
-    // Group members by effective level (promoted or original)
-    const levelGroups = new Map<SkillLevel, typeof cohort>();
-    for (const skill of ['beginner', 'intermediate', 'advanced', 'professional'] as SkillLevel[]) {
-      levelGroups.set(skill, []);
-    }
-    for (const m of cohort) {
-      const effectiveLevel = m.promotedLevel || m.skillLevel;
-      levelGroups.get(effectiveLevel)?.push(m);
+    // ponytail: sort-and-slice — pragmatic grouping, avoids strict level buckets leaving
+    // members unassigned when there aren't enough at each level to fill a group.
+    const sorted = [...cohort].sort((a, b) => {
+      const aRank = LEVEL_RANK[a.promotedLevel || a.skillLevel];
+      const bRank = LEVEL_RANK[b.promotedLevel || b.skillLevel];
+      if (aRank !== bRank) return aRank - bRank;
+      return a.experienceMonths - b.experienceMonths;
+    });
+
+    // Build avoid-member map
+    const avoidMap = new Map<string, Set<string>>();
+    for (const m of sorted) {
+      if (m.avoidMemberIds.length > 0) avoidMap.set(m.id, new Set(m.avoidMemberIds));
     }
 
     let groupIndex = startGroupIndex;
+    const numGroups = Math.ceil(sorted.length / maxSize);
 
-    for (const [skillLevel, levelMembers] of levelGroups) {
-      if (levelMembers.length === 0) continue;
+    for (let i = 0; i < numGroups; i++) {
+      const slice = sorted.slice(i * maxSize, (i + 1) * maxSize);
 
-      const matchingGroups = Array.from(candidateGroups.values()).filter(
-        (g) => g.level === skillLevel && g.ageGroup === ageGroup
+      // Filter out avoid-member conflicts from this slice
+      const filteredSlice = slice.filter((m) => {
+        const enemies = avoidMap.get(m.id);
+        if (!enemies || enemies.size === 0) return true;
+        return !slice.some((other) => other.id !== m.id && enemies.has(other.id));
+      });
+
+      if (filteredSlice.length < minSize && numGroups > 1) {
+        for (const m of slice) {
+          if (!filteredSlice.includes(m) && !assignedMemberIds.has(m.id)) {
+            if (!m._unassignedReason)
+              m._unassignedReason = `Avoid-Konflikt (${ageGroup}) — wird in zweiter Runde neu zugewiesen`;
+          }
+        }
+        continue;
+      }
+
+      // Modal level = most common level in this slice
+      const levelCounts: Record<SkillLevel, number> = {
+        beginner: 0,
+        intermediate: 0,
+        advanced: 0,
+        professional: 0,
+      };
+      for (const m of filteredSlice) levelCounts[m.promotedLevel || m.skillLevel]++;
+      const skillLevel = (Object.entries(levelCounts) as [SkillLevel, number][]).sort(
+        ([, a], [, b]) => b - a
+      )[0][0];
+
+      const levelRanks = filteredSlice.map((m) => LEVEL_RANK[m.promotedLevel || m.skillLevel]);
+      const levelSpan = Math.max(...levelRanks) - Math.min(...levelRanks);
+
+      // Find best time slot
+      const bestSlot = this.findBestTimeSlot(
+        filteredSlice,
+        trainers,
+        courts,
+        trainerSessionCount,
+        courtTimeSlotUsage,
+        slotFailureRates,
+        assignments,
+        timeSlots
       );
 
-      // If no age-specific groups found, allow any matching level group
-      const allMatching =
-        matchingGroups.length > 0
-          ? matchingGroups
-          : Array.from(candidateGroups.values()).filter((g) => g.level === skillLevel);
-
-      // Build avoid-member map for this cohort
-      const avoidMap = new Map<string, Set<string>>();
-      for (const m of levelMembers) {
-        if (m.avoidMemberIds.length > 0) {
-          avoidMap.set(m.id, new Set(m.avoidMemberIds));
-        }
-      }
-
-      const numGroups = Math.ceil(levelMembers.length / maxSize);
-
-      for (let i = 0; i < numGroups; i++) {
-        const slice = levelMembers.slice(i * maxSize, (i + 1) * maxSize);
-
-        // Filter out avoid-member conflicts from this slice
-        const filteredSlice = slice.filter((m) => {
-          const enemies = avoidMap.get(m.id);
-          if (!enemies || enemies.size === 0) return true;
-          // Check if any member in this slice is on m's avoid list
-          return !slice.some((other) => other.id !== m.id && enemies.has(other.id));
-        });
-
-        if (filteredSlice.length < minSize && numGroups > 1) {
-          // Mark avoid-conflicted members for later retry
-          for (const m of slice) {
-            if (!filteredSlice.includes(m) && !assignedMemberIds.has(m.id)) {
-              if (!m._unassignedReason) {
-                m._unassignedReason = `Avoid-Konflikt in ${skillLevel} (${ageGroup}) — wird in zweiter Runde neu zugewiesen`;
-              }
-            }
-          }
-          continue;
-        }
-
-        // Find best time slot
-        const bestSlot = this.findBestTimeSlot(
-          filteredSlice,
-          trainers,
-          courts,
-          trainerSessionCount,
-          courtTimeSlotUsage,
-          slotFailureRates,
-          assignments,
-          timeSlots
-        );
-
-        if (!bestSlot) {
-          // No slot found — mark all for retry (will be picked up in second pass or remain unassigned)
-          for (const m of filteredSlice) {
-            if (!assignedMemberIds.has(m.id)) {
-              m._unassignedReason = `Kein verfügbarer Zeitslot mit Trainer für Level ${skillLevel} (${ageGroup})`;
-            }
-          }
-          continue;
-        }
-
-        // Select matching group or create placeholder in DB
-        const existingGroup = allMatching[groupIndex % Math.max(1, allMatching.length)];
-        let group: GroupInfo;
-        if (existingGroup) {
-          group = existingGroup;
-        } else {
-          const prefix =
-            ageGroup === 'kids' ? 'Kids' : skillLevel.charAt(0).toUpperCase() + skillLevel.slice(1);
-          const groupName = `${prefix} Gruppe ${groupIndex + 1}`;
-          const [newGroup] = await db
-            .insert(groups)
-            .values({
-              club_id: this.clubId,
-              name: groupName,
-              level: skillLevel,
-              age_group: ageGroup === 'kids' ? 'kids' : 'adult',
-              is_active: true,
-              member_ids: [],
-            })
-            .returning({
-              id: groups.id,
-              name: groups.name,
-              level: groups.level,
-              age_group: groups.age_group,
-            });
-          group = {
-            id: newGroup.id,
-            name: newGroup.name,
-            level: newGroup.level as SkillLevel,
-            ageGroup: newGroup.age_group,
-          };
-        }
-
-        groupIndex++;
-
-        // Calculate niveau spans
-        const experiences = filteredSlice.map((m) => m.experienceMonths);
-        const minExp = Math.min(...experiences);
-        const maxExp = Math.max(...experiences);
-        const span = maxExp - minExp;
-        const maxAllowedSpan =
-          skillLevel === 'beginner'
-            ? this.config.maxNiveauSpanBeginner
-            : this.config.maxNiveauSpanAdvanced;
-
-        const warnings: string[] = [];
-        if (span > maxAllowedSpan) {
-          warnings.push(
-            `Niveau-Spanne (${minExp}-${maxExp} Monate) überschreitet Maximum (${maxAllowedSpan})`
-          );
-        }
-
-        if (bestSlot.failureWarning) {
-          warnings.push(
-            `Zeitslot hat ${((bestSlot.failureRate || 0) * 100).toFixed(0)}% historische Ausfallrate`
-          );
-        }
-
-        if (filteredSlice.length < minSize) {
-          warnings.push(`Gruppe hat nur ${filteredSlice.length} Mitglieder (Minimum: ${minSize})`);
-        }
-
-        // Warn about avoid conflicts that were filtered out
-        const removedCount = slice.length - filteredSlice.length;
-        if (removedCount > 0) {
-          warnings.push(
-            `${removedCount} Mitglieder wegen Avoid-Konflikten aus dieser Gruppe entfernt`
-          );
-        }
-
-        // Track trainer session
-        const currentCount = trainerSessionCount.get(bestSlot.trainerId) || 0;
-        trainerSessionCount.set(bestSlot.trainerId, currentCount + 1);
-
-        // Track court usage
-        const courtKey = `${bestSlot.dayOfWeek}_${bestSlot.startTime}`;
-        const courtUsage = courtTimeSlotUsage.get(bestSlot.courtId || '') || new Set();
-        courtUsage.add(courtKey);
-        courtTimeSlotUsage.set(bestSlot.courtId || '', courtUsage);
-
-        // Build member details with wish partner tracking
-        const memberDetails = filteredSlice.map((m) => {
-          const fulfilledWishes = m.wishPartnerIds.filter((wpid) =>
-            filteredSlice.some((sm) => sm.id === wpid)
-          );
-          const niveauMatch = this.computeNiveauMatch(m, filteredSlice);
-          const reason = this.buildAssignmentReason(m, bestSlot!, fulfilledWishes);
-
-          return {
-            memberId: m.id,
-            memberName: m.name,
-            niveauMatch,
-            experienceMonths: m.experienceMonths,
-            groupExperienceSpan: `${minExp}-${maxExp} Monate`,
-            wishPartnerFulfilled: fulfilledWishes.length > 0,
-            wishPartnerNames: fulfilledWishes.map(
-              (wpid) => filteredSlice.find((sm) => sm.id === wpid)?.name || 'Unbekannt'
-            ),
-            isPromoted: !!m.promotedLevel,
-            assignmentReason: reason,
-          };
-        });
-
-        assignments.push({
-          groupId: group.id,
-          groupName: group.name,
-          trainerId: bestSlot.trainerId,
-          trainerName: bestSlot.trainerName,
-          dayOfWeek: bestSlot.dayOfWeek,
-          startTime: bestSlot.startTime,
-          endTime: bestSlot.endTime,
-          courtId: bestSlot.courtId,
-          courtName: bestSlot.courtName,
-          memberIds: filteredSlice.map((m) => m.id),
-          memberDetails,
-          waitlistIds: [],
-          waitlistDetails: [],
-          warnings,
-          conflictIds: [],
-        });
-
+      if (!bestSlot) {
         for (const m of filteredSlice) {
-          assignedMemberIds.add(m.id);
+          if (!assignedMemberIds.has(m.id))
+            m._unassignedReason = `Kein verfügbarer Zeitslot mit Trainer (${ageGroup})`;
         }
+        continue;
       }
+
+      // Select matching group or create placeholder in DB
+      const allMatching = Array.from(candidateGroups.values()).filter(
+        (g) => g.level === skillLevel && (!g.ageGroup || g.ageGroup === ageGroup)
+      );
+      const existingGroup = allMatching[groupIndex % Math.max(1, allMatching.length)];
+      let group: GroupInfo;
+      if (existingGroup) {
+        group = existingGroup;
+      } else {
+        const prefix = ageGroup === 'kids' ? 'Kids' : LEVEL_LABEL[skillLevel];
+        const groupName = `${prefix} Gruppe ${groupIndex + 1}`;
+        const [newGroup] = await db
+          .insert(groups)
+          .values({
+            club_id: this.clubId,
+            name: groupName,
+            level: skillLevel,
+            age_group: ageGroup === 'kids' ? 'kids' : 'adult',
+            is_active: true,
+            member_ids: [],
+          })
+          .returning({
+            id: groups.id,
+            name: groups.name,
+            level: groups.level,
+            age_group: groups.age_group,
+          });
+        group = {
+          id: newGroup.id,
+          name: newGroup.name,
+          level: newGroup.level as SkillLevel,
+          ageGroup: newGroup.age_group,
+        };
+      }
+
+      groupIndex++;
+
+      // Calculate experience span for display
+      const experiences = filteredSlice.map((m) => m.experienceMonths);
+      const minExp = Math.min(...experiences);
+      const maxExp = Math.max(...experiences);
+
+      const warnings: string[] = [];
+      if (levelSpan > this.config.maxNiveauLevelSteps) {
+        const effectiveLevels = filteredSlice.map((m) => m.promotedLevel || m.skillLevel);
+        const minL =
+          LEVEL_LABEL[effectiveLevels.reduce((a, b) => (LEVEL_RANK[a] < LEVEL_RANK[b] ? a : b))];
+        const maxL =
+          LEVEL_LABEL[effectiveLevels.reduce((a, b) => (LEVEL_RANK[a] > LEVEL_RANK[b] ? a : b))];
+        warnings.push(
+          `Niveau-Spanne: ${minL}–${maxL} (${levelSpan} Stufen, Max. ${this.config.maxNiveauLevelSteps})`
+        );
+      }
+
+      if (bestSlot.failureWarning) {
+        warnings.push(
+          `Zeitslot hat ${((bestSlot.failureRate || 0) * 100).toFixed(0)}% historische Ausfallrate`
+        );
+      }
+      if (filteredSlice.length < minSize) {
+        warnings.push(`Gruppe hat nur ${filteredSlice.length} Mitglieder (Minimum: ${minSize})`);
+      }
+      const removedCount = slice.length - filteredSlice.length;
+      if (removedCount > 0) {
+        warnings.push(
+          `${removedCount} Mitglieder wegen Avoid-Konflikten aus dieser Gruppe entfernt`
+        );
+      }
+
+      trainerSessionCount.set(
+        bestSlot.trainerId,
+        (trainerSessionCount.get(bestSlot.trainerId) || 0) + 1
+      );
+      const courtKey = `${bestSlot.dayOfWeek}_${bestSlot.startTime}`;
+      const courtUsage = courtTimeSlotUsage.get(bestSlot.courtId || '') || new Set<string>();
+      courtUsage.add(courtKey);
+      courtTimeSlotUsage.set(bestSlot.courtId || '', courtUsage);
+
+      const memberDetails = filteredSlice.map((m) => {
+        const fulfilledWishes = m.wishPartnerIds.filter((wpid) =>
+          filteredSlice.some((sm) => sm.id === wpid)
+        );
+        return {
+          memberId: m.id,
+          memberName: m.name,
+          niveauMatch: this.computeNiveauMatch(m, filteredSlice),
+          experienceMonths: m.experienceMonths,
+          groupExperienceSpan: `${minExp}-${maxExp} Monate`,
+          wishPartnerFulfilled: fulfilledWishes.length > 0,
+          wishPartnerNames: fulfilledWishes.map(
+            (wpid) => filteredSlice.find((sm) => sm.id === wpid)?.name || 'Unbekannt'
+          ),
+          isPromoted: !!m.promotedLevel,
+          assignmentReason: this.buildAssignmentReason(m, bestSlot!, fulfilledWishes),
+        };
+      });
+
+      assignments.push({
+        groupId: group.id,
+        groupName: group.name,
+        trainerId: bestSlot.trainerId,
+        trainerName: bestSlot.trainerName,
+        dayOfWeek: bestSlot.dayOfWeek,
+        startTime: bestSlot.startTime,
+        endTime: bestSlot.endTime,
+        courtId: bestSlot.courtId,
+        courtName: bestSlot.courtName,
+        memberIds: filteredSlice.map((m) => m.id),
+        memberDetails,
+        waitlistIds: [],
+        waitlistDetails: [],
+        warnings,
+        conflictIds: [],
+      });
+
+      for (const m of filteredSlice) assignedMemberIds.add(m.id);
     }
 
     return groupIndex;
