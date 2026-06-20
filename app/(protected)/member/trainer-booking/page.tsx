@@ -428,7 +428,7 @@ export default function MemberTrainerBookingPage() {
               ? 'Auf Warteliste setzen'
               : 'Jetzt buchen'
         }
-        variant={actionMode === 'waitlist' ? 'outline' : 'brand'}
+        variant={actionMode === 'waitlist' ? 'default' : 'brand'}
         loading={bookingLoading}
         onConfirm={actionMode === 'waitlist' ? handleWaitlist : handleBook}
       >
