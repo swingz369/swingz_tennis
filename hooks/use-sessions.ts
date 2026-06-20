@@ -232,6 +232,73 @@ export function useCancelBooking() {
   });
 }
 
+// ── Warteliste ────────────────────────────────────────────────────────────────
+
+export function useWaitlistPosition(sessionId: string | null) {
+  return useQuery({
+    queryKey: ['waitlist', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return null;
+      const res = await fetch(`/api/sessions/${sessionId}/waitlist`, {
+        credentials: 'include',
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.entry as { id: string; position: number; created_at: string } | null;
+    },
+    enabled: !!sessionId,
+    staleTime: STALE_TIMES.SHORT,
+  });
+}
+
+export function useJoinWaitlist() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ sessionId, clubId }: { sessionId: string; clubId: string }) => {
+      const res = await fetch(`/api/sessions/${sessionId}/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clubId }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Warteliste fehlgeschlagen');
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['waitlist', variables.sessionId] });
+      toast.success('Du stehst auf der Warteliste');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Fehler bei der Warteliste');
+    },
+  });
+}
+
+export function useLeaveWaitlist() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ sessionId }: { sessionId: string }) => {
+      const res = await fetch(`/api/sessions/${sessionId}/waitlist`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Warteliste verlassen fehlgeschlagen');
+      }
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['waitlist', variables.sessionId] });
+      toast.success('Von der Warteliste entfernt');
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Fehler');
+    },
+  });
+}
+
 export function useUpdateBookingStatus() {
   const queryClient = useQueryClient();
 

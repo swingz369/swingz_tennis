@@ -18,8 +18,10 @@ import {
   XCircle,
   ChevronDown,
   AlertCircle,
+  UserPlus,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
+import { useUserClub } from '@/hooks/use-user-data';
 interface TrialParticipant {
   id: string;
   firstName: string;
@@ -40,6 +42,7 @@ interface TrialTrainingItem {
   status: string;
   notes?: string;
   createdAt: string;
+  clubId?: string;
 }
 
 interface TrainerOption {
@@ -57,6 +60,9 @@ interface CourtOption {
 }
 
 export default function AdminTrialApprovals() {
+  const { data: clubData } = useUserClub();
+  const adminClubId = clubData?.clubId ?? null;
+
   const [requests, setRequests] = useState<TrialTrainingItem[]>([]);
   const [trainers, setTrainers] = useState<TrainerOption[]>([]);
   const [courts, setCourts] = useState<CourtOption[]>([]);
@@ -73,6 +79,12 @@ export default function AdminTrialApprovals() {
   const [approveId, setApproveId] = useState<string | null>(null);
   const [selectedTrainerId, setSelectedTrainerId] = useState('');
   const [selectedCourtId, setSelectedCourtId] = useState('');
+
+  // Convert-to-member dialog state
+  const [convertId, setConvertId] = useState<string | null>(null);
+  const [convertLoading, setConvertLoading] = useState(false);
+  const [convertError, setConvertError] = useState<string | null>(null);
+  const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -206,6 +218,35 @@ export default function AdminTrialApprovals() {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleConvertToMember = async () => {
+    if (!convertId || !adminClubId) return;
+    const trial = requests.find((r) => r.id === convertId);
+    if (!trial) return;
+
+    setConvertLoading(true);
+    setConvertError(null);
+    try {
+      const res = await apiFetch(`/api/admin/trial-training/${convertId}/convert-to-member`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: trial.participant.email,
+          fullName: `${trial.participant.firstName} ${trial.participant.lastName}`,
+          clubId: adminClubId,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Konvertierung fehlgeschlagen');
+      setConvertedIds((prev) => new Set(prev).add(convertId));
+      setConvertId(null);
+    } catch (err: unknown) {
+      setConvertError(err instanceof Error ? err.message : 'Unbekannter Fehler');
+    } finally {
+      setConvertLoading(false);
     }
   };
 
@@ -450,6 +491,29 @@ export default function AdminTrialApprovals() {
                         )}
                       </div>
                     )}
+
+                    {/* Zu Mitglied konvertieren — für geplante/abgeschlossene Probetrainings */}
+                    {(r.status === 'scheduled' || r.status === 'completed') && (
+                      <div className="pt-2">
+                        {convertedIds.has(r.id) ? (
+                          <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50 gap-1">
+                            <CheckCircle className="h-3 w-3" /> Konvertiert
+                          </Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setConvertId(r.id);
+                              setConvertError(null);
+                            }}
+                            className="gap-1 text-brand-light border-brand-light/30 hover:bg-brand-light/10"
+                          >
+                            <UserPlus className="h-4 w-4" /> Zu Mitglied konvertieren
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -585,6 +649,96 @@ export default function AdminTrialApprovals() {
                       <CheckCircle className="h-4 w-4" />
                     )}
                     Bestätigen &amp; Einplanen
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+      {/* Konvertieren-Dialog */}
+      {convertId &&
+        (() => {
+          const trial = requests.find((r) => r.id === convertId);
+          if (!trial) return null;
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="bg-background dark:bg-card rounded-2xl shadow-2xl border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
+                <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-brand-primary">
+                      Zu Mitglied konvertieren
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      Erstellt einen Vereins-Account und Mitgliedschaft
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setConvertId(null);
+                      setConvertError(null);
+                    }}
+                  >
+                    ✕
+                  </Button>
+                </div>
+
+                <div className="px-6 py-5 space-y-4">
+                  <div className="rounded-xl bg-brand-light/5 border border-brand-light/10 p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-brand-light" />
+                      <span className="text-sm font-medium">
+                        {trial.participant.firstName} {trial.participant.lastName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {trial.participant.email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Ein Supabase-Account wird angelegt (falls noch nicht vorhanden) und die Person
+                    wird als <strong>Mitglied</strong> im aktuellen Verein eingetragen. Die
+                    Zugangsdaten werden per E-Mail versandt.
+                  </p>
+
+                  {convertError && (
+                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 text-red-700 dark:text-red-400 text-sm flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                      {convertError}
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-6 py-4 border-t border-border dark:border-white/5 flex items-center justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setConvertId(null);
+                      setConvertError(null);
+                    }}
+                    disabled={convertLoading}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleConvertToMember}
+                    disabled={convertLoading || !adminClubId}
+                    className="gap-1"
+                  >
+                    {convertLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserPlus className="h-4 w-4" />
+                    )}
+                    Mitgliedschaft anlegen
                   </Button>
                 </div>
               </div>
