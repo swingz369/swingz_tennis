@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { buildPaginationMeta } from '@/lib/pagination';
@@ -32,9 +33,9 @@ export async function GET(req: NextRequest) {
       const offset = (page - 1) * limit;
 
       // CRITICAL: Scope clubs based on user role
-      // - Superadmin: sees ALL clubs
+      // - Owner/Superadmin: sees ALL clubs
       // - Admin/Trainer/Member: sees only their own club(s)
-      const isSuperadmin = auth.role === 'superadmin';
+      const isSuperadmin = auth.role === 'superadmin' || auth.role === 'owner';
 
       let clubsQuery = supabase
         .from('clubs')
@@ -107,7 +108,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   return withApiAuth(req, async (auth) => {
-    const hasRole = await verifyRole(auth, 'superadmin');
+    const hasRole = (await verifyRole(auth, 'superadmin')) || (await verifyRole(auth, 'owner'));
     if (!hasRole) {
       return forbiddenResponse('Superadmin access required');
     }
@@ -155,9 +156,22 @@ export async function POST(req: NextRequest) {
 
       log.info('Club created', { clubId: newClub.id, name: newClub.name });
 
+      // Give superadmin an admin membership so the club appears in their switcher.
+      // Owner skipped — they see all clubs via platform-level access, not club memberships.
+      if (auth.role === 'superadmin') {
+        const serviceSb = createServiceClient();
+        await serviceSb
+          .from('user_club_memberships')
+          .upsert(
+            { user_id: auth.user.id, club_id: newClub.id, role: 'admin', is_active: true },
+            { onConflict: 'user_id,club_id' }
+          );
+      }
+
       return NextResponse.json(
         {
           clubId: newClub.id,
+          club: { id: newClub.id, name: newClub.name },
           name: newClub.name,
         },
         { status: 201 }

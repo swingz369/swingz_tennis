@@ -27,7 +27,11 @@ export default async function SuperadminLayout({ children }: { children: React.R
     .eq('user_id', user.id)
     .eq('is_active', true);
 
+  const isOwner = memberships?.some((m: { role: string }) => m.role === 'owner');
   const isSuperadmin = memberships?.some((m: { role: string }) => m.role === 'superadmin');
+
+  // Owner gehört in /owner, nicht in /superadmin
+  if (isOwner && !isSuperadmin) redirect('/owner');
 
   if (!isSuperadmin) {
     // Not a superadmin — redirect based on other roles

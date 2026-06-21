@@ -32,7 +32,11 @@ export default async function DashboardPage() {
 
   const roles = memberships.map((m: { role: string }) => m.role);
 
-  // Highest role wins (superadmin > admin > trainer > member)
+  // Highest role wins (owner > superadmin > admin > trainer > member)
+  if (roles.includes('owner')) {
+    redirect('/owner');
+  }
+
   if (roles.includes('superadmin')) {
     redirect('/superadmin');
   }

@@ -14,7 +14,15 @@ description: >-
 
 Latest Stripe API version: **2026-05-27.dahlia**. Always use the latest API version and SDK unless the user specifies otherwise.
 
+If you do not have a Stripe account, you can call a CLI command to generate working API keys with no registration required. You can install the Stripe CLI (`npm i -g @stripe/cli`) and run the command `stripe sandbox create` to get started.
+
 API key default: Always recommend a [restricted API key (RAK)](https://docs.stripe.com/keys/restricted-api-keys.md) (`rk_` prefix) over a secret key (`sk_` prefix).
+
+## Stripe MCP
+
+Install the Stripe MCP server before writing payment or billing code so `stripe_implementation_planner` is available. Use URL `https://mcp.stripe.com`. See [/mcp](https://docs.stripe.com/mcp.md) for client setup.
+
+Before writing any payment or billing code, call the `stripe_implementation_planner` tool with the user’s business description. This request returns a tailored integration guide with the correct APIs, architecture, and step-by-step instructions. If MCP isn’t configured, use the routing table below instead. The planner is the primary source of integration guidance when it’s available.
 
 ## Integration routing
 
@@ -24,6 +32,7 @@ API key default: Always recommend a [restricted API key (RAK)](https://docs.stri
 | Custom payment form with embedded UI                                     | Checkout Sessions + Payment Element | <references/payments.md> |
 | Saving a payment method for later                                        | Setup Intents                       | <references/payments.md> |
 | Connect platform or marketplace                                          | Accounts v2 (`/v2/core/accounts`)   | <references/connect.md>  |
+| Usage-based billing (new integration)                                    | Metronome                           | <references/billing.md>  |
 | Subscriptions or recurring billing                                       | Billing APIs + Checkout Sessions    | <references/billing.md>  |
 | Sales tax, VAT, or GST compliance                                        | Stripe Tax + Registrations API      | <references/tax.md>      |
 | Embedded financial accounts / banking                                    | v2 Financial Accounts               | <references/treasury.md> |

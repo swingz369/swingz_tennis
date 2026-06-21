@@ -44,11 +44,12 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
 
   useGlobalKeyboardShortcuts();
 
+  const isOwner = user.roles?.includes('owner') ?? false;
   const isSuperAdmin = user.roles?.includes('superadmin') ?? false;
   const isAdmin = user.roles?.includes('admin') ?? false;
 
-  // Sidebar visible for admin/superadmin routes; hidden for trainer/member
-  const showSidebar = isSuperAdmin || isAdmin;
+  // Sidebar visible for owner/superadmin/admin; hidden for trainer/member
+  const showSidebar = isOwner || isSuperAdmin || isAdmin;
 
   if (showSidebar) {
     // ─── Admin / Superadmin layout: Left sidebar + header ───

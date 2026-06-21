@@ -1,20 +1,19 @@
 /**
  * lib/auth-common.ts — Shared Auth Constants & Helpers
  *
- * Centralized role hierarchy used by API auth, server-component guards, and tests.
- * Single source of truth — update here and all consumers stay in sync.
- *
  * Role Architecture:
- *   superadmin → club_id = NULL in DB, platform-wide access
- *   admin      → club_id = specific club, manages that club
+ *   owner      → Plattformbetreiber (Swingz GmbH), club_id = NULL, sieht alles
+ *   superadmin → Tennisschule-Chef, verwaltet Gruppe von Vereinen, club_id = NULL
+ *   admin      → Vereinsadmin, genau 1 Verein (club_id gesetzt)
  *   trainer    → club_id = specific club
  *   member     → club_id = specific club
  */
 
-export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
+export type UserRole = 'owner' | 'superadmin' | 'admin' | 'trainer' | 'member';
 
 /** Higher number = more privileges */
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
+  owner: 5,
   superadmin: 4,
   admin: 3,
   trainer: 2,
@@ -22,7 +21,7 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
 };
 
 /** All roles sorted from highest to lowest privilege */
-export const ALL_ROLES: UserRole[] = ['superadmin', 'admin', 'trainer', 'member'];
+export const ALL_ROLES: UserRole[] = ['owner', 'superadmin', 'admin', 'trainer', 'member'];
 
 /**
  * Check if `userRole` meets or exceeds `requiredRole`.

@@ -42,6 +42,12 @@ interface Club {
 }
 
 const roleColors = {
+  owner: {
+    bg: 'bg-indigo-50 dark:bg-indigo-900/20',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    light: 'indigo',
+    ring: 'ring-indigo-300/40',
+  },
   superadmin: {
     bg: 'bg-purple-50 dark:bg-purple-900/20',
     text: 'text-purple-700 dark:text-purple-300',
@@ -134,7 +140,7 @@ export function Sidebar({
   }, [open, onClose]);
 
   // Centralised role detection via hook
-  const { currentRole, isSuperAdmin, isAdmin } = useUserRole(roles);
+  const { currentRole, isOwner, isSuperAdmin, isAdmin } = useUserRole(roles);
   const colors = roleColors[currentRole];
 
   // Feature flags — hide sidebar sections for disabled modules
@@ -297,23 +303,44 @@ export function Sidebar({
       });
     }
 
-    if (isSuperAdmin) {
+    if (isOwner) {
       return [
         {
           label: 'Plattform',
           icon: Shield,
           subItems: [
-            { name: 'Vereinsübersicht', href: '/superadmin/tenants' },
-            { name: 'Club-Verwaltung', href: '/superadmin/clubs' },
-            { name: 'Plattform-Analyse', href: '/admin/analytics' },
+            { name: 'Alle Vereine', href: '/owner/clubs' },
+            { name: 'Superadmins', href: '/owner/superadmins' },
+            { name: 'Zugänge & Anfragen', href: '/owner/access' },
+          ],
+        },
+        {
+          label: 'System',
+          icon: Settings,
+          subItems: [
+            { name: 'Plattform-Statistiken', href: '/owner' },
+            { name: 'System-Einstellungen', href: '/owner/settings' },
+          ],
+        },
+      ];
+    }
+
+    if (isSuperAdmin) {
+      return [
+        {
+          label: 'Meine Vereine',
+          icon: Building2,
+          subItems: [
+            { name: 'Vereinsübersicht', href: '/superadmin/clubs' },
+            { name: 'Admins verwalten', href: '/superadmin/admins' },
           ],
         },
         {
           label: 'Verwaltung',
           icon: Settings,
           subItems: [
-            { name: 'Billing-Verwaltung', href: '/admin/billing' },
-            { name: 'System-Einstellungen', href: '/admin/settings' },
+            { name: 'Statistiken', href: '/superadmin/dashboard' },
+            { name: 'Einstellungen', href: '/superadmin/settings' },
           ],
         },
       ];
@@ -350,8 +377,8 @@ export function Sidebar({
       : []),
   ];
 
-  const dashboardHref = isSuperAdmin ? '/superadmin' : '/admin';
-  const sectionLabel = isSuperAdmin ? 'Plattform' : 'Administration';
+  const dashboardHref = isOwner ? '/owner' : isSuperAdmin ? '/superadmin' : '/admin';
+  const sectionLabel = isOwner ? 'Swingz' : isSuperAdmin ? 'Plattform' : 'Administration';
 
   // ────────────────────────────────────────────────────────────────────
   // Render
@@ -434,8 +461,8 @@ export function Sidebar({
           />
         )}
 
-        {/* Superadmin Club Switcher */}
-        {isSuperAdmin && hasMultipleClubs && (
+        {/* Owner / Superadmin Club Switcher */}
+        {(isOwner || isSuperAdmin) && hasMultipleClubs && (
           <div className="mx-3 mb-4 border border-border/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-muted/50 dark:bg-card/[0.02]">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}

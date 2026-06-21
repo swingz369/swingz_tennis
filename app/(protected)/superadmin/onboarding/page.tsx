@@ -104,7 +104,7 @@ export default function SuperadminOnboardingPage() {
         return;
       }
       const data = await res.json();
-      setCreatedClubId(data.club?.id);
+      setCreatedClubId(data.clubId);
       toast.success('Verein erstellt!');
     } catch {
       toast.error('Netzwerkfehler');

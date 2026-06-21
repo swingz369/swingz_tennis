@@ -17,8 +17,9 @@
  * └─────────────────────────┴────────────────────┴──────────────────────┘
  *
  * Role Architecture:
- *   superadmin → club_id = NULL in DB, platform-wide access
- *   admin      → club_id = specific club, manages that club
+ *   owner      → Plattformbetreiber, club_id = NULL, Vollzugriff
+ *   superadmin → Tennisschule-Chef, club_id = NULL, sieht verwaltete Clubs
+ *   admin      → Vereinsadmin, club_id = specific club
  *   trainer    → club_id = specific club
  *   member     → club_id = specific club
  *
@@ -49,7 +50,7 @@ export interface AuthContext {
   clubId: string | null;
   /** Club explicitly chosen by superadmin via cookie */
   selectedClubId?: string;
-  role: 'superadmin' | 'admin' | 'trainer' | 'member';
+  role: 'owner' | 'superadmin' | 'admin' | 'trainer' | 'member';
   roles: string[];
   memberships: Array<{ club_id: string | null; role: string }>;
 }
@@ -86,7 +87,7 @@ async function buildAuthContext(
   let effectiveClubId: string | null = null;
 
   const cookieValue = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
-  if (effectiveRole === 'superadmin') {
+  if (effectiveRole === 'owner' || effectiveRole === 'superadmin') {
     if (cookieValue) {
       const { data: clubCheck } = await supabase
         .from('clubs')
@@ -181,7 +182,7 @@ export async function requireAuth(request: NextRequest): Promise<AuthContext> {
  */
 export async function verifyRole(
   auth: AuthContext,
-  requiredRole: 'superadmin' | 'admin' | 'trainer' | 'member'
+  requiredRole: 'owner' | 'superadmin' | 'admin' | 'trainer' | 'member'
 ): Promise<boolean> {
   return hasRole(auth.role, requiredRole);
 }
