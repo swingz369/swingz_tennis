@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
 import { requireAuth } from '@/lib/auth';
-import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
+import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
@@ -37,8 +37,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const uniqueClubs = allClubs.filter((c, i, self) => i === self.findIndex((x) => x.id === c.id));
 
-  // Resolve the active club from ADMIN_CLUB_COOKIE (for both superadmin and admin).
-  // This matches the logic in lib/admin-context.ts and lib/api-auth.ts.
+  // Resolve active club from ADMIN_CLUB_COOKIE. Owner skipped — uses service client.
   const cookieStore = await cookies();
   let selectedClubId: string | null = null;
 
@@ -58,25 +57,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     }
   }
 
-  // Auto-set ADMIN_CLUB_COOKIE for regular admins so API routes resolve the same club.
-  // Previously the cookie was only set by the superadmin club-switcher, causing a mismatch
-  // between the layout's selectedClubId and buildAuthContext's effectiveClubId in api-auth.ts.
-  if (isAdmin && selectedClubId) {
-    const existingCookie = cookieStore.get(ADMIN_CLUB_COOKIE)?.value;
-    if (existingCookie !== selectedClubId) {
-      try {
-        cookieStore.set(ADMIN_CLUB_COOKIE, selectedClubId, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: ADMIN_CLUB_COOKIE_MAX_AGE,
-          path: '/',
-        });
-      } catch {
-        // Read-only cookie context — safe to ignore
-      }
-    }
-  }
+  // Cookie-Set im Server Component ist nicht möglich (Next.js 13+).
+  // withApiAuth in api-auth.ts setzt ADMIN_CLUB_COOKIE automatisch beim ersten API-Call.
 
   // Find primary club: prefer selectedClubId, fallback to first membership with a club
   const primaryMembership = selectedClubId

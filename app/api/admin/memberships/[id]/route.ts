@@ -15,6 +15,7 @@ type RouteContext = {
 };
 
 const ROLE_HIERARCHY = {
+  owner: 5,
   superadmin: 4,
   admin: 3,
   trainer: 2,
