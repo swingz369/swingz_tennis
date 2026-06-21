@@ -1,7 +1,7 @@
 # SwingZ — Project Instructions
 
 > Automatisch bei jedem Session-Start geladen. Nur Dinge die NICHT aus dem Code offensichtlich sind.
-> Zuletzt verifiziert: 17. Juni 2026 (gegen echten Code geprüft)
+> Zuletzt verifiziert: 21. Juni 2026 (5-Rollen-Hierarchie: owner > superadmin > admin > trainer > member)
 
 ---
 
@@ -19,7 +19,7 @@
 
 ```
 app/                    # Next.js 16 App Router
-  (protected)/          # admin/, member/, trainer/, superadmin/
+  (protected)/          # owner/, superadmin/, admin/, trainer/, member/
   (public)/             # trial-training/ (kein Login nötig)
   api/                  # API Routes (255)
   landing/              # Marketing Landing Page
@@ -67,19 +67,35 @@ Vollständige Regeln: `docs/BUSINESS_RULES.md`
 ### Hierarchie
 
 ```
-superadmin  →  admin  →  trainer  →  member
+owner  →  superadmin  →  admin  →  trainer  →  member
 ```
 
-| Rolle        | Dashboard     | Besonderheit                                        |
-| ------------ | ------------- | --------------------------------------------------- |
-| `superadmin` | `/superadmin` | Verwaltet mehrere Vereine, Club-Switcher in Sidebar |
-| `admin`      | `/admin`      | **Genau 1 Verein** — mehrere Clubs → superadmin     |
-| `trainer`    | `/trainer`    | Kann in mehreren Vereinen aktiv sein                |
-| `member`     | `/member`     | Kann in mehreren Vereinen aktiv sein                |
+| Rolle        | Dashboard     | Besonderheit                                                    |
+| ------------ | ------------- | --------------------------------------------------------------- |
+| `owner`      | `/owner`      | Plattformbetreiber (Swingz GmbH). Sieht/verwaltet ALLE Vereine. |
+| `superadmin` | `/superadmin` | Tennisschule-Chef. Verwaltet mehrere Vereine, Club-Switcher.    |
+| `admin`      | `/admin`      | **Genau 1 Verein** — mehrere Clubs → superadmin                 |
+| `trainer`    | `/trainer`    | Kann in mehreren Vereinen aktiv sein                            |
+| `member`     | `/member`     | Kann in mehreren Vereinen aktiv sein                            |
+
+**Owner-Besonderheiten:**
+
+- Keine `club_id` in Memberships — nur die Rolle `owner`
+- Sieht alle Clubs ohne Membership (Service-Client in Server Components)
+- `/api/clubs` und `/api/owner/invite-admin` (Superadmin per E-Mail einladen)
+- Keine autom. Admin-Membership beim Club-Erstellen (anders als Superadmin)
 
 ### Dashboard-Dispatch (`/dashboard`)
 
-Höchste aktive Rolle aus `user_club_memberships` gewinnt. Kein aktives Membership → `/member` zeigt Hinweis "Admin kontaktieren" (kein Probetraining-Formular).
+Höchste Rolle gewinnt (in dieser Reihenfolge):
+
+1. `owner` → `/owner`
+2. `superadmin` → `/superadmin`
+3. `admin` → `/admin/members`
+4. `trainer` → `/trainer`
+5. Sonst → `/member`
+
+Kein aktives Membership → `/member` zeigt Hinweis "Admin kontaktieren" (kein Probetraining-Formular).
 
 ### Probetraining
 
@@ -153,22 +169,28 @@ In `notifications`-Tabelle via Service-Client einfügen.
 
 ## Key Files
 
-| Datei                                      | Zweck                                                |
-| ------------------------------------------ | ---------------------------------------------------- |
-| `proxy.ts`                                 | Auth-Middleware, Route-Protection, CSRF              |
-| `lib/auth.ts`                              | `requireAuth()` — Server Component Auth Guard        |
-| `lib/api-auth.ts`                          | `withApiAuth()`, `verifyRole()` — API Route Auth     |
-| `lib/admin-context.ts`                     | `requireAdminClub()` — Admin + Club Kontext          |
-| `lib/cookies.ts`                           | `ADMIN_CLUB_COOKIE` — Cookie-Name für Club-Selektion |
-| `lib/logger.ts`                            | `createLogger()` — Structured Logging                |
-| `lib/env.ts`                               | Zod-validierte ENV-Variablen                         |
-| `lib/format.ts`                            | Datum/Zeit/Währung Formatter (de-DE)                 |
-| `lib/api-fetch.ts`                         | Client-Side Fetch Wrapper                            |
-| `lib/stripe/client.ts`                     | Stripe (graceful, für Checkout)                      |
-| `lib/stripe/stripe-client.ts`              | Stripe (strict, für Webhooks)                        |
-| `lib/features.ts`                          | Feature-Flag-Keys (JSONB in `clubs.features`)        |
-| `src/infrastructure/persistence/schema.ts` | Drizzle Schema (alle Tabellen)                       |
-| `docs/BUSINESS_RULES.md`                   | Verbindliche Produkt- und Rollenregeln               |
+| Datei                                             | Zweck                                                |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| `proxy.ts`                                        | Auth-Middleware, Route-Protection, CSRF              |
+| `lib/auth.ts`                                     | `requireAuth()` — Server Component Auth Guard        |
+| `lib/api-auth.ts`                                 | `withApiAuth()`, `verifyRole()` — API Route Auth     |
+| `lib/admin-context.ts`                            | `requireAdminClub()` — Admin + Club Kontext          |
+| `lib/cookies.ts`                                  | `ADMIN_CLUB_COOKIE` — Cookie-Name für Club-Selektion |
+| `lib/logger.ts`                                   | `createLogger()` — Structured Logging                |
+| `lib/env.ts`                                      | Zod-validierte ENV-Variablen                         |
+| `lib/format.ts`                                   | Datum/Zeit/Währung Formatter (de-DE)                 |
+| `lib/api-fetch.ts`                                | Client-Side Fetch Wrapper                            |
+| `lib/stripe/client.ts`                            | Stripe (graceful, für Checkout)                      |
+| `lib/stripe/stripe-client.ts`                     | Stripe (strict, für Webhooks)                        |
+| `lib/features.ts`                                 | Feature-Flag-Keys (JSONB in `clubs.features`)        |
+| `lib/auth-common.ts`                              | `UserRole` Typ + `ROLE_HIERARCHY` + `ALL_ROLES`      |
+| `src/infrastructure/persistence/schema.ts`        | Drizzle Schema (alle Tabellen)                       |
+| `docs/BUSINESS_RULES.md`                          | Verbindliche Produkt- und Rollenregeln               |
+| `app/(protected)/owner/layout.tsx`                | Owner-Auth-Guard                                     |
+| `app/(protected)/owner/page.tsx`                  | Owner-Dashboard (KPIs via Service-Client)            |
+| `app/(protected)/owner/clubs/page.tsx`            | Club-Management + Admin-Invite-Dialog                |
+| `app/api/owner/invite-admin/route.ts`             | POST — Admin per Supabase-Invite einladen            |
+| `supabase/migrations/20260621_add_owner_role.sql` | Migration: `is_owner()`, RLS-Policies                |
 
 ---
 
@@ -186,12 +208,12 @@ Component-Tests verwenden `TestProviders` aus `src/__tests__/test-utils.tsx`.
 
 ## Test-Accounts (Entwicklung)
 
-| E-Mail                           | Rolle      | Verein                                              |
-| -------------------------------- | ---------- | --------------------------------------------------- |
-| `admin@swingz.com`               | superadmin | Tennis Club Berlin, Badminton Club Hamburg, weitere |
-| `admin@tc-rheinland.de`          | admin      | TC Rheinland e.V.                                   |
-| `trainer.1-8@tc-rheinland.de`    | trainer    | TC Rheinland e.V.                                   |
-| `mitglied.1-120@tc-rheinland.de` | member     | TC Rheinland e.V.                                   |
+| E-Mail                           | Rolle   | Details                            |
+| -------------------------------- | ------- | ---------------------------------- |
+| `admin@swingz.com`               | owner   | Plattformbetreiber (Swingz GmbH)   |
+| `admin@tc-rheinland.de`          | admin   | TC Rheinland e.V. (genau 1 Verein) |
+| `trainer.1-8@tc-rheinland.de`    | trainer | TC Rheinland e.V.                  |
+| `mitglied.1-120@tc-rheinland.de` | member  | TC Rheinland e.V.                  |
 
 Passwörter: `TEST-CREDENTIALS.md` (nicht in Git).
 
@@ -208,3 +230,5 @@ Passwörter: `TEST-CREDENTIALS.md` (nicht in Git).
 - ❌ `createServiceClient()` in Client Components — nur Server-Side
 - ❌ Drizzle/postgres-js für Queries aus Dev-Umgebung — Supabase REST verwenden
 - ❌ Admin-User mehreren Vereinen zuweisen — Admin = genau 1 Verein
+- ❌ Owner mit `club_id` versehen — Owner hat nur Rolle, keine Membership zu Clubs
+- ❌ Owner automatisch Admin-Membership beim Club-Erstellen geben — nur Superadmin bekommt das
