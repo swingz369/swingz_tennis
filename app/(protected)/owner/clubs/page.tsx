@@ -41,6 +41,25 @@ export default function OwnerClubsPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [activating, setActivating] = useState<string | null>(null);
+
+  const handleActivateClub = async (clubId: string) => {
+    setActivating(clubId);
+    try {
+      const res = await apiFetch(`/api/clubs/${clubId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'active' }),
+      });
+      if (!res.ok) {
+        toast.error('Fehler beim Freigeben');
+        return;
+      }
+      toast.success('Verein freigegeben');
+      setClubs((prev) => prev.map((c) => (c.id === clubId ? { ...c, status: 'active' } : c)));
+    } finally {
+      setActivating(null);
+    }
+  };
 
   useEffect(() => {
     apiFetch('/api/clubs')
@@ -135,7 +154,20 @@ export default function OwnerClubsPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {club.status !== 'active' && <Badge variant="secondary">{club.status}</Badge>}
+                  {club.status === 'pending' && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="gap-1 text-xs h-7 bg-amber-500 hover:bg-amber-600"
+                      disabled={activating === club.id}
+                      onClick={() => handleActivateClub(club.id)}
+                    >
+                      {activating === club.id ? '...' : 'Freigeben'}
+                    </Button>
+                  )}
+                  {club.status !== 'active' && club.status !== 'pending' && (
+                    <Badge variant="secondary">{club.status}</Badge>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"

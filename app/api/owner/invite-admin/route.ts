@@ -16,16 +16,27 @@ export async function POST(request: NextRequest) {
     const isOwner = await verifyRole(auth, 'owner');
     if (!isOwner) return forbiddenResponse('Owner access required');
 
-    const { email, fullName, clubId } = await request.json();
+    const { email, fullName, clubId, role: inviteRole = 'admin' } = await request.json();
 
-    if (!email || !clubId) {
+    if (!['admin', 'superadmin'].includes(inviteRole)) {
+      return NextResponse.json({ error: 'Ungültige Rolle' }, { status: 400 });
+    }
+    if (!email) {
+      return NextResponse.json({ error: 'E-Mail ist erforderlich' }, { status: 400 });
+    }
+    // admin must have a club; superadmin club is optional
+    if (inviteRole === 'admin' && !clubId) {
       return NextResponse.json({ error: 'E-Mail und Verein sind erforderlich' }, { status: 400 });
     }
 
     const sb = createServiceClient();
 
-    const { data: club } = await sb.from('clubs').select('id, name').eq('id', clubId).maybeSingle();
-    if (!club) return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
+    let club: { id: string; name: string } | null = null;
+    if (clubId) {
+      const { data } = await sb.from('clubs').select('id, name').eq('id', clubId).maybeSingle();
+      if (!data) return NextResponse.json({ error: 'Verein nicht gefunden' }, { status: 404 });
+      club = data;
+    }
 
     // Supabase Admin Invite — schickt automatisch Setup-E-Mail
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -65,23 +76,25 @@ export async function POST(request: NextRequest) {
           { onConflict: 'id' }
         );
 
-      const { error: membershipErr } = await sb
-        .from('user_club_memberships')
-        .upsert(
-          { user_id: userId, club_id: clubId, role: 'admin', is_active: true },
-          { onConflict: 'user_id,club_id' }
-        );
+      if (clubId) {
+        const { error: membershipErr } = await sb
+          .from('user_club_memberships')
+          .upsert(
+            { user_id: userId, club_id: clubId, role: inviteRole, is_active: true },
+            { onConflict: 'user_id,club_id' }
+          );
 
-      if (membershipErr) {
-        log.error('Membership creation failed', membershipErr);
-        return NextResponse.json(
-          { error: 'Mitgliedschaft konnte nicht erstellt werden' },
-          { status: 500 }
-        );
+        if (membershipErr) {
+          log.error('Membership creation failed', membershipErr);
+          return NextResponse.json(
+            { error: 'Mitgliedschaft konnte nicht erstellt werden' },
+            { status: 500 }
+          );
+        }
       }
     }
 
-    log.info('Admin invited', { email, clubId, clubName: club.name });
-    return NextResponse.json({ success: true, clubName: club.name });
+    log.info(`${inviteRole} invited`, { email, clubId, clubName: club?.name });
+    return NextResponse.json({ success: true, clubName: club?.name });
   });
 }

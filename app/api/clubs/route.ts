@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const body = await req.json();
-      const { name, maxMembers, openingHours } = body;
+      const { name, city, maxMembers, openingHours } = body;
 
       if (!name || typeof name !== 'string' || name.trim().length === 0) {
         return NextResponse.json({ error: 'Club name is required' }, { status: 400 });
@@ -137,14 +137,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Club with this name already exists' }, { status: 400 });
       }
 
+      // Owner creates clubs as active; superadmin-created clubs start as pending (needs owner approval)
+      const status = auth.role === 'owner' ? 'active' : 'pending';
+
       // Create club
       const { data: newClub, error } = await supabase
         .from('clubs')
         .insert({
           name: name.trim(),
+          ...(city ? { city: city.trim() } : {}),
           max_members: maxMembers || 100,
           opening_hours: openingHours || {},
-          status: 'active',
+          status,
         })
         .select('id, name')
         .single();
