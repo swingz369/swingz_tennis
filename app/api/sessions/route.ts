@@ -43,8 +43,12 @@ export async function GET(req: NextRequest) {
 
     try {
       // Fetch upcoming sessions for this club (via schedule)
+      const dateFromParam = url.searchParams.get('dateFrom');
+      const dateToParam = url.searchParams.get('dateTo');
       const now = new Date().toISOString();
       const fourWeeksLater = new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString();
+      const rangeFrom = dateFromParam ?? now;
+      const rangeTo = dateToParam ?? fourWeeksLater;
 
       const { data: sessions, error: sessionsError } = await supabase
         .from('sessions')
@@ -66,8 +70,8 @@ export async function GET(req: NextRequest) {
         `
         )
         .eq('schedules.club_id', clubIdParam)
-        .gte('timeslot_start', now)
-        .lte('timeslot_start', fourWeeksLater)
+        .gte('timeslot_start', rangeFrom)
+        .lte('timeslot_start', rangeTo)
         .order('timeslot_start', { ascending: true });
 
       if (sessionsError) {

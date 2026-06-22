@@ -190,24 +190,22 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     if (!date) return;
     const from = `${date}T00:00:00`;
     const to = `${date}T23:59:59`;
-    const res = await apiFetch(
-      `/api/admin/bookings?clubId=${clubId}&dateFrom=${from}&dateTo=${to}&status=all&limit=200`
-    );
+    const res = await apiFetch(`/api/sessions?clubId=${clubId}&dateFrom=${from}&dateTo=${to}`);
     if (!res.ok) return;
     const data = await res.json();
-    const seen = new Set<string>();
-    const opts: SessionOption[] = [];
-    for (const b of data.bookings ?? []) {
-      if (b.session_id && !seen.has(b.session_id)) {
-        seen.add(b.session_id);
-        opts.push({
-          id: b.session_id,
-          timeslot_start: b.session_start_time ?? '',
-          timeslot_end: b.end_time ?? '',
-          court_name: b.court_name ?? '—',
-        });
-      }
-    }
+    const opts: SessionOption[] = (data.sessions ?? []).map(
+      (s: {
+        id: string;
+        timeslot_start: string;
+        timeslot_end: string;
+        courts?: { name?: string } | null;
+      }) => ({
+        id: s.id,
+        timeslot_start: s.timeslot_start,
+        timeslot_end: s.timeslot_end,
+        court_name: s.courts?.name ?? '—',
+      })
+    );
     setSessionOptions(opts);
   };
 
