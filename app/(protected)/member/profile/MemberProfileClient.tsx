@@ -57,17 +57,21 @@ interface Props {
 }
 
 export function MemberProfileClient({ member }: Props) {
-  const [family, setFamily] = useState<{ familyGroupId?: string; members: FamilyMember[] } | null>(
-    null
-  );
+  const [family, setFamily] = useState<{
+    familyGroupId?: string;
+    inviteCode?: string | null;
+    members: FamilyMember[];
+  } | null>(null);
   const [inviteCode, setInviteCode] = useState('');
   const [familyLoading, setFamilyLoading] = useState(false);
 
+  const reloadFamily = async () => {
+    const r = await apiFetch('/api/family-accounts');
+    setFamily(await r.json());
+  };
+
   useEffect(() => {
-    apiFetch('/api/family-accounts')
-      .then((r) => r.json())
-      .then((d) => setFamily(d))
-      .catch(() => {});
+    reloadFamily().catch(() => {});
   }, []);
 
   const createFamily = async () => {
@@ -79,8 +83,8 @@ export function MemberProfileClient({ member }: Props) {
     });
     const d = await res.json();
     if (d.inviteCode) {
-      toast.success('Familie erstellt! Code: ' + d.inviteCode);
-      setFamily({ familyGroupId: d.familyGroupId, members: [] });
+      toast.success('Familie erstellt!');
+      await reloadFamily();
     } else toast.error(d.error ?? 'Fehler');
     setFamilyLoading(false);
   };
@@ -96,8 +100,8 @@ export function MemberProfileClient({ member }: Props) {
     const d = await res.json();
     if (d.success) {
       toast.success('Familie beigetreten!');
-      const r = await apiFetch('/api/family-accounts');
-      setFamily(await r.json());
+      setInviteCode('');
+      await reloadFamily();
     } else toast.error(d.error ?? 'Fehler');
     setFamilyLoading(false);
   };
@@ -419,23 +423,50 @@ export function MemberProfileClient({ member }: Props) {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Einladungscode:</span>
-                <code className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
-                  {family.familyGroupId?.slice(0, 8).toUpperCase()}
-                </code>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(
-                      family.familyGroupId?.slice(0, 8).toUpperCase() ?? ''
-                    );
-                    toast.success('Code kopiert');
-                  }}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              {(() => {
+                const isParent = family.members.find((m) => m.isSelf)?.role === 'parent';
+                return (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-muted-foreground">Einladungscode:</span>
+                    {family.inviteCode ? (
+                      <>
+                        <code className="text-xs font-mono bg-muted px-2 py-0.5 rounded">
+                          {family.inviteCode}
+                        </code>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(family.inviteCode ?? '');
+                            toast.success('Code kopiert');
+                          }}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    ) : isParent ? (
+                      <span className="text-xs text-muted-foreground">Code bereits verwendet</span>
+                    ) : null}
+                    {isParent && (
+                      <button
+                        onClick={async () => {
+                          setFamilyLoading(true);
+                          const res = await apiFetch('/api/family-accounts', { method: 'PUT' });
+                          const d = await res.json();
+                          if (d.inviteCode) {
+                            toast.success('Neuer Code generiert');
+                            await reloadFamily();
+                          } else toast.error(d.error ?? 'Fehler');
+                          setFamilyLoading(false);
+                        }}
+                        disabled={familyLoading}
+                        className="text-xs text-brand-primary hover:underline disabled:opacity-50"
+                      >
+                        Neuen Code generieren
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
               <div className="space-y-2">
                 {(family.members ?? []).map((m) => (
                   <div

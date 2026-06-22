@@ -20,7 +20,6 @@ import {
   Trophy,
   X,
   CheckCircle,
-  User,
   CreditCard,
   Building2,
   MapPin,
@@ -212,6 +211,12 @@ export function Sidebar({
           subItems: [
             { name: 'Alle Mitglieder', href: '/admin/members' },
             { name: 'Familienkonten', href: '/admin/members/family' },
+            ...(!hiddenSections.has('work_duty')
+              ? [
+                  { name: 'Dienste verwalten', href: '/admin/work-duties' },
+                  { name: 'Zuweisungen', href: '/admin/work-duties/assignments' },
+                ]
+              : []),
           ],
           extraAction: onInvite
             ? {
@@ -261,18 +266,6 @@ export function Sidebar({
               },
             ]
           : []),
-        ...(!hiddenSections.has('work_duty')
-          ? [
-              {
-                label: 'Arbeitsdienst',
-                icon: HardHat,
-                subItems: [
-                  { name: 'Dienste verwalten', href: '/admin/work-duties' },
-                  { name: 'Zuweisungen', href: '/admin/work-duties/assignments' },
-                ],
-              },
-            ]
-          : []),
         {
           label: 'Finanzen',
           icon: DollarSign,
@@ -283,7 +276,7 @@ export function Sidebar({
           ],
         },
         {
-          label: 'Verein',
+          label: 'Verwaltung',
           icon: Building2,
           subItems: [
             { name: 'Dokumente', href: '/admin/documents' },
@@ -292,11 +285,18 @@ export function Sidebar({
           ],
         },
         {
+          label: 'Nachrichten',
+          icon: MessageSquare,
+          subItems: [
+            { name: 'Nachrichten', href: '/messages' },
+            { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
+          ],
+        },
+        {
           label: 'Einstellungen',
           icon: Settings,
           subItems: [
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
-            { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
             ...(!hiddenSections.has('shop')
               ? [{ name: 'Shop verwalten', href: '/admin/shop' }]
               : []),
@@ -371,8 +371,9 @@ export function Sidebar({
 
   // Secondary navigation — shown consistently for both admin & superadmin
   const secondaryNav: NavItem[] = [
-    { name: 'Mein Profil', href: '/profile', icon: User },
-    { name: 'Nachrichten', href: '/messages', icon: MessageSquare },
+    ...(!isAdmin && !isSuperAdmin
+      ? [{ name: 'Nachrichten', href: '/messages', icon: MessageSquare }]
+      : []),
     ...(!isAdmin && !isSuperAdmin
       ? [{ name: 'Matchmaking', href: '/matchmaking', icon: Shuffle }]
       : []),
@@ -565,14 +566,7 @@ export function Sidebar({
 
           {/* Secondary Navigation — shown for both roles */}
           {secondaryNav.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/[0.04]">
-              <div
-                className="mb-1.5 px-3 text-[10px] font-semibold font-display uppercase tracking-[0.15em] text-muted-foreground/50 dark:text-white/30"
-                role="heading"
-                aria-level={2}
-              >
-                Allgemein
-              </div>
+            <div className="mt-2 space-y-0.5">
               {secondaryNav.map((item) => {
                 const isActive = isActivePath(pathname, item.href);
                 return (

@@ -140,6 +140,17 @@ export default function LeagueDetailClient({
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
   const [resultForm, setResultForm] = useState({ result: 'win', score_home: 0, score_away: 0 });
 
+  // League editing
+  const [editingLeague, setEditingLeague] = useState(false);
+  const [leagueForm, setLeagueForm] = useState({
+    name: '',
+    season_year: new Date().getFullYear(),
+    division: '',
+    age_group: '',
+    notes: '',
+    nuliga_url: '',
+  });
+
   const fetchLeague = useCallback(async () => {
     setLoading(true);
     try {
@@ -408,6 +419,29 @@ export default function LeagueDetailClient({
     }
   };
 
+  const handleUpdateLeague = async () => {
+    try {
+      const res = await apiFetch(`/api/leagues/${leagueId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: leagueForm.name,
+          season_year: leagueForm.season_year,
+          division: leagueForm.division || null,
+          age_group: leagueForm.age_group || null,
+          notes: leagueForm.notes || null,
+          nuliga_url: leagueForm.nuliga_url || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      toast.success('Liga aktualisiert');
+      setEditingLeague(false);
+      fetchLeague();
+    } catch {
+      toast.error('Fehler beim Aktualisieren');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">Laden…</div>
@@ -503,12 +537,129 @@ export default function LeagueDetailClient({
           <Button
             variant="outline"
             size="sm"
+            onClick={() => {
+              setLeagueForm({
+                name: league.name,
+                season_year: league.season_year,
+                division: league.division ?? '',
+                age_group: league.age_group ?? '',
+                notes: league.notes ?? '',
+                nuliga_url: league.nuliga_url ?? '',
+              });
+              setEditingLeague(true);
+            }}
+            className="gap-1.5"
+          >
+            <Edit2 className="h-3.5 w-3.5" />
+            Bearbeiten
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => handleStatusChange(league.status === 'active' ? 'completed' : 'active')}
           >
             {league.status === 'active' ? 'Abschließen' : 'Reaktivieren'}
           </Button>
         </div>
       </div>
+
+      {/* Inline Liga Edit Form */}
+      {editingLeague && (
+        <Card className="border-2 border-brand-primary/20">
+          <CardHeader>
+            <CardTitle className="text-base">Liga bearbeiten</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="ld-edit-name" className="text-xs font-medium">
+                  Name *
+                </label>
+                <Input
+                  id="ld-edit-name"
+                  value={leagueForm.name}
+                  onChange={(e) => setLeagueForm({ ...leagueForm, name: e.target.value })}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label htmlFor="ld-edit-year" className="text-xs font-medium">
+                  Saison-Jahr
+                </label>
+                <Input
+                  id="ld-edit-year"
+                  type="number"
+                  value={leagueForm.season_year}
+                  onChange={(e) =>
+                    setLeagueForm({
+                      ...leagueForm,
+                      season_year: parseInt(e.target.value) || new Date().getFullYear(),
+                    })
+                  }
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="ld-edit-division" className="text-xs font-medium">
+                  Liga/Klasse
+                </label>
+                <Input
+                  id="ld-edit-division"
+                  value={leagueForm.division}
+                  onChange={(e) => setLeagueForm({ ...leagueForm, division: e.target.value })}
+                  placeholder="z.B. Hessenliga, Verbandsliga"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label htmlFor="ld-edit-agegroup" className="text-xs font-medium">
+                  Altersklasse
+                </label>
+                <Input
+                  id="ld-edit-agegroup"
+                  value={leagueForm.age_group}
+                  onChange={(e) => setLeagueForm({ ...leagueForm, age_group: e.target.value })}
+                  placeholder="z.B. Herren, Damen, U18"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="ld-edit-notes" className="text-xs font-medium">
+                Notizen
+              </label>
+              <Input
+                id="ld-edit-notes"
+                value={leagueForm.notes}
+                onChange={(e) => setLeagueForm({ ...leagueForm, notes: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label htmlFor="ld-edit-nuliga" className="text-xs font-medium">
+                nuLiga URL
+              </label>
+              <Input
+                id="ld-edit-nuliga"
+                value={leagueForm.nuliga_url}
+                onChange={(e) => setLeagueForm({ ...leagueForm, nuliga_url: e.target.value })}
+                placeholder="https://htv.liga.nu/cgi-bin/WebObjects/..."
+                className="mt-1 font-mono text-xs"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setEditingLeague(false)}>
+                Abbrechen
+              </Button>
+              <Button size="sm" onClick={handleUpdateLeague} disabled={!leagueForm.name}>
+                Speichern
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -821,20 +972,22 @@ export default function LeagueDetailClient({
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        {md.status !== 'completed' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditingResultId(md.id);
-                              setResultForm({ result: 'win', score_home: 0, score_away: 0 });
-                            }}
-                            className="gap-1.5"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                            Ergebnis
-                          </Button>
-                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingResultId(md.id);
+                            setResultForm({
+                              result: md.result ?? 'win',
+                              score_home: md.score_home ?? 0,
+                              score_away: md.score_away ?? 0,
+                            });
+                          }}
+                          className="gap-1.5"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                          {md.status === 'completed' ? 'Bearbeiten' : 'Ergebnis'}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"

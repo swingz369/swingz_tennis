@@ -96,10 +96,12 @@ export default function AdminFamilyPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                   <Users className="h-4 w-4 text-brand-primary" />
-                  Familiengruppe
+                  {group.members.find((m) => m.role === 'parent')?.fullName ??
+                    group.members[0]?.fullName ??
+                    'Familiengruppe'}
                 </CardTitle>
-                <CardDescription className="text-xs font-mono text-muted-foreground/60">
-                  {group.familyGroupId}
+                <CardDescription className="text-xs text-muted-foreground/60">
+                  {group.members.length} Mitglied{group.members.length !== 1 ? 'er' : ''}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">

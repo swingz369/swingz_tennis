@@ -1,7 +1,7 @@
 /**
- * GET    /api/sessions/[sessionId]/waitlist  — Eigene Wartelisten-Position abrufen
- * POST   /api/sessions/[sessionId]/waitlist  — Auf Warteliste setzen
- * DELETE /api/sessions/[sessionId]/waitlist  — Von Warteliste entfernen
+ * GET    /api/sessions/[id]/waitlist  — Eigene Wartelisten-Position abrufen
+ * POST   /api/sessions/[id]/waitlist  — Auf Warteliste setzen
+ * DELETE /api/sessions/[id]/waitlist  — Von Warteliste entfernen
  *
  * Note: session_waitlist table types not yet in generated Supabase types —
  * using (supabase as any) casts until types are regenerated after migration.
@@ -24,21 +24,18 @@ type WaitlistEntry = {
 };
 
 // GET — Aktuelle Position auf Warteliste abrufen
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) return forbiddenResponse('Authentifizierung erforderlich');
 
-    const { sessionId } = await params;
+    const { id } = await params;
     const db = auth.supabase as any;
 
     const { data, error } = await db
       .from('session_waitlist')
       .select('id, position, created_at')
-      .eq('session_id', sessionId)
+      .eq('session_id', id)
       .eq('member_id', auth.user.id)
       .maybeSingle();
 
@@ -57,15 +54,12 @@ export async function GET(
 }
 
 // POST — Auf Warteliste setzen
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) return forbiddenResponse('Authentifizierung erforderlich');
 
-    const { sessionId } = await params;
+    const { id } = await params;
     const supabase = auth.supabase;
     const db = supabase as any;
     const body = await req.json().catch(() => ({}));
@@ -79,7 +73,7 @@ export async function POST(
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .select('id, max_participants')
-      .eq('id', sessionId)
+      .eq('id', id)
       .single();
 
     if (sessionError || !session) {
@@ -90,7 +84,7 @@ export async function POST(
     const { count: bookingCount } = await supabase
       .from('bookings')
       .select('id', { count: 'exact', head: true })
-      .eq('session_id', sessionId)
+      .eq('session_id', id)
       .in('status', ['confirmed', 'pending']);
 
     if ((bookingCount ?? 0) < session.max_participants) {
@@ -104,7 +98,7 @@ export async function POST(
     const { data: existing } = await db
       .from('session_waitlist')
       .select('id, position')
-      .eq('session_id', sessionId)
+      .eq('session_id', id)
       .eq('member_id', auth.user.id)
       .maybeSingle();
 
@@ -119,7 +113,7 @@ export async function POST(
     const { data: maxPos } = await db
       .from('session_waitlist')
       .select('position')
-      .eq('session_id', sessionId)
+      .eq('session_id', id)
       .order('position', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -129,7 +123,7 @@ export async function POST(
     const { data: entry, error: insertError } = await db
       .from('session_waitlist')
       .insert({
-        session_id: sessionId,
+        session_id: id,
         member_id: auth.user.id,
         club_id: clubId,
         position,
@@ -149,7 +143,7 @@ export async function POST(
     }
 
     log.info('Mitglied auf Warteliste eingetragen', {
-      sessionId,
+      id,
       memberId: auth.user.id,
       position,
     });
@@ -159,22 +153,19 @@ export async function POST(
 }
 
 // DELETE — Von Warteliste entfernen
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
     const hasPermission = await verifyRole(auth, 'member');
     if (!hasPermission) return forbiddenResponse('Authentifizierung erforderlich');
 
-    const { sessionId } = await params;
+    const { id } = await params;
     const db = auth.supabase as any;
 
     // Eintrag prüfen
     const { data: entry, error: fetchError } = await db
       .from('session_waitlist')
       .select('id, position')
-      .eq('session_id', sessionId)
+      .eq('session_id', id)
       .eq('member_id', auth.user.id)
       .maybeSingle();
 
@@ -204,7 +195,7 @@ export async function DELETE(
     const { data: remaining } = await db
       .from('session_waitlist')
       .select('id, position')
-      .eq('session_id', sessionId)
+      .eq('session_id', id)
       .gt('position', typedEntry.position)
       .order('position', { ascending: true });
 
@@ -215,7 +206,7 @@ export async function DELETE(
         .eq('id', r.id);
     }
 
-    log.info('Mitglied von Warteliste entfernt', { sessionId, memberId: auth.user.id });
+    log.info('Mitglied von Warteliste entfernt', { id, memberId: auth.user.id });
 
     return NextResponse.json({ success: true });
   });

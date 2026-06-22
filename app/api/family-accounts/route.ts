@@ -29,8 +29,19 @@ export async function GET() {
       .eq('family_group_id', familyLink.family_group_id)
       .order('created_at');
 
+    // Get active invite code for this family group
+    const { data: invite } = await (supabase as any)
+      .from('family_invites')
+      .select('code')
+      .eq('family_group_id', familyLink.family_group_id)
+      .eq('is_used', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     return NextResponse.json({
       familyGroupId: familyLink.family_group_id,
+      inviteCode: invite?.code ?? null,
       currentUserId: user.id,
       members: (familyMembers || []).map((m: any) => ({
         userId: m.user_id,
@@ -134,6 +145,49 @@ export async function POST(request: NextRequest) {
       inviteCode: newInviteCode,
       message: 'Familie erstellt! Teile diesen Code mit deinen Familienmitgliedern',
     });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// PUT: Generate a new invite code (invalidates old unused codes)
+export async function PUT() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { data: familyLink } = await (supabase as any)
+      .from('family_accounts')
+      .select('family_group_id, role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!familyLink)
+      return NextResponse.json({ error: 'Kein Familienkonto vorhanden' }, { status: 404 });
+    if (familyLink.role !== 'parent')
+      return NextResponse.json(
+        { error: 'Nur Elternteile können neue Codes erstellen' },
+        { status: 403 }
+      );
+
+    // Invalidate existing unused codes
+    await (supabase as any)
+      .from('family_invites')
+      .update({ is_used: true })
+      .eq('family_group_id', familyLink.family_group_id)
+      .eq('is_used', false);
+
+    const newCode = `FAM${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    await (supabase as any).from('family_invites').insert({
+      family_group_id: familyLink.family_group_id,
+      code: newCode,
+      created_by: user.id,
+    });
+
+    return NextResponse.json({ success: true, inviteCode: newCode });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

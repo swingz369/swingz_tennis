@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Menu, LogOut, Settings, Trophy, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { Menu, LogOut, Settings, Trophy, ChevronDown, LayoutDashboard, User } from 'lucide-react';
 import { useTenant } from '@/lib/tenant-context';
 import { GlobalSearch } from '@/components/layout/global-search';
 import { NotificationBell } from '@/components/layout/notification-bell';
@@ -45,6 +45,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, [userMenuOpen]);
 
+  const isOwner = user?.roles?.includes('owner');
   const isAdmin = user?.roles?.some((r) => r === 'admin' || r === 'superadmin');
   const isSuperAdmin = user?.roles?.includes('superadmin');
 
@@ -62,13 +63,15 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   };
 
   // Determine dashboard link by role
-  const dashboardLink = isSuperAdmin
-    ? '/superadmin'
-    : isAdmin
-      ? '/admin'
-      : user?.roles?.includes('trainer')
-        ? '/trainer'
-        : '/member';
+  const dashboardLink = isOwner
+    ? '/owner'
+    : isSuperAdmin
+      ? '/superadmin'
+      : isAdmin
+        ? '/admin'
+        : user?.roles?.includes('trainer')
+          ? '/trainer'
+          : '/member';
 
   return (
     <header
@@ -183,6 +186,15 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 >
                   <LayoutDashboard className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   Dashboard
+                </Link>
+                <Link
+                  href="/profile"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/5 transition-colors"
+                  role="menuitem"
+                >
+                  <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  Mein Profil
                 </Link>
                 {isAdmin && (
                   <Link
