@@ -88,6 +88,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const clubId = searchParams.get('clubId');
+    const memberId = searchParams.get('memberId'); // filter by specific member (user_id)
     const status = searchParams.get('status'); // pending | confirmed | cancelled | no_show
     const courtId = searchParams.get('courtId');
     const dateFrom = searchParams.get('dateFrom');
@@ -145,6 +146,10 @@ export async function GET(req: NextRequest) {
       .eq('club_id', clubId);
 
     // Apply filters
+    if (memberId) {
+      query = query.eq('member_id', memberId);
+    }
+
     if (status) {
       query = query.eq('status', status);
     } else {
@@ -369,15 +374,16 @@ export async function PATCH(req: NextRequest) {
       bookingId?: string;
       action?: string;
       reason?: string;
+      newSessionId?: string;
     } | null;
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    const { bookingId, action, reason } = body;
+    const { bookingId, action, reason, newSessionId } = body;
     if (!bookingId || !action) {
       return NextResponse.json({ error: 'bookingId and action required' }, { status: 400 });
     }
 
-    const validActions = ['cancel', 'no_show', 'confirm'] as const;
+    const validActions = ['cancel', 'no_show', 'confirm', 'reschedule'] as const;
     type ValidAction = (typeof validActions)[number];
     if (!(validActions as readonly string[]).includes(action)) {
       return NextResponse.json({ error: `Invalid action: ${action}` }, { status: 400 });
@@ -385,6 +391,31 @@ export async function PATCH(req: NextRequest) {
 
     const supabase = auth.supabase as SupabaseClient<Database>;
     const typedAction = action as ValidAction;
+
+    // Handle reschedule separately — needs session lookup first
+    if (typedAction === 'reschedule') {
+      if (!newSessionId) {
+        return NextResponse.json(
+          { error: 'newSessionId required for reschedule' },
+          { status: 400 }
+        );
+      }
+      const { data: session, error: sessErr } = await supabase
+        .from('sessions')
+        .select('id, timeslot_start, timeslot_end')
+        .eq('id', newSessionId)
+        .single();
+      if (sessErr || !session) {
+        return NextResponse.json({ error: 'Session nicht gefunden' }, { status: 404 });
+      }
+      const { error } = await supabase
+        .from('bookings')
+        .update({ session_id: newSessionId, session_start_time: session.timeslot_start })
+        .eq('id', bookingId);
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true, bookingId, action });
+    }
+
     const updates: {
       status: string;
       cancelled_at?: string;

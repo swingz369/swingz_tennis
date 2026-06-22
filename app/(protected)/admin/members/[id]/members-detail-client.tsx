@@ -57,11 +57,19 @@ interface Props {
 
 interface BookingData {
   id: string;
+  session_id: string | null;
   session_start: string | null;
   session_end: string | null;
   trainer_name: string | null;
   booked_at: string | null;
   status: string;
+}
+
+interface SessionOption {
+  id: string;
+  timeslot_start: string;
+  timeslot_end: string;
+  court_name: string;
 }
 
 interface AbsenceData {
@@ -88,6 +96,11 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
     type: 'deactivate' | 'activate' | 'role';
     newRole?: Member['role'];
   }>(null);
+  const [rescheduleBooking, setRescheduleBooking] = useState<BookingData | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [sessionOptions, setSessionOptions] = useState<SessionOption[]>([]);
+  const [newSessionId, setNewSessionId] = useState('');
+  const [rescheduling, setRescheduling] = useState(false);
   const [cancelDialog, setCancelDialog] = useState(false);
   const [cancelForm, setCancelForm] = useState({
     cancellation_date: '',
@@ -122,17 +135,39 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiFetch(`/api/bookings?memberId=${member.id}&clubId=${clubId}`);
+      const res = await apiFetch(
+        `/api/admin/bookings?clubId=${clubId}&memberId=${member.user_id}&status=all&limit=50`
+      );
       if (res.ok) {
         const data = await res.json();
-        setBookings(Array.isArray(data) ? data : []);
+        const rows = (data.bookings ?? []) as Array<{
+          id: string;
+          session_id: string | null;
+          session_start_time: string | null;
+          end_time: string | null;
+          session_trainer_id: string | null;
+          trainer_name: string | null;
+          booked_at: string | null;
+          status: string;
+        }>;
+        setBookings(
+          rows.map((b) => ({
+            id: b.id,
+            session_id: b.session_id,
+            session_start: b.session_start_time,
+            session_end: b.end_time,
+            trainer_name: b.trainer_name,
+            booked_at: b.booked_at,
+            status: b.status,
+          }))
+        );
       }
     } catch {
       // stille Fehlerbehandlung
     } finally {
       setLoading(false);
     }
-  }, [member.id, clubId]);
+  }, [member.user_id, clubId]);
 
   const fetchAbsences = useCallback(async () => {
     setAbsencesLoading(true);
@@ -148,6 +183,57 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
       setAbsencesLoading(false);
     }
   }, [member.user_id, clubId]);
+
+  const fetchSessionsForDate = async (date: string) => {
+    setSessionOptions([]);
+    setNewSessionId('');
+    if (!date) return;
+    const from = `${date}T00:00:00`;
+    const to = `${date}T23:59:59`;
+    const res = await apiFetch(
+      `/api/admin/bookings?clubId=${clubId}&dateFrom=${from}&dateTo=${to}&status=all&limit=200`
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    const seen = new Set<string>();
+    const opts: SessionOption[] = [];
+    for (const b of data.bookings ?? []) {
+      if (b.session_id && !seen.has(b.session_id)) {
+        seen.add(b.session_id);
+        opts.push({
+          id: b.session_id,
+          timeslot_start: b.session_start_time ?? '',
+          timeslot_end: b.end_time ?? '',
+          court_name: b.court_name ?? '—',
+        });
+      }
+    }
+    setSessionOptions(opts);
+  };
+
+  const handleReschedule = async () => {
+    if (!rescheduleBooking || !newSessionId) return;
+    setRescheduling(true);
+    try {
+      const res = await apiFetch('/api/admin/bookings', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          bookingId: rescheduleBooking.id,
+          action: 'reschedule',
+          newSessionId,
+        }),
+      });
+      if (!res.ok) {
+        toast.error('Umbuchen fehlgeschlagen');
+        return;
+      }
+      toast.success('Buchung umgebucht');
+      setRescheduleBooking(null);
+      fetchBookings();
+    } finally {
+      setRescheduling(false);
+    }
+  };
 
   const handleNotifyTrainer = async () => {
     setNotifyingTrainer(true);
@@ -854,6 +940,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                           <TableHead>Trainer</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Gebucht am</TableHead>
+                          <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -889,6 +976,23 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                             <TableCell className="text-sm text-muted-foreground">
                               {b.booked_at ? formatDate(b.booked_at) : '-'}
                             </TableCell>
+                            <TableCell>
+                              {['confirmed', 'pending'].includes(b.status) && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setRescheduleBooking(b);
+                                    setRescheduleDate('');
+                                    setSessionOptions([]);
+                                    setNewSessionId('');
+                                  }}
+                                >
+                                  <Edit className="h-3.5 w-3.5 mr-1" />
+                                  Umbuchen
+                                </Button>
+                              )}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -896,6 +1000,76 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Umbuchen-Dialog */}
+              {rescheduleBooking && (
+                <Card className="border-amber-200 dark:border-amber-800">
+                  <CardContent className="p-4 space-y-3">
+                    <p className="text-sm font-medium">
+                      Buchung umbuchen:{' '}
+                      {rescheduleBooking.session_start
+                        ? new Date(rescheduleBooking.session_start).toLocaleString('de-DE')
+                        : '—'}
+                    </p>
+                    <div className="flex gap-2 items-center flex-wrap">
+                      <input
+                        type="date"
+                        className="border rounded px-2 py-1 text-sm bg-background"
+                        value={rescheduleDate}
+                        onChange={(e) => {
+                          setRescheduleDate(e.target.value);
+                          fetchSessionsForDate(e.target.value);
+                        }}
+                      />
+                      {sessionOptions.length > 0 && (
+                        <select
+                          className="border rounded px-2 py-1 text-sm bg-background"
+                          value={newSessionId}
+                          onChange={(e) => setNewSessionId(e.target.value)}
+                        >
+                          <option value="">Session wählen…</option>
+                          {sessionOptions.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {new Date(s.timeslot_start).toLocaleTimeString('de-DE', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                              {' – '}
+                              {new Date(s.timeslot_end).toLocaleTimeString('de-DE', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                              {' · '}
+                              {s.court_name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {rescheduleDate && sessionOptions.length === 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          Keine Sessions an diesem Tag
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={!newSessionId || rescheduling}
+                        onClick={handleReschedule}
+                      >
+                        {rescheduling ? 'Speichern…' : 'Speichern'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRescheduleBooking(null)}
+                      >
+                        Abbrechen
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>
