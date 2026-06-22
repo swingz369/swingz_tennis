@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     try {
       const body = await request.json();
-      const { role, is_active } = body;
+      const { role, is_active, is_honorary, honorary_since } = body;
 
       // Validate inputs
       if (role && !['member', 'trainer', 'admin', 'superadmin'].includes(role)) {
@@ -132,6 +132,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           updates.deactivated_at = null;
           updates.deactivated_by = null;
         }
+      }
+
+      if (is_honorary !== undefined) {
+        updates.is_honorary = is_honorary;
+        updates.honorary_since = is_honorary
+          ? (honorary_since ?? new Date().toISOString().slice(0, 10))
+          : null;
       }
 
       // Update membership

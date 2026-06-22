@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Settings, Palette, ShieldAlert } from 'lucide-react';
+import { Settings, Palette, ShieldAlert, BookOpen } from 'lucide-react';
 
 const BrandingSettingsClient = dynamic(() => import('../branding/branding-client'), { ssr: false });
 const AuditLogsList = dynamic(() => import('./audit-logs-tab'), { ssr: false });
+const LegalTab = dynamic(() => import('./legal-tab').then((m) => ({ default: m.LegalTab })), {
+  ssr: false,
+});
 
-type SettingsTab = 'general' | 'branding' | 'audit-logs';
+type SettingsTab = 'general' | 'branding' | 'audit-logs' | 'legal';
 
 const tabs: {
   id: SettingsTab;
@@ -16,6 +19,7 @@ const tabs: {
 }[] = [
   { id: 'general', label: 'Allgemein', icon: Settings },
   { id: 'branding', label: 'Branding', icon: Palette },
+  { id: 'legal', label: 'Vereinsregister', icon: BookOpen },
   { id: 'audit-logs', label: 'Audit-Logs', icon: ShieldAlert },
 ];
 
@@ -53,6 +57,7 @@ export function SettingsTabsWrapper({
       {/* Tab content */}
       {activeTab === 'general' && children}
       {activeTab === 'branding' && <BrandingSettingsClient clubId={clubId} />}
+      {activeTab === 'legal' && <LegalTab clubId={clubId} />}
       {activeTab === 'audit-logs' && <AuditLogsList clubId={clubId} />}
     </div>
   );

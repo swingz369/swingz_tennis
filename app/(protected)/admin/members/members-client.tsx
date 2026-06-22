@@ -466,6 +466,11 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         <span className="font-medium text-foreground dark:text-white">
                           {member.full_name}
                         </span>
+                        {member.is_honorary && (
+                          <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                            Ehren
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground text-sm">
                         {member.email}

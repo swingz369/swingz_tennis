@@ -229,6 +229,7 @@ export function Sidebar({
           icon: GraduationCap,
           subItems: [
             { name: 'Saisonplanung', href: '/admin/seasons' },
+            { name: 'Stundenplan', href: '/scheduler' },
             { name: 'Trainer & Stunden', href: '/admin/trainers' },
             ...(!hiddenSections.has('trial_training')
               ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
@@ -244,7 +245,7 @@ export function Sidebar({
           subItems: [
             { name: 'Platz-Kalender & Verwaltung', href: '/admin/courts' },
             ...(!hiddenSections.has('ai_matchmaking')
-              ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
+              ? [{ name: 'KI-Matchmaking', href: '/matchmaking' }]
               : []),
             ...(!hiddenSections.has('weather_integration')
               ? [{ name: 'Wetter & Platzsperren', href: '/admin/weather' }]
@@ -279,6 +280,15 @@ export function Sidebar({
             { name: 'Abrechnung & Kategorien', href: '/admin/billing' },
             { name: 'Analytics & Berichte', href: '/admin/analytics' },
             { name: 'Abonnement', href: '/admin/subscription' },
+          ],
+        },
+        {
+          label: 'Verein',
+          icon: Building2,
+          subItems: [
+            { name: 'Dokumente', href: '/admin/documents' },
+            { name: 'Versammlungen', href: '/admin/meetings' },
+            { name: 'Wartungsplan', href: '/admin/maintenance' },
           ],
         },
         {
@@ -371,6 +381,9 @@ export function Sidebar({
       : []),
     ...(!isAdmin && !isSuperAdmin
       ? [{ name: 'Meine Rechnungen', href: '/billing', icon: CreditCard }]
+      : []),
+    ...(!isAdmin && !isSuperAdmin
+      ? [{ name: 'Vereinsdokumente', href: '/documents', icon: CheckCircle }]
       : []),
     ...(!isAdmin && !isSuperAdmin
       ? [{ name: 'Arbeitsdienste', href: '/member/work-duties', icon: HardHat }]
