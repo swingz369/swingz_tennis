@@ -517,6 +517,34 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                       </div>
                     </div>
                     <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Ehrenmitglied</Label>
+                      <div>
+                        <Button
+                          variant={member.is_honorary ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={async () => {
+                            const newVal = !member.is_honorary;
+                            const res = await apiFetch(`/api/admin/memberships/${member.id}`, {
+                              method: 'PATCH',
+                              body: JSON.stringify({ is_honorary: newVal }),
+                            });
+                            if (!res.ok) {
+                              toast.error('Fehler beim Speichern');
+                              return;
+                            }
+                            setMember((prev) => ({ ...prev, is_honorary: newVal }));
+                            toast.success(
+                              newVal
+                                ? 'Als Ehrenmitglied eingetragen'
+                                : 'Ehrenmitglied-Status entfernt'
+                            );
+                          }}
+                        >
+                          {member.is_honorary ? '★ Ehrenmitglied' : 'Kein Ehrenmitglied'}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">Beigetreten</Label>
                       <div className="font-medium flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
