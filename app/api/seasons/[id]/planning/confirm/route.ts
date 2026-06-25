@@ -68,6 +68,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
           .from(seasonPlanEntries)
           .where(eq(seasonPlanEntries.season_id, seasonId));
 
+        if (entries.length === 0) {
+          return NextResponse.json(
+            {
+              error:
+                'Keine Planeinträge vorhanden. Bitte zuerst im Schritt "Stundenplan bearbeiten" den Algorithmus ausführen.',
+            },
+            { status: 400 }
+          );
+        }
+
         // Build GroupAssignments from plan entries
         const assignments: GroupAssignment[] = [];
         const groupMap = new Map<string, GroupAssignment>();

@@ -204,13 +204,17 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
         <Card variant="bordered" className="p-12">
           <div className="text-center space-y-3">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-semibold">Keine Einträge im Stundenplan</h3>
+            <h3 className="text-lg font-semibold">Stundenplan noch nicht veröffentlicht</h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Für diese Saison wurden noch keine Trainingseinheiten geplant. Öffne die Planung, um
-              den Algorithmus zu starten oder Einträge manuell anzulegen.
+              Die Saisonplanung wurde noch nicht abgeschlossen. Gehe zur Planung, führe den
+              Algorithmus aus und bestätige den Plan.
             </p>
-            <Button onClick={() => router.push(`/admin/seasons/${seasonId}/planning`)}>
-              Planung öffnen
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/admin/seasons/${seasonId}/planning`)}
+            >
+              Zur Planung
             </Button>
           </div>
         </Card>

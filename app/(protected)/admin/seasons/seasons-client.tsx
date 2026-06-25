@@ -198,22 +198,21 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
                   </div>
                 </div>
 
-                {['published', 'active', 'completed', 'archived'].includes(
-                  season.planning_status
-                ) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/admin/season-plan/${season.id}`);
-                    }}
-                  >
-                    <LayoutGrid className="mr-2 h-4 w-4" />
-                    Stundenplan
-                  </Button>
-                )}
+                {['published', 'completed', 'archived'].includes(season.planning_status) &&
+                  season.planned_entries > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/admin/season-plan/${season.id}`);
+                      }}
+                    >
+                      <LayoutGrid className="mr-2 h-4 w-4" />
+                      Stundenplan
+                    </Button>
+                  )}
 
                 {season.open_conflicts > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-2 text-sm">
