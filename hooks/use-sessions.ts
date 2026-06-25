@@ -29,13 +29,20 @@ export interface Session {
   cancellationReason?: string | null;
 }
 
-export function useSessions(clubId: string | null) {
+export function useSessions(
+  clubId: string | null,
+  dateRange?: { dateFrom?: string; dateTo?: string }
+) {
   return useQuery({
-    queryKey: QUERY_KEYS.sessions(clubId || ''),
+    queryKey: [...QUERY_KEYS.sessions(clubId || ''), dateRange?.dateFrom, dateRange?.dateTo],
     queryFn: async ({ signal }) => {
       if (!clubId) return [];
 
-      const res = await fetch(`/api/sessions?clubId=${clubId}`, {
+      const params = new URLSearchParams({ clubId });
+      if (dateRange?.dateFrom) params.set('dateFrom', dateRange.dateFrom);
+      if (dateRange?.dateTo) params.set('dateTo', dateRange.dateTo);
+
+      const res = await fetch(`/api/sessions?${params}`, {
         credentials: 'include',
         signal, // Support cancellation
       });

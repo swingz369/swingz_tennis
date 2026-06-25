@@ -13,6 +13,10 @@ import { CalendarShell } from '@/components/calendar/CalendarShell';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 
+// ponytail: module-level so Date.now() isn't called on each render (react-hooks/purity)
+const ADMIN_DATE_FROM = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+const ADMIN_DATE_TO = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
 const TIME_SLOTS = [
   '08:00',
   '09:00',
@@ -34,12 +38,16 @@ export default function SchedulerPage() {
   const { data: clubData } = useUserClub();
   const clubId = clubData?.clubId ?? null;
 
-  const { data: allSessions = [], isLoading, error } = useSessions(clubId);
   const { data: user } = useCurrentUser();
   const { data: roles = [] } = useUserRoles();
 
   const isAdmin = roles.includes('admin') || roles.includes('superadmin');
   const isTrainer = roles.includes('trainer');
+
+  // Admins see the full season schedule (up to 1 year); members see only upcoming bookable sessions
+  const adminDateRange = isAdmin ? { dateFrom: ADMIN_DATE_FROM, dateTo: ADMIN_DATE_TO } : undefined;
+
+  const { data: allSessions = [], isLoading, error } = useSessions(clubId, adminDateRange);
   const isMember = !isAdmin && !isTrainer;
 
   const subtitle = isAdmin
