@@ -61,11 +61,11 @@ export interface ClusteringConfig {
   // 0 = greedy only (original behavior). >0 = re-evaluate the last N groups and try
   // alternative slots before giving up.
   backtrackDepth: number;
-  // Sprint 4 P0 #3 (Adaptive Backtrack): if the unassigned rate after the first
-  // backtrack pass is still above this threshold (default 5%), the engine runs a
-  // second pass with depth=5 to give the algorithm more freedom to re-slot victims.
-  // Lower values = more aggressive retries; set to 1.0 to disable the second pass.
   unassignedRateThreshold: number;
+  // Fix 4: Doppelstunden — consecutive 2h block for team/advanced groups
+  teamSlotMinutes: number; // duration for U18/advanced groups (default 120 = 2h)
+  teamLevels: SkillLevel[]; // levels that get double slots (default: advanced, professional)
+  minTrainingWeeks: number; // Fix 5: warn if season has fewer active weeks (default 12)
 }
 
 const DEFAULT_CONFIG: ClusteringConfig = {
@@ -73,7 +73,7 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   trainerUtilizationMaxPct: 100,
   groupMaxSize: 6,
   groupMinSize: 1,
-  kidsGroupMaxSize: 6,
+  kidsGroupMaxSize: 8, // Kinder vertragen größere Gruppen
   kidsGroupMinSize: 1,
   slotDurationMinutes: 60,
   provenGroupThreshold: 80,
@@ -84,6 +84,9 @@ const DEFAULT_CONFIG: ClusteringConfig = {
   treatHighFailureAsHard: false,
   backtrackDepth: 0,
   unassignedRateThreshold: 0.05,
+  teamSlotMinutes: 120,
+  teamLevels: ['advanced', 'professional'],
+  minTrainingWeeks: 12,
 };
 
 // ============================================
@@ -256,8 +259,29 @@ export class SeasonClusteringEngine {
       waitlistResult.waitlisted
     );
 
+    // Step 7b: Fix 5 — Mindest-Trainingswochen prüfen
+    const [currentSeason] = await db
+      .select({ start: seasons.start_date, end: seasons.end_date })
+      .from(seasons)
+      .where(eq(seasons.id, this.seasonId));
+    const trainingWeekWarnings: string[] = [];
+    if (currentSeason?.start && currentSeason?.end) {
+      const totalWeeks = Math.round(
+        (new Date(currentSeason.end).getTime() - new Date(currentSeason.start).getTime()) /
+          (7 * 86400000)
+      );
+      if (totalWeeks < this.config.minTrainingWeeks) {
+        trainingWeekWarnings.push(
+          `⚠️ Saison nur ${totalWeeks} Wochen lang (Minimum: ${this.config.minTrainingWeeks}). Nach Abzug von Ferienwochen bleiben ggf. weniger als 10 aktive Trainingswochen.`
+        );
+      }
+    }
+
     // Step 8: Generate explanations
-    const explanations = this.generateExplanations(assignments, members, trainers);
+    const explanations = [
+      ...trainingWeekWarnings,
+      ...this.generateExplanations(assignments, members, trainers),
+    ];
 
     const result: ClusteringResult = {
       groups: assignments,
@@ -325,6 +349,9 @@ export class SeasonClusteringEngine {
         // Range 0..1, default 0.05 (5%) via DB DEFAULT.
         unassignedRateThreshold:
           dbConfig.unassigned_rate_threshold ?? DEFAULT_CONFIG.unassignedRateThreshold,
+        teamSlotMinutes: DEFAULT_CONFIG.teamSlotMinutes,
+        teamLevels: DEFAULT_CONFIG.teamLevels,
+        minTrainingWeeks: DEFAULT_CONFIG.minTrainingWeeks,
       };
     }
   }
@@ -390,7 +417,21 @@ export class SeasonClusteringEngine {
       const fb = feedbackMap.get(p.pref.user_id);
       const skillLevel = (p.user_skill_level || p.pref.preferred_level || 'beginner') as SkillLevel;
       const prefAgeGroup = p.pref.preferred_age_group || '';
-      const isMinor = prefAgeGroup === 'kids' || membershipRoleMap.get(p.pref.user_id) === 'junior';
+      // Any under-18 age group is school-bound on weekdays → needs after-14:00 slots
+      const isMinor =
+        prefAgeGroup === 'kids' ||
+        prefAgeGroup === 'youth' ||
+        prefAgeGroup === 'junior' ||
+        prefAgeGroup === 'u18' ||
+        prefAgeGroup === 'children' ||
+        membershipRoleMap.get(p.pref.user_id) === 'junior';
+      // Opt #5: count unavailable dates per day-of-week for penalty scoring
+      const unavailDates = (p.pref.unavailable_dates as string[]) || [];
+      const unavailByDow: Record<number, number> = {};
+      for (const d of unavailDates) {
+        const dow = (new Date(d).getDay() + 6) % 7; // 0=Mon..6=Sun
+        unavailByDow[dow] = (unavailByDow[dow] ?? 0) + 1;
+      }
       return {
         id: p.pref.user_id,
         name: p.user_name || p.user_email || 'Unbekannt',
@@ -407,6 +448,7 @@ export class SeasonClusteringEngine {
         selfAssessedLevel: (p.pref.self_assessed_level as SkillLevel) || null,
         previousGroupId: null,
         isMinor,
+        _unavailByDow: unavailByDow,
         _unassignedReason: undefined,
       };
     });
@@ -1237,6 +1279,20 @@ export class SeasonClusteringEngine {
       const levelRanks = filteredSlice.map((m) => LEVEL_RANK[m.promotedLevel || m.skillLevel]);
       const levelSpan = Math.max(...levelRanks) - Math.min(...levelRanks);
 
+      // Fix 4: Team/Leistungsgruppen bekommen Doppelstunden (120 min consecutive block)
+      const isTeamGroup =
+        (ageGroup === 'kids' && skillLevel === 'advanced') || // U18 Mannschaft
+        (!this.config.teamLevels.length
+          ? false
+          : (this.config.teamLevels as string[]).includes(skillLevel) && ageGroup !== 'kids');
+      const slotDuration = isTeamGroup
+        ? this.config.teamSlotMinutes
+        : this.config.slotDurationMinutes;
+      const groupTimeSlots =
+        slotDuration !== this.config.slotDurationMinutes
+          ? buildStandardTimeSlots(slotDuration, 22)
+          : timeSlots;
+
       // Find best time slot
       const bestSlot = this.findBestTimeSlot(
         filteredSlice,
@@ -1246,7 +1302,7 @@ export class SeasonClusteringEngine {
         courtTimeSlotUsage,
         slotFailureRates,
         assignments,
-        timeSlots
+        groupTimeSlots
       );
 
       if (!bestSlot) {
@@ -1415,8 +1471,14 @@ export class SeasonClusteringEngine {
         })
       | null = null;
 
+    const groupHasMinors = members.some((m) => m.isMinor);
+
     for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
       for (const timeSlot of timeSlots) {
+        // HARD CONSTRAINT: Kinder/Jugendliche sind Mo-Fr in der Schule → frühestens 14:00
+        // Samstag/Sonntag: keine Einschränkung (kein Schultag)
+        if (groupHasMinors && dayOfWeek < 5 && timeSlot.start < '14:00') continue;
+
         // HARD CONSTRAINT: Check member availability via pre-computed cache
         // (Sprint 4 P0 #1: O(1) lookup instead of Array.some() per member)
         const availableMembers = members.filter((m) =>
@@ -1466,6 +1528,14 @@ export class SeasonClusteringEngine {
           }
           score += (trainer.maxSessionsPerWeek - currentSessions) * 5; // prefer less busy
           score += trainer.canTeachGroups.length > 0 ? 10 : 0;
+          // Opt #3: age-group alignment — kids need youth specialists, adults avoid them
+          const groupHasMinors = members.some((m) => m.isMinor);
+          const trainerDoesYouth = trainer.specialties.some((s) =>
+            ['Jugendtraining', 'Kids', 'Junior', 'U18'].includes(s)
+          );
+          if (groupHasMinors && trainerDoesYouth) score += 25;
+          if (groupHasMinors && !trainerDoesYouth) score -= 20;
+          if (!groupHasMinors && trainerDoesYouth) score -= 10;
 
           if (score > bestTrainerScore) {
             bestTrainerScore = score;
@@ -1517,8 +1587,43 @@ export class SeasonClusteringEngine {
         let score = 0;
         score += availableMembers.length * 10; // prefer fuller groups
         score -= failureWarning && this.config.avoidHighFailureSlots ? 50 : 0;
-        // Prefer weekdays over weekends
-        score -= dayOfWeek >= 5 ? 15 : 0;
+        // Opt #1: only penalise Sunday, not Saturday (Sa is prime tennis time in Germany)
+        score -= dayOfWeek === 6 ? 15 : 0;
+        // Fix 6: Erwachsene → Abendslots 18–22 Uhr bevorzugen (Berufstätige)
+        //         Kinder/Jugend → Nachmittag 14–17 Uhr bevorzugen
+        if (!groupHasMinors && dayOfWeek < 6) {
+          if (timeSlot.start >= '18:00') score += 12; // Abend-Bonus Berufstätige
+          if (timeSlot.start < '14:00') score -= 8; // Vormittag für Erwachsene unattraktiv
+        }
+        if (groupHasMinors && dayOfWeek < 5) {
+          // Nachmittag 14-17 bevorzugen (nach Schule, vor Abendessen)
+          if (timeSlot.start >= '14:00' && timeSlot.start < '17:00') score += 10;
+        }
+        // Opt #2: wish-partner bonus — more wish-pairs fulfillable in this slot = better
+        const wishPairsInSlot = members.reduce((sum, m) => {
+          const partnerHere = m.wishPartnerIds.filter((wpid) =>
+            availableMembers.some((am) => am.id === wpid)
+          ).length;
+          return sum + partnerHere;
+        }, 0);
+        score += wishPairsInSlot * 8;
+        // Opt #4: experience-based intra-level cohesion — penalise high spread within level
+        const expValues = availableMembers.map((m) => m.experienceMonths);
+        if (expValues.length > 1) {
+          const expSpread = Math.max(...expValues) - Math.min(...expValues);
+          score -= Math.floor(expSpread / 6); // -1 per 6 months spread
+        }
+        // Opt #5: unavailable_dates penalty — members with many absences on this day cost group stability
+        const avgAbsences =
+          availableMembers.reduce(
+            (sum, m) =>
+              sum +
+              ((m as typeof m & { _unavailByDow?: Record<number, number> })._unavailByDow?.[
+                dayOfWeek
+              ] ?? 0),
+            0
+          ) / Math.max(availableMembers.length, 1);
+        score -= Math.floor(avgAbsences * 3);
 
         if (score > bestScore) {
           bestScore = score;
@@ -1643,13 +1748,14 @@ export class SeasonClusteringEngine {
    */
   private buildDefaultAvailability(): WeeklyAvailability {
     const defaultSlot = { start: '08:00', end: '22:00' };
+    const satSlot = { start: '08:00', end: '18:00' };
     return {
       monday: [defaultSlot],
       tuesday: [defaultSlot],
       wednesday: [defaultSlot],
       thursday: [defaultSlot],
       friday: [defaultSlot],
-      saturday: [],
+      saturday: [satSlot],
       sunday: [],
     };
   }

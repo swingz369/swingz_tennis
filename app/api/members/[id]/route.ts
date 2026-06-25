@@ -39,6 +39,15 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
       const member = await memberService.getMemberById(id);
 
+      // A4: DSGVO Read-Audit (Art. 5 Abs. 2) — non-blocking
+      void (serviceClient as any).from('audit_logs').insert({
+        action: 'READ_MEMBER',
+        table_name: 'users',
+        record_id: id,
+        performed_by: auth.user.id,
+        details: { club_id: auth.clubId },
+      });
+
       if (!member) {
         return NextResponse.json({ error: 'Member not found' }, { status: 404 });
       }

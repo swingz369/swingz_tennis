@@ -1,94 +1,92 @@
-'use client';
-
-import { useState } from 'react';
-import { UserPlus, Loader2, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { requireAuth } from '@/lib/auth';
+import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { apiFetch } from '@/lib/api-fetch';
+import { Badge } from '@/components/ui/badge';
+import { Users, Building2 } from 'lucide-react';
+import { SuperadminInviteForm } from './invite-form';
 
-export default function OwnerSuperadminsPage() {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
+export const dynamic = 'force-dynamic';
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await apiFetch('/api/owner/invite-admin', {
-        method: 'POST',
-        body: JSON.stringify({ email, fullName: name, role: 'superadmin' }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? 'Fehler');
-        return;
-      }
-      toast.success(`Einladung an ${email} verschickt`);
-      setEmail('');
-      setName('');
-    } finally {
-      setLoading(false);
-    }
-  };
+export default async function OwnerSuperadminsPage() {
+  await requireAuth();
+  const sb = createServiceClient();
+
+  const { data: memberships } = await sb
+    .from('user_club_memberships')
+    .select('user_id, club_id, clubs(id, name, city)')
+    .eq('role', 'superadmin')
+    .eq('is_active', true);
+
+  const userIds = [...new Set((memberships ?? []).map((m) => m.user_id))];
+  const { data: users } = userIds.length
+    ? await sb.from('users').select('id, full_name, email').in('id', userIds)
+    : { data: [] as { id: string; full_name: string | null; email: string }[] };
+
+  const userMap = Object.fromEntries((users ?? []).map((u) => [u.id, u]));
+
+  const byUser = (memberships ?? []).reduce<
+    Record<
+      string,
+      { user: { id: string; full_name: string | null; email: string }; clubs: string[] }
+    >
+  >((acc, m) => {
+    const club = Array.isArray(m.clubs) ? m.clubs[0] : m.clubs;
+    if (!acc[m.user_id]) acc[m.user_id] = { user: userMap[m.user_id], clubs: [] };
+    if (club) acc[m.user_id].clubs.push(`${(club as any).name} (${(club as any).city})`);
+    return acc;
+  }, {});
+
+  const rows = Object.values(byUser);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Superadmins einladen</h1>
+        <h1 className="text-2xl font-bold">Superadmins</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Superadmins verwalten eine Gruppe von Vereinen (Tennisschule-Chef).
+          Superadmins verwalten mehrere Vereine (Tennisschule-Chef).
         </p>
       </div>
 
-      <Card className="max-w-md">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <UserPlus className="h-4 w-4" /> Superadmin per E-Mail einladen
+            <Users className="h-4 w-4" />
+            {rows.length} aktive{rows.length !== 1 ? ' Superadmins' : 'r Superadmin'}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleInvite} className="space-y-4">
-            <div>
-              <Label htmlFor="saName">Name</Label>
-              <Input
-                id="saName"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Max Mustermann"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="saEmail">E-Mail *</Label>
-              <Input
-                id="saEmail"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="chef@tennisschule.de"
-                className="mt-1.5"
-                required
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Der Superadmin erhält eine Einladungsmail und kann danach Vereine über den
-              Club-Switcher verwalten.
+        <CardContent className="p-0">
+          {rows.length === 0 ? (
+            <p className="px-5 py-8 text-sm text-center text-muted-foreground">
+              Noch keine Superadmins vorhanden.
             </p>
-            <Button type="submit" className="w-full gap-2" disabled={loading || !email}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-              Einladung senden
-            </Button>
-          </form>
+          ) : (
+            <div className="divide-y divide-border">
+              {rows.map(({ user, clubs }) => (
+                <div
+                  key={user?.id}
+                  className="flex items-center justify-between px-5 py-3 hover:bg-muted/40"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{user?.full_name ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    {clubs.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {clubs.join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant="secondary" className="text-xs shrink-0 ml-4">
+                    {clubs.length} Verein{clubs.length !== 1 ? 'e' : ''}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <SuperadminInviteForm />
     </div>
   );
 }

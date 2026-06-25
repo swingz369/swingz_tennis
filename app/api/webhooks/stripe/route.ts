@@ -6,6 +6,20 @@ import { constructStripeEvent, stripe as getStripeClient } from '@/lib/stripe/st
 import { billingEngine } from '@/lib/billing-engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import type { PlanKey } from '@/lib/plans';
+
+// Reverse-map Stripe price ID → plan key
+function priceToPlan(priceId: string): PlanKey | null {
+  const map: Record<string, PlanKey> = {
+    [process.env.STRIPE_PRICE_SOLO_S ?? '___']: 'solo_s',
+    [process.env.STRIPE_PRICE_SOLO_L ?? '___']: 'solo_l',
+    [process.env.STRIPE_PRICE_SCHOOL_S ?? '___']: 'school_s',
+    [process.env.STRIPE_PRICE_SCHOOL_L ?? '___']: 'school_l',
+    [process.env.STRIPE_STARTER_PRICE_ID ?? '___']: 'solo_s',
+    [process.env.STRIPE_PROFESSIONAL_PRICE_ID ?? '___']: 'solo_l',
+  };
+  return map[priceId] ?? null;
+}
 
 const log = createLogger('webhook:stripe');
 
@@ -53,10 +67,15 @@ export async function POST(_request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { invoiceId, bookingId, orderId, orderType } = session.metadata || {};
+        const { invoiceId, bookingId, orderId, orderType, saasSubscription, adminUserId, plan } =
+          session.metadata || {};
 
+        // SaaS subscription checkout
+        if (saasSubscription === 'true' && adminUserId) {
+          await handleSaasSubscription(session, adminUserId, plan as PlanKey | undefined);
+        }
         // Handle shop orders
-        if (orderType === 'shop' && orderId) {
+        else if (orderType === 'shop' && orderId) {
           await handleShopOrderPayment(session, orderId);
         }
         // Handle invoice payments
@@ -69,6 +88,18 @@ export async function POST(_request: NextRequest) {
         } else {
           log.error('No recognized ID in session metadata');
         }
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const sub = event.data.object as Stripe.Subscription;
+        await handleSubscriptionUpdated(sub);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object as Stripe.Subscription;
+        await handleSubscriptionDeleted(sub);
         break;
       }
 
@@ -444,6 +475,77 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   if (payment) {
     await billingEngine.updatePaymentStatus(payment.id, 'refunded');
   }
+}
+
+// --- SaaS subscription handlers ---
+
+async function handleSaasSubscription(
+  session: Stripe.Checkout.Session,
+  userId: string,
+  planHint?: PlanKey
+) {
+  const supabase = createServiceClient();
+  const customerId = session.customer as string | null;
+  const subscriptionId = session.subscription as string | null;
+
+  // Resolve plan from metadata hint or price ID
+  let tier: PlanKey | null = planHint ?? null;
+  if (!tier && subscriptionId) {
+    const stripeClient = getStripeClient();
+    const sub = await stripeClient.subscriptions.retrieve(subscriptionId);
+    const priceId = sub.items.data[0]?.price.id;
+    if (priceId) tier = priceToPlan(priceId);
+  }
+
+  if (!tier) {
+    log.error('SaaS subscription: could not resolve plan tier', { userId });
+    return;
+  }
+
+  await supabase
+    .from('users')
+    .update({
+      subscription_tier: tier,
+      subscription_status: 'active',
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+    })
+    .eq('id', userId);
+
+  log.info('SaaS subscription activated', { userId, tier });
+}
+
+async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
+  const supabase = createServiceClient();
+  const customerId = sub.customer as string;
+  const priceId = sub.items.data[0]?.price.id;
+  const tier = priceId ? priceToPlan(priceId) : null;
+  const periodEndRaw = (sub as any).current_period_end as number | undefined;
+  const periodEnd = periodEndRaw ? new Date(periodEndRaw * 1000).toISOString() : null;
+
+  const update: Record<string, string | null> = {
+    subscription_status: sub.status,
+    stripe_subscription_id: sub.id,
+    current_period_end: periodEnd,
+  };
+  if (tier) update.subscription_tier = tier;
+
+  await supabase.from('users').update(update).eq('stripe_customer_id', customerId);
+  log.info('SaaS subscription updated', { customerId, tier, status: sub.status });
+}
+
+async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
+  const supabase = createServiceClient();
+  const customerId = sub.customer as string;
+  await supabase
+    .from('users')
+    .update({
+      subscription_tier: 'free',
+      subscription_status: 'inactive',
+      stripe_subscription_id: null,
+    })
+    .eq('stripe_customer_id', customerId);
+  log.info('SaaS subscription deleted → reset to free', { customerId });
 }
 
 async function handleBookingPaymentFailed(paymentIntentId: string) {

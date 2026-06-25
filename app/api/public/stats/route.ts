@@ -1,6 +1,8 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
 const log = createLogger('api:public:stats');
 
@@ -10,7 +12,9 @@ const log = createLogger('api:public:stats');
  * Returns public platform statistics for the landing page.
  * No authentication required — only returns aggregate counts.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
+  if (rateLimitError) return rateLimitError;
   try {
     const supabase = createServiceClient();
 

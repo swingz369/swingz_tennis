@@ -158,3 +158,4 @@ midscene_run/
 TEST-CREDENTIALS.md
 test-results/
 .vercel
+*.certSigningRequest

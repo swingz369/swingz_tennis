@@ -2,7 +2,6 @@ import { requireAuth } from '@/lib/auth';
 import Link from 'next/link';
 import {
   Building2,
-  Users,
   GraduationCap,
   Activity,
   ChevronRight,
@@ -18,31 +17,43 @@ export const dynamic = 'force-dynamic';
 export default async function SuperadminPage() {
   const { supabase, user } = await requireAuth();
 
-  // Platform stats — superadmin queries ALL data directly (no club filter)
-  const [
-    { count: clubCount },
-    { count: totalUsers },
-    { count: totalTrainers },
-    { count: activeMembers },
-  ] = await Promise.all([
-    supabase.from('clubs').select('id', { count: 'exact', head: true }),
-    supabase.from('users').select('id', { count: 'exact', head: true }),
-    supabase
-      .from('user_club_memberships')
-      .select('id', { count: 'exact', head: true })
-      .eq('role', 'trainer')
-      .eq('is_active', true),
-    supabase
-      .from('user_club_memberships')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_active', true),
-  ]);
+  // Nur eigene Gruppe: Clubs aus eigenen Memberships
+  const { data: myMemberships } = await supabase
+    .from('user_club_memberships')
+    .select('club_id')
+    .eq('user_id', user.id)
+    .eq('is_active', true);
 
-  // All clubs with member counts
-  const { data: clubs } = await supabase
-    .from('clubs')
-    .select('id, name, status, created_at')
-    .order('name');
+  const myClubIds = (myMemberships ?? [])
+    .map((m: { club_id: string }) => m.club_id)
+    .filter(Boolean);
+
+  const clubCount = myClubIds.length;
+
+  const [{ count: totalTrainers }, { count: activeMembers }] = myClubIds.length
+    ? await Promise.all([
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .in('club_id', myClubIds)
+          .eq('role', 'trainer')
+          .eq('is_active', true),
+        supabase
+          .from('user_club_memberships')
+          .select('id', { count: 'exact', head: true })
+          .in('club_id', myClubIds)
+          .eq('is_active', true),
+      ])
+    : [{ count: 0 }, { count: 0 }];
+
+  // Nur eigene Clubs
+  const { data: clubs } = myClubIds.length
+    ? await supabase
+        .from('clubs')
+        .select('id, name, status, created_at')
+        .in('id', myClubIds)
+        .order('name')
+    : { data: [] };
 
   const clubsWithStats = await Promise.all(
     (clubs ?? []).map(async (club: any) => {
@@ -75,9 +86,9 @@ export default async function SuperadminPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Plattform-Übersicht</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">Meine Gruppe</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Hallo {firstName} — du siehst alle Vereine
+            Hallo {firstName} — {clubCount} Verein{clubCount !== 1 ? 'e' : ''} in deiner Gruppe
           </p>
         </div>
         <Badge
@@ -92,18 +103,11 @@ export default async function SuperadminPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
-            label: 'Vereine',
-            value: clubCount ?? 0,
+            label: 'Vereine (Gruppe)',
+            value: clubCount,
             icon: Building2,
             color: 'text-purple-600',
             bg: 'bg-purple-50 dark:bg-purple-900/20',
-          },
-          {
-            label: 'Nutzer gesamt',
-            value: totalUsers ?? 0,
-            icon: Users,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 dark:bg-blue-900/20',
           },
           {
             label: 'Aktive Mitgliedschaften',

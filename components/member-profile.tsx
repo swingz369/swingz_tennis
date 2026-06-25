@@ -21,6 +21,9 @@ import {
   Edit,
   Award,
   Trash2,
+  Loader2,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { AvatarUpload } from '@/components/ui/avatar-upload';
@@ -29,6 +32,7 @@ import { useUserMember } from '@/hooks/use-user-data';
 import { apiFetch } from '@/lib/api-fetch';
 import { ScrollReveal } from '@/components/animations';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { createClient } from '@/lib/supabase/client';
 
 export default function MemberProfile() {
   const { data: memberData, isLoading } = useUserMember();
@@ -43,6 +47,106 @@ export default function MemberProfile() {
     },
     [router]
   );
+
+  const [newEmail, setNewEmail] = useState('');
+  const [emailChanging, setEmailChanging] = useState(false);
+
+  // ── 2FA / TOTP ──────────────────────────────────────────────────────────
+  type MfaStep = 'idle' | 'enrolling' | 'verifying';
+  const [mfaEnrolled, setMfaEnrolled] = useState<{ id: string } | null>(null);
+  const [mfaStep, setMfaStep] = useState<MfaStep>('idle');
+  const [mfaQr, setMfaQr] = useState<string | null>(null);
+  const [mfaSecret, setMfaSecret] = useState<string | null>(null);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+
+  // Load current MFA status once
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      const verified = data?.totp?.find((f) => f.status === 'verified');
+      setMfaEnrolled(verified ? { id: verified.id } : null);
+    });
+  }, []);
+
+  const startEnroll = async () => {
+    setMfaLoading(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        issuer: 'SwingZ',
+      });
+      if (error) throw error;
+      setMfaFactorId(data.id);
+      setMfaQr(data.totp.qr_code);
+      setMfaSecret(data.totp.secret);
+      setMfaStep('verifying');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : '2FA-Einrichtung fehlgeschlagen');
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const verifyTotp = async () => {
+    if (!mfaFactorId || totpCode.length !== 6) return;
+    setMfaLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: mfaFactorId,
+        code: totpCode,
+      });
+      if (error) throw error;
+      setMfaEnrolled({ id: mfaFactorId });
+      setMfaStep('idle');
+      setMfaQr(null);
+      setMfaSecret(null);
+      setTotpCode('');
+      toast.success('Zwei-Faktor-Authentifizierung aktiviert');
+    } catch (_e: unknown) {
+      toast.error('Ungültiger Code — bitte erneut versuchen');
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const unenrollMfa = async () => {
+    if (!mfaEnrolled) return;
+    setMfaLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: mfaEnrolled.id });
+      if (error) throw error;
+      setMfaEnrolled(null);
+      toast.success('Zwei-Faktor-Authentifizierung deaktiviert');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : '2FA-Deaktivierung fehlgeschlagen');
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleEmailChange = async () => {
+    if (!newEmail.trim() || !newEmail.includes('@')) {
+      toast.error('Bitte eine gültige E-Mail-Adresse eingeben');
+      return;
+    }
+    setEmailChanging(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+      if (error) throw error;
+      toast.success('Bestätigungslink an neue Adresse gesendet. Bitte E-Mail prüfen.');
+      setNewEmail('');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Fehler beim Ändern der E-Mail');
+    } finally {
+      setEmailChanging(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -269,6 +373,12 @@ export default function MemberProfile() {
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Zahlungen
+              </TabsTrigger>
+              <TabsTrigger
+                value="security"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+              >
+                Sicherheit
               </TabsTrigger>
             </TabsList>
 
@@ -513,6 +623,172 @@ export default function MemberProfile() {
                           Mandat erteilen
                         </Button>
                       </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Sicherheit Tab ───────────────────────────────────────── */}
+            <TabsContent value="security" className="space-y-5 animate-in">
+              {/* E-Mail ändern */}
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
+                    <Mail className="h-4 w-4 text-brandPrimary" />
+                    E-Mail-Adresse ändern
+                  </h3>
+                  <div className="space-y-3 max-w-md">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Aktuelle E-Mail</Label>
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {formData.email}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new-email" className="text-xs text-muted-foreground">
+                        Neue E-Mail-Adresse
+                      </Label>
+                      <Input
+                        id="new-email"
+                        type="email"
+                        placeholder="neue@email.de"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleEmailChange()}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Nach der Änderung erhältst du einen Bestätigungslink an die neue Adresse. Die
+                      Änderung wird erst nach Bestätigung aktiv.
+                    </p>
+                    <Button
+                      onClick={handleEmailChange}
+                      disabled={emailChanging || !newEmail.trim()}
+                      variant="primary"
+                      className="gap-2"
+                    >
+                      <Shield className="h-4 w-4" />
+                      {emailChanging ? 'Wird gesendet…' : 'Bestätigungslink senden'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 2FA */}
+              <Card variant="bordered">
+                <CardContent className="p-5">
+                  <h3 className="font-semibold mb-2 flex items-center gap-2 text-base">
+                    <Shield className="h-4 w-4 text-brandPrimary" />
+                    Zwei-Faktor-Authentifizierung (2FA)
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-5">
+                    Schütze dein Konto mit einem TOTP-Code (Google Authenticator, Authy, etc.).
+                  </p>
+
+                  {mfaEnrolled ? (
+                    <div className="space-y-4 max-w-md">
+                      <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                        <CheckCircle className="h-4 w-4" />
+                        2FA ist aktiv
+                      </div>
+                      <Button
+                        onClick={unenrollMfa}
+                        disabled={mfaLoading}
+                        variant="outline"
+                        className="gap-2 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950"
+                      >
+                        {mfaLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <XCircle className="h-4 w-4" />
+                        )}
+                        2FA deaktivieren
+                      </Button>
+                    </div>
+                  ) : mfaStep === 'verifying' ? (
+                    <div className="space-y-4 max-w-md">
+                      <p className="text-sm font-medium">QR-Code scannen</p>
+                      {mfaQr && (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element -- data-URL, next/image nicht kompatibel */}
+                          <img
+                            src={mfaQr}
+                            alt="2FA QR-Code"
+                            className="w-40 h-40 rounded-lg border border-border"
+                          />
+                        </>
+                      )}
+                      {mfaSecret && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">Oder manuell eingeben:</p>
+                          <code className="text-xs font-mono bg-muted px-2 py-1 rounded break-all">
+                            {mfaSecret}
+                          </code>
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="totp-code" className="text-xs text-muted-foreground">
+                          6-stelliger Code zur Bestätigung
+                        </Label>
+                        <Input
+                          id="totp-code"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]{6}"
+                          maxLength={6}
+                          placeholder="000000"
+                          value={totpCode}
+                          onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                          onKeyDown={(e) => e.key === 'Enter' && verifyTotp()}
+                          className="font-mono tracking-widest text-center text-lg w-36"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={verifyTotp}
+                          disabled={mfaLoading || totpCode.length !== 6}
+                          variant="primary"
+                          className="gap-2"
+                        >
+                          {mfaLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                          Bestätigen
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setMfaStep('idle');
+                            setMfaQr(null);
+                            setTotpCode('');
+                          }}
+                          variant="outline"
+                        >
+                          Abbrechen
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-w-md">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <XCircle className="h-4 w-4" />
+                        2FA ist nicht aktiv
+                      </div>
+                      <Button
+                        onClick={startEnroll}
+                        disabled={mfaLoading}
+                        variant="primary"
+                        className="gap-2"
+                      >
+                        {mfaLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Shield className="h-4 w-4" />
+                        )}
+                        2FA einrichten
+                      </Button>
                     </div>
                   )}
                 </CardContent>

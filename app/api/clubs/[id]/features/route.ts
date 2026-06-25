@@ -1,10 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { db } from '@/infrastructure/persistence/db';
-import { clubs } from '@/infrastructure/persistence/schema';
-import { eq } from 'drizzle-orm';
 import { sanitizeFeatureFlags } from '@/lib/features';
 import { z } from 'zod';
 import { createLogger } from '@/lib/logger';
@@ -18,30 +16,25 @@ const log = createLogger('api:clubs:[id]:features');
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withApiAuth(req, async (auth) => {
-    const hasAccess = auth.role === 'superadmin' || auth.clubId === (await params).id;
+    const { id } = await params;
+    const hasAccess = auth.role === 'owner' || auth.role === 'superadmin' || auth.clubId === id;
     if (!hasAccess) return forbiddenResponse('No access to this club');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
     if (rateLimitError) return rateLimitError;
 
     try {
-      const { id } = await params;
-      const result = await db
-        .select({ features: clubs.features })
-        .from(clubs)
-        .where(eq(clubs.id, id))
-        .limit(1);
+      const { data } = await createServiceClient()
+        .from('clubs')
+        .select('features')
+        .eq('id', id)
+        .maybeSingle();
 
-      const row = result[0];
-      if (!row) {
-        return NextResponse.json({ error: 'Club not found' }, { status: 404 });
-      }
-
-      return NextResponse.json({ features: sanitizeFeatureFlags(row.features) });
+      if (!data) return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+      return NextResponse.json({ features: sanitizeFeatureFlags(data.features) });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error getting club features:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      log.error('Error getting club features', error instanceof Error ? error : undefined);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });
 }
@@ -58,7 +51,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   return withApiAuth(req, async (auth) => {
     const { id } = await params;
     const isAdmin = await verifyRole(auth, 'admin');
-    const hasAccess = auth.role === 'superadmin' || auth.clubId === id;
+    const hasAccess = auth.role === 'owner' || auth.role === 'superadmin' || auth.clubId === id;
     if (!isAdmin || !hasAccess) return forbiddenResponse('Admin access required');
 
     const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
@@ -76,16 +69,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const sanitized = sanitizeFeatureFlags(parsed.data);
 
     try {
-      await db
-        .update(clubs)
-        .set({ features: sanitized, updated_at: new Date() })
-        .where(eq(clubs.id, id));
+      const { error } = await createServiceClient()
+        .from('clubs')
+        .update({ features: sanitized, updated_at: new Date().toISOString() })
+        .eq('id', id);
 
+      if (error) throw error;
       return NextResponse.json({ features: sanitized });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error updating club features:', error);
-      return NextResponse.json({ error: message }, { status: 500 });
+      log.error('Error updating club features', error instanceof Error ? error : undefined);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
     }
   });
 }

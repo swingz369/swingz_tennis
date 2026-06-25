@@ -15,7 +15,6 @@ import {
   Building2,
   CreditCard,
   Clock,
-  MessageSquare,
   ClipboardList,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -37,12 +36,19 @@ export function MobileBottomNav({
   const pathname = usePathname();
 
   // Centralised role detection via hook
-  const { isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
+  const { isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
 
   // Navigation items based on HIGHEST role — matches TSOW tab bar
   let navItems: { name: string; href: string; icon: React.ElementType }[] = [];
 
-  if (isSuperAdmin) {
+  if (isOwner) {
+    navItems = [
+      { name: 'Dashboard', href: '/owner', icon: Home },
+      { name: 'Vereine', href: '/owner/clubs', icon: Building2 },
+      { name: 'Anfragen', href: '/owner/access', icon: ClipboardList },
+      { name: 'Billing', href: '/owner/billing', icon: CreditCard },
+    ];
+  } else if (isSuperAdmin) {
     navItems = [
       { name: 'Dashboard', href: '/superadmin', icon: Home },
       { name: 'Vereine', href: '/superadmin/tenants', icon: Building2 },
@@ -69,8 +75,8 @@ export function MobileBottomNav({
     // Member: 4 tabs (Profil accessible via user menu in header)
     navItems = [
       { name: 'Home', href: '/member', icon: Home },
-      { name: 'Buchen', href: '/bookings', icon: Calendar },
-      { name: 'Chat', href: '/messages', icon: MessageSquare },
+      { name: 'Stundenplan', href: '/scheduler', icon: Calendar },
+      { name: 'Buchen', href: '/bookings', icon: ClipboardList },
       { name: 'Rechnungen', href: '/billing', icon: CreditCard },
     ];
   }

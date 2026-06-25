@@ -11,7 +11,7 @@ import {
   KeyboardSensor,
   useDraggable,
   useDroppable,
-  rectIntersection,
+  pointerWithin,
 } from '@dnd-kit/core';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -391,9 +391,11 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
       // Cell ID format: cell-{day}-{hour}
       if (!overId.startsWith('cell-')) return;
 
-      const parts = overId.split('-');
-      const newDay = parseInt(parts[1], 10);
-      const newHour = parts[2];
+      // Format: cell-{day}-{HH:MM} — use indexOf to safely split at second dash
+      const firstDash = overId.indexOf('-');
+      const secondDash = overId.indexOf('-', firstDash + 1);
+      const newDay = parseInt(overId.slice(firstDash + 1, secondDash), 10);
+      const newHour = overId.slice(secondDash + 1);
 
       if (newDay === slot.dayOfWeek && newHour === slot.startTime) return;
 
@@ -422,7 +424,7 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
     <>
       <DndContext
         sensors={sensors}
-        collisionDetection={rectIntersection}
+        collisionDetection={pointerWithin}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveSlot(null)}

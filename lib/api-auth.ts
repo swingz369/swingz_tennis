@@ -196,6 +196,27 @@ export function verifyClubAccess(auth: AuthContext, requestedClubId: string): bo
   return auth.clubId === requestedClubId;
 }
 
+/**
+ * Verify user holds a functional office in their club (A2: Ämter-Flags).
+ * Admins and above always pass implicitly.
+ */
+export async function verifyOffice(
+  auth: AuthContext,
+  office: 'kassenwart' | 'jugendwart' | 'platzwart' | 'mannschaftsfuehrer' | 'turnierleiter'
+): Promise<boolean> {
+  if (hasRole(auth.role, 'admin')) return true;
+  if (!auth.user?.id || !auth.clubId) return false;
+  const { data } = await auth.supabase
+    .from('user_club_memberships')
+    .select('office_flags')
+    .eq('user_id', auth.user.id)
+    .eq('club_id', auth.clubId)
+    .eq('is_active', true)
+    .maybeSingle();
+  const flags = (data as { office_flags?: Record<string, boolean> } | null)?.office_flags ?? {};
+  return flags[office] === true;
+}
+
 export function unauthorizedResponse(message = 'Unauthorized'): NextResponse {
   return NextResponse.json({ error: message }, { status: 401 });
 }

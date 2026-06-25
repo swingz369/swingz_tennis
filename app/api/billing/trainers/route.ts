@@ -46,6 +46,25 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
       }
 
+      // Übungsleiterpauschale (§ 3 Nr. 26 EStG): max. 3.000 € steuerfrei p.a.
+      const ANNUAL_LIMIT = 3000;
+      const currentYear = new Date().getFullYear();
+      const { supabase } = auth;
+      // ponytail: cast as any — tax_free_amount added via migration, not yet in generated types
+      const { data: existingBillings } = await (supabase as any)
+        .from('trainer_billings')
+        .select('tax_free_amount, created_at')
+        .eq('trainer_id', trainerId)
+        .not('status', 'eq', 'overdue');
+      const usedThisYear = (
+        (existingBillings ?? []) as Array<{ tax_free_amount: number; created_at: string }>
+      )
+        .filter((b) => new Date(b.created_at).getFullYear() === currentYear)
+        .reduce((sum, b) => sum + Number(b.tax_free_amount), 0);
+      const remaining = Math.max(0, ANNUAL_LIMIT - usedThisYear);
+      const taxFreeAmount = Math.min(Number(totalAmount), remaining);
+      const taxableAmount = Number(totalAmount) - taxFreeAmount;
+
       // Create trainer billing
       const trainerBilling = await BillingService.createTrainerBilling({
         billingPeriodId,
@@ -54,6 +73,8 @@ export async function POST(_request: NextRequest) {
         totalHours,
         hourlyRate,
         totalAmount,
+        taxFreeAmount,
+        taxableAmount,
         dueDate,
         notes,
       });

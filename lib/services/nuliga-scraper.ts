@@ -9,6 +9,9 @@
  */
 
 import * as cheerio from 'cheerio';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('nuliga-scraper');
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -76,7 +79,17 @@ export async function fetchNuligaGroupPage(url: string): Promise<NuligaGroupPage
   }
 
   const html = await response.text();
-  return parseGroupPageHtml(html, url);
+  const result = parseGroupPageHtml(html, url);
+
+  // A3: leere Tabelle = HTML-Layout möglicherweise geändert → sofort loggen
+  if (result.standings.length === 0 && result.matches.length === 0) {
+    log.error('nuLiga-Parse lieferte leere Ergebnisse — HTML-Layout möglicherweise geändert', {
+      url,
+      htmlSnippet: html.slice(0, 300),
+    });
+  }
+
+  return result;
 }
 
 // ── HTML Parsing ─────────────────────────────────────────────────────────

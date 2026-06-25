@@ -1,3 +1,8 @@
+// F7: Architekturentscheid Schema-Drift
+// Migrationen (supabase/migrations/) = einzige Quelle der Wahrheit.
+// Drizzle = Teilabbild (~38 von ~105 Tabellen) — nur für typisierte Queries genutzt.
+// Neue Tabellen: erst Migration, Drizzle-Eintrag optional wenn Route ihn braucht.
+
 import {
   pgTable,
   timestamp,

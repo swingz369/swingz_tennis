@@ -1,9 +1,12 @@
 import { createServiceClient } from '@/lib/supabase/service';
 import { Resend } from 'resend';
+import { createLogger } from '@/lib/logger';
 import type { DunningRecord, CreateDunningRecord } from '../types/billing';
 import { InvoiceService } from './invoice.service';
+import { calculateVerzugszinsForInvoice, type BaseRateSnapshot } from './verzugszins';
 
 const supabase = createServiceClient();
+const log = createLogger('billing:dunning');
 
 export class DunningService {
   private static instance: DunningService;
@@ -18,7 +21,16 @@ export class DunningService {
     return DunningService.instance;
   }
 
-  private calculateDunningFee(level: number): number {
+  /**
+   * Mahngebühren-Staffel je Mahnstufe.
+   * B2C: branchenübliche Pauschalen (streng genommen müssen Vereine vor
+   * Gericht echten Schaden nachweisen — daher klein gehalten).
+   * B2B: §288 Abs. 5 BGB erlaubt 40 € Verzugspauschale.
+   *
+   * TODO: perspektivisch pro Verein in system_settings konfigurierbar.
+   */
+  private calculateDunningFee(level: number, isB2B = false): number {
+    if (isB2B) return 40.0; // §288 Abs. 5 BGB
     switch (level) {
       case 1:
         return 5.0;
@@ -31,13 +43,46 @@ export class DunningService {
     }
   }
 
-  async createDunningRecord(data: CreateDunningRecord): Promise<DunningRecord> {
-    const dunningFee = data.fee_amount || this.calculateDunningFee(data.level);
+  /**
+   * Lädt die Basiszinssatz-Historie aus base_interest_rates.
+   * Fallback auf leere Liste wenn Tabelle nicht existiert (Pre-Migration-Phase).
+   */
+  async loadBaseRates(): Promise<BaseRateSnapshot[]> {
+    try {
+      const { data, error } = await supabase
+        .from('base_interest_rates')
+        .select('valid_from, rate')
+        .order('valid_from', { ascending: true });
 
-    // Look up club_id from the invoice (club_id is NOT NULL on dunning_records)
+      if (error) {
+        log.warn('base_interest_rates nicht lesbar (Pre-Migration oder RLS-Block)', {
+          message: error.message,
+        });
+        return [];
+      }
+      return (data ?? []).map((row: { valid_from: string; rate: number }) => ({
+        validFrom: row.valid_from,
+        rate: row.rate,
+      }));
+    } catch (err) {
+      log.warn('loadBaseRates fehlgeschlagen', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Erstellt einen Mahndatensatz inkl. Verzugszins-Berechnung nach §288 BGB.
+   */
+  async createDunningRecord(data: CreateDunningRecord): Promise<DunningRecord> {
+    const isB2B = data.is_b2b ?? false;
+    const dunningFee = data.fee_amount ?? this.calculateDunningFee(data.level, isB2B);
+
+    // Invoice-Lookup (mind. club_id + member_id + amount + due_date)
     const { data: invoice } = await supabase
       .from('invoices')
-      .select('club_id, member_id')
+      .select('club_id, member_id, amount, due_date')
       .eq('id', data.invoice_id)
       .single();
 
@@ -45,17 +90,56 @@ export class DunningService {
       throw new Error(`Cannot create dunning record: invoice ${data.invoice_id} has no club_id`);
     }
 
+    // Verzugszins §288 BGB
+    const baseRates = await this.loadBaseRates();
+    let interestAmount = 0;
+    let interestDays = 0;
+    let baseRateApplied = 0;
+    let totalDue = (invoice.amount ?? 0) + dunningFee;
+    let legalBasis: string | null = null;
+
+    if (baseRates.length > 0 && invoice.due_date) {
+      const today = data.due_date ? new Date(data.due_date) : new Date();
+      try {
+        // Erstes Mahndatum = das hier (current date) — Verzug startet davor
+        const result = calculateVerzugszinsForInvoice({
+          invoiceAmountEur: Number(invoice.amount ?? 0),
+          dueDate: new Date(invoice.due_date),
+          isB2B,
+          baseRates,
+          firstDunningAt: today,
+          computationDate: today,
+        });
+        interestAmount = result.totalInterest;
+        interestDays = result.totalDays;
+        baseRateApplied = result.lineItems[0]?.baseRate ?? 0;
+        totalDue = (invoice.amount ?? 0) + dunningFee + interestAmount;
+        legalBasis = result.legalBasis;
+      } catch (err) {
+        log.warn('Verzugszins-Berechnung fehlgeschlagen — fahre mit 0 fort', {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
     const { data: dunning, error } = await supabase
       .from('dunning_records')
       .insert({
         invoice_id: data.invoice_id,
-        club_id: invoice?.club_id ?? null,
-        member_id: invoice?.member_id ?? null,
+        club_id: invoice.club_id,
+        member_id: invoice.member_id ?? null,
         level: data.level,
         due_date: data.due_date,
         fee_amount: dunningFee,
+        original_amount: invoice.amount ?? 0,
         sent_at: new Date().toISOString(),
         notes: data.notes ?? null,
+        interest_amount: interestAmount,
+        interest_days: interestDays,
+        is_b2b: isB2B,
+        base_rate_applied: baseRateApplied,
+        total_due: totalDue,
+        legal_basis: legalBasis,
       })
       .select()
       .single();
@@ -86,19 +170,21 @@ export class DunningService {
     invoiceNumber: string,
     amount: number,
     level: number,
-    dueDate: string
+    dueDate: string,
+    isB2B: boolean,
+    interestAmount: number,
+    totalDue: number,
+    legalBasis: string | null
   ): Promise<void> {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      console.warn(
-        `[dunning] No RESEND_API_KEY — skipping email to ${memberEmail} (invoice ${invoiceNumber}, level ${level})`
-      );
+      log.warn('No RESEND_API_KEY — skipping email', { to: memberEmail, level });
       return;
     }
 
     const levelLabel =
       level === 1 ? '1. Mahnung' : level === 2 ? '2. Mahnung' : '3. Mahnung (Letzte)';
-    const fee = this.calculateDunningFee(level);
+    const fee = this.calculateDunningFee(level, isB2B);
 
     const resend = new Resend(apiKey);
     await resend.emails.send({
@@ -111,6 +197,8 @@ export class DunningService {
         <p>Ihre Rechnung <strong>${invoiceNumber}</strong> über <strong>€${amount.toFixed(2)}</strong> ist noch offen.</p>
         <p>Bitte begleichen Sie den ausstehenden Betrag bis zum <strong>${dueDate}</strong>.</p>
         ${fee > 0 ? `<p>Für diese Mahnung wird eine Mahngebühr von <strong>€${fee.toFixed(2)}</strong> erhoben.</p>` : ''}
+        ${interestAmount > 0 ? `<p>Aufgelaufene Verzugszinsen <strong>${legalBasis ?? '§288 BGB'}</strong>: <strong>€${interestAmount.toFixed(2)}</strong></p>` : ''}
+        <p><strong>Gesamtforderung: €${totalDue.toFixed(2)}</strong></p>
         <p>Bei Fragen wenden Sie sich bitte an Ihren Verein.</p>
         <p>Mit freundlichen Grüßen,<br/>SWINGZ</p>
       `,
@@ -147,13 +235,13 @@ export class DunningService {
 
         const dunning = await this.createDunningRecord({
           invoice_id: invoice.id,
-          level: nextLevel,
+          level: Number(nextLevel),
           due_date: dueDateStr,
+          is_b2b: false,
         });
 
         newDunningRecords.push(dunning);
 
-        // Fetch member email to send notification
         if (invoice.member_id) {
           try {
             const { data: user } = await supabase
@@ -169,18 +257,23 @@ export class DunningService {
                 invoice.invoice_number,
                 invoice.amount,
                 nextLevel,
-                dueDateStr
+                dueDateStr,
+                dunning.is_b2b ?? false,
+                dunning.interest_amount ?? 0,
+                dunning.total_due ?? invoice.amount,
+                dunning.legal_basis
               );
             } else {
-              console.warn(
-                `[dunning] No email found for member ${invoice.member_id}, invoice ${invoice.invoice_number}`
-              );
+              log.warn('No email found for member', {
+                memberId: invoice.member_id,
+                invoice: invoice.invoice_number,
+              });
             }
           } catch (emailError) {
-            console.error(
-              `[dunning] Failed to send email for invoice ${invoice.invoice_number}:`,
-              emailError
-            );
+            log.error('Failed to send dunning email', {
+              invoice: invoice.invoice_number,
+              error: emailError instanceof Error ? emailError.message : String(emailError),
+            });
           }
         }
       }

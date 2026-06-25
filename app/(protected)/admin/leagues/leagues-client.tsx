@@ -5,7 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Flag, Users, Plus, ChevronRight, Target, Trophy } from 'lucide-react';
+import {
+  Flag,
+  Users,
+  Plus,
+  ChevronRight,
+  Target,
+  Trophy,
+  Download,
+  FileSpreadsheet,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
@@ -228,10 +237,25 @@ export default function LeaguesClient() {
                     <Users className="h-3 w-3" />
                     {league.teams.length} Team(s)
                   </span>
-                  <span className="flex items-center gap-1 group-hover:text-brand-primary transition-colors">
-                    Details
-                    <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`/api/leagues/${league.id}/export/verband`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      download
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded border border-border bg-background hover:bg-muted hover:text-foreground transition-colors"
+                      title="Medenspiel-CSV für Verband herunterladen"
+                    >
+                      <FileSpreadsheet className="h-3 w-3" />
+                      <Download className="h-3 w-3" />
+                      <span className="font-medium">CSV</span>
+                    </a>
+                    <span className="flex items-center gap-1 group-hover:text-brand-primary transition-colors">
+                      Details
+                      <ChevronRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

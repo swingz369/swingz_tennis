@@ -129,6 +129,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const isMock = !weatherData;
+
     // Fallback mock weather data
     if (!weatherData) {
       weatherData = {
@@ -143,11 +145,15 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      weather: weatherData,
+      weather: { ...weatherData, source: isMock ? 'mock' : 'live' },
       outdoorCourts: outdoorCourts ?? [],
       activeClosures: activeClosures ?? [],
       club: club?.name ?? 'Verein',
       city: clubCity ?? 'Berlin',
+      ...(isMock && {
+        warning:
+          'Wetterdaten nicht verfügbar (kein OPENWEATHER_API_KEY). Es werden Demo-Daten angezeigt.',
+      }),
     });
   });
 }

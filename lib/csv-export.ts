@@ -1,5 +1,24 @@
 /**
+ * CSV-Zelle sicher escapen (DE-Standard: Semikolon-getrennt, Hochkomma-Doppel als Quote per RFC 4180).
+ *
+ * Quote-Trigger: Semikolon, doppeltes Hochkomma, NL oder CR im String.
+ * Inhaltliche doppelte Hochkommata werden verdoppelt.
+ *
+ * Lebt in lib/csv-export (statt in app/api/leagues/.rest/route.ts) — vitest.config.ts
+ * schließt app/api-Pfade aus, also messen wir Coverage hier.
+ */
+export function escapeCsvCell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (str.includes(';') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+/**
  * Convert an array of objects to CSV string with UTF-8 BOM for Excel
+ * (Komma-Separator, alle Felder gequotet — bleibt unverändert für BC)
  */
 export function convertToCSV(
   data: Record<string, unknown>[],

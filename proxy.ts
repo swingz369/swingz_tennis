@@ -2,6 +2,30 @@
 
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+// Webhooks + Health + Cron: kein globales Limit
+const GLOBAL_RATE_EXCLUDED = ['/api/webhooks', '/api/health', '/api/cron'];
+
+// ponytail: reiner fetch-Call gegen Upstash REST (Edge-kompatibel, kein SDK-Import nötig)
+async function checkGlobalRateLimit(ip: string): Promise<boolean> {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return true; // nicht konfiguriert → durchlassen
+  try {
+    const key = `rl:global:${ip}`;
+    const res = await fetch(`${url}/pipeline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([
+        ['INCR', key],
+        ['EXPIRE', key, '60'],
+      ]),
+    });
+    const data = await res.json();
+    return (data?.[0]?.result ?? 0) <= 200;
+  } catch {
+    return true; // fail open — lieber durchlassen als alles sperren
+  }
+}
 
 /**
  * Generate a cryptographically secure random hex string
@@ -79,9 +103,13 @@ const PUBLIC_ROUTES = [
   '/privacy', // Privacy summary — public
   '/terms', // Terms of service — public
   '/trial-training', // Public trial booking — no auth required
+  '/join', // Member self-registration via club link
   '/api/auth/login',
   '/api/auth/logout',
   '/api/auth/register',
+  '/api/auth/register-interest',
+  '/api/auth/join',
+  '/api/public/club',
   '/api/public', // Public platform stats and trial endpoints
   '/api/health', // Health check — public for monitoring
   '/api/csrf-token', // CSRF token fetch — must be public
@@ -94,6 +122,18 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
   let response = NextResponse.next({ request: { headers: requestHeaders } });
+
+  // 0. Globales Rate-Limit für alle /api/*-Routen (DoS-Schutz, 200 req/min pro IP)
+  if (pathname.startsWith('/api/') && !GLOBAL_RATE_EXCLUDED.some((p) => pathname.startsWith(p))) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const allowed = await checkGlobalRateLimit(ip);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Zu viele Anfragen. Bitte kurz warten.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      );
+    }
+  }
 
   // 1. Öffentliche Routen → durchlassen (vor Auth & CSRF)
   const isPublic = PUBLIC_ROUTES.some(

@@ -4,12 +4,11 @@ import React from 'react';
 import { format, isToday } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin } from 'lucide-react';
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';
+import { CalendarShell } from '@/components/calendar/CalendarShell';
 
-/**
- * Modern header with glass-effect navigation bar.
- */
+/** Thin wrapper around CalendarShell for the court/booking calendar. */
 export function CourtCalendarHeader({
   title,
   subtitle,
@@ -31,56 +30,25 @@ export function CourtCalendarHeader({
   onGoDaily?: () => void;
   children?: React.ReactNode;
 }) {
+  const navLabel = `${format(weekStart, 'dd.MM', { locale: de })} – ${format(weekEnd, 'dd.MM.yyyy', { locale: de })}`;
+
   return (
-    <div className="space-y-4">
-      {/* Title row */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-        </div>
-      </div>
-
-      {/* Navigation bar — frosted glass effect */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-sm px-3 py-2">
-        {onGoDaily && (
-          <Button variant="outline" size="sm" onClick={onGoDaily} className="gap-1.5">
-            <CalendarIcon className="h-3.5 w-3.5" />
-            Tagesansicht
-          </Button>
-        )}
-        {children}
-
-        <div className="flex-1" />
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onGoToday}
-          className="text-xs font-semibold text-primary hover:text-primary/80"
-        >
-          Heute
-        </Button>
-
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-lg"
-            onClick={onGoPrevious}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[140px] text-center text-sm font-semibold text-foreground tabular-nums">
-            {format(weekStart, 'dd.MM', { locale: de })} –{' '}
-            {format(weekEnd, 'dd.MM.yyyy', { locale: de })}
-          </span>
-          <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" onClick={onGoNext}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
+    <CalendarShell
+      title={title}
+      subtitle={subtitle}
+      nav={{ label: navLabel, onPrev: onGoPrevious, onNext: onGoNext, onToday: onGoToday }}
+      controls={
+        <>
+          {onGoDaily && (
+            <Button variant="outline" size="sm" onClick={onGoDaily} className="gap-1.5">
+              <CalendarIcon className="h-3.5 w-3.5" />
+              Tagesansicht
+            </Button>
+          )}
+          {children}
+        </>
+      }
+    />
   );
 }
 

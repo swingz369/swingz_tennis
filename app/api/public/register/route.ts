@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
+import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 
 const log = createLogger('api:public:register');
 
 export async function POST(request: NextRequest) {
+  const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STRICT);
+  if (rateLimitError) return rateLimitError;
+
   try {
     const supabase = await createClient();
     const body = await request.json();

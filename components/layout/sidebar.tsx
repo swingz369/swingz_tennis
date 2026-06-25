@@ -22,13 +22,12 @@ import {
   CheckCircle,
   CreditCard,
   Building2,
-  MapPin,
+  Calendar,
   ChevronDown,
   UserPlus,
   DollarSign,
   Shield,
   MessageSquare,
-  Flag,
   HardHat,
   Shuffle,
 } from 'lucide-react';
@@ -211,12 +210,14 @@ export function Sidebar({
           subItems: [
             { name: 'Alle Mitglieder', href: '/admin/members' },
             { name: 'Familienkonten', href: '/admin/members/family' },
-            ...(!hiddenSections.has('work_duty')
-              ? [
-                  { name: 'Dienste verwalten', href: '/admin/work-duties' },
-                  { name: 'Zuweisungen', href: '/admin/work-duties/assignments' },
-                ]
+            ...(!hiddenSections.has('trial_training')
+              ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
               : []),
+            ...(!hiddenSections.has('work_duty')
+              ? [{ name: 'Arbeitsdienste', href: '/admin/work-duties' }]
+              : []),
+            { name: 'Nachrichten', href: '/messages' },
+            { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
           ],
           extraAction: onInvite
             ? {
@@ -230,66 +231,40 @@ export function Sidebar({
             : undefined,
         },
         {
-          label: 'Training & Saison',
+          label: 'Training',
           icon: GraduationCap,
           subItems: [
             { name: 'Saisonplanung', href: '/admin/seasons' },
-            { name: 'Stundenplan', href: '/scheduler' },
-            { name: 'Trainer & Stunden', href: '/admin/trainers' },
-            ...(!hiddenSections.has('trial_training')
-              ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
+            { name: 'Wochenstundenplan', href: '/scheduler' },
+            { name: 'Trainer-Profile', href: '/admin/trainers' },
+            { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
+          ],
+        },
+        {
+          label: 'Spielbetrieb',
+          icon: Trophy,
+          subItems: [
+            { name: 'Platzverwaltung', href: '/admin/courts' },
+            ...(!hiddenSections.has('weather_integration')
+              ? [{ name: 'Platzsperren & Wetter', href: '/admin/weather' }]
+              : []),
+            ...(!hiddenSections.has('league_lineup')
+              ? [{ name: 'Ligen & Teams', href: '/admin/leagues' }]
               : []),
             ...(!hiddenSections.has('tournaments')
               ? [{ name: 'Turniere', href: '/admin/tournaments' }]
               : []),
-          ],
-        },
-        {
-          label: 'Plätze',
-          icon: MapPin,
-          subItems: [
-            { name: 'Platz-Kalender & Verwaltung', href: '/admin/courts' },
             ...(!hiddenSections.has('ai_matchmaking')
               ? [{ name: 'KI-Matchmaking', href: '/matchmaking' }]
               : []),
-            ...(!hiddenSections.has('weather_integration')
-              ? [{ name: 'Wetter & Platzsperren', href: '/admin/weather' }]
-              : []),
           ],
         },
-        ...(!hiddenSections.has('league_lineup')
-          ? [
-              {
-                label: 'Liga & Mannschaft',
-                icon: Flag,
-                subItems: [{ name: 'Ligen & Teams', href: '/admin/leagues' }],
-              },
-            ]
-          : []),
         {
           label: 'Finanzen',
           icon: DollarSign,
           subItems: [
-            { name: 'Abrechnung & Kategorien', href: '/admin/billing' },
-            { name: 'Analytics & Berichte', href: '/admin/analytics' },
+            { name: 'Abrechnung', href: '/admin/billing' },
             { name: 'Abonnement', href: '/admin/subscription' },
-          ],
-        },
-        {
-          label: 'Verwaltung',
-          icon: Building2,
-          subItems: [
-            { name: 'Dokumente', href: '/admin/documents' },
-            { name: 'Versammlungen', href: '/admin/meetings' },
-            { name: 'Wartungsplan', href: '/admin/maintenance' },
-          ],
-        },
-        {
-          label: 'Nachrichten',
-          icon: MessageSquare,
-          subItems: [
-            { name: 'Nachrichten', href: '/messages' },
-            { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
           ],
         },
         {
@@ -297,16 +272,19 @@ export function Sidebar({
           icon: Settings,
           subItems: [
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
-            ...(!hiddenSections.has('shop')
-              ? [{ name: 'Shop verwalten', href: '/admin/shop' }]
-              : []),
+            { name: 'Auswertungen & Berichte', href: '/admin/analytics' },
+            { name: 'Dokumente', href: '/admin/documents' },
+            { name: 'Versammlungen', href: '/admin/meetings' },
+            { name: 'Board-Beschlüsse', href: '/admin/decisions' },
+            { name: 'Wartungsplan', href: '/admin/maintenance' },
+            ...(!hiddenSections.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
           ],
         },
       ];
-      // Hide entire sections if the primary feature is disabled.
+
       return allSections.filter((section) => {
         if (section.label === 'Mitglieder') return !hiddenSections.has('members');
-        if (section.label === 'Training & Saison')
+        if (section.label === 'Training')
           return !hiddenSections.has('trainers') || !hiddenSections.has('seasons');
         if (section.label === 'Finanzen') return !hiddenSections.has('finance');
         return true;
@@ -321,6 +299,7 @@ export function Sidebar({
           subItems: [
             { name: 'Alle Vereine', href: '/owner/clubs' },
             { name: 'Superadmins', href: '/owner/superadmins' },
+            { name: 'Admins', href: '/owner/admins' },
             { name: 'Zugänge & Anfragen', href: '/owner/access' },
           ],
         },
@@ -328,7 +307,7 @@ export function Sidebar({
           label: 'System',
           icon: Settings,
           subItems: [
-            { name: 'Plattform-Statistiken', href: '/owner' },
+            { name: 'Umsatz & Abos', href: '/owner/billing' },
             { name: 'System-Einstellungen', href: '/owner/settings' },
           ],
         },
@@ -351,6 +330,7 @@ export function Sidebar({
           subItems: [
             { name: 'Statistiken', href: '/superadmin/dashboard' },
             { name: 'Einstellungen', href: '/superadmin/settings' },
+            { name: 'Abonnement', href: '/superadmin/subscription' },
           ],
         },
       ];
@@ -371,22 +351,28 @@ export function Sidebar({
 
   // Secondary navigation — shown consistently for both admin & superadmin
   const secondaryNav: NavItem[] = [
-    ...(!isAdmin && !isSuperAdmin
+    ...(!isAdmin && !isSuperAdmin && !isOwner
+      ? [{ name: 'Stundenplan', href: '/scheduler', icon: Calendar }]
+      : []),
+    ...(!isAdmin && !isSuperAdmin && !isOwner
+      ? [{ name: 'Trainings­präferenzen', href: '/member/preferences', icon: GraduationCap }]
+      : []),
+    ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Nachrichten', href: '/messages', icon: MessageSquare }]
       : []),
-    ...(!isAdmin && !isSuperAdmin
+    ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Matchmaking', href: '/matchmaking', icon: Shuffle }]
       : []),
-    ...(!isAdmin && !isSuperAdmin
+    ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Offene Spiele', href: '/matches', icon: Users }]
       : []),
-    ...(!isAdmin && !isSuperAdmin
+    ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Meine Rechnungen', href: '/billing', icon: CreditCard }]
       : []),
-    ...(!isAdmin && !isSuperAdmin
+    ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Vereinsdokumente', href: '/documents', icon: CheckCircle }]
       : []),
-    ...(!isAdmin && !isSuperAdmin
+    ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Arbeitsdienste', href: '/member/work-duties', icon: HardHat }]
       : []),
   ];
@@ -546,21 +532,43 @@ export function Sidebar({
             <span>Dashboard</span>
           </Link>
 
-          {/* Role-specific collapsible sections — unified rendering for both roles */}
+          {/* Role-specific sections — flat for owner, collapsible for admin/superadmin */}
           {roleSections.length > 0 && (
             <div className="mt-2 space-y-0.5">
-              {roleSections.map((section) => (
-                <AdminSection
-                  key={section.label}
-                  label={section.label}
-                  icon={section.icon}
-                  subItems={section.subItems}
-                  pathname={pathname}
-                  onClose={onClose}
-                  colors={colors}
-                  extraAction={section.extraAction}
-                />
-              ))}
+              {isOwner
+                ? roleSections
+                    .flatMap((section) => section.subItems)
+                    .map((item) => {
+                      const isActive = isActivePath(pathname, item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => onClose?.()}
+                          className={cn(
+                            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                            isActive
+                              ? `${colors.bg} ${colors.text} shadow-sm`
+                              : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
+                          )}
+                          aria-current={isActive ? 'page' : undefined}
+                        >
+                          <span>{item.name}</span>
+                        </Link>
+                      );
+                    })
+                : roleSections.map((section) => (
+                    <AdminSection
+                      key={section.label}
+                      label={section.label}
+                      icon={section.icon}
+                      subItems={section.subItems}
+                      pathname={pathname}
+                      onClose={onClose}
+                      colors={colors}
+                      extraAction={section.extraAction}
+                    />
+                  ))}
             </div>
           )}
 

@@ -187,6 +187,11 @@ export class DrizzleTrainerBillingRepository implements TrainerBillingRepository
       totalHours: parseFloat(row.total_hours),
       hourlyRate: parseFloat(row.hourly_rate),
       totalAmount: parseFloat(row.total_amount),
+      // ponytail: cast — columns added via migration, not yet in Drizzle schema
+      taxFreeAmount: parseFloat((row as unknown as Record<string, string>).tax_free_amount ?? '0'),
+      taxableAmount: parseFloat(
+        (row as unknown as Record<string, string>).taxable_amount ?? row.total_amount
+      ),
       status: row.status as 'pending' | 'processed' | 'paid' | 'overdue',
       invoiceId: row.invoice_id ?? undefined,
       invoiceNumber: row.invoice_number ?? undefined,

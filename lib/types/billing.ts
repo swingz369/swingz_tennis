@@ -122,10 +122,38 @@ export const DunningRecordSchema = z.object({
   escalated_at: z.string().nullable(),
   cancelled_at: z.string().nullable(),
   notes: z.string().nullable(),
+  // Verzugszins-Spalten (Migration 20260624_mahnwesen_verzugszins_decisions.sql)
+  interest_amount: z.number().nullable(),
+  interest_days: z.number().int().nullable(),
+  is_b2b: z.boolean().nullable(),
+  base_rate_applied: z.number().nullable(),
+  total_due: z.number().nullable(),
+  legal_basis: z.string().nullable(),
   created_at: z.string().nullable(),
   updated_at: z.string().nullable(),
 });
 export type DunningRecord = z.infer<typeof DunningRecordSchema>;
+
+// === Bundesbank-Basiszinssatz (Migration 20260624) ===
+export const BaseInterestRateSchema = z.object({
+  id: z.string().uuid(),
+  valid_from: z.string(), // ISO-Datum
+  rate: z.number(),
+  source: z.string().nullable(),
+  created_at: z.string().nullable(),
+});
+export type BaseInterestRate = z.infer<typeof BaseInterestRateSchema>;
+
+// === Erweiterter Create-Dunning-Input mit Verzugszins-Flag ===
+export const CreateDunningRecordSchema = z.object({
+  invoice_id: z.string().uuid(),
+  level: z.number().int().min(1).max(3),
+  due_date: z.string(),
+  fee_amount: z.number().optional(),
+  is_b2b: z.boolean().default(false),
+  notes: z.string().nullable().optional(),
+});
+export type CreateDunningRecord = z.infer<typeof CreateDunningRecordSchema>;
 
 // === Create/Input schemas (keep original API shape, map internally) ===
 
@@ -167,14 +195,7 @@ export const CreateSepaMandateSchema = z.object({
 });
 export type CreateSepaMandate = z.infer<typeof CreateSepaMandateSchema>;
 
-export const CreateDunningRecordSchema = z.object({
-  invoice_id: z.string().uuid(),
-  level: z.number().int().min(1).max(3),
-  due_date: z.string(),
-  fee_amount: z.number().optional(),
-  notes: z.string().nullable().optional(),
-});
-export type CreateDunningRecord = z.infer<typeof CreateDunningRecordSchema>;
+// (Legacy-Kommentar: CreateDunningRecordSchema wurde oben mit is_b2b-Flag erweitert.)
 
 // === Composite types ===
 

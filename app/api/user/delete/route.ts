@@ -8,7 +8,7 @@ const log = createLogger('api:user:delete');
 
 export async function DELETE(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
-    const { user, clubId } = auth;
+    const { user } = auth;
     const serviceSb = createServiceClient();
 
     try {
@@ -29,23 +29,32 @@ export async function DELETE(request: NextRequest) {
         })
         .eq('id', user.id);
 
-      // Deactivate membership
-      if (clubId) {
-        await serviceSb
-          .from('user_club_memberships')
-          .update({ is_active: false })
-          .eq('user_id', user.id)
-          .eq('club_id', clubId);
-      }
+      // Deactivate ALL memberships across all clubs
+      await serviceSb
+        .from('user_club_memberships')
+        .update({ is_active: false })
+        .eq('user_id', user.id);
 
-      // Delete auth user (this invalidates all sessions)
+      // Remove trainer notes about this member (PII)
+      await (serviceSb as any).from('trainer_member_notes').delete().eq('member_id', user.id);
+
+      // Audit trail (DSGVO Art. 5 Abs. 2)
+      await (serviceSb as any).from('audit_logs').insert({
+        action: 'DSGVO_DELETE',
+        table_name: 'users',
+        record_id: user.id,
+        performed_by: user.id,
+        details: { pseudonym: `deleted-${user.id}`, timestamp: new Date().toISOString() },
+      });
+
+      // Delete auth user (invalidates all sessions)
       const { error } = await serviceSb.auth.admin.deleteUser(user.id);
       if (error) {
         log.error('Auth user deletion failed', error);
         return NextResponse.json({ error: 'Löschung fehlgeschlagen' }, { status: 500 });
       }
 
-      log.info('User account deleted (DSGVO)', { userId: user.id });
+      log.info('User account anonymized (DSGVO)', { userId: user.id });
       return NextResponse.json({ success: true });
     } catch (err) {
       log.error('Account deletion error', err instanceof Error ? err : undefined);

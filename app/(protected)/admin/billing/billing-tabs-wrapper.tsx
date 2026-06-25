@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { CreditCard, Tag, FileDown, Info } from 'lucide-react';
+import { CreditCard, Tag, FileDown, Info, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -16,6 +16,82 @@ interface FeeConfig {
   amount: number;
   billing_cycle: string;
   is_active: boolean;
+}
+
+function DatevExportTab() {
+  const [isLoading, setIsLoading] = useState(false);
+  const today = new Date().toISOString().split('T')[0];
+  const [from, setFrom] = useState(`${today.slice(0, 4)}-01-01`);
+  const [to, setTo] = useState(today);
+
+  const handleExport = async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiFetch(`/api/billing/export/datev?from=${from}&to=${to}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error ?? 'DATEV-Export fehlgeschlagen');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `datev-buchungsstapel-${from}-${to}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('DATEV-CSV erfolgreich heruntergeladen');
+    } catch {
+      toast.error('Ein Fehler ist aufgetreten');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex items-start gap-3 text-sm text-muted-foreground">
+          <Info className="h-5 w-5 mt-0.5 shrink-0 text-brand-primary" />
+          <p>
+            Exportiert alle abgeschlossenen Rechnungen im Zeitraum als{' '}
+            <strong>DATEV Buchungsstapel</strong> (CSV, Format EXTF). Direkt importierbar in DATEV
+            Rechnungswesen und Lexware.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium" htmlFor="datev-from">
+              Von
+            </label>
+            <input
+              id="datev-from"
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium" htmlFor="datev-to">
+              Bis
+            </label>
+            <input
+              id="datev-to"
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+            />
+          </div>
+        </div>
+        <Button onClick={handleExport} disabled={isLoading || !from || !to} className="gap-2">
+          <BookOpen className="h-4 w-4" />
+          {isLoading ? 'Exportiere...' : 'DATEV-CSV herunterladen'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 function SepaExportTab() {
@@ -94,10 +170,10 @@ export function BillingCategoriesTabs({
   clubId: string;
   defaultTab?: string;
 }) {
-  const tab = ['categories', 'sepa'].includes(defaultTab) ? defaultTab : 'invoices';
+  const tab = ['categories', 'sepa', 'datev'].includes(defaultTab) ? defaultTab : 'invoices';
   return (
     <Tabs defaultValue={tab} className="space-y-6">
-      <TabsList className="w-full max-w-lg grid grid-cols-3 bg-muted dark:bg-card/5 p-1 rounded-xl">
+      <TabsList className="w-full max-w-2xl grid grid-cols-4 bg-muted dark:bg-card/5 p-1 rounded-xl">
         <TabsTrigger
           value="invoices"
           className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
@@ -119,6 +195,13 @@ export function BillingCategoriesTabs({
           <FileDown className="h-4 w-4 mr-2" />
           SEPA-Export
         </TabsTrigger>
+        <TabsTrigger
+          value="datev"
+          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+        >
+          <BookOpen className="h-4 w-4 mr-2" />
+          DATEV
+        </TabsTrigger>
       </TabsList>
 
       {/* Rechnungen Tab — renders the existing BillingClient */}
@@ -132,6 +215,11 @@ export function BillingCategoriesTabs({
       {/* SEPA-Export Tab */}
       <TabsContent value="sepa">
         <SepaExportTab />
+      </TabsContent>
+
+      {/* DATEV-Export Tab */}
+      <TabsContent value="datev">
+        <DatevExportTab />
       </TabsContent>
     </Tabs>
   );

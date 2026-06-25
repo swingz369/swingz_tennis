@@ -15,6 +15,8 @@ export interface TrainerBilling {
   totalHours: number;
   hourlyRate: number;
   totalAmount: number;
+  taxFreeAmount: number;
+  taxableAmount: number;
   status: 'pending' | 'processed' | 'paid' | 'overdue';
   invoiceId?: string;
   invoiceNumber?: string;
@@ -44,6 +46,8 @@ export interface CreateTrainerBillingInput {
   totalHours: number;
   hourlyRate: number;
   totalAmount: number;
+  taxFreeAmount?: number;
+  taxableAmount?: number;
   dueDate?: string;
   notes?: string;
 }

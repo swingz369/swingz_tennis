@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     if (familyError) {
       log.error('Family accounts fetch error:', familyError);
-      return NextResponse.json({ error: 'DB error' }, { status: 500 });
+      return NextResponse.json({ groups: [] }); // graceful — Familienkonten nicht verfügbar
     }
 
     // Group by family_group_id
