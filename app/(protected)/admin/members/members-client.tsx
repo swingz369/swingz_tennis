@@ -528,88 +528,107 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
               Keine Mitglieder gefunden
             </div>
           ) : (
-            paginatedMembers.map((member) => (
-              <Card
-                key={member.id}
-                className="hover:shadow-md transition-shadow border-border dark:border-white/10"
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <CardTitle className="text-sm font-semibold truncate">
-                        {member.full_name}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate mt-0.5">
-                        {member.email}
+            paginatedMembers.map((member) => {
+              const isSelected = selectedIds.has(member.id);
+              return (
+                <Card
+                  key={member.id}
+                  className={`hover:shadow-md transition-all border-border dark:border-white/10 ${
+                    isSelected
+                      ? 'ring-2 ring-brand-primary border-brand-primary bg-brand-primary/5 dark:bg-brand-primary/10'
+                      : ''
+                  }`}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <CardTitle className="text-sm font-semibold truncate">
+                          {member.full_name}
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground dark:text-muted-foreground truncate mt-0.5">
+                          {member.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(member.id)}
+                          aria-label={`${member.full_name} auswählen`}
+                          className="translate-y-0.5"
+                        />
+                        {member.role === 'member' && (
+                          <button
+                            onClick={() =>
+                              handleTogglePlanning(member.id, member.include_in_planning)
+                            }
+                            className="hover:scale-110 transition-transform"
+                            title={
+                              member.include_in_planning
+                                ? 'Von Planung ausschließen'
+                                : 'In Planung einbeziehen'
+                            }
+                          >
+                            {member.include_in_planning !== false ? (
+                              <CheckSquare className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <Square className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2 pt-0">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleActive(member.id, member.is_active)}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
+                          member.is_active
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
+                        }`}
+                      >
+                        {member.is_active ? 'Aktiv' : 'Inaktiv'}
+                      </button>
+                    </div>
+                    {member.phone && (
+                      <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                        {member.phone}
                       </p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      {member.role === 'member' && (
-                        <button
-                          onClick={() =>
-                            handleTogglePlanning(member.id, member.include_in_planning)
-                          }
-                          className="hover:scale-110 transition-transform"
-                          title={
-                            member.include_in_planning
-                              ? 'Von Planung ausschließen'
-                              : 'In Planung einbeziehen'
-                          }
-                        >
-                          {member.include_in_planning !== false ? (
-                            <CheckSquare className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <Square className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 pt-0">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleToggleActive(member.id, member.is_active)}
-                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
-                        member.is_active
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
-                      }`}
-                    >
-                      {member.is_active ? 'Aktiv' : 'Inaktiv'}
-                    </button>
-                  </div>
-                  {member.phone && (
+                    )}
                     <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                      {member.phone}
+                      Beigetreten: {formatDate(member.joined_at)}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">
-                    Beigetreten: {formatDate(member.joined_at)}
-                  </p>
-                  <div className="flex justify-end gap-1 pt-1 border-t border-border dark:border-white/5">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title="Details" asChild>
-                      <Link href={`/admin/members/${member.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                      onClick={() => handleToggleActive(member.id, member.is_active)}
-                    >
-                      {member.is_active ? (
-                        <UserX className="h-4 w-4 text-orange-600" />
-                      ) : (
-                        <UserCheck className="h-4 w-4 text-green-600" />
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                    <div className="flex justify-end gap-1 pt-1 border-t border-border dark:border-white/5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Details"
+                        asChild
+                      >
+                        <Link href={`/admin/members/${member.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                        onClick={() => handleToggleActive(member.id, member.is_active)}
+                      >
+                        {member.is_active ? (
+                          <UserX className="h-4 w-4 text-orange-600" />
+                        ) : (
+                          <UserCheck className="h-4 w-4 text-green-600" />
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       )}
@@ -626,10 +645,22 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
 
       {/* Bulk Selection Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-3 shadow-lg">
-          <span className="text-sm font-medium">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 sm:gap-4 rounded-xl border border-border bg-card px-3 sm:px-5 py-3 shadow-lg">
+          <span className="text-sm font-medium tabular-nums whitespace-nowrap">
             {selectedIds.size} Mitglied{selectedIds.size !== 1 ? 'er' : ''} ausgewählt
           </span>
+          {!allSelected && filteredMembers.length > selectedIds.size && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSelectAll}
+              title={`Alle ${filteredMembers.length} auswählen`}
+              className="text-xs"
+            >
+              <CheckSquare className="h-3.5 w-3.5 mr-1" />
+              Alle auswählen
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
             Auswahl aufheben
           </Button>
