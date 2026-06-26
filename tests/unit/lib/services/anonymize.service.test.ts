@@ -204,7 +204,12 @@ vi.mock('drizzle-orm', () => ({
   },
   and: (...conds: Pred[]) => Object.assign({}, ...conds),
   sql: (() => {
-    const proxy = new Proxy(() => proxy, {
+    // Opaque self-referential Proxy: any property access or call returns
+    // the proxy again. Explicit `: any` annotation avoids TS7022 (self-ref
+    // inference). The mock represents drizzle-orm's sql`` tag template,
+    // which is never inspected by the F6.1 service skeleton — see
+    // AnonymizeService JSDoc about the JSONB operator we skip in mocks.
+    const proxy: any = new Proxy(() => proxy, {
       get: () => proxy,
       apply: () => proxy,
     });
