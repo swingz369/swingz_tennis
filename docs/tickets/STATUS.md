@@ -5,11 +5,11 @@
 
 ## Verteilung
 
-- **✅ DONE**: 22
+- **✅ DONE**: 23
 - **🔶 PARTIAL**: 12
-- **❌ TODO**: 51
+- **❌ TODO**: 50
 
-## ❌ TODO (51)
+## ❌ TODO (50)
 
 - **[1.2.1](q1/1.2.1.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — ROI-Stat-Berechnung  
   → „`lib/season-planning/analytics.ts` neu erstellen mit Funktion `computeRoiStats(dryRunResult)`; Anzeige in `app/(protected)/admin/seasons/[id]/planning/page.tsx` ergänzen."
@@ -107,8 +107,7 @@
   → „Konzept erstellen — Datei-Targets fehlen."
 - **[F6.1](q1/F6.1.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — Anonymize-Service skelettieren  
   → „`lib/services/anonymize.service.ts` neu — Voraussetzung für Q2-Epic 2.1."
-- **[F6.3](q1/F6.3.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — Audit-Eintrag bei Anonymisierung  
-  → „Im Rahmen von F6.1 mit-umsetzen."
+
 - **[F6.4](q1/F6.4.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — E2E-Test: User löschen → PII raus, Rechnungen pseudonymisiert  
   → „E2E-Spec schreiben sobald F6.1 existiert."
 - **[F8](old-plan/F8.md)** _(Old Plan/F8 SMS/WhatsApp)_ — SMS/WhatsApp-Benachrichtigungen  
@@ -142,7 +141,7 @@
 - **[TICKET-W2-CAST-CLEANUP](roadmap/TICKET-W2-CAST-CLEANUP.md)** _(Roadmap/TICKET-W2 Cast-Cleanup)_ — Wave-2 Cast-Cleanup Complex Routes  
   → „W3 Cast-Cleanup: 5 weitere `as any` in anderen `app/api/leagues/`-Routes (Tickets in `route.ts` + `[id]/route.ts`)."
 
-## ✅ DONE (22)
+## ✅ DONE (23)
 
 - **[1.0.1](q1/1.0.1.md)** _(Q1/1.0 Service-Client-Audit)_ — Service-Client-Inventur  
   → „Keine. Optional Refresh nach großen Auth/RLS-Refactors."
@@ -184,6 +183,8 @@
   → „Keine."
 - **[1.3.1](q1/1.3.1.md)** _(Q1/1.3 nuLiga-Hardening)_ — Retry-Logik + Layout-Alarm  
   → „Retry-Wrapper (1+3 Versuche, exp. backoff 500/1k/2k/4k, cap 8s) + Sentry.withScope-Layout-Alarm bei leerem Parse. 10/10 Vitest grün (vi.useFakeTimers)."
+- **[F6.3](q1/F6.3.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — Audit-Log-Composite-Index  
+  → „Migration `20260626_audit_logs_dsgvo_idx.sql` legt `audit_logs_action_resource_type_id_idx` ON (action, resource_type, resource_id) an. Skaliert das F6.1-Idempotenz-Query von BitmapAnd+SequentialScan auf Index-only-Scan. LEFTMOST-PREFIX: column order matches WHERE-clause in anonymize.service.ts. Drizzle-Schema-Callback nachgezogen für künftige `drizzle-kit generate` Alignments."
 - **[F7](old-plan/F7.md)** _(Old Plan/F7 Drizzle-Schema-Drift)_ — Drizzle-Schema-Drift (deckt sich mit Epic 1.1)  
   → „Keine — regelmäßig in CI laufen lassen."
 - **[TICKET-003](roadmap/TICKET-003.md)** _(Roadmap/TICKET-003 Medenspiel-CSV)_ — Medenspiel-CSV-Export für Verbände  

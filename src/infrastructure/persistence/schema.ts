@@ -19,6 +19,11 @@ import {
   text,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
+import type { OfficeFlagMap } from '@/lib/auth-common';
+
+// A2-Vertrag: user_club_memberships.office_flags ist JSONB mit Shape
+// OfficeFlagMap = Partial<Record<OfficeRole, boolean>>. Der Migration-SQL ist
+// in 20260625_office_flags.sql bereits live — Drizzle-Sync nur TS-Layer.
 
 export const clubs = pgTable(
   'clubs',
@@ -51,6 +56,8 @@ export const clubs = pgTable(
     tax_rate: integer('tax_rate').default(0),
     default_payment_method: varchar('default_payment_method', { length: 20 }).default('transfer'),
     invoice_number_prefix: varchar('invoice_number_prefix', { length: 10 }),
+    // F1.1 DATEV: Per-Verein Default-Erlöskonto (SKR03/04). Default '4000' für SKR04.
+    default_revenue_account: text('default_revenue_account').notNull().default('4000'),
     // Per-club feature flags. Keys defined in lib/features.ts.
     // Core features (members, trainers, seasons, finance) are immutable and always true.
     features: jsonb('features').$type<Record<string, boolean>>().notNull().default({
@@ -339,8 +346,10 @@ export const users = pgTable(
     skill_level: varchar('skill_level', { length: 20 }).default('beginner'),
     // Superadmin onboarding completion flag (person-bound, not club-bound)
     superadmin_setup_completed_at: timestamp('superadmin_setup_completed_at'),
-    // DTB-ID: Deutsche Tennis Bund Spielernummer für tennis.de Integration
+    //    DTB-ID: Deutsche Tennis Bund Spielernummer für tennis.de Integration
     dtb_id: varchar('dtb_id', { length: 20 }),
+    // F1.1 DATEV: Per-Mitglied-Debitoren-Nummer (z. B. „10042"). NULL = Fallback auf ENV-Default.
+    datev_debitor_number: text('datev_debitor_number'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -362,6 +371,13 @@ export const userClubMemberships = pgTable(
     joined_at: timestamp('joined_at').notNull().defaultNow(),
     is_active: boolean('is_active').notNull().default(true),
     include_in_planning: boolean('include_in_planning').notNull().default(true),
+    // A2 — Funktionale Vereinsämter (Host-Flag-System, komplement\u00e4r zur Rolle).
+    // Keys + Typen definiert in `lib/auth-common.ts` (`OfficeRole` / `OfficeFlagMap`).
+    // Bestehende Migration `20260625_office_flags.sql` hat die JSONB-Spalte bereits angelegt.
+    // Hier nur nachgezogen, damit typisierte Queries ohne `as unknown`-Cast funktionieren.
+    // Verteidigung: `sanitizeOfficeFlags` in `lib/auth-common.ts` filtert unbekannte Keys,
+    // bevor sie in den Map-Lookup in `verifyOffice` gehen.
+    office_flags: jsonb('office_flags').$type<OfficeFlagMap>().notNull().default({}),
     tenant_id: varchar('tenant_id', { length: 100 }), // Für Multi-Tenant Isolation
     created_at: timestamp('created_at').notNull().defaultNow(),
   },
@@ -390,6 +406,14 @@ export const auditLogs = pgTable(
     actor_idx: index('audit_logs_actor_idx').on(table.actor_id),
     resource_idx: index('audit_logs_resource_idx').on(table.resource_id, table.resource_type),
     action_idx: index('audit_logs_action_idx').on(table.action),
+    // F6.3 — composite covering the AnonymizeService DSGVO idempotency query
+    // WHERE action=X AND resource_type=Y AND resource_id=Z. Created by
+    // supabase/migrations/20260626_audit_logs_dsgvo_idx.sql.
+    action_resource_type_id_idx: index('audit_logs_action_resource_type_id_idx').on(
+      table.action,
+      table.resource_type,
+      table.resource_id
+    ),
     created_at_idx: index('audit_logs_created_at_idx').on(table.created_at),
   })
 );
@@ -1017,6 +1041,10 @@ export const trainerBillings = pgTable(
     total_hours: numeric('total_hours', { precision: 10, scale: 2 }).notNull(),
     hourly_rate: numeric('hourly_rate', { precision: 10, scale: 2 }).notNull(),
     total_amount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
+    // F2: Übungsleiterpauschale (§ 3 Nr. 26 EStG) — steuerfreier Anteil, max. 3.000 € p.a. pro Trainer
+    tax_free_amount: numeric('tax_free_amount', { precision: 10, scale: 2 }).notNull().default('0'),
+    // F2: Steuerpflichtiger Anteil (Betrag über der Übungsleiterpauschale)
+    taxable_amount: numeric('taxable_amount', { precision: 10, scale: 2 }).notNull().default('0'),
     status: varchar('status', { length: 20 }).notNull().default('pending'),
     invoice_id: uuid('invoice_id'),
     invoice_number: varchar('invoice_number', { length: 50 }),

@@ -200,6 +200,13 @@ export class AnonymizeService {
       // Using `auditLogs.details->>'schema_version' = '2'` keeps the
       // query robust against older schema-version rows (e.g. from
       // initial flow migrations) being mis-identified.
+      //
+      // PERFORMANCE: the WHERE column order matches the composite B-tree
+      // `audit_logs_action_resource_type_id_idx` (created by migration
+      // 20260626_audit_logs_dsgvo_idx.sql) — Postgres uses leftmost-prefix
+      // rules so this is an index-only scan down to ~1 row even at >10^6
+      // audit rows. The `details->>'schema_version'` filter is a post-fetch
+      // heap check on the small candidate set.
       const existing = await db
         .select({ id: auditLogs.id, details: auditLogs.details })
         .from(auditLogs)
