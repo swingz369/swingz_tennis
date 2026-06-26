@@ -9,6 +9,7 @@
  */
 
 import * as cheerio from 'cheerio';
+import * as Sentry from '@sentry/nextjs';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('nuliga-scraper');
@@ -65,14 +66,7 @@ export async function fetchNuligaGroupPage(url: string): Promise<NuligaGroupPage
     );
   }
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'SwingZ/1.0 (Vereinsmanagement; Kontakt: admin@swingz.de)',
-      Accept: 'text/html,application/xhtml+xml',
-      'Accept-Language': 'de-DE,de;q=0.9',
-    },
-    signal: AbortSignal.timeout(30_000),
-  });
+  const response = await fetchWithRetry(url);
 
   if (!response.ok) {
     throw new Error(`nuLiga antwortete mit HTTP ${response.status}`);
@@ -81,12 +75,9 @@ export async function fetchNuligaGroupPage(url: string): Promise<NuligaGroupPage
   const html = await response.text();
   const result = parseGroupPageHtml(html, url);
 
-  // A3: leere Tabelle = HTML-Layout möglicherweise geändert → sofort loggen
+  // A3: leere Tabelle = HTML-Layout möglicherweise geändert → sofort loggen + Sentry-Alarm (T1.3.1)
   if (result.standings.length === 0 && result.matches.length === 0) {
-    log.error('nuLiga-Parse lieferte leere Ergebnisse — HTML-Layout möglicherweise geändert', {
-      url,
-      htmlSnippet: html.slice(0, 300),
-    });
+    triggerLayoutAlarm(url, html);
   }
 
   return result;
@@ -340,6 +331,111 @@ function parseMatchSchedule($: cheerio.CheerioAPI): NuligaMatch[] {
 function parseIntSafe(value: string): number {
   const parsed = parseInt(value?.trim() || '0', 10);
   return isNaN(parsed) ? 0 : parsed;
+}
+
+// ── Retry-Layer (Q1 · 1.3.1) ──────────────────────────────────────────────
+
+interface FetchWithRetryOptions {
+  /** Total retry attempts AFTER the initial attempt. 3 ⇒ 4 fetches max. */
+  retries?: number;
+  /** Initial backoff delay; doubles per attempt (capped at 8s). */
+  baseDelayMs?: number;
+  /** Per-attempt fetch timeout. */
+  perAttemptTimeoutMs?: number;
+}
+
+/**
+ * Fetch with exponential-backoff retry layer for nuLiga HTTP calls.
+ *
+ * Retry policy:
+ * - 5xx server errors → retry (5xx is transient / upstream infrastructure)
+ * - Network errors (fetch throws TypeError), AbortError, TimeoutError → retry
+ * - 4xx client errors → NO retry (fail fast — bad URL, page removed, etc.)
+ * - Final retry throws an explicit Error with retry-count context so the
+ *   caller (and Sentry) can distinguish "first-try 503" from "503 exhausted
+ *   4 attempts". Network errors are re-thrown as-is so the original cause
+ *   is preserved in the stack trace (fetch failed / AbortError / Timeout).
+ */
+async function fetchWithRetry(
+  url: string,
+  { retries = 3, baseDelayMs = 500, perAttemptTimeoutMs = 15_000 }: FetchWithRetryOptions = {}
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'SwingZ/1.0 (Vereinsmanagement; Kontakt: admin@swingz.de)',
+          Accept: 'text/html,application/xhtml+xml',
+          'Accept-Language': 'de-DE,de;q=0.9',
+        },
+        signal: AbortSignal.timeout(perAttemptTimeoutMs),
+      });
+      if (response.ok) return response;
+      // 4xx client errors → fail fast, no retry (caller throws).
+      if (response.status >= 400 && response.status < 500) return response;
+      // 5xx → retry until exhaustion, then throw with retry-count context.
+      if (attempt === retries) {
+        throw new Error(
+          `nuLiga responded with HTTP ${response.status} after ${retries + 1} attempts`
+        );
+      }
+      log.warn('nuLiga-fetch 5xx — retry', { url, attempt, status: response.status });
+    } catch (err) {
+      // Network / Timeout / AbortError: rethrow as-is so original cause
+      // is preserved. Only the helper's own exhausted-retry-error above
+      // takes this path on 5xx — for network errors we let the underlying
+      // TypeError/AbortError propagate naturally.
+      if (attempt === retries) throw err;
+      log.warn('nuLiga-fetch network error — retry', {
+        url,
+        attempt,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+    // Exponential backoff: 500ms, 1000ms, 2000ms (hard cap 8s keeps worst-case bounded).
+    await new Promise((r) => setTimeout(r, Math.min(baseDelayMs * 2 ** attempt, 8000)));
+  }
+  // Defensive — every code path above either returns or throws.
+  throw new Error('fetchWithRetry: unreachable — loop invariant broken');
+}
+
+// ── Layout-Alarm (Q1 · 1.3.1) ──────────────────────────────────────────────
+
+/**
+ * Fire an "empty parse" alarm: likely a nuLiga HTML/CSS layout change.
+ *
+ * Logs to the structured logger AND captures a tagged Sentry exception with
+ * a per-host-name fingerprint, so a single layout change surfaces as ONE
+ * grouped issue in Sentry (rather than flooding the feed with N copies).
+ */
+function triggerLayoutAlarm(url: string, html: string): void {
+  let hostname = 'unknown';
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    // URL was already validated by fetchNuligaGroupPage; safe to swallow here.
+  }
+
+  // NB: We use log.warn here (not log.error) because lib/logger.error auto-
+  // fires Sentry.captureException(new Error(message)). The structured
+  // Sentry.withScope(...) capture below is the canonical alarm — calling
+  // log.error would create a duplicate Entry in Sentry with no tags.
+  log.warn('nuLiga-Parse lieferte leere Ergebnisse — Layout-Alarm', {
+    url,
+    htmlSnippet: html.slice(0, 300),
+  });
+
+  Sentry.withScope((scope) => {
+    scope.setTag('component', 'nuliga-scraper');
+    scope.setTag('reason', 'layout_empty');
+    scope.setTag('nuLiga_host', hostname);
+    scope.setFingerprint(['nuliga', 'layout-alarm', hostname]);
+    scope.setExtra('html_snippet', html.slice(0, 300));
+    scope.setExtra('url', url);
+    Sentry.captureException(
+      new Error('nuLiga-Layout-Alarm: keine Tabellen + keine Matches geparst')
+    );
+  });
 }
 
 /**

@@ -5,8 +5,8 @@
 
 ## Verteilung
 
-- **✅ DONE**: 21
-- **🔶 PARTIAL**: 13
+- **✅ DONE**: 22
+- **🔶 PARTIAL**: 12
 - **❌ TODO**: 51
 
 ## ❌ TODO (51)
@@ -114,7 +114,7 @@
 - **[F8](old-plan/F8.md)** _(Old Plan/F8 SMS/WhatsApp)_ — SMS/WhatsApp-Benachrichtigungen  
   → „Vendor wählen + lib/push-notification erweitern."
 
-## 🔶 PARTIAL (13)
+## 🔶 PARTIAL (12)
 
 - **[1.0.2](q1/1.0.2.md)** _(Q1/1.0 Service-Client-Audit)_ — Service-Client-Klassifizierung (Auto-Detection + Lint)  
   → „ESLint-Regel-Implementierung verifizieren, ggf. in ESLint-Konfig aktivieren."
@@ -124,8 +124,7 @@
   → „Verifizieren, dass INSERT-Pfad Drizzle nutzt (ggf. anstelle von supabase-js)."
 - **[1.1.7](q1/1.1.7.md)** _(Q1/1.1 DB-Layer-Unify)_ — `next-intl`-Strategie klären  
   → „Bestehender `i18n/` Ordner existiert — klären ob aktiviert oder zur Löschung ansteht. Bundle-Größe messen."
-- **[1.3.1](q1/1.3.1.md)** _(Q1/1.3 nuLiga-Hardening)_ — Retry-Logik + Layout-Alarm  
-  → „Retry-Logik im Scraper verifizieren + ggf. erweitern. Sentry-Capture sicherstellen (Cron-Route hat die verdrahtet)."
+
 - **[A3](old-plan/A3.md)** _(Old Plan/A3 nuLiga)_ — nuLiga-Adapter härten (deckt sich mit Epic 1.3)  
   → „Wie Epic 1.3 — CSV-Import und Snapshot-Tests ergänzen."
 - **[B1](cross/B1.md)** _(Cross-Cutting/B1 Bundle-Analyzer)_ — Bundle-Analyzer CI-Integration  
@@ -143,7 +142,7 @@
 - **[TICKET-W2-CAST-CLEANUP](roadmap/TICKET-W2-CAST-CLEANUP.md)** _(Roadmap/TICKET-W2 Cast-Cleanup)_ — Wave-2 Cast-Cleanup Complex Routes  
   → „W3 Cast-Cleanup: 5 weitere `as any` in anderen `app/api/leagues/`-Routes (Tickets in `route.ts` + `[id]/route.ts`)."
 
-## ✅ DONE (21)
+## ✅ DONE (22)
 
 - **[1.0.1](q1/1.0.1.md)** _(Q1/1.0 Service-Client-Audit)_ — Service-Client-Inventur  
   → „Keine. Optional Refresh nach großen Auth/RLS-Refactors."
@@ -183,6 +182,8 @@
   → „Keine."
 - **[F6.2](q1/F6.2.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — PII-Mapping dokumentieren  
   → „Keine."
+- **[1.3.1](q1/1.3.1.md)** _(Q1/1.3 nuLiga-Hardening)_ — Retry-Logik + Layout-Alarm  
+  → „Retry-Wrapper (1+3 Versuche, exp. backoff 500/1k/2k/4k, cap 8s) + Sentry.withScope-Layout-Alarm bei leerem Parse. 10/10 Vitest grün (vi.useFakeTimers)."
 - **[F7](old-plan/F7.md)** _(Old Plan/F7 Drizzle-Schema-Drift)_ — Drizzle-Schema-Drift (deckt sich mit Epic 1.1)  
   → „Keine — regelmäßig in CI laufen lassen."
 - **[TICKET-003](roadmap/TICKET-003.md)** _(Roadmap/TICKET-003 Medenspiel-CSV)_ — Medenspiel-CSV-Export für Verbände  
