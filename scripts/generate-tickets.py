@@ -643,7 +643,7 @@ t(dict(id="3.1.1", title="Hardware-Adapter-Interface", status="TODO",
        criteria=[
            "Adapter-Tests grün",
        ],
-       deps=["3.2.1"],
+       deps=[],
        next_action="`lib/hardware/adapter.ts` neu erstellen (Plugin-Interface)."))
 
 t(dict(id="3.1.2", title="Buchung-zu-Hardware-Webhook", status="TODO",
@@ -676,58 +676,6 @@ t(dict(id="3.1.4", title="Smart-Court Premium-Pricing", status="TODO",
        ],
        deps=["3.6.1"],
        next_action="lib/features.ts Add-On-Feature-Flag + Owner-Billing Page."))
-
-# Epic 3.2 — Multi-Sport
-t(dict(id="3.2.1", title="Court-Typ-Enum-Erweiterung", status="TODO",
-       quarter="Q3", epic="3.2 Multi-Sport", aufwand="8 h",
-       ziel="`tennis`, `padel`, `pickleball`, `squash` als `courts.sport_type` Enums.",
-       files=[("src/infrastructure/persistence/schema.ts", "OK")],
-       criteria=[
-           "Migration grün",
-       ],
-       deps=[],
-       next_action="Migration mit `ALTER TYPE` + Drizzle-Schema-Erweiterung."))
-
-t(dict(id="3.2.2", title="Court-Booking-Sport-Typ-Filter", status="TODO",
-       quarter="Q3", epic="3.2 Multi-Sport", aufwand="8 h",
-       ziel="Dropdown im Booking-Flow.",
-       files=[("app/(protected)/dashboard/bookings/new/page.tsx", "OK")],
-       criteria=[
-           "Filter funktioniert",
-       ],
-       deps=["3.2.1"],
-       next_action="Sport-Select in Booking-New-Page."))
-
-t(dict(id="3.2.3", title="Saisonplaner-Multi-Sport", status="TODO",
-       quarter="Q3", epic="3.2 Multi-Sport", aufwand="16 h",
-       ziel="Court-Constraint nach Sport-Typ im Clustering.",
-       files=[("lib/season-planning/clustering-engine.ts", "OK")],
-       criteria=[
-           "Tests grün",
-       ],
-       deps=["3.2.1"],
-       next_action="Erweitern + Tests."))
-
-t(dict(id="3.2.4", title="Pricing-Rules für Multi-Sport", status="TODO",
-       quarter="Q3", epic="3.2 Multi-Sport", aufwand="12 h",
-       ziel="Padel teurer pro Std als Tennis.",
-       files=[("lib/billing/pricing-rules.ts", "MISS")],
-       criteria=[
-           "Tests grün",
-       ],
-       deps=["3.2.1"],
-       next_action="`lib/billing/pricing-rules.ts` neu (Sport-Tier-aware)."))
-
-t(dict(id="3.2.5", title="Migration alter Tennis-only Courts", status="TODO",
-       quarter="Q3", epic="3.2 Multi-Sport", aufwand="4 h",
-       ziel="Default `sport_type='tennis'` für existierende Courts.",
-       files=[],
-       criteria=[
-           "`tsc` grün",
-           "Migration idempotent",
-       ],
-       deps=["3.2.1"],
-       next_action="Migration mit `UPDATE … SET sport_type='tennis' WHERE …`."))
 
 # Epic 3 (Pricing-Tier-Update) — Q3 Zusatz
 t(dict(id="3.6.1", title="Pay-per-Active-Member-Pricing", status="TODO",

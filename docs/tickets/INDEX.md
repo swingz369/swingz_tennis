@@ -1,7 +1,7 @@
 # Ticket-Tracking Index
 
 > Quelle: [`docs/UMSETZUNGSPLAN_PROJEKTANALYSE.md`](../UMSETZUNGSPLAN_PROJEKTANALYSE.md) + [`docs/roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md`](../roadmap/IMPLEMENTATION_TICKETS_Q3_2026.md)  
-> Stand: 2026-06-26 · Gesamt: 90 Tickets  
+> Stand: 2026-06-26 · Gesamt: 85 Tickets  
 > Status-Legende: ✅ DONE · 🔶 PARTIAL · ❌ TODO · 📅 PLANNED
 
 ## Cross-Cutting (9 Tickets)
@@ -90,17 +90,12 @@
 - ❌ **[2.5.2](q2/2.5.2.md)** — Inaktivitäts-Reaktivierung
 - ❌ **[2.5.3](q2/2.5.3.md)** — Newsletter-Wizard
 
-## Q3 (12 Tickets)
+## Q3 (7 Tickets)
 
 - ❌ **[3.1.1](q3/3.1.1.md)** — Hardware-Adapter-Interface
 - ❌ **[3.1.2](q3/3.1.2.md)** — Buchung-zu-Hardware-Webhook
 - ❌ **[3.1.3](q3/3.1.3.md)** — Smart-Court-Admin-UI
 - ❌ **[3.1.4](q3/3.1.4.md)** — Smart-Court Premium-Pricing
-- ❌ **[3.2.1](q3/3.2.1.md)** — Court-Typ-Enum-Erweiterung
-- ❌ **[3.2.2](q3/3.2.2.md)** — Court-Booking-Sport-Typ-Filter
-- ❌ **[3.2.3](q3/3.2.3.md)** — Saisonplaner-Multi-Sport
-- ❌ **[3.2.4](q3/3.2.4.md)** — Pricing-Rules für Multi-Sport
-- ❌ **[3.2.5](q3/3.2.5.md)** — Migration alter Tennis-only Courts
 - ❌ **[3.6.1](q3/3.6.1.md)** — Pay-per-Active-Member-Pricing
 - ❌ **[3.6.2](q3/3.6.2.md)** — Pricing-Page Communication
 - ❌ **[3.6.3](q3/3.6.3.md)** — Owner-Billing-Dashboard Update

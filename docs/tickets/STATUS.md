@@ -1,15 +1,15 @@
 # Status-Übersicht
 
 > Aggregiert aus dem vollständigen Ticket-Set.
-> Stand: 2026-06-26 · Gesamt: 90 Tickets
+> Stand: 2026-06-26 · Gesamt: 85 Tickets
 
 ## Verteilung
 
 - **✅ DONE**: 21
 - **🔶 PARTIAL**: 13
-- **❌ TODO**: 56
+- **❌ TODO**: 51
 
-## ❌ TODO (56)
+## ❌ TODO (51)
 
 - **[1.2.1](q1/1.2.1.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — ROI-Stat-Berechnung  
   → „`lib/season-planning/analytics.ts` neu erstellen mit Funktion `computeRoiStats(dryRunResult)`; Anzeige in `app/(protected)/admin/seasons/[id]/planning/page.tsx` ergänzen."
@@ -77,16 +77,6 @@
   → „Admin-Page neu erstellen."
 - **[3.1.4](q3/3.1.4.md)** _(Q3/3.1 Smart-Court API)_ — Smart-Court Premium-Pricing  
   → „lib/features.ts Add-On-Feature-Flag + Owner-Billing Page."
-- **[3.2.1](q3/3.2.1.md)** _(Q3/3.2 Multi-Sport)_ — Court-Typ-Enum-Erweiterung  
-  → „Migration mit `ALTER TYPE` + Drizzle-Schema-Erweiterung."
-- **[3.2.2](q3/3.2.2.md)** _(Q3/3.2 Multi-Sport)_ — Court-Booking-Sport-Typ-Filter  
-  → „Sport-Select in Booking-New-Page."
-- **[3.2.3](q3/3.2.3.md)** _(Q3/3.2 Multi-Sport)_ — Saisonplaner-Multi-Sport  
-  → „Erweitern + Tests."
-- **[3.2.4](q3/3.2.4.md)** _(Q3/3.2 Multi-Sport)_ — Pricing-Rules für Multi-Sport  
-  → „`lib/billing/pricing-rules.ts` neu (Sport-Tier-aware)."
-- **[3.2.5](q3/3.2.5.md)** _(Q3/3.2 Multi-Sport)_ — Migration alter Tennis-only Courts  
-  → „Migration mit `UPDATE … SET sport_type='tennis' WHERE …`."
 - **[3.6.1](q3/3.6.1.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Pay-per-Active-Member-Pricing  
   → „Stripe-Quantity-basiertes Pricing; Webhook-Update."
 - **[3.6.2](q3/3.6.2.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Pricing-Page Communication  
