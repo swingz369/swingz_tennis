@@ -35,9 +35,11 @@ import {
   X,
   UserCheck,
   UserX,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { Checkbox } from '@/components/ui/checkbox';
 import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
 
 export interface TrainerAvailabilitySlot {
@@ -119,6 +121,10 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
+  // ── Bulk selection state ────────────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkDeactivating, setBulkDeactivating] = useState(false);
 
   const loadTrainers = async () => {
     try {
@@ -236,6 +242,96 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
     return matchesStatus && matchesSearch;
   });
 
+  // Reset selection when filters change so users don't accidentally target
+  // trainers that are no longer visible in the filtered list.
+  const setSearchAndClear = (v: string) => {
+    setSearchQuery(v);
+    setSelectedIds(new Set());
+  };
+  const setStatusFilterAndClear = (v: string) => {
+    setStatusFilter(v);
+    setSelectedIds(new Set());
+  };
+
+  // Bulk deactivate selection metrics — must live after filteredTrainers.
+  const selectableTrainers = filteredTrainers.filter(
+    (t) => t.status !== 'terminated' && t.status !== 'on_leave'
+  );
+  const allSelected =
+    selectableTrainers.length > 0 && selectableTrainers.every((t) => selectedIds.has(t.id));
+  const someSelected = selectableTrainers.some((t) => selectedIds.has(t.id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (allSelected) {
+        return new Set();
+      }
+      const next = new Set(prev);
+      for (const t of selectableTrainers) {
+        next.add(t.id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Bulk deactivate the selected trainers in parallel. Trains with
+  // status 'terminated' / 'on_leave' are excluded by selectableTrainers above.
+  const handleBulkDeactivate = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0 || bulkDeactivating) return;
+    setBulkDeactivating(true);
+    try {
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          apiFetch(`/api/trainer-profiles/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'inactive' }),
+          }).then(async (res) => {
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.error ?? `HTTP ${res.status}`);
+            }
+            return id;
+          })
+        )
+      );
+      const ok = results.filter((r) => r.status === 'fulfilled').length;
+      const failed = results.length - ok;
+      if (ok > 0) {
+        // Update only the trainers whose PATCH actually succeeded (natural
+        // narrowing discriminates `PromiseSettledResult` in the forEach).
+        const okIds = new Set<string>();
+        results.forEach((r) => {
+          if (r.status === 'fulfilled') okIds.add(r.value);
+        });
+        setTrainers((prev) =>
+          prev.map((t) => (okIds.has(t.id) ? { ...t, status: 'inactive' as const } : t))
+        );
+      }
+      if (ok > 0 && failed === 0) {
+        toast.success(`${ok} Trainer deaktiviert`);
+      } else if (ok > 0 && failed > 0) {
+        toast.warning(`${ok} deaktiviert, ${failed} fehlgeschlagen`);
+      } else {
+        toast.error(`Aktion fehlgeschlagen (${failed} Fehler)`);
+      }
+      setSelectedIds(new Set());
+      setBulkConfirmOpen(false);
+    } finally {
+      setBulkDeactivating(false);
+    }
+  };
+
   // ── Loading Skeleton ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -286,11 +382,11 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           leftIcon={<Search className="h-5 w-5" />}
           placeholder="Nach Name oder E-Mail suchen..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchAndClear(e.target.value)}
           className="max-w-md"
         />
         <div className="w-full sm:w-48">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={setStatusFilterAndClear}>
             <SelectTrigger>
               <SelectValue placeholder="Alle Status" />
             </SelectTrigger>
@@ -337,6 +433,23 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) {
+                        // `indeterminate` is a DOM property on HTMLInputElement;
+                        // the Radix Checkbox ref forwards to its button which
+                        // doesn't expose it in the type system.
+                        (el as unknown as { indeterminate: boolean }).indeterminate =
+                          someSelected && !allSelected;
+                      }
+                    }}
+                    onCheckedChange={toggleSelectAll}
+                    disabled={selectableTrainers.length === 0}
+                    aria-label="Alle auswählen"
+                  />
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead className="hidden md:table-cell">E-Mail</TableHead>
                 <TableHead>Status</TableHead>
@@ -347,91 +460,102 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTrainers.map((trainer) => (
-                <TableRow
-                  key={trainer.id}
-                  className="hover:bg-muted/40 dark:hover:bg-background/40"
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 shrink-0">
-                        <User className="h-4 w-4 text-brandPrimary" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold">
-                          {trainer.firstName} {trainer.lastName}
+              {filteredTrainers.map((trainer) => {
+                const selectable = trainer.status !== 'terminated' && trainer.status !== 'on_leave';
+                return (
+                  <TableRow
+                    key={trainer.id}
+                    className="hover:bg-muted/40 dark:hover:bg-background/40"
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(trainer.id)}
+                        onCheckedChange={() => toggleSelect(trainer.id)}
+                        disabled={!selectable}
+                        aria-label={`${trainer.firstName} ${trainer.lastName} auswählen`}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 shrink-0">
+                          <User className="h-4 w-4 text-brandPrimary" />
                         </div>
-                        <div className="truncate text-xs text-muted-foreground md:hidden">
-                          {trainer.email}
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold">
+                            {trainer.firstName} {trainer.lastName}
+                          </div>
+                          <div className="truncate text-xs text-muted-foreground md:hidden">
+                            {trainer.email}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                    {trainer.email}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(trainer.status)} size="sm">
-                      {getStatusLabel(trainer.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm">
-                    {trainer.specializations.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {trainer.specializations.slice(0, 2).map((s) => (
-                          <Badge key={s.id} variant="outline" size="sm">
-                            {s.name}
-                          </Badge>
-                        ))}
-                        {trainer.specializations.length > 2 && (
-                          <span className="text-xs text-muted-foreground">
-                            +{trainer.specializations.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm">
-                    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                      <Award className="h-3.5 w-3.5" />
-                      {trainer.qualifications.length}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell text-right tabular-nums text-sm">
-                    {trainer.hourlyRate ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Euro className="h-3.5 w-3.5 text-muted-foreground" />
-                        {trainer.hourlyRate}/h
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                      {trainer.email}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(trainer.status)} size="sm">
+                        {getStatusLabel(trainer.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">
+                      {trainer.specializations.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {trainer.specializations.slice(0, 2).map((s) => (
+                            <Badge key={s.id} variant="outline" size="sm">
+                              {s.name}
+                            </Badge>
+                          ))}
+                          {trainer.specializations.length > 2 && (
+                            <span className="text-xs text-muted-foreground">
+                              +{trainer.specializations.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">
+                      <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        <Award className="h-3.5 w-3.5" />
+                        {trainer.qualifications.length}
                       </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" title="Details" asChild>
-                        <Link href={`/admin/trainers/${trainer.id}`}>
-                          <Eye className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
-                        onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
-                      >
-                        {trainer.status === 'active' ? (
-                          <UserX className="h-4 w-4 text-orange-600" />
-                        ) : (
-                          <UserCheck className="h-4 w-4 text-green-600" />
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell text-right tabular-nums text-sm">
+                      {trainer.hourlyRate ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Euro className="h-3.5 w-3.5 text-muted-foreground" />
+                          {trainer.hourlyRate}/h
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" title="Details" asChild>
+                          <Link href={`/admin/trainers/${trainer.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                          onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
+                        >
+                          {trainer.status === 'active' ? (
+                            <UserX className="h-4 w-4 text-orange-600" />
+                          ) : (
+                            <UserCheck className="h-4 w-4 text-green-600" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -443,6 +567,109 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           {filteredTrainers.length} von {trainers.length} Trainern
         </p>
       )}
+
+      {/* ── Floating Bulk-Action Bar ───────────────────────────────────────── */}
+      {selectedIds.size > 0 && (
+        <div
+          className="fixed inset-x-0 bottom-6 z-40 mx-auto w-fit max-w-[min(calc(100vw-2rem),640px)] rounded-full border border-border bg-background/95 backdrop-blur shadow-lg px-3 py-2 flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4"
+          role="region"
+          aria-label="Massenaktionen"
+        >
+          <span className="px-3 text-sm font-medium tabular-nums">
+            {selectedIds.size} ausgewählt
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedIds(new Set())}
+            disabled={bulkDeactivating}
+          >
+            Auswahl aufheben
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setBulkConfirmOpen(true)}
+            disabled={bulkDeactivating}
+            leftIcon={
+              bulkDeactivating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserX className="h-4 w-4" />
+              )
+            }
+          >
+            {bulkDeactivating ? 'Wird deaktiviert…' : 'Ausgewählte deaktivieren'}
+          </Button>
+        </div>
+      )}
+
+      {/* ── Bulk-Confirmation Modal ─────────────────────────────────────────── */}
+      <CenteredModal
+        open={bulkConfirmOpen}
+        onClose={() => (bulkDeactivating ? undefined : setBulkConfirmOpen(false))}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">{selectedIds.size} Trainer deaktivieren?</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setBulkConfirmOpen(false)}
+            disabled={bulkDeactivating}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Die ausgewählten Trainer werden auf <strong>inaktiv</strong> gesetzt. Sie können sie
+          später jederzeit wieder aktivieren.
+        </p>
+        <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3">
+          <ul className="space-y-1.5 text-sm">
+            {Array.from(selectedIds).map((id) => {
+              const t = trainers.find((x) => x.id === id);
+              if (!t) return null;
+              return (
+                <li
+                  key={id}
+                  className="flex items-center justify-between gap-3 rounded-md bg-background px-2.5 py-1.5"
+                >
+                  <span className="font-medium truncate">
+                    {t.firstName} {t.lastName}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate">{t.email}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <Button
+            variant="outline"
+            onClick={() => setBulkConfirmOpen(false)}
+            disabled={bulkDeactivating}
+            className="flex-1"
+          >
+            Abbrechen
+          </Button>
+          <Button
+            onClick={handleBulkDeactivate}
+            variant="destructive"
+            disabled={bulkDeactivating}
+            className="flex-1"
+            leftIcon={
+              bulkDeactivating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserX className="h-4 w-4" />
+              )
+            }
+          >
+            {bulkDeactivating ? 'Wird deaktiviert…' : `${selectedIds.size} deaktivieren`}
+          </Button>
+        </div>
+      </CenteredModal>
 
       {/* ── Invite Modal ──────────────────────────────────────────────────── */}
       <CenteredModal open={showInviteForm} onClose={() => setShowInviteForm(false)}>
