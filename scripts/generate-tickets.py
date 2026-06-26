@@ -966,7 +966,7 @@ t(dict(id="F12", title="Churn-Prediction", status="TODO",
        criteria=[
            "Algorithmus dokumentiert",
        ],
-       deps=["WAM-Messung"],
+       deps=["B6"],
        next_action="Konzept erstellen, Q3+."))
 
 t(dict(id="A1", title="Rate-Limit zentralisieren", status="DONE",
@@ -1165,6 +1165,26 @@ def main() -> int:
     if not TICKETS:
         print("ERROR: keine Tickets definiert.", file=sys.stderr)
         return 1
+
+    # Validierung: keine doppelten IDs, keine dangling cross-references.
+    # Errors werden gesammelt, damit alle Probleme auf einmal gemeldet werden
+    # (`O(n)` Statische Checks, keine halbe Output-Datei).
+    errors: list[str] = []
+    seen_ids: set[str] = set()
+    for tk in TICKETS:
+        if tk["id"] in seen_ids:
+            errors.append(f"duplicate ticket id {tk['id']!r}")
+        seen_ids.add(tk["id"])
+    valid_ids = seen_ids
+    for tk in TICKETS:
+        for dep in tk.get("deps") or []:
+            if dep not in valid_ids:
+                errors.append(f"ticket {tk['id']!r} has dangling dependency {dep!r}")
+    if errors:
+        for e in errors:
+            print(f"ERROR: {e}", file=sys.stderr)
+        return 1
+
     OUT.mkdir(parents=True, exist_ok=True)
     for q in sorted(set(t["quarter"] for t in TICKETS)):
         (OUT / QUARTER_DIR[q]).mkdir(parents=True, exist_ok=True)
