@@ -10,6 +10,8 @@ import { db } from '@/infrastructure/persistence/db';
 import { sql } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:admin:cron-health');
 
 export async function GET(req: NextRequest) {

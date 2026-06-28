@@ -7,6 +7,12 @@ import { billingEngine } from '@/lib/billing-engine';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import type { PlanKey } from '@/lib/plans';
+import {
+  syncClubFeaturesForSubscription,
+  type SubscriptionPlan,
+} from '@/lib/services/tier-features-sync';
+
+export const dynamic = 'force-dynamic';
 
 // Reverse-map Stripe price ID → plan key
 function priceToPlan(priceId: string): PlanKey | null {
@@ -512,7 +518,17 @@ async function handleSaasSubscription(
     })
     .eq('id', userId);
 
-  log.info('SaaS subscription activated', { userId, tier });
+  // ADR-003 — push Pro-feature flags (ai_matchmaking, weather_integration)
+  // onto every club this user administers so the UI gates correctly. Failure
+  // is logged, not propagated: the user's tier row is the source of truth;
+  // club-side sync is a downstream cache that self-heals on the next webhook.
+  const syncResult = await syncClubFeaturesForSubscription(supabase, userId, tier);
+  log.info('SaaS subscription activated', {
+    userId,
+    tier,
+    clubsSynced: syncResult.updated,
+    clubsErrored: syncResult.errors.length,
+  });
 }
 
 async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
@@ -523,6 +539,15 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   const periodEndRaw = (sub as any).current_period_end as number | undefined;
   const periodEnd = periodEndRaw ? new Date(periodEndRaw * 1000).toISOString() : null;
 
+  // ADR-003 — resolve user.id BEFORE the update (race-window-free pattern,
+  // mirrors handleSubscriptionDeleted). This guarantees the value we write
+  // clubs.features for is the same user-state Stripe subscribed.
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle();
+
   const update: Record<string, string | null> = {
     subscription_status: sub.status,
     stripe_subscription_id: sub.id,
@@ -531,12 +556,36 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   if (tier) update.subscription_tier = tier;
 
   await supabase.from('users').update(update).eq('stripe_customer_id', customerId);
+
+  if (tier && userRow?.id) {
+    const syncResult = await syncClubFeaturesForSubscription(
+      supabase,
+      userRow.id,
+      tier as SubscriptionPlan
+    );
+    log.info('Subscription update: clubs synced', {
+      customerId,
+      tier,
+      clubsSynced: syncResult.updated,
+      clubsErrored: syncResult.errors.length,
+    });
+  }
+
   log.info('SaaS subscription updated', { customerId, tier, status: sub.status });
 }
 
 async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
   const supabase = createServiceClient();
   const customerId = sub.customer as string;
+
+  // Resolve user.id BEFORE the update (Postgres ignores WHERE-clauses after
+  // DELETE/UPDATE without RETURNING would have to guess).
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle();
+
   await supabase
     .from('users')
     .update({
@@ -545,6 +594,19 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
       stripe_subscription_id: null,
     })
     .eq('stripe_customer_id', customerId);
+
+  // ADR-003 — revert Pro-feature flags on every admin-owned club so the
+  // isStarterTier(features) predicate flips back to TRUE and the upsell
+  // modal can fire again for renewal flows.
+  if (userRow?.id) {
+    const syncResult = await syncClubFeaturesForSubscription(supabase, userRow.id, 'free');
+    log.info('Subscription deleted: clubs reverted to free', {
+      customerId,
+      clubsSynced: syncResult.updated,
+      clubsErrored: syncResult.errors.length,
+    });
+  }
+
   log.info('SaaS subscription deleted → reset to free', { customerId });
 }
 

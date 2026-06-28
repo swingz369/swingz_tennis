@@ -5,6 +5,8 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { deleteStorageFile } from '@/lib/supabase/storage-utils';
 import { buildPaginationMeta } from '@/lib/pagination';
 
+export const dynamic = 'force-dynamic';
+
 const STORAGE_BUCKET = 'swingz-files';
 const UPLOAD_PREFIX = 'shop-products';
 

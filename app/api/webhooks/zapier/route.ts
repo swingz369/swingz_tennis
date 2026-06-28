@@ -5,6 +5,8 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { apiFetch } from '@/lib/api-fetch';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:webhooks:zapier');
 
 // Type guard: validates URL format and protocol

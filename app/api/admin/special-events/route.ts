@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 // ponytail: cast until `supabase gen types` re-runs with the new migration
 
 const from = (sb: Awaited<ReturnType<typeof createClient>>, t: string) => (sb as any).from(t);

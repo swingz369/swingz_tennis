@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createClient } from '@/infrastructure/external/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 interface Ctx {
   params: Promise<{ id: string }>;
 }

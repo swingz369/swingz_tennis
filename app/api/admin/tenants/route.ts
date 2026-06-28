@@ -4,6 +4,8 @@ import { withAuth } from '@/lib/api-auth';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:admin:tenants');
 
 export async function GET(request: NextRequest) {

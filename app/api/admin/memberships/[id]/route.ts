@@ -8,6 +8,8 @@ import { NextResponse } from 'next/server';
 import { withAuth, verifyRole, forbiddenResponse, type AuthContext } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:admin:memberships:[id]');
 
 type RouteContext = {
