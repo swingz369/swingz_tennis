@@ -10,12 +10,7 @@
 - **🟢 DECIDED**: 0
 - **📅 PLANNED (untracked Q2 forward-batch)**: 4 (q2.0.1–q2.0.4)
 
-> **Working-Tree-Hinweis:** `git HEAD` ist `50efd0b` (Sprint-4-Followups, 4 Dateien).
-> Die 13 Q1-Sweep-Tickets sind im Working-Tree **MODIFIED** (uncommitted) — sobald
-> committet, wandern sie offiziell in den `✅ DONE`-Block; bis dahin zählt der
-> committed-Stand **65 DONE**. Die Differenz **65 → 78 (committed + working-tree)**
-> ist im Heute-closed-Audit-Log unter `## Heute closed / Heute erstellt (2026-06-28)`
-> im Detail dokumentiert.
+> **OBSOLETE post-b1e32fc:** Working-Tree ist leer nach Q1-Sweep + b1e32fc-Ticket-Close; Distribution-Counts stehen oben im Distribution-Block (✅ DONE 79, 🟢 DECIDED 0).
 
 - **❌ TODO**: 14
 
@@ -510,16 +505,18 @@ Alle Tickets waren in der Praxis fertig (STATUS.md Heute-closed-Notes aus 2026-0
 
 ### Sprint-4/5 Net-Bilanz (2026-06-28)
 
-| Bereich                 | Vor-Sprint             | Nach-Sprint                    | Δ         |
-| ----------------------- | ---------------------- | ------------------------------ | --------- |
-| Q1 ✅ DONE (committed)  | 65                     | 78                             | +13 sweep |
-| Q1 🟢 DECIDED           | 0                      | 1 (1.5.1 per ADR-007 ACCEPTED) | +1        |
-| Q2 Forward-Batch        | 0                      | 5 (q2.0.0-q2.0.4)              | +5        |
-| ADR-007                 | nicht existent         | ✅ ACCEPTED                    | +1        |
-| Vitest-Tests            | 0 Sprint-5 regressions | 2 regression-guards            | +2        |
-| `tsc --noEmit` baseline | 0 production errors    | 0 production errors            | stable    |
-| Vitest baseline         | (pre-Sprint-5)         | 0 failing new tests            | stable    |
-| ESLint baseline         | 0 errors               | 0 errors                       | stable    |
+| Bereich                 | Vor-Sprint             | Nach-Sprint                  | Δ      |
+| ----------------------- | ---------------------- | ---------------------------- | ------ |
+| Q1 ✅ DONE (committed)  | 65                     | 79                           | +14    |
+| Q1 🟢 DECIDED           | 0                      | 0 (1.5.1 closed per b1e32fc) | -1     |
+| Q2 Forward-Batch        | 0                      | 5 (q2.0.0-q2.0.4)            | +5     |
+| ADR-007                 | nicht existent         | ✅ ACCEPTED                  | +1     |
+| Vitest-Tests            | 0 Sprint-5 regressions | 2 regression-guards          | +2     |
+| `tsc --noEmit` baseline | 0 production errors    | 0 production errors          | stable |
+| Vitest baseline         | (pre-Sprint-5)         | 0 failing new tests          | stable |
+| ESLint baseline         | 0 errors               | 0 errors                     | stable |
+
+> **Δ-1-Definition:** Δ=+14 = 13 Q1-Sweep-Items (post-`e5acd5b`) + 1 q1/1.5.1 Ticket-Close (post-`b1e32fc`). Siehe auch Working-Tree-Hinweis oben (jetzt **OBSOLETE**).
 
 ### Distribution-Sync-Fix + Polish-Fixup-Chain (Folge-Commits post `f87988f`, alle 2026-06-28)
 
