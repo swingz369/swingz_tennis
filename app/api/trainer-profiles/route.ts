@@ -162,6 +162,26 @@ export async function GET(_request: NextRequest) {
             experience: row.experience ?? { years: 0, previousClubs: [], achievements: [] },
             status: row.status ?? 'active',
             hourlyRate: row.hourlyRate ?? row.hourly_rate ?? undefined,
+            // Sprint 4 Trainer Dual-Rate: ALSO map the two new columns in the
+            // fallback path so the admin UI doesn't silently lose the contracted
+            // rate (admin-editable) + extra-hours rate (trainer-editable) when
+            // Drizzle throws (stale-socket fallback). See migration
+            // supabase/migrations/20260610_add_trainer_dual_rate.sql and
+            // TrainerProfile.$inferSelect for the canonical column names.
+            //
+            // Mirror the Drizzle `mapToEntity` coercion pattern: Supabase's
+            // PostgREST API returns `numeric(10, 2)` columns as strings
+            // (decimal precision is lost otherwise). Without `parseFloat`,
+            // downstream `.toFixed()` still happens to work but any arithmetic
+            // (Math.round, sum, comparisons) silently breaks.
+            contractedHourlyRate:
+              typeof row.contracted_hourly_rate === 'string'
+                ? parseFloat(row.contracted_hourly_rate)
+                : row.contracted_hourly_rate ?? null,
+            extraHoursRate:
+              typeof row.extra_hours_rate === 'string'
+                ? parseFloat(row.extra_hours_rate)
+                : row.extra_hours_rate ?? null,
             availability: row.availability ?? {
               monday: true,
               tuesday: true,

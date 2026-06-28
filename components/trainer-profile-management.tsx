@@ -523,9 +523,35 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                       </span>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell text-right tabular-nums text-sm">
-                      {trainer.hourlyRate ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Euro className="h-3.5 w-3.5 text-muted-foreground" />
+                      {trainer.contractedHourlyRate != null ? (
+                        // Sprint 4 Trainer Dual-Rate: show the contracted rate
+                        // (admin-controlled) as the primary value, and add a tiny
+                        // "+Z" badge when the trainer has also configured an extra-
+                        // hours rate (trainer-editable). The Detail page renders
+                        // the full form, so this list view stays terse.
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <span
+                            className="inline-flex items-center gap-1 font-medium text-brandPrimary"
+                            title={`Vertragssatz (Admin-only) · ${trainer.contractedHourlyRate.toFixed(2)} €/h`}
+                          >
+                            <Euro className="h-3.5 w-3.5" />
+                            {trainer.contractedHourlyRate.toFixed(2)}/h
+                          </span>
+                          {trainer.extraHoursRate != null && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0"
+                              title={`Zusatzstunden-Satz · ${trainer.extraHoursRate.toFixed(2)} €/h`}
+                            >
+                              +Z
+                            </Badge>
+                          )}
+                        </div>
+                      ) : trainer.hourlyRate ? (
+                        // Legacy fallback for trainers created before the dual-rate
+                        // migration was applied (contracted_hourly_rate IS NULL).
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
+                          <Euro className="h-3.5 w-3.5" />
                           {trainer.hourlyRate}/h
                         </span>
                       ) : (
