@@ -6,6 +6,8 @@ import { createLogger } from '@/lib/logger';
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:admin:sessions:cancel');
 
 // POST /api/admin/sessions/[sessionId]/cancel

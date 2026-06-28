@@ -2,6 +2,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth } from '@/lib/api-auth';
 
+// TICKET 2.4.5: Capacitor-static-export marker (siehe scripts/check-dynamic-api-routes.ts).
+export const dynamic = 'force-dynamic';
+
 // GET /api/admin/approvals/count — returns count of pending registrations
 export async function GET(req: NextRequest) {
   return withApiAuth(req, async (auth) => {

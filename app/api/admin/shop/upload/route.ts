@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 
+export const dynamic = 'force-dynamic';
+
 const STORAGE_BUCKET = 'swingz-files';
 const UPLOAD_PREFIX = 'shop-products';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB

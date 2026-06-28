@@ -7,6 +7,8 @@ import { EmailService as InfraEmailService } from '@/src/infrastructure/email/em
 import { createLogger } from '@/lib/logger';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:approvals');
 
 /**

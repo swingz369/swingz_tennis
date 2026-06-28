@@ -5,6 +5,8 @@ import { buildPaginationMeta } from '@/lib/pagination';
 import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/shop/orders
  * Returns global order KPI stats + orders list for the admin shop dashboard.

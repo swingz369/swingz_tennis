@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 
+export const dynamic = 'force-dynamic';
+
 const BUCKET = 'swingz-files';
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -7,6 +7,8 @@ import { assignSubscriptionSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:admin:billing:subscriptions');
 
 // const memberRepo = new DrizzleMemberRepository(); // Will be used in future for advanced member queries

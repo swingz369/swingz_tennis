@@ -1,0 +1,44 @@
+# scripts/sprint-1-routes.txt
+# Generated from empirical filesystem scan 2026-06-28T05:47:03Z
+# Format: <relative-path-from-project-root>
+
+# \u2500\u2500\u2500 admin \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+app/api/admin/approvals/route.ts
+app/api/admin/billing/invoices/route.ts
+app/api/admin/billing/subscriptions/route.ts
+app/api/admin/bookings/route.ts
+app/api/admin/cron-health/route.ts
+app/api/admin/documents/[id]/route.ts
+app/api/admin/documents/route.ts
+app/api/admin/family-accounts/route.ts
+app/api/admin/fee-categories/route.ts
+app/api/admin/maintenance/[id]/route.ts
+app/api/admin/maintenance/route.ts
+app/api/admin/meetings/[id]/route.ts
+app/api/admin/meetings/route.ts
+app/api/admin/memberships/[id]/route.ts
+app/api/admin/members/[id]/absences/route.ts
+app/api/admin/members/[id]/dsgvo-delete/route.ts
+app/api/admin/members/[id]/notes/route.ts
+app/api/admin/members/[id]/office-flags/route.ts
+app/api/admin/nuliga/import/route.ts
+app/api/admin/sessions/[sessionId]/cancel/route.ts
+app/api/admin/shop/orders/[id]/route.ts
+app/api/admin/shop/orders/route.ts
+app/api/admin/shop/products/route.ts
+app/api/admin/shop/upload/route.ts
+app/api/admin/special-events/[id]/route.ts
+app/api/admin/special-events/route.ts
+app/api/admin/switch-club-redirect/route.ts
+app/api/admin/switch-club/route.ts
+app/api/admin/system/settings/route.ts
+app/api/admin/tenants/route.ts
+app/api/admin/trial-training/[requestId]/convert-to-member/route.ts
+
+# \u2500\u2500\u2500 cron \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+app/api/cron/check-absences/route.ts
+app/api/cron/matchday-reminders/route.ts
+
+# \u2500\u2500\u2500 webhooks \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+app/api/webhooks/stripe/route.ts
+app/api/webhooks/zapier/route.ts

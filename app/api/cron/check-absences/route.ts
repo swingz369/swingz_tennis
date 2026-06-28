@@ -12,6 +12,8 @@ import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('cron:check-absences');
 
 const LOOKBACK_DAYS = 60;

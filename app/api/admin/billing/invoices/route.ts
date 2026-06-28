@@ -4,6 +4,8 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:admin:billing:invoices');
 
 // GET /api/admin/billing/invoices – All invoices for the current club (Admin/Superadmin)

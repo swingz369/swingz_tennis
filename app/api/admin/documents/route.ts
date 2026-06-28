@@ -4,6 +4,8 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+
 const log = createLogger('api:admin:documents');
 const BUCKET = 'swingz-files';
 const MAX_SIZE = 20 * 1024 * 1024;

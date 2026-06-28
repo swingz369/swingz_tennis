@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE, ADMIN_CLUB_COOKIE_MAX_AGE } from '@/lib/cookies';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/switch-club-redirect?clubId=xxx
  * Superadmin wählt einen Verein → Cookie setzen → /admin weiterleiten
