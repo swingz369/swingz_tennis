@@ -334,6 +334,31 @@ export class MemberService {
   }
 
   /**
+   * Count active members in a club (lightweight `.select('id', { count: 'exact', head: true })`
+   * — does not fetch row data).
+   *
+   * Used by Stripe Subscription Quantity Sync (ticket 3.6.1) to drive the
+   * subscription-item quantity. Returns 0 for clubs with no members.
+   *
+   * Note: uses `is_active = true` rather than `status = 'active'` because
+   * `user_club_memberships` is the authoritative soft-delete layer (GoBD § 147
+   * AO 10-year retention requires we keep `status` history; `is_active` is the
+   * runtime gate). Members with `status='suspended'` are still counted as
+   * "active" because their subscription is still being billed.
+   */
+  static async getActiveMemberCount(clubId?: string): Promise<number> {
+    let q = db.from('user_club_memberships').select('id', { count: 'exact', head: true }).eq('is_active', true);
+    if (clubId) {
+      q = q.eq('club_id', clubId);
+    }
+    const { count, error } = await q;
+    if (error) {
+      return 0;
+    }
+    return count ?? 0;
+  }
+
+  /**
    * Get members by training group — joins training_group_memberships
    *
    * Resolves the human-readable group name (e.g. "Anfänger") to a group ID

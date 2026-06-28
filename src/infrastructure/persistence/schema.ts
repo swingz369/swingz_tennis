@@ -340,6 +340,14 @@ export const users = pgTable(
     subscription_status: varchar('subscription_status', { length: 20 }).default('active'),
     stripe_customer_id: varchar('stripe_customer_id', { length: 255 }),
     stripe_subscription_id: varchar('stripe_subscription_id', { length: 255 }),
+    // 3.6.1 Pay-per-Active-Member-Pricing — Stripe quantity idempotency cache.
+    // See supabase/migrations/20260628_add_stripe_quantity_sync.sql
+    // (lib/services/stripe-subscription-quantity-sync.service.ts).
+    stripe_subscription_quantity_synced: integer('stripe_subscription_quantity_synced'),
+    stripe_subscription_quantity_synced_at: timestamp(
+      'stripe_subscription_quantity_synced_at',
+      { withTimezone: true }
+    ),
     current_period_end: timestamp('current_period_end'),
     // Season planning fields
     experience_months: integer('experience_months').default(0),
