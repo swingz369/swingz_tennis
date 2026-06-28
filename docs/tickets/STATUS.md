@@ -292,8 +292,8 @@ _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F
 - **[3.1.4](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Smart-Court Premium-Pricing
   → „lib/features.ts Add-On-Feature-Flag + Owner-Billing Page."
 
-- **[3.6.1](q3/3.6.1.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Pay-per-Active-Member-Pricing
-  → „Stripe-Quantity-basiertes Pricing; Webhook-Update."
+- **[3.6.1](q3/3.6.1.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Pay-per-Active-Member-Pricing — DONE
+  → _(siehe DONE-Section zur Implementation)_
 
 - **[3.6.2](q3/3.6.1.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Pricing-Page Communication
   → „`app/landing/pricing/page.tsx` neu (siehe 1.2.3)."
