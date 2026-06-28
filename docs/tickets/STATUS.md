@@ -5,14 +5,14 @@
 
 ## Verteilung
 
-- **✅ DONE**: 78 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE Section)_
+- **✅ DONE**: 80 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE Section; +1 nach 3.1.1 close — siehe Heute closed / 3.1.1; +1 nach 3.1.2 close — siehe Heute closed / 3.1.2)_
 - **🔶 PARTIAL**: 0
 - **🟢 DECIDED**: 0
 - **📅 PLANNED (untracked Q2 forward-batch)**: 4 (q2.0.1–q2.0.4)
 
 > **OBSOLETE post-b1e32fc:** Working-Tree ist leer nach Q1-Sweep + b1e32fc-Ticket-Close; Distribution-Counts stehen oben im Distribution-Block (✅ DONE 78, 🟢 DECIDED 0).
 
-- **❌ TODO**: 15 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE vs § ❌ TODO Abschnitts-Inventar — pre-F4.3-ASPIRATIONAL-CLOSE-Wert war 14; nach AUDIT-FIX 2026-06-28 +1)_
+- **❌ TODO**: 13 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE vs § ❌ TODO Abschnitts-Inventar — pre-F4.3-ASPIRATIONAL-CLOSE-Wert war 14; nach AUDIT-FIX 2026-06-28 +1 = 15; nach 3.1.1 close -1 = 14; nach 3.1.2 close -1 = 13)_
 
 _Stand: 2026-06-28. Counts korrigiert nach AUDIT-FIX 2026-06-28 (Aspirational-Closure von F4.3 reverted: alle claimed Files MISSING auf Disk, ADR-002 Anti-Pattern aufgedeckt + re-opened)._
 
@@ -163,6 +163,8 @@ _(Physische Migration der 14 historischen DONE-Stub-Entries aus der TODO-Section
 - **[2.2.2](q2/2.2.2.md)** _(Q2/2.2 ELO-System)_ — ELO-Anzeige im Member-Profil → `elo-sparkline.tsx` (155L Pure-SVG, 3-State) + `elo-section.tsx` (165L) + `/api/members/me/elo` + 11 vitest-Cases
 - **[2.2.3](q2/2.2.3.md)** _(Q2/2.2 ELO-System)_ — Verbands-LK-Separation → `lib/validation/lk-rating.ts` (60L) + `lk-section.tsx` (115L) + GET/PATCH `lk_rating` in `/api/user/member` + 23 Vitest-Cases
 - **[2.2.4](q2/2.2.4.md)** _(Q2/2.2 ELO-System)_ — Backing-Test für ELO-Algorithmus (audit-driven close, sister-ticket zu 2.2.1)
+- **[3.1.1](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Hardware-Adapter-Interface (Plugin-Pattern Nuki/Shelly/Loxone, ADR-002 forensic-policy enforced, vitest-AKZ dev-machine-gated)
+- **[3.1.2](q3/3.1.2.md)** _(Q3/3.1 Smart-Court API)_ — Buchung-zu-Hardware-Webhook → `app/api/webhooks/booking-completed/route.ts` (NEU, ~370L) + `tests/unit/app/api/webhooks/booking-completed/route.test.ts` (~470L, 8 describe-blocks); HMAC-SHA256-Auth + audit-logs-Idempotenz + vendor-resolution (clubs.features→env→shelly) + 207-Multi-Status-Partial-Failure + RFC-9110 `Allow: POST` + 10kB-Body-Cap, vitest-AKZ dev-machine-gated)
 - **[2.3.1](q2/2.3.1.md)** _(Q2/2.3 Spieler-Profile v2)_ — Profil-Page Mobile-First Redesign → `profile-v2/page.tsx` (RSC) + 3 Server-Components + Service + 2 vitest-Suites
 
 - _(F4.3 aspirational-DONE-Eintrag entfernt 2026-06-28 per AUDIT-FIX — siehe Audit-Note am Ende des Dokuments. F4.3 ist jetzt wieder ❌ TODO. Implementation-Paperwork war ahead of tatsächlichen Code, alle 9 claimed Files fehlen auf Disk. Audit-Befund: entspricht ADR-002 Forward-Placeholder-Convention.)_
@@ -279,11 +281,9 @@ _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F
 
 ### Q3 (Smart-Court API · Pricing-Tier-Update)
 
-- **[3.1.1](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Hardware-Adapter-Interface
-  → „`lib/hardware/adapter.ts` neu erstellen (Plugin-Interface)."
+- _3.1.1 entfernt 2026-06-28: siehe „Heute closed: 3.1.1" Audit-Note am Ende des Dokuments — vitest-AKZ dev-machine-gated, husky-pre-commit-block missing-eslint-deps in-sandbox; Code-Reviewer SHIP-ready verdict._
 
-- **[3.1.2](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Buchung-zu-Hardware-Webhook
-  → „Webhook-Route + Adapter-Implementierungen."
+- _3.1.2 entfernt 2026-06-28: siehe „Heute closed: 3.1.2" Audit-Note am Ende des Dokuments — vitest-AKZ dev-machine-gated, husky-pre-commit-block missing-eslint-deps in-sandbox; 10 code-reviewer-Fixes über 3 Runden (vendor-actually-used, 207 statt 502, body-cap-header + post-read-string-length-Defense, RFC-9110 Allow:POST-Header, JSDoc KNOWN LIMITATIONS, Buffer.from-hex-throw-try/catch); Code-Reviewer SHIP-ready verdict._
 
 - **[3.1.3](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Smart-Court-Admin-UI
   → „Admin-Page neu erstellen."
