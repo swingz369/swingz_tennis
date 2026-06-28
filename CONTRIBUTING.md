@@ -228,3 +228,66 @@ type first, then write the minimum-blast-radius fix.
 **Maintainer:** Keep this file in sync with the Sprint-handoff notes in
 `docs/tickets/` and the project-status sheets. If a new "lesson the hard way"
 emerges in a sprint, add a Rule here with the Sprint reference.
+
+---
+
+## 🟢 Rule 9: Maintainer git-identity policy (anti Vercel-block on wrong commit-email)
+
+**Lesson from Sprint-4/5 (2026-06-28):** 12 consecutive commits were
+authored with local git-identity `Codebuff-CI-Validator <ci-validate@swingz.local>`
+because earlier AI-sessions had overwritten the global/local git config.
+Vercel's pre-deployment check then blocked the deployment with:
+
+> "The deployment was blocked because the commit author email
+> (ci-validate@swingz.local) is not valid. Ensure your git email matches
+> your GitHub account."
+
+Root cause: nothing **prevented** an AI-session from setting `git config
+user.email` to a placeholder value. Root fix is procedural: enforce the
+correct identity at the commit boundary + maintain a fallback mapping.
+
+### Prevention — 4 layers, all required
+
+| Layer                         | What                                          | Where                                 | Purpose                                                                                                            |
+| ----------------------------- | --------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1. Persistent local identity  | `git config user.email "bartmz@gmx.de"`       | repo-local (run once after clone)     | All future commits from this machine use the right email                                                           |
+| 2. Husky pre-commit guard     | Step 0 of `.husky/pre-commit`                 | this repo, runs at every commit       | Rejects commits with wrong/missing email BEFORE they enter history                                                 |
+| 3. `.mailmap` display-mapping | root-level, versioned                         | Git's built-in display-only mechanism | Older wrong-identity commits still display as `Bart Mz <bartmz@gmx.de>` in `git log` / GitHub UI                   |
+| 4. One-shot recovery script   | `scripts/_rewrite_sprint45_authors.py --full` | idempotent helper used once           | If wrong-identity commits ever slip through again, atomic 12-commit rewrite + force-push with backup-tag preserved |
+
+### What you must do if you're a new contributor / AI-session
+
+Before your first commit in this repo, run:
+
+```bash
+cd /home/aeugeln/SwingZ
+git config user.name  "Bart Mz"
+git config user.email "bartmz@gmx.de"
+git config user.email  # verify the output is "bartmz@gmx.de"
+```
+
+Notes:
+
+- Bare `git config` (without `--global`) sets repo-local identity. Prefer repo-local so other repos on your machine are not affected.
+- If your shell has `GIT_AUTHOR_EMAIL` or `GIT_COMMITTER_EMAIL` exported globally (e.g. via `.bashrc` / `.zshrc`), **unset it first** — env-vars override git config and will defeat the husky guard.
+- The husky pre-commit hook (Layer 2) checks `git config user.email` BEFORE the cache-check + lint-staged. If the email is wrong, the commit is rejected with a clear fix-instruction.
+
+### Recovery (if wrong-identity commits ARE in history)
+
+Use `scripts/_rewrite_sprint45_authors.py` (atomic, backup-tag-preserving):
+
+```bash
+python3 scripts/_rewrite_sprint45_authors.py --dry-run   # analyse-only
+python3 scripts/_rewrite_sprint45_authors.py --full      # rewrite + force-push
+```
+
+Recovery anchor:
+`git reset --hard backup-pre-author-fix-20260628 && git push --force-with-lease origin main`
+
+### Related ADR
+
+- `docs/decisions/adr-007-schema-migrations-composite-pk.md`: maintainer-name
+  correspondence. ADR-007 stamps `Mike Swinger <mike.swinger@gmx.de>` as the
+  decision-time maintainer-name; this was superseded 2026-06-28 by
+  `Bart Mz <bartmz@gmx.de>` = the real GitHub-account-email that Vercel
+  actually validates against.

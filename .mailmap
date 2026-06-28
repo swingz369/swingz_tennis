@@ -1,0 +1,24 @@
+# .mailmap — Git's built-in display-mapping for commit authors.
+# Maps historical commit-author identities to the canonical maintainer-identity.
+# Does NOT change commit-objects — only how `git log`, `git shortlog`, and
+# GitHub's web UI display them.
+# Format spec: https://git-scm.com/docs/gitmailmap
+#
+# Background (Sprint-4/5 Folge, 2026-06-28): Local git config in earlier
+# AI-sessions was set to "Codebuff-CI-Validator <ci-validate@swingz.local>",
+# which causes Vercel to BLOCK deployments ("commit author email ... is not
+# valid. Ensure your git email matches your GitHub account."). The 12 most
+# recent Sprint-4/5 commits were rewritten via scripts/_rewrite_sprint45_authors.py
+# to "Bart Mz <bartmz@gmx.de>" + force-pushed. Older commits from earlier
+# sessions may still carry the wrong identity — this .mailmap displays them
+# as the canonical maintainer everywhere.
+#
+# Format per row: <wrong-name> <wrong-email> <canonical-name> <canonical-email>
+
+# Sprint-4/5 rewrite (→ historical artifact: 12 commits have backend rewrites)
+Codebuff-CI-Validator <ci-validate@swingz.local> Bart Mz <bartmz@gmx.de>
+
+# Earlier AI-session variants (if you encounter these in `git log`, add a row):
+# Add more rows here when a new wrong-identity pattern emerges.
+# Example template:
+# Some AI Name <wrong@email> Bart Mz <bartmz@gmx.de>
