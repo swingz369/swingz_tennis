@@ -1,6 +1,6 @@
 # ADR-007 — Schema-Migrations Composite-PK Trade-off
 
-> **Status:** ✅ ACCEPTED (Maintainer-Signoff received) · _Decision-Date: 2026-06-28_ · _Maintainer: SwingZ-Maintainer_ · _zuletzt geprüft: 2026-06-28_
+> **Status:** ✅ ACCEPTED (Maintainer-Signoff received) · _Decision-Date: 2026-06-28_ · _Maintainer: Mike Swinger <mike.swinger@gmx.de>_ · _zuletzt geprüft: 2026-06-28_
 
 ## Kontext
 
