@@ -5,9 +5,9 @@
 
 ## Verteilung
 
-- **✅ DONE**: 78
+- **✅ DONE**: 79
 - **🔶 PARTIAL**: 0
-- **🟢 DECIDED**: 1 (q1/1.5.1 — Status-Quo belassen per ADR-007)
+- **🟢 DECIDED**: 0
 - **📅 PLANNED (untracked Q2 forward-batch)**: 4 (q2.0.1–q2.0.4)
 
 > **Working-Tree-Hinweis:** `git HEAD` ist `50efd0b` (Sprint-4-Followups, 4 Dateien).
@@ -520,3 +520,9 @@ Alle Tickets waren in der Praxis fertig (STATUS.md Heute-closed-Notes aus 2026-0
 | `tsc --noEmit` baseline | 0 production errors    | 0 production errors            | stable    |
 | Vitest baseline         | (pre-Sprint-5)         | 0 failing new tests            | stable    |
 | ESLint baseline         | 0 errors               | 0 errors                       | stable    |
+
+### Distribution-Sync-Fix + Polish-Fixup-Chain (Folge-Commits post `f87988f`, alle 2026-06-28)
+
+- **Distribution-Sync-Fix** (dieser Commit `chore(status-sync)`): ✅ DONE Distribution-Counts aktualisiert 78 → 79 (post `b1e32fc` q1/1.5.1 ticket-close) und 🟢 DECIDED 1 → 0. Sync-Drift-Close für Audit-Trail-Konsistenz zwischen `q1/1.5.1.md` Status (✅ DONE) und STATUS.md Distribution-Counts.
+- **`e7df4f7` — `chore(q1-1.5.1-review-fixes)`** (Reviewer-Verifiability-Fixes): `q1/1.5.1.md` Acceptance-Resolution-Sektion um Cross-Commit-Chain-Traceability-Block ergänzt; Migration-Sketch-SQL aus Ticket dedupliziert zu ADR-007 als single-source-of-truth.
+- **`29cdfbb` — `chore(q1-1.5.1-polish)`** (Reviewer-Polish-Fixes): HTML-comment zu Markdown-callout, Sequence-drift-anchor, subsection-heading, Pointer byte-equality, Changelog-Duplikations-Warning.
