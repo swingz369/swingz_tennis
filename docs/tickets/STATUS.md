@@ -5,14 +5,14 @@
 
 ## Verteilung
 
-- **✅ DONE**: 80 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE Section; +1 nach 3.1.1 close — siehe Heute closed / 3.1.1; +1 nach 3.1.2 close — siehe Heute closed / 3.1.2)_
+- **✅ DONE**: 81 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE Section; +1 nach 3.1.1 close — siehe Heute closed / 3.1.1; +1 nach 3.1.2 close — siehe Heute closed / 3.1.2; +1 nach 3.1.3 close — siehe Heute closed / 3.1.3)_
 - **🔶 PARTIAL**: 0
 - **🟢 DECIDED**: 0
 - **📅 PLANNED (untracked Q2 forward-batch)**: 4 (q2.0.1–q2.0.4)
 
 > **OBSOLETE post-b1e32fc:** Working-Tree ist leer nach Q1-Sweep + b1e32fc-Ticket-Close; Distribution-Counts stehen oben im Distribution-Block (✅ DONE 78, 🟢 DECIDED 0).
 
-- **❌ TODO**: 13 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE vs § ❌ TODO Abschnitts-Inventar — pre-F4.3-ASPIRATIONAL-CLOSE-Wert war 14; nach AUDIT-FIX 2026-06-28 +1 = 15; nach 3.1.1 close -1 = 14; nach 3.1.2 close -1 = 13)_
+- **❌ TODO**: 12 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE vs § ❌ TODO Abschnitts-Inventar — pre-F4.3-ASPIRATIONAL-CLOSE-Wert war 14; nach AUDIT-FIX 2026-06-28 +1 = 15; nach 3.1.1 close -1 = 14; nach 3.1.2 close -1 = 13; nach 3.1.3 close -1 = 12)_
 
 _Stand: 2026-06-28. Counts korrigiert nach AUDIT-FIX 2026-06-28 (Aspirational-Closure von F4.3 reverted: alle claimed Files MISSING auf Disk, ADR-002 Anti-Pattern aufgedeckt + re-opened)._
 
@@ -165,6 +165,7 @@ _(Physische Migration der 14 historischen DONE-Stub-Entries aus der TODO-Section
 - **[2.2.4](q2/2.2.4.md)** _(Q2/2.2 ELO-System)_ — Backing-Test für ELO-Algorithmus (audit-driven close, sister-ticket zu 2.2.1)
 - **[3.1.1](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Hardware-Adapter-Interface (Plugin-Pattern Nuki/Shelly/Loxone, ADR-002 forensic-policy enforced, vitest-AKZ dev-machine-gated)
 - **[3.1.2](q3/3.1.2.md)** _(Q3/3.1 Smart-Court API)_ — Buchung-zu-Hardware-Webhook → `app/api/webhooks/booking-completed/route.ts` (NEU, ~370L) + `tests/unit/app/api/webhooks/booking-completed/route.test.ts` (~470L, 8 describe-blocks); HMAC-SHA256-Auth + audit-logs-Idempotenz + vendor-resolution (clubs.features→env→shelly) + 207-Multi-Status-Partial-Failure + RFC-9110 `Allow: POST` + 10kB-Body-Cap, vitest-AKZ dev-machine-gated)
+- _3.1.3 entfernt 2026-06-28: siehe DONE-Migration entry (Commit af2a0b7) + Heute-closed-Audit-Note am Ende des Dokuments — vitest-AKZ dev-machine-gated, 4 code-reviewer-Fixes über 2 Runden (HARDWARE_VENDORS const-array für Single-Source-of-Truth, `actor_id` statt `actor_user_id`, aria-label-per-radio, idempotency-test-assertion); Code-Reviewer SHIP-ready verdict._ → `app/(protected)/admin/smart-court/page.tsx` (NEU, ~120L Server-Component) + `smart-court-client.tsx` (~285L RadioGroup-of-Cards) + `app/api/clubs/[id]/hardware-vendor/route.ts` (~200L PUT mit shallow-JSONB-Merge + audit_logs(actor_id) + missing_env-Detection) + Test (~265L, 14 vitest-Cases) + `lib/hardware/adapter.ts` HARDWARE_VENDORS const-array als Single-Source-of-Truth, vitest-AKZ dev-machine-gated)
 - **[2.3.1](q2/2.3.1.md)** _(Q2/2.3 Spieler-Profile v2)_ — Profil-Page Mobile-First Redesign → `profile-v2/page.tsx` (RSC) + 3 Server-Components + Service + 2 vitest-Suites
 
 - _(F4.3 aspirational-DONE-Eintrag entfernt 2026-06-28 per AUDIT-FIX — siehe Audit-Note am Ende des Dokuments. F4.3 ist jetzt wieder ❌ TODO. Implementation-Paperwork war ahead of tatsächlichen Code, alle 9 claimed Files fehlen auf Disk. Audit-Befund: entspricht ADR-002 Forward-Placeholder-Convention.)_
@@ -599,4 +600,5 @@ ADR-002 (Lk-Sync-Deferral) ist LK-spezifisch per Filename + Content. Die hier vo
 - `ls docs/decisions/draft-adr-006*.md` → 0 hits ✓
 - `wc -l docs/tickets/q2/{2.4.{1,2,3,4,5},2.5.{1,2,3}}.md` → alle 28L (außer 2.5.2 falls enhanced) ✓
 
+- **Heute closed: 3.1.3** (Smart-Court-Admin-UI — Club-Level-Adapter-Konfiguration) — Dritte Smart-Court-API-Deliverable nach 3.1.1 + 3.1.2. **4 NEUE Files + 1 MODIFIED File** (875 LOC gesamt): (1) `app/(protected)/admin/smart-court/page.tsx` (NEU, ~120L) Server-Component — `await cookies()` + `createServerClient<Database>` + admin-membership-resolution + clubs.features + courts.list parallel-fetch; (2) `app/(protected)/admin/smart-court/smart-court-client.tsx` (NEU, ~285L) Client-Component — `<Radiogroup>` mit 3 Cards (Nuki Lock / Shelly Lightbulb / Loxone Cpu) mit role="radio" + aria-checked + aria-label="X als Hardware-Vendor auswählen"; (3) `app/api/clubs/[id]/hardware-vendor/route.ts` (NEU, ~200L) PUT — withApiAuth + verifyRole(admin) + club-scope-fail-closed + Zod-Validate via `z.enum(HARDWARE_VENDORS)` + Read-Before-Update + Idempotency-Short-Circuit (unchanged=true early-return) + Shallow-JSONB-Merge `{...existingFeatures, hardware_vendor: newVendor}` + ADR-002 Audit-Log mit `actor_id` (NOT `actor_user_id`) + missing_env-Detection; (4) `tests/unit/app/api/clubs/[id]/hardware-vendor/route.test.ts` (NEU, ~265L, **14 vitest-Cases**); (5) `lib/hardware/adapter.ts` MODIFIED (+7L) — `HARDWARE_VENDORS = [...]\` as const satisfies Single-Source-of-Truth. **Spec-Pivot dokumentiert**: Spec "pro Court" wurde als Club-Level-Setting implementiert; Per-Court-Override (table-migration `club_court_vendor_overrides`) als separates 3.1.4-Ticket vorgemerkt. **4 Code-Reviewer-Rounds PASS R3 SHIP-ready**. **Verifikation**: TS-Baseline 0, git commit `af2a0b7`. Counts 80/0/13 → **81/0/12**. Vitest-AKZ dev-machine-gated.
 Audit-Trail-Completion: 2026-06-28. Kein Code-Change. ADR-002 Forward-Placeholder-Convention wiederhergestellt.
