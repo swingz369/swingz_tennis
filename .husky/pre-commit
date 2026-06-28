@@ -36,8 +36,22 @@ NC='\033[0m' # No Color
 # + email-guard). --no-verify überspringt ALLE hooks — falsche Emails würden
 # so ungehindert passieren und beim nächsten Vercel-Deployment einen Block
 # auslösen.
-EXPECTED_EMAIL="bartmz@gmx.de"
-EXPECTED_NAME="Bart Mz"
+# Source Maintainer-Identity Source-of-Truth
+# (see scripts/_maintainer_identity.sh for the canonical values).
+# Husky-pre-commit must NOT hardcode the email — if the maintainer's
+# GitHub-account-email ever changes, only one file needs to update.
+GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -n "${GIT_ROOT}" ] && [ -f "${GIT_ROOT}/scripts/_maintainer_identity.sh" ]; then
+  . "${GIT_ROOT}/scripts/_maintainer_identity.sh"
+  # EXPECTED_EMAIL, EXPECTED_NAME are now exported
+else
+  # Fallback: if scripts/_maintainer_identity.sh was deleted, hardcode
+  # the last-known values so the hook still functions (with a clear warn).
+  echo "${YELLOW}⚠️  Cannot source scripts/_maintainer_identity.sh — using fallback values.${NC}"
+  echo "${YELLOW}   This file should exist in the repo; check it wasn't deleted.${NC}"
+  EXPECTED_EMAIL="bartmz@gmx.de"
+  EXPECTED_NAME="Bart Mz"
+fi
 
 CURRENT_EMAIL=$(git config user.email 2>/dev/null || echo "")
 CURRENT_NAME=$(git config user.name 2>/dev/null || echo "")

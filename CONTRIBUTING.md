@@ -246,6 +246,31 @@ Root cause: nothing **prevented** an AI-session from setting `git config
 user.email` to a placeholder value. Root fix is procedural: enforce the
 correct identity at the commit boundary + maintain a fallback mapping.
 
+### Canonical maintainer-identity (single source-of-truth)
+
+The maintainer's expected name + email live in **`scripts/_maintainer_identity.sh`**
+(exported as `EXPECTED_NAME` and `EXPECTED_EMAIL`). All other files
+(`.husky/pre-commit` Step 0, this CONTRIBUTING.md Rule 9, `.mailmap`
+entry-rows, and `scripts/_rewrite_sprint45_authors.py` constants) refer
+to that file rather than hardcoding the values.
+
+If the canonical identity ever changes, follow this protocol:
+
+1. Update `scripts/_maintainer_identity.sh` (the source-of-truth).
+2. Mirror new values in `.mailmap`'s entry-rows (git's display-mapping
+   parser requires literal values — no source/include support).
+3. Mirror new values in `scripts/_rewrite_sprint45_authors.py`
+   (`NEW_NAME` / `NEW_EMAIL` constants) for the recovery-script path.
+4. Update the bash setup example in this Rule 9 to reference the new
+   values (`$EXPECTED_NAME` / `$EXPECTED_EMAIL` from source).
+5. Update any ADR that still stamps the old maintainer-name (currently
+   `docs/decisions/adr-007-schema-migrations-composite-pk.md` references
+   `Mike Swinger <mike.swinger@gmx.de>` — kept as historical, but new
+   ADRs should use `Bart Mz <bartmz@gmx.de>`).
+6. (Only if many commits in history still carry the old identity)
+   `python3 scripts/_rewrite_sprint45_authors.py --full` — atomic
+   history-rewrite with backup-tag preservation.
+
 ### Prevention — 4 layers, all required
 
 | Layer                         | What                                          | Where                                 | Purpose                                                                                                            |
@@ -257,13 +282,20 @@ correct identity at the commit boundary + maintain a fallback mapping.
 
 ### What you must do if you're a new contributor / AI-session
 
-Before your first commit in this repo, run:
+Before your first commit in this repo, source the maintainer-identity
+single source-of-truth (see `### Canonical maintainer-identity` above),
+then apply it to repo-local git config:
 
 ```bash
+# Step 1: source the maintainer-identity source-of-truth file
+. ./scripts/_maintainer_identity.sh               # exports EXPECTED_NAME + EXPECTED_EMAIL
+
+# Step 2: apply as repo-local git config in this SwingZ repo
+#         (bare `git config` without `--global` — repo-local, other repos unaffected)
 cd /home/aeugeln/SwingZ
-git config user.name  "Bart Mz"
-git config user.email "bartmz@gmx.de"
-git config user.email  # verify the output is "bartmz@gmx.de"
+git config user.name  "$EXPECTED_NAME"
+git config user.email "$EXPECTED_EMAIL"
+git config user.email                              # verify the output
 ```
 
 Notes:

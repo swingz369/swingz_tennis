@@ -9,9 +9,17 @@
 # which causes Vercel to BLOCK deployments ("commit author email ... is not
 # valid. Ensure your git email matches your GitHub account."). The 12 most
 # recent Sprint-4/5 commits were rewritten via scripts/_rewrite_sprint45_authors.py
-# to "Bart Mz <bartmz@gmx.de>" + force-pushed. Older commits from earlier
-# sessions may still carry the wrong identity — this .mailmap displays them
-# as the canonical maintainer everywhere.
+# + force-pushed. Older commits from earlier sessions may still carry the wrong
+# identity — this .mailmap displays them as the canonical maintainer everywhere.
+#
+# CANONICAL MAINTAINER-IDENTITY (single source-of-truth):
+#   See `scripts/_maintainer_identity.sh` for the canonical name + email
+#   (EXPECTED_NAME / EXPECTED_EMAIL exported there). The entry-rows below
+#   hardcode the values because git's `.mailmap` parser is a literal-lookup
+#   mechanism with no source/include support — if the maintainer-identity
+#   ever changes: (1) update scripts/_maintainer_identity.sh first, (2)
+#   mirror the new values in the entry-rows below, (3) re-run husky
+#   pre-commit to verify.
 #
 # Format per row: <wrong-name> <wrong-email> <canonical-name> <canonical-email>
 
