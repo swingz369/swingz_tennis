@@ -29,6 +29,13 @@ NC='\033[0m' # No Color
 #   - falsche user.email → fail mit Fix-Hinweis + Vercel-block-Warnung
 #   - user.name mismatch → WARN (kein fail), da Name vs Email unterschiedlich
 #     streng gehandhabt werden; nur Email blockiert Vercel
+#
+# ACHTUNG: `git commit --no-verify` umgeht diesen Guard komplett. Verwende
+# --no-verify nur für WIP-Commits, die NICHT nach origin/main gehen. Commits
+# für main MÜSSEN durch die vollständige Hook-Chain (cache-check + lint-staged
+# + email-guard). --no-verify überspringt ALLE hooks — falsche Emails würden
+# so ungehindert passieren und beim nächsten Vercel-Deployment einen Block
+# auslösen.
 EXPECTED_EMAIL="bartmz@gmx.de"
 EXPECTED_NAME="Bart Mz"
 

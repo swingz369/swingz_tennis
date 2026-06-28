@@ -272,6 +272,8 @@ Notes:
 - If your shell has `GIT_AUTHOR_EMAIL` or `GIT_COMMITTER_EMAIL` exported globally (e.g. via `.bashrc` / `.zshrc`), **unset it first** — env-vars override git config and will defeat the husky guard.
 - The husky pre-commit hook (Layer 2) checks `git config user.email` BEFORE the cache-check + lint-staged. If the email is wrong, the commit is rejected with a clear fix-instruction.
 
+> ⚠️ **`git commit --no-verify` bypasses Layer 2 (husky email-guard) entirely.** Only use `--no-verify` for WIP commits that will NOT reach origin/main. Commits destined for the main branch MUST go through the full pre-commit hook chain. `--no-verify` skips ALL hooks in this repo — lint-staged, cache-check, AND email-guard — so wrong-identity commits will pass through silently. If you used `--no-verify` for a commit destined for `main`, run `git commit --amend --author="Bart Mz <bartmz@gmx.de>"` (or `git rebase -i --exec 'git commit --amend --author=... --no-edit'`) to fix the identity before pushing.
+
 ### Recovery (if wrong-identity commits ARE in history)
 
 Use `scripts/_rewrite_sprint45_authors.py` (atomic, backup-tag-preserving):
