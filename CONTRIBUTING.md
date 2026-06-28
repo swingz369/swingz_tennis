@@ -1,0 +1,230 @@
+# Contributing Operational Rules
+
+> **Supplement to `docs/README.md` § Contributing.** Where the README covers
+> workflow and code-style, this file documents **operational rules** that
+> Sprint-4 (TS-Baseline Pass) discovered the hard way.
+>
+> When these two documents disagree, this file is the source of truth for
+> editing-tools and recovery-patterns; the README is the source of truth for
+> workflow and commit-message format.
+
+---
+
+## 🔴 Rule 1: Never `sed -i` a TypeScript file
+
+**Lesson from Sprint-4 (2026-06-27):** A `sed -i 's/...(/(_table) => [.../};,' drizzle/schema.ts`
+wildcard pass silently matched **102 unrelated `gravis`-template callbacks** (the
+`pgPolicy`, `pgIndex`, `foreignKey`, `unique` builders all share the
+`() => [` arrow shape), destroying the entire schema file end-to-end. Recovery
+required force-reverting via `rm + git checkout` and manually re-applying the
+fix via Python.
+
+### What to do instead
+
+| Use case                                                    | Safe tool                                              | Why it survives                                                                                                                                                                      |
+| ----------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Single-anchor in-place edit in a known `.ts` file           | `str_replace` tool                                     | Anchored on surrounding context — cannot accidentally match unrelated occurrences.                                                                                                   |
+| Rewrite a single file                                       | `write_file`                                           | TypeScript-validity checked at write time + diff-reviewable.                                                                                                                         |
+| Multi-line edit where the anchor appears in multiple places | **Python heredoc** with a UNIQUE anchor                | Python `str.replace(old, new)` with the _unique_ anchor avoids sed's positional ambiguity. See `lib/season-planning/clustering-engine.ts` → `MergedPrefRow` widening for an example. |
+| Bulk-edit across many files                                 | `regex_search` + per-file `str_replace`, one at a time | Each file's edit goes through the editor's anchor-match check.                                                                                                                       |
+
+### When `sed -i` IS safe
+
+- Shell scripts (`*.sh`) where the anchor is line-unique by construction.
+- XML/HTML/Markdown where the surrounding context is structurally rigid.
+- One-line `find ... -exec sed -i 's/foo/bar/g'` for literal-substitution of a token that doesn't appear in syntax-significant positions (variable renames inside strings, log-format changes, etc.).
+- When you'd be willing to `git checkout HEAD --` anyway because the diff is trivially re-doable from a known-good state.
+
+### Diagnostic if you accidentally ran a bad sed
+
+Real example: a Sprint-4 session accidentally ran
+`sed -i 's/...(/(_table) => [/};,' drizzle/schema.ts` and the wildcard match
+destroyed 102 unrelated `pgPolicy`-template callbacks. Recovery:
+
+```bash
+# 1. Confirm damage: how many new TS errors?
+TSC=$(timeout 200 npx tsc --noEmit 2>&1)
+echo "$TSC" | grep -c 'error TS'
+# (If error count jumped from 0 to 100+, sed is the culprit.)
+
+# 2. Force-revert drizzle/schema.ts (note: rm + checkout is more aggressive
+#    than `git checkout --` and works on dirty files)
+rm -f drizzle/schema.ts
+git checkout HEAD -- drizzle/schema.ts
+[ -f drizzle/schema.ts ] && echo "✓ Restored" || echo "✗ FAILED"
+
+# 3. Re-apply the original intent via Python heredoc with a UNIQUE anchor
+#    (the unique anchor is the ONLY multi-line `pgPolicy(...)` line — sed's
+#    wildcard could not have matched broadly because the policy NAME is unique)
+#    ★ Replace `...` placeholders below with the ACTUAL line content from your file
+#      before running. The Python str.replace() must match exactly, including
+#      whitespace and any trailing characters.
+cat > /tmp/schema-fix.py <<'PYEOF'
+with open('drizzle/schema.ts', 'r') as f: content = f.read()
+old = '}, (table) => [\n\tpgPolicy("owner can read access requests", <PASTE_ACTUAL_TAIL_HERE>)'
+new = '}, (table) => {\n\tvoid table;\n\treturn [\n\t\tpgPolicy("owner can read access requests", <PASTE_ACTUAL_TAIL_HERE>),\n\t];\n});'
+with open('drizzle/schema.ts', 'w') as f: f.write(content.replace(old, new))
+PYEOF
+python3 /tmp/schema-fix.py
+
+# 4. Re-typecheck to confirm 0 (or back-to-baseline) errors.
+npx tsc --noEmit 2>&1 | grep -c 'error TS'
+```
+
+---
+
+## 🟡 Rule 2: Drizzle `schema.ts` and `relations.ts` are build artifacts (gitignored)
+
+The files `drizzle/schema.ts` (~241 KB) and `drizzle/relations.ts` (~40 KB)
+are **auto-generated** by `drizzle-kit generate` and are listed in `.gitignore`
+(L23-24). This means:
+
+- **They are NOT source-of-truth.** The canonical schema lives in
+  `src/infrastructure/persistence/schema.ts` (currently 2973 lines).
+- **They WILL be regenerated** by `npm run db:generate` from the Drizzle schema.
+- **Manual edits to them are pointless** — they get clobbered on the next
+  `drizzle-kit generate`.
+
+If `tsc --noEmit` complains about a missing module `@/drizzle/schema` (TS2307),
+the file is missing locally. Run `npm run db:generate` OR — if the Docker pull
+of `postgres-meta` is blocked in the sandbox — run `drizzle-kit pull` (uses the
+direct pg client) to regenerate without Docker.
+
+---
+
+## 🟡 Rule 3: TypeScript discipline — no `as any`, no `as never` without comment
+
+The project enforces `strict: true` in `tsconfig.json`. When TS complains,
+the answer is almost never `as any`.
+
+| Layer                                   | Acceptable cast                                              | Why                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Domain types                            | `as const` for tuple-type narrowing                          | Pure narrowing, no `as never`.                                                                |
+| Boundary with un-typed data             | `Record<string, unknown>` + runtime allowlist                | Type-safe at the boundary, fail-at-runtime on bad keys.                                       |
+| `supabase-js` `.update(updates)`        | `as never` (with comment)                                    | The Zod schema upstream is the source of truth; TS still can't see through generic inference. |
+| Drizzle `db.insert(table).values(rows)` | `as unknown as (typeof table.$inferInsert)[]` (with comment) | Mapper sets `undefined` for optionals; Drizzle's strict overloads reject `Partial<T>`.        |
+
+If you find yourself adding `as any` to silence TS, **stop and write a comment**
+explaining (a) which upstream source-of-truth shape you trust, (b) what runtime
+guard (allowlist, Zod, narrowing) makes the cast defensible. If you cannot
+write that comment, the answer is to widen the upstream type, not to suppress
+TS.
+
+---
+
+## 🟡 Rule 4: Multi-file deletion protection
+
+`rm file.ts && git checkout` can fail in two ways:
+
+1. The file exists but is dirty (working-tree or staged) — `git checkout HEAD -- <file>` is refused.
+2. The file is too important to delete (e.g. part of a coupled schema).
+
+**Always prefer surgical edits over deletion.** If `str_replace` doesn't
+apply because of whitespace mismatch, use `write_file` (overwrites the target
+file pre-write-checked) or the Python heredoc pattern from Rule 1.
+
+If you MUST delete and re-checkout:
+
+```bash
+# Aggressive recovery (use only for build artifacts that are NOT tracked)
+rm -f <file>
+git checkout HEAD -- <file>  # restores from last committed state
+
+# Verify the restore actually worked before re-applying
+[ -f <file> ] && echo "✓ Restored" || echo "✗ Restore FAILED"
+wc -l <file>  # confirm non-empty
+```
+
+For untracked-but-not-gitignored files (rare), `git restore --staged --worktree <file>`
+or `git checkout-index -- <file>` is the safer equivalent.
+
+---
+
+## 🟢 Rule 5: TS-error triage (when target is "0 production errors")
+
+`tsc --noEmit|grep error TS` counts include errors from `.next/dev/types/validator.ts`
+(a build-cache artifact, gitignored). These are **NOT production errors** —
+they are stale build-cache output.
+
+The filter for production errors only:
+
+```bash
+TSC=$(timeout 200 npx tsc --noEmit 2>&1)
+TOTAL=$(echo "$TSC" | grep -c 'error TS')
+NEXT=$(echo "$TSC" | grep -c '.next/dev/types/validator.ts')
+PROD=$((TOTAL - NEXT))
+echo "Total: $TOTAL | .next: $NEXT | production: $PROD"
+```
+
+When PROD = 0 but TOTAL > 0, the only outstanding issue is the build cache. Run
+`npm run clean` (or `rm -rf .next`) and re-`tsc --noEmit`. This happens
+frequently after `drizzle-kit generate`, which rebuilds `.next`.
+
+**If `.next/dev/types/validator.ts` errors persist AFTER `rm -rf .next && tsc --noEmit`**,
+the cache is genuinely stale — investigate dependency versions. Most common root
+causes:
+
+- A recent `npm install` upgraded a runtime dep's `.d.ts` types without bumping
+  `node_modules/`.
+- A `next.config.js` change invalidated the cache schema.
+- A local `tsconfig.json` change extended the type-list (e.g. new `include` glob
+  picked up a `.d.ts` from a third-party package).
+
+---
+
+## 🟢 Rule 6: Type-only-files import path
+
+When a helper file imports from `@/drizzle/schema` and the import fails
+with TS2307, the immediate fix is to switch to **the source-of-truth schema**:
+
+```ts
+// ❌ Wrong (drizzle/schema.ts is gitignored build artifact)
+import type { Database } from '@/drizzle/schema';
+import { clubs, groups } from '@/drizzle/schema';
+
+// ✅ Right (canonical, source-of-truth, always present)
+import type { Database } from '../src/infrastructure/persistence/schema';
+import { clubs, groups } from '../src/infrastructure/persistence/schema';
+```
+
+`src/infrastructure/persistence/schema.ts` is the canonical schema that
+`drizzle-kit generate` reads from / writes to. Code that needs schema types
+imports from here directly. Importing from `@/drizzle/schema` only works if
+the build artifact was generated locally (rare outside CI).
+
+---
+
+## 🟢 Rule 7: Pull-request review checklist
+
+Before requesting review on a PR:
+
+1. **Lint clean**: `npm run lint` exits 0 (warnings ≠ errors).
+2. **Typecheck clean**: `tsc --noEmit` shows 0 production errors (see Rule 5).
+3. **Tests pass**: `npm test` (Vitest) — all green; new code has tests.
+4. **No `as any`**: `grep -rn ' as any' --include='*.ts' --include='*.tsx' lib/ app/ components/`
+   (allowed only inside `_DrizzleLayer` / database-bridge cast contexts with a
+   paragraph-length comment; never in domain code).
+5. **No bulk multi-file edits**: the diff is ≤500 lines across ≤5 files
+   (larger PRs need to be split into stacked reviewable chunks).
+6. **`drizzle/` directory NOT modified**: if the diff touches `drizzle/schema.ts`
+   or `drizzle/relations.ts`, you've probably edited a build artifact.
+   Re-do the edit in `src/infrastructure/persistence/schema.ts`.
+
+---
+
+## 🟢 Rule 8: When you hit TS-errors you've never seen before
+
+Spawn `thinker-with-files-gemini` with:
+
+- The full error message + 5-line surrounding context
+- The current file state (whole file is best)
+- What you've already tried
+
+Don't cycle through 5 cast variants hoping one works — diagnose the upstream
+type first, then write the minimum-blast-radius fix.
+
+---
+
+**Maintainer:** Keep this file in sync with the Sprint-handoff notes in
+`docs/tickets/` and the project-status sheets. If a new "lesson the hard way"
+emerges in a sprint, add a Rule here with the Sprint reference.

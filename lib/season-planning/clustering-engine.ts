@@ -13,6 +13,7 @@ import {
   seasonPlanEntries,
   userClubMemberships,
   trainerClubs,
+  memberSchedulePreferences,
 } from '@/src/infrastructure/persistence/schema';
 import {
   seasonWaitlists,
@@ -358,7 +359,12 @@ export class SeasonClusteringEngine {
 
   private async loadMembers(): Promise<(MemberWithDetails & { _unassignedReason?: string })[]> {
     if (this._cachedMembers) return this._cachedMembers;
-    const prefs = await db
+
+    // ── 1. Season-specific user_training_preferences (primary source) ──
+    // Members who submitted the per-season form via the planning wizard. These
+    // carry the richest data (unavailable_dates, avoid_member_ids,
+    // self_assessed_level) and take precedence over the club-wide baseline.
+    const seasonPrefs = await db
       .select({
         pref: userTrainingPreferences,
         user_name: users.full_name,
@@ -375,8 +381,30 @@ export class SeasonClusteringEngine {
           eq(userTrainingPreferences.user_role, 'member')
         )
       );
+    const seasonMemberIds = new Set<string>();
+    for (const p of seasonPrefs) seasonMemberIds.add(p.pref.user_id);
 
-    // Also load user_club_memberships to check is_minor / age_group info
+    // ── 2. Club-baseline member_schedule_preferences (fallback) ──
+    // Bridge members who filled in Wunsch-Tage/Zeiten via /member/preferences
+    // (writes here, per club) but never submitted per-season prefs in the
+    // planning wizard. Without this row, the engine would return 0 groups for
+    // any season whose members happen to all live in this table — bug fix.
+    const baselinePrefs = await db
+      .select({
+        pref: memberSchedulePreferences,
+        user_name: users.full_name,
+        user_email: users.email,
+        user_experience: users.experience_months,
+        user_skill_level: users.skill_level,
+      })
+      .from(memberSchedulePreferences)
+      .innerJoin(users, eq(memberSchedulePreferences.user_id, users.id))
+      .where(eq(memberSchedulePreferences.club_id, this.clubId));
+
+    // Also load user_club_memberships to:
+    //   (a) check is_minor / age_group info
+    //   (b) filter baseline rows to active 'member' role in this club
+    //       (skip admins / trainers / superadmins accidentally present in msp)
     const memberships = await db
       .select({
         user_id: userClubMemberships.user_id,
@@ -391,7 +419,23 @@ export class SeasonClusteringEngine {
       membershipRoleMap.set(m.user_id, m.role);
     }
 
-    // Load trainer feedback from previous season
+    // Baseline rows are eligible only if:
+    //   (a) NOT already covered by a per-season user_training_preferences row
+    //      (so a user who submitted both doesn't get double-counted), AND
+    //   (b) they hold an active 'member'-role membership in this club.
+    //
+    // ROLE BOUNDARY (don't loosen accidentally): utp above requires
+    // `user_role = 'member'`, and this filter requires the membership role
+    // 'member'. A user with `user_role = 'trainer'` on utp paired with role =
+    // 'member' on memberships is intentionally excluded for THIS season —
+    // they're treated as a trainer. If you touch this, also coordinate with
+    // `loadTrainers()` above (same row, different role).
+    const eligibleBaseline = baselinePrefs.filter(
+      (bp) =>
+        !seasonMemberIds.has(bp.pref.user_id) && membershipRoleMap.get(bp.pref.user_id) === 'member'
+    );
+
+    // Load trainer feedback from previous season (unchanged)
     const previousSeasonId = await this.getPreviousSeasonId();
     void previousSeasonId; // re-used below via feedbackMap
     const feedbackMap = new Map<
@@ -413,7 +457,59 @@ export class SeasonClusteringEngine {
       }
     }
 
-    const result = prefs.map((p) => {
+    // ── 3. Merge — per-season rows take precedence. Baseline rows are
+    //      normalised to the seasonPrefs row shape with the three utp-only
+    //      fields (unavailable_dates, avoid_member_ids, self_assessed_level)
+    //      explicitly typed as nullable so the msp rows can carry nulls
+    //      without `as unknown as` acrobatics. Downstream map() reads them
+    //      with `?? []` / `?? null` for runtime safety. ──
+    type SeasonPrefRow = (typeof seasonPrefs)[number];
+    // MergedPrefRow represents the union shape we need for downstream
+    // consumers (which read `weekly_availability`, `wish_partner_ids`,
+    // `unavailable_dates`, `avoid_member_ids`, etc.). The 3 utp-only fields
+    // are marked OPTIONAL because baseline rows from
+    // `memberSchedulePreferences` don't carry those columns; downstream
+    // readers do `?? []` / `?? null` runtime guards to handle the absence.
+    // seasonPrefs rows DO have these fields populated at runtime.
+    type MergedPrefRow = Omit<SeasonPrefRow, 'pref'> & {
+      pref: Omit<
+        SeasonPrefRow['pref'],
+        'unavailable_dates' | 'avoid_member_ids' | 'self_assessed_level'
+      > & {
+        unavailable_dates?: string[] | null;
+        avoid_member_ids?: string[] | null;
+        self_assessed_level?: string | null;
+      };
+    };
+    const mergedRows: MergedPrefRow[] = [
+      ...seasonPrefs,
+      // TS2352 fires on a direct `as MergedPrefRow[]` cast because the
+      // upstream `bp.pref` (memberSchedulePreferences row) has different
+      // JSON-cast shapes than userTrainingPreferences (e.g.
+      // `wish_partner_ids: Json | null` vs `string[] | null`). The
+      // double-cast `as unknown as MergedPrefRow[]` is the canonical TS
+      // escape hatch for "matches at runtime but TS can't see it" — the
+      // structural overlap is insufficient. Runtime is correct because
+      // downstream consumers do `?? []` / `?? null` / `as string[]`
+      // guards. Tracked as a P2 ticket: merge-pref-tables (unify
+      // member_schedule_preferences + user_training_preferences schemas
+      // so the cast disappears entirely).
+      ...(eligibleBaseline.map((bp) => ({
+        pref: {
+          ...bp.pref,
+          // Stamp the utp-only fields as null on baseline rows.
+          unavailable_dates: null,
+          avoid_member_ids: null,
+          self_assessed_level: null,
+        },
+        user_name: bp.user_name,
+        user_email: bp.user_email,
+        user_experience: bp.user_experience,
+        user_skill_level: bp.user_skill_level,
+      })) as unknown as MergedPrefRow[]),
+    ];
+
+    const result = mergedRows.map((p) => {
       const fb = feedbackMap.get(p.pref.user_id);
       const skillLevel = (p.user_skill_level || p.pref.preferred_level || 'beginner') as SkillLevel;
       const prefAgeGroup = p.pref.preferred_age_group || '';
@@ -426,7 +522,7 @@ export class SeasonClusteringEngine {
         prefAgeGroup === 'children' ||
         membershipRoleMap.get(p.pref.user_id) === 'junior';
       // Opt #5: count unavailable dates per day-of-week for penalty scoring
-      const unavailDates = (p.pref.unavailable_dates as string[]) || [];
+      const unavailDates = (p.pref.unavailable_dates as string[] | null) ?? [];
       const unavailByDow: Record<number, number> = {};
       for (const d of unavailDates) {
         const dow = (new Date(d).getDay() + 6) % 7; // 0=Mon..6=Sun
@@ -444,8 +540,8 @@ export class SeasonClusteringEngine {
         promotedLevel: null,
         availability: p.pref.weekly_availability as WeeklyAvailability,
         wishPartnerIds: (p.pref.wish_partner_ids as string[]) || [],
-        avoidMemberIds: (p.pref.avoid_member_ids as string[]) || [],
-        selfAssessedLevel: (p.pref.self_assessed_level as SkillLevel) || null,
+        avoidMemberIds: ((p.pref.avoid_member_ids as string[] | null) ?? []) as string[],
+        selfAssessedLevel: (p.pref.self_assessed_level as SkillLevel | null) ?? null,
         previousGroupId: null,
         isMinor,
         _unavailByDow: unavailByDow,

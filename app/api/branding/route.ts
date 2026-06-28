@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
-import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:branding');
@@ -36,45 +35,50 @@ const BrandingUpdateSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const clubId = searchParams.get('clubId');
+  return withApiAuth(request, async (auth) => {
+    const { searchParams } = new URL(request.url);
+    const clubId = searchParams.get('clubId');
 
-  if (!clubId) {
-    return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-  }
-
-  try {
-    const supabase = createServiceClient();
-    const { data, error } = await supabase
-      .from('clubs')
-      .select(
-        'primary_color, secondary_color, accent_color, logo_light_url, logo_dark_url, favicon_url, custom_domain'
-      )
-      .eq('id', clubId)
-      .single();
-
-    if (error || !data) {
-      return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+    if (!clubId) {
+      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
-    return NextResponse.json({
-      clubId,
-      brand: {
-        primaryColor: data.primary_color || '#1B4332',
-        secondaryColor: data.secondary_color || '#1e3a5f',
-        accentColor: data.accent_color || '#FF6B35',
-      },
-      logos: {
-        light: data.logo_light_url || null,
-        dark: data.logo_dark_url || null,
-        favicon: data.favicon_url || null,
-      },
-      customDomain: data.custom_domain || null,
-    });
-  } catch (err) {
-    log.error('GET /api/branding error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+    const isOwner = auth.role === 'owner' || auth.role === 'superadmin';
+    const hasAccess = isOwner || auth.clubId === clubId;
+    if (!hasAccess) return forbiddenResponse('No access to this club');
+
+    try {
+      const { data, error } = await auth.supabase
+        .from('clubs')
+        .select(
+          'primary_color, secondary_color, accent_color, logo_light_url, logo_dark_url, favicon_url, custom_domain'
+        )
+        .eq('id', clubId)
+        .single();
+
+      if (error || !data) {
+        return NextResponse.json({ error: 'Club not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({
+        clubId,
+        brand: {
+          primaryColor: data.primary_color || '#1B4332',
+          secondaryColor: data.secondary_color || '#1e3a5f',
+          accentColor: data.accent_color || '#FF6B35',
+        },
+        logos: {
+          light: data.logo_light_url || null,
+          dark: data.logo_dark_url || null,
+          favicon: data.favicon_url || null,
+        },
+        customDomain: data.custom_domain || null,
+      });
+    } catch (err) {
+      log.error('GET /api/branding error:', err);
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+  });
 }
 
 export async function PUT(request: NextRequest) {
@@ -113,8 +117,45 @@ export async function PUT(request: NextRequest) {
 
       updates.updated_at = new Date().toISOString();
 
-      const supabase = createServiceClient();
-      const { error } = await supabase.from('clubs').update(updates).eq('id', clubId);
+      // Tenant guard: only owner-of-club may update
+      const isOwner = auth.role === 'owner' || auth.role === 'superadmin';
+      if (!isOwner && auth.clubId !== clubId) {
+        return forbiddenResponse('No access to this club');
+      }
+      // Cast + runtime allowlist: TS2345 fires because the inferred shape of
+      // `updates` doesn't match Supabase's `ClubsUpdate` exactly. The Zod
+      // schema upstream is the source of truth, but the allowlist adds a
+      // defense-in-depth runtime check so a typo'd key (e.g. `customDomain`
+      // vs `custom_domain`) doesn't silently reach the database.
+      //
+      // ALLOWED_BRANDING_KEYS intentionally mirrors exactly the columns built in
+      // the `updates` object above (L100-108) and is NARROWER than the full
+      // `clubs` table. NOTE: the clubs table also has `name`, `logo_url`,
+      // `address`, `email`, `phone`, `website`, `description`, etc., but those
+      // columns are managed by OTHER endpoints (e.g. PUT /api/clubs).
+      // This allowlist is typo-defense-in-depth: a typo'd key like
+      // `customDomain` (vs `custom_domain`) fails-fast with 400 instead of
+      // silently inserting a phantom column. When adding a NEW branding field,
+      // update BOTH the build-up above AND this set in the same commit.
+      const ALLOWED_BRANDING_KEYS: Set<string> = new Set([
+        'primary_color',
+        'secondary_color',
+        'accent_color',
+        'logo_light_url',
+        'logo_dark_url',
+        'favicon_url',
+        'custom_domain',
+        'updated_at',
+      ]);
+      for (const k of Object.keys(updates)) {
+        if (!ALLOWED_BRANDING_KEYS.has(k)) {
+          return NextResponse.json({ error: `Unknown branding field: ${k}` }, { status: 400 });
+        }
+      }
+      const { error } = await auth.supabase
+        .from('clubs')
+        .update(updates as never)
+        .eq('id', clubId);
 
       if (error) {
         log.error('Branding update error:', error);
