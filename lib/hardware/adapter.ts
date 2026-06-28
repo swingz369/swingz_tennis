@@ -50,6 +50,13 @@
 export type HardwareVendor = 'nuki' | 'shelly' | 'loxone';
 
 /**
+ * Single-source-of-truth runtime-array für Z.enum + Iteration. Verwendet von
+ * route.ts (Zod-Validation), client.tsx (Card-Grid-Iteration), webhook (vendor-validation).
+ * NICHT ändern ohne vorher Hardware-Vendor-Adapter zu implementieren (siehe listHardwareVendors).
+ */
+export const HARDWARE_VENDORS = ['nuki', 'shelly', 'loxone'] as const satisfies readonly HardwareVendor[];
+
+/**
  * Alle-Mögliche-Error-Strings für Hardware-Adapter-Calls.
  * Konvention: SCREAMING_SNAKE_CASE, semantisch eindeutig, maschinenlesbar.
  * Erweiterungen müssen hier ergänzt + alle 3-Adapter-Implementationen auditiert.
