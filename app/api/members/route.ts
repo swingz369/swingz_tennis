@@ -7,6 +7,7 @@ import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import type { ZodError } from 'zod';
 import { createLogger } from '@/lib/logger';
+import { logPiiRead } from '@/lib/db/audit-logger';
 
 const log = createLogger('api:members');
 
@@ -127,6 +128,9 @@ export async function GET(request: NextRequest) {
       }
 
       const members = await memberService.queryMembers(query);
+
+      // B8: Audit PII list read
+      void logPiiRead(auth.user.id, 'member', `list:${query.clubId ?? 'all'}`, request);
 
       // Apply pagination
       const paginatedMembers = members.slice(offset, offset + limit);
