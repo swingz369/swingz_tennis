@@ -73,6 +73,39 @@ npx tsc --noEmit 2>&1 | grep -c 'error TS'
 
 ---
 
+### 🔴 Rule 1.1: No `sed -i` on configuration files (`.yml`, `.yaml`, `.json`)
+
+Same reasoning as Rule 1, but for **CI/tool configuration files** where sed cannot reason about indentation or key scope:
+
+| File pattern              | Safe tool                        | Why                                                                                                          |
+| ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `.github/workflows/*.yml` | `write_file` (recreate workflow) | YAML has nested-key semantics — sed matches all `timeout: 15` entries regardless of which job they belong to |
+| `vercel.json`             | `jq` (round-trip JSON)           | Preserves key ordering; `jq` understands JSON structure                                                      |
+| `.lighthouserc.json`      | `jq` or Python `json`            | Same as vercel.json                                                                                          |
+| `package.json`            | `npm pkg set <key>=<value>`      | Schema-aware editor; avoids touching unrelated keys                                                          |
+
+**Recovery example** (sed disaster on YAML):
+
+```bash
+# 1. Confirm damage
+yamllint .github/workflows/*.yml 2>&1 || true
+
+# 2. Restore from git
+git checkout HEAD -- .github/workflows/
+
+# 3. Re-apply intent via Python with structure-aware round-trip
+python3 <<'PYEOF'
+import yaml
+for f in ['.github/workflows/bundle-analyzer.yml']:
+    with open(f) as fh: doc = yaml.safe_load(fh)
+    # Apply semantic edits here, e.g.:
+    # doc['jobs']['analyze']['timeout-minutes'] = 30
+    with open(f, 'w') as fh: yaml.safe_dump(doc, fh, default_flow_style=False)
+PYEOF
+```
+
+---
+
 ## 🟡 Rule 2: Drizzle `schema.ts` and `relations.ts` are build artifacts (gitignored)
 
 The files `drizzle/schema.ts` (~241 KB) and `drizzle/relations.ts` (~40 KB)

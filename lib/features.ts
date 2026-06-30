@@ -137,6 +137,17 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     sidebarSection: 'work_duty',
     order: 11,
   },
+  // ponytail: add-on priced separately (€79/Monat) — gates hardware vendor access from 3.1.x
+  {
+    key: 'smart_court',
+    label: 'Smart Court',
+    description:
+      'Automatische Platzkontrolle via Hardware-Integration (Nuki, Shelly, Loxone). Add-On € 79/Monat.',
+    icon: 'Wifi',
+    category: 'optional',
+    sidebarSection: 'smart_court',
+    order: 12,
+  },
 ] as const;
 
 export type FeatureKey = (typeof CLUB_FEATURES)[number]['key'];

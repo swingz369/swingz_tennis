@@ -2,7 +2,7 @@ import { requireAuth } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Euro, Building2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Euro, Building2, CheckCircle, Clock, AlertCircle, Users, Wifi } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +42,7 @@ export default async function OwnerBillingPage() {
   await requireAuth();
   const sb = createServiceClient();
 
-  const { data: clubs } = await sb.from('clubs').select('id, name, city').order('name');
+  const { data: clubs } = await sb.from('clubs').select('id, name, city, features').order('name');
   const clubIds = (clubs ?? []).map((c) => c.id);
 
   const { data: adminMemberships } = await sb
@@ -64,14 +64,32 @@ export default async function OwnerBillingPage() {
     if (!clubAdminMap[m.club_id]) clubAdminMap[m.club_id] = m.user_id;
   }
 
+  // 3.6.3: member counts per club
+  const { data: allMembers } = await sb
+    .from('user_club_memberships')
+    .select('club_id')
+    .in('club_id', clubIds)
+    .eq('role', 'member')
+    .eq('is_active', true);
+
+  const memberCountByClub: Record<string, number> = {};
+  for (const m of allMembers ?? []) {
+    memberCountByClub[m.club_id] = (memberCountByClub[m.club_id] ?? 0) + 1;
+  }
+  const totalMembers = Object.values(memberCountByClub).reduce((a, b) => a + b, 0);
+
   const rows = (clubs ?? []).map((club) => ({
     club,
     admin: userMap[clubAdminMap[club.id]] ?? null,
+    memberCount: memberCountByClub[club.id] ?? 0,
+    hasSmartCourt: !!(club.features as Record<string, unknown> | null)?.['smart_court'],
   }));
   const active = rows.filter(({ admin }) => admin?.subscription_status === 'active').length;
-  const mrr = rows.reduce((sum, { admin }) => {
+  const smartCourtCount = rows.filter((r) => r.hasSmartCourt).length;
+  const mrr = rows.reduce((sum, { admin, hasSmartCourt }) => {
     const tier = admin?.subscription_tier ?? 'free';
-    return admin?.subscription_status === 'active' ? sum + (PLAN_PRICES[tier] ?? 0) : sum;
+    const baseMrr = admin?.subscription_status === 'active' ? (PLAN_PRICES[tier] ?? 0) : 0;
+    return sum + baseMrr + (hasSmartCourt ? 79 : 0);
   }, 0);
 
   return (
@@ -83,7 +101,7 @@ export default async function OwnerBillingPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {(
           [
             {
@@ -100,6 +118,13 @@ export default async function OwnerBillingPage() {
               ).length,
               Icon: Euro,
               color: 'text-violet-600',
+            },
+            { label: 'Mitglieder gesamt', value: totalMembers, Icon: Users, color: 'text-sky-600' },
+            {
+              label: 'Smart Court Add-Ons',
+              value: smartCourtCount,
+              Icon: Wifi,
+              color: 'text-orange-600',
             },
             { label: 'MRR (ca.)', value: `€ ${mrr}`, Icon: Euro, color: 'text-emerald-600' },
           ] as const
@@ -122,7 +147,7 @@ export default async function OwnerBillingPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
-            {rows.map(({ club, admin }) => {
+            {rows.map(({ club, admin, memberCount, hasSmartCourt }) => {
               const tier = admin?.subscription_tier ?? 'free';
               const status = admin?.subscription_status ?? 'inactive';
               const cfg = STATUS_CFG[status] ?? STATUS_CFG.inactive;
@@ -134,10 +159,19 @@ export default async function OwnerBillingPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{club.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {club.city} · {admin?.email ?? 'kein Admin'}
+                      {club.city} · {admin?.email ?? 'kein Admin'} · {memberCount} Mitglieder
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    {hasSmartCourt && (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 text-xs text-orange-600 border-orange-300"
+                      >
+                        <Wifi className="h-3 w-3" />
+                        Smart Court
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-xs">
                       {TIER_LABELS[tier] ?? tier}
                     </Badge>

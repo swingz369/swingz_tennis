@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { MemberProfileClient } from './MemberProfileClient';
+import { SeasonStatsCard } from '@/components/member-profile/season-stats-card';
+import HeadToHead from '@/components/matches/head-to-head';
 
 export default async function MemberProfilePage() {
   const supabase = await createClient();
@@ -75,5 +77,11 @@ export default async function MemberProfilePage() {
     emergency_phone: profile?.emergency_phone || null,
   };
 
-  return <MemberProfileClient member={member} />;
+  return (
+    <div className="space-y-6">
+      <MemberProfileClient member={member} />
+      <SeasonStatsCard userId={user.id} clubId={membership.club_id} />
+      <HeadToHead myUserId={user.id} clubId={membership.club_id} />
+    </div>
+  );
 }

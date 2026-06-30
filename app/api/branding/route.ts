@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
+import type { Database } from '@/types/supabase';
+
+type ClubsBrandingKey = keyof Database['public']['Tables']['clubs']['Update'];
 
 const log = createLogger('api:branding');
 
@@ -137,7 +140,7 @@ export async function PUT(request: NextRequest) {
       // `customDomain` (vs `custom_domain`) fails-fast with 400 instead of
       // silently inserting a phantom column. When adding a NEW branding field,
       // update BOTH the build-up above AND this set in the same commit.
-      const ALLOWED_BRANDING_KEYS: Set<string> = new Set([
+      const ALLOWED_BRANDING_KEYS = new Set<ClubsBrandingKey>([
         'primary_color',
         'secondary_color',
         'accent_color',
@@ -148,7 +151,7 @@ export async function PUT(request: NextRequest) {
         'updated_at',
       ]);
       for (const k of Object.keys(updates)) {
-        if (!ALLOWED_BRANDING_KEYS.has(k)) {
+        if (!ALLOWED_BRANDING_KEYS.has(k as ClubsBrandingKey)) {
           return NextResponse.json({ error: `Unknown branding field: ${k}` }, { status: 400 });
         }
       }
