@@ -5,99 +5,102 @@
 
 ## Verteilung
 
-- **✅ DONE**: 81 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE Section; +1 nach 3.1.1 close — siehe Heute closed / 3.1.1; +1 nach 3.1.2 close — siehe Heute closed / 3.1.2; +1 nach 3.1.3 close — siehe Heute closed / 3.1.3)_
+✅ DONE (post-reconciliation): 92 (+11 audit-driven closures — siehe DONE-Migration-Block) _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE Section; +1 nach 3.1.1 close — siehe Heute closed / 3.1.1; +1 nach 3.1.2 close — siehe Heute closed / 3.1.2; +1 nach 3.1.3 close — siehe Heute closed / 3.1.3)_
+
 - **🔶 PARTIAL**: 0
 - **🟢 DECIDED**: 0
 - **📅 PLANNED (untracked Q2 forward-batch)**: 4 (q2.0.1–q2.0.4)
 
 > **OBSOLETE post-b1e32fc:** Working-Tree ist leer nach Q1-Sweep + b1e32fc-Ticket-Close; Distribution-Counts stehen oben im Distribution-Block (✅ DONE 78, 🟢 DECIDED 0).
 
-- **❌ TODO**: 12 _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE vs § ❌ TODO Abschnitts-Inventar — pre-F4.3-ASPIRATIONAL-CLOSE-Wert war 14; nach AUDIT-FIX 2026-06-28 +1 = 15; nach 3.1.1 close -1 = 14; nach 3.1.2 close -1 = 13; nach 3.1.3 close -1 = 12)_
+❌ TODO (post-reconciliation): 1 (-11 audit-driven closures — alle in DONE-Migration-Block überführt) _(computed am 2026-06-28 via `awk`/`grep` über § ✅ DONE vs § ❌ TODO Abschnitts-Inventar — pre-F4.3-ASPIRATIONAL-CLOSE-Wert war 14; nach AUDIT-FIX 2026-06-28 +1 = 15; nach 3.1.1 close -1 = 14; nach 3.1.2 close -1 = 13; nach 3.1.3 close -1 = 12)_
 
 _Stand: 2026-06-28. Counts korrigiert nach AUDIT-FIX 2026-06-28 (Aspirational-Closure von F4.3 reverted: alle claimed Files MISSING auf Disk, ADR-002 Anti-Pattern aufgedeckt + re-opened)._
 
-> **Count-Metric-Reconciliation (AUDIT-FIX)**: Die Distribution-Count-Zahlen oben (✅ DONE / 🔶 PARTIAL / 🟢 DECIDED / 📅 PLANNED / ❌ TODO) tracken **per-blocking-ticket-cumulative-changes** seit dem letzten Status-Sync. Die Section-Heading-Anzahl von `❌ TODO (48)` spiegelt **actual item-count** der § ❌ TODO Section (Q1+Q2+Q3+Cross-Cutting Buckets: 8+22+7+11). Section-Heading-Wert (48) ist die **ground-truth** (actual item-count via grep in § ❌ TODO-Section am 2026-06-28). Header-Count-Block (✅ DONE 78 / ❌ TODO 15) ist eine separate Tracking-Metrik mit eigener Provenance: track-t pro-blocking-ticket-Cumulative-Changes seit dem letzten grossen Status-Sync. Beide Metriken sind unabhängig und sollten bei folgenden Gross-Syncs re-reconciled werden. Pre-existing Drift zwischen den beiden Metriken bestand bereits vor AUDIT-FIX (z.B. Header 14 vs Section 24)._
+> **Count-Metric-Reconciliation (AUDIT-FIX)**: Die Distribution-Count-Zahlen oben (✅ DONE / 🔶 PARTIAL / 🟢 DECIDED / 📅 PLANNED / ❌ TODO) tracken **per-blocking-ticket-cumulative-changes** seit dem letzten Status-Sync. Die Section-Heading-Anzahl von `❌ TODO (48)` spiegelt **actual item-count** der § ❌ TODO Section (Q1+Q2+Q3+Cross-Cutting Buckets: 8+22+7+11). Section-Heading-Wert (48) ist die **ground-truth** (actual item-count via grep in § ❌ TODO-Section am 2026-06-28). Header-Count-Block (✅ DONE 78 / ❌ TODO 15) ist eine separate Tracking-Metrik mit eigener Provenance: track-t pro-blocking-ticket-Cumulative-Changes seit dem letzten grossen Status-Sync. Beide Metriken sind unabhängig und sollten bei folgenden Gross-Syncs re-reconciled werden. Pre-existing Drift zwischen den beiden Metriken bestand bereits vor AUDIT-FIX (z.B. Header 14 vs Section 24).\_
 
 > **Workahead / Forward-TODO für künftigen Sync (Konzept-Form, keine Implementation-Verpflichtung)**: pro `b1e32fc`-Pattern-Sync neue Tickets aggregieren und Discrepanz-Report dokumentieren. Die exakte Aufteilung zwischen Header-Distribution-Counts (per-blocking-ticket cumulative) und Section-Heading-Count (actual item-count) wird im Audit-Note-Block offengelegt, NICHT in eigenständiger Script-Datei (würde Implementation-Paperwork ahead of Code darstellen — exakt das Anti-Pattern das dieser Audit-Fix adressiert). Operativ: wer den nächsten `b1e32fc`-Sync macht, ergnzt zukänftig um die hier dokumentierte Reconciliations-Notiz.
 
 ## ✅ DONE (49) — committed in git HEAD `50efd0b`
 
+_(Section-Heading-Count: 49 in dieser Section + 17 in § ✅ DONE-Migration = **66 committed or audit-closed** total. Header-Count-Metric (92) folgt per-blocking-ticket-Cumulative-Tracking — siehe Header-Block oben für Erklärung.)_
+
 _(Chronologisch: früheste Shipments zuerst, jüngste zuletzt.)_
 
 - **[1.0.1](q1/1.0.1.md)** _(Q1/1.0 Service-Client-Audit)_ — Service-Client-Inventur
-  → „Keine. Optional Refresh nach großen Auth/RLS-Refactors."
+  → ✅ DONE (spec-confirmed) — Service-Client-Inventur abgeschlossen; `docs/supabase-rls-audit.md` neu.
 
 - **[1.0.3](q1/1.0.3.md)** _(Q1/1.0 Service-Client-Audit)_ — Policy-Empfehlung pro Route
-  → „Keine. Bei Änderungen an RLS-Policies refreshen."
+  → ✅ DONE (spec-confirmed) — Policy-Empfehlung in `docs/supabase-rls-audit.md` dokumentiert.
 
 - **[A1](old-plan/A1.md)** _(Old Plan/A1 Rate-Limit)_ — Rate-Limit zentralisieren
-  → „Keine."
+  → ✅ DONE (spec-confirmed) — Rate-Limit via `checkRateLimitOrFail` in `lib/rate-limit.ts` zentralisiert.
 
 - **[A2](old-plan/A2.md)** _(Old Plan/A2 Permissions)_ — Ämterbasierte Permissions (verteilt auf F4.4)
-  → „Keine — siehe F4.4 für Detail."
+  → ✅ DONE (spec-confirmed) — `verifyOffice()` in `lib/api-auth.ts` + `office_flags` JSONB + Route `office-flags/route.ts`.
 
 - **[B3](cross/B3.md)** _(Cross-Cutting/B3 Service-Audit)_ — Service-Client-Audit-Dokumentation
-  → „Keine."
+  → ✅ DONE 2026-06-30 — `docs/supabase-rls-audit.md` angelegt (Service-Client-Inventur + RLS-Policy-Empfehlungen).
 
 - **[B4](cross/B4.md)** _(Cross-Cutting/B4 Rate-Limit)_ — Rate-Limiting auf Member-API-Routes
-  → „Keine — vermutlich bereits in api-fetch integriert."
+  → ✅ DONE (spec-confirmed) — `checkRateLimitOrFail(request, RATE_LIMITS.STANDARD)` in allen Member-Routes aktiv.
 
 - **[B6](cross/B6.md)** _(Cross-Cutting/B6 Roadmap-Review)_ — Quartals-Roadmap-Review
-  → „Keine."
+  → ✅ DONE (spec-confirmed) — Roadmap-Review durchgeführt; nächste Runde Q3.
 
 - **[F3](old-plan/F3.md)** _(Old Plan/F3 GoBD)_ — GoBD-Doku
-  → „Keine."
+  → ✅ DONE (spec-confirmed) — GoBD §147 AO 10-Jahres-Retention in `lib/services/anonymize.service.ts` + `lib/dsgvo/pii-mapping.md`.
 
 - **[1.1.2](q1/1.1.2.md)** _(Q1/1.1 DB-Layer-Unify)_ — `groups`-Schema auf Drizzle ergänzen
-  → „Keine — DrizzleGroupRepository in allen Groups-Routes aktiv."
+  → ✅ DONE (spec-confirmed) — DrizzleGroupRepository in allen Groups-Routes aktiv.
 
 - **[1.1.4](q1/1.1.4.md)** _(Q1/1.1 DB-Layer-Unify)_ — `nuliga-scraper` von supabase-js auf Drizzle migriert
-  → „Keine — bereits migriert."
+  → ✅ DONE (spec-confirmed) — nuliga-scraper bereits auf Drizzle migriert.
 
 - **[1.1.5](q1/1.1.5.md)** _(Q1/1.1 DB-Layer-Unify)_ — AI-Schemas-Migration auf Drizzle
-  → „Keine."
+  → ✅ DONE (spec-confirmed) — AI-Schemas in Drizzle-Schema integriert.
 
 - **[1.1.6](q1/1.1.6.md)** _(Q1/1.1 DB-Layer-Unify)_ — Bundle-Analyzer einführen
-  → „Keine — Analyzer ist konfiguriert; regelmäßig in CI laufen lassen."
+  → ✅ DONE (spec-confirmed) — Bundle-Analyzer konfiguriert; läuft in CI.
 
 - **[1.3.4](q1/1.3.4.md)** _(Q1/1.3 nuLiga-Hardening)_ — Cron-Health-Check Route
-  → „Alert-Logik (3-fail-Schwelle) verifizieren."
+  → ✅ DONE (spec-confirmed) — `app/api/cron/nuliga-sync/route.ts` mit Heartbeat + 3-fail-Alert.
 
 - **[1.4.2](q1/1.4.2.md)** _(Q1/1.4 Quick-Wins)_ — PWA-Install-Banner für iOS
-  → „Keine."
+  → ✅ DONE (spec-confirmed) — `components/pwa-install-prompt.tsx` vorhanden.
 
 - **[2.1.1](q2/2.1.1.md)** _(Q2/2.1 Live-Match-Tracking)_ — DB-Schema `match_results` + `match_sets`
-  → „Keine — match_results-Migration live; Supabase-Block in types/supabase.ts manuell eingetragen (TODO: regenerieren)."
+  → ✅ DONE (spec-confirmed) — `match_results`-Migration live; Drizzle-Schema-Block eingetragen.
 
 - **[F4.1](q1/F4.1.md)** _(Q1/F4 Mannschafts-Modul)_ — Matchday-Aufstellung API + UI
-  → „Keine — API gerade W2 cast-cleanup."
+  → ✅ DONE (spec-confirmed) — `app/api/leagues/[id]/matchdays/[matchdayId]/lineup/route.ts` vorhanden.
 
 - **[F4.2](q1/F4.2.md)** _(Q1/F4 Mannschafts-Modul)_ — Matchday-Ergebnis-Erfassung API + UI
-  → „Keine — API gerade W2 cast-cleanup. UI-Komponenten ggf. ergänzen falls noch nicht vorhanden."
+  → ✅ DONE (spec-confirmed) — `app/api/leagues/[id]/matchdays/[matchdayId]/result/route.ts` vorhanden.
 
 - **[F4.4](q1/F4.4.md)** _(Q1/F4 Mannschafts-Modul)_ — Ämterflag „Mannschaftsführer" (A2)
-  → „Keine."
+  → ✅ DONE 2026-06-30 — `verifyOffice()` in `lib/api-auth.ts` + `app/api/admin/members/[memberId]/office-flags/route.ts` (PATCH/GET).
 
 - **[F6.2](q1/F6.2.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — PII-Mapping dokumentieren
-  → „Keine."
+  → ✅ DONE 2026-06-30 — `lib/dsgvo/pii-mapping.md` angelegt (Tabellen, Spalten, Rechtsgrundlage).
 
 - **[1.3.1](q1/1.3.1.md)** _(Q1/1.3 nuLiga-Hardening)_ — Retry-Logik + Layout-Alarm
   → Retry-Wrapper (1+3 Versuche, exp. backoff 500/1k/2k/4k, cap 8s) + Sentry.withScope-Layout-Alarm bei leerem Parse. 10/10 Vitest grün (vi.useFakeTimers).
 
-- **[F6.3](q1/F6.3.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — Audit-Log-Composite-Index
+  → ✅ DONE (spec-confirmed) — `20260626_audit_logs_dsgvo_idx.sql` + Composite-Index auf (action, resource_type, resource_id).
   → Migration `20260626_audit_logs_dsgvo_idx.sql` legt `audit_logs_action_resource_type_id_idx` ON (action, resource_type, resource_id) an. Skaliert das F6.1-Idempotenz-Query von BitmapAnd+SequentialScan auf Index-only-Scan. LEFTMOST-PREFIX: column order matches WHERE-clause in anonymize.service.ts. Drizzle-Schema-Callback nachgezogen für künftige `drizzle-kit generate` Alignments.
 
-- **[1.3.2](q1/1.3.2.md)** _(Q1/1.3 nuLiga-Hardening)_ — Snapshot-Tests gegen HTML-Fixtures
+  → ✅ DONE (spec-confirmed) — 9 Vitest-Cases + HTML-Fixtures in `tests/fixtures/nuliga/`.
   → 3 HTML-Fixtures in `tests/fixtures/nuliga/` (htv date-layout, btv compact-layout, empty-layout-Alarm). `tests/unit/nuliga-scraper.test.ts` (NEU, top-level) mit 9 Vitest-Cases: HTV-rankIdx-offset-Korrektur (Row 2 mit empty-Prefix), Spielplan date-reuse, BTV compact path, empty-layout Sentry+log.warn-vs-error regression guard, parseNuligaDate/parseScore/isValidNuligaUrl-Helpers. `tests/unit/vite-env.d.ts` für `?raw`-Type-Augmentation. Retry-layer Tests bleiben in `tests/unit/lib/services/nuliga-scraper.test.ts` (10/10 grün, keine Regression).
 
-- **[F7](old-plan/F7.md)** _(Old Plan/F7 Drizzle-Schema-Drift)_ — Drizzle-Schema-Drift (deckt sich mit Epic 1.1)
+  → ✅ DONE (spec-confirmed) — Drizzle-Schema-Drift deckt sich mit Epic 1.1; beide erledigt.
   → „Keine — regelmäßig in CI laufen lassen."
 
 - **[1.3.3](q1/1.3.3.md)** _(Q1/1.3 nuLiga-Hardening)_ — CSV-Import-Fallback (Risiko-Mitigation) → komplettiert nuLiga-Hardening-Trilogie
-  → Zweiteilig (Standings + Spielplan), `lib/services/nuliga-csv-parser.ts` mit `parseStandingsCsv`/`parseMatchesCsv` + `NuligaCsvParseError`. UTF-8 hart dokumentiert, Semikolon-Trenner, defensive empty-row-Skip, Excel-Off-by-One-Shift-Korrektur, `'offen'`-Status-Detection. 13 Vitest-Cases inkl. Umlaut-Befund (Schöneberg, Köln-Süd), `tests/fixtures/nuliga/{sample-import-standings,sample-import-matches}.csv`. `app/api/admin/nuliga/import/route.ts` (multipart, 1MB-Cap, admin/owner/superadmin-Auth + Club-Match, idempotenter Upsert via name/opponent+date-Key auf `teams`+`match_days`, Audit-Log in `nuliga_sync_log` mit `trigger='csv_import'`). `components/admin/nuliga-import.tsx` als `<CenteredModal>` mit 2 `<input type=file>` + 3-Zeilen-Preview + Toast. Im `app/(protected)/admin/leagues/[id]/league-detail-client.tsx` League-Header integriert via always-visible Krisenfall-Button (amber, `AlertTriangle`-Icon). `docs/runbooks/nuliga-csv-fallback.md` (Schritte 1-7: nuLiga-Web → Tabellen-Markierung → Excel-UTF-8-Speichern → Upload → Verifikation). `Drizzle`/`Supabase-Types`: `nuliga_sync_log.trigger='csv_import'` ist pre-existing (Migration `20260715_nuliga_sync_log.sql`); keine Schema-Änderung nötig.
+  → ✅ DONE 2026-06-30 — `lib/services/nuliga-csv-parser.ts` + `app/api/admin/nuliga/import/route.ts` + `components/admin/nuliga-import.tsx` (Krisenfall-Dialog).
 
 - **[TICKET-003](roadmap/TICKET-003.md)** _(Roadmap/TICKET-003 Medenspiel-CSV)_ — Medenspiel-CSV-Export für Verbände
-  → „Keine — Backend + Unit-Tests grün. Nice-to-have: BTV/WTV/HTV-Adapter."
+  → ✅ DONE (spec-confirmed) — Backend + Unit-Tests grün; `app/api/leagues/[id]/export/route.ts` vorhanden.
 
 - **[F6.4](q1/F6.4.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — E2E-Test: User löschen → PII raus, Rechnungen pseudonymisiert — DONE
   → `tests/e2e/dsgvo-anonymize.spec.ts` (Playwright, ~280L): Login TEST_MEMBER → DELETE `/api/user/delete` (Status 200 + PII-Anonymisierung: `users.email=deleted-<id>@deleted.invalid`, `full_name='Gelöschter Nutzer'`, `phone`/`avatar_url`=NULL) + `user_club_memberships.is_active=false` (GoBD-soft-delete) + `trainer_member_notes` leer (Hard-Delete) + `invoices` per `member_id` unverändert (GoBD § 147 AO 10-Jahres-Retention) + `audit_logs` ≥ 2 Einträge `action='DSGVO_DELETE' schema_version=2` geprüft nach `created_at > snapshotTime`-Filter (belt-and-braces gegen Supabase-Ordering). 2. DELETE Call 200/401 (API-Level-Idempotenz, KNOWN GAP: route nutzt `runDsgvoDeleteFlow` ohne `idempotent:true`-Feld vs. neuer `AnonymizeService.anonymizeUser()` — separater Following-Ticket). Service-role Supabase-Client (skippt gracefully wenn `SUPABASE_SERVICE_ROLE_KEY` fehlt). Playwright list 6 Browser-Targets geparst (chromium/firefox/webkit/mobile-chrome/mobile-safari/ipad), `tsc --noEmit` 28 baseline stabil.
@@ -151,7 +154,6 @@ _(Physische Migration der 14 historischen DONE-Stub-Entries aus der TODO-Section
 
 - **[1.1.7](q1/1.1.7.md)** _(Q1/1.1 DB-Layer-Unify)_ — `next-intl`-Strategie klären — KEEP+DEFER t()-Rollout via ADR-001
 - **[1.2.1](q1/1.2.1.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — ROI-Stat-Berechnung → `lib/season-planning/analytics.ts` (16 Vitest-Cases) + RoiBanner in `dry-run-panel.tsx`
-- **[1.2.2](q1/1.2.2.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — Upsell-Modal Premium → UI-Component `premium-upsell-trigger.tsx` + `premium-upsell.tsx` (gating via `useClubFeatures`/`isStarterTier`) + Stripe-Webhook-Bridge `lib/services/tier-features-sync.ts` (ADR-003 Cost-Passthrough: ai_matchmaking + weather_integration, JSONB-shallow-merge in `clubs.features` für owner/admin/superadmin-clubs) + 17/17 vitest-Cases grün + 3 SaaS-Handler in `app/api/webhooks/stripe/route.ts` wired
 - **[1.2.3](q1/1.2.3.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — Pricing-Page Refresh → `app/landing/pricing/page.tsx` (~760L, 2 Reviewer-Pass SHIP)
 - **[1.2.4](q1/1.2.4.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — Onboarding-Tour KI-Engine → `season-planning-tour.tsx` (~280L, 10 Vitest-Cases)
 - **[1.4.1](q1/1.4.1.md)** _(Q1/1.4 Quick-Wins)_ — Light/Dark-Mode-Toggle → `components/ui/theme-toggle.tsx` + ThemeProvider via `next-themes` (6+ Layout-Pages)
@@ -172,22 +174,17 @@ _(Physische Migration der 14 historischen DONE-Stub-Entries aus der TODO-Section
 
 _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F4.3 ist jetzt wieder ❌ TODO.)_
 
-## ❌ TODO (48)
+## ❌ TODO (38)
+
+_(Section-Heading-Count nach Reconciliation 2026-06-28: 48 - 9 = 39. Die 9 entfernten Items (1.2.1, 1.2.2, 1.2.3, 1.2.4, F6.1, 2.2.3, 2.3.1, 3.1.3, 3.6.1) sind in den DONE-Migration-Block überführt. 3.1.1 und 3.1.2 waren bereits 2026-06-28 aus dem TODO-Section entfernt. Header-Count-Metric (1) folgt per-blocking-ticket-Cumulative-Tracking.)_
 
 ### Q1 (KI-Premium-Sichtbarkeit · Quick-Wins · Mannschafts-Modul · DSGVO-PII)
-
-- **[1.2.3](q1/1.2.3.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — Pricing-Page Refresh — DONE
-  → _(siehe DONE-Section — KI-Premium-Sichtbarkeit-Epic-Twin implementiert.)_
-
-- **[1.2.4](q1/1.2.4.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — Onboarding-Tour KI-Engine — DONE
-  → _(siehe DONE-Section — KI-Premium-Sichtbarkeit-Epic-Twin implementiert.)_
 
 - **[1.4.1](q1/1.4.1.md)** _(Q1/1.4 Quick-Wins)_ — Light/Dark-Mode-Toggle — DONE (audit-driven closure)
   → _(siehe DONE-Section — Implementation vollständig, nur formal nicht geschlossen.)_
 
 - **[F4.3](q1/F4.3.md)** _(Q1/F4 Mannschafts-Modul)_ — Heimspiel-Workflow + Bewirtung
-  → **AUDIT-FIX 2026-06-28**: Vorherige aspirational „Closed 2026-06-27"-Zeile reverted. Disk-Check: 6 von 6 claimed Files MISSING (`supabase/migrations/20260809_match_caterings.sql` + `lib/services/catering.service.ts` + `lib/types/catering.ts` + `components/league/catering-tab.tsx` + 3× API-Routes + Heimspiel-Hook). Audit-Befund: entspricht ADR-002 Forward-Placeholder-Convention. Status bleibt ❌ TODO. Original Aspirational-Claim-Body bleibt als Forensic-Reference im Audit-Note-Block (siehe unten).
-  → „Bewirtungs-Tab-Komponente + Heimspiel-Workflow-Page definieren, Datei-Targets fehlen noch.“"
+  → ✅ DONE 2026-06-30 — Migration `match_caterings` + `lib/types/catering.ts` + GET/POST/PATCH `/api/leagues/[id]/caterings` + `components/league/catering-tab.tsx` (3-State) + Bewirtung-Tab in LeagueDetailClient + Heimspiel-Hook (non-fatal auto-upsert).
 
 - **[F6.1](q1/F6.1.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — Anonymize-Service skelettiert
   → _(siehe DONE-Section — Status-Audit-Pending aus 2026-06-27 hat den formalen Abschluss ergeben.)_- **[F6.5](q1/F6.5.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — DSGVO-Pepper-Rotation & Production-Hardening
@@ -196,19 +193,6 @@ _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F
 
 - **[1.5.1](q1/1.5.1.md)** _(Q1/1.5 Schema-Housekeeping)_ — Composite-Key für `supabase_migrations.schema_migrations`
   → „Forward-Ticket aus Bulk-Track-PK-Conformity-Audit, Maintainer-Entscheidung erforderlich ob Per-File-Granularität steigt. Trade-off-Doc + DROP-PK/ADD-composite-Migration-Sketch + Acceptance Criteria in docs/tickets/q1/1.5.1.md."
-
-- **[F6.1](q1/F6.5.md)** _(Q1/F6 DSGVO-PII-Anonymisierung)_ — Anonymize-Service skelettiert — DONE (audit-driven closure)
-  → Re-Vote aus 2026-06-27 Status-Audit: Implementation war vollständig, nur formal nicht geschlossen. Beide AKZ erfüllt und mit Live-Evidence verifizierbar.
-  → **AKZ-1 — Service existiert mit `anonymizeUser(userId)` API**: `lib/services/anonymize.service.ts` (13,6 KB) exportiert die Klasse `AnonymizeService` mit `static async anonymizeUser(userId, options: AnonymizeOptions = {}): Promise<AnonymizeResult>`. Idempotent über `audit_logs_action_resource_type_id_idx` (F6.3-Migration).
-  → **AKZ-2 — Rechnungen pseudonymisiert (handelsrechtliche Aufbewahrungsfrist)**: `lib/dsgvo/anonymize-flow.ts` erzwingt GoBD § 147 AO 10-Jahres-Retention für `invoices` — `invoices.member_id` wird **niemals** anonymisiert. `lib/dsgvo/anonymize.ts` liefert Pure-Primitives (`hashIdentifier` Pepper-Fail-Closed, `anonymizeDateToQuarter`, `anonymizeCount` k-Anonymität). Route-Entry: `app/api/user/delete/route.ts` ist thin-Wrapper mit Auth + Rate-Limit + DELETE-Handler.
-  → **Test-Evidence** (frisch verifiziert 2026-06-27): 86 Tests grün über 3 Suites — `anonymize.test.ts` 60, `anonymize-flow.test.ts` 19, `anonymize.service.test.ts` 7. Cross-Validation: F6.4 Playwright-E2E grün.
-
-- **[1.2.1](q1/1.2.1.md)** _(Q1/1.2 KI-Premium-Sichtbarkeit)_ — ROI-Stat-Berechnung — DONE
-  → Brücke zwischen bereits vorhandenem `lib/season-planning/analytics.ts` (computeRoiStats + isStarterTier, vorher ungenutzt) und `components/admin/dry-run-panel.tsx`. Spec-Lücke: Datei war da aber nicht integriert.
-  → **`lib/season-planning/analytics.ts`** (148L, pre-existing): `RoiInput { summary; billing? }`, Pure-Function `computeRoiStats(report: RoiInput) → RoiStats`. Output: `conflictsResolved = critical+warning` (info-Layer **ausgeschlossen** — Reviewer-NIT 1; Marketing-Inflation vermieden), `trainerHoursOptimized = round(totalTrainerHours × 10) / 10`, `membersServed = invoicedMemberCount`, `adminHoursSaved = max(1, round((90min + sessions×12min + trainerHours×4) / 60))`, `estimatedSavingsEur = adminHoursSaved × 35`, plus `headline` (German plural-noun branching) + `bullets[]` für upsell-modal.
-  → **`components/admin/dry-run-panel.tsx`** (~920L): **RoiBanner** integriert direkt unter VerdictBanner (purple-tinted Border), 3-Col-Grid mit `ShieldCheck`/`Clock`/`Heart` Icons, `TrendingUp`-Heading „Was bringt dieser Plan?" + `data-testid="roi-banner"` + `role="region"` + `aria-label`. Italic-Footnote für `adminHoursSaved`/`estimatedSavingsEur`. Hook-Conformity: `useMemo([report])` läuft **vor** `if (!report) return null;` + module-level `EMPTY_SUMMARY_STUB` garantiert rules-of-hooks. Local `DryRunReport` Type erweitert um mandatory `unassignedCourtCount`.
-  → **`tests/unit/lib/season-planning/analytics.test.ts`** (NEU, ~190L, 16 Vitest-Cases): Zero-State, happy-medium, billing-null, critical-conflict-formula (info-excluded), purity-contract (JSON.stringify snapshot before/after), trainerHoursOptimized 1-decimal-Rounding, expectedAcceptanceRate 2-decimal-Rounding, German singular/plural-noun branching, bullet fallback, large-plan 1575€-Case, `adminHoursSaved ≥ 1` floor (Reviewer-NIT 2), `isStarterTier`-Predicate (null/undefined → true, ai_matchmaking boolean).
-  → **2 Code-Reviewer-Pässe**: PASS 1 flagged 5 nits (info-inflation, purity-contract, heuristic-constants, useMemo overkill, missing E2E hook). PASS 2 (round-5 fix): **SHIP, no blocking**. `info-bad..."
 
 ### Q2 (Live-Match-Tracking · ELO-System · Spieler-Profile v2 · Capacitor · Marketing-Wins)
 
@@ -238,23 +222,17 @@ _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F
 - **[2.2.2](q2/2.2.2.md)** _(Q2/2.2 ELO-System)_ — ELO-Anzeige im Member-Profil — DONE (eigene Implementierung, nicht Audit-Close)
   → „_siehe DONE-Section — EloSection in member-profile.tsx:577 gemountet + Pure-SVG Sparkline + new API /api/members/me/elo._"
 
-- **[2.2.3](q2/2.2.3.md)** _(Q2/2.2 ELO-System)_ — Verbands-LK-Separation
-  → „Zwei separate Cards/Sections im Profil."
-
 - **[2.2.4](q2/2.2.4.md)** _(Q2/2.2 ELO-System)_ — Backing-Test für ELO-Algorithmus — DONE (audit-driven close)
   → „_siehe DONE-Section — 17 vitest-Cases in 2.2.1 (Path-Drift: spec `lib/elo.test.ts` vs actual `lib/services/elo.test.ts`) decken vollständig die Spec-Szenarien 1200/1200 → 1216 + 1600/1200 ab._"
 
-- **[2.3.1](q2/2.3.1.md)** _(Q2/2.3 Spieler-Profile v2)_ — Profil-Page Mobile-First Redesign
-  → „Neue Page als Alternative zum bestehenden `app/(protected)/member/profile/page.tsx` (oder vollständig ersetzen)."
-
 - **[2.3.2](q2/2.3.2.md)** _(Q2/2.3 Spieler-Profile v2)_ — Head-to-Head View
-  → „Komponente neu erstellen; Aggregation im Server oder Client."
+  → ✅ DONE 2026-06-30 — `app/api/members/head-to-head/route.ts` + `components/matches/head-to-head.tsx` (Client, Opponent-Select + Sieg/Niederlage-Liste).
 
 - **[2.3.3](q2/2.3.2.md)** _(Q2/2.3 Spieler-Profile v2)_ — Saison-Bilanz
-  → „Server-Komponente mit Drizzle-Aggregation."
+  → ✅ DONE 2026-06-30 — `components/member-profile/season-stats-card.tsx` (Server-Component, match_results Aggregation, Win-Rate) + eingebaut in `member/profile/page.tsx`.
 
 - **[2.3.4](q2/2.3.2.md)** _(Q2/2.3 Spieler-Profile v2)_ — „Fordern"-Button in Open-Matches-Liste
-  → „Inline-Button in open-matches.tsx ergänzen."
+  → ✅ DONE 2026-06-30 — Swords-Icon + `handleChallenge` in `components/open-matches.tsx`.
 
 - **[2.4.1](q2/2.4.1.md)** _(Q2/2.4 Capacitor Mobile App)_ — Capacitor-Wrapper initialisieren
   → „`npx cap init`, capacitor.config.ts generieren, iOS/Android-Targets hinzufügen."
@@ -272,13 +250,13 @@ _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F
   → „GitHub-Action definieren."
 
 - **[2.5.1](q2/2.5.1.md)** _(Q2/2.5 Marketing-Wins)_ — Last-Minute-Alerts
-  → „Hook in booking-cancel + lib/push-notification.service."
+  → ✅ DONE (pre-session) — `lib/services/last-minute-alert.service.ts` + Hook in `app/api/bookings/[id]/cancel/route.ts` bereits implementiert.
 
 - **[2.5.2](q2/2.5.2.md)** _(Q2/2.5 Marketing-Wins)_ — Inaktivitäts-Reaktivierung
-  → „Cron-Route + Vercel Cron-Job definieren."
+  → ✅ DONE (disk-confirmed) — `app/api/cron/reactivation/route.ts` + `lib/services/reactivation.service.ts` vorhanden; Vercel-Cron in `vercel.json`.
 
 - **[2.5.3](q2/2.5.3.md)** _(Q2/2.5 Marketing-Wins)_ — Newsletter-Wizard
-  → „Wizard-Page + Resend-Integrations-Komponente."
+  → ✅ DONE 2026-06-30 — Migration `newsletter_campaigns`+`newsletter_send_logs` + GET/POST `/api/admin/newsletters` (Resend) + 3-Schritt-Wizard `app/(protected)/admin/newsletters/page.tsx`.
 
 ### Q3 (Smart-Court API · Pricing-Tier-Update)
 
@@ -286,31 +264,25 @@ _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F
 
 - _3.1.2 entfernt 2026-06-28: siehe „Heute closed: 3.1.2" Audit-Note am Ende des Dokuments — vitest-AKZ dev-machine-gated, husky-pre-commit-block missing-eslint-deps in-sandbox; 10 code-reviewer-Fixes über 3 Runden (vendor-actually-used, 207 statt 502, body-cap-header + post-read-string-length-Defense, RFC-9110 Allow:POST-Header, JSDoc KNOWN LIMITATIONS, Buffer.from-hex-throw-try/catch); Code-Reviewer SHIP-ready verdict._
 
-- **[3.1.3](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Smart-Court-Admin-UI
-  → „Admin-Page neu erstellen."
-
 - **[3.1.4](q3/3.1.1.md)** _(Q3/3.1 Smart-Court API)_ — Smart-Court Premium-Pricing
-  → „lib/features.ts Add-On-Feature-Flag + Owner-Billing Page."
-
-- **[3.6.1](q3/3.6.1.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Pay-per-Active-Member-Pricing — DONE
-  → _(siehe DONE-Section zur Implementation)_
+  → ✅ DONE 2026-06-30 — `smart_court` Flag in `lib/features.ts` (order 12, €79 Add-On) + MRR-Berechnung + Badge in Owner-Billing.
 
 - **[3.6.2](q3/3.6.1.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Pricing-Page Communication
   → „`app/landing/pricing/page.tsx` neu (siehe 1.2.3)."
 
 - **[3.6.3](q3/3.6.1.md)** _(Q3/3.6 Pricing-Tier-Update)_ — Owner-Billing-Dashboard Update
-  → „Dashboard-Karte mit Member-Count-Multiplikator."
+  → ✅ DONE 2026-06-30 — Mitglieder-Count + Smart-Court-Count KPI-Cards + MRR inkl. Add-On in `app/(protected)/owner/billing/page.tsx`.
 
 ### Cross-Cutting / Backlog (Old-Plan · DSGVO · Vendor-Selection)
 
 - **[A4](old-plan/A4.md)** _(Old Plan/A4 DSGVO-Audit)_ — DSGVO-Read-Audit-Trail
-  → „Wie B8 — gemeinsam umsetzen."
+  → ✅ DONE 2026-06-30 — gemeinsam mit B8 umgesetzt.
 
 - **[B7](cross/B7.md)** _(Cross-Cutting/B7 Decisions)_ — Decisions/Voting Sichtbarkeits-Boost + Demo-Video
   → „Video auf landing-page ergänzen; UI-Promo-Banner."
 
 - **[B8](cross/B8.md)** _(Cross-Cutting/B8 DSGVO-Audit)_ — DSGVO-Audit-Trail für Lese-PII-Zugriffe (A4)
-  → „`lib/db/audit-logger.ts` neu; Middleware für PII-Routes."
+  → ✅ DONE 2026-06-30 — `lib/db/audit-logger.ts` (PII_READ, 60s-Dedup, non-fatal) + Hook in `GET /api/members`.
 
 - **[B9](cross/B9.md)** _(Cross-Cutting/B9 Pen-Test)_ — Pen-Test vor Q2-Auslieferung (Live-Tracking)
   → „Vendor aussuchen + Zeitfenster in Q2."
@@ -359,7 +331,7 @@ _(Diese Migration wurde im AUDIT-FIX-Block am Ende des Dokuments dokumentiert; F
 - **Heute closed: 1.2.3** (Pricing-Page Refresh) — NEU `app/landing/pricing/page.tsx` (~760L, Server-Component) referenced als Default-`pricingHref` aus `premium-upsell.tsx`. 4 Sections (Hero „Dein digitaler KI-Sportwart" USP → Pricing-Cards Starter €29/Pro €79 → 9-Row Comparison-Table mit `CategoryGroup`+`MatrixCell`-Sub-Components → Final-CTA + Footer) + brand-continuity 1:1 mit Landing-Page Hero-Pattern (dark gradient + `noise` + `animate-aurora`). Single-Source-of-Truth via 2 `as const`-Daten-Arrays (`PRICING_TIERS`/`FEATURE_MATRIX`), mobile-toggle zu per-Tier-Listen mit `INCLUDED_ICON`/`EXCLUDED_ICON` + `line-through` für nicht-enthaltende Features. **2 Code-Reviewer-Pässe**: PASS 1 flagged `Bot` vs `Brain`-Icon-Inkonsistenz + `readonly.push()`-TS2339 + `<th scope="rowgroup">`-A11y-Typo + Dead-Code in Mobile-List. PASS 2 SHIP: alle 4 Blockers gefixt (`Bot→Brain`-Swap, immutable `[...list, row]`-Build, `scope="colgroup"`-A11y-Korrektur, Dead-Code-Ternary entfernt). **Verifikation**: tsc-baseline stabil bei 27, ESLint clean, KI-Sportwart-USP im Hero + Pricing-Page in 9-Row-Vergleichstabelle visuell konsistent mit `premium-upsell.tsx` reference. TODO → DONE: counts 49/0/39 → **50/0/38**.
 - **Heute closed: 1.2.4** (Onboarding-Tour KI-Engine) — Erste eigenständige Tour-Chain im Repo. 3 Files: `components/onboarding-tour/season-planning-tour.tsx` (~280L, Client-Component mit 3-Step-Tooltip auf `#tour-generate-btn`/`#tour-score-card`/`#tour-ai-analysis`), `tests/unit/components/onboarding-tour/season-planning-tour.test.ts` (~110L, **10 Vitest-Cases** = 7 getTooltipStyle-Pixelmath + 3 STEPS-Structure-Guard), `app/(protected)/admin/seasons/[id]/planning/steps/plan-edit-step.tsx` (5 str_replace: import + 3 `id`-attrs + Mount). **Eigene Tooltip-Chain** statt driver.js dep — small surface, vollständige A11y-Kontrolle, view-aware `getTooltipStyle(rect, side, viewport, opts)` mit 4-Side-Branches + Viewport-Clamping. Pure-Helper-Exports (`isDismissedRecently`/`markDismissed`/`getTooltipStyle`/`STEPS`) für Tests. localStorage 30-Tage-Cooldown (mirror `pwa-install-prompt` + `push-opt-in-modal` Repo-Convention). a11y: `role="dialog"` + `aria-modal` + `aria-labelledby` + `aria-describedby` + Escape/Enter-Handler mit input/textarea-Guard + focus-trap on step-change. Pre-Flight-Gate: nach Reviewer-PASS-1 — wenn `#tour-generate-btn` fehlt aber `#tour-score-card` existiert (Returning-User post-clustering-State) → step=1 überspringen. Backdrop click-to-dismiss (`onClick`+`role="presentation"`). „Tour pausiert"-Pill-Fallback bei fehlendem rect. **3 Code-Reviewer-Pässe**: PASS 1 BLOCKING (returning-user UX + shadcn-Card-id-forwarding) + 3 Nits (backdrop onClick, height estimate, STEPS-test-guard). PASS 2 SHIP mit 2 Cosmetic-Follow-ups. PASS 3 (TS1030 duplicate-`export`-Bug nach str_replace-Duplikation) SHIP. PASS 4 (TEST_OPTS-Threading für constant-decoupling — `tooltipHeight: 150` explizit in Tests) SHIP. **Verifikation**: tsc-baseline stabil 27, ESLint clean, vitest 10/10 grün, 0 TS-Errors in geänderten Files. TODO → DONE: counts 50/0/38 → **51/0/37**.
 - **Heute audit-driven close: 1.4.1** (Light/Dark-Mode-Toggle) — Implementation bereits vollständig (war nur formal nicht geschlossen). `components/ui/theme-toggle.tsx` (~95L, Client-Component) ist 3-Modus-Toggle (`system` ⇄ `light` ⇄ `dark`) mit `useTheme()` aus `next-themes@0.4.6`, Monitor/Sun/Moon lucide-react-Icons + blauer Auto-Indicator-Dot für system-mode, ssr-safe via `mounted`-State + `suppressHydrationWarning`, `aria-label` dynamisch pro Modus (`„Zum hellen Design wechseln"`) + `sr-only` Fallback-Text. **ThemeProvider** in `app/providers.tsx` wired mit `attribute="class"`, `defaultTheme="system"`, `enableSystem` (localStorage-Persistenz durch next-themes' Default-`storageKey="theme"`). **Datei-Discrepancy**: Spec sagte `components/layout/theme-toggle.tsx` aber Component ist unter `components/ui/theme-toggle.tsx` — shadcn/ui-Convention, semantisch äquivalent. **Provider-Discrepancy**: Spec sagte `app/layout.tsx` aber Provider ist in `app/providers.tsx` — Next.js-Convention (Provider-Chain-Komposition in dedizierter Datei, dann im Root-Layout used) ist sauberer testbar und Pattern-Consistent. **Usage**: `<ThemeToggle />` ist in 6+ Layout-Pages eingebunden: `app/register/page.tsx`, `app/landing/page.tsx`, `app/forgot-password/page.tsx`, `app/login/page.tsx`, `app/(protected)/layout/mobile-bottom-nav.tsx`, `app/(protected)/layout/header.tsx`. **Beide AKZ erfüllt und visuell verifizierbar**: (1) Toggle sichtbar (mind. 6× gerendert, plus Dark-Indicator ✓), (2) Beide Themes visuell geprüft (`.dark`-Block in `app/globals.css:124-167`, `dark:` Tailwind-Variants in 30+ Components, `color-scheme: light/dark` Switching). TS-Baseline stabil. ESLint clean — kein Code-Change (Pure-Audit-Completion analog TICKET-002/F6.1/1.2.2). TODO → DONE: counts 51/0/37 → **52/0/36**.
-- **Heute closed: 1.2.2** (Upsell-Modal Premium + ADR-003 Stripe-Webhook-Bridge) — Implementation-ship mit echtem Code-Change (Audit-driven close von voriger Session stellte sich als premature heraus: UI-Komponenten vorhanden, aber `useClubFeatures()`/`isStarterTier()`-Predicate hätte User nach Pro-Upgrade in der Upsell-Loop festgehalten, weil der Stripe-Webhook nur `users.subscription_tier` aber NICHT `clubs.features` syncte). **3 Files geändert**: (1) NEU `lib/services/tier-features-sync.ts` (~150L) — Pure `getProFeaturesForPlan(plan: SubscriptionPlan): ProFeatureDelta` mappt `free → ai_matchmaking=false / weather_integration=false`, alle 4 paid plans (`solo_s`/`solo_l`/`school_s`/`school_l`) → beide Pro-Features ON (ADR-003 Cost-Passthrough). Async `syncClubFeaturesForSubscription(supabase, userId, plan): TierSyncResult` resolved Admin-Clubs via `user_club_memberships` (role IN `['owner','admin','superadmin']` als typed readonly-list, is_active Filter), führt shallow-JSONB-Merge auf `clubs.features` durch, per-Club-try-wrapper für Error-Isolation (1 failing club poist batch NICHT), Defensive-Check gegen non-object/null-features. ADMIN_CLUB_ROLES als typed readonly-Array. (2) MODIFIED `app/api/webhooks/stripe/route.ts` — `syncClubFeaturesForSubscription` in allen 3 SaaS-Handlern gewired: `handleSaasSubscription` (after user.update → sync + log.info mit ADR-003-Referenz), `handleSubscriptionUpdated` (select-BEFORE-update race-free + ADR-003-Comment-Block), `handleSubscriptionDeleted` (select-BEFORE-update + sync mit tier='free' für Pro-Revoke). (3) NEU `tests/unit/lib/services/tier-features-sync.test.ts` (~290L, **17/17 vitest-grün**) — 8 Pure-Mapping-Tests (free→off, alle 4 paid→on, exhaustive-coverage, cost-passthrough-invariant, starter-invariant vs isStarterTier-predicate) + 9 Async-Service-Tests (Role-Filter-Assertion mit roleFilterCapture.Object-Pattern gegen destructure-stale-bug, Shallow-JSONB-Merge-Verify, Downgrade-Revoke, Idempotency-Byte-Stable, Per-Club-Error-Isolation mit writeError auf c2 → updated=2 + errors=1, Ghost-Club-Skip, Read-Error-Isolation, Membership-Lookup-Error). **Code-Reviewer-Passes 4 Runden SHIP-ready**: R1 (5 NITs: dead-code first-line, merge-type Record<string,unknown>, ghost-club-shortcut, ADR-Ref in handleSaasSubscription, ADMIN_CLUB_ROLES typing), R2 (race-window select-BEFORE-update symmetrisch in updated/deleted), R3 (TS-Mock val:unknown → val:string cleanup), R4 (closure-capture-bug in roleFilterCapture + Reviewer-Confirmed-OK). **Verifikation**: TS-baseline 0 Errors in 1.2.2-touched Files (`tier-features-sync.ts` + test-file clean), 17/17 vitest-grün, idempotency-invariant verifiziert. **Q1-Stand bei diesem Audit-Close-Event**: **65/0/23 (Gesamt: 88 Tickets stabil)** — _AUDIT-FIX-korrigiert per 2026-06-28; korrekter Stand 78/0/15 (siehe AUDIT-FIX-Block am Ende)._
+- **Heute closed: 1.2.2** (Upsell-Modal Premium + ADR-003 Stripe-Webhook-Bridge) — Implementation-ship mit echtem Code-Change (Audit-driven close von voriger Session stellte sich als premature heraus: UI-Komponenten vorhanden, aber `useClubFeatures()`/`isStarterTier()`-Predicate hätte User nach Pro-Upgrade in der Upsell-Loop festgehalten, weil der Stripe-Webhook nur `users.subscription_tier` aber NICHT `clubs.features` syncte). **3 Files geändert**: (1) NEU `lib/services/tier-features-sync.ts` (~150L) — Pure `getProFeaturesForPlan(plan: SubscriptionPlan): ProFeatureDelta` mappt `free → ai_matchmaking=false / weather_integration=false`, alle 4 paid plans (`solo_s`/`solo_l`/`school_s`/`school_l`) → beide Pro-Features ON (ADR-003 Cost-Passthrough). Async `syncClubFeaturesForSubscription(supabase, userId, plan): TierSyncResult` resolved Admin-Clubs via `user_club_memberships` (role IN `['owner','admin','superadmin']` als typed readonly-list, is*active Filter), führt shallow-JSONB-Merge auf `clubs.features` durch, per-Club-try-wrapper für Error-Isolation (1 failing club poist batch NICHT), Defensive-Check gegen non-object/null-features. ADMIN_CLUB_ROLES als typed readonly-Array. (2) MODIFIED `app/api/webhooks/stripe/route.ts` — `syncClubFeaturesForSubscription` in allen 3 SaaS-Handlern gewired: `handleSaasSubscription` (after user.update → sync + log.info mit ADR-003-Referenz), `handleSubscriptionUpdated` (select-BEFORE-update race-free + ADR-003-Comment-Block), `handleSubscriptionDeleted` (select-BEFORE-update + sync mit tier='free' für Pro-Revoke). (3) NEU `tests/unit/lib/services/tier-features-sync.test.ts` (~290L, **17/17 vitest-grün**) — 8 Pure-Mapping-Tests (free→off, alle 4 paid→on, exhaustive-coverage, cost-passthrough-invariant, starter-invariant vs isStarterTier-predicate) + 9 Async-Service-Tests (Role-Filter-Assertion mit roleFilterCapture.Object-Pattern gegen destructure-stale-bug, Shallow-JSONB-Merge-Verify, Downgrade-Revoke, Idempotency-Byte-Stable, Per-Club-Error-Isolation mit writeError auf c2 → updated=2 + errors=1, Ghost-Club-Skip, Read-Error-Isolation, Membership-Lookup-Error). **Code-Reviewer-Passes 4 Runden SHIP-ready**: R1 (5 NITs: dead-code first-line, merge-type Record<string,unknown>, ghost-club-shortcut, ADR-Ref in handleSaasSubscription, ADMIN_CLUB_ROLES typing), R2 (race-window select-BEFORE-update symmetrisch in updated/deleted), R3 (TS-Mock val:unknown → val:string cleanup), R4 (closure-capture-bug in roleFilterCapture + Reviewer-Confirmed-OK). **Verifikation**: TS-baseline 0 Errors in 1.2.2-touched Files (`tier-features-sync.ts` + test-file clean), 17/17 vitest-grün, idempotency-invariant verifiziert. **Q1-Stand bei diesem Audit-Close-Event**: **65/0/23 (Gesamt: 88 Tickets stabil)** — \_AUDIT-FIX-korrigiert per 2026-06-28; korrekter Stand 78/0/15 (siehe AUDIT-FIX-Block am Ende).*
 
 - **Heute closed: 2.1.2 + 2.1.4** (Match-API Route — POST + GET in gleicher Datei) — Erstes Live-Match-Tracking-Deliverable der Q2-Phase. **6 Files**: (1) `supabase/migrations/20260627_create_matches_table.sql` (~140L) — `match_side`-Enum (`'left'|'right'` ohne home/away-Bias vs. `match_results.outcome`), `matches`-Tabelle mit `id`/`club_id`FK/`match_type`-ENUM/`players_left_ids`[]+`players_right_ids`[]+`score_sets`-JSONB/`winner_side`-ENUM/`league_match_id`-FK→`match_results.id` nullable/`is_official`/Unique-`external_id` pro Club für Idempotency/`recorded_by`+`recorded_at`+`updated_at`. **3 Constraints**: Doubles-Check strict `=2` (Zod-Refine-Alignment), Singles-Check `=1`, `matches_no_duplicate_players` (keine Spieler-Überschneidung). **Indizes**: club_id + 2× GIN auf player-id-Arrays + partial idx auf `league_match_id`. **Trigger**: `matches_touch_updated_at` + `matches_validate_winner` auto-setzt winner_side aus score_sets. **4 RLS-Policies**: SELECT alle Club-Members, INSERT/UPDATE/DELETE admin/owner/superadmin (Restrictive, mit `club_id`-Bindung für Write-Auth). (2) `lib/helpers/match-logic.ts` (NEU, ~95L) — Pure-Helpers `deriveMatchWinner(scoreSets) → 'left'|'right'|null` (Tennis-Best-of-3 mit Tiebreak im 3. Satz; Defensiv-Null bei <2 Sätzen oder ungültigen Eintragungen) + `isPlayerInSide(sideArr, playerId)`. (3) `lib/types/matches.ts` (NEU, ~95L) — `MatchSide`/`MatchType`/`MatchCreateSchema`-Zod (Strict, mit `.refine()` für Singles/Doubles-Player-Count) + `MatchesQuerySchema` (player_id/from/to/limit/offset cookie-coercing) + 3 row-types. (4) `app/api/matches/route.ts` (NEU, ~180L) — POST mit Idempotency-Lookup (returns 200 wenn external_id bereits existiert andernfalls 201), zod-Parse, Club-Match-Check, Admin-Role-Gate via `verifyRole('admin')`; GET mit Pagination + `.or(`players_left_ids.cs.{${q.player_id}},players_right_ids.cs.{q.player_id}}`)` filter, leverage `apiFetch`-Pattern für Cluster-Konsistenz. (5) `types/supabase.ts` (ERWEITERT, +90L) — `matches`-Block zwischen `match_results` und `matchday_reminder_logs` (alphabetisch) mit vollständigem Row/Insert/Update/Relationships-Typing, json-cast `score_sets: Json`. (6) `tests/unit/lib/helpers/match-logic.test.ts` (~135L, **16 Vitest-Cases**) + `tests/unit/lib/types/matches.test.ts` (~135L, **18 Zod-Schema-Cases**) — zusammen **34 green**. **AKZ-1** (E2E Score 6:4 7:5 → winner='right') als Vitest `deriveMatchWinner`-Block „TICKET-2.1.2 AKZ-1 Spec" abgebildet. **AKZ-2** (Pagination per Spieler) als Zod-Tests `limit/offset`-Coercing-Tests abgebildet. **3 Code-Reviewer-Pässe**: PASS 1 BLOCKING (DB-Check-Doubles-Laxheit + dead Comment-Block + `as never`-Cast + fehlende Zod-Regression-Tests). PASS 2 SHIP nach 4 Fixes (CHECK-tighten + dead-block-entfernt + `as never`-drop + 18 Zod-Tests). PASS 3+4 (SWC-JSDoc Parse-Errors durch `*/`/`**/` sequences, 2 Rewrites bis Parser-clean). **Verifikation**: tsc-baseline stabil bei 27 (matches-Files reporten clean), ESLint clean auf 5 Project-Files, vitest 34/34 grün, Code-Reviewer final SHIP. TODO → DONE: counts 52/0/36 → **54/0/34**.
 - **Heute closed: 2.1.3** (Live-Match-Scoring-UI) — Erste Touch-First-Component im Repo für Spieler-vs-Spieler-Matches. **3 Files**: (1) `components/matches/live-score.tsx` (NEU, ~430L) — Mobile-First-Form mit Singles/Doubles-Toggle (radiogroup), nativer `<select>` Player-Picker für iOS/Android-wheel-Picker (mobile-tap-optimal), touch-friendly GameStepper (-/+ Buttons um Read-only-Zahl, min=0, ARIA-Labels deutsch). Live-Winner-Preview via `useMemo(() => deriveMatchWinner(sets), [sets])` (Role=status aria-live=polite). **Auto-Storage-Hooks**: 2 dedicated useEffects — einer für re-aktive Online-Detection (`setOnline(true|false)` auf window `online`/`offline`), einer für Queue-Auto-Flush (online + visibilitychange → `flushQueue(apiFetch /api/matches)`). **Submit-Pre-Flight**: `!navigator.onLine` → direkt in Offline-Queue (spart aussichtslose Roundtrips). **Retry-Policy**: 2xx → ok+reset, 5xx/408/429 → queue+reset, 4x sonst → error-Anzeige ohne queue. **Validation-Hints** als listenpunktierte Bullet-List (linke-rechte-spieler-count, self-play-check, mind. 2 Sätze). A11y: `role="dialog"` + `aria-live` + `aria-checked` + `aria-label` auf allen interaktiven Controls. (2) `lib/helpers/match-queue.ts` (NEU, ~210L) — localStorage-basierte Offline-Queue mit Soft-Versionierung (`{_v: 1, items}`), private-mode safe (try/catch silent-fail), SSR-safe. Public-API: `enqueueMatch/getQueue/getPendingMatches/getPendingCount/updateQueueStatus/removeFromQueue/purgeSyncedOlderThan/clearQueue/flushQueue`. Submit-Fn als Dependency-Injection für Testbarkeit. **flushQueue-Policy**: 2xx → remove+synced++, 4xx (außer 408/429) → remove+rejected++ (Validator-Rejected, kein Retry), 408/429/5xx/throw → failed++ (Retry beim nächsten flush). (3) `tests/unit/lib/helpers/match-queue.test.ts` (NEU, ~225L, **21 Cases grün**) — Vitest-Tests für 6 Helper-Klassen + flushQueue-alle-5-Pfade + Robustheit (kaputte JSON, \_v-Mismatch, fehlende payload-fields).
@@ -453,9 +425,9 @@ Alle Tickets waren in der Praxis fertig (STATUS.md Heute-closed-Notes aus 2026-0
 ### Q2 Forward-Batch: 4 neue P2/P3-Tickets erstellt
 
 - `docs/tickets/q2/q2.0.1-drizzle-kit-regen-gitignore-doc.md` — **P3/docs-only**: JSDoc-Warnung in (hypothetischem) Regen-Script, dass `drizzle/schema.ts` ein gitignored Build-Artefakt ist.
-- `docs/tickets/q2/q2.0.2-branding-allowed-from-inferinsert.md` — **P2/typescript**: `ALLOWED_BRANDING_KEYS` aus `Database['public']['Tables']['club_branding']['Update']` ($inferInsert/$inferUpdate) ableiten, um die Allowlist selbstwartend zu machen.
+- `docs/tickets/q2/q2.0.2-branding-allowed-from-inferinsert.md` — ✅ DONE 2026-06-30 — `ALLOWED_BRANDING_KEYS` als `Set<keyof ClubsUpdate>` in `app/api/branding/route.ts`.
 - `docs/tickets/q2/q2.0.3-reconcile-script-bucket-format-option.md` — **P2/scripts**: `scripts/reconcile-ticket-status.sh` um `--format=junit|markdown|csv` erweitern (aktuell hardcoded Markdown).
-- `docs/tickets/q2/q2.0.4-contributing-md-no-sed-yml-edits.md` — **P3/docs**: CONTRIBUTING.md Rule-9 ergänzen: „Niemals `sed -i` auf `.yml`/`.yaml` — stattdessen `yq` oder manuelle Anchor-Replace“.
+- `docs/tickets/q2/q2.0.4-contributing-md-no-sed-yml-edits.md` — ✅ DONE 2026-06-30 — CONTRIBUTING.md Rule 1.1 ergänzt (kein `sed -i` auf .yml/.yaml/.json).
 
 ### Sprint-5: 2 neue Vitest Regression-Guard Tests erstellt
 
@@ -530,7 +502,6 @@ Alle Tickets waren in der Praxis fertig (STATUS.md Heute-closed-Notes aus 2026-0
 - **`29cdfbb` — `chore(q1-1.5.1-polish)`** (Reviewer-Polish-Fixes): HTML-comment zu Markdown-callout, Sequence-drift-anchor, subsection-heading, Pointer byte-equality, Changelog-Duplikations-Warning.
 - **`9465fbe` -- `chore(status-sync-tidy)`** (Audit-Trail-Self-Consistency-Close): Net-Bilanz-Tabelle Q1-DONE 78 -> 79 (Delta +13 sweep -> +14), Q1-DECIDED 1 -> 0 (Delta +1 -> -1 ASCII-minus), Working-Tree-Hinweis 6-line moving-target blockquote -> single-line **OBSOLETE post-b1e32fc**-Marker, Delta-1-Definition-Footnote (blockquote) vor Polish-Fixup-Chain-Subsection. Closes die Trajectory-Sync aus 6249ab3 Polish-Fixup-Chain-Subsection und stellt Distribution-Block / Net-Bilanz-Tabelle Selbstkonsistenz endgultig her.
 
-
 ---
 
 ## AUDIT-FIX 2026-06-28: Aspirational-Closure Reverts (per ADR-002)
@@ -541,14 +512,14 @@ Alle Tickets waren in der Praxis fertig (STATUS.md Heute-closed-Notes aus 2026-0
 
 ### 6 Migration-Files MISSING auf Disk
 
-| # | Dateiname | Referenziert in | Disk-State |
-|---|---|---|---|
-| 1 | `supabase/migrations/20260801_add_device_token_push_subscriptions.sql` | Q2/2.4.2 + Heute Spec-Enhancements | ❌ MISSING |
-| 2 | `supabase/migrations/20260808_club_feature_costs.sql` | F8 + ADR-006 DRAFT | ❌ MISSING |
-| 3 | `supabase/migrations/20260809_match_caterings.sql` | Q1/F4.3 + Heute Spec-Enhancements | ❌ MISSING |
-| 4 | `supabase/migrations/20260810_initialize_vendor_costs.sql` | ADR-006 ACCEPTED | ❌ MISSING |
-| 5 | `supabase/migrations/20260815_create_last_minute_alert_logs.sql` | Q2/2.5.1 + Heute Spec-Enhancements | ❌ MISSING |
-| 6 | `supabase/migrations/20260820_create_newsletter_tables.sql` | Q2/2.5.3 + Heute Spec-Enhancements | ❌ MISSING |
+| #   | Dateiname                                                              | Referenziert in                    | Disk-State |
+| --- | ---------------------------------------------------------------------- | ---------------------------------- | ---------- |
+| 1   | `supabase/migrations/20260801_add_device_token_push_subscriptions.sql` | Q2/2.4.2 + Heute Spec-Enhancements | ❌ MISSING |
+| 2   | `supabase/migrations/20260808_club_feature_costs.sql`                  | F8 + ADR-006 DRAFT                 | ❌ MISSING |
+| 3   | `supabase/migrations/20260809_match_caterings.sql`                     | Q1/F4.3 + Heute Spec-Enhancements  | ❌ MISSING |
+| 4   | `supabase/migrations/20260810_initialize_vendor_costs.sql`             | ADR-006 ACCEPTED                   | ❌ MISSING |
+| 5   | `supabase/migrations/20260815_create_last_minute_alert_logs.sql`       | Q2/2.5.1 + Heute Spec-Enhancements | ❌ MISSING |
+| 6   | `supabase/migrations/20260820_create_newsletter_tables.sql`            | Q2/2.5.3 + Heute Spec-Enhancements | ❌ MISSING |
 
 ### 4 Aspirational-Closure-Blöcke REVERTED
 
@@ -578,6 +549,7 @@ Alle Tickets waren in der Praxis fertig (STATUS.md Heute-closed-Notes aus 2026-0
 ADR-002 (Lk-Sync-Deferral) ist LK-spezifisch per Filename + Content. Die hier vorgeschlagene Rule-of-Three ist eine **neue Convention**, die NICHT in ADR-002 deklariert ist — sie ist ein **Convention-Forward-TODO** für einen zukünftigen ADR (z.B. `docs/decisions/draft-adr-008-aspirational-closure-prevention.md` analog ADR-005/006/007-Pattern).
 
 **Vorschlag** (zur Diskussion im Sprint-Q3, KEIN enforcement ab jetzt):
+
 1. Mindestens 1 spec-File mit echtem Implementation-Pfad existiert.
 2. Mindestens 1 disk-File würde die Spec erfüllen (oder Migration-Pattern analog ADR-007).
 3. Mindestens 1 Vitest/Test-File mit den spec-Pfaden im Covered-Set referenziert.
@@ -601,4 +573,4 @@ ADR-002 (Lk-Sync-Deferral) ist LK-spezifisch per Filename + Content. Die hier vo
 - `wc -l docs/tickets/q2/{2.4.{1,2,3,4,5},2.5.{1,2,3}}.md` → alle 28L (außer 2.5.2 falls enhanced) ✓
 
 - **Heute closed: 3.1.3** (Smart-Court-Admin-UI — Club-Level-Adapter-Konfiguration) — Dritte Smart-Court-API-Deliverable nach 3.1.1 + 3.1.2. **4 NEUE Files + 1 MODIFIED File** (875 LOC gesamt): (1) `app/(protected)/admin/smart-court/page.tsx` (NEU, ~120L) Server-Component — `await cookies()` + `createServerClient<Database>` + admin-membership-resolution + clubs.features + courts.list parallel-fetch; (2) `app/(protected)/admin/smart-court/smart-court-client.tsx` (NEU, ~285L) Client-Component — `<Radiogroup>` mit 3 Cards (Nuki Lock / Shelly Lightbulb / Loxone Cpu) mit role="radio" + aria-checked + aria-label="X als Hardware-Vendor auswählen"; (3) `app/api/clubs/[id]/hardware-vendor/route.ts` (NEU, ~200L) PUT — withApiAuth + verifyRole(admin) + club-scope-fail-closed + Zod-Validate via `z.enum(HARDWARE_VENDORS)` + Read-Before-Update + Idempotency-Short-Circuit (unchanged=true early-return) + Shallow-JSONB-Merge `{...existingFeatures, hardware_vendor: newVendor}` + ADR-002 Audit-Log mit `actor_id` (NOT `actor_user_id`) + missing_env-Detection; (4) `tests/unit/app/api/clubs/[id]/hardware-vendor/route.test.ts` (NEU, ~265L, **14 vitest-Cases**); (5) `lib/hardware/adapter.ts` MODIFIED (+7L) — `HARDWARE_VENDORS = [...]\` as const satisfies Single-Source-of-Truth. **Spec-Pivot dokumentiert**: Spec "pro Court" wurde als Club-Level-Setting implementiert; Per-Court-Override (table-migration `club_court_vendor_overrides`) als separates 3.1.4-Ticket vorgemerkt. **4 Code-Reviewer-Rounds PASS R3 SHIP-ready**. **Verifikation**: TS-Baseline 0, git commit `af2a0b7`. Counts 80/0/13 → **81/0/12**. Vitest-AKZ dev-machine-gated.
-Audit-Trail-Completion: 2026-06-28. Kein Code-Change. ADR-002 Forward-Placeholder-Convention wiederhergestellt.
+  Audit-Trail-Completion: 2026-06-28. Kein Code-Change. ADR-002 Forward-Placeholder-Convention wiederhergestellt.

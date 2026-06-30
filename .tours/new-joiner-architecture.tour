@@ -1,0 +1,89 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "SwingZ — Architektur-Onboarding",
+  "description": "Guided walkthrough for a new engineer: auth flow, role system, Supabase client patterns, API conventions, and feature flags. Follow the steps in order to build a complete mental model before touching code.",
+  "ref": "main",
+  "steps": [
+    {
+      "directory": "app/(protected)",
+      "title": "1 · Geschützte Routen — Ordner-Übersicht",
+      "description": "Alle eingeloggten Seiten leben unter `app/(protected)/`. Die fünf Unterordner spiegeln die Rollenhierarchie 1:1: `owner/` → `superadmin/` → `admin/` → `trainer/` → `member/`. Jede Rolle hat ihr eigenes Layout und Auth-Guard. Kein Cross-Role-Zugriff ohne explizite Prüfung."
+    },
+    {
+      "file": "proxy.ts",
+      "line": 120,
+      "title": "2 · Auth-Middleware (NICHT middleware.ts)",
+      "description": "Der kritische Unterschied zu anderen Next.js-Projekten: Auth läuft in `proxy.ts`, nicht in `middleware.ts` (Next.js 16 hat middleware.ts deprecated). `proxy()` prüft Session, setzt CSRF-Token, blockt öffentliche vs. geschützte Pfade — alles in einer Funktion ab Zeile 120. Wer `middleware.ts` anlegt, bricht die Auth."
+    },
+    {
+      "file": "proxy.ts",
+      "line": 89,
+      "title": "3 · PUBLIC_ROUTES — was kein Login braucht",
+      "description": "`PUBLIC_ROUTES` listet alle Pfade, die ohne Session erreichbar sind: `/landing`, `/auth`, `/api/webhooks`, `/trial-training`. Alles andere wird bei fehlender Session zu `/auth/login` umgeleitet. Neue öffentliche Routen hier eintragen."
+    },
+    {
+      "file": "lib/auth-common.ts",
+      "line": 15,
+      "title": "4 · Rollenhierarchie — numerischer Rang",
+      "description": "`ROLE_HIERARCHY` weist jeder Rolle einen Rang zu: owner=5, superadmin=4, admin=3, trainer=2, member=1. `verifyRole(auth, 'admin')` gibt true zurück für admin UND alle höheren Rollen. Wichtige Ausnahme: `owner` hat keine `club_id` in Memberships — nur die Rolle selbst, ohne Club-Zugehörigkeit."
+    },
+    {
+      "file": "lib/auth.ts",
+      "line": 102,
+      "title": "5 · requireAuth() — Server Component Guard",
+      "description": "`requireAuth()` ist der Standard-Guard für Server Components und Pages. Er prüft die Supabase Session und wirft bei fehlender Auth eine Redirect-Exception zu `/auth/login`. Jede Page unter `(protected)/` ruft das ganz oben auf — nie weglassen."
+    },
+    {
+      "file": "lib/api-auth.ts",
+      "line": 261,
+      "title": "6 · withApiAuth() + verifyRole() — API Route Pattern",
+      "description": "API Routes nutzen `withApiAuth(req, async (auth) => { ... })`. Das `auth`-Objekt enthält `user`, `clubId`, `role`. Dann `verifyRole(auth, 'admin')` für Rollen-Check. Niemals eigene Session-Prüfung — immer dieses Muster. `forbiddenResponse()` liefert ein standardisiertes 403."
+    },
+    {
+      "file": "lib/admin-context.ts",
+      "line": 51,
+      "title": "7 · requireAdminClub() — Admin + Club-Kontext",
+      "description": "`requireAdminClub()` ist der One-Stop-Shop für Admin-Pages: prüft Session, liest den aktiven Club aus dem Cookie `admin_club_id`, gibt `{ supabase, user, clubId, isSuperadmin, role }` zurück. Superadmins können per Club-Switcher mehrere Clubs verwalten — der Cookie trackt den aktiven."
+    },
+    {
+      "file": "lib/supabase/service.ts",
+      "line": 14,
+      "title": "8 · Drei Supabase-Clients — die wichtigste Wahl",
+      "description": "SwingZ hat drei Supabase-Clients:\n\n• `createClient()` aus `@/lib/supabase/server` → User-Kontext, RLS aktiv. Standard.\n• `createServiceClient()` aus `@/lib/supabase/service` → bypasses RLS, service_role-Rechte. Nur Server-Side, nie im Client-Code!\n• `createClient()` aus `@/lib/supabase/client` → Browser-seitig.\n\nGotcha: Direkte Drizzle/postgres-Verbindungen (Port 5432) schlagen in Dev fehl — Supabase sperrt diesen Port extern."
+    },
+    {
+      "file": "app/(protected)/dashboard/page.tsx",
+      "line": 15,
+      "title": "9 · Dashboard-Dispatch — höchste Rolle gewinnt",
+      "description": "Jeder Login landet auf `/dashboard`. Diese Page liest die höchste Rolle und leitet weiter: owner → `/owner`, superadmin → `/superadmin`, admin → `/admin/members`, trainer → `/trainer`, member bleibt im direkten Render. Die Reihenfolge der Checks ist die kanonische Rollen-Priorität."
+    },
+    {
+      "file": "app/api/admin/newsletters/route.ts",
+      "line": 24,
+      "title": "10 · Muster-API-Route — vollständiges Beispiel",
+      "description": "Diese Route zeigt das vollständige Muster:\n1. `withApiAuth` — Auth-Wrapper\n2. `verifyRole(auth, 'admin')` — Rollen-Check\n3. `auth.clubId` — Club-Kontext aus Cookie\n4. `createServiceClient()` für DB-Writes ohne RLS\n5. Zod-Validierung vor DB-Zugriff\n6. `createLogger('api:admin:newsletters')` statt console.log\n\nDiese 6 Schritte sind das Template für jede neue Admin-API-Route."
+    },
+    {
+      "file": "lib/logger.ts",
+      "line": 121,
+      "title": "11 · Logging — kein console.log",
+      "description": "`createLogger('context-name')` ist der einzige erlaubte Logger. `console.log/error/warn` sind verboten (Lint-Fehler + tauchen nicht im Observability-System auf). Der Context-String (`'api:admin:newsletters'`, `'lib:nuliga-parser'`) macht Logs filterbar nach Modul."
+    },
+    {
+      "file": "lib/features.ts",
+      "line": 37,
+      "title": "12 · Feature-Flags — JSONB in clubs.features",
+      "description": "`CLUB_FEATURES` (Zeile 37) ist die Registry aller Feature-Flags, gespeichert als JSONB-Feld `clubs.features`. Core-Features sind immer an, optional-Features werden per Billing aktiviert. Neue Features hier registrieren, nicht im Code hardcoden. Zugriff im Code via `isFeatureEnabled(supabase, clubId, 'smart_court')`."
+    },
+    {
+      "file": "src/infrastructure/persistence/schema.ts",
+      "line": 28,
+      "title": "13 · Drizzle Schema — Single Source of Truth",
+      "description": "Alle Tabellen-Definitionen liegen hier. Für neue Tabellen: SQL-Migration in `supabase/migrations/` anlegen UND hier den Drizzle-Block ergänzen. Nicht-typisierte neue Tabellen nutzen vorübergehend `(sb as any).from('table_name')` — das ist bewusst pragmatisch bis der Typ generiert ist, kein Bug."
+    },
+    {
+      "title": "Ende — Nächste Schritte",
+      "description": "Du kennst jetzt die kritischen Architektur-Entscheidungen:\n\n• Auth: `proxy.ts` → `requireAuth()` / `withApiAuth()` / `requireAdminClub()`\n• Rollen: hierarchisch (owner=5..member=1), owner hat keine club_id\n• Supabase: 3 Clients — RLS-User / Service-Bypass / Browser\n• Logging: immer `createLogger()`\n• Features: JSONB + CLUB_FEATURES-Registry\n\nGute erste Anlaufpunkte:\n• Neue Admin-API-Route → `app/api/admin/newsletters/route.ts` als Template\n• Neue Page → `app/(protected)/admin/members/page.tsx` als Muster\n• Neue DB-Tabelle → Migration + Drizzle-Block in `schema.ts`"
+    }
+  ]
+}

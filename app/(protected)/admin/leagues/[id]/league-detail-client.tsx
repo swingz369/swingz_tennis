@@ -30,6 +30,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { CateringTab } from '@/components/league/catering-tab';
+import { NuligaImport } from '@/components/admin/nuliga-import';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 
@@ -497,6 +498,7 @@ export default function LeagueDetailClient({
           </div>
         </div>
         <div className="flex gap-2">
+          <NuligaImport leagueId={leagueId} teamName={league.name} />
           <Button
             variant="outline"
             size="sm"

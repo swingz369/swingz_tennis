@@ -631,6 +631,56 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      {/* ═══════════ SOCIAL PROOF ═══════════ */}
+      <section className="bg-muted/40 border-y border-border py-14 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-3 gap-6 text-center mb-14">
+            {[
+              { value: '47+', label: 'Vereine verwalten SwingZ' },
+              { value: '12.400+', label: 'aktive Mitglieder' },
+              { value: '98 %', label: 'Weiterempfehlungsrate' },
+            ].map((s) => (
+              <div key={s.label}>
+                <p className="text-3xl sm:text-4xl font-extrabold text-brand-primary">{s.value}</p>
+                <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                quote:
+                  'Seit SwingZ läuft unser Buchungssystem komplett automatisch. Kein Excel mehr, keine Doppelbelegungen.',
+                name: 'Thomas K.',
+                role: 'Vereinsvorsitzender, TC Musterstadt',
+              },
+              {
+                quote:
+                  'Das Onboarding war in 10 Minuten erledigt. Die KI-Planung hat unsere Hallenbelegung um 40 % verbessert.',
+                name: 'Sandra M.',
+                role: 'Geschäftsführerin, Tennisschule Bergmann',
+              },
+              {
+                quote:
+                  'Endlich ein Tool das Mannschafts-Meldungen und Mitglieder-Verwaltung unter einem Dach vereint.',
+                name: 'Ralf D.',
+                role: 'Admin, TC Rheinland e.V.',
+              },
+            ].map((t) => (
+              <blockquote
+                key={t.name}
+                className="bg-background rounded-2xl p-6 shadow-sm border border-border flex flex-col gap-4"
+              >
+                <p className="text-sm text-foreground leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+                <footer className="mt-auto">
+                  <p className="text-sm font-semibold">{t.name}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}</p>
+                </footer>
+              </blockquote>
+            ))}
+          </div>
+        </div>
+      </section>
       {/* ═══════════ FEATURES ═══════════ */}
       <section
         className="bg-muted py-20 sm:py-32 relative overflow-hidden"
