@@ -67,15 +67,60 @@ export const colors = {
     900: '#151921',
     950: '#0c0f14',
   },
-  // Semantic
-  success: '#22c55e',
-  successLight: '#dcfce7',
-  warning: '#f59e0b',
-  warningLight: '#fef3c7',
-  error: '#ef4444',
-  errorLight: '#fee2e2',
-  info: '#3b82f6',
-  infoLight: '#dbeafe',
+  // Semantic — shade scales match Tailwind's green/red/amber/blue defaults
+  // so `success-500` etc. render identically to the raw classes they replace.
+  success: {
+    50: '#f0fdf4',
+    100: '#dcfce7',
+    200: '#bbf7d0',
+    300: '#86efac',
+    400: '#4ade80',
+    500: '#22c55e',
+    600: '#16a34a',
+    700: '#15803d',
+    800: '#166534',
+    900: '#14532d',
+    DEFAULT: '#22c55e',
+  },
+  warning: {
+    50: '#fffbeb',
+    100: '#fef3c7',
+    200: '#fde68a',
+    300: '#fcd34d',
+    400: '#fbbf24',
+    500: '#f59e0b',
+    600: '#d97706',
+    700: '#b45309',
+    800: '#92400e',
+    900: '#78350f',
+    DEFAULT: '#f59e0b',
+  },
+  error: {
+    50: '#fef2f2',
+    100: '#fee2e2',
+    200: '#fecaca',
+    300: '#fca5a5',
+    400: '#f87171',
+    500: '#ef4444',
+    600: '#dc2626',
+    700: '#b91c1c',
+    800: '#991b1b',
+    900: '#7f1d1d',
+    DEFAULT: '#ef4444',
+  },
+  info: {
+    50: '#eff6ff',
+    100: '#dbeafe',
+    200: '#bfdbfe',
+    300: '#93c5fd',
+    400: '#60a5fa',
+    500: '#3b82f6',
+    600: '#2563eb',
+    700: '#1d4ed8',
+    800: '#1e40af',
+    900: '#1e3a8a',
+    DEFAULT: '#3b82f6',
+  },
 };
 
 export const typography = {
@@ -162,10 +207,10 @@ export const shadows = {
   '3xl': '0 48px 80px -16px rgb(0 0 0 / 0.25)',
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
   glow: {
-    primary: '0 0 60px -12px rgba(27, 67, 50, 0.4), 0 0 24px -8px rgba(27, 67, 50, 0.3)',
-    primaryStrong: '0 0 80px -16px rgba(27, 67, 50, 0.5), 0 0 40px -12px rgba(27, 67, 50, 0.4)',
-    accent: '0 0 60px -12px rgba(255, 107, 53, 0.4), 0 0 24px -8px rgba(255, 107, 53, 0.3)',
-    accentStrong: '0 0 80px -16px rgba(255, 107, 53, 0.5), 0 0 40px -12px rgba(255, 107, 53, 0.4)',
+    primary: '0 0 60px -12px hsl(150 48% 18% / 0.4), 0 0 24px -8px hsl(150 48% 18% / 0.3)',
+    primaryStrong: '0 0 80px -16px hsl(150 48% 18% / 0.5), 0 0 40px -12px hsl(150 48% 18% / 0.4)',
+    accent: '0 0 60px -12px hsl(26 100% 60% / 0.4), 0 0 24px -8px hsl(26 100% 60% / 0.3)',
+    accentStrong: '0 0 80px -16px hsl(26 100% 60% / 0.5), 0 0 40px -12px hsl(26 100% 60% / 0.4)',
     premium:
       '0 24px 64px -16px rgba(0, 0, 0, 0.15), 0 8px 32px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
   },
@@ -176,44 +221,46 @@ export const shadows = {
       '0 24px 48px -12px rgb(0 0 0 / 0.12), 0 8px 24px -8px rgb(0 0 0 / 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
   },
   button: {
-    default: '0 2px 8px -2px rgba(27, 67, 50, 0.3), 0 1px 2px rgba(0, 0, 0, 0.05)',
-    hover: '0 8px 24px -4px rgba(27, 67, 50, 0.4), 0 2px 8px -2px rgba(27, 67, 50, 0.2)',
-    active: '0 1px 4px rgba(27, 67, 50, 0.3) inset',
+    default: '0 2px 8px -2px hsl(150 48% 18% / 0.3), 0 1px 2px rgba(0, 0, 0, 0.05)',
+    hover: '0 8px 24px -4px hsl(150 48% 18% / 0.4), 0 2px 8px -2px hsl(150 48% 18% / 0.2)',
+    active: '0 1px 4px hsl(150 48% 18% / 0.3) inset',
   },
 };
 
 export const gradients = {
-  primary: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 50%, #40916C 100%)',
-  primaryRadial: 'radial-gradient(ellipse 80% 50% at 50% 0%, #40916C 0%, #1B4332 100%)',
-  primaryMesh: `
-    radial-gradient(at 40% 20%, hsla(150, 48%, 25%, 0.8) 0px, transparent 50%),
-    radial-gradient(at 80% 0%, hsla(150, 45%, 35%, 0.6) 0px, transparent 50%),
-    radial-gradient(at 0% 50%, hsla(217, 33%, 20%, 0.5) 0px, transparent 50%),
-    radial-gradient(at 80% 50%, hsla(150, 48%, 30%, 0.4) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, hsla(217, 33%, 25%, 0.6) 0px, transparent 50%),
-    radial-gradient(at 80% 100%, hsla(150, 45%, 35%, 0.5) 0px, transparent 50%),
-    radial-gradient(at 0% 0%, hsla(150, 50%, 20%, 0.7) 0px, transparent 50%)
+  primary:
+    'linear-gradient(135deg, hsl(150 48% 18%) 0%, hsl(150 41% 30%) 50%, hsl(150 45% 35%) 100%)',
+  primaryRadial:
+    'radial-gradient(ellipse 80% 50% at 50% 0%, hsl(150 45% 35%) 0%, hsl(150 48% 18%) 100%)',
+  primaryMesh: `    radial-gradient(at 40% 20%, hsl(150 48% 25% / 0.8) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(150 45% 35% / 0.6) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsl(217 33% 20% / 0.5) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsl(150 48% 30% / 0.4) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsl(217 33% 25% / 0.6) 0px, transparent 50%),
+    radial-gradient(at 80% 100%, hsl(150 45% 35% / 0.5) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, hsl(150 50% 20% / 0.7) 0px, transparent 50%)
   `,
-  accent: 'linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FFAB76 100%)',
-  accentRadial: 'radial-gradient(circle at 70% 30%, #FFAB76 0%, #FF6B35 100%)',
-  hero: 'linear-gradient(160deg, #0A3D2E 0%, #1B4332 40%, #2D6A4F 100%)',
+  accent:
+    'linear-gradient(135deg, hsl(26 100% 60%) 0%, hsl(26 100% 67%) 50%, hsl(26 100% 73%) 100%)',
+  accentRadial: 'radial-gradient(circle at 70% 30%, hsl(26 100% 73%) 0%, hsl(26 100% 60%) 100%)',
+  hero: 'linear-gradient(160deg, hsl(150 72% 14%) 0%, hsl(150 48% 18%) 40%, hsl(150 41% 30%) 100%)',
   heroMesh: `
-    radial-gradient(ellipse 100% 100% at 20% 0%, rgba(64, 145, 108, 0.25) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 80% at 80% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 40%),
-    radial-gradient(ellipse 60% 60% at 40% 80%, rgba(30, 58, 95, 0.2) 0%, transparent 50%),
-    linear-gradient(160deg, #0A3D2E 0%, #1B4332 40%, #2D6A4F 100%)
+    radial-gradient(ellipse 100% 100% at 20% 0%, hsl(150 45% 35% / 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 80% at 80% 20%, hsl(26 100% 60% / 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse 60% 60% at 40% 80%, hsl(217 33% 24% / 0.2) 0%, transparent 50%),
+    linear-gradient(160deg, hsl(150 72% 14%) 0%, hsl(150 48% 18%) 40%, hsl(150 41% 30%) 100%)
   `,
   glass: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
   glassDark: 'linear-gradient(135deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 100%)',
-  mesh: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 25%, #40916C 50%, #52B788 75%, #74C69D 100%)',
+  mesh: 'linear-gradient(135deg, hsl(150 48% 18%) 0%, hsl(150 41% 30%) 25%, hsl(150 45% 35%) 50%, hsl(150 41% 52%) 75%, hsl(150 40% 62%) 100%)',
   aurora: `
-    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(64, 145, 108, 0.3) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 30% at 50% 90%, rgba(30, 58, 95, 0.2) 0%, transparent 40%)
+    radial-gradient(ellipse 60% 40% at 10% 20%, hsl(150 45% 35% / 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, hsl(26 100% 60% / 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 30% at 50% 90%, hsl(217 33% 24% / 0.2) 0%, transparent 40%)
   `,
   text: {
-    primary: 'linear-gradient(135deg, #1B4332 0%, #40916C 100%)',
-    accent: 'linear-gradient(135deg, #FF6B35 0%, #FFAB76 100%)',
+    primary: 'linear-gradient(135deg, hsl(150 48% 18%) 0%, hsl(150 45% 35%) 100%)',
+    accent: 'linear-gradient(135deg, hsl(26 100% 60%) 0%, hsl(26 100% 73%) 100%)',
   },
 };
 

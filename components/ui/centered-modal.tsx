@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useCallback, type ReactNode, type MouseEvent } from 'react';
+import { useEffect, useCallback, useRef, type ReactNode, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { focusManager } from '@/lib/accessibility';
 
 export interface CenteredModalProps {
   /** Whether the modal is open. When false, the modal unmounts entirely. */
@@ -57,14 +58,31 @@ export function CenteredModal({
   overlayClassName,
   ariaLabel,
 }: CenteredModalProps) {
-  // Body scroll lock — prevents the page from scrolling behind the modal.
-  // Saves + restores the previous overflow value so we don't clobber user-set styles.
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Focus trapping — when the modal opens, trap Tab/Shift+Tab inside the
+  // dialog and focus the first focusable element (or the dialog itself).
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const el = dialogRef.current;
+    if (!el) return;
+
+    // Wait for the portal to render into the DOM before trapping.
+    // Focus the first focusable element, or the dialog itself as fallback.
+    const raf = requestAnimationFrame(() => {
+      focusManager.focusFirst(el);
+      // If no focusable child was found, focus the dialog wrapper which
+      // has tabIndex={-1} (programmatically focusable, not in Tab order).
+      if (document.activeElement === document.body || !el.contains(document.activeElement)) {
+        el.focus();
+      }
+    });
+
+    const cleanupTrap = focusManager.trapFocus(el);
+
     return () => {
-      document.body.style.overflow = previousOverflow;
+      cancelAnimationFrame(raf);
+      cleanupTrap();
     };
   }, [open]);
 
@@ -136,6 +154,7 @@ export function CenteredModal({
       )}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}

@@ -8,6 +8,8 @@ import { QueryProvider } from './query-provider';
 import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 import { SkipToContent } from '@/lib/accessibility';
+import { AriaLiveProvider } from '@/components/aria-live-region';
+import { SonnerAriaBridge } from '@/components/sonner-aria-bridge';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -58,6 +60,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <head>
+        {/* Theme persistence: read localStorage before React hydration to avoid flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme');
+                  var isDark = theme === 'dark' ||
+                    (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) document.documentElement.classList.add('dark');
+                  else document.documentElement.classList.remove('dark');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://api.fontshare.com" />
@@ -71,13 +89,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         )}
       </head>
       <body className={`${dmSans.className} antialiased`}>
-        <SkipToContent />
-        <ServiceWorkerRegistration />
-        <PwaInstallPrompt />
-        <QueryProvider>
-          <Providers>{children}</Providers>
-          <Toaster position="top-right" richColors />
-        </QueryProvider>
+        <AriaLiveProvider>
+          <SkipToContent />
+          <ServiceWorkerRegistration />
+          <PwaInstallPrompt />
+          <QueryProvider>
+            <Providers>{children}</Providers>
+            <Toaster position="top-right" richColors />
+            <SonnerAriaBridge />
+          </QueryProvider>
+        </AriaLiveProvider>
       </body>
     </html>
   );
