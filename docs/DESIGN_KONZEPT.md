@@ -228,8 +228,8 @@ Die Design-Preview-Seite (`app/(public)/design-preview/page.tsx`) zeigt 11 Anima
 
 - 🔴 **Drei CTAs im Hero** → ✅ Auf 1 Primär-CTA ("Demo starten") + 1 Sekundär-Link ("Demo ansehen") reduziert.
 - 🟡 Keine Produkt-Screenshots — Tennisball-SVG dekorativ, aber zeigt nichts vom Produkt → ✅ Beides: Tennisball-SVG (Marken-Anchor) + 4 Produkt-Screenshots in `public/screenshots/` (Hero, Features, Pricing, CTA)
-- 🟡 Testimonials ohne Avatare
-- 🟡 Pricing nur 2 Pläne, kein Jahresrabatt
+- 🟡 Testimonials ohne Avatare → ✅ Initialen-Avatare mit Brand-Gradienten (TK/Forest Green, SM/Sunrise Orange, RD/Midnight Navy)
+- 🟡 Pricing nur 2 Pläne, kein Jahresrabatt → ✅ Jahresrabatt-Toggle (2 Monate gratis): Starter 290€/Jahr (24,17€/Monat), Professional 790€/Jahr (65,83€/Monat)
 
 ---
 

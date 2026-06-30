@@ -115,6 +115,32 @@ function StatItem({
 }
 
 /* ── Testimonial Data ── */
+const TESTIMONIALS = [
+  {
+    quote:
+      'Seit SwingZ läuft unser Buchungssystem komplett automatisch. Kein Excel mehr, keine Doppelbelegungen.',
+    name: 'Thomas K.',
+    role: 'Vereinsvorsitzender, TC Musterstadt',
+    initials: 'TK',
+    avatarGradient: 'from-brand-primary to-brand-light',
+  },
+  {
+    quote:
+      'Das Onboarding war in 10 Minuten erledigt. Die KI-Planung hat unsere Hallenbelegung um 40 % verbessert.',
+    name: 'Sandra M.',
+    role: 'Geschäftsführerin, Tennisschule Bergmann',
+    initials: 'SM',
+    avatarGradient: 'from-brand-accent to-orange-600',
+  },
+  {
+    quote:
+      'Endlich ein Tool das Mannschafts-Meldungen und Mitglieder-Verwaltung unter einem Dach vereint.',
+    name: 'Ralf D.',
+    role: 'Admin, TC Rheinland e.V.',
+    initials: 'RD',
+    avatarGradient: 'from-brand-secondary to-info-700',
+  },
+];
 
 /* ── Feature Data ── */
 const FEATURES = [
@@ -142,7 +168,7 @@ const FEATURES = [
     title: 'Echtzeit Analytics',
     description:
       'Dashboards mit KPIs, Auslastungsstatistiken und Vorhersagen — alle Daten übersichtlich auf einem Bildschirm.',
-    gradient: 'from-brand-secondary to-blue-700',
+    gradient: 'from-brand-secondary to-info-700',
     stat: '24/7',
     statLabel: 'Live-Daten',
   },
@@ -151,7 +177,7 @@ const FEATURES = [
     title: 'Mitglieder-Management',
     description:
       'Verwalte Mitglieder, Gruppen und Buchungen zentral. Mit personalisierten Zugängen für jedes Mitglied.',
-    gradient: 'from-green-500 to-green-700',
+    gradient: 'from-success-500 to-success-700',
     stat: '',
     statLabel: '',
   },
@@ -168,7 +194,7 @@ const FEATURES = [
     title: 'Integrationen & API',
     description:
       'REST-API für nahtlose Anbindung an euren bestehenden Tech-Stack und eure Vereinswebsite.',
-    gradient: 'from-amber-500 to-amber-700',
+    gradient: 'from-warning-500 to-warning-700',
     stat: '',
     statLabel: '',
   },
@@ -180,6 +206,9 @@ const PRICING_PLANS = [
     name: 'Starter',
     subtitle: 'Für kleine Vereine',
     price: '29',
+    yearlyPrice: '290',
+    yearlyPricePerMonth: '24,17',
+    savings: '58 €',
     period: '/Monat',
     description: 'Alles was du brauchst, um deinen Verein digital zu verwalten.',
     features: [
@@ -199,6 +228,9 @@ const PRICING_PLANS = [
     name: 'Professional',
     subtitle: 'Für wachsende Vereine',
     price: '79',
+    yearlyPrice: '790',
+    yearlyPricePerMonth: '65,83',
+    savings: '158 €',
     period: '/Monat',
     description: 'KI-gestützte Planung und erweiterte Analytics für maximale Performance.',
     features: [
@@ -240,6 +272,7 @@ export default function LandingPage() {
   const router = useRouter();
   const { variant: heroCtaVariant } = useExperiment('landing_hero_cta');
   const platformStats = usePlatformStats();
+  const [billingYearly, setBillingYearly] = useState(false);
 
   const { ref: statsRef, visible: statsVisible } = useRevealOnScroll();
 
@@ -427,16 +460,6 @@ export default function LandingPage() {
                     Demo ansehen
                   </button>
                 </Link>
-                <Link href="/trial-training">
-                  <button
-                    type="button"
-                    className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-background/10 backdrop-blur-sm border border-white/20 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-background/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[52px]"
-                    onClick={() => analytics.featureUsed('landing_trial_training')}
-                  >
-                    <Calendar className="h-5 w-5" />
-                    Probetraining buchen
-                  </button>
-                </Link>
               </div>
 
               <div className="mt-10 sm:mt-12 flex items-center gap-6 sm:gap-8 justify-center lg:justify-start animate-in animate-in-delay-5">
@@ -549,7 +572,7 @@ export default function LandingPage() {
                   style={{ animationDelay: '5s' }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-brand-secondary to-blue-700 flex items-center justify-center shadow-lg">
+                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-brand-secondary to-info-700 flex items-center justify-center shadow-lg">
                       <Shield className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -617,7 +640,7 @@ export default function LandingPage() {
               suffix="%"
               label="Weniger Planungsaufwand"
               icon={Brain}
-              color="from-green-500 to-green-700"
+              color="from-success-500 to-success-700"
               visible={statsVisible}
             />
             <StatItem
@@ -647,35 +670,25 @@ export default function LandingPage() {
             ))}
           </div>
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                quote:
-                  'Seit SwingZ läuft unser Buchungssystem komplett automatisch. Kein Excel mehr, keine Doppelbelegungen.',
-                name: 'Thomas K.',
-                role: 'Vereinsvorsitzender, TC Musterstadt',
-              },
-              {
-                quote:
-                  'Das Onboarding war in 10 Minuten erledigt. Die KI-Planung hat unsere Hallenbelegung um 40 % verbessert.',
-                name: 'Sandra M.',
-                role: 'Geschäftsführerin, Tennisschule Bergmann',
-              },
-              {
-                quote:
-                  'Endlich ein Tool das Mannschafts-Meldungen und Mitglieder-Verwaltung unter einem Dach vereint.',
-                name: 'Ralf D.',
-                role: 'Admin, TC Rheinland e.V.',
-              },
-            ].map((t) => (
+            {TESTIMONIALS.map((t) => (
               <blockquote
                 key={t.name}
                 className="bg-background rounded-2xl p-6 shadow-sm border border-border flex flex-col gap-4"
               >
+                {/* Avatar + Attribution */}
+                <header className="flex items-center gap-3">
+                  <div
+                    className={`h-11 w-11 rounded-full bg-gradient-to-br ${t.avatarGradient} flex items-center justify-center text-white text-sm font-bold shadow-md flex-shrink-0`}
+                    aria-hidden="true"
+                  >
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </header>
                 <p className="text-sm text-foreground leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-                <footer className="mt-auto">
-                  <p className="text-sm font-semibold">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
-                </footer>
               </blockquote>
             ))}
           </div>
@@ -812,6 +825,43 @@ export default function LandingPage() {
             <p className="mt-4 sm:mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
               Flexible Preismodelle — vom kleinen Verein bis zum großen Verband.
             </p>
+
+            {/* Billing Toggle */}
+            <div className="mt-8 flex items-center justify-center gap-3">
+              <span
+                className={`text-sm font-medium transition-colors ${
+                  !billingYearly ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+              >
+                Monatlich
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={billingYearly}
+                aria-label="Jährliche Abrechnung"
+                onClick={() => setBillingYearly((v) => !v)}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 ${
+                  billingYearly ? 'bg-brand-primary' : 'bg-border'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                    billingYearly ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span
+                className={`text-sm font-medium transition-colors ${
+                  billingYearly ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+              >
+                Jährlich
+              </span>
+              <span className="ml-1 inline-flex items-center gap-0.5 rounded-full bg-success-500/10 px-2 py-0.5 text-xs font-semibold text-success-600">
+                2 Monate gratis
+              </span>
+            </div>
           </div>
 
           <div className="flex justify-center">
@@ -832,12 +882,17 @@ export default function LandingPage() {
                       <p className="text-sm text-muted-foreground mt-1">{plan.subtitle}</p>
                       <div className="mt-6 flex items-baseline justify-center gap-1">
                         <span className="text-5xl font-extrabold text-foreground tracking-tight">
-                          €{plan.price}
+                          €{billingYearly ? plan.yearlyPrice : plan.price}
                         </span>
                         <span className="text-muted-foreground text-sm font-medium">
-                          {plan.period}
+                          {billingYearly ? '/Jahr' : plan.period}
                         </span>
                       </div>
+                      {billingYearly && (
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          €{plan.yearlyPricePerMonth}/Monat · {plan.savings} gespart
+                        </p>
+                      )}
                       <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
                         {plan.description}
                       </p>
