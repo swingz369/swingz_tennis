@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:leagues:[id]:matchdays');
@@ -73,6 +74,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (error) {
       log.error('[MatchDays POST] Error:', error);
       return NextResponse.json({ error: 'Failed to create match day' }, { status: 500 });
+    }
+
+    // F4.3: Heimspiel → Catering-Eintrag automatisch anlegen (non-fatal)
+    if ((is_home ?? true) && data?.id && auth.clubId) {
+      void (async () => {
+        try {
+          const sb = createServiceClient();
+          await (sb as any)
+            .from('match_caterings')
+            .upsert(
+              { match_day_id: data.id, club_id: auth.clubId, status: 'not_planned' },
+              { onConflict: 'match_day_id', ignoreDuplicates: true }
+            );
+        } catch (hookErr) {
+          log.error(
+            '[MatchDays POST] Catering-Hook fehlgeschlagen',
+            hookErr instanceof Error ? hookErr : undefined
+          );
+        }
+      })();
     }
 
     return NextResponse.json({ match_day: data }, { status: 201 });

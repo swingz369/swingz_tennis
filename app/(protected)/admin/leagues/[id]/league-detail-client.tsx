@@ -27,7 +27,9 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  UtensilsCrossed,
 } from 'lucide-react';
+import { CateringTab } from '@/components/league/catering-tab';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 
@@ -672,6 +674,9 @@ export default function LeagueDetailClient({
           </TabsTrigger>
           <TabsTrigger value="standings" className="gap-1.5">
             <Trophy className="h-3.5 w-3.5" /> Tabelle
+          </TabsTrigger>
+          <TabsTrigger value="catering" className="gap-1.5">
+            <UtensilsCrossed className="h-3.5 w-3.5" /> Bewirtung
           </TabsTrigger>
         </TabsList>
 
@@ -1469,6 +1474,12 @@ export default function LeagueDetailClient({
               </table>
             </div>
           )}
+        </TabsContent>
+
+        {/* Bewirtung Tab */}
+        <TabsContent value="catering" className="space-y-4">
+          <h2 className="text-lg font-semibold">Bewirtung Heimspiele</h2>
+          <CateringTab leagueId={leagueId} matchDays={league.match_days} />
         </TabsContent>
       </Tabs>
     </div>
