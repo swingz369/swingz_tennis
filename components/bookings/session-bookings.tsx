@@ -186,8 +186,8 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                           key={session.id}
                           className={`p-1 rounded text-xs transition-colors cursor-pointer ${
                             session.bookedByUser
-                              ? 'bg-red-50 dark:bg-red-950 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
-                              : 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900'
+                              ? 'bg-error-50 dark:bg-error-950 text-error-800 dark:text-error-200 border border-error-200 dark:border-error-800'
+                              : 'bg-info-50 dark:bg-info-950 text-info-800 dark:text-info-200 hover:bg-info-100 dark:hover:bg-info-900'
                           }`}
                           role="button"
                           tabIndex={session.bookedByUser ? -1 : 0}
@@ -209,7 +209,7 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                                     handleCancelBooking(session.id, session.bookingId);
                                   }
                                 }}
-                                className="ml-1 p-0.5 rounded hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                                className="ml-1 p-0.5 rounded hover:bg-error-200 dark:hover:bg-error-800 transition-colors"
                                 title="Buchung stornieren"
                               >
                                 <svg
@@ -228,7 +228,7 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                               </button>
                             )}
                           </div>
-                          <div className="flex items-center gap-1 text-[11px]">
+                          <div className="flex items-center gap-1 text-2xs">
                             <Clock className="h-3 w-3" />
                             <span className="truncate">
                               {session.trainerName || session.trainerId}
@@ -237,11 +237,11 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                           {session.bookedByUser && session.bookingStatus && (
                             <div className="flex items-center gap-1 mt-0.5">
                               <span
-                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
+                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-2xs font-medium ${
                                   session.bookingStatus === 'confirmed'
-                                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200'
+                                    ? 'bg-success-100 dark:bg-success-900 text-success-700 dark:text-success-200'
                                     : session.bookingStatus === 'cancelled'
-                                      ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200'
+                                      ? 'bg-error-100 dark:bg-error-900 text-error-700 dark:text-error-200'
                                       : session.bookingStatus === 'no_show'
                                         ? 'bg-muted dark:bg-muted text-foreground dark:text-gray-200'
                                         : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200'
@@ -263,7 +263,7 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                                   }
                                 >
                                   <SelectTrigger
-                                    className="h-6 text-[11px] px-1 py-0"
+                                    className="h-6 text-2xs px-1 py-0"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <SelectValue />

@@ -586,7 +586,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div>
@@ -618,31 +618,31 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
             <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Profil
               </TabsTrigger>
               <TabsTrigger
                 value="qualifications"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Qualifikationen ({trainer.qualifications.length})
               </TabsTrigger>
               <TabsTrigger
                 value="experience"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Erfahrung
               </TabsTrigger>
               <TabsTrigger
                 value="availability"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Verfügbarkeit ({weeklySlots.length + availabilitySlots.length})
               </TabsTrigger>
               <TabsTrigger
                 value="trials"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Probetrainings ({trialTrainings.length})
               </TabsTrigger>
@@ -653,7 +653,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brandPrimary" />
+                    <User className="h-4 w-4 text-brand-primary" />
                     Persönliche Informationen
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -743,7 +743,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <PhoneCall className="h-4 w-4 text-brandAccent" />
+                    <PhoneCall className="h-4 w-4 text-brand-accent" />
                     Notfallkontakt
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -814,7 +814,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                    <Euro className="h-4 w-4 text-brandAccent" />
+                    <Euro className="h-4 w-4 text-brand-accent" />
                     Honorar
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -854,7 +854,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                             : 'Nicht festgelegt'}
                         </div>
                       )}
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         Vertraglich vereinbarter Stundensatz. Nur durch Admins änderbar.
                       </p>
                     </div>
@@ -885,7 +885,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                             : 'Nicht festgelegt'}
                         </div>
                       )}
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         {isAdmin
                           ? 'Satz für Zusatzstunden. Trainer kann diesen ebenfalls anpassen.'
                           : 'Du kannst diesen Satz selbst für deine Zusatzstunden festlegen.'}
@@ -898,7 +898,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                    <Globe className="h-4 w-4 text-brandPrimary" />
+                    <Globe className="h-4 w-4 text-brand-primary" />
                     Sprachen
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -991,7 +991,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
 
               <div className="pt-2">
                 <h3 className="font-semibold mb-3 flex items-center gap-2 text-base">
-                  <Target className="h-4 w-4 text-brandAccent" />
+                  <Target className="h-4 w-4 text-brand-accent" />
                   Spezialisierungen
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -1011,11 +1011,11 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
             {/* ── Experience Tab ───────────────────────────────────────── */}
             <TabsContent value="experience" className="space-y-5 animate-in">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-brandPrimary" />
+                <Briefcase className="h-5 w-5 text-brand-primary" />
                 Berufserfahrung
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card variant="gradient">
+                <Card variant="elevated">
                   <CardContent className="p-5 text-center">
                     <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                       Branchenerfahrung
@@ -1025,7 +1025,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                     </div>
                   </CardContent>
                 </Card>
-                <Card variant="gradient">
+                <Card variant="elevated">
                   <CardContent className="p-5 text-center">
                     <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                       Vorherige Vereine
@@ -1069,7 +1069,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                             key={index}
                             className="flex items-center gap-3 text-foreground dark:text-foreground text-sm"
                           >
-                            <Trophy className="h-4 w-4 text-brandAccent shrink-0" />
+                            <Trophy className="h-4 w-4 text-brand-accent shrink-0" />
                             <span>{achievement}</span>
                           </div>
                         ))}
@@ -1088,7 +1088,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold flex items-center gap-2 text-base">
-                      <Calendar className="h-4 w-4 text-brandPrimary" />
+                      <Calendar className="h-4 w-4 text-brand-primary" />
                       Reguläre Wochenverfügbarkeit
                     </h3>
                     <div className="flex items-center gap-1">
@@ -1132,10 +1132,10 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                               {daySlots.map((slot) => (
                                 <div
                                   key={slot.id}
-                                  className="flex items-center justify-between bg-green-50 border border-green-200 dark:bg-green-900/10 dark:border-green-800 rounded p-3"
+                                  className="flex items-center justify-between bg-success-50 border border-success-200 dark:bg-success-900/10 dark:border-success-800 rounded p-3"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-green-600" />
+                                    <Clock className="h-4 w-4 text-success-600" />
                                     <span className="font-medium text-sm">
                                       {slot.start_time} – {slot.end_time}
                                     </span>
@@ -1149,7 +1149,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                                     className="h-7 w-7"
                                     onClick={() => slot.id && handleDeleteWeeklySlot(slot.id)}
                                   >
-                                    <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
+                                    <Trash2 className="h-3.5 w-3.5 text-error-400 hover:text-error-600" />
                                   </Button>
                                 </div>
                               ))}
@@ -1251,7 +1251,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold flex items-center gap-2 text-base">
-                      <Clock className="h-4 w-4 text-brandAccent" />
+                      <Clock className="h-4 w-4 text-brand-accent" />
                       Konkrete Verfügbarkeiten
                     </h3>
                     <div className="flex items-center gap-1">
@@ -1288,21 +1288,21 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                           key={slot.id}
                           className={`flex items-center gap-3 p-3 rounded-lg border text-sm ${
                             slot.status === 'available'
-                              ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800'
+                              ? 'bg-success-50 border-success-200 dark:bg-success-900/10 dark:border-success-800'
                               : slot.status === 'booked'
-                                ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-800'
+                                ? 'bg-info-50 border-info-200 dark:bg-info-900/10 dark:border-info-800'
                                 : slot.status === 'blocked'
-                                  ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800'
+                                  ? 'bg-error-50 border-error-200 dark:bg-error-900/10 dark:border-error-800'
                                   : 'bg-muted border-border dark:bg-card/10 dark:border-border'
                           }`}
                         >
                           <div className="shrink-0">
                             {slot.status === 'available' ? (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <CheckCircle className="h-4 w-4 text-success-500" />
                             ) : slot.status === 'booked' ? (
-                              <Calendar className="h-4 w-4 text-blue-500" />
+                              <Calendar className="h-4 w-4 text-info-500" />
                             ) : (
-                              <XCircle className="h-4 w-4 text-red-500" />
+                              <XCircle className="h-4 w-4 text-error-500" />
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
@@ -1321,7 +1321,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                               className="h-7 w-7 shrink-0"
                               onClick={() => handleDeleteSlot(slot.id)}
                             >
-                              <Trash2 className="h-3.5 w-3.5 text-red-400 hover:text-red-600" />
+                              <Trash2 className="h-3.5 w-3.5 text-error-400 hover:text-error-600" />
                             </Button>
                           )}
                         </div>
@@ -1413,7 +1413,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
               <Card variant="flat">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-3 flex items-center gap-2 text-base">
-                    <Clock className="h-4 w-4 text-brandAccent" />
+                    <Clock className="h-4 w-4 text-brand-accent" />
                     Bevorzugte Arbeitszeiten
                   </h3>
                   {trainer.preferredTimeSlots.length > 0 ? (
@@ -1445,7 +1445,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold flex items-center gap-2 text-base">
-                      <Sparkles className="h-4 w-4 text-brandAccent" />
+                      <Sparkles className="h-4 w-4 text-brand-accent" />
                       Probetrainings
                     </h3>
                     <Button
@@ -1473,8 +1473,8 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                             trial.status === 'requested'
                               ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-800'
                               : trial.status === 'scheduled'
-                                ? 'bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-800'
-                                : 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800'
+                                ? 'bg-success-50 border-success-200 dark:bg-success-900/10 dark:border-success-800'
+                                : 'bg-error-50 border-error-200 dark:bg-error-900/10 dark:border-error-800'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
@@ -1488,8 +1488,8 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                                     trial.status === 'requested'
                                       ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
                                       : trial.status === 'scheduled'
-                                        ? 'bg-green-100 text-green-700 border-green-200'
-                                        : 'bg-red-100 text-red-700 border-red-200'
+                                        ? 'bg-success-100 text-success-700 border-success-200'
+                                        : 'bg-error-100 text-error-700 border-error-200'
                                   }`}
                                 >
                                   {trial.status === 'requested'

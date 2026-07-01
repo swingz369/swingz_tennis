@@ -128,11 +128,11 @@ function SeasonInvoiceGenerator({ seasonId, clubId }: { seasonId: string; clubId
 
         {result && (
           <div className="mt-2 space-y-1">
-            <p className="text-sm font-medium text-green-600">
+            <p className="text-sm font-medium text-success-600">
               {result.created} Rechnung{result.created !== 1 ? 'en' : ''} erstellt
             </p>
             {result.errors && result.errors.length > 0 && (
-              <ul className="text-sm text-red-600 space-y-0.5">
+              <ul className="text-sm text-error-600 space-y-0.5">
                 {result.errors.map((e, i) => (
                   <li key={i}>{e}</li>
                 ))}
@@ -249,9 +249,9 @@ function GroupChangeDialog({
               className="mt-1 max-w-xs"
             />
           </div>
-          {err && <p className="text-sm text-red-600">{err}</p>}
+          {err && <p className="text-sm text-error-600">{err}</p>}
           {result && (
-            <p className="text-sm font-medium text-green-600">
+            <p className="text-sm font-medium text-success-600">
               Wechsel durchgeführt. Netto: {result.net_delta >= 0 ? '+' : ''}
               {result.net_delta.toFixed(2)} €
             </p>
@@ -402,13 +402,18 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const confirmPublish = async () => {
     setPublishConfirmOpen(false);
     try {
-      const response = await apiFetch(`/api/seasons/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ planning_status: 'published' }),
+      const response = await apiFetch(`/api/seasons/${id}/planning/confirm`, {
+        method: 'POST',
+        body: JSON.stringify({ acceptedWarnings: [] }),
       });
 
-      if (!response.ok) throw new Error('Fehler beim Veröffentlichen');
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Fehler beim Veröffentlichen');
+      }
 
+      const data = await response.json();
+      toast.success(`Saison veröffentlicht: ${data.publishedSessions} Trainingseinheiten erstellt`);
       await fetchSeason();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
@@ -505,7 +510,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         title="Saison veröffentlichen"
         description="Möchten Sie diese Saison wirklich veröffentlichen?"
         confirmLabel="Veröffentlichen"
-        variant="brand"
+        variant="primary"
         onConfirm={confirmPublish}
       />
 
@@ -743,7 +748,7 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <div className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-950 dark:text-warning-200">
         Bestehende Gruppen in dieser Saison werden <strong>nicht gelöscht</strong> — die kopierten
         Gruppen kommen zusätzlich hinzu.
       </div>
@@ -916,7 +921,7 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
             <CardContent>
               {season.open_conflicts === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <CheckCircle className="h-12 w-12 text-green-500" />
+                  <CheckCircle className="h-12 w-12 text-success-500" />
                   <p className="mt-4 text-lg font-medium">Keine Konflikte</p>
                   <p className="text-sm text-muted-foreground">Die Planung ist konfliktfrei</p>
                 </div>

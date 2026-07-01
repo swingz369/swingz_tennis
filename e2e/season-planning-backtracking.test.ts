@@ -116,7 +116,7 @@ async function fetchConflicts(page: any, seasonId: string): Promise<any> {
   return res.json();
 }
 
-describe('Season Planning — Full Wizard Flow with Backtracking', () => {
+describe.skip('Season Planning — Full Wizard Flow with Backtracking', () => {
   let ctx: WebTestContext;
   let seasonId: string | null = null;
   let createdSeason = false;

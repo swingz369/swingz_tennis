@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
+import { NoTournamentsBrandedEmptyState } from '@/components/ui/empty-state';
 import {
   STATUS_LABELS,
   STATUS_VARIANTS,
@@ -45,7 +46,7 @@ export function TournamentsClient({ initialTournaments, pagination }: Tournament
           <h1 className="text-2xl font-bold text-brand-primary">Turniere</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Turnierverwaltung des Vereins</p>
         </div>
-        <Button asChild size="sm" variant="brand" className="gap-1.5">
+        <Button asChild size="sm" variant="primary" className="gap-1.5">
           <Link href="/admin/tournaments/new">
             <Plus className="h-4 w-4" />
             Neues Turnier
@@ -54,16 +55,7 @@ export function TournamentsClient({ initialTournaments, pagination }: Tournament
       </div>
 
       {tournaments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-          <IconBox icon={Trophy} size="lg" variant="amber" className="h-16 w-16" />
-          <h3 className="font-semibold">Noch keine Turniere</h3>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Lege dein erstes Turnier an und lade Mitglieder zur Anmeldung ein.
-          </p>
-          <Button asChild size="sm" variant="brand" className="mt-2">
-            <Link href="/admin/tournaments/new">Erstes Turnier anlegen</Link>
-          </Button>
-        </div>
+        <NoTournamentsBrandedEmptyState onCreate={() => router.push('/admin/tournaments/new')} />
       ) : (
         <div className="space-y-3">
           {tournaments.map((t) => (

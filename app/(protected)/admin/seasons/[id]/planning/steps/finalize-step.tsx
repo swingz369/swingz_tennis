@@ -37,10 +37,23 @@ import type { ConflictDetectionResult, ConflictSeverityLevel } from '@/lib/seaso
 import type { SeasonBillingPreview } from '@/lib/billing/season-billing.service';
 import { apiFetch } from '@/lib/api-fetch';
 import { DryRunPanel } from '@/components/admin/dry-run-panel';
+import { InactiveWeeksPanel } from './inactive-weeks-panel';
+import { SubstituteTrainerPanel } from './substitute-trainer-panel';
 
+/**
+ * FinalizeStep (Schritt 3 von 3)
+ *
+ * Responsibilities:
+ * 1. Conflict Detection: Scan the plan for issues
+ * 2. Conflict Management: Admin resolves or ignores conflicts
+ * 3. AI Review: Optional AI-powered plan analysis
+ * 4. Billing Preview: Show cost breakdown before publishing
+ * 5. Final Confirmation: Publish plan to sessions
+ * 6. Post-Publish: Show success metrics, invoices, waitlist
+ */
 /* eslint-disable react-hooks/preserve-manual-memoization -- complex wizard step, compiler cannot preserve memoization */
 export function FinalizeStep() {
-  const { state, confirmPlan, detectConflicts } = useWizard();
+  const { state, dispatch, confirmPlan, detectConflicts } = useWizard();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isGeneratingInvoices, setIsGeneratingInvoices] = useState(false);
@@ -51,7 +64,6 @@ export function FinalizeStep() {
     setHasRunCheck(false);
   }, [state.clusteringResult]);
   const [confirmedWarnings, setConfirmedWarnings] = useState<Set<string>>(new Set());
-  const [adminNotes, setAdminNotes] = useState('');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [aiReviewText, setAiReviewText] = useState<string | null>(null);
   const [aiReviewLoading, setAiReviewLoading] = useState(false);
@@ -207,9 +219,12 @@ export function FinalizeStep() {
     });
   };
 
-  // Fetch billing preview when confirmed and not yet fetched
+  // Fetch billing preview as soon as a plan exists (not just after confirm)
   useEffect(() => {
-    if (state.isConfirmed && !billingFetched) {
+    if (
+      (state.isConfirmed || (state.clusteringResult?.groups.length ?? 0) > 0) &&
+      !billingFetched
+    ) {
       setBillingFetched(true);
       setBillingLoading(true);
       setBillingError(null);
@@ -224,7 +239,7 @@ export function FinalizeStep() {
         })
         .finally(() => setBillingLoading(false));
     }
-  }, [state.isConfirmed, billingFetched, state.seasonId]);
+  }, [state.isConfirmed, state.clusteringResult, billingFetched, state.seasonId]);
 
   const handleGenerateInvoices = async () => {
     setIsGeneratingInvoices(true);
@@ -255,13 +270,13 @@ export function FinalizeStep() {
   if (state.isConfirmed) {
     return (
       <div className="space-y-6">
-        <Card className="border-green-200 bg-green-50/30">
+        <Card className="border-success-200 bg-success-50/30">
           <CardContent className="py-12 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mx-auto mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100 mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-success-600" />
             </div>
-            <h2 className="text-xl font-bold text-green-800">Planung erfolgreich bestätigt!</h2>
-            <p className="text-sm text-green-700 mt-2 max-w-md mx-auto">
+            <h2 className="text-xl font-bold text-success-800">Planung erfolgreich bestätigt!</h2>
+            <p className="text-sm text-success-700 mt-2 max-w-md mx-auto">
               Trainingsgruppen und Sessions wurden erstellt und in die Profile der Trainer und
               Mitglieder übertragen. Alle Beteiligten werden automatisch benachrichtigt.
             </p>
@@ -283,7 +298,7 @@ export function FinalizeStep() {
           <Card>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-green-500" />
+                <Calendar className="h-4 w-4 text-success-500" />
                 <p className="text-sm text-muted-foreground">Sessions</p>
               </div>
               <p className="text-2xl font-bold mt-1">{state.publishedSessionIds.length}</p>
@@ -292,7 +307,7 @@ export function FinalizeStep() {
           <Card>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-amber-500" />
+                <Bell className="h-4 w-4 text-warning-500" />
                 <p className="text-sm text-muted-foreground">Benachrichtigungen</p>
               </div>
               <p className="text-2xl font-bold mt-1">{state.selectedMemberIds.length}</p>
@@ -305,7 +320,7 @@ export function FinalizeStep() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-500" />
+                <Clock className="h-4 w-4 text-info-500" />
                 Wartelisten-Benachrichtigungen
               </CardTitle>
             </CardHeader>
@@ -313,7 +328,7 @@ export function FinalizeStep() {
               <div className="space-y-2">
                 {state.clusteringResult?.waitlistSummary.map((w, idx) => (
                   <div key={idx} className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <CheckCircle className="h-4 w-4 text-success-500" />
                     <span className="font-medium">{w.memberName}</span>
                     <span>
                       Warteliste {w.groupName} (Pos. {w.position})
@@ -362,7 +377,7 @@ export function FinalizeStep() {
             {/* ── Error State ── */}
             {!billingLoading && billingError && (
               <div className="flex flex-col items-center justify-center py-10 gap-3">
-                <AlertTriangle className="h-8 w-8 text-amber-500" />
+                <AlertTriangle className="h-8 w-8 text-warning-500" />
                 <p className="text-sm text-muted-foreground">{billingError}</p>
                 <Button
                   variant="outline"
@@ -384,7 +399,7 @@ export function FinalizeStep() {
               billingPreview &&
               billingPreview.memberPreviews.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-10 gap-3">
-                  <Info className="h-8 w-8 text-blue-400" />
+                  <Info className="h-8 w-8 text-info-400" />
                   <p className="text-sm text-muted-foreground">
                     Keine Planungseinträge für die Abrechnung gefunden.
                   </p>
@@ -406,19 +421,19 @@ export function FinalizeStep() {
                       subtitle={`${billingPreview.groupCount} Gruppen`}
                     />
                     <BillingKpiCard
-                      icon={<Users className="h-4 w-4 text-blue-500" />}
+                      icon={<Users className="h-4 w-4 text-info-500" />}
                       label="Mitgliedsbeiträge"
                       value={billingPreview.totalMembershipFees}
                       subtitle={`${billingPreview.memberCount} Mitglieder`}
                     />
                     <BillingKpiCard
-                      icon={<DollarSign className="h-4 w-4 text-amber-500" />}
+                      icon={<DollarSign className="h-4 w-4 text-warning-500" />}
                       label="Zusatzgebühren"
                       value={billingPreview.totalAdditionalFees}
                       subtitle={billingPreview.totalAdditionalFees > 0 ? 'Konfiguriert' : 'Keine'}
                     />
                     <BillingKpiCard
-                      icon={<TrendingUp className="h-4 w-4 text-green-600" />}
+                      icon={<TrendingUp className="h-4 w-4 text-success-600" />}
                       label="Gesamtsumme"
                       value={billingPreview.grandTotal}
                       subtitle="Alle Posten"
@@ -430,23 +445,23 @@ export function FinalizeStep() {
                   {billingPreview.config && (
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
                       <span className="font-medium text-foreground">Konfiguration:</span>
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-2xs">
                         Stundensatz {billingPreview.config.trainer_hourly_rate.toFixed(2)} €
                       </Badge>
                       {billingPreview.config.use_trainer_profile_rate && (
-                        <Badge variant="secondary" className="text-[11px]">
+                        <Badge variant="secondary" className="text-2xs">
                           Trainer-Profile
                         </Badge>
                       )}
                       {billingPreview.config.include_membership_fee && (
-                        <Badge variant="secondary" className="text-[11px]">
+                        <Badge variant="secondary" className="text-2xs">
                           Mitgliedsbeitrag inkl.
                         </Badge>
                       )}
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-2xs">
                         MwSt. {billingPreview.config.tax_rate}%
                       </Badge>
-                      <Badge variant="secondary" className="text-[11px]">
+                      <Badge variant="secondary" className="text-2xs">
                         Zahlungsziel {billingPreview.config.payment_terms_days} Tage
                       </Badge>
                     </div>
@@ -529,7 +544,7 @@ export function FinalizeStep() {
                     <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       Kosten pro Mitglied
-                      <Badge variant="secondary" className="text-[11px] ml-1">
+                      <Badge variant="secondary" className="text-2xs ml-1">
                         {billingPreview.memberPreviews.length}
                       </Badge>
                     </h4>
@@ -675,7 +690,7 @@ export function FinalizeStep() {
           <Card>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2">
-                <ClipboardCheck className="h-4 w-4 text-green-500" />
+                <ClipboardCheck className="h-4 w-4 text-success-500" />
                 <p className="text-sm text-muted-foreground">Niveau-Match</p>
               </div>
               <p className="text-2xl font-bold mt-1">
@@ -687,7 +702,7 @@ export function FinalizeStep() {
           <Card>
             <CardContent className="pt-5 pb-4">
               <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500" />
+                <Star className="h-4 w-4 text-warning-500" />
                 <p className="text-sm text-muted-foreground">Trainer-Auslastung</p>
               </div>
               <p className="text-2xl font-bold mt-1">
@@ -699,7 +714,7 @@ export function FinalizeStep() {
 
         <Card>
           <CardContent className="py-8 text-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
+            <CheckCircle className="h-12 w-12 text-success-500 mx-auto" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">Konfliktprüfung starten</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
               Führen Sie die automatische Konfliktprüfung durch, bevor Sie die Planung final
@@ -732,11 +747,11 @@ export function FinalizeStep() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <AlertTriangle className="h-4 w-4 text-error-500" />
               <p className="text-xs text-muted-foreground">Kritisch</p>
             </div>
             <p
-              className={`text-xl font-bold mt-1 ${criticalConflicts.length > 0 ? 'text-red-600' : 'text-green-600'}`}
+              className={`text-xl font-bold mt-1 ${criticalConflicts.length > 0 ? 'text-error-600' : 'text-success-600'}`}
             >
               {criticalConflicts.length}
             </p>
@@ -745,7 +760,7 @@ export function FinalizeStep() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-warning-500" />
               <p className="text-xs text-muted-foreground">Warnungen</p>
             </div>
             <p className="text-xl font-bold mt-1">{warningConflicts.length}</p>
@@ -754,7 +769,7 @@ export function FinalizeStep() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-blue-500" />
+              <Info className="h-4 w-4 text-info-500" />
               <p className="text-xs text-muted-foreground">Gelöst / Ignoriert</p>
             </div>
             <p className="text-xl font-bold mt-1">
@@ -775,13 +790,13 @@ export function FinalizeStep() {
 
       {/* Critical Conflicts */}
       {criticalConflicts.length > 0 && (
-        <Card className="border-red-200 bg-red-50/30">
+        <Card className="border-error-200 bg-error-50/30">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-red-700">
+            <CardTitle className="text-base flex items-center gap-2 text-error-700">
               <ShieldAlert className="h-5 w-5" />
               Kritische Konflikte — müssen gelöst werden
             </CardTitle>
-            <CardDescription className="text-red-600">
+            <CardDescription className="text-error-600">
               Diese Konflikte blockieren die finale Bestätigung
             </CardDescription>
           </CardHeader>
@@ -804,7 +819,7 @@ export function FinalizeStep() {
       {warningConflicts.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-amber-700">
+            <CardTitle className="text-base flex items-center gap-2 text-warning-700">
               <AlertTriangle className="h-5 w-5" />
               Warnungen & Hinweise
             </CardTitle>
@@ -828,15 +843,15 @@ export function FinalizeStep() {
       {/* All clear message (after check ran or all resolved) */}
       {criticalConflicts.length === 0 &&
         warningConflicts.filter((c) => c.status === 'open').length === 0 && (
-          <Card className="border-green-200 bg-green-50/30">
+          <Card className="border-success-200 bg-success-50/30">
             <CardContent className="py-8 text-center">
-              <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-              <h3 className="mt-4 text-lg font-semibold text-green-800">
+              <CheckCircle className="h-12 w-12 text-success-500 mx-auto" />
+              <h3 className="mt-4 text-lg font-semibold text-success-800">
                 {conflicts.length === 0
                   ? 'Keine Konflikte gefunden'
                   : 'Alle Konflikte gelöst oder ignoriert'}
               </h3>
-              <p className="text-sm text-green-700 mt-1">
+              <p className="text-sm text-success-700 mt-1">
                 {conflicts.length === 0
                   ? 'Die Planung ist konfliktfrei und kann bestätigt werden.'
                   : 'Alle Konflikte wurden gelöst oder ignoriert.'}
@@ -876,8 +891,8 @@ export function FinalizeStep() {
                         <Badge
                           className={`text-xs ${
                             conflict.severity === 'warning'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-blue-100 text-blue-700'
+                              ? 'bg-warning-100 text-warning-700'
+                              : 'bg-info-100 text-info-700'
                           }`}
                         >
                           {conflict.severity === 'warning' ? 'Warnung' : 'Hinweis'}
@@ -897,6 +912,12 @@ export function FinalizeStep() {
           </CardContent>
         </Card>
       )}
+
+      {/* Inactive Weeks Panel */}
+      <InactiveWeeksPanel />
+
+      {/* Substitute Trainer Panel */}
+      <SubstituteTrainerPanel />
 
       {/* Dry-Run Preview — simulates the full publish workflow (read-only) */}
       <DryRunPanel seasonId={state.seasonId} />
@@ -963,8 +984,8 @@ export function FinalizeStep() {
           <textarea
             className="w-full min-h-[80px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y"
             placeholder='z.B. "Planung mit Vorstand abgestimmt am..."'
-            value={adminNotes}
-            onChange={(e) => setAdminNotes(e.target.value)}
+            value={state.adminNotes}
+            onChange={(e) => dispatch({ type: 'SET_ADMIN_NOTES', notes: e.target.value })}
           />
         </CardContent>
       </Card>
@@ -974,17 +995,17 @@ export function FinalizeStep() {
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             {hasBlockingConflicts ? (
-              <span className="flex items-center gap-1 text-red-600">
+              <span className="flex items-center gap-1 text-error-600">
                 <AlertTriangle className="h-4 w-4" />
                 Kritische Konflikte müssen zuerst gelöst werden
               </span>
             ) : !allWarningsAccepted ? (
-              <span className="flex items-center gap-1 text-amber-600">
+              <span className="flex items-center gap-1 text-warning-600">
                 <Info className="h-4 w-4" />
                 Bitte alle Warnungen bestätigen
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-green-600">
+              <span className="flex items-center gap-1 text-success-600">
                 <CheckCircle className="h-4 w-4" />
                 Bereit zur Bestätigung
               </span>
@@ -999,7 +1020,7 @@ export function FinalizeStep() {
             <Button
               onClick={handleConfirm}
               disabled={hasBlockingConflicts || !allWarningsAccepted || isConfirming}
-              variant="brand"
+              variant="primary"
               size="lg"
               className="gap-2"
             >
@@ -1052,7 +1073,7 @@ function BillingKpiCard({
         >
           {value.toFixed(2)} €
         </p>
-        <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+        <p className="text-2xs text-muted-foreground">{subtitle}</p>
       </CardContent>
     </Card>
   );
@@ -1075,9 +1096,9 @@ function ConflictCard({
   canIgnore: boolean;
 }) {
   const severityConfig: Record<ConflictSeverityLevel, { badgeColor: string }> = {
-    critical: { badgeColor: 'bg-red-100 text-red-700' },
-    warning: { badgeColor: 'bg-amber-100 text-amber-700' },
-    info: { badgeColor: 'bg-blue-100 text-blue-700' },
+    critical: { badgeColor: 'bg-error-100 text-error-700' },
+    warning: { badgeColor: 'bg-warning-100 text-warning-700' },
+    info: { badgeColor: 'bg-info-100 text-info-700' },
   };
   const config = severityConfig[conflict.severity];
   const isOpen = conflict.status === 'open';
@@ -1086,12 +1107,12 @@ function ConflictCard({
     <div
       className={`rounded-lg border p-4 ${
         conflict.status === 'resolved'
-          ? 'border-green-200 bg-green-50/30 opacity-70'
+          ? 'border-success-200 bg-success-50/30 opacity-70'
           : conflict.status === 'ignored'
             ? 'border-border bg-muted/30 opacity-70'
             : conflict.severity === 'critical'
-              ? 'border-red-200 bg-background'
-              : 'border-amber-200 bg-background'
+              ? 'border-error-200 bg-background'
+              : 'border-warning-200 bg-background'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -1105,7 +1126,7 @@ function ConflictCard({
                   : 'Hinweis'}
             </Badge>
             {conflict.status === 'resolved' && (
-              <Badge className="text-xs bg-green-100 text-green-700">
+              <Badge className="text-xs bg-success-100 text-success-700">
                 <CheckCircle className="h-3 w-3 mr-0.5" /> Gelöst
               </Badge>
             )}

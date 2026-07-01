@@ -119,7 +119,7 @@ const SortIcon = ({
 }) => (
   <ArrowUpDown
     className={`h-3.5 w-3.5 ml-1 inline-block transition-colors ${
-      currentSortField === field ? 'text-brandPrimary' : 'text-muted-foreground/40'
+      currentSortField === field ? 'text-brand-primary' : 'text-muted-foreground/40'
     }`}
   />
 );
@@ -455,7 +455,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
               ) : error ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                    <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-red-500" />
+                    <AlertTriangle className="h-5 w-5 mx-auto mb-2 text-error-500" />
                     <p>Fehler beim Laden der Buchungen</p>
                     <p className="text-xs mt-1">{(error as Error).message}</p>
                   </td>
@@ -519,8 +519,8 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                       <td className="p-3 whitespace-nowrap">
                         {isSeasonPlan ? (
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                              <User className="h-3.5 w-3.5 text-amber-600" />
+                            <div className="w-7 h-7 rounded-full bg-warning-100 flex items-center justify-center flex-shrink-0">
+                              <User className="h-3.5 w-3.5 text-warning-600" />
                             </div>
                             <div>
                               <div className="font-medium text-sm">
@@ -538,8 +538,8 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-brandPrimary/10 flex items-center justify-center flex-shrink-0">
-                              <User className="h-3.5 w-3.5 text-brandPrimary" />
+                            <div className="w-7 h-7 rounded-full bg-brand-primary/10 flex items-center justify-center flex-shrink-0">
+                              <User className="h-3.5 w-3.5 text-brand-primary" />
                             </div>
                             <div>
                               <div className="font-medium text-sm">{booking.member_name}</div>
@@ -638,7 +638,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
           <>
             <div className="space-y-1.5">
               <h2 className="text-lg font-bold flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-brandPrimary" />
+                <CalendarIcon className="h-5 w-5 text-brand-primary" />
                 Buchungsdetails
               </h2>
               <p className="text-sm text-muted-foreground">
@@ -655,8 +655,8 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
             <div className="space-y-4 py-2">
               {/* Member / Trainer */}
               {selectedBooking.source === 'season_plan' ? (
-                <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
-                  <User className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-3 bg-warning-50 rounded-lg">
+                  <User className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <div className="font-medium">{selectedBooking.trainer_name || '—'}</div>
                     <div className="text-sm text-muted-foreground">
@@ -671,7 +671,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                 </div>
               ) : (
                 <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                  <User className="h-5 w-5 text-brandPrimary mt-0.5 flex-shrink-0" />
+                  <User className="h-5 w-5 text-brand-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <div className="font-medium">{selectedBooking.member_name}</div>
                     <div className="text-sm text-muted-foreground">
@@ -794,7 +794,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
 
               {/* Cancellation info */}
               {selectedBooking.status === 'cancelled' && selectedBooking.cancelled_at && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <div className="p-3 bg-error-50 border border-error-200 rounded-lg text-sm text-error-700">
                   <div className="font-medium">
                     Storniert am{' '}
                     {format(parseISO(selectedBooking.cancelled_at), 'dd.MM.yyyy HH:mm', {
@@ -830,7 +830,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                     size="sm"
                     onClick={() => handleAdminAction(selectedBooking.id, 'no_show')}
                     disabled={actionLoading}
-                    className="gap-1.5 text-amber-600 hover:text-amber-700"
+                    className="gap-1.5 text-warning-600 hover:text-warning-700"
                   >
                     <AlertTriangle className="h-4 w-4" />
                     Nicht erschienen
@@ -842,7 +842,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                       handleAdminAction(selectedBooking.id, 'cancel', 'admin_cancellation')
                     }
                     disabled={actionLoading}
-                    className="gap-1.5 text-red-600 hover:text-red-700"
+                    className="gap-1.5 text-error-600 hover:text-error-700"
                   >
                     <Ban className="h-4 w-4" />
                     Stornieren

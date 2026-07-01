@@ -353,7 +353,7 @@ export default async function AdminPage() {
               {needsApprovals && (
                 <Link
                   href="/admin/members?tab=approvals"
-                  className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 border border-orange-200 dark:border-orange-700/50 px-4 py-3 hover:shadow-md transition-all"
+                  className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-orange-50 to-warning-50 dark:from-orange-900/20 dark:to-warning-900/10 border border-orange-200 dark:border-orange-700/50 px-4 py-3 hover:shadow-md transition-all"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30 shrink-0">
                     <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
@@ -372,20 +372,20 @@ export default async function AdminPage() {
               {needsBilling && (
                 <Link
                   href="/admin/billing"
-                  className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 border border-blue-200 dark:border-blue-700/50 px-4 py-3 hover:shadow-md transition-all"
+                  className="group flex items-center gap-3 rounded-xl bg-gradient-to-r from-info-50 to-indigo-50 dark:from-info-900/20 dark:to-indigo-900/10 border border-info-200 dark:border-info-700/50 px-4 py-3 hover:shadow-md transition-all"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30 shrink-0">
-                    <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-100 dark:bg-info-900/30 shrink-0">
+                    <CreditCard className="h-5 w-5 text-info-600 dark:text-info-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                    <p className="text-sm font-semibold text-info-800 dark:text-info-300">
                       Rechnungen ausstehend
                     </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400">
+                    <p className="text-xs text-info-600 dark:text-info-400">
                       Monatsrechnungen für {memberCount ?? 0} Mitglieder erstellen
                     </p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4 text-blue-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <ArrowUpRight className="h-4 w-4 text-info-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </Link>
               )}
             </div>
@@ -555,7 +555,7 @@ export default async function AdminPage() {
                               )}
                             </p>
                           </div>
-                          <Badge className="shrink-0 text-[11px] bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700/30">
+                          <Badge className="shrink-0 text-2xs bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-400 dark:border-success-700/30">
                             Aktiv
                           </Badge>
                         </div>
@@ -581,14 +581,14 @@ export default async function AdminPage() {
                         <div
                           className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 ${
                             item.type === 'join'
-                              ? 'bg-blue-100 dark:bg-blue-900/30'
+                              ? 'bg-info-100 dark:bg-info-900/30'
                               : 'bg-brand-light/10'
                           }`}
                         >
                           <span
                             className={`text-xs font-semibold ${
                               item.type === 'join'
-                                ? 'text-blue-700 dark:text-blue-300'
+                                ? 'text-info-700 dark:text-info-300'
                                 : 'text-brand-light'
                             }`}
                           >
@@ -604,9 +604,9 @@ export default async function AdminPage() {
                           </p>
                         </div>
                         <div
-                          className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                          className={`text-2xs font-medium px-2 py-0.5 rounded-full ${
                             item.type === 'join'
-                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                              ? 'bg-info-50 text-info-700 dark:bg-info-900/20 dark:text-info-400'
                               : 'bg-brand-light/10 text-brand-light'
                           }`}
                         >

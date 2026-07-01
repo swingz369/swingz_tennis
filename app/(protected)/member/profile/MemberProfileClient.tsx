@@ -190,7 +190,7 @@ export function MemberProfileClient({ member }: Props) {
       </div>
 
       {isEditing && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700">
+        <div className="flex items-center gap-2 px-4 py-2 bg-info-50 border border-info-200 rounded-xl text-sm text-info-700">
           <AlertCircle className="h-4 w-4 shrink-0" />
           Bearbeitungsmodus aktiv
           <Button
@@ -209,8 +209,8 @@ export function MemberProfileClient({ member }: Props) {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
-                <User className="h-8 w-8 text-blue-600" />
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-info-100 to-info-50 flex items-center justify-center">
+                <User className="h-8 w-8 text-info-600" />
               </div>
               <div>
                 <CardTitle>{member.full_name}</CardTitle>
@@ -400,7 +400,7 @@ export function MemberProfileClient({ member }: Props) {
                 Verknüpfe dein Konto mit Familienmitgliedern (z.B. Kinder).
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Button variant="brand" size="sm" onClick={createFamily} disabled={familyLoading}>
+                <Button variant="primary" size="sm" onClick={createFamily} disabled={familyLoading}>
                   <Plus className="h-4 w-4 mr-1" /> Familie erstellen
                 </Button>
                 <div className="flex gap-2 flex-1">

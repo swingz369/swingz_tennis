@@ -325,8 +325,8 @@ export default function SuperadminOnboardingPage() {
 
             {createdClubId ? (
               <div className="text-center space-y-6 py-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
-                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 rounded-full">
+                  <CheckCircle2 className="w-8 h-8 text-success-600" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">

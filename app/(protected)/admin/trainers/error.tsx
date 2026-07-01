@@ -24,8 +24,8 @@ export default function TrainersError({
       <Card className="max-w-md w-full shadow-lg">
         <CardHeader>
           <div className="flex justify-center mb-4">
-            <div className="p-4 rounded-full bg-red-100 dark:bg-red-900/20">
-              <AlertTriangle className="h-10 w-10 text-red-600 dark:text-red-400" />
+            <div className="p-4 rounded-full bg-error-100 dark:bg-error-900/20">
+              <AlertTriangle className="h-10 w-10 text-error-600 dark:text-error-400" />
             </div>
           </div>
           <CardTitle className="text-2xl text-center">Fehler beim Laden</CardTitle>

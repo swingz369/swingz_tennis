@@ -79,14 +79,13 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
       {/* ── Hero Header ── */}
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-white/70 mb-1">Trainer-Bereich</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Willkommen zurück</h1>
+                <h1 className="text-2xl md:text-3xl font-bold font-display">Willkommen zurück</h1>
                 <p className="text-white/70 mt-2">
                   Deine Übersicht über Sessions, Anwesenheit und mehr
                 </p>
@@ -129,7 +128,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                   </p>
                   <p className="text-xs text-muted-foreground">alle Zeiten</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Calendar className="h-5 w-5" />
                 </div>
               </div>
@@ -186,7 +185,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                   </p>
                   <p className="text-xs text-muted-foreground">Quote</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CheckCircle className="h-5 w-5" />
                 </div>
               </div>

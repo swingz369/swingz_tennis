@@ -233,13 +233,14 @@ function SlotEditModal({
               Wochentag
             </span>
             <div role="group" aria-labelledby="slot-edit-day" className="flex gap-1">
-              {DAYS.map((d, i) => (
+              {/* Mo-Sa only — Sonntag ist kein Trainingstag (Vereinsrealität) */}
+              {DAYS.slice(0, 6).map((d, i) => (
                 <button
                   key={d}
-                  onClick={() => setDay(i + 1)}
+                  onClick={() => setDay(i)}
                   className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all
                     ${
-                      day === i + 1
+                      day === i
                         ? 'bg-brand-primary text-white shadow-sm'
                         : 'bg-muted dark:bg-muted text-muted-foreground hover:bg-muted/80 dark:hover:bg-muted/80'
                     }`}
@@ -444,18 +445,18 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
             </p>
           </div>
 
-          {/* Grid */}
+          {/* Grid — Mo-Sa only — Sonntag ist kein Trainingstag (Vereinsrealität) */}
           <div className="overflow-x-auto">
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: '56px repeat(7, 1fr)',
+                gridTemplateColumns: '56px repeat(6, 1fr)',
                 minWidth: '700px',
               }}
             >
               {/* Day headers */}
               <div className="h-9 border-b border-r border-border bg-muted/30" />
-              {DAYS.map((d) => (
+              {DAYS.slice(0, 6).map((d) => (
                 <div
                   key={d}
                   className="h-9 border-b border-r border-border bg-muted/30 flex items-center justify-center text-xs font-semibold text-muted-foreground"
@@ -473,8 +474,8 @@ export default function ScheduleGrid({ plan, onSlotMove, onSlotUpdate }: Schedul
                     <div className="min-h-[56px] border-b border-r border-border flex items-start justify-end pr-1.5 pt-1.5 bg-muted/20">
                       <span className="text-[11px] text-muted-foreground tabular-nums">{hour}</span>
                     </div>
-                    {/* Day cells */}
-                    {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                    {/* Day cells — index matches DayOfWeek convention (0=Mo..5=Sa) */}
+                    {[0, 1, 2, 3, 4, 5].map((day) => {
                       const cellId = `cell-${day}-${hour}`;
                       const slotsInCell = (cellMap.get(`${day}-${hour}`) ?? []).filter(
                         (s) => s.startTime >= hour && s.startTime < nextHour

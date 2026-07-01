@@ -264,7 +264,7 @@ export function PerfHistoryClient() {
                     <td className="py-2 pr-3 tabular-nums">
                       {new Date(p.timestamp).toLocaleString('de-DE')}
                     </td>
-                    <td className="py-2 pr-3 font-mono text-[11px]">{p.label}</td>
+                    <td className="py-2 pr-3 font-mono text-2xs">{p.label}</td>
                     <td className="py-2 pr-3 text-muted-foreground">{p.source}</td>
                     <td className="py-2 pr-3 tabular-nums text-right">{p.numMembers ?? '—'}</td>
                     <td className="py-2 pr-3 tabular-nums text-right font-semibold">

@@ -51,13 +51,13 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   pending:
-    'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30',
+    'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-800/30',
   confirmed:
-    'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30',
+    'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800/30',
   shipped:
     'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/30',
   cancelled:
-    'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30',
+    'text-error-600 dark:text-error-400 bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800/30',
 };
 
 const FILTER_TABS = [
@@ -183,14 +183,14 @@ export default function MeineBestellungenPage() {
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <Badge
-                            className={`text-[11px] px-1.5 py-0 border ${STATUS_COLORS[order.status]}`}
+                            className={`text-2xs px-1.5 py-0 border ${STATUS_COLORS[order.status]}`}
                           >
                             <StatusIcon className="h-3 w-3 mr-1 inline" />
                             {STATUS_LABELS[order.status] || order.status}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className={`text-[11px] px-1.5 py-0 ${
+                            className={`text-2xs px-1.5 py-0 ${
                               order.payment_status === 'paid'
                                 ? 'border-emerald-200 dark:border-emerald-800/30 text-emerald-600 dark:text-emerald-400'
                                 : 'border-border dark:border-white/10 text-muted-foreground'

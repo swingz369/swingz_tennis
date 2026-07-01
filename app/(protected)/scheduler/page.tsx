@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Clock, User } from 'lucide-react';
+import { Clock, User, MapPin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,37 +56,45 @@ export default function SchedulerPage() {
       ? 'Deine zugewiesenen Trainingseinheiten'
       : 'Dein Trainingsplan · Gebuchte Sessions sind markiert';
 
-  // For the grid: deduplicate by dayOfWeek+startTime — one representative card per slot
-  // Pick the next upcoming session for each slot as representative
+  // For the grid: collapse the many future weekly occurrences of the same
+  // recurring slot (day+time+court+group) into one representative card, but
+  // keep concurrent sessions on different courts/groups at the same day+time
+  // as separate cards — otherwise parallel trainings silently disappear.
   const slotMap = useMemo(() => {
     const now = new Date();
-    const map = new Map<string, Session>();
-    // Sort ascending so we pick the soonest upcoming session per slot
+    const representatives = new Map<string, Session>();
+    // Sort ascending so we pick the soonest upcoming occurrence as representative
     const sorted = [...allSessions].sort((a, b) =>
       (a.timeslotStart ?? '').localeCompare(b.timeslotStart ?? '')
     );
     for (const s of sorted) {
-      const key = `${s.dayOfWeek}-${s.startTime}`;
-      const existing = map.get(key);
+      const slotKey = `${s.dayOfWeek}-${s.startTime}-${s.courtId ?? 'none'}-${(s.groupIds ?? []).join(',')}`;
+      const existing = representatives.get(slotKey);
       if (!existing) {
-        map.set(key, s);
-      } else {
-        // Prefer upcoming over past
-        const sDate = s.timeslotStart ? new Date(s.timeslotStart) : null;
-        const existDate = existing.timeslotStart ? new Date(existing.timeslotStart) : null;
-        if (sDate && sDate >= now && (!existDate || existDate < now)) {
-          map.set(key, s);
-        }
+        representatives.set(slotKey, s);
+        continue;
+      }
+      const sDate = s.timeslotStart ? new Date(s.timeslotStart) : null;
+      const existDate = existing.timeslotStart ? new Date(existing.timeslotStart) : null;
+      if (sDate && sDate >= now && (!existDate || existDate < now)) {
+        representatives.set(slotKey, s);
       }
     }
-    return map;
+
+    const byDayTime = new Map<string, Session[]>();
+    for (const s of representatives.values()) {
+      const key = `${s.dayOfWeek}-${s.startTime}`;
+      const arr = byDayTime.get(key) ?? [];
+      arr.push(s);
+      byDayTime.set(key, arr);
+    }
+    return byDayTime;
   }, [allSessions]);
 
   const getSessionsForSlot = (dayIdx: number, time: string): Session[] => {
     // dayIdx 0=Mo ... 6=So → API dayOfWeek 1=Mo ... 7=So
     const dayOfWeek = dayIdx + 1;
-    const s = slotMap.get(`${dayOfWeek}-${time}`);
-    return s ? [s] : [];
+    return slotMap.get(`${dayOfWeek}-${time}`) ?? [];
   };
 
   const handleOptimize = async () => {
@@ -220,12 +228,13 @@ function SessionSlotCard({ session }: { session: Session }) {
       className={`p-1.5 rounded text-xs border ${
         session.bookedByUser
           ? 'bg-brand-light/15 border-brand-light/40 text-brand-light'
-          : 'bg-blue-50 border-blue-200 text-blue-800'
+          : 'bg-info-50 border-info-200 text-info-800'
       }`}
     >
       <div className="font-medium truncate">{session.trainerName || 'Trainer'}</div>
-      <div className="text-[10px] text-muted-foreground">
+      <div className="text-2xs text-muted-foreground truncate">
         {session.startTime}–{session.endTime}
+        {session.courtName && ` · ${session.courtName}`}
       </div>
       {session.bookedByUser && <div className="w-1.5 h-1.5 rounded-full bg-brand-light mt-0.5" />}
     </div>
@@ -268,6 +277,12 @@ function SessionCard({ session }: { session: Session }) {
           <User size={13} />
           <span>{session.trainerName || 'Trainer'}</span>
         </div>
+        {session.courtName && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MapPin size={13} />
+            <span>{session.courtName}</span>
+          </div>
+        )}
       </div>
       {session.groupNames && session.groupNames.length > 1 && (
         <div className="mt-2 flex flex-wrap gap-1">

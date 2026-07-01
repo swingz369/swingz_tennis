@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Building2, Users, Calendar, DollarSign, ArrowRight } from 'lucide-react';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { toast } from 'sonner';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('page:superadmin:tenants');
 
 interface ClubStats {
   id: string;
@@ -41,7 +44,7 @@ export default function SuperadminTenantsPage() {
         .order('name');
 
       if (error) {
-        console.error('Failed to fetch clubs:', error);
+        log.error('Failed to fetch clubs', error);
         toast.error('Fehler beim Laden der Vereine');
         return;
       }
@@ -80,7 +83,7 @@ export default function SuperadminTenantsPage() {
 
       setClubs(clubsWithStats);
     } catch (error) {
-      console.error('Tenant fetch error:', error);
+      log.error('Tenant fetch error', error);
       toast.error('Fehler beim Laden der Vereinsdaten');
     } finally {
       setLoading(false);
@@ -160,7 +163,7 @@ export default function SuperadminTenantsPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
-                      <div className="h-4 w-4 rounded-full bg-blue-500"></div>
+                      <div className="h-4 w-4 rounded-full bg-info-500"></div>
                       Sessions
                     </span>
                     <span className="font-bold text-lg">{club.active_sessions}</span>

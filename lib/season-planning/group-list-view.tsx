@@ -45,9 +45,9 @@ export default function GroupListView({
           {/* Day header */}
           <div className="flex items-center gap-3 px-5 py-3 bg-muted/50 border-b border-border">
             <div className="w-8 h-8 rounded-lg bg-brand-secondary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-              {DAYS[day - 1]}
+              {DAYS[day]}
             </div>
-            <h2 className="font-semibold text-foreground text-sm">{DAY_LABELS[day - 1]}</h2>
+            <h2 className="font-semibold text-foreground text-sm">{DAY_LABELS[day]}</h2>
             <span className="text-xs text-muted-foreground">
               {byDay[day].length} Gruppe{byDay[day].length > 1 ? 'n' : ''}
             </span>
@@ -118,7 +118,7 @@ export default function GroupListView({
                                 .filter((s) => s.id !== slot.id)
                                 .map((s) => (
                                   <SelectItem key={s.id} value={s.id}>
-                                    {s.groupName} · {DAYS[s.dayOfWeek - 1]} {s.startTime} ·{' '}
+                                    {s.groupName} · {DAYS[s.dayOfWeek]} {s.startTime} ·{' '}
                                     {s.trainerName}
                                   </SelectItem>
                                 ))}

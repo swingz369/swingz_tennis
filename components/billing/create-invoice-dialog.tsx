@@ -228,10 +228,10 @@ export default function CreateInvoiceDialog({ onSuccess, members }: CreateInvoic
                         </span>
                         {m.role && (
                           <span
-                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                            className={`text-2xs font-semibold px-1.5 py-0.5 rounded-full ${
                               m.role === 'trainer'
                                 ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-blue-100 text-blue-700'
+                                : 'bg-info-100 text-info-700'
                             }`}
                           >
                             {m.role === 'trainer' ? 'Trainer' : 'Mitglied'}

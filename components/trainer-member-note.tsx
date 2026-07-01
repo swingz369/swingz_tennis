@@ -131,7 +131,7 @@ export function TrainerMemberNote({ memberId, memberName, className }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <StickyNote className="h-4 w-4 text-brandPrimary shrink-0" />
+            <StickyNote className="h-4 w-4 text-brand-primary shrink-0" />
             <span className="font-semibold text-sm">Trainer-Notiz</span>
             {!loading && note && (
               <Badge

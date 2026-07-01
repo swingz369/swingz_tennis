@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/ui/stat-card';
 import { QuickActions } from '@/components/ui/quick-actions';
 import { MemberHeroActions } from '@/components/member-hero-actions';
+import { TennisBallEmptyState } from '@/components/ui/empty-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,16 +44,11 @@ export default async function MemberPage() {
 
   if (!membership) {
     return (
-      <div className="max-w-xl mx-auto py-12 text-center space-y-4">
-        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-muted mb-2">
-          <Sparkles className="h-7 w-7 text-muted-foreground" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground">Kein aktives Mitgliedschaft</h2>
-        <p className="text-sm text-muted-foreground">
-          Du bist aktuell keinem Verein zugeordnet. Bitte wende dich an den Administrator deines
-          Vereins.
-        </p>
-      </div>
+      <TennisBallEmptyState
+        title="Keine aktive Mitgliedschaft"
+        description="Du bist aktuell keinem Verein zugeordnet. Bitte wende dich an den Administrator deines Vereins."
+        size="md"
+      />
     );
   }
 
@@ -137,7 +133,7 @@ export default async function MemberPage() {
       {/* ── Greeting ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground dark:text-white">
+          <h1 className="text-2xl font-bold font-display text-foreground dark:text-white">
             Hallo, {firstName}!
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -165,7 +161,7 @@ export default async function MemberPage() {
                   </p>
                 </div>
                 {isToday(nextSession.timeslot_start) && (
-                  <span className="text-[11px] font-bold bg-white/25 text-white px-3 py-1 rounded-full">
+                  <span className="text-2xs font-bold bg-white/25 text-white px-3 py-1 rounded-full">
                     HEUTE
                   </span>
                 )}
@@ -276,7 +272,7 @@ export default async function MemberPage() {
                         {formatDate(b.session_start_time)} · {formatTime(b.session_start_time)}
                       </p>
                     </div>
-                    <Badge className="text-[11px] bg-green-50 text-green-700 border-green-200 font-medium">
+                    <Badge className="text-2xs bg-success-50 text-success-700 border-success-200 font-medium">
                       Bestätigt
                     </Badge>
                   </div>

@@ -1,17 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withAuth } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:tenants');
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, async (auth) => {
-    // Only superadmin can access tenant overview
-    if (auth.role !== 'superadmin') {
-      return NextResponse.json({ error: 'Superadmin access required' }, { status: 403 });
-    }
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'superadmin');
+    if (!hasPermission) return forbiddenResponse('Superadmin access required');
 
     const supabase = createClient();
 

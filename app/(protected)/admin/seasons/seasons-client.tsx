@@ -11,9 +11,9 @@ import {
   AlertCircle,
   CheckCircle,
   TrendingUp,
-  CalendarPlus,
   LayoutGrid,
 } from 'lucide-react';
+import { NoSeasonsBrandedEmptyState } from '@/components/ui/empty-state';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import type { PaginationMeta } from '@/lib/pagination';
@@ -124,25 +124,7 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
 
       {/* Seasons List */}
       {seasons.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
-            <CalendarPlus className="h-10 w-10 text-brand-light" />
-          </div>
-          <h3 className="text-xl font-semibold text-foreground dark:text-white">
-            Noch keine Spielzeit
-          </h3>
-          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 max-w-xs">
-            Erstelle deine erste Spielzeit um die Trainingsplanung zu starten
-          </p>
-          <Button
-            onClick={() => router.push('/admin/seasons/new')}
-            variant="brand"
-            className="mt-6 gap-2 px-6 py-2.5 h-auto rounded-xl font-medium"
-          >
-            <Plus className="h-4 w-4" />
-            Spielzeit erstellen
-          </Button>
-        </div>
+        <NoSeasonsBrandedEmptyState onCreate={() => router.push('/admin/seasons/new')} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {seasons.map((season) => (

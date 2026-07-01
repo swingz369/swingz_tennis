@@ -289,7 +289,7 @@ export default function TrainerProfilePage() {
           {isNotFound ? (
             <User className="h-8 w-8 text-muted-foreground" />
           ) : (
-            <XCircle className="h-8 w-8 text-red-400" />
+            <XCircle className="h-8 w-8 text-error-400" />
           )}
         </div>
         <div className="space-y-1">
@@ -333,11 +333,11 @@ export default function TrainerProfilePage() {
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 flex items-center justify-center shrink-0">
-                <User className="h-6 w-6 text-brandPrimary" />
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 flex items-center justify-center shrink-0">
+                <User className="h-6 w-6 text-brand-primary" />
               </div>
               <div className="min-w-0">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
@@ -364,7 +364,7 @@ export default function TrainerProfilePage() {
 
         {/* ── Editing Banner ──────────────────────────────────────────── */}
         {isEditing && (
-          <div className="flex items-center gap-2 px-5 py-2 bg-brandAccent/5 border-b border-brandAccent/20 text-sm text-brandAccent">
+          <div className="flex items-center gap-2 px-5 py-2 bg-brand-accent/5 border-b border-brand-accent/20 text-sm text-brand-accent">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>
               Bearbeitungsmodus aktiv — Änderungen werden erst nach Klick auf &quot;Speichern&quot;
@@ -387,20 +387,20 @@ export default function TrainerProfilePage() {
             <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Profil
               </TabsTrigger>
               <TabsTrigger
                 value="rates"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Honorar
               </TabsTrigger>
               {profile.qualifications && profile.qualifications.length > 0 && (
                 <TabsTrigger
                   value="qualifications"
-                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
                 >
                   Qualifikationen ({profile.qualifications.length})
                 </TabsTrigger>
@@ -412,7 +412,7 @@ export default function TrainerProfilePage() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brandPrimary" />
+                    <User className="h-4 w-4 text-brand-primary" />
                     Persönliche Informationen
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -501,7 +501,7 @@ export default function TrainerProfilePage() {
                 <Card variant="bordered">
                   <CardContent className="p-5">
                     <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                      <Globe className="h-4 w-4 text-brandPrimary" />
+                      <Globe className="h-4 w-4 text-brand-primary" />
                       Sprachen
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -520,7 +520,7 @@ export default function TrainerProfilePage() {
                 <Card variant="bordered">
                   <CardContent className="p-5">
                     <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                      <Briefcase className="h-4 w-4 text-brandAccent" />
+                      <Briefcase className="h-4 w-4 text-brand-accent" />
                       Spezialisierungen
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -540,7 +540,7 @@ export default function TrainerProfilePage() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <Euro className="h-4 w-4 text-brandAccent" />
+                    <Euro className="h-4 w-4 text-brand-accent" />
                     Honorar
                   </h3>
 
@@ -560,7 +560,7 @@ export default function TrainerProfilePage() {
                           <span className="text-muted-foreground">Nicht festgelegt</span>
                         )}
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         Vertraglich vereinbart. Wird von deinem Admin verwaltet.
                       </p>
                     </div>
@@ -593,14 +593,14 @@ export default function TrainerProfilePage() {
                           {saving ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : saved ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-300" />
+                            <CheckCircle2 className="h-4 w-4 text-success-300" />
                           ) : (
                             <Save className="h-4 w-4" />
                           )}
                           {saving ? 'Speichern…' : saved ? 'Gespeichert' : 'Speichern'}
                         </Button>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         Dein Satz für Zusatzstunden außerhalb des Regelvertrags. Du kannst diesen
                         selbst anpassen.
                       </p>
@@ -616,7 +616,7 @@ export default function TrainerProfilePage() {
                 <Card variant="bordered">
                   <CardContent className="p-5">
                     <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                      <Briefcase className="h-4 w-4 text-brandPrimary" />
+                      <Briefcase className="h-4 w-4 text-brand-primary" />
                       Qualifikationen ({profile.qualifications.length})
                     </h3>
                     <div className="space-y-2">

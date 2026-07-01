@@ -48,7 +48,7 @@ export function SubscribeButton({
 
   return (
     <Button
-      variant={primary ? 'brand' : 'outline'}
+      variant={primary ? 'primary' : 'outline'}
       className="w-full"
       disabled={loading}
       onClick={handleClick}

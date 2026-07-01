@@ -60,21 +60,25 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
         },
         {
           key: 'trainer_avail',
-          label: `${availCount ?? 0} Trainer-Verfügbarkeiten`,
+          label: `${availCount ?? 0} Trainer-Präferenzen`,
           count: availCount ?? 0,
-          required: 1,
-          status: (availCount ?? 0) >= 1 ? 'ok' : 'error',
-          hint: `${trainerCount ?? 0} Trainer vorhanden — aber noch keine Verfügbarkeiten. Trainer unter Admin → Trainer eintragen.`,
-          link: '/admin/trainers',
-          linkLabel: 'Trainer verwalten',
+          required: 0,
+          status: (availCount ?? 0) >= 1 ? 'ok' : 'warn',
+          hint: `${trainerCount ?? 0} Trainer vorhanden. ${
+            (availCount ?? 0) === 0
+              ? 'Ohne Planungspräferenzen nutzt der Algorithmus Mo–Fr 8–22 Uhr als Fallback. Trainer können Präferenzen unter Trainer → Planungspräferenzen eintragen.'
+              : `${(trainerCount ?? 0) - (availCount ?? 0)} Trainer ohne Präferenzen — Fallback Mo–Fr 8–22 Uhr wird verwendet.`
+          }`,
+          link: '/trainer/planning-preferences',
+          linkLabel: 'Planungspräferenzen (Trainer)',
         },
         {
           key: 'courts',
-          label: `${courtCount ?? 0} Aktive Plätze`,
+          label: `${courtCount ?? 0} Plätze für Trainingsplanung`,
           count: courtCount ?? 0,
           required: 1,
           status: (courtCount ?? 0) >= 1 ? 'ok' : 'error',
-          hint: 'Lege mindestens einen aktiven Platz an.',
+          hint: 'Lege mindestens einen aktiven, für die Trainingsplanung freigegebenen Platz an.',
           link: '/admin/courts',
           linkLabel: 'Plätze verwalten',
         },
@@ -185,11 +189,15 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
                   )}
                   {item.label}
                 </p>
-                <p className="text-xs leading-relaxed text-red-700">{item.hint}</p>
+                <p
+                  className={`text-xs leading-relaxed ${item.status === 'warn' ? 'text-amber-700' : 'text-red-700'}`}
+                >
+                  {item.hint}
+                </p>
                 {item.link && (
                   <a
                     href={item.link}
-                    className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-red-700"
+                    className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${item.status === 'warn' ? 'text-amber-700' : 'text-red-700'}`}
                   >
                     {item.linkLabel} <ArrowRight className="w-3 h-3" />
                   </a>

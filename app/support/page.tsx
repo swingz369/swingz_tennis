@@ -75,8 +75,8 @@ const CHANNELS = [
     description: '+49 123 4567890',
     note: 'Für Enterprise-Kunden',
     href: 'tel:+491234567890',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
+    color: 'text-info-600',
+    bg: 'bg-info-50',
   },
 ];
 
@@ -167,21 +167,21 @@ export default function SupportPage() {
               title="Über uns"
               description="Vollständige Anleitungen, API-Referenz und Best Practices."
               href="/about"
-              color="bg-blue-50 text-blue-600"
+              color="bg-info-50 text-info-600"
             />
             <ResourceCard
               icon={<BookOpen className="h-5 w-5" />}
               title="Über SWINGZ"
               description="Erfahre mehr über unsere Mission und unser Team."
               href="/about"
-              color="bg-green-50 text-green-600"
+              color="bg-success-50 text-success-600"
             />
             <ResourceCard
               icon={<Bug className="h-5 w-5" />}
               title="Bug melden"
               description="Hast du einen Fehler gefunden? Sag uns Bescheid."
               href="mailto:bugs@swingz.cloud"
-              color="bg-red-50 text-red-600"
+              color="bg-error-50 text-error-600"
             />
           </div>
         </div>

@@ -187,7 +187,7 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
                 style={{ backgroundColor: g.color }}
               >
                 {g.name}
-                {g.level && <span className="opacity-75 text-[10px]">· {g.level}</span>}
+                {g.level && <span className="opacity-75 text-2xs">· {g.level}</span>}
               </div>
             ))}
           </div>
@@ -234,7 +234,7 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
               >
                 {d}
                 {occupiedRowsByDay[i] && occupiedRowsByDay[i].size > 0 && (
-                  <span className="ml-1.5 inline-flex items-center justify-center min-w-[20px] h-4 px-1 rounded-full bg-brand-light/15 text-brand-light text-[10px] tabular-nums">
+                  <span className="ml-1.5 inline-flex items-center justify-center min-w-[20px] h-4 px-1 rounded-full bg-brand-light/15 text-brand-light text-2xs tabular-nums">
                     {occupiedRowsByDay[i].size}
                   </span>
                 )}
@@ -251,7 +251,7 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
               return (
                 <div key={row.label} className="contents">
                   <div
-                    className={`p-1.5 text-[10px] tabular-nums text-right text-muted-foreground border-r border-b border-border/40 dark:border-white/5 sticky left-0 bg-card z-10 ${
+                    className={`p-1.5 text-2xs tabular-nums text-right text-muted-foreground border-r border-b border-border/40 dark:border-white/5 sticky left-0 bg-card z-10 ${
                       row.minute === 30 ? 'opacity-60' : 'font-medium'
                     }`}
                     style={{ minHeight: 32 }}
@@ -262,38 +262,46 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
                     const slot = grid.get(`${dayIdx}-${rowIdx}`);
                     const showHourBg = row.minute === 0;
                     if (slot && slot.length > 0) {
-                      const s = slot[0];
-                      const rows = durationRows(s);
+                      // Mehrere Slots zur gleichen Zeit (z.B. verschiedene Plätze/Gruppen)
+                      // nebeneinander zeigen statt nur den ersten — sonst verschwinden
+                      // parallele Trainings im Raster.
+                      const rows = Math.max(...slot.map(durationRows));
                       return (
                         <div
                           key={`${dayIdx}-${rowIdx}`}
-                          className="border-r border-b border-border/40 dark:border-white/5 p-1 relative"
-                          style={{
-                            minHeight: 32,
-                            gridRow: `span ${rows}`,
-                            backgroundColor: `${s.group_color}1A`,
-                            borderLeft: `3px solid ${s.group_color}`,
-                          }}
-                          title={`${s.group_name} · ${s.trainer_name} · ${s.start_time}-${s.end_time}`}
+                          className="border-r border-b border-border/40 dark:border-white/5 p-1 flex gap-0.5"
+                          style={{ minHeight: 32, gridRow: `span ${rows}` }}
                         >
-                          <div
-                            className="text-[10px] font-semibold leading-tight truncate"
-                            style={{ color: s.group_color }}
-                          >
-                            {s.group_name}
-                          </div>
-                          <div className="text-[10px] text-foreground/80 tabular-nums">
-                            {s.start_time}–{s.end_time}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground truncate">
-                            {s.trainer_name}
-                            {s.court_name && ` · ${s.court_name}`}
-                          </div>
-                          {rows > 1 && (
-                            <div className="text-[10px] text-muted-foreground mt-0.5">
-                              {s.member_count} TN
+                          {slot.map((s) => (
+                            <div
+                              key={s.id}
+                              className="flex-1 min-w-0 rounded p-1 relative"
+                              style={{
+                                backgroundColor: `${s.group_color}1A`,
+                                borderLeft: `3px solid ${s.group_color}`,
+                              }}
+                              title={`${s.group_name} · ${s.trainer_name} · ${s.court_name ?? 'kein Platz'} · ${s.start_time}-${s.end_time}`}
+                            >
+                              <div
+                                className="text-2xs font-semibold leading-tight truncate"
+                                style={{ color: s.group_color }}
+                              >
+                                {s.group_name}
+                              </div>
+                              <div className="text-2xs text-foreground/80 tabular-nums">
+                                {s.start_time}–{s.end_time}
+                              </div>
+                              <div className="text-2xs text-muted-foreground truncate">
+                                {s.trainer_name}
+                                {s.court_name && ` · ${s.court_name}`}
+                              </div>
+                              {durationRows(s) > 1 && (
+                                <div className="text-2xs text-muted-foreground mt-0.5">
+                                  {s.member_count} TN
+                                </div>
+                              )}
                             </div>
-                          )}
+                          ))}
                         </div>
                       );
                     }

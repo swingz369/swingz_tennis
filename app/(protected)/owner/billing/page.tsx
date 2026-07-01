@@ -110,7 +110,7 @@ export default async function OwnerBillingPage() {
               Icon: Building2,
               color: 'text-indigo-600',
             },
-            { label: 'Aktive Abos', value: active, Icon: CheckCircle, color: 'text-green-600' },
+            { label: 'Aktive Abos', value: active, Icon: CheckCircle, color: 'text-success-600' },
             {
               label: 'Premium-Pläne',
               value: rows.filter(({ admin }) =>

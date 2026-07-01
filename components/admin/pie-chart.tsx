@@ -200,7 +200,7 @@ export function PieChart({
             <span className="text-sm font-bold tabular-nums text-foreground">{centerLabel}</span>
           )}
           {centerSubLabel && (
-            <span className="text-[10px] text-muted-foreground">{centerSubLabel}</span>
+            <span className="text-2xs text-muted-foreground">{centerSubLabel}</span>
           )}
         </div>
       )}

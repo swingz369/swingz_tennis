@@ -172,13 +172,13 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
                     style={{ width: `${myWinPct}%` }}
                   />
                   <div
-                    className="h-full bg-red-400 transition-all"
+                    className="h-full bg-error-400 transition-all"
                     style={{ width: `${oppWinPct}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span className="text-emerald-600 dark:text-emerald-400">{myWinPct}% Ich</span>
-                  <span className="text-red-500 dark:text-red-400">
+                  <span className="text-error-500 dark:text-error-400">
                     {oppWinPct}% {opponent.full_name || opponent.email}
                   </span>
                 </div>
@@ -211,7 +211,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
                             match.outcome === 'win' &&
                               'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
                             match.outcome === 'loss' &&
-                              'border-red-400 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300',
+                              'border-error-400 bg-error-50 text-error-700 dark:bg-error-950 dark:text-error-300',
                             match.outcome === 'draw' &&
                               'border-muted-foreground text-muted-foreground'
                           )}

@@ -217,7 +217,7 @@ export function LogoUpload({
             className="hidden"
             onChange={handleFileChange}
           />
-          <p className="text-[11px] text-muted-foreground mt-1">JPG, PNG, WebP, SVG · Max. 2 MB</p>
+          <p className="text-2xs text-muted-foreground mt-1">JPG, PNG, WebP, SVG · Max. 2 MB</p>
         </TabsContent>
 
         <TabsContent value="url" className="mt-2">

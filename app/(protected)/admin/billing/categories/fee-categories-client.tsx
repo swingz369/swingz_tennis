@@ -350,7 +350,7 @@ export default function FeeCategoriesClient({
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full ${
                             cat.is_active
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-success-100 text-success-700'
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >
@@ -368,7 +368,7 @@ export default function FeeCategoriesClient({
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                          className="h-8 w-8 text-error-500 hover:text-error-600 hover:bg-error-50"
                           onClick={() => handleDelete(cat.id, cat.name)}
                           disabled={deletingId === cat.id}
                           aria-label={`${cat.name} löschen`}

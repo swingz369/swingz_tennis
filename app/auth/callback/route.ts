@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/infrastructure/external/supabase/server';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('api:auth:callback');
 
 // GET /auth/callback – Supabase Auth callback handler
 //
@@ -31,7 +34,7 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    console.error('Auth callback error:', error);
+    log.error('Auth callback error', error);
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`);
   }
 

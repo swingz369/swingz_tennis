@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Increase timeout for dynamic imports of route modules (Next.js compilation overhead)
 vi.setConfig({ hookTimeout: 30000, testTimeout: 15000 });
@@ -138,12 +138,14 @@ afterEach(() => {
 
 // ── Helper ───────────────────────────────────────────────────
 function buildRequest(method: string, body?: unknown, url = 'http://localhost:3000'): NextRequest {
-  const init: RequestInit = { method };
+  // Cast to unknown-then-NextRequest's init: Next.js augments RequestInit with
+  // `next` config fields, but we don't use them here.
+  const init: Record<string, unknown> = { method };
   if (body !== undefined) {
     init.body = JSON.stringify(body);
-    (init.headers as Record<string, string>) = { 'Content-Type': 'application/json' };
+    init.headers = { 'Content-Type': 'application/json' };
   }
-  return new NextRequest(new URL(url), init);
+  return new NextRequest(new URL(url), init as unknown as ConstructorParameters<typeof NextRequest>[1]);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -213,7 +215,6 @@ describe('POST /api/public/register', () => {
   });
 
   it('returns 201 on successful registration', async () => {
-    const insertedData: unknown = null;
     const qb = createMockQueryBuilder({
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       insert: vi.fn().mockReturnValue({
@@ -251,7 +252,7 @@ describe('POST /api/public/register', () => {
     let inserted = false;
     const qb = createMockQueryBuilder({
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-      insert: vi.fn().mockImplementation((data: unknown) => {
+      insert: vi.fn().mockImplementation((_data: unknown) => {
         inserted = true;
         return qb;
       }),
@@ -274,11 +275,13 @@ describe('POST /api/public/register', () => {
 // 2.  GET /api/admin/approvals
 // ════════════════════════════════════════════════════════════
 describe('GET /api/admin/approvals', () => {
-  let GET: (req?: NextRequest) => Promise<Response>;
+  // Wider type: route handlers return NextResponse<unknown> which TS treats as
+  // not strictly assignable to Response due to generic variance.
+  let GET: (req?: NextRequest) => Promise<NextResponse<unknown>>;
 
   beforeAll(async () => {
     const mod = await import('@/app/api/admin/approvals/route');
-    GET = mod.GET;
+    GET = mod.GET as unknown as (req?: NextRequest) => Promise<NextResponse<unknown>>;
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -332,11 +335,11 @@ describe('GET /api/admin/approvals', () => {
 // 3.  PATCH /api/admin/approvals
 // ════════════════════════════════════════════════════════════
 describe('PATCH /api/admin/approvals', () => {
-  let PATCH: (req: NextRequest) => Promise<Response>;
+  let PATCH: (req: NextRequest) => Promise<NextResponse<unknown>>;
 
   beforeAll(async () => {
     const mod = await import('@/app/api/admin/approvals/route');
-    PATCH = mod.PATCH;
+    PATCH = mod.PATCH as unknown as (req: NextRequest) => Promise<NextResponse<unknown>>;
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -408,7 +411,9 @@ describe('GET /api/shop', () => {
 
   beforeAll(async () => {
     const mod = await import('@/app/api/shop/route');
-    GET = mod.GET;
+    // The production GET has a stricter (NextRequest) signature than the
+    // test's declared (Request) signature — cast is intentional.
+    GET = mod.GET as unknown as (req?: NextRequest) => Promise<Response>;
   });
 
   it('returns 200 with products array', async () => {
@@ -701,11 +706,11 @@ describe('GET /api/coupons', () => {
 // 7.  GET /api/gamification
 // ════════════════════════════════════════════════════════════
 describe('GET /api/gamification', () => {
-  let GET: () => Promise<Response>;
+  let GET: (req?: NextRequest) => Promise<NextResponse<unknown>>;
 
   beforeAll(async () => {
     const mod = await import('@/app/api/gamification/route');
-    GET = mod.GET;
+    GET = mod.GET as unknown as (req?: NextRequest) => Promise<NextResponse<unknown>>;
   });
 
   it('returns 401 when not authenticated', async () => {

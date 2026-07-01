@@ -14,7 +14,18 @@ export default defineConfig({
       'tests/unit/**/*.test.{ts,tsx}',
       'e2e/**/*.test.ts',
     ],
-    exclude: ['node_modules/**', '.next/**', '.claude/**'],
+    exclude: [
+      'node_modules/**',
+      '.next/**',
+      // `.claude/` and its worktree subdirectories contain parallel-agent
+      // working copies of the same test files. Without these patterns,
+      // `npx vitest bench <file>` still discovers and runs the worktree
+      // copies, producing NaN measurements and polluting `.bench-results.json`.
+      '.claude/**',
+      '**/.claude/**',
+      '**/worktrees/**',
+      '**/agent-*/**',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

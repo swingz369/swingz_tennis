@@ -113,6 +113,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         currentAssignedHours: number;
         availableSlots: number;
         utilizationStatus: 'under' | 'optimal' | 'near_limit' | 'over';
+        hasSubmittedPreferences: boolean;
       }> = [];
       const processedTrainerIds = new Set<string>();
 
@@ -151,6 +152,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           currentAssignedHours: hoursAssigned,
           availableSlots,
           utilizationStatus,
+          hasSubmittedPreferences: true,
         });
       });
 
@@ -188,6 +190,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           currentAssignedHours: hoursAssigned,
           availableSlots,
           utilizationStatus,
+          hasSubmittedPreferences: false,
         });
       }
 

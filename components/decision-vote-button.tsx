@@ -92,7 +92,7 @@ export function DecisionVoteButton({
         variant={isSelected('for') ? 'default' : 'ghost'}
         disabled={disabled || pending}
         onClick={() => castVote('for')}
-        className={cn('gap-1.5', isSelected('for') && 'bg-green-600 hover:bg-green-700 text-white')}
+        className={cn('gap-1.5', isSelected('for') && 'bg-success-600 hover:bg-success-700 text-white')}
         aria-pressed={isSelected('for')}
       >
         {pending && vote?.choice === 'for' ? (
@@ -108,7 +108,7 @@ export function DecisionVoteButton({
         variant={isSelected('against') ? 'default' : 'ghost'}
         disabled={disabled || pending}
         onClick={() => castVote('against')}
-        className={cn('gap-1.5', isSelected('against') && 'bg-red-600 hover:bg-red-700 text-white')}
+        className={cn('gap-1.5', isSelected('against') && 'bg-error-600 hover:bg-error-700 text-white')}
         aria-pressed={isSelected('against')}
       >
         {pending && vote?.choice === 'against' ? (

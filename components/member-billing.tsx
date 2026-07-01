@@ -172,7 +172,7 @@ export default function MemberBilling() {
     if (status === 'paid') {
       return {
         label: 'Bezahlt',
-        color: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+        color: 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-400',
         isPaid: true,
       };
     }
@@ -186,7 +186,7 @@ export default function MemberBilling() {
     if (invoice.dueDate && invoice.dueDate < now) {
       return {
         label: 'Überfällig',
-        color: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+        color: 'bg-error-100 text-error-700 dark:bg-error-900/20 dark:text-error-400',
         isPaid: false,
       };
     }
@@ -225,8 +225,8 @@ export default function MemberBilling() {
     return (
       <div className="p-4 md:p-6">
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center mb-4">
-            <AlertCircle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          <div className="h-16 w-16 rounded-2xl bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center mb-4">
+            <AlertCircle className="h-8 w-8 text-warning-600 dark:text-warning-400" />
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">Zugang eingeschränkt</h2>
           <p className="text-muted-foreground max-w-md">
@@ -252,7 +252,6 @@ export default function MemberBilling() {
       {/* ── Hero Header ── */}
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
@@ -311,7 +310,7 @@ export default function MemberBilling() {
                   </p>
                   <p className="text-xs text-muted-foreground">{monthSessions.length} Sessions</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Calendar className="h-5 w-5" />
                 </div>
               </div>
@@ -330,7 +329,7 @@ export default function MemberBilling() {
                   </p>
                   <p className="text-xs text-muted-foreground">{openCount} Rechnungen</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-warning-500 to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CreditCard className="h-5 w-5" />
                 </div>
               </div>
@@ -349,7 +348,7 @@ export default function MemberBilling() {
                   </p>
                   <p className="text-xs text-muted-foreground">{paidCount} Rechnungen</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
               </div>
@@ -420,10 +419,10 @@ export default function MemberBilling() {
               <>
                 <div className="grid gap-3">
                   {membershipCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-info-50 dark:bg-info-950/30 border border-info-200 dark:border-info-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40">
-                          <CreditCard className="h-4 w-4 text-blue-600" />
+                        <div className="p-2 rounded-lg bg-info-100 dark:bg-info-900/40">
+                          <CreditCard className="h-4 w-4 text-info-600" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">Mitgliedsbeitrag</div>
@@ -434,10 +433,10 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {trainingCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-success-50 dark:bg-success-950/30 border border-success-200 dark:border-success-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/40">
-                          <Calendar className="h-4 w-4 text-green-600" />
+                        <div className="p-2 rounded-lg bg-success-100 dark:bg-success-900/40">
+                          <Calendar className="h-4 w-4 text-success-600" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">Training</div>
@@ -558,10 +557,10 @@ export default function MemberBilling() {
         </CardContent>
       </Card>
       {/* Payment Info */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-info-50 border-info-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-blue-600" />
+            <AlertCircle className="h-5 w-5 text-info-600" />
             Zahlungsinformationen
           </CardTitle>
         </CardHeader>

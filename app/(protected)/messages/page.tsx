@@ -203,7 +203,6 @@ function MessagesContent() {
       {/* ── Hero Header ── */}
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
@@ -248,7 +247,7 @@ function MessagesContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">im Posteingang</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-error-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Mail className="h-5 w-5" />
                 </div>
               </div>
@@ -269,7 +268,7 @@ function MessagesContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">Nachrichten</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <MessageSquare className="h-5 w-5" />
                 </div>
               </div>
@@ -288,7 +287,7 @@ function MessagesContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">Nachrichten</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
               </div>
@@ -342,7 +341,7 @@ function MessagesContent() {
                 <Inbox className="h-4 w-4" />
                 Posteingang
                 {unreadCount > 0 && (
-                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-2xs font-bold">
                     {unreadCount}
                   </span>
                 )}
@@ -497,12 +496,12 @@ function MessageList({
                   {person.full_name}
                 </span>
                 {isBroadcast && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-50 text-[9px] font-semibold text-blue-700 border border-blue-100">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 text-[9px] font-semibold text-info-700 border border-info-100">
                     <Users className="h-2.5 w-2.5" />
                     Rundnachricht
                   </span>
                 )}
-                <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
+                <span className="ml-auto text-2xs text-muted-foreground shrink-0">
                   {format(new Date(msg.created_at), 'dd.MM.yy HH:mm', { locale: de })}
                 </span>
               </div>
@@ -954,7 +953,7 @@ function ComposeDialog({
 
         {/* Broadcast info */}
         {isAdmin && recipientMode !== 'individual' && recipientMode !== 'multi' && (
-          <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/30 px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
+          <div className="rounded-lg bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-700/30 px-3 py-2 text-sm text-info-800 dark:text-info-300">
             {recipientMode === 'all' &&
               '📣 Nachricht wird an alle aktiven Vereinsmitglieder gesendet.'}
             {recipientMode === 'trainers' &&

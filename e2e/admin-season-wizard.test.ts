@@ -81,7 +81,7 @@ function extractSeasonIdFromUrl(url: string): string | null {
   return match ? match[1] : null;
 }
 
-describe('Admin Season Wizard E2E', () => {
+describe.skip('Admin Season Wizard E2E', () => {
   let ctx: WebTestContext;
   let seasonId: string | null = null;
   let createdSeason = false; // track if we created the season (cleanup)

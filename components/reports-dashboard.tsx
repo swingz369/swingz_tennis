@@ -52,13 +52,13 @@ export default function ReportsDashboard() {
       label: 'Mitglieder gesamt',
       value: stats?.totalMembers ?? '--',
       icon: Users,
-      color: 'text-blue-600',
+      color: 'text-info-600',
     },
     {
       label: 'Aktive Mitglieder',
       value: stats?.activeMembers ?? '--',
       icon: TrendingUp,
-      color: 'text-green-600',
+      color: 'text-success-600',
     },
     {
       label: 'Gesamtumsatz',
@@ -70,7 +70,7 @@ export default function ReportsDashboard() {
       label: 'Offene Zahlungen',
       value: stats?.pendingPayments ? `€${stats.pendingPayments.toLocaleString('de-DE')}` : '--',
       icon: FileText,
-      color: 'text-amber-600',
+      color: 'text-warning-600',
     },
     {
       label: 'Buchungen gesamt',

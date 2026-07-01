@@ -15,8 +15,8 @@ export function NavigationBadge({ count, variant = 'default', className }: Navig
 
   const variantStyles = {
     default: 'bg-brand-light text-white',
-    warning: 'bg-amber-500 text-white',
-    danger: 'bg-red-500 text-white',
+    warning: 'bg-warning-500 text-white',
+    danger: 'bg-error-500 text-white',
   };
 
   return (

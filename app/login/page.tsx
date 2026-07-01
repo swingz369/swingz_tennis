@@ -213,8 +213,8 @@ export default function LoginPage() {
               </div>
 
               {error && (
-                <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600 border border-red-100 animate-scale-in flex items-start gap-3">
-                  <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-400" />
+                <div className="rounded-xl bg-error-50 p-4 text-sm text-error-600 border border-error-100 animate-scale-in flex items-start gap-3">
+                  <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-error-400" />
                   <span>{error}</span>
                 </div>
               )}

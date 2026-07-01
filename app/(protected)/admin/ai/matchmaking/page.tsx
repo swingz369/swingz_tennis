@@ -26,10 +26,10 @@ const levelLabels: Record<string, string> = {
 };
 
 const levelColors: Record<string, string> = {
-  beginner: 'from-green-500 to-emerald-600',
+  beginner: 'from-success-500 to-emerald-600',
   advanced_beginner: 'from-cyan-500 to-teal-600',
-  intermediate: 'from-amber-500 to-orange-600',
-  advanced: 'from-orange-500 to-red-600',
+  intermediate: 'from-warning-500 to-orange-600',
+  advanced: 'from-orange-500 to-error-600',
   tournament: 'from-purple-500 to-violet-600',
 };
 
@@ -84,8 +84,7 @@ export default function MatchmakingPage() {
     <div className="space-y-6">
       {/* ── Hero Header ── */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-info-600 via-indigo-600 to-purple-700 p-6 md:p-8 text-white">
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-purple-400/10 blur-3xl" />
           <div className="relative">
@@ -132,7 +131,7 @@ export default function MatchmakingPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">potenzielle Partner</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Shuffle className="h-5 w-5" />
                 </div>
               </div>
@@ -151,7 +150,7 @@ export default function MatchmakingPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">Durchschnitts-Score</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Target className="h-5 w-5" />
                 </div>
               </div>

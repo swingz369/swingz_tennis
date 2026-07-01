@@ -44,7 +44,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   court_maintenance: {
     label: 'Platzpflege',
     icon: Wrench,
-    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
   },
   event_support: {
     label: 'Veranstaltung',
@@ -54,7 +54,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   bar_duty: {
     label: 'Schankdienst',
     icon: GlassWater,
-    color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
   },
   cleaning: {
     label: 'Reinigung',
@@ -64,7 +64,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   coaching_assist: {
     label: 'Trainerhilfe',
     icon: Users,
-    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
   },
   other: {
     label: 'Sonstiges',
@@ -196,7 +196,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
       <div className="grid grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-info-600">
               {myDuties.filter((d) => getMyAssignmentStatus(d) === 'assigned').length}
             </p>
             <p className="text-xs text-muted-foreground">Anstehend</p>
@@ -204,7 +204,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-success-600">
               {myDuties.filter((d) => getMyAssignmentStatus(d) === 'completed').length}
             </p>
             <p className="text-xs text-muted-foreground">Erledigt</p>
@@ -212,7 +212,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-amber-600">{availableDuties.length}</p>
+            <p className="text-2xl font-bold text-warning-600">{availableDuties.length}</p>
             <p className="text-xs text-muted-foreground">Freiwillige Plätze</p>
           </CardContent>
         </Card>
@@ -292,8 +292,8 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                             <Badge
                               className={`${
                                 myStatus === 'completed'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                  ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
+                                  : 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300'
                               } text-xs gap-1`}
                             >
                               {myStatus === 'completed' ? (
@@ -315,7 +315,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(duty.scheduled_date)}
-                          {isPast && <span className="text-red-500 ml-1">(vergangen)</span>}
+                          {isPast && <span className="text-error-500 ml-1">(vergangen)</span>}
                         </div>
                       )}
                       {duty.start_time && (
@@ -350,7 +350,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                       <>
                         <Button
                           size="sm"
-                          className="gap-1.5 bg-green-600 hover:bg-green-700"
+                          className="gap-1.5 bg-success-600 hover:bg-success-700"
                           onClick={() => handleMarkComplete(duty.id)}
                           disabled={isLoading}
                         >
@@ -360,7 +360,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="gap-1.5 text-red-600 hover:text-red-700"
+                          className="gap-1.5 text-error-600 hover:text-error-700"
                           onClick={() => handleWithdraw(duty.id)}
                           disabled={isLoading}
                         >
@@ -371,7 +371,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                     )}
 
                     {activeTab === 'my_duties' && myStatus === 'completed' && (
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs gap-1">
+                      <Badge className="bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300 text-xs gap-1">
                         <CheckCircle2 className="h-3 w-3" />
                         Erledigt — Vielen Dank!
                       </Badge>

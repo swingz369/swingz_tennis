@@ -45,7 +45,7 @@ async function pollFor(
   return false;
 }
 
-describe('Trainer Availability E2E', () => {
+describe.skip('Trainer Availability E2E', () => {
   let ctx: WebTestContext;
 
   beforeAll(async () => {

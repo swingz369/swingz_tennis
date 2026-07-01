@@ -113,15 +113,15 @@ export default async function SuperadminPage() {
             label: 'Aktive Mitgliedschaften',
             value: activeMembers ?? 0,
             icon: Activity,
-            color: 'text-green-600',
-            bg: 'bg-green-50 dark:bg-green-900/20',
+            color: 'text-success-600',
+            bg: 'bg-success-50 dark:bg-success-900/20',
           },
           {
             label: 'Aktive Trainer',
             value: totalTrainers ?? 0,
             icon: GraduationCap,
-            color: 'text-amber-600',
-            bg: 'bg-amber-50 dark:bg-amber-900/20',
+            color: 'text-warning-600',
+            bg: 'bg-warning-50 dark:bg-warning-900/20',
           },
         ].map((stat) => (
           <Card key={stat.label} className="border-0 shadow-sm">

@@ -232,10 +232,10 @@ export function CourtBookings({ clubId }: Props) {
                             court.surface_type === 'clay'
                               ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
                               : court.surface_type === 'grass'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
                                 : court.surface_type === 'artificial_grass'
                                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                  : 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300'
                           }`}
                         >
                           {court.surface_type === 'clay' || court.surface_type === 'grass' ? (
@@ -293,9 +293,9 @@ export function CourtBookings({ clubId }: Props) {
           </div>
         )}
 
-        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Buchungsregeln</h4>
-          <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
+        <div className="bg-info-50 dark:bg-info-950 border border-info-200 dark:border-info-800 rounded-lg p-4">
+          <h4 className="font-medium text-info-900 dark:text-info-100 mb-2">Buchungsregeln</h4>
+          <ul className="text-sm text-info-700 dark:text-info-200 space-y-1">
             <li>• Buchungsdauer wählbar: 30, 60 oder 90 Minuten</li>
             <li>• Buchungen bis zu 7 Tage im Voraus möglich</li>
             <li>• Kostenlose Stornierung bis 24h vor Beginn</li>

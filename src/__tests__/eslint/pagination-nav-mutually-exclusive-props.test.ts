@@ -7,6 +7,7 @@
  * <PaginationNav> with both `buildUrl` and `onPageChange` props.
  */
 import { RuleTester } from 'eslint';
+// @ts-expect-error -- untyped JS file (no .d.ts)
 import rule from '../../../eslint-rules/pagination-nav-mutually-exclusive-props.js';
 
 const tester = new RuleTester({

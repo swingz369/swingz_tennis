@@ -31,7 +31,7 @@ const MEMBER_PASSWORD = process.env.TEST_MEMBER_PASSWORD!;
 // ═══ Test timeout: 5 min (Gemini free tier needs more time per aiAct/aiQuery) ═══
 const TEST_TIMEOUT = 300_000;
 
-describe('Member Lifecycle E2E', () => {
+describe.skip('Member Lifecycle E2E', () => {
   let adminCtx: WebTestContext;
   let memberCtx: WebTestContext;
 

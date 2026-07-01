@@ -95,7 +95,7 @@ export function ClubsClient({ initialClubs, pagination, searchParams }: ClubsCli
           <CardContent>
             <form onSubmit={handleCreateClub} className="space-y-4">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="p-3 bg-error-50 border border-error-200 rounded-lg text-error-700 text-sm">
                   {error}
                 </div>
               )}

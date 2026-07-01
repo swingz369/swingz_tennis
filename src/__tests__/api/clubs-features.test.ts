@@ -90,7 +90,7 @@ function makeRequest(method = 'GET', body?: any): NextRequest {
     body !== undefined
       ? { method, body: typeof body === 'string' ? body : JSON.stringify(body) }
       : { method };
-  return new NextRequest(new URL('http://localhost/api/clubs/club-1/features'), init);
+  return new NextRequest(new URL('http://localhost/api/clubs/club-1/features'), init as any);
 }
 
 function asAdmin(clubId = 'club-1') {

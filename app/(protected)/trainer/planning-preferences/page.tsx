@@ -230,7 +230,7 @@ export default function TrainerPlanningPreferencesPage() {
       )}
 
       {seasons.length === 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-sm text-amber-700">
+        <div className="flex items-center gap-2 rounded-lg border border-warning-200 bg-warning-50/60 px-3 py-2 text-sm text-warning-700">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           Keine aktiven Saisons gefunden.
         </div>
@@ -295,7 +295,7 @@ export default function TrainerPlanningPreferencesPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-muted-foreground hover:text-red-500 shrink-0"
+                className="h-9 w-9 text-muted-foreground hover:text-error-500 shrink-0"
                 onClick={() => removeTimePref(idx)}
               >
                 <X className="h-4 w-4" />
@@ -340,12 +340,12 @@ export default function TrainerPlanningPreferencesPage() {
 
       {/* Feedback */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+        <div className="flex items-center gap-2 rounded-lg border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-600">
           <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
         </div>
       )}
       {savedOk && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+        <div className="flex items-center gap-2 rounded-lg border border-success-200 bg-success-50 px-3 py-2 text-sm text-success-700">
           <CheckCircle className="h-4 w-4 shrink-0" /> Gespeichert
         </div>
       )}

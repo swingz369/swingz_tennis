@@ -13,6 +13,8 @@ const h = vi.hoisted(() => {
     stats: [] as any[],
     config: null as any,
     seasons: [] as any[],
+    baselinePrefs: [] as any[],
+    clubs: [] as any[],
     insertedGroups: [] as any[],
     insertedPlanEntries: [] as any[],
     insertedWaitlist: [] as any[],
@@ -46,6 +48,10 @@ const h = vi.hoisted(() => {
         return state.seasons;
       case 'seasonPlanEntries':
         return state.planEntries;
+      case 'memberSchedulePreferences':
+        return state.baselinePrefs;
+      case 'clubs':
+        return state.clubs;
       default:
         return [];
     }
@@ -212,6 +218,19 @@ vi.mock('@/src/infrastructure/persistence/schema', () => ({
     __table: 'trainerClubs',
     trainer_id: 'trainer_id',
     club_id: 'club_id',
+  },
+  memberSchedulePreferences: {
+    __table: 'memberSchedulePreferences',
+    id: 'id',
+    user_id: 'user_id',
+    club_id: 'club_id',
+    weekly_availability: 'weekly_availability',
+    wish_partner_ids: 'wish_partner_ids',
+  },
+  clubs: {
+    __table: 'clubs',
+    id: 'id',
+    bundesland: 'bundesland',
   },
 }));
 
@@ -416,7 +435,7 @@ beforeEach(() => {
 
 describe('SeasonClusteringEngine — initialization', () => {
   it('constructs with default config', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1');
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     expect(engine).toBeDefined();
   });
 
@@ -460,7 +479,7 @@ describe('Optimization #3: Caching', () => {
         user_skill_level: 'beginner',
       },
     ];
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const result1 = await engine.loadMembers();
     // Mutate the mock — second call should NOT see the change
     h.state.members = [
@@ -481,7 +500,7 @@ describe('Optimization #3: Caching', () => {
     h.state.courts = [
       { id: 'c1', name: 'Court 1', surface: 'sand', is_active: true, club_id: 'c1' },
     ];
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const result1 = await engine.loadCourts();
     h.state.courts = [
       { id: 'c2', name: 'Court 2', surface: 'hard', is_active: true, club_id: 'c1' },
@@ -502,7 +521,7 @@ describe('Optimization #3: Caching', () => {
         club_id: 'c1',
       },
     ];
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const result1 = await engine.loadGroups();
     h.state.groups = [];
     const result2 = await engine.loadGroups();
@@ -518,7 +537,7 @@ describe('Optimization #3: Caching', () => {
         computed_at: new Date(),
       },
     ];
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const result1 = await engine.loadSlotFailureRates();
     h.state.stats = [];
     const result2 = await engine.loadSlotFailureRates();
@@ -528,7 +547,7 @@ describe('Optimization #3: Caching', () => {
 
   it('getPreviousSeasonId caches its result (including null)', async () => {
     h.state.seasons = [];
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const result1 = await engine.getPreviousSeasonId();
     h.state.seasons = [{ id: 's1', club_id: 'c1', season_type: 'summer', year: 2026 }];
     const result2 = await engine.getPreviousSeasonId();
@@ -541,7 +560,7 @@ describe('Optimization #3: Caching', () => {
 
 describe('applyNiveauPromotions (Schritt 4c)', () => {
   it('promotes beginner → intermediate when readyForNextLevel=true', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const members: MemberWithDetails[] = [
       makeMember({ id: 'm1', skillLevel: 'beginner', readyForNextLevel: true }),
     ];
@@ -550,7 +569,7 @@ describe('applyNiveauPromotions (Schritt 4c)', () => {
   });
 
   it('promotes intermediate → advanced when ready', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const members: MemberWithDetails[] = [
       makeMember({ id: 'm1', skillLevel: 'intermediate', readyForNextLevel: true }),
     ];
@@ -559,7 +578,7 @@ describe('applyNiveauPromotions (Schritt 4c)', () => {
   });
 
   it('caps at professional (no further promotion)', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const members: MemberWithDetails[] = [
       makeMember({ id: 'm1', skillLevel: 'professional', readyForNextLevel: true }),
     ];
@@ -568,7 +587,7 @@ describe('applyNiveauPromotions (Schritt 4c)', () => {
   });
 
   it('does NOT promote when readyForNextLevel=false', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const members: MemberWithDetails[] = [
       makeMember({ id: 'm1', skillLevel: 'beginner', readyForNextLevel: false }),
     ];
@@ -715,7 +734,7 @@ describe('findBestTimeSlot', () => {
   });
 
   it('skips high-failure slots when treatHighFailureAsHard=true', () => {
-    const { engine, members, trainers, courts, trainerSessionCount, courtTimeSlotUsage } = setup();
+    const { members, trainers, courts, trainerSessionCount, courtTimeSlotUsage } = setup();
     // Member + trainer only available on Tuesday (day=1) where the high-failure slot lives.
     members[0].availability = {
       monday: [],
@@ -895,7 +914,7 @@ describe('applyWaitlistLogic (Schritt 4d)', () => {
   });
 
   it('does not waitlist if wish partner is already in same group', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const members = [makeMember({ id: 'm1', wishPartnerIds: ['m2'] }), makeMember({ id: 'm2' })];
     const assignments: GroupAssignment[] = [
       makeAssignment({ groupId: 'g1', memberIds: ['m1', 'm2'] }),
@@ -905,7 +924,7 @@ describe('applyWaitlistLogic (Schritt 4d)', () => {
   });
 
   it('uses O(1) lookups (does not call members.find repeatedly)', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const members = Array.from({ length: 20 }, (_, i) =>
       makeMember({ id: `m${i}`, wishPartnerIds: i < 19 ? [`m${i + 1}`] : [] })
     );
@@ -924,7 +943,7 @@ describe('applyWaitlistLogic (Schritt 4d)', () => {
 
 describe('computeMetrics', () => {
   it('returns zeros for empty input', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const metrics = engine.computeMetrics([], [], [], [], []);
     expect(metrics.totalMembers).toBe(0);
     expect(metrics.totalGroups).toBe(0);
@@ -933,7 +952,7 @@ describe('computeMetrics', () => {
   });
 
   it('counts wish partner requests and fulfillments', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const members = [
       makeMember({ id: 'm1', wishPartnerIds: ['m2'] }),
       makeMember({ id: 'm2', wishPartnerIds: ['m1'] }),
@@ -964,7 +983,7 @@ describe('computeMetrics', () => {
   });
 
   it('counts niveau span violations', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const assignments: GroupAssignment[] = [
       makeAssignment({
         warnings: ['Niveau-Spanne (2-12 Monate) überschreitet Maximum (8)'],
@@ -976,7 +995,7 @@ describe('computeMetrics', () => {
   });
 
   it('tracks runtime', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     engine.startTime = Date.now() - 100;
     const metrics = engine.computeMetrics([], [], [], [], []);
     expect(metrics.runtimeMs).toBeGreaterThanOrEqual(100);
@@ -987,7 +1006,7 @@ describe('computeMetrics', () => {
 
 describe('computeNiveauMatch', () => {
   it('returns 100 for homogeneous group (all same experience)', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const member = makeMember({ experienceMonths: 6 });
     const group = [makeMember({ experienceMonths: 6 }), makeMember({ experienceMonths: 6 })];
     const score = engine.computeNiveauMatch(member, group);
@@ -995,7 +1014,7 @@ describe('computeNiveauMatch', () => {
   });
 
   it('returns lower score for outlier member', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const member = makeMember({ experienceMonths: 24 });
     const group = [makeMember({ experienceMonths: 6 }), makeMember({ experienceMonths: 7 })];
     const score = engine.computeNiveauMatch(member, group);
@@ -1007,7 +1026,7 @@ describe('computeNiveauMatch', () => {
 
 describe('Optimization #5: treatHighFailureAsHard', () => {
   it('default config has treatHighFailureAsHard=false (backwards compat)', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     expect(engine.config.treatHighFailureAsHard).toBe(false);
   });
 
@@ -1023,7 +1042,7 @@ describe('Optimization #5: treatHighFailureAsHard', () => {
 
 describe('Optimization #6: Backtracking', () => {
   it('default config has backtrackDepth=0 (disabled)', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     expect(engine.config.backtrackDepth).toBe(0);
   });
 
@@ -1033,7 +1052,7 @@ describe('Optimization #6: Backtracking', () => {
   });
 
   it('capped at 3 retries (override of 99)', async () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1', { backtrackDepth: 99 }) as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     // The method should cap iterations to 3 — verify via internal call
     const allMembers: MemberWithDetails[] = [makeMember({ id: 'm1' })];
     const sortedMembers = allMembers;
@@ -1076,7 +1095,7 @@ describe('Optimization #6: Backtracking', () => {
 
 describe('Sprint 4 P0 #3: Adaptive Backtrack', () => {
   it('default config has unassignedRateThreshold=0.05', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     expect(engine.config.unassignedRateThreshold).toBe(0.05);
   });
 
@@ -1096,7 +1115,7 @@ describe('Sprint 4 P0 #3: Adaptive Backtrack', () => {
   });
 
   it('decouples maxRetries from depthOverride (depth follows depthOverride)', async () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1', { backtrackDepth: 10 }) as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const allMembers: MemberWithDetails[] = [makeMember({ id: 'm1' })];
     const sortedMembers = allMembers;
     const membersById = new Map<string, MemberWithDetails>();
@@ -1145,7 +1164,7 @@ describe('Sprint 4 P0 #3: Adaptive Backtrack', () => {
   });
 
   it('uses depth=3 by default when depthOverride is omitted', async () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1', { backtrackDepth: 5 }) as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const allMembers: MemberWithDetails[] = [makeMember({ id: 'm1' })];
     const sortedMembers = allMembers;
     const membersById = new Map<string, MemberWithDetails>();
@@ -1195,7 +1214,6 @@ describe('Sprint 4 P0 #3: Adaptive Backtrack', () => {
 
 describe('Optimization #4: Second-pass slot availability check', () => {
   it('does not place a member into a group whose slot they are unavailable for', () => {
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
     const member = makeMember({
       id: 'm1',
       // Only available Wednesday
@@ -1233,7 +1251,7 @@ describe('Optimization #4: Second-pass slot availability check', () => {
       'friday',
       'saturday',
     ];
-    const dayName = DAY_NAMES[assignment.dayOfWeek];
+    const dayName = DAY_NAMES[assignment.dayOfWeek] as keyof typeof member.availability;
     const daySlots = member.availability[dayName] || [];
     const memberAvailable = daySlots.some(
       (s: any) => s.start <= assignment.startTime && s.end >= assignment.endTime
@@ -1272,7 +1290,7 @@ describe('Optimization #1: duration_minutes in trainer limit', () => {
     };
     h.state.trainers = [];
     h.state.memberships = [];
-    const engine = new SeasonClusteringEngine('s1', 'c1', { slotDurationMinutes: 60 }) as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     // Inject a trainer via the trainerClubs join
     // (We can't easily mock the join here, so just verify the config value)
     expect(engine.config.slotDurationMinutes).toBe(60);
@@ -1309,7 +1327,7 @@ describe('runClustering — end-to-end smoke test', () => {
       slot_duration_minutes: 90,
     };
     // Empty members → no groups created, but should not throw
-    const engine = new SeasonClusteringEngine('s1', 'c1') as any;
+    const engine = new SeasonClusteringEngine('s1', 'c1', {}) as any;
     const result = await engine.runClustering(true);
     expect(result.groups).toBeDefined();
     expect(result.unassignedMembers).toBeDefined();

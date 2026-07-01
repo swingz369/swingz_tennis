@@ -156,7 +156,7 @@ export function ModuleSelectionStep({
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-foreground">{feature.label}</h3>
                 {isCore && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-brand-primary bg-brand-primary/10 px-1.5 py-0.5 rounded">
+                  <span className="inline-flex items-center gap-1 text-2xs font-medium uppercase tracking-wider text-brand-primary bg-brand-primary/10 px-1.5 py-0.5 rounded">
                     <Lock className="h-2.5 w-2.5" />
                     Pflicht
                   </span>
@@ -185,13 +185,13 @@ export function ModuleSelectionStep({
 
   return (
     <div className="space-y-6">
-      <div className="bg-blue-50/50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800 flex gap-2.5">
+      <div className="bg-info-50/50 border border-info-200 rounded-lg p-4 text-sm text-info-800 flex gap-2.5">
         <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
         <div>
           <strong>Wähle die Module aus, die du nutzen möchtest.</strong> Du kannst sie später
           jederzeit in den <em>Einstellungen → Module</em> ändern.
           <br />
-          <span className="text-xs text-blue-700/80">
+          <span className="text-xs text-info-700/80">
             Grundfunktionen (Mitgliederverwaltung, Trainer, Saisonplanung, Finanzen) sind immer
             aktiv.
           </span>

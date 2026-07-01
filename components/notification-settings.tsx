@@ -235,8 +235,8 @@ export default function NotificationSettings() {
           {/* Email Notifications */}
           <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <User className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-info-100 rounded-lg">
+                <User className="h-5 w-5 text-info-600" />
               </div>
               <div>
                 <div className="font-medium">E-Mail-Benachrichtigungen</div>
@@ -428,13 +428,13 @@ export default function NotificationSettings() {
       </Card>
 
       {/* Info */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-info-50 border-info-200">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <Bell className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div className="space-y-1 text-sm text-blue-900">
+            <Bell className="h-5 w-5 text-info-600 mt-0.5" />
+            <div className="space-y-1 text-sm text-info-900">
               <p className="font-medium">Wichtige Informationen</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-800">
+              <ul className="list-disc list-inside space-y-1 text-info-800">
                 <li>
                   Push-Benachrichtigungen funktionieren nur, wenn du diese im Browser erlaubst
                 </li>

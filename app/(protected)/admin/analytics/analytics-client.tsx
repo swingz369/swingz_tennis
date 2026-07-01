@@ -62,7 +62,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
       title: 'Buchungen',
       value: data.totalBookings,
       icon: TrendingUp,
-      gradient: 'from-blue-500 to-blue-600',
+      gradient: 'from-info-500 to-info-600',
     },
     {
       title: 'Umsatz',
@@ -94,7 +94,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
         {kpiCards.map((kpi, i) => (
           <ScrollReveal key={kpi.title} delay={i * 80}>
             <Card
-              variant="glass"
+              variant="elevated"
               className="group hover-lift transition-all duration-300 hover:shadow-lg p-6"
             >
               <div className="flex items-start justify-between">
@@ -136,15 +136,15 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </div>
             </div>
             <div className="space-y-3">
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                <p className="text-sm font-medium text-blue-800">Matchmaking</p>
-                <p className="text-xs text-blue-600 mt-1">
+              <div className="p-3 bg-info-50 rounded-lg border border-info-100">
+                <p className="text-sm font-medium text-info-800">Matchmaking</p>
+                <p className="text-xs text-info-600 mt-1">
                   Finde Trainingspartner mit passendem Level und freien Zeiten.
                 </p>
               </div>
-              <div className="p-3 bg-green-50 rounded-lg border border-green-100">
-                <p className="text-sm font-medium text-green-800">Empfehlungen</p>
-                <p className="text-xs text-green-600 mt-1">
+              <div className="p-3 bg-success-50 rounded-lg border border-success-100">
+                <p className="text-sm font-medium text-success-800">Empfehlungen</p>
+                <p className="text-xs text-success-600 mt-1">
                   Basierend auf Buchungs- und Anwesenheitsdaten generiert.
                 </p>
               </div>

@@ -16,6 +16,9 @@ import { Badge } from '@/components/ui/badge';
 import { IconBox } from '@/components/ui/icon-box';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('page:select-admin-club');
 
 interface Club {
   id: string;
@@ -48,11 +51,11 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
       if (res.ok) {
         router.push('/admin');
       } else {
-        console.error('Failed to switch club');
+        log.error('Failed to switch club');
         setSelecting(null);
       }
     } catch (err) {
-      console.error(err);
+      log.error('Switch club error', err);
       setSelecting(null);
     }
   };

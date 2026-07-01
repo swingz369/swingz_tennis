@@ -128,7 +128,7 @@ export function PremiumUpsell({
 
       {/* ═══ CTAs ═══ */}
       <div className="flex flex-col sm:flex-row gap-2">
-        <Button asChild variant="brand" className="flex-1 gap-2">
+        <Button asChild variant="primary" className="flex-1 gap-2">
           <Link href={pricingHref}>
             <Sparkles className="h-4 w-4" />
             Pro entdecken
@@ -140,7 +140,7 @@ export function PremiumUpsell({
           Vielleicht später
         </Button>
       </div>
-      <p className="text-[11px] text-muted-foreground text-center mt-3">
+      <p className="text-2xs text-muted-foreground text-center mt-3">
         Starter-Tier bleibt aktiv. KI-Hilfen sind optional in Pro enthalten.
       </p>
     </CenteredModal>
@@ -162,12 +162,12 @@ function StatTile({
   // JIT compiler can pick them up (no string-built classes).
   const accentStyles: Record<typeof accent, string> = {
     emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-    blue: 'bg-blue-50 border-blue-200 text-blue-700',
+    blue: 'bg-info-50 border-info-200 text-info-700',
     purple: 'bg-purple-50 border-purple-200 text-purple-700',
   };
   return (
     <div className={cn('rounded-lg border p-3', accentStyles[accent])}>
-      <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-90">
+      <div className="flex items-center gap-1.5 text-2xs font-medium opacity-90">
         {icon}
         <span className="leading-tight">{label}</span>
       </div>

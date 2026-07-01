@@ -154,7 +154,6 @@ describe('useUserRole — empty and edge cases', () => {
   });
 
   it('ignores unknown role strings', () => {
-    // @ts-expect-error — testing runtime behavior with unknown roles
     const { result } = renderHook(() => useUserRole(['superadmin', 'unknown']));
 
     expect(result.current.currentRole).toBe('superadmin');
@@ -163,7 +162,6 @@ describe('useUserRole — empty and edge cases', () => {
   });
 
   it('returns member when roles contains only unknown values', () => {
-    // @ts-expect-error — testing runtime behavior
     const { result } = renderHook(() => useUserRole(['unknown', 'guest']));
 
     expect(result.current.currentRole).toBe('member');

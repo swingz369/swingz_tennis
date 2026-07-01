@@ -285,13 +285,13 @@ export default function AdminTrialApprovals() {
         );
       case 'scheduled':
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50">
+          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50">
             Geplant
           </Badge>
         );
       case 'cancelled':
         return (
-          <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50">
+          <Badge className="bg-error-100 text-error-700 border-error-200 dark:bg-error-900/30 dark:text-error-400 dark:border-error-700/50">
             Abgelehnt
           </Badge>
         );
@@ -340,7 +340,7 @@ export default function AdminTrialApprovals() {
                   ? 'Abgelehnt'
                   : 'Alle'}
             {f === 'requested' && requestedCount > 0 && (
-              <span className="ml-1.5 bg-background/20 text-[11px] px-1.5 py-0 rounded-full">
+              <span className="ml-1.5 bg-background/20 text-2xs px-1.5 py-0 rounded-full">
                 {requestedCount}
               </span>
             )}
@@ -349,7 +349,7 @@ export default function AdminTrialApprovals() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm dark:bg-red-900/20 dark:border-red-700/30 dark:text-red-400">
+        <div className="p-4 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm dark:bg-error-900/20 dark:border-error-700/30 dark:text-error-400">
           {error}
         </div>
       )}
@@ -370,7 +370,7 @@ export default function AdminTrialApprovals() {
                 r.status === 'requested'
                   ? 'border-yellow-200 bg-yellow-50/30 dark:border-yellow-700/40 dark:bg-yellow-900/10'
                   : r.status === 'cancelled'
-                    ? 'border-red-100 bg-red-50/20 dark:border-red-800/30 dark:bg-red-900/10'
+                    ? 'border-error-100 bg-error-50/20 dark:border-error-800/30 dark:bg-error-900/10'
                     : ''
               }
             >
@@ -496,7 +496,7 @@ export default function AdminTrialApprovals() {
                     {(r.status === 'scheduled' || r.status === 'completed') && (
                       <div className="pt-2">
                         {convertedIds.has(r.id) ? (
-                          <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50 gap-1">
+                          <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
                             <CheckCircle className="h-3 w-3" /> Konvertiert
                           </Badge>
                         ) : (
@@ -566,7 +566,7 @@ export default function AdminTrialApprovals() {
                       Trainer zuweisen
                     </label>
                     {trainers.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 text-amber-700 dark:text-amber-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Trainer verfügbar. Bitte zuerst Trainer im System anlegen.
                       </div>
@@ -599,7 +599,7 @@ export default function AdminTrialApprovals() {
                       Platz zuweisen
                     </label>
                     {courts.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 text-amber-700 dark:text-amber-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Plätze verfügbar. Bitte zuerst Plätze im System anlegen.
                       </div>
@@ -708,7 +708,7 @@ export default function AdminTrialApprovals() {
                   </p>
 
                   {convertError && (
-                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 text-red-700 dark:text-red-400 text-sm flex items-start gap-2">
+                    <div className="p-3 rounded-lg bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700/30 text-error-700 dark:text-error-400 text-sm flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                       {convertError}
                     </div>

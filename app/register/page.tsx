@@ -56,8 +56,8 @@ export default function RegisterPage() {
         <div className="w-full max-w-md space-y-6">
           {done ? (
             <Card className="p-8 text-center space-y-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20 mx-auto">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/20 mx-auto">
+                <CheckCircle2 className="h-6 w-6 text-success-600" />
               </div>
               <h2 className="text-xl font-bold">Anfrage eingegangen!</h2>
               <p className="text-sm text-muted-foreground">

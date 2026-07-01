@@ -21,8 +21,8 @@ export default function Error({
       <Card className="max-w-md w-full">
         <CardHeader>
           <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-red-100">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+            <div className="p-3 rounded-full bg-error-100">
+              <AlertTriangle className="h-8 w-8 text-error-600" />
             </div>
           </div>
           <CardTitle className="text-2xl text-center">

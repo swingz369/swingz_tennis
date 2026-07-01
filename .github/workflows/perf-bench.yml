@@ -1,0 +1,114 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# .github/workflows/perf-bench.yml
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# WHAT THIS WORKFLOW DOES
+#
+#   Runs the engine performance bench → report pipeline on every PR, push to
+#   main, and on-demand workflow_dispatch. The pipeline is:
+#
+#     1. `npx vitest bench tests/bench/clustering.bench.ts`
+#          → writes tests/bench/.bench-results.json (gitignored)
+#     2. `npx tsx scripts/generate-perf-report.ts`
+#          → writes docs/PERFORMANCE_BENCHMARK.md (gitignored)
+#
+#   Both steps are ADVISORY (`continue-on-error: true`) — bench measurements
+#   are flaky on shared CI runners (GC pauses, throttling) so a regression
+#   should never block a merge. Failures are still surfaced via ::error::
+#   annotations in the job log so they show up in the PR "Files changed"
+#   sidebar, and the artifacts are uploaded for forensic inspection.
+#
+#   This is the upstream side of the perf-history dashboard:
+#     app/api/admin/perf-history/local  (reads .bench-results.json on the server)
+#     app/api/admin/perf-history/github  (fetches workflow runs via
+#                                        lib/perf-history/github-source.ts)
+#   Uploading the JSON as an artifact makes the run reachable from the
+#   `github` source — no extra wiring needed.
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: perf-bench
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/season-planning/**'
+      - 'tests/bench/**'
+      - 'scripts/generate-perf-report.ts'
+      - 'package.json'
+      - 'vitest.config.ts'
+      - '.github/workflows/perf-bench.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'lib/season-planning/**'
+      - 'tests/bench/**'
+      - 'scripts/generate-perf-report.ts'
+      - 'package.json'
+      - 'vitest.config.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-bench-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    name: Vitest bench + perf-report
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run vitest bench (advisory)
+        id: bench
+        continue-on-error: true
+        run: |
+          echo "── vitest bench: tests/bench/clustering.bench.ts ──"
+          npx vitest bench tests/bench/clustering.bench.ts --reporter=default 2>&1 | tee bench-stdout.log
+          if [ -f tests/bench/.bench-results.json ]; then
+            echo "✓ .bench-results.json written ($(wc -c < tests/bench/.bench-results.json) bytes)"
+          else
+            echo "::error::.bench-results.json was NOT created (bench may have failed or skipped)"
+          fi
+
+      - name: Run perf-report (advisory)
+        id: report
+        continue-on-error: true
+        run: |
+          echo "── scripts/generate-perf-report.ts ──"
+          npx tsx scripts/generate-perf-report.ts 2>&1 | tee report-stdout.log
+          if [ -f docs/PERFORMANCE_BENCHMARK.md ]; then
+            echo "✓ docs/PERFORMANCE_BENCHMARK.md written ($(wc -c < docs/PERFORMANCE_BENCHMARK.md) bytes)"
+          else
+            echo "::error::docs/PERFORMANCE_BENCHMARK.md was NOT created (report may have failed)"
+          fi
+
+      - name: Upload bench artifacts (retention 90 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-bench-${{ github.run_id }}
+          path: |
+            tests/bench/.bench-results.json
+            docs/PERFORMANCE_BENCHMARK.md
+            bench-stdout.log
+            report-stdout.log
+          retention-days: 90
+          if-no-files-found: warn

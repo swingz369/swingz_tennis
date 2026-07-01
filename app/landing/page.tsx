@@ -311,10 +311,10 @@ export default function LandingPage() {
             className="absolute inset-0"
             style={{
               background: `
-                radial-gradient(ellipse 100% 60% at 50% -20%, hsl(var(--brand-primary-light) / 0.35) 0%, transparent 50%),
-                radial-gradient(ellipse 70% 50% at 100% 50%, hsl(var(--brand-secondary) / 0.25) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 60% at 0% 80%, hsl(var(--brand-accent) / 0.12) 0%, transparent 50%),
-                linear-gradient(180deg, hsl(150 55% 10%) 0%, hsl(var(--brand-primary)) 50%, hsl(150 30% 8%) 100%)
+                radial-gradient(ellipse 100% 60% at 50% -20%, hsl(var(--brand-primary-light) / 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 50% at 100% 50%, hsl(var(--brand-secondary) / 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 60% at 0% 80%, hsl(var(--brand-accent) / 0.08) 0%, transparent 50%),
+                linear-gradient(180deg, hsl(var(--brand-secondary)) 0%, hsl(150 50% 12%) 100%)
               `,
             }}
           />
@@ -331,7 +331,7 @@ export default function LandingPage() {
             />
           </div>
           {/* Dot grid */}
-          <div className="absolute inset-0 noise opacity-[0.015]" />
+          <div className="absolute inset-0 noise opacity-[0.04]" />
           <svg
             className="absolute inset-0 w-full h-full opacity-[0.025]"
             xmlns="http://www.w3.org/2000/svg"
@@ -413,16 +413,16 @@ export default function LandingPage() {
               </div>
 
               <h1 id="hero-heading" className="animate-in animate-in-delay-2">
-                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-white leading-none tracking-tight">
                   Optimale
                 </span>
-                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight mt-1.5 text-gradient-primary bg-clip-text text-transparent">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold leading-none tracking-tight mt-3 text-gradient-primary bg-clip-text text-transparent">
                   Trainingspläne.
                 </span>
-                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight mt-1.5">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-white leading-none tracking-tight mt-3">
                   Maximale
                 </span>
-                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight mt-1.5 text-gradient-accent bg-clip-text text-transparent">
+                <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold leading-none tracking-tight mt-3 text-gradient-accent bg-clip-text text-transparent">
                   Performance.
                 </span>
               </h1>
@@ -542,7 +542,7 @@ export default function LandingPage() {
                   </svg>
                 </div>
                 {/* Floating cards */}
-                <div className="absolute top-8 right-0 glass-strong rounded-2xl p-4 shadow-2xl animate-float-slow">
+                <div className="absolute top-8 right-0 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl animate-float-slow">
                   <div className="flex items-center gap-3">
                     <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-brand-accent to-orange-700 flex items-center justify-center shadow-lg">
                       <Brain className="h-5 w-5 text-white" />
@@ -554,7 +554,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div
-                  className="absolute bottom-16 -left-8 glass-strong rounded-2xl p-4 shadow-2xl animate-float-slow"
+                  className="absolute bottom-16 -left-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl animate-float-slow"
                   style={{ animationDelay: '2.5s' }}
                 >
                   <div className="flex items-center gap-3">
@@ -568,7 +568,7 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div
-                  className="absolute top-1/2 -right-6 glass-strong rounded-2xl p-4 shadow-2xl animate-float-slow"
+                  className="absolute top-1/2 -right-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-5 shadow-2xl animate-float-slow"
                   style={{ animationDelay: '5s' }}
                 >
                   <div className="flex items-center gap-3">
@@ -620,7 +620,7 @@ export default function LandingPage() {
             </span>
             <h2
               id="vision-heading"
-              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight"
+              className="text-3xl sm:text-4xl md:text-5xl font-display font-semibold text-foreground tracking-tight"
             >
               Was wir{' '}
               <span className="text-gradient-accent bg-clip-text text-transparent">vorhaben</span>
@@ -657,14 +657,14 @@ export default function LandingPage() {
       {/* ═══════════ SOCIAL PROOF ═══════════ */}
       <section className="bg-muted/40 border-y border-border py-14 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 gap-6 text-center mb-14">
+          <div className="grid grid-cols-3 gap-6 text-center mb-14 divide-x divide-border/60">
             {[
               { value: '47+', label: 'Vereine verwalten SwingZ' },
               { value: '12.400+', label: 'aktive Mitglieder' },
               { value: '98 %', label: 'Weiterempfehlungsrate' },
             ].map((s) => (
-              <div key={s.label}>
-                <p className="text-3xl sm:text-4xl font-extrabold text-brand-primary">{s.value}</p>
+              <div key={s.label} className="first:pr-6 last:pl-6 px-6">
+                <p className="text-3xl sm:text-4xl font-display font-semibold text-brand-primary">{s.value}</p>
                 <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
               </div>
             ))}
@@ -673,7 +673,7 @@ export default function LandingPage() {
             {TESTIMONIALS.map((t) => (
               <blockquote
                 key={t.name}
-                className="bg-background rounded-2xl p-6 shadow-sm border border-border flex flex-col gap-4"
+                className="bg-background rounded-2xl p-8 shadow-sm border border-border/60 flex flex-col gap-5"
               >
                 {/* Avatar + Attribution */}
                 <header className="flex items-center gap-3">
@@ -709,12 +709,12 @@ export default function LandingPage() {
             </span>
             <h2
               id="features-heading"
-              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight"
+              className="text-3xl sm:text-4xl md:text-5xl font-display font-semibold text-foreground tracking-tight"
             >
               Warum{' '}
               <span className="text-gradient-primary bg-clip-text text-transparent">SWINGZ</span>?
             </h2>
-            <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Revolutioniere deine Trainingsplanung mit modernster KI und durchdachtem Design.
             </p>
           </div>
@@ -723,7 +723,7 @@ export default function LandingPage() {
             {FEATURES.map((feature, idx) => (
               <div
                 key={idx}
-                className={`group relative bg-background rounded-3xl p-7 sm:p-8 shadow-elegant border border-border transition-all duration-500 hover:shadow-premium hover:-translate-y-2 ${feature.highlight ? 'ring-1 ring-brand-primary/15' : ''}`}
+                className={`group relative bg-card rounded-[2.5rem] p-10 border-transparent ring-1 ring-border/50 transition-all duration-500 hover:ring-brand-primary/30 hover:-translate-y-2 hover:shadow-elegant ${feature.highlight ? 'ring-brand-primary/20' : ''}`}
               >
                 {feature.highlight && (
                   <div className="absolute -top-3 right-6 px-3.5 py-1 bg-gradient-to-r from-brand-primary to-brand-light text-white text-xs font-bold rounded-full shadow-md">
@@ -731,7 +731,7 @@ export default function LandingPage() {
                   </div>
                 )}
                 <div
-                  className={`inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.gradient} text-white shadow-lg mb-6 group-hover:scale-110 transition-transform duration-500`}
+                  className={`inline-flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br ${feature.gradient} text-white shadow-lg mb-6 group-hover:scale-110 transition-transform duration-500`}
                 >
                   <feature.icon className="h-7 w-7" />
                 </div>
@@ -743,7 +743,7 @@ export default function LandingPage() {
                 </p>
                 {feature.stat && (
                   <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
-                    <span className="text-2xl font-extrabold text-foreground">{feature.stat}</span>
+                    <span className="text-2xl font-display font-semibold text-foreground">{feature.stat}</span>
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {feature.statLabel}
                     </span>
@@ -761,7 +761,7 @@ export default function LandingPage() {
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 text-brand-accent text-sm font-semibold mb-5">
               <Zap className="h-3.5 w-3.5" /> So einfach geht&apos;s
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-semibold text-foreground tracking-tight">
               In{' '}
               <span className="text-gradient-accent bg-clip-text text-transparent">
                 3 Schritten
@@ -793,11 +793,11 @@ export default function LandingPage() {
                 description: 'Plane Trainingseinheiten, verwalte Buchungen und optimiere mit KI.',
               },
             ].map((item, idx) => (
-              <div key={idx} className="relative text-center group">
+              <div key={idx} className="relative text-left group">
                 <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-xl mb-6 group-hover:scale-110 transition-transform duration-500 group-hover:shadow-glow-primary">
                   <item.icon className="h-9 w-9" />
                 </div>
-                <div className="absolute top-3 -right-2 text-7xl font-black text-white/90 select-none -z-10 group-hover:text-white transition-colors">
+                <div className="absolute -top-6 -left-4 text-8xl font-display font-medium text-muted/20 select-none transition-colors group-hover:text-brand-primary/20 pointer-events-none">
                   {item.step}
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{item.title}</h3>
@@ -816,7 +816,7 @@ export default function LandingPage() {
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 text-brand-accent text-sm font-semibold mb-5">
               <CreditCard className="h-3.5 w-3.5" /> Preise
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-semibold text-foreground tracking-tight">
               Für jeden Verein die{' '}
               <span className="text-gradient-accent bg-clip-text text-transparent">
                 richtige Lösung
@@ -869,7 +869,7 @@ export default function LandingPage() {
               {PRICING_PLANS.map((plan, idx) => (
                 <div
                   key={idx}
-                  className={`relative flex flex-col bg-background rounded-3xl border border-border shadow-elegant transition-all duration-500 hover:shadow-premium hover:-translate-y-2 overflow-hidden max-w-lg w-full ${plan.popular ? 'ring-2 ring-brand-primary/30 z-10' : ''} ${plan.borderHover}`}
+                  className={`relative flex flex-col rounded-3xl border transition-all duration-500 hover:shadow-premium hover:-translate-y-2 overflow-hidden max-w-lg w-full ${plan.popular ? 'ring-2 ring-brand-accent/30 z-10 bg-brand-secondary border-brand-secondary/50 shadow-xl' : 'bg-background border-border shadow-elegant'} ${plan.borderHover}`}
                 >
                   {plan.popular && (
                     <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-brand-primary to-brand-light text-white text-center text-sm font-bold py-2.5 tracking-wide">
@@ -878,22 +878,21 @@ export default function LandingPage() {
                   )}
                   <div className={`p-8 ${plan.popular ? 'pt-16' : 'pt-10'}`}>
                     <div className="text-center">
-                      <h3 className="text-2xl font-bold text-foreground">{plan.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{plan.subtitle}</p>
+                      <h3 className={`text-2xl font-bold ${plan.popular ? 'text-white' : 'text-foreground'}`}>{plan.name}</h3>
+                      <p className={`text-sm mt-1 ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>{plan.subtitle}</p>
                       <div className="mt-6 flex items-baseline justify-center gap-1">
-                        <span className="text-5xl font-extrabold text-foreground tracking-tight">
+                        <span className={`text-5xl font-extrabold tracking-tight ${plan.popular ? 'text-white' : 'text-foreground'}`}>
                           €{billingYearly ? plan.yearlyPrice : plan.price}
                         </span>
-                        <span className="text-muted-foreground text-sm font-medium">
+                        <span className={`text-sm font-medium ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>
                           {billingYearly ? '/Jahr' : plan.period}
                         </span>
                       </div>
-                      {billingYearly && (
-                        <p className="mt-1.5 text-xs text-muted-foreground">
+                      {billingYearly && (                          <p className={`mt-1.5 text-xs ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>
                           €{plan.yearlyPricePerMonth}/Monat · {plan.savings} gespart
                         </p>
                       )}
-                      <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+                      <p className={`mt-4 text-sm leading-relaxed ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>
                         {plan.description}
                       </p>
                     </div>
@@ -902,9 +901,9 @@ export default function LandingPage() {
                       {plan.features.map((feature, fIdx) => (
                         <li key={fIdx} className="flex items-start gap-3">
                           <CheckCircle2
-                            className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.iconColor}`}
+                            className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.popular ? 'text-brand-accent' : plan.iconColor}`}
                           />
-                          <span className="text-sm text-muted-foreground">{feature}</span>
+                          <span className={`text-sm ${plan.popular ? 'text-white/70' : 'text-muted-foreground'}`}>{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -914,7 +913,7 @@ export default function LandingPage() {
                         href="/register"
                         className={`group flex items-center justify-center gap-2 w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] ${
                           plan.popular
-                            ? 'bg-gradient-to-r from-brand-primary to-brand-light text-white shadow-lg hover:shadow-xl hover:brightness-105'
+                            ? 'bg-gradient-to-r from-brand-accent to-orange-500 text-white shadow-lg hover:shadow-xl hover:brightness-105'
                             : 'bg-brand-secondary text-white hover:bg-brand-secondary/90 shadow-sm'
                         }`}
                       >
@@ -948,7 +947,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-semibold text-white tracking-tight">
             Bereit für die{' '}
             <span className="text-gradient-accent bg-clip-text text-transparent">Zukunft</span>?
           </h2>

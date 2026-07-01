@@ -26,8 +26,8 @@ export function QueryError({
     <div className="flex items-center justify-center min-h-[400px] p-6">
       <Card className="w-full max-w-md p-6 text-center">
         <div className="flex justify-center mb-4">
-          <div className="p-3 rounded-full bg-red-100">
-            <AlertTriangle className="h-8 w-8 text-red-600" />
+          <div className="p-3 rounded-full bg-error-100">
+            <AlertTriangle className="h-8 w-8 text-error-600" />
           </div>
         </div>
         <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>

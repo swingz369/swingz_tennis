@@ -116,13 +116,13 @@ export function ContactFormClient() {
           name="message"
           required
           rows={5}
-          className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brandPrimary/20 focus:border-brand-light resize-none"
+          className="flex w-full rounded-xl border border-border bg-background px-4 py-3 text-base shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-light resize-none"
           placeholder="Erzähl uns von deinem Verein und was dich an SWINGZ interessiert..."
         />
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-700/30 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+        <div className="rounded-lg bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 px-4 py-3 text-sm text-error-700 dark:text-error-400">
           {error}
         </div>
       )}

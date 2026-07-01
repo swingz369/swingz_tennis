@@ -19,7 +19,7 @@ const USER_ID = 'user-001';
 // MOCK STATE
 // ════════════════════════════════════════════════════════════
 
-let mockVerifyRole: ReturnType<typeof vi.fn>;
+let mockVerifyRole: any;
 const mockSupabase = { from: vi.fn() };
 
 const mockAuthCtx = {

@@ -46,6 +46,7 @@ import {
   Users,
   Sun,
   DollarSign,
+  GraduationCap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -59,6 +60,7 @@ import {
 import { getSurfaceLabel } from '@/lib/court-calendar-utils';
 import type { Court } from '@/lib/types/court-booking';
 import { CenteredModal } from '@/components/ui/centered-modal';
+import { NoCourtsBrandedEmptyState } from '@/components/ui/empty-state';
 import { apiFetch } from '@/lib/api-fetch';
 
 interface CourtType {
@@ -84,8 +86,8 @@ type ViewMode = 'grid' | 'list';
 
 const SURFACE_COLORS: Record<string, string> = {
   clay: 'bg-orange-100 text-orange-800 border-orange-200',
-  hard: 'bg-blue-100 text-blue-800 border-blue-200',
-  grass: 'bg-green-100 text-green-800 border-green-200',
+  hard: 'bg-info-100 text-info-800 border-info-200',
+  grass: 'bg-success-100 text-success-800 border-success-200',
   carpet: 'bg-purple-100 text-purple-800 border-purple-200',
   artificial_grass: 'bg-teal-100 text-teal-800 border-teal-200',
 };
@@ -105,6 +107,7 @@ const emptyForm = {
   location: '',
   description: '',
   isActive: true,
+  usableForTraining: true,
 };
 
 export function CourtsManageClient({ initialCourts, courtTypes, clubId }: CourtsManageClientProps) {
@@ -290,6 +293,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           location: formData.location || null,
           description: formData.description || null,
           isActive: formData.isActive,
+          usableForTraining: formData.usableForTraining,
           clubId,
         }),
       });
@@ -325,6 +329,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       location: court.location || '',
       description: court.description || '',
       isActive: court.is_active,
+      usableForTraining: court.usable_for_training,
     });
     setShowInlineForm('edit');
   };
@@ -348,6 +353,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           location: formData.location || null,
           description: formData.description || null,
           isActive: formData.isActive,
+          usableForTraining: formData.usableForTraining,
         }),
       });
 
@@ -524,8 +530,20 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             className="h-4 w-4 rounded border-border"
           />
           <span className="flex items-center gap-2 text-sm font-medium">
-            <Power className="h-4 w-4 text-green-500" />
+            <Power className="h-4 w-4 text-success-500" />
             Platz aktiv
+          </span>
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.usableForTraining}
+            onChange={(e) => setFormData({ ...formData, usableForTraining: e.target.checked })}
+            className="h-4 w-4 rounded border-border"
+          />
+          <span className="flex items-center gap-2 text-sm font-medium">
+            <GraduationCap className="h-4 w-4 text-brand-primary" />
+            Für Trainingsplanung nutzen
           </span>
         </label>
       </div>
@@ -694,8 +712,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       {/* Inline Create/Edit Form */}
       {showInlineForm && (
-        <Card className="border-brandPrimary/20 shadow-md animate-in">
-          <CardHeader className="border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+        <Card className="border-brand-primary/20 shadow-md animate-in">
+          <CardHeader className="border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" onClick={handleCloseForm} className="shrink-0">
@@ -774,31 +792,24 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
           {/* Empty state */}
           {filteredCourts.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
-                <MapPin className="h-10 w-10 text-brand-light" />
+            searchQuery ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
+                  <MapPin className="h-10 w-10 text-brand-light" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground dark:text-white">
+                  Keine Plätze gefunden
+                </h3>
+                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 max-w-xs">
+                  Keine Plätze für &quot;{searchQuery}&quot; gefunden
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-foreground dark:text-white">
-                {searchQuery ? 'Keine Plätze gefunden' : 'Noch keine Plätze'}
-              </h3>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 max-w-xs">
-                {searchQuery
-                  ? `Keine Plätze für "${searchQuery}" gefunden`
-                  : 'Erstelle deine ersten Spielflächen um Buchungen zu ermöglichen'}
-              </p>
-              {!searchQuery && (
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setShowInlineForm('create');
-                  }}
-                  className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 bg-brand-light hover:bg-brand-light/80 text-white text-sm font-medium rounded-xl transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                  Platz anlegen
-                </button>
-              )}
-            </div>
+            ) : (
+              <NoCourtsBrandedEmptyState onCreate={() => {
+                resetForm();
+                setShowInlineForm('create');
+              }} />
+            )
           )}
 
           {/* Grid view */}
@@ -838,7 +849,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="text-red-600"
+                              className="text-error-600"
                               onClick={() => {
                                 setSelectedCourt(court);
                                 setShowDeleteDialog(true);
@@ -867,6 +878,12 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             Flutlicht
                           </span>
                         )}
+                        {court.usable_for_training && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-light/15 text-brand-light border border-brand-light/40">
+                            <GraduationCap className="h-3 w-3" />
+                            Training
+                          </span>
+                        )}
                       </div>
                       {court.location && (
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground dark:text-muted-foreground">
@@ -877,14 +894,14 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                       <div className="flex items-center justify-between pt-1">
                         <div className="flex items-center gap-1.5">
                           {court.is_active ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <CheckCircle2 className="h-4 w-4 text-success-500" />
                           ) : (
                             <XCircle className="h-4 w-4 text-muted-foreground" />
                           )}
                           <span
                             className={cn(
                               'text-xs font-medium',
-                              court.is_active ? 'text-green-600' : 'text-muted-foreground'
+                              court.is_active ? 'text-success-600' : 'text-muted-foreground'
                             )}
                           >
                             {court.is_active ? 'Aktiv' : 'Inaktiv'}
@@ -901,7 +918,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           {togglingId === court.id ? (
                             <span className="text-xs">...</span>
                           ) : court.is_active ? (
-                            <ToggleRight className="h-4 w-4 text-green-500" />
+                            <ToggleRight className="h-4 w-4 text-success-500" />
                           ) : (
                             <ToggleLeft className="h-4 w-4 text-muted-foreground" />
                           )}
@@ -931,6 +948,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                       <TableHead>Typ / Belag</TableHead>
                       <TableHead>Standort</TableHead>
                       <TableHead>Flutlicht</TableHead>
+                      <TableHead>Training</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Aktionen</TableHead>
                     </TableRow>
@@ -965,6 +983,15 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             )}
                           </TableCell>
                           <TableCell>
+                            {court.usable_for_training ? (
+                              <span className="flex items-center gap-1 text-brand-light text-sm">
+                                <GraduationCap className="h-4 w-4" /> Ja
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">Nein</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             <button
                               onClick={() => handleToggleActive(court)}
                               disabled={togglingId === court.id}
@@ -976,7 +1003,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                 className={cn(
                                   'text-xs transition-colors',
                                   court.is_active
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    ? 'bg-success-100 text-success-700 hover:bg-success-200'
                                     : 'bg-muted text-muted-foreground hover:bg-muted'
                                 )}
                               >
@@ -1104,7 +1131,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                 Bearbeiten
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                className="text-red-600"
+                                className="text-error-600"
                                 onClick={() => {
                                   setSelectedCT(type);
                                   setShowCTDelete(true);
@@ -1148,7 +1175,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             className={cn(
                               'text-xs',
                               type.is_active
-                                ? 'bg-green-100 text-green-700'
+                                ? 'bg-success-100 text-success-700'
                                 : 'bg-muted text-foreground'
                             )}
                           >

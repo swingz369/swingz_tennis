@@ -225,7 +225,7 @@ export function SeasonPlanningTab() {
                   <div className="flex items-center gap-2">
                     <span>{s.name}</span>
                     {s.planning_status && (
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-2xs">
                         {s.planning_status}
                       </Badge>
                     )}
@@ -251,7 +251,7 @@ export function SeasonPlanningTab() {
                 >
                   Hochrisiko-Zeitslots als harte Constraint
                 </Label>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-2xs">
                   Optimierung #5
                 </Badge>
               </div>
@@ -260,7 +260,7 @@ export function SeasonPlanningTab() {
                 <strong>komplett übersprungen</strong> (statt nur mit -50 Score bestraft). Nützlich
                 für Vereine, die konsistente Anwesenheit priorisieren.
               </p>
-              <p className="text-[11px] text-muted-foreground italic flex items-center gap-1">
+              <p className="text-2xs text-muted-foreground italic flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Standard: <code className="px-1 rounded bg-muted">false</code> (Soft-Score für
                 Abwärtskompatibilität)
@@ -286,7 +286,7 @@ export function SeasonPlanningTab() {
                 >
                   Backtracking-Tiefe
                 </Label>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-2xs">
                   Optimierung #6
                 </Badge>
               </div>
@@ -295,7 +295,7 @@ export function SeasonPlanningTab() {
                 unzugewiesene Mitglieder doch noch zu platzieren. Depth-First: die letzten N Gruppen
                 werden rückgängig gemacht und mit alternativen Slots re-evaluiert.
               </p>
-              <p className="text-[11px] text-muted-foreground italic flex items-center gap-1">
+              <p className="text-2xs text-muted-foreground italic flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Standard: <code className="px-1 rounded bg-muted">0</code> (Greedy ohne
                 Backtracking) · Max: 3 Retries intern (höhere Werte werden auf 3 gekappt)
@@ -330,7 +330,7 @@ export function SeasonPlanningTab() {
                 >
                   Schwellwert für unzugewiesene Mitglieder
                 </Label>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-2xs">
                   Sprint 4 P0 #3
                 </Badge>
               </div>
@@ -340,7 +340,7 @@ export function SeasonPlanningTab() {
                 mehr Freiheit für die Neuplatzierung zu bekommen. Dezimalzahl, z.B.{' '}
                 <code className="px-1 rounded bg-muted">0.05</code> = 5%.
               </p>
-              <p className="text-[11px] text-muted-foreground italic flex items-center gap-1">
+              <p className="text-2xs text-muted-foreground italic flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Standard: <code className="px-1 rounded bg-muted">0.05</code> (5%) · Range: 0–1 ·
                 Auf <code className="px-1 rounded bg-muted">1.0</code> setzen, um zweiten Pass zu
@@ -370,7 +370,7 @@ export function SeasonPlanningTab() {
           {/* Save button */}
           <div className="flex items-center justify-between pt-2">
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Zap className="h-3 w-3 text-amber-500" />
+              <Zap className="h-3 w-3 text-warning-500" />
               Änderungen wirken sich auf das nächste Clustering aus.
             </p>
             <Button onClick={handleSave} disabled={saving || !configLoaded} className="gap-2">

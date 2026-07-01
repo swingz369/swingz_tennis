@@ -97,7 +97,9 @@ export async function PATCH(
         }
         if (
           rawContractedRate !== null &&
-          (typeof rawContractedRate !== 'number' || rawContractedRate < 0)
+          (typeof rawContractedRate !== 'number' ||
+            !Number.isFinite(rawContractedRate) ||
+            rawContractedRate < 0)
         ) {
           return NextResponse.json({ error: 'Vertragssatz muss ≥ 0 sein' }, { status: 400 });
         }
@@ -105,7 +107,10 @@ export async function PATCH(
       }
 
       if (rawExtraRate !== undefined) {
-        if (rawExtraRate !== null && (typeof rawExtraRate !== 'number' || rawExtraRate < 0)) {
+        if (
+          rawExtraRate !== null &&
+          (typeof rawExtraRate !== 'number' || !Number.isFinite(rawExtraRate) || rawExtraRate < 0)
+        ) {
           return NextResponse.json({ error: 'Zusatzstunden-Satz muss ≥ 0 sein' }, { status: 400 });
         }
         extraHoursRate = rawExtraRate;

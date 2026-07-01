@@ -61,7 +61,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
           .from('courts')
           .select('id', { count: 'exact', head: true })
           .eq('club_id', clubId)
-          .eq('is_active', true),
+          .eq('is_active', true)
+          .eq('usable_for_training', true),
 
         // preferences
         supabase
@@ -70,12 +71,17 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
           .eq('season_id', seasonId ?? ''),
       ];
 
-      // trainer_availability (only if there are trainers)
+      // trainer availability — check user_training_preferences (user_role='trainer')
+      // because that's what the clustering engine actually reads. The old
+      // trainer_availability table (weekly day-of-week patterns) is a separate
+      // system that is NOT used by the planning algorithm.
       if (trainerUserIdList.length > 0) {
         queries.push(
-          (supabase.from('trainer_availability') as any)
+          (supabase.from('user_training_preferences') as any)
             .select('id', { count: 'exact', head: true })
             .in('user_id', trainerUserIdList)
+            .eq('user_role', 'trainer')
+            .eq('season_id', seasonId ?? '')
         );
       } else {
         queries.push(Promise.resolve({ count: 0 }));

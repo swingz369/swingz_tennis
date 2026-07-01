@@ -18,15 +18,15 @@ import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
 
 const actionIcons: Record<string, React.ReactNode> = {
-  user_created: <UserCheck className="h-4 w-4 text-green-500" />,
-  user_deleted: <ShieldAlert className="h-4 w-4 text-red-500" />,
-  role_changed: <ShieldAlert className="h-4 w-4 text-amber-500" />,
-  settings_updated: <Settings className="h-4 w-4 text-blue-500" />,
+  user_created: <UserCheck className="h-4 w-4 text-success-500" />,
+  user_deleted: <ShieldAlert className="h-4 w-4 text-error-500" />,
+  role_changed: <ShieldAlert className="h-4 w-4 text-warning-500" />,
+  settings_updated: <Settings className="h-4 w-4 text-info-500" />,
   login: <LogIn className="h-4 w-4 text-emerald-500" />,
   logout: <LogOut className="h-4 w-4 text-muted-foreground" />,
   season_created: <Clock className="h-4 w-4 text-brand-light" />,
   season_published: <Clock className="h-4 w-4 text-brand-light" />,
-  billing_generated: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  billing_generated: <AlertTriangle className="h-4 w-4 text-warning-500" />,
 };
 
 const actionLabels: Record<string, string> = {
@@ -102,16 +102,16 @@ export default function AuditLogsTab({ clubId }: { clubId: string }) {
                     <span className="text-sm font-medium text-foreground dark:text-white">
                       {actionLabels[log.action] ?? log.action}
                     </span>
-                    <Badge variant="secondary" className="text-[10px] font-mono">
+                    <Badge variant="secondary" className="text-2xs font-mono">
                       {log.action}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <span className="text-2xs text-muted-foreground flex items-center gap-1">
                       <UserCheck className="h-3 w-3" />
                       {log.performed_by_name ?? log.performed_by ?? 'System'}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-2xs text-muted-foreground">
                       {new Date(log.created_at).toLocaleString('de-DE', {
                         day: '2-digit',
                         month: '2-digit',

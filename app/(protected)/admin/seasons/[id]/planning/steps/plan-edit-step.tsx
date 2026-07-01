@@ -27,6 +27,18 @@ import {
 
 import { COLORS } from '@/lib/season-planning/schedule-constants';
 
+/**
+ * PlanEditStep (Schritt 2 von 3)
+ *
+ * Responsibilities:
+ * 1. Plan Generation: Run clustering algorithm with config
+ * 2. Metrics Display: Show quality score + detailed metrics
+ * 3. Conflict Detection (live): Real-time court double-booking check
+ * 4. Plan Editing: Drag & drop member reassignment
+ * 5. AI Analysis: Optional AI-powered plan review
+ * 6. Waitlist Summary: Show members on waitlist with positions
+ * 7. Unassigned Members: Show why members couldn't be assigned
+ */
 export function PlanEditStep() {
   const { state, dispatch, runClustering } = useWizard();
   const {
@@ -131,6 +143,31 @@ export function PlanEditStep() {
 
   const metrics = state.clusteringResult?.metrics;
 
+  // ponytail: live court double-booking check — runs on every plan change, no API call needed
+  const courtConflicts = useMemo(() => {
+    const conflicts: Array<{ courtName: string; day: number; time: string; groups: string[] }> = [];
+    const byCourtDayTime = new Map<string, string[]>();
+    for (const slot of plan) {
+      if (!slot.courtId) continue;
+      const key = `${slot.courtId}|${slot.dayOfWeek}|${slot.startTime}`;
+      const existing = byCourtDayTime.get(key) ?? [];
+      existing.push(slot.groupName);
+      byCourtDayTime.set(key, existing);
+    }
+    for (const [key, groupNames] of byCourtDayTime.entries()) {
+      if (groupNames.length < 2) continue;
+      const [, dayStr, time] = key.split('|');
+      const slot = plan.find((s) => s.dayOfWeek === Number(dayStr) && s.startTime === time);
+      conflicts.push({
+        courtName: slot?.courtName ?? 'Unbekannter Platz',
+        day: Number(dayStr),
+        time,
+        groups: groupNames,
+      });
+    }
+    return conflicts;
+  }, [plan]);
+
   // Compute auto-plan style score from clustering metrics
   const scoreData = useMemo(() => {
     if (!metrics) return null;
@@ -165,7 +202,7 @@ export function PlanEditStep() {
             <Button
               onClick={handleGenerate}
               disabled={isGenerating}
-              variant="brand"
+              variant="primary"
               size="lg"
               className="mt-6 gap-2"
             >
@@ -182,7 +219,7 @@ export function PlanEditStep() {
               )}
             </Button>
             {generationError && (
-              <div className="flex items-center gap-2 mt-4 justify-center text-sm text-red-600">
+              <div className="flex items-center gap-2 mt-4 justify-center text-sm text-error-600">
                 <AlertTriangle className="h-4 w-4" />
                 {generationError}
               </div>
@@ -199,17 +236,17 @@ export function PlanEditStep() {
       {metrics && scoreData && (
         <div className="space-y-4">
           {/* Score Card */}
-          <Card className={scoreData.isExcellent ? 'border-green-500/50 bg-green-50/50' : ''}>
+          <Card className={scoreData.isExcellent ? 'border-success-500/50 bg-success-50/50' : ''}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-amber-500" />
+                  <Zap className="h-4 w-4 text-warning-500" />
                   Planungs-Score
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
-                    className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                    className="text-xs bg-info-50 text-info-700 border-info-200"
                   >
                     Quelle: Auto
                   </Badge>
@@ -234,7 +271,7 @@ export function PlanEditStep() {
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-3xl font-bold ${scoreData.score >= 80 ? 'text-green-600' : scoreData.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}
+                  className={`text-3xl font-bold ${scoreData.score >= 80 ? 'text-success-600' : scoreData.score >= 60 ? 'text-yellow-600' : 'text-error-600'}`}
                 >
                   {scoreData.score}%
                 </span>
@@ -246,10 +283,10 @@ export function PlanEditStep() {
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${
                     scoreData.score >= 80
-                      ? 'bg-green-500'
+                      ? 'bg-success-500'
                       : scoreData.score >= 60
                         ? 'bg-yellow-500'
-                        : 'bg-red-500'
+                        : 'bg-error-500'
                   }`}
                   style={{ width: `${Math.min(100, scoreData.score)}%` }}
                 />
@@ -266,7 +303,7 @@ export function PlanEditStep() {
                   <p className="text-xs text-muted-foreground">Gruppen</p>
                 </div>
                 <p className="text-xl font-bold mt-1">{metrics.totalGroups}</p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   {metrics.totalMembers} Mitglieder
                 </p>
               </CardContent>
@@ -274,13 +311,13 @@ export function PlanEditStep() {
             <Card>
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-green-500" />
+                  <Target className="h-4 w-4 text-success-500" />
                   <p className="text-xs text-muted-foreground">Niveau-Match</p>
                 </div>
                 <p className="text-xl font-bold mt-1">{Math.round(metrics.avgNiveauMatch)}%</p>
                 <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-green-500"
+                    className="h-full rounded-full bg-success-500"
                     style={{ width: `${Math.round(metrics.avgNiveauMatch)}%` }}
                   />
                 </div>
@@ -289,11 +326,11 @@ export function PlanEditStep() {
             <Card>
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2">
-                  <Heart className="h-4 w-4 text-red-400" />
+                  <Heart className="h-4 w-4 text-error-400" />
                   <p className="text-xs text-muted-foreground">Wunschpartner</p>
                 </div>
                 <p className="text-xl font-bold mt-1">{Math.round(metrics.wishPartnerRate)}%</p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   {metrics.wishPartnerFulfilled}/{metrics.wishPartnerRequests} erfüllt
                 </p>
               </CardContent>
@@ -301,7 +338,7 @@ export function PlanEditStep() {
             <Card>
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-500" />
+                  <Star className="h-4 w-4 text-warning-500" />
                   <p className="text-xs text-muted-foreground">Trainer-Auslastung</p>
                 </div>
                 <p className="text-xl font-bold mt-1">
@@ -309,7 +346,7 @@ export function PlanEditStep() {
                 </p>
                 <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-amber-500"
+                    className="h-full rounded-full bg-warning-500"
                     style={{ width: `${Math.round(metrics.avgTrainerUtilization)}%` }}
                   />
                 </div>
@@ -318,13 +355,14 @@ export function PlanEditStep() {
           </div>
 
           {/* Warnings Section */}
-          {scoreData.totalWarnings > 0 && (
+          {(scoreData.totalWarnings > 0 || courtConflicts.length > 0) && (
             <Card className="border-yellow-500/50">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-yellow-600" />
                   <CardTitle className="text-base text-yellow-800">
-                    {scoreData.totalWarnings} Warnung{scoreData.totalWarnings !== 1 ? 'en' : ''}
+                    {scoreData.totalWarnings + courtConflicts.length} Warnung
+                    {scoreData.totalWarnings + courtConflicts.length !== 1 ? 'en' : ''}
                   </CardTitle>
                 </div>
               </CardHeader>
@@ -348,6 +386,11 @@ export function PlanEditStep() {
                       {metrics.trainerOverloadWarnings !== 1 ? 'en' : ''}
                     </li>
                   )}
+                  {courtConflicts.map((c, i) => (
+                    <li key={i} className="text-sm text-error-700">
+                      • Platzdoppelbelegung: {c.courtName} {c.time} Uhr — {c.groups.join(' & ')}
+                    </li>
+                  ))}
                 </ul>
               </CardContent>
             </Card>
@@ -355,15 +398,15 @@ export function PlanEditStep() {
 
           {/* Excellent Plan Card */}
           {scoreData.isExcellent && (
-            <Card className="border-green-500/50 bg-green-50">
+            <Card className="border-success-500/50 bg-success-50">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <CardTitle className="text-base text-green-900">Exzellente Planung!</CardTitle>
+                  <CheckCircle className="h-5 w-5 text-success-600" />
+                  <CardTitle className="text-base text-success-900">Exzellente Planung!</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-green-800">
+                <p className="text-sm text-success-800">
                   Der Algorithmus hat eine optimale Planung ohne Warnungen erstellt. Sie können
                   diesen Plan übernehmen oder weitere Anpassungen vornehmen.
                 </p>
@@ -390,7 +433,7 @@ export function PlanEditStep() {
           Neu generieren
         </Button>
         {generationError && (
-          <span className="text-sm text-red-600 flex items-center gap-1">
+          <span className="text-sm text-error-600 flex items-center gap-1">
             <AlertTriangle className="h-4 w-4" />
             {generationError}
           </span>
@@ -454,9 +497,9 @@ export function PlanEditStep() {
 
       {/* Waitlist Summary */}
       {state.clusteringResult.waitlistSummary.length > 0 && (
-        <Card className="border-blue-200 bg-blue-50/30">
+        <Card className="border-info-200 bg-info-50/30">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-blue-700">
+            <CardTitle className="text-base flex items-center gap-2 text-info-700">
               <Users className="h-4 w-4" />
               Warteliste ({state.clusteringResult.waitlistSummary.length})
             </CardTitle>
@@ -466,7 +509,7 @@ export function PlanEditStep() {
               {state.clusteringResult.waitlistSummary.map((w, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-lg border border-blue-100 bg-background p-3 text-sm"
+                  className="flex items-center justify-between rounded-lg border border-info-100 bg-background p-3 text-sm"
                 >
                   <span className="font-medium">{w.memberName}</span>
                   <div className="flex items-center gap-2">
@@ -488,9 +531,9 @@ export function PlanEditStep() {
 
       {/* Unassigned Members */}
       {state.clusteringResult.unassignedMembers.length > 0 && (
-        <Card className="border-red-200 bg-red-50/30">
+        <Card className="border-error-200 bg-error-50/30">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-red-700">
+            <CardTitle className="text-base flex items-center gap-2 text-error-700">
               <AlertTriangle className="h-4 w-4" />
               Nicht zugewiesen ({state.clusteringResult.unassignedMembers.length})
             </CardTitle>
@@ -500,10 +543,10 @@ export function PlanEditStep() {
               {state.clusteringResult.unassignedMembers.map((m) => (
                 <div
                   key={m.memberId}
-                  className="flex items-center justify-between rounded-lg border border-red-100 bg-background p-3 text-sm"
+                  className="flex items-center justify-between rounded-lg border border-error-100 bg-background p-3 text-sm"
                 >
                   <span className="font-medium">{m.memberName}</span>
-                  <span className="text-red-600 text-xs">{m.reason}</span>
+                  <span className="text-error-600 text-xs">{m.reason}</span>
                 </div>
               ))}
             </div>

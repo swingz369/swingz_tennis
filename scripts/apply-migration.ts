@@ -44,8 +44,10 @@ const statements = sqlContent
 
 async function main() {
   console.log(`[migrate] Connecting to database...`);
-  const sql = postgres(dbUrl, {
-    ssl: dbUrl.includes('localhost') ? false : { rejectUnauthorized: false },
+  // `dbUrl` is checked at the top of the file (process.exit(1) if missing),
+  // but TS can't narrow it across the function boundary — use non-null assertion.
+  const sql = postgres(dbUrl!, {
+    ssl: dbUrl!.includes('localhost') ? false : { rejectUnauthorized: false },
     max: 1,
   });
 

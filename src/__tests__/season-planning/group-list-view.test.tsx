@@ -24,13 +24,12 @@ function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
   };
 }
 
+// Mirrors the fixed useSchedulePlan().byDay(): direct 0=Monday..6=Sunday index, no wrap.
 function makeByDay(plan: ScheduleSlot[]): Record<number, ScheduleSlot[]> {
   const result: Record<number, ScheduleSlot[]> = {};
-  for (let d = 1; d <= 7; d++) result[d] = [];
+  for (let d = 0; d <= 6; d++) result[d] = [];
   plan.forEach((s) => {
-    const day = s.dayOfWeek === 0 ? 7 : s.dayOfWeek;
-    if (!result[day]) result[day] = [];
-    result[day].push(s);
+    result[s.dayOfWeek].push(s);
   });
   return result;
 }
@@ -45,7 +44,7 @@ describe('GroupListView — empty state', () => {
       <GroupListView
         plan={[]}
         expandedSlot={null}
-        byDay={{ 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [] }}
+        byDay={{ 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] }}
         activeDays={[]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
@@ -63,8 +62,8 @@ describe('GroupListView — empty state', () => {
 describe('GroupListView — groups by day', () => {
   it('should render day headers for active days', () => {
     const plan = [
-      makeSlot({ id: 's1', dayOfWeek: 1, groupName: 'Gruppe A' }),
-      makeSlot({ id: 's2', dayOfWeek: 2, groupName: 'Gruppe B' }),
+      makeSlot({ id: 's1', dayOfWeek: 0, groupName: 'Gruppe A' }),
+      makeSlot({ id: 's2', dayOfWeek: 1, groupName: 'Gruppe B' }),
     ];
     const byDay = makeByDay(plan);
 
@@ -73,7 +72,7 @@ describe('GroupListView — groups by day', () => {
         plan={plan}
         expandedSlot={null}
         byDay={byDay}
-        activeDays={[1, 2]}
+        activeDays={[0, 1]}
         onToggleExpand={vi.fn()}
         onMoveMember={vi.fn()}
       />

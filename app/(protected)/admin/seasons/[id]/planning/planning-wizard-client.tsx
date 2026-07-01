@@ -54,13 +54,13 @@ class StepErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-6">
+        <Card className="border-error-200 bg-error-50 dark:bg-error-900/20 dark:border-error-800 p-6">
           <div className="flex flex-col items-center text-center gap-3">
-            <AlertTriangle className="h-8 w-8 text-red-500" />
-            <h3 className="text-lg font-semibold text-red-700">
+            <AlertTriangle className="h-8 w-8 text-error-500" />
+            <h3 className="text-lg font-semibold text-error-700">
               Ein unerwarteter Fehler ist aufgetreten
             </h3>
-            <p className="text-sm text-red-600 max-w-md">
+            <p className="text-sm text-error-600 max-w-md">
               {this.state.error?.message || 'Unbekannter Fehler'}
             </p>
             <Button
@@ -80,11 +80,12 @@ class StepErrorBoundary extends Component<
 
 const STEPS = [
   { number: 1, label: 'Konfigurieren', icon: Settings, hint: 'Daten prüfen & einstellen' },
+  { number: 2, label: 'Planen', icon: LayoutGrid, hint: 'Plan generieren & bearbeiten' },
   {
-    number: 2,
-    label: 'Planen & Veröffentlichen',
-    icon: LayoutGrid,
-    hint: 'Generieren, bearbeiten & abschließen',
+    number: 3,
+    label: 'Abschließen',
+    icon: ClipboardCheck,
+    hint: 'Konflikte prüfen & bestätigen',
   },
 ];
 
@@ -100,6 +101,7 @@ interface PlanningWizardClientProps {
   seasonYear: number;
   planningStatus: string;
   initialStep?: number;
+  aiAvailable?: boolean;
 }
 
 // ============================================
@@ -110,10 +112,12 @@ function WizardContent({
   seasonName,
   seasonType,
   seasonYear,
+  aiAvailable,
 }: {
   seasonName: string;
   seasonType: string;
   seasonYear: number;
+  aiAvailable: boolean;
 }) {
   const router = useRouter();
   const { state, nextStep, prevStep, goToStep } = useWizard();
@@ -122,22 +126,22 @@ function WizardContent({
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <ConfigStep />;
+        return <ConfigStep aiAvailable={aiAvailable} />;
       case 2:
-        return (
-          <>
-            <PlanEditStep />
-            <FinalizeStep />
-          </>
-        );
+        return <PlanEditStep />;
+      case 3:
+        return <FinalizeStep />;
       default:
-        return <ConfigStep />;
+        return <ConfigStep aiAvailable={aiAvailable} />;
     }
   };
 
-  const canGoNext = currentStep < 2 && !(currentStep === 1 && !state.isReady);
+  const canGoNext =
+    currentStep < 3 &&
+    !(currentStep === 1 && !state.isReady) &&
+    !(currentStep === 2 && !state.clusteringResult);
   const canGoPrev = currentStep > 1;
-  const isLast = currentStep === 2;
+  const isLast = currentStep === 3;
 
   return (
     <div className="space-y-6">
@@ -181,7 +185,7 @@ function WizardContent({
                   isActive
                     ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/20'
                     : isCompleted
-                      ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                      ? 'bg-success-50 text-success-700 dark:bg-success-900/20 dark:text-success-400'
                       : isClickable
                         ? 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-foreground'
                         : 'bg-muted text-muted-foreground cursor-not-allowed dark:bg-muted/50'
@@ -203,18 +207,18 @@ function WizardContent({
       <div className="h-1.5 w-full rounded-full bg-muted dark:bg-muted overflow-hidden">
         <div
           className="h-full rounded-full bg-brand-primary transition-all duration-500"
-          style={{ width: `${(currentStep / 2) * 100}%` }}
+          style={{ width: `${(currentStep / 3) * 100}%` }}
         />
       </div>
 
       {/* Error Display */}
       {error && (
-        <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-4">
+        <Card className="border-error-200 bg-error-50 dark:bg-error-900/20 dark:border-error-800 p-4">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
+            <AlertTriangle className="h-5 w-5 text-error-500 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-red-700 dark:text-red-400">Fehler</p>
-              <p className="text-sm text-red-600 dark:text-red-300 mt-0.5">{error}</p>
+              <p className="text-sm font-medium text-error-700 dark:text-error-400">Fehler</p>
+              <p className="text-sm text-error-600 dark:text-error-300 mt-0.5">{error}</p>
             </div>
           </div>
         </Card>
@@ -243,15 +247,21 @@ function WizardContent({
           {!isLast ? (
             <>
               {currentStep === 1 && !state.isReady ? (
-                <p className="text-xs text-amber-600 mr-2">Bereitschaftsprüfung nicht bestanden</p>
+                <p className="text-xs text-warning-600 mr-2">
+                  Bereitschaftsprüfung nicht bestanden — Schritt 1 muss komplett sein
+                </p>
+              ) : currentStep === 2 && !state.clusteringResult ? (
+                <p className="text-xs text-warning-600 mr-2">
+                  Plan muss erst generiert werden — Button in Schritt 2
+                </p>
               ) : null}
               <Button onClick={nextStep} disabled={!canGoNext || isProcessing}>
-                Weiter
+                {currentStep === 1 ? 'Zu Planung' : 'Zu Abschluss'}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </>
           ) : (
-            <Button onClick={() => router.push(`/admin/seasons/${state.seasonId}`)} variant="brand">
+            <Button onClick={() => router.push(`/admin/seasons/${state.seasonId}`)} variant="primary">
               <ClipboardCheck className="mr-2 h-4 w-4" />
               Zur Saisonübersicht
             </Button>
@@ -273,10 +283,16 @@ export function PlanningWizardClient({
   seasonType,
   seasonYear,
   initialStep,
+  aiAvailable = true,
 }: PlanningWizardClientProps) {
   return (
     <WizardProvider seasonId={seasonId} clubId={clubId} initialStep={initialStep}>
-      <WizardContent seasonName={seasonName} seasonType={seasonType} seasonYear={seasonYear} />
+      <WizardContent
+        seasonName={seasonName}
+        seasonType={seasonType}
+        seasonYear={seasonYear}
+        aiAvailable={aiAvailable}
+      />
     </WizardProvider>
   );
 }

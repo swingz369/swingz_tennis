@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingButton } from '@/components/ui/loading-button';
 import { AlertTriangle, CheckCircle, Trash2, XCircle } from 'lucide-react';
 
-export type ConfirmVariant = 'danger' | 'warning' | 'default' | 'destructive' | 'brand';
+export type ConfirmVariant = 'danger' | 'warning' | 'default' | 'destructive' | 'primary';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -32,7 +32,7 @@ const variantStyles: Record<ConfirmVariant, { icon: React.ElementType; buttonCla
   },
   warning: { icon: AlertTriangle, buttonClass: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
   default: { icon: XCircle, buttonClass: '' },
-  brand: {
+  primary: {
     icon: CheckCircle,
     buttonClass: 'bg-brand-primary hover:bg-brand-primary/90 text-white',
   },
@@ -72,7 +72,7 @@ export function ConfirmDialog({
                 ? 'bg-destructive/10'
                 : variant === 'warning'
                   ? 'bg-yellow-100'
-                  : variant === 'brand'
+                  : variant === 'primary'
                     ? 'bg-brand-primary/10'
                     : 'bg-muted'
             }`}
@@ -83,7 +83,7 @@ export function ConfirmDialog({
                   ? 'text-destructive'
                   : variant === 'warning'
                     ? 'text-yellow-600'
-                    : variant === 'brand'
+                    : variant === 'primary'
                       ? 'text-brand-primary'
                       : 'text-muted-foreground'
               }`}

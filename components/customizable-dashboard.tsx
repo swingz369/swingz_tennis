@@ -117,7 +117,7 @@ function SortableWidget({
           {/* Remove */}
           <button
             onClick={() => onRemove(widget.id)}
-            className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 hover:text-red-600"
+            className="p-1 rounded-lg hover:bg-error-50 dark:hover:bg-error-900/20 text-error-400 hover:text-error-600"
             aria-label="Widget entfernen"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -477,7 +477,7 @@ export function CustomizableDashboard({
 
       {/* Error toast */}
       {saveStatus === 'error' && (
-        <div className="fixed bottom-6 right-6 z-50 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl shadow-lg text-sm">
+        <div className="fixed bottom-6 right-6 z-50 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 text-error-700 dark:text-error-300 px-4 py-3 rounded-xl shadow-lg text-sm">
           Fehler beim Speichern. Bitte erneut versuchen.
         </div>
       )}

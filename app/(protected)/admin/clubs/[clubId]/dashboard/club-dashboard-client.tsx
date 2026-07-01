@@ -57,7 +57,7 @@ export function ClubDashboardClient({
       label: 'Mitglieder',
       value: stats.members,
       icon: Users,
-      gradient: 'from-blue-500 to-indigo-600',
+      gradient: 'from-info-500 to-indigo-600',
       href: `/admin/members?clubId=${clubId}`,
     },
     {
@@ -65,7 +65,7 @@ export function ClubDashboardClient({
       label: 'Trainer',
       value: stats.trainers,
       icon: UserCheck,
-      gradient: 'from-green-500 to-emerald-700',
+      gradient: 'from-success-500 to-emerald-700',
       href: `/admin/trainers?clubId=${clubId}`,
     },
     {
@@ -179,7 +179,6 @@ export function ClubDashboardClient({
       {/* Hero Header */}
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">

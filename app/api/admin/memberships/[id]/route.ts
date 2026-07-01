@@ -5,7 +5,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withAuth, verifyRole, forbiddenResponse, type AuthContext } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, forbiddenResponse, type AuthContext } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:admin:memberships:[id]');
@@ -27,7 +27,7 @@ const ROLE_HIERARCHY = {
  */
 export async function GET(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
-  return withAuth(request, async (auth: AuthContext) => {
+  return withApiAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Admin access required');
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
 
-  return withAuth(request, async (auth: AuthContext) => {
+  return withApiAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Admin access required');
@@ -225,7 +225,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const { id } = await params;
 
-  return withAuth(request, async (auth: AuthContext) => {
+  return withApiAuth(request, async (auth: AuthContext) => {
     const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
       return forbiddenResponse('Admin access required');

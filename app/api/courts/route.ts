@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     const { data: courts, error } = await auth.supabase
       .from('courts')
       .select(
-        'id, club_id, court_type_id, name, surface, has_indoor, has_lighting, is_active, created_at'
+        'id, club_id, court_type_id, name, surface, has_indoor, has_lighting, is_active, usable_for_training, created_at'
       )
       .eq('club_id', clubId)
       .order('name', { ascending: true });
@@ -67,6 +67,7 @@ export async function GET(req: NextRequest) {
       hasLighting: c.has_lighting ?? false,
       hasIndoor: c.has_indoor ?? false,
       isActive: c.is_active ?? true,
+      usableForTraining: c.usable_for_training ?? true,
       createdAt: c.created_at,
     }));
 
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    const { name, hasLighting, clubId: bodyClubId, isActive } = body;
+    const { name, hasLighting, clubId: bodyClubId, isActive, usableForTraining } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
@@ -115,6 +116,7 @@ export async function POST(req: NextRequest) {
         has_indoor: body.hasIndoor ?? false,
         has_lighting: hasLighting ?? false,
         is_active: isActive ?? true,
+        usable_for_training: usableForTraining ?? true,
       })
       .select()
       .single();
@@ -135,6 +137,7 @@ export async function POST(req: NextRequest) {
           location: court.location,
           hasLighting: court.has_lighting,
           isActive: court.is_active,
+          usableForTraining: court.usable_for_training,
           status: court.status,
           createdAt: court.created_at,
         },

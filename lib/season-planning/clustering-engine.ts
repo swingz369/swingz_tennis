@@ -14,6 +14,7 @@ import {
   userClubMemberships,
   trainerClubs,
   memberSchedulePreferences,
+  clubs,
 } from '@/src/infrastructure/persistence/schema';
 import {
   seasonWaitlists,
@@ -22,6 +23,12 @@ import {
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import { and, eq, asc } from 'drizzle-orm';
+import {
+  getHolidaysForState,
+  resolveBundeslandCode,
+  isHolidayWeek,
+  getMonday,
+} from '@/lib/season-planning/holidays';
 import type { WeeklyAvailability, DayOfWeek, SkillLevel } from '@/lib/types/season-planning';
 import type {
   MemberWithDetails,
@@ -44,6 +51,10 @@ import type {
  */
 export interface ClusteringConfig {
   maxNiveauLevelSteps: number; // max skill-level steps within a group, default 1
+  // Niveau-Spanne in Monaten Erfahrung — DB-Spalten existieren (season_planning_configs),
+  // werden hier nur typed durchgereicht; Matching nutzt weiterhin maxNiveauLevelSteps.
+  maxNiveauSpanBeginner: number; // default 4
+  maxNiveauSpanAdvanced: number; // default 8
   trainerUtilizationMaxPct: number; // default 100 (% of max_hours_per_week)
   groupMaxSize: number; // default 6
   groupMinSize: number; // default 1
@@ -71,6 +82,8 @@ export interface ClusteringConfig {
 
 const DEFAULT_CONFIG: ClusteringConfig = {
   maxNiveauLevelSteps: 1,
+  maxNiveauSpanBeginner: 4,
+  maxNiveauSpanAdvanced: 8,
   trainerUtilizationMaxPct: 100,
   groupMaxSize: 6,
   groupMinSize: 1,
@@ -278,9 +291,45 @@ export class SeasonClusteringEngine {
       }
     }
 
+    // Step 7c: Ferien-adjustierte Sessionzahl berechnen und in Explanations aufnehmen
+    const holidayWarnings: string[] = [];
+    try {
+      const [clubRow] = await db
+        .select({ bundesland: clubs.bundesland })
+        .from(clubs)
+        .where(eq(clubs.id, this.clubId))
+        .limit(1);
+      if (currentSeason?.start && currentSeason?.end && clubRow?.bundesland) {
+        const code = resolveBundeslandCode(clubRow.bundesland);
+        const holidays = getHolidaysForState(code);
+        if (holidays.length > 0) {
+          let holidayWeekCount = 0;
+          const cursor = new Date(getMonday(new Date(currentSeason.start)));
+          const end = new Date(currentSeason.end);
+          while (cursor <= end) {
+            if (isHolidayWeek(cursor.toISOString().slice(0, 10), holidays)) holidayWeekCount++;
+            cursor.setDate(cursor.getDate() + 7);
+          }
+          if (holidayWeekCount > 0) {
+            const totalWeeks = Math.round(
+              (new Date(currentSeason.end).getTime() - new Date(currentSeason.start).getTime()) /
+                (7 * 86400000)
+            );
+            const activeWeeks = totalWeeks - holidayWeekCount;
+            holidayWarnings.push(
+              `📅 ${holidayWeekCount} Ferienwochen (${code}) erkannt — effektive Trainingswochen: ${activeWeeks} von ${totalWeeks}. Rechnungsvorschau und Sessionzahl basieren auf diesen ${activeWeeks} Wochen.`
+            );
+          }
+        }
+      }
+    } catch {
+      // non-critical — skip
+    }
+
     // Step 8: Generate explanations
     const explanations = [
       ...trainingWeekWarnings,
+      ...holidayWarnings,
       ...this.generateExplanations(assignments, members, trainers),
     ];
 
@@ -325,6 +374,14 @@ export class SeasonClusteringEngine {
           (dbConfig as Record<string, unknown>).max_niveau_level_steps != null
             ? Number((dbConfig as Record<string, unknown>).max_niveau_level_steps)
             : DEFAULT_CONFIG.maxNiveauLevelSteps,
+        maxNiveauSpanBeginner:
+          (dbConfig as Record<string, unknown>).max_niveau_span_beginner_months != null
+            ? Number((dbConfig as Record<string, unknown>).max_niveau_span_beginner_months)
+            : DEFAULT_CONFIG.maxNiveauSpanBeginner,
+        maxNiveauSpanAdvanced:
+          (dbConfig as Record<string, unknown>).max_niveau_span_advanced_months != null
+            ? Number((dbConfig as Record<string, unknown>).max_niveau_span_advanced_months)
+            : DEFAULT_CONFIG.maxNiveauSpanAdvanced,
         trainerUtilizationMaxPct:
           dbConfig.trainer_utilization_max_pct ?? DEFAULT_CONFIG.trainerUtilizationMaxPct,
         groupMaxSize: dbConfig.group_max_size ?? DEFAULT_CONFIG.groupMaxSize,
@@ -643,10 +700,28 @@ export class SeasonClusteringEngine {
 
   private async loadCourts(): Promise<CourtInfo[]> {
     if (this._cachedCourts) return this._cachedCourts;
-    const courtRows = await db
-      .select()
-      .from(courts)
-      .where(and(eq(courts.club_id, this.clubId), eq(courts.is_active, true)));
+
+    // Winter-Saison: nur Hallen-Courts (has_indoor=true). Sommer: alle aktiven Courts.
+    const [currentSeason] = await db
+      .select({ season_type: seasons.season_type })
+      .from(seasons)
+      .where(eq(seasons.id, this.seasonId));
+    const isWinter = currentSeason?.season_type === 'winter';
+
+    const filter = isWinter
+      ? and(
+          eq(courts.club_id, this.clubId),
+          eq(courts.is_active, true),
+          eq(courts.usable_for_training, true),
+          eq(courts.has_indoor, true)
+        )
+      : and(
+          eq(courts.club_id, this.clubId),
+          eq(courts.is_active, true),
+          eq(courts.usable_for_training, true)
+        );
+
+    const courtRows = await db.select().from(courts).where(filter);
     const result = courtRows.map((c) => ({
       id: c.id,
       name: c.name,
@@ -1569,10 +1644,12 @@ export class SeasonClusteringEngine {
 
     const groupHasMinors = members.some((m) => m.isMinor);
 
-    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+    // HARD CONSTRAINT: kein Trainingsbetrieb am Sonntag (Vereinsrealität — Sonntag ist
+    // spielfrei/Turniertag, kein regulärer Trainingstag). Mo(0)-Sa(5) only.
+    for (let dayOfWeek = 0; dayOfWeek < 6; dayOfWeek++) {
       for (const timeSlot of timeSlots) {
         // HARD CONSTRAINT: Kinder/Jugendliche sind Mo-Fr in der Schule → frühestens 14:00
-        // Samstag/Sonntag: keine Einschränkung (kein Schultag)
+        // Samstag: keine Einschränkung (kein Schultag)
         if (groupHasMinors && dayOfWeek < 5 && timeSlot.start < '14:00') continue;
 
         // HARD CONSTRAINT: Check member availability via pre-computed cache
@@ -1683,8 +1760,6 @@ export class SeasonClusteringEngine {
         let score = 0;
         score += availableMembers.length * 10; // prefer fuller groups
         score -= failureWarning && this.config.avoidHighFailureSlots ? 50 : 0;
-        // Opt #1: only penalise Sunday, not Saturday (Sa is prime tennis time in Germany)
-        score -= dayOfWeek === 6 ? 15 : 0;
         // Fix 6: Erwachsene → Abendslots 18–22 Uhr bevorzugen (Berufstätige)
         //         Kinder/Jugend → Nachmittag 14–17 Uhr bevorzugen
         if (!groupHasMinors && dayOfWeek < 6) {

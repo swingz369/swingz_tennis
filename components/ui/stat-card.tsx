@@ -29,9 +29,9 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
     border: 'hover:border-brand-light/30',
   },
   blue: {
-    text: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-900/30',
-    border: 'hover:border-blue-200 dark:hover:border-blue-700/50',
+    text: 'text-info-600 dark:text-info-400',
+    bg: 'bg-info-50 dark:bg-info-900/30',
+    border: 'hover:border-info-200 dark:hover:border-info-700/50',
   },
   green: {
     text: 'text-emerald-600 dark:text-emerald-400',
@@ -49,9 +49,9 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
     border: 'hover:border-orange-200 dark:hover:border-orange-700/50',
   },
   red: {
-    text: 'text-red-600 dark:text-red-400',
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'hover:border-red-200 dark:hover:border-red-700/50',
+    text: 'text-error-600 dark:text-error-400',
+    bg: 'bg-error-50 dark:bg-error-900/20',
+    border: 'hover:border-error-200 dark:hover:border-error-700/50',
   },
   gray: {
     text: 'text-muted-foreground dark:text-muted-foreground',
@@ -132,7 +132,7 @@ export function StatCard({
               {badge != null && badge > 0 && (
                 <span
                   className={cn(
-                    'text-[11px] font-bold px-2 py-0.5 rounded-full',
+                    'text-2xs font-bold px-2 py-0.5 rounded-full',
                     colors.bg,
                     colors.text
                   )}

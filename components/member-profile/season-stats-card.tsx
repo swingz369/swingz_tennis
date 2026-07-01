@@ -37,7 +37,7 @@ export async function SeasonStatsCard({ userId, clubId }: Props) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <Trophy className="h-4 w-4 text-amber-500" />
+          <Trophy className="h-4 w-4 text-warning-500" />
           Saison {new Date().getFullYear()}
         </CardTitle>
       </CardHeader>
@@ -49,19 +49,19 @@ export async function SeasonStatsCard({ userId, clubId }: Props) {
         ) : (
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{wins}</p>
+              <p className="text-2xl font-bold text-success-600">{wins}</p>
               <p className="text-xs text-muted-foreground">Siege</p>
             </div>
             <Minus className="h-4 w-4 text-muted-foreground" />
             <div className="text-center">
-              <p className="text-2xl font-bold text-red-500">{losses}</p>
+              <p className="text-2xl font-bold text-error-500">{losses}</p>
               <p className="text-xs text-muted-foreground">Niederlagen</p>
             </div>
             <div className="ml-auto">
               {winRate !== null && (
                 <Badge
                   variant="secondary"
-                  className={`gap-1 ${winRate >= 50 ? 'text-green-700 bg-green-100' : 'text-muted-foreground'}`}
+                  className={`gap-1 ${winRate >= 50 ? 'text-success-700 bg-success-100' : 'text-muted-foreground'}`}
                 >
                   <TrendingUp className="h-3 w-3" />
                   {winRate} % Siege

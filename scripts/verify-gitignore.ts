@@ -224,7 +224,7 @@ async function postWebhook(
   }
 }
 
-function formatHumanReport(report: Report, results: CheckResult[]): string {
+function formatHumanReport(results: CheckResult[]): string {
   const lines: string[] = [];
   lines.push('┌──────────────────────┬────────┬─────────────────┐');
   lines.push('│ Pattern              │ Status │ .gitignore-Zeile│');
@@ -327,7 +327,7 @@ async function main() {
   } else {
     console.log('🔍 Gitignore-Verifizierung startet...\n');
     console.log('📋 Schritt 1: .gitignore-Patterns prüfen\n');
-    console.log(formatHumanReport(report, results));
+    console.log(formatHumanReport(results));
     if (missing.length > 0) {
       console.error(`\n❌ ${missing.length} Pattern(s) fehlen in .gitignore:`);
       for (const m of missing) console.error(`   - ${m}`);

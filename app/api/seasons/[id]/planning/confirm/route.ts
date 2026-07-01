@@ -14,6 +14,7 @@ import {
   schedules,
   seasonPlanningHistory,
   clubs,
+  seasonGroupWeeks,
 } from '@/src/infrastructure/persistence/schema';
 import { eq, and } from 'drizzle-orm';
 import { ConflictDetector } from '@/lib/season-planning/conflict-detector';
@@ -180,6 +181,22 @@ export async function POST(request: NextRequest, context: RouteContext) {
           );
         }
 
+        // ── Load inactive weeks per group (season_group_weeks) ───────────
+        // Groups can have individual weeks marked inactive (e.g. hall repairs).
+        // key: `${group_id}|${week_number}` → true means skip this week.
+        const inactiveWeekRows = await db
+          .select({
+            group_id: seasonGroupWeeks.group_id,
+            week_number: seasonGroupWeeks.week_number,
+          })
+          .from(seasonGroupWeeks)
+          .where(
+            and(eq(seasonGroupWeeks.season_id, seasonId), eq(seasonGroupWeeks.is_active, false))
+          );
+        const inactiveWeekSet = new Set(
+          inactiveWeekRows.map((r) => `${r.group_id}|${r.week_number}`)
+        );
+
         // ── Publish transaction ──────────────────────────────────────────
         // All DB writes run in a single transaction. If anything fails after
         // sessions are created (audit trail, conflict persistence, season
@@ -313,13 +330,25 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 if (isDateInHolidays(dateStr, holidays)) continue;
               }
 
+              // Skip if this group/week is explicitly marked inactive
+              if (entry.group_id && inactiveWeekSet.has(`${entry.group_id}|${week}`)) continue;
+
               const sessionEndDate = new Date(sessionDate.getTime() + actualDurationMs);
+
+              // Vertretungstrainer falls für diese Woche konfiguriert
+              const substituteId = (entry as any).substitute_trainer_id;
+              const subFrom = (entry as any).substitute_from_week;
+              const subTo = (entry as any).substitute_to_week;
+              const effectiveTrainerId =
+                substituteId && subFrom != null && subTo != null && week >= subFrom && week <= subTo
+                  ? substituteId
+                  : entry.trainer_id;
 
               const [newSession] = await tx
                 .insert(sessions)
                 .values({
                   schedule_id: scheduleId,
-                  trainer_id: entry.trainer_id,
+                  trainer_id: effectiveTrainerId,
                   group_ids: entry.group_id ? [entry.group_id] : [],
                   week_number: week,
                   timeslot_start: sessionDate,
@@ -331,6 +360,49 @@ export async function POST(request: NextRequest, context: RouteContext) {
                 .returning({ id: sessions.id });
 
               createdSessionIds.push(newSession.id);
+            }
+
+            // Zweite wöchentliche Session bei sessions_per_week=2
+            const sessionsPerWeek = (entry as any).sessions_per_week ?? 1;
+            if (sessionsPerWeek >= 2) {
+              const dow2 =
+                (entry as any).day_of_week_2 != null
+                  ? (entry as any).day_of_week_2
+                  : (targetDayOfWeek + 3) % 7;
+              const jsDow2 = dow2 === 6 ? 0 : dow2 + 1;
+              const firstDate2 = new Date(seasonStart);
+              let daysUntil2 = jsDow2 - firstDate2.getDay();
+              if (daysUntil2 < 0) daysUntil2 += 7;
+              firstDate2.setDate(firstDate2.getDate() + daysUntil2);
+              firstDate2.setHours(startHours, startMinutes, 0, 0);
+
+              for (let week = startWeek; week <= endWeek && week <= totalSeasonWeeks; week++) {
+                const sessionDate2 = new Date(firstDate2);
+                sessionDate2.setDate(sessionDate2.getDate() + (week - 1) * 7);
+                if (sessionDate2 > seasonEnd) break;
+                if (holidays.length > 0) {
+                  const dateStr = sessionDate2.toISOString().substring(0, 10);
+                  if (isDateInHolidays(dateStr, holidays)) continue;
+                }
+                if (entry.group_id && inactiveWeekSet.has(`${entry.group_id}|${week}`)) continue;
+
+                const sessionEndDate2 = new Date(sessionDate2.getTime() + actualDurationMs);
+                const [s2] = await tx
+                  .insert(sessions)
+                  .values({
+                    schedule_id: scheduleId,
+                    trainer_id: entry.trainer_id,
+                    group_ids: entry.group_id ? [entry.group_id] : [],
+                    week_number: week,
+                    timeslot_start: sessionDate2,
+                    timeslot_end: sessionEndDate2,
+                    court_id: entry.court_id,
+                    max_participants: entry.max_participants || 10,
+                    notes: 'Erstellt durch Saisonplanung (2. Wochentermin)',
+                  })
+                  .returning({ id: sessions.id });
+                createdSessionIds.push(s2.id);
+              }
             }
 
             // Update plan entry with the first session ID as reference

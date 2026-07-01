@@ -568,7 +568,7 @@ export default function TrainerAvailabilityManager() {
         <div
           className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-sm ${
             weeklyHours > maxHoursPerWeek
-              ? 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-error-200 bg-error-50 text-error-700'
               : 'border-border bg-muted/30 text-foreground'
           }`}
         >
@@ -621,8 +621,8 @@ export default function TrainerAvailabilityManager() {
         <div
           className={`p-3 rounded-lg text-sm ${
             message.startsWith('Fehler')
-              ? 'bg-red-50 text-red-700 border border-red-200'
-              : 'bg-green-50 text-green-700 border border-green-200'
+              ? 'bg-error-50 text-error-700 border border-error-200'
+              : 'bg-success-50 text-success-700 border border-success-200'
           }`}
         >
           {message}
@@ -681,7 +681,7 @@ export default function TrainerAvailabilityManager() {
                       </div>
                       <div className="flex items-center gap-2">
                         {count > 0 ? (
-                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                          <Badge className="bg-success-100 text-success-700 border-success-200">
                             {count} {count === 1 ? 'Fenster' : 'Fenster'}
                           </Badge>
                         ) : (
@@ -736,13 +736,13 @@ export default function TrainerAvailabilityManager() {
                             key={slot.id}
                             className={`flex items-center gap-3 flex-wrap border rounded-lg p-3 ${
                               slot.isAvailable
-                                ? 'bg-green-50/50 border-green-100'
+                                ? 'bg-success-50/50 border-success-100'
                                 : 'bg-muted/50 border-border'
                             }`}
                           >
                             <Clock
                               className={`h-4 w-4 flex-shrink-0 ${
-                                slot.isAvailable ? 'text-green-600' : 'text-muted-foreground'
+                                slot.isAvailable ? 'text-success-600' : 'text-muted-foreground'
                               }`}
                             />
                             <div className="flex items-center gap-2">
@@ -779,7 +779,7 @@ export default function TrainerAvailabilityManager() {
                               variant="ghost"
                               size="sm"
                               onClick={() => removeSlotById(slot.id)}
-                              className="text-red-500 hover:text-red-700"
+                              className="text-error-500 hover:text-error-700"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

@@ -317,7 +317,7 @@ export function CourtTypesClient() {
                         variant={type.is_active ? 'default' : 'secondary'}
                         className={
                           type.is_active
-                            ? 'bg-green-100 text-green-700'
+                            ? 'bg-success-100 text-success-700'
                             : 'bg-muted text-foreground'
                         }
                       >
@@ -337,7 +337,7 @@ export function CourtTypesClient() {
                             Bearbeiten
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="text-red-600"
+                            className="text-error-600"
                             onClick={() => {
                               setSelectedType(type);
                               setShowDeleteDialog(true);

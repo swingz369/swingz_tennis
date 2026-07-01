@@ -23,7 +23,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     .limit(1);
 
   if (!memberships || memberships.length === 0) {
-    return <div className="p-6 text-red-600">Kein Vereinszugang gefunden</div>;
+    return <div className="p-6 text-error-600">Kein Vereinszugang gefunden</div>;
   }
 
   clubId = memberships[0].club_id;

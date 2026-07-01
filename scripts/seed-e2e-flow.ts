@@ -50,7 +50,8 @@ function logSection(title: string) {
 }
 
 async function ensureAuthPassword(email: string, password: string): Promise<string | null> {
-  const { data: users } = await supabase.auth.admin.listUsers({ email });
+  // `email` is not in Supabase PageParams but is accepted at runtime.
+  const { data: users } = await supabase.auth.admin.listUsers({ email } as never);
   if (!users?.users.length) {
     log('❌', `Auth user ${email} not found`);
     stats.errors++;
@@ -183,7 +184,8 @@ async function seed() {
         continue;
       }
 
-      const { data: authUsers } = await supabase.auth.admin.listUsers({ email: trainer.email });
+      // `email` is not in Supabase PageParams but is accepted at runtime.
+      const { data: authUsers } = await supabase.auth.admin.listUsers({ email: trainer.email } as never);
       if (authUsers?.users.length) {
         const authId = authUsers.users[0].id;
         await supabase.from('trainers').update({ user_id: authId }).eq('id', trainer.id);
@@ -531,20 +533,7 @@ async function seed() {
           .limit(2);
 
         if (courts && courts.length > 0) {
-          // Create walk-in sessions for the next 3 days
-          const bookings: Array<{
-            club_id: string;
-            member_id: string;
-            schedule_id: string;
-            session_id: string;
-            court_id: string;
-            session_start_time: string;
-            start_time: string;
-            end_time: string;
-            booking_type: string;
-            status: string;
-            payment_status: string;
-          }> = [];
+          // (Removed unused `bookings` array — bookings are inserted inline below)
 
           for (let dayOffset = 1; dayOffset <= 3; dayOffset++) {
             const date = new Date();

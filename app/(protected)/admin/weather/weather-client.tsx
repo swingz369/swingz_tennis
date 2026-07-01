@@ -53,13 +53,13 @@ function WeatherIcon({ condition }: { condition: string }) {
   switch (condition) {
     case 'Rain':
     case 'Drizzle':
-      return <CloudRain className="h-8 w-8 text-blue-500" />;
+      return <CloudRain className="h-8 w-8 text-info-500" />;
     case 'Snow':
       return <Snowflake className="h-8 w-8 text-cyan-400" />;
     case 'Thunderstorm':
-      return <AlertTriangle className="h-8 w-8 text-red-500" />;
+      return <AlertTriangle className="h-8 w-8 text-error-500" />;
     case 'Clear':
-      return <Sun className="h-8 w-8 text-amber-500" />;
+      return <Sun className="h-8 w-8 text-warning-500" />;
     default:
       return <Cloud className="h-8 w-8 text-gray-400" />;
   }
@@ -69,17 +69,17 @@ function RecommendationBadge({ level }: { level: 'green' | 'yellow' | 'red' }) {
   const config = {
     green: {
       label: 'Freigegeben',
-      color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
       icon: Sun,
     },
     yellow: {
       label: 'Eingeschränkt',
-      color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+      color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
       icon: AlertTriangle,
     },
     red: {
       label: 'Gesperrt',
-      color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+      color: 'bg-error-100 text-error-800 dark:bg-error-900/30 dark:text-error-300',
       icon: CloudRain,
     },
   };
@@ -207,11 +207,11 @@ export default function WeatherClient() {
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
               <div className="flex items-center gap-2 text-sm">
-                <Thermometer className="h-4 w-4 text-red-400" />
+                <Thermometer className="h-4 w-4 text-error-400" />
                 <span>{Math.round(weather.temperature)}°C</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Wind className="h-4 w-4 text-blue-400" />
+                <Wind className="h-4 w-4 text-info-400" />
                 <span>{weather.windSpeed} m/s</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -220,8 +220,8 @@ export default function WeatherClient() {
               </div>
             </div>
             {weather.recommendation !== 'green' && (
-              <div className="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                <p className="text-sm text-amber-800 dark:text-amber-300">
+              <div className="mt-4 p-3 rounded-lg bg-warning-50 dark:bg-warning-950/30 border border-warning-200 dark:border-warning-800">
+                <p className="text-sm text-warning-800 dark:text-warning-300">
                   {weather.recommendation === 'red'
                     ? '⚠️ Achtung: Schlechte Wetterbedingungen — Außenplätze sollten gesperrt werden.'
                     : '⚡ Eingeschränkte Bedingungen — Bitte prüfe die Platzverhältnisse vor Ort.'}
@@ -243,7 +243,7 @@ export default function WeatherClient() {
         <CardContent>
           {closures.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <Sun className="h-8 w-8 mx-auto mb-2 text-green-400" />
+              <Sun className="h-8 w-8 mx-auto mb-2 text-success-400" />
               <p>Keine aktiven Platzsperren</p>
             </div>
           ) : (

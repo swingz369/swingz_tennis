@@ -34,11 +34,16 @@ const mockAuth: {
   user: { id: string } | null;
   clubId: string | null;
   role: string;
-} = { user: { id: '00000000-0000-4000-8000-000000000001' }, clubId: '11111111-1111-4111-8111-111111111111', role: 'admin' };
+} = {
+  user: { id: '00000000-0000-4000-8000-000000000001' },
+  clubId: '11111111-1111-4111-8111-111111111111',
+  role: 'admin',
+};
 
 vi.mock('@/lib/api-auth', () => ({
-  withApiAuth: async (req: NextRequest, handler: (auth: typeof mockAuth) => Promise<Response>) => {
-    if (!mockAuth.user) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
+  withApiAuth: async (_req: NextRequest, handler: (auth: typeof mockAuth) => Promise<Response>) => {
+    if (!mockAuth.user)
+      return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
     return handler(mockAuth);
   },
   verifyRole: vi.fn(async (_auth: typeof mockAuth, required: string) => {
@@ -46,7 +51,10 @@ vi.mock('@/lib/api-auth', () => ({
     return hierarchy.indexOf(mockAuth.role) <= hierarchy.indexOf(required);
   }),
   forbiddenResponse: (msg: string) =>
-    new Response(JSON.stringify({ error: msg }), { status: 403, headers: { 'Content-Type': 'application/json' } }),
+    new Response(JSON.stringify({ error: msg }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    }),
 }));
 
 const mockSb = {

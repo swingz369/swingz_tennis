@@ -39,21 +39,21 @@ const statusConfig: Record<
     label: 'Angefragt',
     icon: AlertCircle,
     color:
-      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800',
+      'bg-warning-50 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800',
     description: 'Deine Anfrage ist eingegangen. Wir melden uns in Kürze mit einem Termin.',
   },
   scheduled: {
     label: 'Terminiert',
     icon: Calendar,
     color:
-      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800',
+      'bg-info-50 text-info-700 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800',
     description: 'Dein Probetraining ist terminiert. Wir freuen uns auf dich!',
   },
   completed: {
     label: 'Abgeschlossen',
     icon: CheckCircle2,
     color:
-      'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800',
+      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800',
     description: 'Dein Probetraining ist abgeschlossen. Willkommen im Verein!',
   },
   cancelled: {
@@ -67,7 +67,7 @@ const statusConfig: Record<
     label: 'Nicht erschienen',
     icon: XCircle,
     color:
-      'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
+      'bg-error-50 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800',
     description: 'Leider bist du nicht zum Probetraining erschienen.',
   },
   converted: {

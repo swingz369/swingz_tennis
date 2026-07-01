@@ -47,14 +47,14 @@ const KPI_CONFIGS = [
     type: 'kpi_members',
     title: 'Mitglieder',
     icon: Users,
-    gradient: 'from-blue-500 to-indigo-600',
+    gradient: 'from-info-500 to-indigo-600',
     href: '/admin/members',
   },
   {
     type: 'kpi_trainers',
     title: 'Trainer',
     icon: UserCheck,
-    gradient: 'from-green-500 to-emerald-700',
+    gradient: 'from-success-500 to-emerald-700',
     href: '/admin/trainers',
   },
   {
@@ -80,7 +80,7 @@ function KpiCard({
   return (
     <ScrollReveal delay={index * 80}>
       <Card
-        variant="glass"
+        variant="elevated"
         className="group cursor-pointer hover-lift transition-all duration-300"
         role="link"
         tabIndex={0}
@@ -130,7 +130,7 @@ function ClubListWidget({
 }) {
   return (
     <ScrollReveal delay={200}>
-      <Card variant="glass" className="overflow-hidden">
+      <Card variant="elevated" className="overflow-hidden">
         <CardHeader className="border-b border-border/50 bg-muted/30">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -234,8 +234,8 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
       <div className="p-6 min-h-[60vh] flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <Activity className="h-12 w-12 mx-auto mb-4 text-red-400" />
-            <p className="text-red-600 font-medium">Fehler: Ungültige Dashboard-Daten</p>
+            <Activity className="h-12 w-12 mx-auto mb-4 text-error-400" />
+            <p className="text-error-600 font-medium">Fehler: Ungültige Dashboard-Daten</p>
           </CardContent>
         </Card>
       </div>
@@ -274,14 +274,13 @@ export function SuperadminDashboardClient({ data }: { data: DashboardData }) {
       {/* Hero Header */}
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-white/70 mb-1">Superadmin</p>
-                <h1 className="text-3xl font-bold">Plattform Dashboard</h1>
+                <h1 className="text-3xl font-bold font-display">Plattform Dashboard</h1>
                 <p className="text-white/70 mt-2">Übersicht aller Vereine und Kennzahlen</p>
               </div>
               <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">

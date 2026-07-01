@@ -112,8 +112,8 @@ export default function ForgotPasswordPage() {
           <Card variant="elevated" className="p-6 sm:p-8 border-0 shadow-premium">
             {submitted ? (
               <div className="text-center space-y-4">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-50 mx-auto">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-success-50 mx-auto">
+                  <CheckCircle2 className="h-8 w-8 text-success-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground">E-Mail versendet</h2>
                 <p className="text-muted-foreground">
@@ -169,8 +169,8 @@ export default function ForgotPasswordPage() {
                   </div>
 
                   {error && (
-                    <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600 border border-red-100 flex items-start gap-3">
-                      <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-400" />
+                    <div className="rounded-xl bg-error-50 p-4 text-sm text-error-600 border border-error-100 flex items-start gap-3">
+                      <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-error-400" />
                       <span>{error}</span>
                     </div>
                   )}

@@ -23,7 +23,7 @@ const ACTIONS: QuickAction[] = [
     href: '/bookings',
     icon: Calendar,
     color:
-      'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:bg-blue-500/30',
+      'bg-info-50 text-info-700 hover:bg-info-100 dark:bg-info-500/20 dark:text-info-300 dark:hover:bg-info-500/30',
   },
   {
     label: 'Nachrichten',
@@ -37,7 +37,7 @@ const ACTIONS: QuickAction[] = [
     href: '/billing',
     icon: CreditCard,
     color:
-      'bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30',
+      'bg-warning-50 text-warning-700 hover:bg-warning-100 dark:bg-warning-500/20 dark:text-warning-300 dark:hover:bg-warning-500/30',
   },
   {
     label: 'Trainer',

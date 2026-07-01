@@ -12,16 +12,29 @@ const log = createLogger('api:pricing-rules');
 
 const repo = new DrizzlePricingRuleRepository();
 
+const timeRangeSchema = z.object({
+  start: z.string().regex(/^\d{2}:\d{2}$/),
+  end: z.string().regex(/^\d{2}:\d{2}$/),
+  priceMultiplier: z.number().min(0).max(10),
+});
+
 const pricingRuleSchema = z.object({
   clubId: z.string().uuid(),
   courtId: z.string().uuid().optional().nullable(),
   ruleType: z.enum(['hourly', 'member', 'trial', 'group', 'season']),
+  name: z.string().max(200).optional(),
+  description: z.string().optional(),
   minBookingHours: z.number().nonnegative().default(1),
   maxBookingHours: z.number().nonnegative().default(4),
   pricePerHour: z.number().positive(),
   advanceBookingDays: z.number().int().nonnegative().default(7),
   appliesToMemberTypes: z.array(z.string()).optional().default([]),
   appliesToGroups: z.array(z.string()).optional().default([]),
+  timeRanges: z.array(timeRangeSchema).optional().default([]),
+  daysOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
+  seasonId: z.string().uuid().optional().nullable(),
+  validFrom: z.string().datetime().optional().nullable(),
+  validUntil: z.string().datetime().optional().nullable(),
   priority: z.number().int().default(0),
   isActive: z.boolean().default(true),
 });
@@ -52,12 +65,19 @@ export async function GET(req: NextRequest) {
           clubId: r.clubId.getValue(),
           courtId: r.courtId?.getValue(),
           ruleType: r.ruleType,
+          name: r.name,
+          description: r.description,
           minBookingHours: r.minBookingHours,
           maxBookingHours: r.maxBookingHours,
           pricePerHour: r.pricePerHour,
           advanceBookingDays: r.advanceBookingDays,
           appliesToMemberTypes: r.appliesToMemberTypes,
           appliesToGroups: r.appliesToGroups,
+          timeRanges: r.timeRanges,
+          daysOfWeek: r.daysOfWeek,
+          seasonId: r.seasonId,
+          validFrom: r.validFrom?.toISOString(),
+          validUntil: r.validUntil?.toISOString(),
           priority: r.priority,
           isActive: r.isActive,
         })),
@@ -97,12 +117,19 @@ export async function POST(req: NextRequest) {
         clubId: ClubId.fromString(data.clubId),
         courtId: data.courtId ? CourtId.fromString(data.courtId) : undefined,
         ruleType: data.ruleType,
+        name: data.name,
+        description: data.description,
         minBookingHours: data.minBookingHours,
         maxBookingHours: data.maxBookingHours,
         pricePerHour: data.pricePerHour,
         advanceBookingDays: data.advanceBookingDays,
         appliesToMemberTypes: data.appliesToMemberTypes,
         appliesToGroups: data.appliesToGroups,
+        timeRanges: data.timeRanges,
+        daysOfWeek: data.daysOfWeek,
+        seasonId: data.seasonId ?? undefined,
+        validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
+        validUntil: data.validUntil ? new Date(data.validUntil) : undefined,
         priority: data.priority,
         isActive: data.isActive,
         createdAt: new Date(),
@@ -119,9 +146,11 @@ export async function POST(req: NextRequest) {
             clubId: rule.clubId.getValue(),
             courtId: rule.courtId?.getValue(),
             ruleType: rule.ruleType,
-            minBookingHours: rule.minBookingHours,
-            maxBookingHours: rule.maxBookingHours,
+            name: rule.name,
             pricePerHour: rule.pricePerHour,
+            timeRanges: rule.timeRanges,
+            daysOfWeek: rule.daysOfWeek,
+            seasonId: rule.seasonId,
           },
         },
         { status: 201 }
@@ -134,53 +163,5 @@ export async function POST(req: NextRequest) {
   });
 }
 
-// GET /api/pricing-rules/match – Beste Preisregel für gegebenes Szenario finden
-export async function GET_MATCH(req: NextRequest) {
-  return withApiAuth(req, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'member');
-    if (!hasPermission) {
-      return forbiddenResponse('Member access required');
-    }
-
-    const rateLimitError = await checkRateLimitOrFail(req, RATE_LIMITS.STANDARD);
-    if (rateLimitError) return rateLimitError;
-
-    const url = new URL(req.url);
-    const clubId = url.searchParams.get('clubId');
-    const courtId = url.searchParams.get('courtId');
-    const memberType = url.searchParams.get('memberType');
-    const bookingHours = url.searchParams.get('bookingHours');
-    const advanceDays = url.searchParams.get('advanceDays');
-
-    if (!clubId) {
-      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-    }
-
-    try {
-      const courtIdObj = courtId ? CourtId.fromString(courtId) : undefined;
-      const rule = await repo.findBestMatch(
-        ClubId.fromString(clubId),
-        courtIdObj ?? (undefined as any),
-        memberType || undefined,
-        undefined,
-        bookingHours ? Number(bookingHours) : undefined,
-        advanceDays ? Number(advanceDays) : undefined
-      );
-
-      if (!rule) {
-        // Fallback: return default hourly rate from club (could be fetched here)
-        return NextResponse.json({ pricePerHour: 15.0, source: 'default' });
-      }
-
-      return NextResponse.json({
-        pricePerHour: rule.pricePerHour,
-        ruleId: rule.id,
-        source: 'pricing_rule',
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      log.error('Error matching pricing rule:', message);
-      return NextResponse.json({ error: message }, { status: 500 });
-    }
-  });
-}
+// PUT /api/pricing-rules/[id] – via dynamic route (see [id]/route.ts)
+// GET /api/pricing-rules/calculate – via separate file (see calculate/route.ts)

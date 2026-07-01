@@ -27,7 +27,7 @@ export default async function AnalyticsPage({
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-        <p className="text-red-500">Keine Club-Daten gefunden.</p>
+        <p className="text-error-500">Keine Club-Daten gefunden.</p>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export default async function AnalyticsPage({
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-        <p className="text-red-500">Keine Club-Daten gefunden.</p>
+        <p className="text-error-500">Keine Club-Daten gefunden.</p>
       </div>
     );
   }
@@ -191,7 +191,7 @@ export default async function AnalyticsPage({
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-        <p className="text-red-500">
+        <p className="text-error-500">
           Fehler beim Laden der Vereinsstatistiken. Bitte versuchen Sie es später erneut.
         </p>
       </div>

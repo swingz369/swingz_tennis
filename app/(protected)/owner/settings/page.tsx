@@ -13,9 +13,9 @@ function StatusRow({ label, ok, detail }: { label: string; ok: boolean; detail?:
       <div className="flex items-center gap-2">
         {detail && <span className="text-xs text-muted-foreground">{detail}</span>}
         {ok ? (
-          <CheckCircle className="h-4 w-4 text-green-500" />
+          <CheckCircle className="h-4 w-4 text-success-500" />
         ) : (
-          <XCircle className="h-4 w-4 text-red-400" />
+          <XCircle className="h-4 w-4 text-error-400" />
         )}
       </div>
     </div>

@@ -126,11 +126,11 @@ export function CourtRowHeader({
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-foreground truncate">{court.name}</div>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-[10px] font-medium text-muted-foreground border border-border/50">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted text-2xs font-medium text-muted-foreground border border-border/50">
             {getSurfaceLabel(court.surface)}
           </span>
           {court.hasIndoor && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-blue-50 text-[10px] font-medium text-blue-600 border border-blue-100">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-info-50 text-2xs font-medium text-info-600 border border-info-100">
               Indoor
             </span>
           )}

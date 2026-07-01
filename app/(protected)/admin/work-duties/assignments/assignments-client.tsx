@@ -135,13 +135,13 @@ export default function AssignmentsClient({
     switch (status) {
       case 'assigned':
         return (
-          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-xs gap-1">
+          <Badge className="bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300 text-xs gap-1">
             <Clock className="h-3 w-3" /> Ausstehend
           </Badge>
         );
       case 'completed':
         return (
-          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 text-xs gap-1">
+          <Badge className="bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300 text-xs gap-1">
             <CheckCircle2 className="h-3 w-3" /> Erledigt
           </Badge>
         );
@@ -172,7 +172,7 @@ export default function AssignmentsClient({
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-info-600">
               {allAssignments.filter((a) => a.status === 'assigned').length}
             </p>
             <p className="text-xs text-muted-foreground">Ausstehend</p>
@@ -180,7 +180,7 @@ export default function AssignmentsClient({
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-success-600">
               {allAssignments.filter((a) => a.status === 'completed').length}
             </p>
             <p className="text-xs text-muted-foreground">Erledigt</p>
@@ -188,7 +188,7 @@ export default function AssignmentsClient({
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-amber-600">{Object.keys(memberStats).length}</p>
+            <p className="text-2xl font-bold text-warning-600">{Object.keys(memberStats).length}</p>
             <p className="text-xs text-muted-foreground">Aktive Mitglieder</p>
           </CardContent>
         </Card>
@@ -289,7 +289,7 @@ export default function AssignmentsClient({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-green-600"
+                            className="h-7 text-xs text-success-600"
                             onClick={() => handleConfirmCompletion(a.dutyId, a.id, 'confirm')}
                             disabled={confirmLoading === a.id}
                           >
@@ -298,7 +298,7 @@ export default function AssignmentsClient({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-xs text-red-600"
+                            className="h-7 text-xs text-error-600"
                             onClick={() => handleConfirmCompletion(a.dutyId, a.id, 'reject')}
                             disabled={confirmLoading === a.id}
                           >
@@ -371,15 +371,15 @@ export default function AssignmentsClient({
                       <tr key={m.id} className="border-b last:border-0 hover:bg-muted/50">
                         <td className="py-2.5 px-3 font-medium">{m.name}</td>
                         <td className="py-2.5 px-3 text-right">{m.assigned}</td>
-                        <td className="py-2.5 px-3 text-right text-green-600">{m.completed}</td>
+                        <td className="py-2.5 px-3 text-right text-success-600">{m.completed}</td>
                         <td className="py-2.5 px-3 text-right">
                           <Badge
                             className={`text-xs ${
                               m.rate >= 80
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-success-100 text-success-800'
                                 : m.rate >= 50
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-red-100 text-red-800'
+                                  ? 'bg-warning-100 text-warning-800'
+                                  : 'bg-error-100 text-error-800'
                             }`}
                           >
                             {m.rate}%

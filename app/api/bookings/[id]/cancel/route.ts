@@ -9,6 +9,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
+import { LastMinuteAlertService } from '@/lib/services/last-minute-alert.service';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:bookings:cancel');
@@ -74,6 +75,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
+    }
+
+    // Last-Minute-Alert: Push an alle aktiven Mitglieder des Clubs
+    // (außer dem Stornierenden), dass der Slot frei ist.
+    // Non-fatal: Fehler werden geloggt, schlagen die Stornierung nicht fehl.
+    // Ticket 2.5.1 — Sprint 4 Q2.
+    try {
+      await LastMinuteAlertService.sendAlertForCancellation({
+        clubId: booking.club_id,
+        courtId: booking.court_id,
+        sessionStartTime: booking.session_start_time,
+        cancelledByUserId: auth.user.id,
+      });
+    } catch (alertErr) {
+      log.error(
+        'Last-Minute-Alert fehlgeschlagen',
+        alertErr instanceof Error ? alertErr : undefined
+      );
     }
 
     // Warteliste: Ersten Eintrag nachrücken lassen (non-fatal)

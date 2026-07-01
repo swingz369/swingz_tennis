@@ -41,19 +41,19 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
       title: 'Gesamt Buchungen',
       value: stats.totalBookings.toString(),
       icon: Calendar,
-      color: 'text-blue-600',
+      color: 'text-info-600',
     },
     {
       title: 'Bestätigt',
       value: stats.confirmed.toString(),
       icon: CheckCircle,
-      color: 'text-green-600',
+      color: 'text-success-600',
     },
     {
       title: 'Storniert',
       value: stats.cancelled.toString(),
       icon: XCircle,
-      color: 'text-red-600',
+      color: 'text-error-600',
     },
     {
       title: 'Nicht erschienen',
@@ -67,13 +67,13 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
     switch (status) {
       case 'confirmed':
         return (
-          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+          <span className="px-2 py-1 bg-success-100 text-success-700 rounded-full text-xs font-medium">
             Bestätigt
           </span>
         );
       case 'cancelled':
         return (
-          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+          <span className="px-2 py-1 bg-error-100 text-error-700 rounded-full text-xs font-medium">
             Storniert
           </span>
         );

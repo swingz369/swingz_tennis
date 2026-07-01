@@ -67,15 +67,15 @@ function InvoiceStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
     open: { label: 'Offen', className: 'bg-sky-100 text-sky-700' },
-    sent: { label: 'Versendet', className: 'bg-blue-100 text-blue-700' },
+    sent: { label: 'Versendet', className: 'bg-info-100 text-info-700' },
     reminder_sent: { label: 'Erinnerung', className: 'bg-yellow-100 text-yellow-700' },
     partially_paid: { label: 'Teilbezahlt', className: 'bg-orange-100 text-orange-700' },
-    paid: { label: 'Bezahlt', className: 'bg-green-100 text-green-700' },
-    overdue: { label: 'Überfällig', className: 'bg-red-100 text-red-700' },
-    dunning: { label: 'Mahnung', className: 'bg-red-200 text-red-900 font-bold' },
+    paid: { label: 'Bezahlt', className: 'bg-success-100 text-success-700' },
+    overdue: { label: 'Überfällig', className: 'bg-error-100 text-error-700' },
+    dunning: { label: 'Mahnung', className: 'bg-error-200 text-error-900 font-bold' },
     cancelled: { label: 'Storniert', className: 'bg-muted text-muted-foreground line-through' },
     void: { label: 'Ungültig', className: 'bg-muted text-muted-foreground line-through' },
-    uncollectible: { label: 'Uneinbringlich', className: 'bg-red-100 text-red-700 italic' },
+    uncollectible: { label: 'Uneinbringlich', className: 'bg-error-100 text-error-700 italic' },
     refunded: { label: 'Erstattet', className: 'bg-purple-100 text-purple-700' },
   };
   const c = config[status] ?? config.draft;
@@ -87,7 +87,7 @@ function InvoiceStatusBadge({ status }: { status: string }) {
 function InvoiceTypeBadge({ type }: { type: string }) {
   const config: Record<string, { label: string; className: string }> = {
     season: { label: 'Saison', className: 'bg-purple-100 text-purple-700' },
-    membership: { label: 'Mitgliedsbeitrag', className: 'bg-blue-100 text-blue-700' },
+    membership: { label: 'Mitgliedsbeitrag', className: 'bg-info-100 text-info-700' },
     adhoc: { label: 'Zusatz', className: 'bg-muted text-muted-foreground' },
   };
   const c = config[type] ?? config.adhoc;
@@ -448,7 +448,7 @@ export default function BillingClient({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  className="text-error-600 hover:text-error-700 hover:bg-error-50 border-error-200"
                   onClick={() => {
                     const allDeletable = invoices
                       .filter((inv) => inv.status !== 'paid')
@@ -592,7 +592,7 @@ export default function BillingClient({
                           <span
                             className={
                               invoice.paidAmount >= invoice.amount
-                                ? 'text-green-600'
+                                ? 'text-success-600'
                                 : 'text-orange-600'
                             }
                           >
@@ -645,7 +645,7 @@ export default function BillingClient({
                               }}
                               title="Rechnung löschen"
                             >
-                              <Trash2 className="h-3 w-3 text-red-400" />
+                              <Trash2 className="h-3 w-3 text-error-400" />
                             </Button>
                           )}
                         </div>
@@ -675,7 +675,7 @@ export default function BillingClient({
       {/* Bulk Delete Confirmation Dialog */}
       <CenteredModal open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)}>
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold text-red-600">
+          <h2 className="text-lg font-bold text-error-600">
             {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} löschen?
           </h2>
           <div className="text-sm text-muted-foreground space-y-2">
@@ -699,7 +699,7 @@ export default function BillingClient({
               const inv = invoices.find((i) => i.id === id);
               return inv && !['draft', 'open'].includes(inv.status);
             }) && (
-              <p className="text-amber-600 font-medium">
+              <p className="text-warning-600 font-medium">
                 ⚠️ Einige Rechnungen wurden bereits versendet oder haben Zahlungen erhalten.
               </p>
             )}
@@ -734,11 +734,11 @@ export default function BillingClient({
         }}
       >
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold text-red-600">Rechnung löschen?</h2>
+          <h2 className="text-lg font-bold text-error-600">Rechnung löschen?</h2>
           <p className="text-sm text-muted-foreground">
             Möchtest du Rechnung <strong>{invoiceToDelete?.invoiceNumber}</strong> wirklich löschen?
             {invoiceToDelete && !['draft', 'open'].includes(invoiceToDelete.status) && (
-              <span className="block mt-1 text-amber-600 font-medium">
+              <span className="block mt-1 text-warning-600 font-medium">
                 ⚠️ Diese Rechnung wurde bereits versendet oder hat Zahlungen erhalten.
               </span>
             )}
@@ -804,11 +804,11 @@ export default function BillingClient({
           <div className="space-y-4 py-2">
             {/* Fee info */}
             {previewData.warning === 'NO_FEE_CONFIGURED' ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-sm text-amber-800 font-medium">
+              <div className="bg-warning-50 border border-warning-200 rounded-lg p-3">
+                <p className="text-sm text-warning-800 font-medium">
                   Keine aktive Mitgliedsgebühr konfiguriert.
                 </p>
-                <p className="text-xs text-amber-700 mt-1">
+                <p className="text-xs text-warning-700 mt-1">
                   Bitte zuerst eine Gebühr vom Typ „Mitgliedschaft" anlegen.
                 </p>
               </div>
@@ -1008,10 +1008,10 @@ export default function BillingClient({
                         </span>
                         {m.role && (
                           <span
-                            className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                            className={`text-2xs font-semibold px-1.5 py-0.5 rounded-full ${
                               m.role === 'trainer'
                                 ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-blue-100 text-blue-700'
+                                : 'bg-info-100 text-info-700'
                             }`}
                           >
                             {m.role === 'trainer' ? 'Trainer' : 'Mitglied'}
@@ -1084,7 +1084,7 @@ export default function BillingClient({
                     onClick={() => removeItem(idx)}
                     disabled={adhocItems.length === 1}
                   >
-                    <Trash2 className="h-4 w-4 text-red-400" />
+                    <Trash2 className="h-4 w-4 text-error-400" />
                   </Button>
                 </div>
               ))}

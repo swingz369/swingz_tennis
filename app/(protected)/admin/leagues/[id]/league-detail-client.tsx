@@ -477,7 +477,7 @@ export default function LeagueDetailClient({
             <h1 className="text-2xl font-bold text-brand-primary">{league.name}</h1>
             <div className="flex gap-2 mt-2 flex-wrap">
               {league.nuliga_url && (
-                <Badge variant="outline" className="gap-1 text-blue-600 border-blue-200">
+                <Badge variant="outline" className="gap-1 text-info-600 border-info-200">
                   <Link2 className="h-3 w-3" /> nuLiga verbunden
                 </Badge>
               )}
@@ -488,7 +488,7 @@ export default function LeagueDetailClient({
               <Badge
                 className={
                   league.status === 'active'
-                    ? 'bg-green-100 text-green-800'
+                    ? 'bg-success-100 text-success-800'
                     : 'bg-gray-100 text-gray-600'
                 }
               >
@@ -737,7 +737,7 @@ export default function LeagueDetailClient({
                           onClick={() => handleDeleteTeam(team.id)}
                           title="Team löschen"
                         >
-                          <Trash2 className="h-4 w-4 text-red-400" />
+                          <Trash2 className="h-4 w-4 text-error-400" />
                         </Button>
                       </div>
                     </div>
@@ -755,7 +755,7 @@ export default function LeagueDetailClient({
                           >
                             <span className="font-medium">{m.name}</span>
                             {m.role === 'captain' && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                              <Badge variant="secondary" className="text-2xs px-1.5 py-0">
                                 Kapitän
                               </Badge>
                             )}
@@ -772,7 +772,7 @@ export default function LeagueDetailClient({
                             )}
                             <button
                               onClick={() => handleRemoveMember(team.id, m.member_id)}
-                              className="text-muted-foreground hover:text-red-500 transition-colors"
+                              className="text-muted-foreground hover:text-error-500 transition-colors"
                             >
                               <X className="h-3 w-3" />
                             </button>
@@ -827,7 +827,7 @@ export default function LeagueDetailClient({
                                       <span className="text-muted-foreground">({m.email})</span>
                                     </span>
                                     {alreadyInTeam && (
-                                      <Badge variant="secondary" className="text-[10px]">
+                                      <Badge variant="secondary" className="text-2xs">
                                         Bereits im Team
                                       </Badge>
                                     )}
@@ -904,10 +904,10 @@ export default function LeagueDetailClient({
                   className={`hover:shadow-md transition-all duration-200 ${
                     md.status === 'completed'
                       ? md.result === 'win'
-                        ? 'border-l-4 border-l-green-500'
+                        ? 'border-l-4 border-l-success-500'
                         : md.result === 'loss'
-                          ? 'border-l-4 border-l-red-500'
-                          : 'border-l-4 border-l-amber-500'
+                          ? 'border-l-4 border-l-error-500'
+                          : 'border-l-4 border-l-warning-500'
                       : ''
                   }`}
                 >
@@ -915,7 +915,7 @@ export default function LeagueDetailClient({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="text-center min-w-[3rem]">
-                          <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                          <div className="text-2xs text-muted-foreground uppercase tracking-wider">
                             Spieltag
                           </div>
                           <div className="text-xl font-bold text-brand-primary">
@@ -932,10 +932,10 @@ export default function LeagueDetailClient({
                               <Badge
                                 className={`text-xs font-semibold ${
                                   md.result === 'win'
-                                    ? 'bg-green-100 text-green-800'
+                                    ? 'bg-success-100 text-success-800'
                                     : md.result === 'loss'
-                                      ? 'bg-red-100 text-red-800'
-                                      : 'bg-amber-100 text-amber-800'
+                                      ? 'bg-error-100 text-error-800'
+                                      : 'bg-warning-100 text-warning-800'
                                 }`}
                               >
                                 {md.result === 'win'
@@ -948,7 +948,7 @@ export default function LeagueDetailClient({
                             {md.status !== 'completed' && (
                               <Badge
                                 variant="outline"
-                                className="text-xs text-blue-600 border-blue-200"
+                                className="text-xs text-info-600 border-info-200"
                               >
                                 Ausstehend
                               </Badge>
@@ -1000,7 +1000,7 @@ export default function LeagueDetailClient({
                           size="icon"
                           onClick={() => handleDeleteMatchDay(md.id)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                          <Trash2 className="h-3.5 w-3.5 text-error-400" />
                         </Button>
                       </div>
                     </div>
@@ -1087,7 +1087,7 @@ export default function LeagueDetailClient({
 
           {/* nuLiga Sync Panel */}
           {showNuligaConfig && (
-            <Card className="border-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+            <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-950/20 dark:border-info-800">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
@@ -1110,7 +1110,7 @@ export default function LeagueDetailClient({
                     placeholder="https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=...&group=..."
                     className="mt-1 font-mono text-xs"
                   />
-                  <p className="text-[11px] text-muted-foreground mt-1">
+                  <p className="text-2xs text-muted-foreground mt-1">
                     URL muss von *.liga.nu stammen (z.B. htv.liga.nu, btv.liga.nu)
                   </p>
                 </div>
@@ -1120,8 +1120,8 @@ export default function LeagueDetailClient({
                   </p>
                 )}
                 {syncResult && (
-                  <div className="text-xs bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded p-2 space-y-1">
-                    <p className="font-medium text-green-700 dark:text-green-400">Sync-Ergebnis:</p>
+                  <div className="text-xs bg-success-50 dark:bg-success-950/30 border border-success-200 dark:border-success-800 rounded p-2 space-y-1">
+                    <p className="font-medium text-success-700 dark:text-success-400">Sync-Ergebnis:</p>
                     <p>
                       {String(syncResult.standings)} Teams, {String(syncResult.matches)} Spieltage
                       geladen
@@ -1193,11 +1193,11 @@ export default function LeagueDetailClient({
                       >
                         <div className="mt-0.5">
                           {(entry.status as string) === 'success' ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <CheckCircle className="h-4 w-4 text-success-500" />
                           ) : (entry.status as string) === 'partial' ? (
-                            <AlertTriangle className="h-4 w-4 text-amber-500" />
+                            <AlertTriangle className="h-4 w-4 text-warning-500" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-500" />
+                            <XCircle className="h-4 w-4 text-error-500" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1224,7 +1224,7 @@ export default function LeagueDetailClient({
                             </p>
                           )}
                           {(entry.status as string) === 'failed' && !!entry.error_message && (
-                            <p className="text-xs text-red-500 mt-1">
+                            <p className="text-xs text-error-500 mt-1">
                               {String(entry.error_message)}
                             </p>
                           )}
@@ -1239,7 +1239,7 @@ export default function LeagueDetailClient({
 
           {/* CSV Import Panel */}
           {showImport && (
-            <Card className="border-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+            <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-950/20 dark:border-info-800">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Upload className="h-4 w-4" />
@@ -1458,13 +1458,13 @@ export default function LeagueDetailClient({
                         <td className="px-4 py-3 text-sm text-center tabular-nums">
                           {team.matches_played}
                         </td>
-                        <td className="px-4 py-3 text-sm text-center tabular-nums text-green-600">
+                        <td className="px-4 py-3 text-sm text-center tabular-nums text-success-600">
                           {team.matches_won}
                         </td>
-                        <td className="px-4 py-3 text-sm text-center tabular-nums text-amber-600">
+                        <td className="px-4 py-3 text-sm text-center tabular-nums text-warning-600">
                           {team.matches_drawn}
                         </td>
-                        <td className="px-4 py-3 text-sm text-center tabular-nums text-red-600">
+                        <td className="px-4 py-3 text-sm text-center tabular-nums text-error-600">
                           {team.matches_lost}
                         </td>
                         <td className="px-4 py-3 text-sm text-right font-bold tabular-nums">

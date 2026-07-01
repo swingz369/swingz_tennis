@@ -358,7 +358,7 @@ function DecisionRow({
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-base">{decision.title}</h3>
               <Badge variant={st.variant}>{st.label}</Badge>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="text-2xs">
                 {TYPE_LABELS[decision.decision_type]}
               </Badge>
             </div>
@@ -394,10 +394,10 @@ function DecisionRow({
               decision.votes_abstain > 0 ||
               votes.length > 0) && (
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
-                <span className="flex items-center gap-1 font-medium text-green-700">
+                <span className="flex items-center gap-1 font-medium text-success-700">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Dafür: {decision.votes_for || tally.for}
                 </span>
-                <span className="flex items-center gap-1 font-medium text-red-700">
+                <span className="flex items-center gap-1 font-medium text-error-700">
                   <XCircle className="h-3.5 w-3.5" /> Dagegen:{' '}
                   {decision.votes_against || tally.against}
                 </span>
@@ -407,7 +407,7 @@ function DecisionRow({
                 {decision.quorum_met !== null && (
                   <Badge
                     variant={decision.quorum_met ? 'success' : 'secondary'}
-                    className="text-[10px]"
+                    className="text-2xs"
                   >
                     {decision.quorum_met ? 'Quorum erreicht' : 'Quorum offen'}
                   </Badge>
@@ -438,13 +438,13 @@ function DecisionRow({
                   <DropdownMenuItem
                     onClick={() => onUpdateStatus(decision.id, 'completed', 'approved')}
                   >
-                    <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 mr-2 text-success-600" />
                     Annehmen (completed)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onUpdateStatus(decision.id, 'completed', 'rejected')}
                   >
-                    <XCircle className="h-4 w-4 mr-2 text-red-600" />
+                    <XCircle className="h-4 w-4 mr-2 text-error-600" />
                     Ablehnen (completed)
                   </DropdownMenuItem>
                 </>

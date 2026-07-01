@@ -14,7 +14,7 @@
  * when SUPABASE_SERVICE_ROLE_KEY is not configured.
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
 // Test environment setup
@@ -27,10 +27,10 @@ const hasSupabase = !!SUPABASE_SERVICE_KEY;
 const describeIntegration = hasSupabase ? describe : describe.skip;
 
 // Test user IDs (to be created in beforeAll)
-let superadminUserId: string;
-let adminUserId: string;
-let trainerUserId: string;
-let memberUserId: string;
+// (unused) let superadminUserId: string;
+// (unused) let adminUserId: string;
+// (unused) let trainerUserId: string;
+// (unused) let memberUserId: string;
 let testClubId: string;
 
 describeIntegration('Phase 2 Service Migration Integration Tests', () => {

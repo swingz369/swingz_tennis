@@ -26,13 +26,12 @@
  *     shallow-JSONB-merge in `clubs.features` + audit_logs-Eintrag
  */
 
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-import type { Database } from '@/types/supabase';
 import SmartCourtClient from './smart-court-client';
 import type { HardwareVendor } from '@/lib/hardware/adapter';
 import { createLogger } from '@/lib/logger';
+import { requireAuth } from '@/lib/auth';
+import { requireAdminClub } from '@/lib/admin-context';
+import { createClient } from '@/lib/supabase/server';
 
 const log = createLogger('admin:smart-court:page');
 
@@ -44,49 +43,11 @@ type CourtRow = {
 };
 
 export default async function SmartCourtPage() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: () => {
-          // No-op (read-only in Server-Component)
-        },
-      },
-    }
-  );
+  await requireAuth();
+  const { clubId } = await requireAdminClub();
+  const supabase = await createClient();
 
-  // 1. Auth-Gate
-  const { data: userResult } = await supabase.auth.getUser();
-  const user = userResult.user;
-  if (!user) {
-    redirect('/login?reason=unauthorized&next=/admin/smart-court');
-  }
-
-  // 2. Admin-Membership-Resolution
-  const { data: membership } = await supabase
-    .from('user_club_memberships')
-    .select('club_id, role')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .in('role', ['admin', 'owner', 'superadmin'])
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership?.club_id) {
-    log.warn('No active admin membership for smart-court page access', { user_id: user.id });
-    redirect('/admin/dashboard?reason=admin_only');
-  }
-
-  const clubId = membership.club_id;
-
-  // 3. Initial-Data-Fetch (parallel)
-  const [
-    { data: club, error: clubErr },
-    { data: courts, error: courtsErr },
-  ] = await Promise.all([
+  const [{ data: club, error: clubErr }, { data: courts, error: courtsErr }] = await Promise.all([
     supabase.from('clubs').select('features').eq('id', clubId).maybeSingle(),
     supabase
       .from('courts')

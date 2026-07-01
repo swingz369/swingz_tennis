@@ -161,7 +161,7 @@ export default function SuperadminTenantsPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
-                      <div className="h-4 w-4 rounded-full bg-blue-500"></div>
+                      <div className="h-4 w-4 rounded-full bg-info-500"></div>
                       Sessions
                     </span>
                     <span className="font-bold text-lg">{club.active_sessions}</span>

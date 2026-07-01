@@ -97,12 +97,12 @@ export default function MemberCourtBookings() {
     const bookingDate = new Date(booking.timeslotStart!);
 
     if (booking.bookingStatus === 'cancelled') {
-      return { label: 'Storniert', color: 'bg-red-100 text-red-700', icon: XCircle };
+      return { label: 'Storniert', color: 'bg-error-100 text-error-700', icon: XCircle };
     }
 
     if (bookingDate < now) {
       if (booking.bookingStatus === 'completed') {
-        return { label: 'Abgeschlossen', color: 'bg-green-100 text-green-700', icon: CheckCircle };
+        return { label: 'Abgeschlossen', color: 'bg-success-100 text-success-700', icon: CheckCircle };
       }
       if (booking.bookingStatus === 'no_show') {
         return { label: 'Nicht erschienen', color: 'bg-muted text-foreground', icon: XCircle };
@@ -111,7 +111,7 @@ export default function MemberCourtBookings() {
     }
 
     if (booking.bookingStatus === 'confirmed') {
-      return { label: 'Bestätigt', color: 'bg-blue-100 text-blue-700', icon: CheckCircle };
+      return { label: 'Bestätigt', color: 'bg-info-100 text-info-700', icon: CheckCircle };
     }
 
     return { label: 'Ausstehend', color: 'bg-yellow-100 text-yellow-700', icon: Clock };
@@ -163,8 +163,8 @@ export default function MemberCourtBookings() {
           }
           label="Kommende"
           sublabel="noch bevorstehend"
-          iconClassName="bg-blue-100"
-          valueClassName="text-blue-600"
+          iconClassName="bg-info-100"
+          valueClassName="text-info-600"
         />
 
         <StatCard
@@ -172,7 +172,7 @@ export default function MemberCourtBookings() {
           value={new Set(monthBookings.map((b: EnrichedSession) => b.courtId)).size}
           label="Verschiedene Plätze"
           sublabel="unterschiedliche Plätze"
-          iconClassName="bg-green-100"
+          iconClassName="bg-success-100"
         />
       </div>
 

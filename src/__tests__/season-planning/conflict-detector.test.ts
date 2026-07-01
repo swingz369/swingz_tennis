@@ -254,7 +254,7 @@ describe('member double-booking detection', () => {
     expect(multiGroupMembers[0][0]).toBe('m1');
 
     // Check time overlap
-    const [mid, groups] = multiGroupMembers[0];
+    const [_mid, groups] = multiGroupMembers[0];
     const overlaps =
       groups[0].dayOfWeek === groups[1].dayOfWeek &&
       timeSlotsOverlap(

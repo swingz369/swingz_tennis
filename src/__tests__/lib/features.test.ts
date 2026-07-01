@@ -95,36 +95,34 @@ describe('getDefaultFeatures', () => {
 
 describe('sanitizeFeatureFlags', () => {
   it('returns the default map when input is null', () => {
-    const result = sanitizeFeatureFlags(null);
+    const result = sanitizeFeatureFlags((null) as any);
     expect(result).toEqual(getDefaultFeatures());
   });
 
   it('returns the default map when input is undefined', () => {
-    const result = sanitizeFeatureFlags(undefined);
+    const result = sanitizeFeatureFlags((undefined) as any);
     expect(result).toEqual(getDefaultFeatures());
   });
 
   it('returns the default map when input is not an object', () => {
-    // @ts-expect-error — testing runtime safety
-    const result = sanitizeFeatureFlags('not-an-object');
+    const result = sanitizeFeatureFlags(('not-an-object') as any);
     expect(result).toEqual(getDefaultFeatures());
   });
 
   it('keeps valid boolean values from input', () => {
-    const result = sanitizeFeatureFlags({ shop: true, tournaments: true });
+    const result = sanitizeFeatureFlags(({ shop: true, tournaments: true }) as any);
     expect(result.shop).toBe(true);
     expect(result.tournaments).toBe(true);
   });
 
   it('ignores unknown keys', () => {
-    const result = sanitizeFeatureFlags({ 'invalid-key': true, shop: true });
+    const result = sanitizeFeatureFlags(({ 'invalid-key': true, shop: true }) as any);
     expect(result).not.toHaveProperty('invalid-key');
     expect(result.shop).toBe(true);
   });
 
   it('ignores non-boolean values for known keys', () => {
-    // @ts-expect-error — testing runtime safety
-    const result = sanitizeFeatureFlags({ shop: 'yes', tournaments: 1, members: null });
+    const result = sanitizeFeatureFlags(({ shop: 'yes', tournaments: 1, members: null }) as any);
     // shop and tournaments fall back to defaults (false), members stays true (core)
     expect(result.shop).toBe(false);
     expect(result.tournaments).toBe(false);
@@ -132,13 +130,12 @@ describe('sanitizeFeatureFlags', () => {
   });
 
   it('forces all core features to true regardless of input', () => {
-    // @ts-expect-error — testing malicious input
-    const result = sanitizeFeatureFlags({
+    const result = sanitizeFeatureFlags(({
       members: false,
       trainers: false,
       seasons: false,
       finance: false,
-    });
+    }) as any);
     expect(result.members).toBe(true);
     expect(result.trainers).toBe(true);
     expect(result.seasons).toBe(true);
@@ -149,7 +146,7 @@ describe('sanitizeFeatureFlags', () => {
     // If a future feature depends on `trainers`, it stays enabled when trainers is on.
     // We simulate by adding a transient dependency for the test.
     const input = { 'made-up-feature': true, trainers: true };
-    const result = sanitizeFeatureFlags(input);
+    const result = sanitizeFeatureFlags((input) as any);
     // The made-up key is unknown, so it should be dropped
     expect(result).not.toHaveProperty('made-up-feature');
     expect(result.trainers).toBe(true);

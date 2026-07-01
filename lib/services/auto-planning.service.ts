@@ -480,8 +480,9 @@ export class AutoPlanningService {
       { start: '18:30:00', end: '20:00:00', duration: 90 },
     ];
 
-    // Days of week (0=Monday, 6=Sunday)
-    const daysOfWeek = [0, 1, 2, 3, 4, 5, 6];
+    // Days of week (0=Monday, 6=Sunday). Sonntag ist kein Trainingstag (Vereinsrealität)
+    // — bewusst ausgeschlossen, nur Mo-Sa.
+    const daysOfWeek = [0, 1, 2, 3, 4, 5];
     const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
     // Track trainer sessions per week
@@ -654,6 +655,19 @@ export class AutoPlanningService {
     conflicts: Array<{ type: string; description: string; severity: string }>,
     metrics: AlgorithmMetrics
   ): Promise<void> {
+    // HARD CONSTRAINT backstop: kein Trainingsbetrieb am Sonntag (day_of_week=6).
+    // Greift sowohl für den deterministischen Algorithmus (oben bereits auf Mo-Sa
+    // begrenzt) als auch für generatePlanAI(), deren KI-Pfad keine eigene
+    // Wochentags-Begrenzung hat.
+    const sundaySlots = slots.filter((s) => s.day_of_week === 6);
+    if (sundaySlots.length > 0) {
+      log.warn('Filtered out Sunday training slots before save', {
+        seasonId,
+        count: sundaySlots.length,
+      });
+      slots = slots.filter((s) => s.day_of_week !== 6);
+    }
+
     // Delete existing plan entries (if re-planning)
     await db.delete(seasonPlanEntries).where(eq(seasonPlanEntries.season_id, seasonId));
 

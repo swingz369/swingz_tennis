@@ -41,9 +41,9 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         brand: {
-          primary: '#1B4332',
-          secondary: '#1e3a5f',
-          accent: '#FF6B35',
+          primary: 'hsl(var(--brand-primary))',
+          secondary: 'hsl(var(--brand-secondary))',
+          accent: 'hsl(var(--brand-accent))',
         },
         gray: colors.gray,
         success: colors.success,
@@ -52,7 +52,7 @@ const config: Config = {
         info: colors.info,
       },
       ringColor: {
-        brand: 'rgba(27, 67, 50, 0.7)',
+        brand: 'hsl(var(--brand-primary) / 0.7)',
       },
       fontFamily: {
         sans: typography.fontFamily.sans,
@@ -60,6 +60,7 @@ const config: Config = {
         mono: typography.fontFamily.mono,
       },
       fontSize: {
+        '2xs': typography.fontSize['2xs'],
         'display-1': ['3.75rem', { lineHeight: '1.1', fontWeight: '800' }],
         'display-2': ['3rem', { lineHeight: '1.2', fontWeight: '700' }],
         'display-3': ['2.25rem', { lineHeight: '1.2', fontWeight: '700' }],
@@ -115,66 +116,12 @@ const config: Config = {
         gentle: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
       },
       keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        'float-slow': {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-6px)' },
-        },
-        'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(27, 67, 50, 0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(27, 67, 50, 0.6)' },
-        },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
-        },
-        'fade-in-up': {
-          '0%': { opacity: '0', transform: 'translateY(24px) scale(0.98)' },
-          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
-        },
-        'fade-in': {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        'scale-in': {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
-        'slide-in-right': {
-          '0%': { opacity: '0', transform: 'translateX(24px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
-        'slide-in-left': {
-          '0%': { opacity: '0', transform: 'translateX(-24px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
+        // Keyframes are defined as Single Source of Truth in app/globals.css.
+        // Only aurora + slide-down remain here (they have no globals.css equivalent).
         aurora: {
           '0%, 100%': { transform: 'translateY(0) rotate(0deg) scale(1)', opacity: '0.6' },
           '33%': { transform: 'translateY(-30px) rotate(5deg) scale(1.1)', opacity: '0.8' },
           '66%': { transform: 'translateY(20px) rotate(-3deg) scale(0.95)', opacity: '0.5' },
-        },
-        'gradient-shift': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-        },
-        marquee: {
-          '0%': { transform: 'translateX(0)' },
-          '100%': { transform: 'translateX(-50%)' },
-        },
-        'border-glow': {
-          '0%, 100%': { borderColor: 'rgba(27, 67, 50, 0.3)' },
-          '50%': { borderColor: 'rgba(255, 107, 53, 0.5)' },
-        },
-        ripple: {
-          '0%': { transform: 'scale(0)', opacity: '0.5' },
-          '100%': { transform: 'scale(4)', opacity: '0' },
-        },
-        'count-up': {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'slide-down': {
           '0%': { opacity: '0', transform: 'translateY(-4px) scaleY(0.98)', maxHeight: '0' },
@@ -182,6 +129,8 @@ const config: Config = {
         },
       },
       animation: {
+        // Keyframe bodies are in app/globals.css (Single Source of Truth).
+        // Only aurora + slide-down keyframes remain in this file.
         float: 'float 6s ease-in-out infinite',
         'float-slow': 'float-slow 8s ease-in-out infinite',
         'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
@@ -193,10 +142,6 @@ const config: Config = {
         'slide-in-left': 'slide-in-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         aurora: 'aurora 15s ease-in-out infinite',
         'gradient-shift': 'gradient-shift 8s ease infinite',
-        marquee: 'marquee 30s linear infinite',
-        'border-glow': 'border-glow 3s ease-in-out infinite',
-        ripple: 'ripple 0.6s ease-out forwards',
-        'count-up': 'count-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'slide-down': 'slide-down 0.25s ease-out forwards',
       },
     },

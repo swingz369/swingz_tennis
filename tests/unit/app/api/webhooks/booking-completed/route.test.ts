@@ -94,15 +94,19 @@ function buildValidPayload(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makeReq(opts: {
-  body?: string;
-  signature?: string | null;
-  contentLength?: number;
-} = {}): NextRequest {
+function makeReq(
+  opts: {
+    body?: string;
+    signature?: string | null;
+    contentLength?: number;
+  } = {}
+): NextRequest {
   const body = opts.body ?? JSON.stringify(buildValidPayload());
   const headers: Record<string, string> = {
     'content-type': 'application/json',
-    ...(opts.contentLength !== undefined ? { 'content-length': String(opts.contentLength) } : { 'content-length': String(body.length) }),
+    ...(opts.contentLength !== undefined
+      ? { 'content-length': String(opts.contentLength) }
+      : { 'content-length': String(body.length) }),
   };
   if (opts.signature !== null && opts.signature !== undefined) {
     headers['x-swingz-signature'] = opts.signature;
@@ -326,7 +330,7 @@ describe('POST /api/webhooks/booking-completed — vendor resolution', () => {
 
   it('reads clubs.features.hardware_vendor (nuki) and dispatches via nuki-adapter', async () => {
     resetSupabaseMock({ clubRow: { features: { hardware_vendor: 'nuki' } } });
-    const { POST, getHardwareAdapter } = await import('@/app/api/webhooks/booking-completed/route');
+    const { POST } = await import('@/app/api/webhooks/booking-completed/route');
     const { getHardwareAdapter: getHw } = await import('@/lib/hardware/adapter');
 
     const body = JSON.stringify(buildValidPayload({ event_type: 'booking_started' }));
@@ -446,7 +450,6 @@ describe('POST /api/webhooks/booking-completed — ADR-002 partial-failure surfa
 describe('GET /api/webhooks/booking-completed — method restriction', () => {
   it('returns 405 with Allow: POST header (RFC 9110)', async () => {
     const { GET } = await import('@/app/api/webhooks/booking-completed/route');
-    const req = new NextRequest('http://test/api/webhooks/booking-completed', { method: 'GET' });
     const res = await GET();
     expect(res.status).toBe(405);
     expect(res.headers.get('allow')).toBe('POST');

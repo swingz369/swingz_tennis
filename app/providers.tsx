@@ -35,7 +35,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages[locale] ?? deMessages}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="theme">
         <TenantProvider>
           <QueryClientProvider client={queryClient}>
             <ErrorBoundary>{children}</ErrorBoundary>

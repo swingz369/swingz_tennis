@@ -62,7 +62,7 @@ export default async function MembersPage({
 
   if (error) {
     return (
-      <div className="p-6 text-red-600">Fehler beim Laden der Mitglieder: {error.message}</div>
+      <div className="p-6 text-error-600">Fehler beim Laden der Mitglieder: {error.message}</div>
     );
   }
 

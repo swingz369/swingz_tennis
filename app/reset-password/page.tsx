@@ -193,8 +193,8 @@ export default function ResetPasswordPage() {
             {/* ── Error (invalid/expired link) ───────────────────────────── */}
             {state === 'error' && (
               <div className="text-center space-y-4">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-50 mx-auto">
-                  <AlertCircle className="h-8 w-8 text-red-500" />
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-error-50 mx-auto">
+                  <AlertCircle className="h-8 w-8 text-error-500" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground">Link ungültig</h2>
                 <p className="text-muted-foreground">{errorMsg}</p>
@@ -216,8 +216,8 @@ export default function ResetPasswordPage() {
             {/* ── Success ────────────────────────────────────────────────── */}
             {state === 'success' && (
               <div className="text-center space-y-4">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-50 mx-auto">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-success-50 mx-auto">
+                  <CheckCircle2 className="h-8 w-8 text-success-600" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground">
                   Passwort erfolgreich geändert
@@ -290,8 +290,8 @@ export default function ResetPasswordPage() {
                   </div>
 
                   {validationError && (
-                    <div className="rounded-xl bg-red-50 p-4 text-sm text-red-600 border border-red-100 flex items-start gap-3">
-                      <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-red-400" />
+                    <div className="rounded-xl bg-error-50 p-4 text-sm text-error-600 border border-error-100 flex items-start gap-3">
+                      <Shield className="h-5 w-5 flex-shrink-0 mt-0.5 text-error-400" />
                       <span>{validationError}</span>
                     </div>
                   )}

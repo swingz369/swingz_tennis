@@ -1,12 +1,12 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:trainer-absences');
 
 export async function POST(request: NextRequest) {
-  return withAuth(request, async (auth) => {
+  return withApiAuth(request, async (auth) => {
     const hasPermission = await verifyRole(auth, 'trainer');
     if (!hasPermission) return forbiddenResponse('Insufficient permissions');
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, async (auth) => {
+  return withApiAuth(request, async (auth) => {
     const { supabase } = auth;
 
     const searchParams = request.nextUrl.searchParams;

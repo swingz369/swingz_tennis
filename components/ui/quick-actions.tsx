@@ -84,7 +84,7 @@ export function QuickActions({
               variant={action.variant ?? 'light'}
               className="group-hover:scale-110 transition-transform duration-300"
             />
-            <span className="text-[11px] font-semibold text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
+            <span className="text-2xs font-semibold text-center leading-tight text-muted-foreground group-hover:text-foreground transition-colors">
               {action.label}
             </span>
           </Link>

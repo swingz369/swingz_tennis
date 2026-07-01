@@ -54,7 +54,7 @@ export function AdminPanelV2Client({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-brand-primary">Superadmin Dashboard</h1>
+          <h1 className="text-3xl font-bold font-display text-brand-primary">Superadmin Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Hallo {firstName} — Plattform-Übersicht über alle Vereine
           </p>
@@ -73,7 +73,7 @@ export function AdminPanelV2Client({
                     <Building2 className="h-3.5 w-3.5 text-purple-500 shrink-0" />
                     <span className="truncate">{club.name}</span>
                     {club.status === 'inactive' && (
-                      <Badge variant="secondary" className="text-[10px] px-1 py-0 leading-none">
+                      <Badge variant="secondary" className="text-2xs px-1 py-0 leading-none">
                         Inaktiv
                       </Badge>
                     )}
@@ -108,22 +108,22 @@ export function AdminPanelV2Client({
             label: 'Mitglieder gesamt',
             value: platformStats.totalMembers,
             icon: Users,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 dark:bg-blue-900/20',
+            color: 'text-info-600',
+            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Trainer gesamt',
             value: platformStats.totalTrainers,
             icon: GraduationCap,
-            color: 'text-amber-600',
-            bg: 'bg-amber-50 dark:bg-amber-900/20',
+            color: 'text-warning-600',
+            bg: 'bg-warning-50 dark:bg-warning-900/20',
           },
           {
             label: 'Aktiv',
             value: clubs.filter((c) => c.status === 'active').length,
             icon: Activity,
-            color: 'text-green-600',
-            bg: 'bg-green-50 dark:bg-green-900/20',
+            color: 'text-success-600',
+            bg: 'bg-success-50 dark:bg-success-900/20',
           },
         ].map((stat) => (
           <Card key={stat.label} className="border-0 shadow-sm">

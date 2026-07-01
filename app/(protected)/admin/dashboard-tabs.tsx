@@ -31,7 +31,7 @@ export function DashboardTabs({ tabs, children }: { tabs: Tab[]; children: React
             {tab.count != null && tab.count > 0 && (
               <span
                 className={cn(
-                  'ml-1.5 text-[10px] font-bold px-1.5 py-0 rounded-full',
+                  'ml-1.5 text-2xs font-bold px-1.5 py-0 rounded-full',
                   i === active
                     ? 'bg-brand-light/20 text-brand-light'
                     : 'bg-muted text-muted-foreground'

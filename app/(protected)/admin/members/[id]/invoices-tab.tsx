@@ -28,10 +28,10 @@ interface InvoiceData {
 function InvoiceStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
-    open: { label: 'Offen', className: 'bg-blue-100 text-blue-700' },
-    sent: { label: 'Versendet', className: 'bg-blue-100 text-blue-700' },
-    paid: { label: 'Bezahlt', className: 'bg-green-100 text-green-700' },
-    overdue: { label: 'Überfällig', className: 'bg-red-100 text-red-700' },
+    open: { label: 'Offen', className: 'bg-info-100 text-info-700' },
+    sent: { label: 'Versendet', className: 'bg-info-100 text-info-700' },
+    paid: { label: 'Bezahlt', className: 'bg-success-100 text-success-700' },
+    overdue: { label: 'Überfällig', className: 'bg-error-100 text-error-700' },
     cancelled: { label: 'Storniert', className: 'bg-muted text-muted-foreground line-through' },
   };
   const c = config[status] ?? config.draft;
@@ -43,7 +43,7 @@ function InvoiceStatusBadge({ status }: { status: string }) {
 function InvoiceTypeBadge({ type }: { type: string }) {
   const config: Record<string, { label: string; className: string }> = {
     season: { label: 'Saison', className: 'bg-purple-100 text-purple-700' },
-    membership: { label: 'Mitgliedsbeitrag', className: 'bg-blue-100 text-blue-700' },
+    membership: { label: 'Mitgliedsbeitrag', className: 'bg-info-100 text-info-700' },
     adhoc: { label: 'Zusatz', className: 'bg-muted text-muted-foreground' },
   };
   const c = config[type] ?? config.adhoc;

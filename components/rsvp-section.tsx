@@ -139,7 +139,7 @@ export function RsvpSection({
       <div className="flex items-center gap-1">
         <button
           onClick={handleExportICal}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-blue-50 hover:text-blue-600 transition-all"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-info-50 hover:text-info-600 transition-all"
           title="In Kalender exportieren (.ics)"
         >
           <CalendarIcon className="h-3.5 w-3.5" />
@@ -147,7 +147,7 @@ export function RsvpSection({
         </button>
         <button
           onClick={handleGoogleCal}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-blue-50 hover:text-blue-600 transition-all"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-info-50 hover:text-info-600 transition-all"
           title="Zu Google Kalender hinzufügen"
         >
           <CalendarIcon className="h-3.5 w-3.5" />
@@ -165,9 +165,9 @@ export function RsvpSection({
             type="button"
             onClick={focusFirstAction}
             className={cn(
-              'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border cursor-pointer transition-all',
+              'inline-flex items-center gap-1 px-2 py-1 rounded-md text-2xs font-medium border cursor-pointer transition-all',
               'hover:ring-2 hover:ring-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/40',
-              'bg-blue-100 text-blue-700 border-blue-200 animate-pulse'
+              'bg-info-100 text-info-700 border-info-200 animate-pulse'
             )}
             aria-label="Jetzt antworten — fokussiert die RSVP-Action-Buttons"
             title="Klicken um zu antworten"
@@ -178,7 +178,7 @@ export function RsvpSection({
         ) : (
           <span
             className={cn(
-              'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border',
+              'inline-flex items-center gap-1 px-2 py-1 rounded-md text-2xs font-medium border',
               getRsvpStatusConfig(status).badgeClass
             )}
             aria-live="polite"

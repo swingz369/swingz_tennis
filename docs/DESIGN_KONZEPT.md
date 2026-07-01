@@ -1,6 +1,6 @@
 # 🎾 SwingZ — Design-Konzept
 
-> **Version 4.8** — 1. Juli 2026 (Sprint 3+ vollständig: Tickets 9–13 ✅, F1/F2 behoben, keine offenen Tickets)
+> **Version 4.9** — 1. Juli 2026 (Sprint 3+ vollständig + Massives Design-Update: Typografie, Pricing, How-It-Works)
 > **Methode:** `frontend-design` Skill + Code-verifiziert (`glob`, `code-searcher`, `read_files`)
 > **Status:** Lebendes Konzept — vierteljährlich aktualisiert
 
@@ -229,7 +229,7 @@ Die Design-Preview-Seite (`app/(public)/design-preview/page.tsx`) zeigt 11 Anima
 - 🔴 **Drei CTAs im Hero** → ✅ Auf 1 Primär-CTA ("Demo starten") + 1 Sekundär-Link ("Demo ansehen") reduziert.
 - 🟡 Keine Produkt-Screenshots — Tennisball-SVG dekorativ, aber zeigt nichts vom Produkt → ✅ Beides: Tennisball-SVG (Marken-Anchor) + 4 Produkt-Screenshots in `public/screenshots/` (Hero, Features, Pricing, CTA)
 - 🟡 Testimonials ohne Avatare → ✅ Initialen-Avatare mit Brand-Gradienten (TK/Forest Green, SM/Sunrise Orange, RD/Midnight Navy)
-- 🟡 Pricing nur 2 Pläne, kein Jahresrabatt → ✅ Jahresrabatt-Toggle (2 Monate gratis): Starter 290€/Jahr (24,17€/Monat), Professional 790€/Jahr (65,83€/Monat)
+- 🟡 Pricing nur 2 Pläne, kein Jahresrabatt → ✅ Jahresrabatt-Toggle (2 Monate gratis): Starter 290€/Jahr (24,17€/Monat), Professional 790€/Jahr (65,83€/Monat). Professional-Karte invertiert (Midnight-Navy-Hintergrund, weißer Text, oranger CTA).
 
 ---
 

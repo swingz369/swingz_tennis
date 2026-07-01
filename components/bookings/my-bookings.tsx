@@ -99,7 +99,7 @@ export function MyBookings() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <Badge className="bg-green-500">Bestätigt</Badge>;
+        return <Badge className="bg-success-500">Bestätigt</Badge>;
       case 'pending':
         return (
           <Badge variant="outline" className="border-yellow-500 text-yellow-700">
@@ -190,7 +190,7 @@ export function MyBookings() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-error-600 hover:text-error-700 hover:bg-error-50"
                       disabled={cancelling === booking.id}
                       onClick={() => handleCancel(booking.id)}
                     >

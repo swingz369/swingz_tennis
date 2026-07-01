@@ -381,7 +381,7 @@ export default function SpecialEventsPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleDelete(ev.id, ev.name)}
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                    className="h-8 w-8 p-0 text-error-500 hover:text-error-600"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

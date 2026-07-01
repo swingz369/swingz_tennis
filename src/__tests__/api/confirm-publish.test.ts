@@ -5,7 +5,7 @@
  * fails, all prior writes (sessions, plan entries, season status, conflicts,
  * audit trail) must be rolled back.
  */
-import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 
 // Ensure DATABASE_URL is set before any dynamic import triggers db.ts module evaluation.
 // CI environments may not have DATABASE_URL, and vi.mock hoisting may not intercept
@@ -234,7 +234,7 @@ function createTx(): any {
 
 // The global DB — used outside the transaction (season lookup, entry lookup,
 // post-transaction user lookup)
-let mockGetDb: ReturnType<typeof vi.fn>;
+let mockGetDb: any;
 
 // ── vi.mock calls (hoisted to module top) ───────────────────
 
@@ -244,7 +244,7 @@ let mockGetDb: ReturnType<typeof vi.fn>;
 vi.mock('drizzle-orm', async (importOriginal) => {
   const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as any),
     eq: vi.fn(() => ({})),
     and: vi.fn(() => ({})),
     inArray: vi.fn(() => ({})),

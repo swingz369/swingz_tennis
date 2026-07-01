@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { data: court, error } = await auth.supabase
       .from('courts')
       .select(
-        'id, club_id, name, number, location, description, status, surface, has_indoor, has_lighting, is_active, created_at'
+        'id, club_id, name, number, location, description, status, surface, has_indoor, has_lighting, is_active, usable_for_training, created_at'
       )
       .eq('id', courtId)
       .single();
@@ -42,6 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       hasIndoor: court.has_indoor,
       hasLighting: court.has_lighting,
       isActive: court.is_active,
+      usableForTraining: court.usable_for_training,
       createdAt: court.created_at,
     });
   });
@@ -65,11 +66,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.hasIndoor !== undefined) updates.has_indoor = body.hasIndoor;
     if (body.hasLighting !== undefined) updates.has_lighting = body.hasLighting;
     if (body.isActive !== undefined) updates.is_active = body.isActive;
+    if (body.usableForTraining !== undefined) updates.usable_for_training = body.usableForTraining;
 
     const { data: court, error } = await auth.supabase
       .from('courts')
       .select(
-        'id, club_id, name, number, surface, status, has_indoor, has_lighting, is_active, created_at'
+        'id, club_id, name, number, surface, status, has_indoor, has_lighting, is_active, usable_for_training, created_at'
       )
       .eq('id', courtId)
       .single();
@@ -99,6 +101,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         number: court.number,
         hasLighting: court.has_lighting,
         isActive: court.is_active,
+        usableForTraining: court.usable_for_training,
         status: court.status,
       },
     });

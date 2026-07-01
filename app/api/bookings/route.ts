@@ -10,9 +10,12 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { createBookingSafe } from '@/lib/booking/safe-booking';
 import { createServiceClient } from '@/lib/supabase/service';
+import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
+import { ClubId, CourtId } from '@/domain/value-objects';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:bookings');
+const pricingRepo = new DrizzlePricingRuleRepository();
 
 // POST /api/bookings
 export async function POST(req: NextRequest) {
@@ -151,6 +154,28 @@ export async function POST(req: NextRequest) {
       }
     })();
 
+    // Calculate dynamic price for this booking
+    let priceInfo: { pricePerHour: number; effectivePricePerHour: number; source: string } | null = null;
+    try {
+      const sessionStart = new Date(session.timeslot_start);
+      const sessionEnd = new Date(session.timeslot_end);
+      const bookingHours = (sessionEnd.getTime() - sessionStart.getTime()) / 3_600_000;
+      const result = await pricingRepo.calculatePrice(ClubId.fromString(clubId), {
+        courtId: session.court_id ? CourtId.fromString(session.court_id) : undefined,
+        startTime: sessionStart,
+        dayOfWeek: sessionStart.getDay(),
+        bookingHours,
+      });
+      priceInfo = {
+        pricePerHour: result.pricePerHour,
+        effectivePricePerHour: +(result.pricePerHour * result.multiplier).toFixed(2),
+        source: result.source,
+      };
+    } catch {
+      // Non-blocking: price calculation failure should not prevent booking
+      log.warn('[Bookings] Price calculation failed (non-blocking)');
+    }
+
     return NextResponse.json(
       {
         bookingId: result.bookingId,
@@ -159,6 +184,7 @@ export async function POST(req: NextRequest) {
         status: 'confirmed',
         payment_status: requiresPayment ? 'pending' : null,
         requiresPayment,
+        pricing: priceInfo,
       },
       { status: 201 }
     );

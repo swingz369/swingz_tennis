@@ -19,9 +19,9 @@ const USER_ID = 'user-admin-001';
 // MOCK STATE
 // ════════════════════════════════════════════════════════════
 
-let mockVerifyRole: ReturnType<typeof vi.fn>;
+let mockVerifyRole: any;
 
-const mockAuthCtx = {
+const mockAuthCtx: { user: any; clubId: string; supabase: any } = {
   user: { id: USER_ID, email: 'admin@test.com' },
   clubId: CLUB_ID,
   supabase: {
@@ -30,7 +30,7 @@ const mockAuthCtx = {
 };
 
 const mockForbiddenResponse = vi.fn(
-  (msg?: string) =>
+  (msg?: unknown) =>
     new Response(JSON.stringify({ error: msg || 'Forbidden' }), {
       status: 403,
       headers: { 'Content-Type': 'application/json' },
@@ -40,9 +40,13 @@ const mockForbiddenResponse = vi.fn(
 // ── Module mocks ────────────────────────────────────────────
 
 vi.mock('@/lib/api-auth', () => ({
-  withApiAuth: vi.fn((_req: unknown, fn: (auth: unknown) => Promise<Response>) => fn(mockAuthCtx)),
-  verifyRole: (...args: unknown[]) => mockVerifyRole(...args),
-  forbiddenResponse: (...args: unknown[]) => mockForbiddenResponse(...args),
+  // The real withApiAuth has a stricter signature; cast is intentional for
+  // the test mock (we always resolve with mockAuthCtx regardless of _req).
+  withApiAuth: vi.fn(
+    (_req: unknown, fn: (auth: unknown) => Promise<Response>) => fn(mockAuthCtx)
+  ) as unknown as typeof import('@/lib/api-auth').withApiAuth,
+  verifyRole: (...args: unknown[]) => mockVerifyRole(...args) as never,
+  forbiddenResponse: (...args: unknown[]) => mockForbiddenResponse(...args) as never,
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
@@ -60,19 +64,6 @@ function supabaseSelectChain(data: unknown | null, error: { message: string } | 
   chain.select = vi.fn(() => chain);
   chain.eq = vi.fn(() => chain);
   chain.order = vi.fn(() => chain);
-  chain.single = vi.fn(() => chain);
-  chain.then = (resolve: (v: unknown) => unknown, _reject: (e: unknown) => unknown) => {
-    resolve({ data, error });
-    return chain;
-  };
-  return chain;
-}
-
-/** Creates a Supabase insert chain (insert → select → single → then) */
-function supabaseInsertChain(data: unknown, error: { message: string } | null = null) {
-  const chain: Record<string, any> = {};
-  chain.insert = vi.fn(() => chain);
-  chain.select = vi.fn(() => chain);
   chain.single = vi.fn(() => chain);
   chain.then = (resolve: (v: unknown) => unknown, _reject: (e: unknown) => unknown) => {
     resolve({ data, error });

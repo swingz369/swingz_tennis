@@ -90,7 +90,7 @@ export default function NewTournamentPage() {
         <Card className="p-0">
           <CardHeader className="px-5 pt-5 pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-amber-500" />
+              <Trophy className="h-4 w-4 text-warning-500" />
               Turnier-Details
             </CardTitle>
           </CardHeader>
@@ -242,7 +242,7 @@ export default function NewTournamentPage() {
               />
             </div>
 
-            {error && <p className="text-xs text-red-500">{error}</p>}
+            {error && <p className="text-xs text-error-500">{error}</p>}
 
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" className="flex-1" asChild disabled={loading}>

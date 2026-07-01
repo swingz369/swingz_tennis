@@ -54,7 +54,7 @@ const roleColors = {
   },
   admin: {
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
-    text: 'text-brand-light dark:text-green-300',
+    text: 'text-brand-light dark:text-success-300',
     light: 'brand-light',
     ring: 'ring-brand-light/30',
   },
@@ -66,7 +66,7 @@ const roleColors = {
   },
   member: {
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
-    text: 'text-brand-light dark:text-green-300',
+    text: 'text-brand-light dark:text-success-300',
     light: 'brand-light',
     ring: 'ring-brand-light/30',
   },
@@ -388,7 +388,7 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'h-[calc(100vh-4rem)] w-64 border-r border-border/60 dark:border-white/[0.06] bg-background/90 dark:bg-surface-dark/90 backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
+        'h-[calc(100vh-4rem)] w-64 border-r border-white/[0.04] dark:border-white/[0.06] bg-gradient-to-b from-[hsl(150,48%,14%)] via-[hsl(150,48%,11%)] to-[hsl(150,48%,8%)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
@@ -399,10 +399,9 @@ export function Sidebar({
       aria-hidden={isMobile === true && !open ? true : undefined}
     >
       {/* Mobile close button */}
-      {open && (
-        <button
-          onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-muted dark:hover:bg-background/10 text-muted-foreground dark:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
+      {open && (          <button
+            onClick={onClose}
+            className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-white/5 text-white/70 focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
           aria-label="Menü schließen"
         >
           <X className="h-5 w-5" />
@@ -428,16 +427,16 @@ export function Sidebar({
                     onLoad={() => setImgFailed(false)}
                   />
                 ) : (
-                  <Trophy className="h-5 w-5 text-foreground dark:text-foreground relative" />
+                  <Trophy className="h-5 w-5 text-white/70 relative" />
                 )}
               </div>
-              <span className="text-sm font-bold tracking-tight text-foreground dark:text-white">
+              <span className="text-sm font-bold tracking-tight text-white">
                 {activeClub?.name || 'SWINGZ'}
               </span>
             </Link>
             <span
               className={cn(
-                'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
+                'text-2xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
                 colors.bg,
                 colors.text
               )}
@@ -445,7 +444,7 @@ export function Sidebar({
               {sectionLabel}
             </span>
           </div>
-          <div className="h-px bg-gradient-to-r from-transparent via-gray-200/50 dark:via-white/10 to-transparent" />
+          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
         </div>
 
         {/* Family Account Switcher — for parents with minor children */}
@@ -463,10 +462,10 @@ export function Sidebar({
 
         {/* Owner / Superadmin Club Switcher */}
         {(isOwner || isSuperAdmin) && hasMultipleClubs && (
-          <div className="mx-3 mb-4 border border-border/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-muted/50 dark:bg-card/[0.02]">
+          <div className="mx-3 mb-4 border border-white/[0.08] rounded-xl overflow-hidden bg-white/5">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground dark:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.04] transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/5 transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
@@ -474,7 +473,7 @@ export function Sidebar({
               </div>
               <ChevronDown
                 className={cn(
-                  'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                  'h-4 w-4 shrink-0 text-white/50 transition-transform duration-200',
                   clubSwitcherOpen && 'rotate-180'
                 )}
               />
@@ -489,7 +488,7 @@ export function Sidebar({
                       'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                       club.id === (selectedClubId ?? activeClub?.id)
                         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-medium'
-                        : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04]'
+                        : 'text-white/70 hover:bg-white/5'
                     )}
                   >
                     <CheckCircle
@@ -518,7 +517,7 @@ export function Sidebar({
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
               isExactActive(pathname, dashboardHref)
                 ? `${colors.bg} ${colors.text} shadow-sm`
-                : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
             )}
             aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
           >
@@ -549,7 +548,7 @@ export function Sidebar({
                             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                             isActive
                               ? `${colors.bg} ${colors.text} shadow-sm`
-                              : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
+                              : 'text-white/70 hover:bg-white/5 hover:text-white'
                           )}
                           aria-current={isActive ? 'page' : undefined}
                         >
@@ -586,7 +585,7 @@ export function Sidebar({
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
                         ? `${colors.bg} ${colors.text} shadow-sm`
-                        : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
+                        : 'text-white/70 hover:bg-white/5 hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                     aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}

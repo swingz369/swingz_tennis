@@ -35,9 +35,58 @@ import {
   CalendarDays,
   Save,
   Loader2,
+  Mail,
 } from 'lucide-react';
 
-export function ConfigStep() {
+function RemindButton({ seasonId }: { seasonId: string }) {
+  const [sending, setSending] = useState(false);
+  const send = useCallback(async () => {
+    setSending(true);
+    try {
+      const res = await apiFetch(`/api/seasons/${seasonId}/planning/remind`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      toast.success(`Erinnerung gesendet an ${data.sent ?? 0} Mitglieder ohne Präferenzen`);
+    } catch {
+      toast.error('Erinnerung konnte nicht gesendet werden');
+    } finally {
+      setSending(false);
+    }
+  }, [seasonId]);
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Mail className="h-4 w-4" />
+        Mitglieder ohne Präferenzen per E-Mail erinnern
+      </div>
+      <Button variant="outline" size="sm" onClick={send} disabled={sending} className="gap-1.5">
+        {sending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Mail className="h-3.5 w-3.5" />
+        )}
+        Erinnerung senden
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * ConfigStep (Schritt 1 von 3)
+ *
+ * Responsibilities:
+ * 1. Readiness Check: Verify all prerequisites are met
+ * 2. Preference Reminders: Email members/trainers without preferences
+ * 3. Planning Config: Set algorithm parameters (group sizes, trainer util, etc.)
+ * 4. Auto-Plan Goals: Choose optimization objectives (conflicts, load, preferences)
+ * 5. AI Features: Toggle AI optimization (Gemini)
+ * 6. Member Selection: Choose which members to plan for
+ * 7. Trainer Availability: Review trainer load & submission status
+ * 8. Billing Config: Set hourly rates, membership fees, tax rates
+ *
+ * Gate to next step: readiness check must pass (isReady = true)
+ */
+export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
   const { state, dispatch } = useWizard();
   const [config, setConfig] = useState(state.planningConfig);
 
@@ -95,11 +144,9 @@ export function ConfigStep() {
   }, [state.seasonId, billingConfig]);
 
   const handleConfigChange = (key: string, value: number | boolean) => {
-    setConfig((prev) => {
-      const next = { ...prev, [key]: value };
-      dispatch({ type: 'SET_PLANNING_CONFIG', config: next });
-      return next;
-    });
+    const next = { ...config, [key]: value };
+    setConfig(next);
+    dispatch({ type: 'SET_PLANNING_CONFIG', config: next });
   };
 
   return (
@@ -110,6 +157,9 @@ export function ConfigStep() {
         seasonId={state.seasonId}
         onReady={(isReady) => dispatch({ type: 'SET_READY', isReady })}
       />
+
+      {/* Präferenz-Erinnerung */}
+      <RemindButton seasonId={state.seasonId} />
 
       {/* Season Config */}
       <Card>
@@ -250,7 +300,7 @@ export function ConfigStep() {
           {/* Auto-Plan Options (integrated from /auto-plan page) */}
           <div className="mt-6 border-t pt-5">
             <div className="flex items-center gap-2 mb-4">
-              <Zap className="h-4 w-4 text-amber-500" />
+              <Zap className="h-4 w-4 text-warning-500" />
               <span className="text-sm font-medium text-foreground">Auto-Plan Optimierung</span>
             </div>
 
@@ -266,7 +316,7 @@ export function ConfigStep() {
                   onChange={(e) => handleConfigChange('maxIterations', Number(e.target.value))}
                   className="h-9"
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   Höhere Werte = bessere Ergebnisse, längere Laufzeit
                 </p>
               </div>
@@ -339,8 +389,11 @@ export function ConfigStep() {
                   htmlFor="use-ai"
                   className="text-sm cursor-pointer flex items-center gap-1.5"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                  <Sparkles className="h-3.5 w-3.5 text-warning-500" />
                   KI-Optimierung (Gemini)
+                  {!aiAvailable && (
+                    <span className="text-xs text-warning-600 ml-1">(nicht konfiguriert)</span>
+                  )}
                 </label>
               </div>
               <div className="flex items-center space-x-2">
@@ -388,7 +441,7 @@ export function ConfigStep() {
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <Gauge className="h-4 w-4 text-blue-500" />
+              <Gauge className="h-4 w-4 text-info-500" />
               <p className="text-xs text-muted-foreground">Trainer-Auslastung</p>
             </div>
             <p className="text-xl font-bold mt-1">
@@ -405,14 +458,14 @@ export function ConfigStep() {
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
               {state.isReady ? (
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-success-500" />
               ) : (
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <AlertTriangle className="h-4 w-4 text-warning-500" />
               )}
               <p className="text-xs text-muted-foreground">Bereitschaft</p>
             </div>
             <p
-              className={`text-xl font-bold mt-1              ${state.isReady ? 'text-green-600' : 'text-amber-600'}`}
+              className={`text-xl font-bold mt-1              ${state.isReady ? 'text-success-600' : 'text-warning-600'}`}
             >
               {state.isReady ? 'Bereit' : 'Prüfen'}
             </p>
@@ -473,7 +526,7 @@ export function ConfigStep() {
                 }
                 className="h-9"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-2xs text-muted-foreground">
                 Standard-Stundensatz für alle Trainer
               </p>
             </div>
@@ -502,9 +555,7 @@ export function ConfigStep() {
                 }
                 className="h-9"
               />
-              <p className="text-[11px] text-muted-foreground">
-                0 = steuerbefreit (Kleinunternehmer)
-              </p>
+              <p className="text-2xs text-muted-foreground">0 = steuerbefreit (Kleinunternehmer)</p>
             </div>
 
             {/* Payment terms */}
@@ -531,7 +582,7 @@ export function ConfigStep() {
                 }
                 className="h-9"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-2xs text-muted-foreground">
                 Tage bis zur Fälligkeit nach Rechnungsstellung
               </p>
             </div>
@@ -594,7 +645,7 @@ export function ConfigStep() {
                   }
                   className="h-9"
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   Leer lassen für Auto-Erkennung aus Beitragskategorien
                 </p>
               </div>
@@ -621,7 +672,7 @@ export function ConfigStep() {
                     <SelectItem value="monthly">Monatlich</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-2xs text-muted-foreground">
                   Bestimmt die Beschreibung auf der Rechnung
                 </p>
               </div>

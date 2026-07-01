@@ -174,7 +174,7 @@ export default function LeaguesClient() {
                   <Badge
                     className={
                       league.status === 'active'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-success-100 text-success-800'
                         : 'bg-gray-100 text-gray-600'
                     }
                   >
@@ -202,11 +202,11 @@ export default function LeaguesClient() {
                             <span
                               className={`text-xs font-bold w-5 text-center ${
                                 idx === 0
-                                  ? 'text-amber-500'
+                                  ? 'text-warning-500'
                                   : idx === 1
                                     ? 'text-gray-400'
                                     : idx === 2
-                                      ? 'text-amber-700'
+                                      ? 'text-warning-700'
                                       : 'text-muted-foreground'
                               }`}
                             >
@@ -350,7 +350,7 @@ export default function LeaguesClient() {
                 placeholder="https://htv.liga.nu/cgi-bin/WebObjects/nuLigaTENDE.woa/wa/groupPage?championship=...&group=..."
                 className="mt-1 font-mono text-xs"
               />
-              <p className="text-[11px] text-muted-foreground mt-1">
+              <p className="text-2xs text-muted-foreground mt-1">
                 Verbindet die Liga automatisch mit nuLiga für Tabellen-Sync
               </p>
             </div>

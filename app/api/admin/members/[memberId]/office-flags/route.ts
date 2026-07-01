@@ -27,10 +27,14 @@ const PatchSchema = z.object({
   active: z.boolean(),
 });
 
-export async function PATCH(req: NextRequest, { params }: { params: { memberId: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ memberId: string }> }
+) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin-Zugriff erforderlich');
 
+    const { memberId } = await params;
     const body = await req.json();
     const parsed = PatchSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Ungültige Eingabe' }, { status: 400 });
@@ -41,7 +45,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { memberId: 
     const { data: mem, error: fetchErr } = await sb
       .from('user_club_memberships')
       .select('id, office_flags')
-      .eq('user_id', params.memberId)
+      .eq('user_id', memberId)
       .eq('club_id', auth.clubId)
       .eq('is_active', true)
       .maybeSingle();
@@ -67,15 +71,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { memberId: 
   });
 }
 
-export async function GET(req: NextRequest, { params }: { params: { memberId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ memberId: string }> }) {
   return withApiAuth(req, async (auth) => {
     if (!(await verifyRole(auth, 'admin'))) return forbiddenResponse('Admin-Zugriff erforderlich');
 
+    const { memberId } = await params;
     const sb = createServiceClient();
     const { data, error } = await sb
       .from('user_club_memberships')
       .select('office_flags')
-      .eq('user_id', params.memberId)
+      .eq('user_id', memberId)
       .eq('club_id', auth.clubId)
       .eq('is_active', true)
       .maybeSingle();

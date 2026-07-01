@@ -49,7 +49,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { stripe } from '@/lib/stripe/stripe-client';
-import { withApiAuth, forbiddenResponse, unauthorizedResponse } from '@/lib/api-auth';
+import { withApiAuth, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import {
   syncSubscriptionItemQuantity,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
       return forbiddenResponse('Nur Admins können die Stripe-Subscription synchronisieren.');
     }
 
-    const rateLimitResponse = await checkRateLimitOrFail(request, 'clubs-stripe-sync', auth);
+    const rateLimitResponse = await checkRateLimitOrFail(request, 'strict');
     if (rateLimitResponse) return rateLimitResponse;
 
     const { id: clubId } = await context.params;
@@ -111,10 +111,7 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
       return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
     }
     if (!adminMemberships || adminMemberships.length === 0) {
-      return NextResponse.json(
-        { error: 'Kein Admin für diesen Verein gefunden' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Kein Admin für diesen Verein gefunden' }, { status: 404 });
     }
 
     const adminUserIds = adminMemberships.map((m) => m.user_id as string);
@@ -136,12 +133,13 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
       );
     }
 
-    // Count active members (memberships.is_active=true).
+    // Count active members — role='member' only; trainers/admins must not inflate the Stripe quantity.
     const { count: activeMemberCount, error: countErr } = await supabase
       .from('user_club_memberships')
       .select('id', { count: 'exact', head: true })
       .eq('club_id', clubId)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('role', 'member');
 
     if (countErr) {
       log.error('Active member count failed', countErr);
@@ -151,7 +149,7 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
     const targetQuantity = activeMemberCount ?? 0;
 
     const syncResult: SyncQuantityResult = await syncSubscriptionItemQuantity({
-      stripe,
+      stripe: stripe(),
       subscriptionId: ownerUser.stripe_subscription_id,
       currentSyncedQuantity: ownerUser.stripe_subscription_quantity_synced ?? null,
       targetQuantity,
@@ -199,7 +197,7 @@ export async function POST(request: NextRequest, context: RouteContext): Promise
     });
   }).catch((err) => {
     if (err instanceof NextResponse) return err;
-    log.error('Unerwarteter Fehler', err instanceof Error ? err : undefined);
-    return unauthorizedResponse(err instanceof Error ? err.message : 'Authentifizierung fehlgeschlagen');
+    log.error('Unerwarteter Fehler in stripe-sync', err instanceof Error ? err : undefined);
+    return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
   });
 }

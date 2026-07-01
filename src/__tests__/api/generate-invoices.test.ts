@@ -18,7 +18,7 @@ const USER_ID = 'user-admin-001';
 // MOCK STATE
 // ════════════════════════════════════════════════════════════
 
-let mockVerifyRole: ReturnType<typeof vi.fn>;
+let mockVerifyRole: any;
 
 const mockAuthCtx = {
   user: { id: USER_ID, email: 'admin@test.com' },
@@ -218,7 +218,7 @@ describe('POST /api/billing/generate-invoices', () => {
   });
 
   it('returns 400 when no club context is available', async () => {
-    mockAuthCtx.clubId = null;
+    (mockAuthCtx as any).clubId = null;
     mockAuthCtx.role = 'admin';
 
     const req = new NextRequest('http://localhost/api/billing/generate-invoices', {
@@ -335,7 +335,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
     setupGenerateMocks({
       memberships,
-      feeConfig: null,
+      feeConfig: null as unknown as string,
       existingInvoices: [],
       invoiceCount: 5,
     });
@@ -562,7 +562,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
     setupGenerateMocks({
       memberships,
-      feeConfig: null,
+      feeConfig: null as unknown as string,
       existingInvoices: [],
       invoiceCount: 5,
     });
@@ -675,7 +675,7 @@ describe('POST /api/billing/generate-invoices', () => {
 
   it('superadmin without clubId cookie returns 400', async () => {
     mockAuthCtx.role = 'superadmin';
-    mockAuthCtx.clubId = null;
+    (mockAuthCtx as any).clubId = null;
 
     const req = new NextRequest('http://localhost/api/billing/generate-invoices', {
       method: 'POST',

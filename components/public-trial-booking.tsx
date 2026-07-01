@@ -138,7 +138,7 @@ export default function PublicTrialBooking({
 
   if (success) {
     return (
-      <Card className="border-2 border-green-200 bg-green-50/50 dark:bg-green-900/10 max-w-2xl mx-auto">
+      <Card className="border-2 border-success-200 bg-success-50/50 dark:bg-success-900/10 max-w-2xl mx-auto">
         <CardContent className="p-8 text-center space-y-4">
           {clubLogo && (
             <div className="flex justify-center">
@@ -147,21 +147,21 @@ export default function PublicTrialBooking({
                 alt={clubName || 'Club'}
                 width={64}
                 height={64}
-                className="rounded-full object-cover border-2 border-green-300"
+                className="rounded-full object-cover border-2 border-success-300"
               />
             </div>
           )}
           <div className="flex items-center justify-center">
-            <CheckCircle className="h-16 w-16 text-green-500" />
+            <CheckCircle className="h-16 w-16 text-success-500" />
           </div>
-          <h2 className="text-xl font-bold text-green-800 dark:text-green-300">
+          <h2 className="text-xl font-bold text-success-800 dark:text-success-300">
             Probetraining angefragt!
           </h2>
-          <p className="text-green-700 dark:text-green-400 max-w-md mx-auto">
+          <p className="text-success-700 dark:text-success-400 max-w-md mx-auto">
             Vielen Dank für deine Anfrage{clubName ? ` bei ${clubName}` : ''}! Wir prüfen deinen
             Wunschtermin und melden uns in Kürze per E-Mail mit einer Bestätigung.
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-500">
+          <div className="flex items-center justify-center gap-2 text-sm text-success-600 dark:text-success-500">
             <Mail className="h-4 w-4" />
             <span>Bestätigung an: {form.email}</span>
           </div>
@@ -204,9 +204,9 @@ export default function PublicTrialBooking({
       </CardHeader>
       <CardContent>
         {/* Info Banner */}
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-900/10 dark:border-blue-800 mb-6">
-          <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-          <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-info-50 border border-info-200 dark:bg-info-900/10 dark:border-info-800 mb-6">
+          <Info className="h-5 w-5 text-info-600 mt-0.5 shrink-0" />
+          <div className="text-sm text-info-800 dark:text-info-300 space-y-1">
             <p className="font-medium">So funktioniert&apos;s:</p>
             <ol className="list-decimal list-inside space-y-0.5">
               <li>Formular ausfüllen und Wunschtermin angeben</li>
@@ -217,7 +217,7 @@ export default function PublicTrialBooking({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-6">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm mb-6">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
@@ -238,10 +238,10 @@ export default function PublicTrialBooking({
                   value={form.firstName}
                   onChange={(e) => updateField('firstName', e.target.value)}
                   placeholder="Max"
-                  className={fieldErrors.firstName ? 'border-red-300' : ''}
+                  className={fieldErrors.firstName ? 'border-error-300' : ''}
                 />
                 {fieldErrors.firstName && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.firstName}</p>
+                  <p className="text-xs text-error-500 mt-1">{fieldErrors.firstName}</p>
                 )}
               </div>
               <div>
@@ -251,10 +251,10 @@ export default function PublicTrialBooking({
                   value={form.lastName}
                   onChange={(e) => updateField('lastName', e.target.value)}
                   placeholder="Mustermann"
-                  className={fieldErrors.lastName ? 'border-red-300' : ''}
+                  className={fieldErrors.lastName ? 'border-error-300' : ''}
                 />
                 {fieldErrors.lastName && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.lastName}</p>
+                  <p className="text-xs text-error-500 mt-1">{fieldErrors.lastName}</p>
                 )}
               </div>
             </div>
@@ -270,10 +270,10 @@ export default function PublicTrialBooking({
                   value={form.email}
                   onChange={(e) => updateField('email', e.target.value)}
                   placeholder="max@example.com"
-                  className={fieldErrors.email ? 'border-red-300' : ''}
+                  className={fieldErrors.email ? 'border-error-300' : ''}
                 />
                 {fieldErrors.email && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.email}</p>
+                  <p className="text-xs text-error-500 mt-1">{fieldErrors.email}</p>
                 )}
               </div>
               <div>
@@ -286,10 +286,10 @@ export default function PublicTrialBooking({
                   value={form.phone}
                   onChange={(e) => updateField('phone', e.target.value)}
                   placeholder="+49 123 456789"
-                  className={fieldErrors.phone ? 'border-red-300' : ''}
+                  className={fieldErrors.phone ? 'border-error-300' : ''}
                 />
                 {fieldErrors.phone && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>
+                  <p className="text-xs text-error-500 mt-1">{fieldErrors.phone}</p>
                 )}
               </div>
             </div>
@@ -301,10 +301,10 @@ export default function PublicTrialBooking({
                 type="date"
                 value={form.dateOfBirth}
                 onChange={(e) => updateField('dateOfBirth', e.target.value)}
-                className={fieldErrors.dateOfBirth ? 'border-red-300' : ''}
+                className={fieldErrors.dateOfBirth ? 'border-error-300' : ''}
               />
               {fieldErrors.dateOfBirth && (
-                <p className="text-xs text-red-500 mt-1">{fieldErrors.dateOfBirth}</p>
+                <p className="text-xs text-error-500 mt-1">{fieldErrors.dateOfBirth}</p>
               )}
             </div>
           </div>
@@ -324,10 +324,10 @@ export default function PublicTrialBooking({
                   value={form.preferredDate}
                   onChange={(e) => updateField('preferredDate', e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className={fieldErrors.preferredDate ? 'border-red-300' : ''}
+                  className={fieldErrors.preferredDate ? 'border-error-300' : ''}
                 />
                 {fieldErrors.preferredDate && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.preferredDate}</p>
+                  <p className="text-xs text-error-500 mt-1">{fieldErrors.preferredDate}</p>
                 )}
               </div>
               <div>
@@ -339,10 +339,10 @@ export default function PublicTrialBooking({
                   type="time"
                   value={form.preferredTime}
                   onChange={(e) => updateField('preferredTime', e.target.value)}
-                  className={fieldErrors.preferredTime ? 'border-red-300' : ''}
+                  className={fieldErrors.preferredTime ? 'border-error-300' : ''}
                 />
                 {fieldErrors.preferredTime && (
-                  <p className="text-xs text-red-500 mt-1">{fieldErrors.preferredTime}</p>
+                  <p className="text-xs text-error-500 mt-1">{fieldErrors.preferredTime}</p>
                 )}
               </div>
             </div>

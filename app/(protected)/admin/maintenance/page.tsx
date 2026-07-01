@@ -120,8 +120,8 @@ export default function MaintenancePage() {
         {items.map((item) => (
           <Card key={item.id}>
             <CardContent className="p-4 flex items-start gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20 shrink-0 mt-0.5">
-                <Wrench className="h-4 w-4 text-amber-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-warning-50 dark:bg-warning-900/20 shrink-0 mt-0.5">
+                <Wrench className="h-4 w-4 text-warning-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

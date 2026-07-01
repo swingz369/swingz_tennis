@@ -48,7 +48,7 @@ export default function SessionWaitlistButton({
   if (waitlistEntry) {
     return (
       <div className="mt-0.5 space-y-0.5">
-        <span className="inline-block text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded-full leading-tight">
+        <span className="inline-block text-2xs font-medium bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-400 px-1.5 py-0.5 rounded-full leading-tight">
           Warteliste #{waitlistEntry.position}
         </span>
         <button
@@ -57,7 +57,7 @@ export default function SessionWaitlistButton({
             leaveWaitlist.mutate({ sessionId });
           }}
           disabled={leaveWaitlist.isPending}
-          className="block w-full text-[10px] text-left text-red-500 hover:underline leading-tight disabled:opacity-50"
+          className="block w-full text-2xs text-left text-error-500 hover:underline leading-tight disabled:opacity-50"
         >
           {leaveWaitlist.isPending ? 'Wird entfernt…' : 'Entfernen'}
         </button>
@@ -72,7 +72,7 @@ export default function SessionWaitlistButton({
         joinWaitlist.mutate({ sessionId, clubId });
       }}
       disabled={joinWaitlist.isPending}
-      className="mt-0.5 w-full text-left text-[10px] font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 px-1.5 py-0.5 rounded transition-colors disabled:opacity-50 leading-tight"
+      className="mt-0.5 w-full text-left text-2xs font-medium bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-400 hover:bg-warning-100 dark:hover:bg-warning-900/30 px-1.5 py-0.5 rounded transition-colors disabled:opacity-50 leading-tight"
     >
       {joinWaitlist.isPending ? (
         <span className="flex items-center gap-1">

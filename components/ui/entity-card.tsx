@@ -50,8 +50,8 @@ interface EntityCardProps {
 }
 
 const ROLE_BADGE_CLASS: Record<string, string> = {
-  admin: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  trainer: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  admin: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400',
+  trainer: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
   superadmin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   member: 'bg-muted text-foreground dark:bg-muted dark:text-foreground',
 };
@@ -138,7 +138,7 @@ export function EntityCard({
               const cls = cn(
                 'h-8 w-8 p-0',
                 action.variant === 'destructive' &&
-                  'text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  'text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20'
               );
 
               if (action.href) {

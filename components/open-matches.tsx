@@ -85,11 +85,11 @@ function getSkillBadge(level: string) {
   const map: Record<string, { label: string; className: string }> = {
     beginner: {
       label: 'Anfänger',
-      className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+      className: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
     },
     intermediate: {
       label: 'Mittel',
-      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
     },
     advanced: {
       label: 'Fortg.',
@@ -97,7 +97,7 @@ function getSkillBadge(level: string) {
     },
     tournament: {
       label: 'Turnier',
-      className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+      className: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
     },
     all: { label: 'Alle', className: 'bg-muted text-muted-foreground' },
   };
@@ -515,14 +515,14 @@ export default function OpenMatches({ clubId, userId }: Props) {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Spieler</span>
-                      <span className={`font-medium ${isFull ? 'text-green-600' : ''}`}>
+                      <span className={`font-medium ${isFull ? 'text-success-600' : ''}`}>
                         {match.current_players}/{match.max_players}
                       </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${
-                          isFull ? 'bg-green-500' : 'bg-brand-primary'
+                          isFull ? 'bg-success-500' : 'bg-brand-primary'
                         }`}
                         style={{ width: `${(match.current_players / match.max_players) * 100}%` }}
                       />
@@ -550,7 +550,7 @@ export default function OpenMatches({ clubId, userId }: Props) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="flex-1 gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="flex-1 gap-1.5 text-error-600 hover:text-error-700 hover:bg-error-50"
                             onClick={() => handleCancel(match.id)}
                             disabled={cancellingId === match.id}
                           >

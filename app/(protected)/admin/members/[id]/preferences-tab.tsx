@@ -220,7 +220,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Target className="h-4 w-4 text-brandPrimary" />
+            <Target className="h-4 w-4 text-brand-primary" />
             Trainingslevel & Altersgruppe
           </CardTitle>
         </CardHeader>
@@ -267,7 +267,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Clock className="h-4 w-4 text-brandAccent" />
+                <Clock className="h-4 w-4 text-brand-accent" />
                 Wöchentliche Verfügbarkeit
               </CardTitle>
               <CardDescription>
@@ -357,7 +357,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-red-400 hover:text-red-600"
+                        className="h-8 w-8 text-error-400 hover:text-error-600"
                         onClick={() => removeSlot(key, slot.start, slot.end)}
                       >
                         ×
@@ -419,7 +419,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="h-4 w-4 text-brandPrimary" />
+            <Users className="h-4 w-4 text-brand-primary" />
             Trainingspensum
           </CardTitle>
         </CardHeader>
@@ -454,7 +454,7 @@ export function PreferencesTab({ userId, clubId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <CheckCircle2 className="h-4 w-4 text-brandAccent" />
+            <CheckCircle2 className="h-4 w-4 text-brand-accent" />
             Anmerkungen & Wünsche
           </CardTitle>
         </CardHeader>

@@ -136,7 +136,7 @@ export function MobileBottomNav({
               </div>
               <span
                 className={cn(
-                  'text-[10px] font-medium leading-tight transition-all duration-300',
+                  'text-2xs font-medium leading-tight transition-all duration-300',
                   isActive ? 'opacity-100 translate-y-0' : 'opacity-80'
                 )}
               >
@@ -156,7 +156,7 @@ export function MobileBottomNav({
               className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
               aria-hidden="true"
             />
-            <span className="text-[10px] font-medium leading-tight">Menü</span>
+            <span className="text-2xs font-medium leading-tight">Menü</span>
           </button>
         )}
       </div>

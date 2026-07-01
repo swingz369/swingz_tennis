@@ -224,7 +224,7 @@ export function CommandPalette() {
                       <span className="text-xs text-muted-foreground ml-2">{result.subtitle}</span>
                     )}
                   </div>
-                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                  <span className="text-2xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                     {result.type === 'member'
                       ? 'Mitglied'
                       : result.type === 'booking'

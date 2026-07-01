@@ -158,7 +158,7 @@ export default function OwnerClubsPage() {
                     <Button
                       size="sm"
                       variant="default"
-                      className="gap-1 text-xs h-7 bg-amber-500 hover:bg-amber-600"
+                      className="gap-1 text-xs h-7 bg-warning-500 hover:bg-warning-600"
                       disabled={activating === club.id}
                       onClick={() => handleActivateClub(club.id)}
                     >

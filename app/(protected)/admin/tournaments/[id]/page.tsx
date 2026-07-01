@@ -310,8 +310,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-100 shrink-0">
-              <CheckCircle className="h-5 w-5 text-green-700" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-success-100 shrink-0">
+              <CheckCircle className="h-5 w-5 text-success-700" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Bestätigt</p>
@@ -322,8 +322,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-amber-100 shrink-0">
-              <Calendar className="h-5 w-5 text-amber-700" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-warning-100 shrink-0">
+              <Calendar className="h-5 w-5 text-warning-700" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Start</p>
@@ -334,8 +334,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-100 shrink-0">
-              <Clock className="h-5 w-5 text-blue-700" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-info-100 shrink-0">
+              <Clock className="h-5 w-5 text-info-700" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Auslastung</p>
@@ -354,7 +354,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           <Card>
             <CardHeader className="px-5 pt-5 pb-3">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-amber-500" />
+                <Trophy className="h-4 w-4 text-warning-500" />
                 Turnier-Details
               </CardTitle>
             </CardHeader>
@@ -429,7 +429,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 <>
                   <hr className="border-border dark:border-white/10" />
                   <div className="flex items-start gap-2">
-                    <Trophy className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <Trophy className="h-4 w-4 text-warning-500 shrink-0 mt-0.5" />
                     <p className="text-sm">{tournament.prize_info}</p>
                   </div>
                 </>
@@ -448,10 +448,10 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
                           capacityPercent >= 90
-                            ? 'bg-red-500'
+                            ? 'bg-error-500'
                             : capacityPercent >= 60
-                              ? 'bg-amber-500'
-                              : 'bg-green-500'
+                              ? 'bg-warning-500'
+                              : 'bg-success-500'
                         }`}
                         style={{ width: `${capacityPercent}%` }}
                       />

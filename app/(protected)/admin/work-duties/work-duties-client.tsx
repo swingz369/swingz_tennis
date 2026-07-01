@@ -55,7 +55,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   court_maintenance: {
     label: 'Platzpflege',
     icon: Wrench,
-    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
   },
   event_support: {
     label: 'Veranstaltung',
@@ -65,7 +65,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   bar_duty: {
     label: 'Schankdienst',
     icon: GlassWater,
-    color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
   },
   cleaning: {
     label: 'Reinigung',
@@ -75,7 +75,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   coaching_assist: {
     label: 'Trainerhilfe',
     icon: Users,
-    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
   },
   other: {
     label: 'Sonstiges',
@@ -88,17 +88,17 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; c
   open: {
     label: 'Offen',
     icon: AlertCircle,
-    color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    color: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
   },
   assigned: {
     label: 'Zugewiesen',
     icon: Users,
-    color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
   },
   completed: {
     label: 'Erledigt',
     icon: CheckCircle2,
-    color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    color: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
   },
   cancelled: {
     label: 'Storniert',
@@ -109,8 +109,8 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; c
 
 const priorityColors: Record<string, string> = {
   low: 'bg-gray-100 text-gray-600',
-  medium: 'bg-blue-100 text-blue-700',
-  high: 'bg-red-100 text-red-700',
+  medium: 'bg-info-100 text-info-700',
+  high: 'bg-error-100 text-error-700',
 };
 
 export default function WorkDutiesClient({
@@ -426,17 +426,17 @@ export default function WorkDutiesClient({
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Offen', value: stats.open, color: 'text-amber-600', status: 'open' },
+          { label: 'Offen', value: stats.open, color: 'text-warning-600', status: 'open' },
           {
             label: 'Zugewiesen',
             value: stats.assigned,
-            color: 'text-blue-600',
+            color: 'text-info-600',
             status: 'assigned',
           },
           {
             label: 'Erledigt',
             value: stats.completed,
-            color: 'text-green-600',
+            color: 'text-success-600',
             status: 'completed',
           },
         ].map((s) => (
@@ -601,7 +601,7 @@ export default function WorkDutiesClient({
                               >
                                 <span className="font-medium">{a.name ?? a.member_id}</span>
                                 {a.status === 'completed' && (
-                                  <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                  <CheckCircle2 className="h-3 w-3 text-success-600" />
                                 )}
                                 {duty.status !== 'completed' && (
                                   <button
@@ -609,7 +609,7 @@ export default function WorkDutiesClient({
                                       e.stopPropagation();
                                       handleRemoveAssignment(duty.id, a.id);
                                     }}
-                                    className="text-muted-foreground hover:text-red-500 transition-colors"
+                                    className="text-muted-foreground hover:text-error-500 transition-colors"
                                   >
                                     <X className="h-3 w-3" />
                                   </button>
@@ -667,7 +667,7 @@ export default function WorkDutiesClient({
                                           <span className="text-muted-foreground">({m.email})</span>
                                         </span>
                                         {alreadyAssigned && (
-                                          <Badge variant="secondary" className="text-[10px]">
+                                          <Badge variant="secondary" className="text-2xs">
                                             Bereits zugewiesen
                                           </Badge>
                                         )}
@@ -705,7 +705,7 @@ export default function WorkDutiesClient({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1.5"
+                          className="text-error-600 hover:text-error-700 hover:bg-error-50 gap-1.5"
                           onClick={() => handleDeleteDuty(duty.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Löschen

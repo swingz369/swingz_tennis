@@ -143,6 +143,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           }
           updateData.day_of_week = body.day_of_week;
         }
+        // Vereinsrealität: regulärer Trainingsbetrieb findet nicht sonntags statt.
+        const finalEntryType = body.entry_type ?? existingEntry.entry_type;
+        const finalDayForTypeCheck = updateData.day_of_week ?? existingEntry.day_of_week;
+        if (finalDayForTypeCheck === 6 && finalEntryType === 'training') {
+          return NextResponse.json(
+            { error: 'Trainingsstunden können nicht auf einen Sonntag gelegt werden (nur Mo-Sa).' },
+            { status: 400 }
+          );
+        }
         if (body.start_time !== undefined) updateData.start_time = body.start_time;
         if (body.end_time !== undefined) updateData.end_time = body.end_time;
         if (body.duration_minutes !== undefined)

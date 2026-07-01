@@ -453,7 +453,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                             }
                           >
                             {member.include_in_planning !== false ? (
-                              <CheckSquare className="h-4 w-4 text-green-600" />
+                              <CheckSquare className="h-4 w-4 text-success-600" />
                             ) : (
                               <Square className="h-4 w-4 text-muted-foreground" />
                             )}
@@ -467,7 +467,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           {member.full_name}
                         </span>
                         {member.is_honorary && (
-                          <span className="ml-1.5 inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                          <span className="ml-1.5 inline-flex items-center rounded-full bg-warning-100 dark:bg-warning-900/30 px-1.5 py-0.5 text-2xs font-medium text-warning-700 dark:text-warning-400">
                             Ehren
                           </span>
                         )}
@@ -483,7 +483,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           onClick={() => handleToggleActive(member.id, member.is_active)}
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
                             member.is_active
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400'
                               : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
                           }`}
                         >
@@ -509,7 +509,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                             {member.is_active ? (
                               <UserX className="h-4 w-4 text-orange-600" />
                             ) : (
-                              <UserCheck className="h-4 w-4 text-green-600" />
+                              <UserCheck className="h-4 w-4 text-success-600" />
                             )}
                           </Button>
                         </div>
@@ -569,7 +569,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                             }
                           >
                             {member.include_in_planning !== false ? (
-                              <CheckSquare className="h-4 w-4 text-green-600" />
+                              <CheckSquare className="h-4 w-4 text-success-600" />
                             ) : (
                               <Square className="h-4 w-4 text-muted-foreground" />
                             )}
@@ -584,7 +584,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         onClick={() => handleToggleActive(member.id, member.is_active)}
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
                           member.is_active
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400'
                             : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
                         }`}
                       >
@@ -621,7 +621,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         {member.is_active ? (
                           <UserX className="h-4 w-4 text-orange-600" />
                         ) : (
-                          <UserCheck className="h-4 w-4 text-green-600" />
+                          <UserCheck className="h-4 w-4 text-success-600" />
                         )}
                       </Button>
                     </div>
@@ -676,7 +676,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
-              <CardTitle className="text-red-600">
+              <CardTitle className="text-error-600">
                 {selectedIds.size} Mitglied{selectedIds.size !== 1 ? 'er' : ''} deaktivieren?
               </CardTitle>
             </CardHeader>

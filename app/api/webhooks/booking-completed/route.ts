@@ -62,7 +62,11 @@ import { z } from 'zod';
 
 import { createLogger } from '@/lib/logger';
 import { createServiceClient } from '@/lib/supabase/service';
-import { getHardwareAdapter, type HardwareResult, type HardwareVendor } from '@/lib/hardware/adapter';
+import {
+  getHardwareAdapter,
+  type HardwareResult,
+  type HardwareVendor,
+} from '@/lib/hardware/adapter';
 
 // ─── Module-Logger (per ADR-002 forensic-trail) ──────────────────────────────
 const log = createLogger('webhook:booking-completed');
@@ -89,7 +93,9 @@ type ActionMap = {
   unlock?: (courtId: string) => Promise<HardwareResult>;
 };
 
-function buildActionsForVendor(vendor: HardwareVendor): Record<WebhookPayload['event_type'], ActionMap> {
+function buildActionsForVendor(
+  vendor: HardwareVendor
+): Record<WebhookPayload['event_type'], ActionMap> {
   const adapter = getHardwareAdapter(vendor);
   return {
     booking_started: {
@@ -124,7 +130,9 @@ function verifyHmacSignature(rawBody: string, signatureHeader: string | null): b
   }
   const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   // Receivers may prefix with `sha256=` (Stripe-style); strip if present
-  const received = signatureHeader.startsWith('sha256=') ? signatureHeader.slice(7) : signatureHeader;
+  const received = signatureHeader.startsWith('sha256=')
+    ? signatureHeader.slice(7)
+    : signatureHeader;
   // Hex-decode of received-throw synchronously on malformed input (TypeError:
   // Invalid hex string). Wrap the conversion too — outer try/catch only
   // catches what timingSafeEqual throws otherwise.
@@ -205,7 +213,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const signature = req.headers.get('x-swingz-signature');
   if (!verifyHmacSignature(rawBody, signature)) {
     log.warn('Booking-completed webhook signature invalid', { has_signature: !!signature });
-    return NextResponse.json({ error: 'Unauthorized: invalid or missing signature' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Unauthorized: invalid or missing signature' },
+      { status: 401 }
+    );
   }
 
   // 3. JSON-Parse + Zod-Validation (Q5 + Q8)
@@ -229,13 +240,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     idempotency_key: payload.idempotency_key,
   });
 
-  // 4. Idempotency-Check (Q3: audit_logs.resource_id = idempotency_key)
+  // 4. Idempotency-Check (dedup by booking_id + event_type — both are stable UUIDs/enums)
   const supabase = createServiceClient();
   const { data: existing, error: dedupQueryError } = await supabase
     .from('audit_logs')
     .select('id')
-    .eq('action', 'hardware_webhook_trigger')
-    .eq('resource_id', payload.idempotency_key)
+    .eq('action', `hardware_webhook_${payload.event_type}`)
+    .eq('resource_id', payload.booking_id)
     .maybeSingle();
 
   if (dedupQueryError) {
@@ -313,16 +324,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 7. Audit-Trail-Save (Q9: idempotency-Key-IDs the audit-log entry)
-  //    Note: We save the audit-log AFTER hardware-dispatch so that dedup on
-  //    next replay correctly detects "already completed" vs "in-flight".
-  //    If the insert itself fails, log + return 502 to surface the failure.
+  // 7. Audit-Trail-Save — fetch booking owner for actor_id (required NOT NULL)
+  const { data: bookingRow } = await supabase
+    .from('bookings')
+    .select('user_id')
+    .eq('id', payload.booking_id)
+    .maybeSingle();
+
   const auditPayload = {
-    action: 'hardware_webhook_trigger' as const,
+    actor_id: bookingRow?.user_id as string,
+    action: `hardware_webhook_${payload.event_type}`,
     resource_type: 'booking' as const,
-    resource_id: payload.idempotency_key,
+    resource_id: payload.booking_id,
     details: {
-      booking_id: payload.booking_id,
+      idempotency_key: payload.idempotency_key,
       court_id: payload.court_id,
       club_id: payload.club_id,
       event_type: payload.event_type,
@@ -346,7 +361,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 8. ADR-002 Status-Surface (Q7: explicit error outcomes per HardwareResult)
   const lightErrored = lightResult.error !== null;
-  const lockErrored = lockResult?.error !== null;
+  const lockErrored = lockResult !== null && lockResult.error !== null;
 
   if (lightErrored || lockErrored) {
     log.warn('Hardware-Webhook partial/full failure (ADR-002 explicit)', {

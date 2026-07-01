@@ -33,6 +33,7 @@ export type NewSeasonPlanningConfig = typeof seasonPlanningConfigs.$inferInsert;
 export const WizardStep = {
   CONFIGURE: 1,
   PLAN_EDIT: 2,
+  FINALIZE: 3,
 } as const;
 export type WizardStep = (typeof WizardStep)[keyof typeof WizardStep];
 
@@ -44,6 +45,7 @@ export interface WizardState {
   isReady: boolean;
   isProcessing: boolean;
   error: string | null;
+  adminNotes: string;
 
   // Schritt 1: Konfigurieren
   selectedMemberIds: string[];

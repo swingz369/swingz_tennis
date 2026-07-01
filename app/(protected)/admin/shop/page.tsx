@@ -93,13 +93,13 @@ const STATUS_ICONS: Record<string, React.ComponentType<{ className?: string | un
 
 const STATUS_COLORS: Record<string, string> = {
   pending:
-    'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/30',
+    'text-warning-600 dark:text-warning-400 bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-800/30',
   confirmed:
-    'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30',
+    'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800/30',
   shipped:
     'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/30',
   cancelled:
-    'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/30',
+    'text-error-600 dark:text-error-400 bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800/30',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -428,8 +428,8 @@ export default function AdminShopPage() {
             label: 'Produkte',
             value: productsPagination?.totalCount ?? products.length,
             icon: Package,
-            color: 'text-blue-600 dark:text-blue-400',
-            bg: 'bg-blue-50 dark:bg-blue-900/30',
+            color: 'text-info-600 dark:text-info-400',
+            bg: 'bg-info-50 dark:bg-info-900/30',
           },
           {
             label: 'Aktive',
@@ -779,7 +779,7 @@ export default function AdminShopPage() {
                   <CardHeader className="px-5 pt-5 pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
                       <IconBox icon={Eye} size="xs" variant="light" /> Aktive Produkte
-                      <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
+                      <Badge className="text-2xs px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
                         {activeProducts.length}
                         {productsPagination && productsPagination.totalPages > 1
                           ? ` (Seite ${productsPagination.page})`
@@ -854,7 +854,7 @@ export default function AdminShopPage() {
                                 <span
                                   className={
                                     product.stock <= 0
-                                      ? 'text-red-500 font-medium'
+                                      ? 'text-error-500 font-medium'
                                       : product.stock < 5
                                         ? 'text-orange-500 font-medium'
                                         : 'text-muted-foreground dark:text-muted-foreground'
@@ -878,7 +878,7 @@ export default function AdminShopPage() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setDeleteId(product.id)}
-                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    className="h-8 w-8 p-0 text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20"
                                     aria-label={`${product.name} löschen`}
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -899,7 +899,7 @@ export default function AdminShopPage() {
                   <CardHeader className="px-5 pt-5 pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
                       <IconBox icon={EyeOff} size="xs" variant="gray" /> Ausgeblendete Produkte
-                      <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
+                      <Badge variant="secondary" className="text-2xs px-1.5 py-0">
                         {inactiveProducts.length}
                       </Badge>
                     </CardTitle>
@@ -950,9 +950,9 @@ export default function AdminShopPage() {
           {/* Delete confirmation */}
           {deleteId && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <Card className="max-w-md w-full mx-4 shadow-xl border-red-200 dark:border-red-800/50">
+              <Card className="max-w-md w-full mx-4 shadow-xl border-error-200 dark:border-error-800/50">
                 <CardHeader>
-                  <CardTitle className="text-base font-semibold flex items-center gap-2 text-red-700 dark:text-red-400">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2 text-error-700 dark:text-error-400">
                     <Trash2 className="h-5 w-5" /> Produkt löschen
                   </CardTitle>
                 </CardHeader>
@@ -1040,7 +1040,7 @@ export default function AdminShopPage() {
                 <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
                   <IconBox icon={ClipboardList} size="xs" variant="light" />
                   {orderStatusFilter ? STATUS_LABELS[orderStatusFilter] : 'Alle'} Bestellungen
-                  <Badge className="text-[11px] px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
+                  <Badge className="text-2xs px-1.5 py-0 bg-brand-light/10 text-brand-light border-brand-light/20 ml-1">
                     {ordersPagination?.totalCount ?? orders.length}
                   </Badge>
                 </CardTitle>
@@ -1084,7 +1084,7 @@ export default function AdminShopPage() {
                                 <p className="font-medium text-foreground dark:text-white text-xs font-mono truncate max-w-[100px]">
                                   {order.id.slice(0, 8)}…
                                 </p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                <p className="text-2xs text-muted-foreground mt-0.5">
                                   {order.created_at ? formatDate(order.created_at) : '—'}
                                 </p>
                               </div>
@@ -1100,7 +1100,7 @@ export default function AdminShopPage() {
                                   </div>
                                 ))}
                                 {(order.items ?? []).length > 2 && (
-                                  <p className="text-[11px] text-muted-foreground">
+                                  <p className="text-2xs text-muted-foreground">
                                     +{(order.items ?? []).length - 2} weitere
                                   </p>
                                 )}
@@ -1112,7 +1112,7 @@ export default function AdminShopPage() {
                             <td className="py-3 px-2 text-center hidden sm:table-cell">
                               <Badge
                                 variant={order.payment_status === 'paid' ? 'default' : 'secondary'}
-                                className={`text-[11px] px-1.5 py-0 ${
+                                className={`text-2xs px-1.5 py-0 ${
                                   order.payment_status === 'paid'
                                     ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30'
                                     : ''
@@ -1123,7 +1123,7 @@ export default function AdminShopPage() {
                             </td>
                             <td className="py-3 px-2 text-center">
                               <Badge
-                                className={`text-[11px] px-2 py-0.5 border ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}
+                                className={`text-2xs px-2 py-0.5 border ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}
                               >
                                 <StatusIcon className="h-3 w-3 mr-1 inline" />
                                 {STATUS_LABELS[order.status] || order.status}
@@ -1150,7 +1150,7 @@ export default function AdminShopPage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                      className="h-7 w-7 p-0 text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20"
                                       disabled={updatingOrderId === order.id}
                                       onClick={() => handleCancelOrder(order.id)}
                                       title="Stornieren"
@@ -1160,20 +1160,20 @@ export default function AdminShopPage() {
                                   )}
                                 </div>
                               ) : order.status === 'shipped' ? (
-                                <span className="text-[11px] text-muted-foreground italic">
+                                <span className="text-2xs text-muted-foreground italic">
                                   Erledigt
                                 </span>
                               ) : order.status === 'cancelled' ? (
-                                <span className="text-[11px] text-red-400 italic">Storniert</span>
+                                <span className="text-2xs text-error-400 italic">Storniert</span>
                               ) : order.payment_status !== 'paid' ? (
                                 <div className="flex items-center justify-end gap-1">
-                                  <span className="text-[11px] text-muted-foreground italic">
+                                  <span className="text-2xs text-muted-foreground italic">
                                     Warte auf Zahlung
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    className="h-7 w-7 p-0 text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20"
                                     disabled={updatingOrderId === order.id}
                                     onClick={() => handleCancelOrder(order.id)}
                                     title="Stornieren"

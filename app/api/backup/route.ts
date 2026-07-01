@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { createLogger } from '@/lib/logger';
 import { withCSRFProtection } from '@/lib/csrf';
@@ -13,90 +13,54 @@ const STORAGE_BUCKET = 'swingz-files';
 const BACKUP_PREFIX = 'backups';
 
 /**
- * Verify the user is an admin or superadmin.
- * Returns the authenticated user or sends a 401/403 response.
- */
-async function requireAdmin(): Promise<
-  { authorized: true; userId: string } | { authorized: false; response: NextResponse }
-> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return {
-      authorized: false,
-      response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    };
-  }
-
-  // Check user role in user_club_memberships
-  const { data: memberships, error: roleError } = await supabase
-    .from('user_club_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .in('role', ['admin', 'superadmin']);
-
-  if (roleError || !memberships || memberships.length === 0) {
-    return {
-      authorized: false,
-      response: NextResponse.json({ error: 'Forbidden: admin role required' }, { status: 403 }),
-    };
-  }
-
-  return { authorized: true, userId: user.id };
-}
-
-/**
  * GET /api/backup
  *
  * List available backups from Supabase Storage.
  * Admin-only: requires admin or superadmin role.
  */
 export async function GET(_request: NextRequest) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
+  return withApiAuth(_request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) return forbiddenResponse('Admin access required');
 
-  try {
-    const serviceClient = createServiceClient();
+    try {
+      const serviceClient = createServiceClient();
 
-    const { data, error } = await serviceClient.storage.from(STORAGE_BUCKET).list(BACKUP_PREFIX, {
-      limit: 200,
-      sortBy: { column: 'created_at', order: 'desc' },
-    });
+      const { data, error } = await serviceClient.storage.from(STORAGE_BUCKET).list(BACKUP_PREFIX, {
+        limit: 200,
+        sortBy: { column: 'created_at', order: 'desc' },
+      });
 
-    if (error) {
-      log.error('Failed to list backups', { error });
-      return NextResponse.json({ error: 'Failed to list backups' }, { status: 500 });
+      if (error) {
+        log.error('Failed to list backups', { error });
+        return NextResponse.json({ error: 'Failed to list backups' }, { status: 500 });
+      }
+
+      const backups = (data ?? [])
+        .filter((f) => f.name.endsWith('.json'))
+        .map((f) => ({
+          filename: f.name,
+          path: `${BACKUP_PREFIX}/${f.name}`,
+          size_bytes: f.metadata?.size ?? 0,
+          size_formatted: formatFileSize(f.metadata?.size ?? 0),
+          created_at: f.created_at,
+        }))
+        .sort(
+          (a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
+        );
+
+      return NextResponse.json({
+        backups,
+        total: backups.length,
+        storage_bucket: STORAGE_BUCKET,
+        storage_prefix: BACKUP_PREFIX,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.error('Error listing backups', { error: message });
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
-
-    const backups = (data ?? [])
-      .filter((f) => f.name.endsWith('.json'))
-      .map((f) => ({
-        filename: f.name,
-        path: `${BACKUP_PREFIX}/${f.name}`,
-        size_bytes: f.metadata?.size ?? 0,
-        size_formatted: formatFileSize(f.metadata?.size ?? 0),
-        created_at: f.created_at,
-      }))
-      .sort(
-        (a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime()
-      );
-
-    return NextResponse.json({
-      backups,
-      total: backups.length,
-      storage_bucket: STORAGE_BUCKET,
-      storage_prefix: BACKUP_PREFIX,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    log.error('Error listing backups', { error: message });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+  });
 }
 
 /**
@@ -108,55 +72,58 @@ export async function GET(_request: NextRequest) {
  * Protected by CSRF + admin auth check.
  */
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) return forbiddenResponse('Admin access required');
 
-  return withCSRFProtection(request, async () => {
-    const startedAt = Date.now();
-    log.info('Manual backup triggered by admin');
+    const response = await withCSRFProtection(request, async () => {
+      const startedAt = Date.now();
+      log.info('Manual backup triggered by admin', { userId: auth.user.id });
 
-    try {
-      const cronSecret = process.env.CRON_SECRET;
-      if (!cronSecret) {
-        log.error('CRON_SECRET not configured - manual backup unavailable');
-        return NextResponse.json(
-          { error: 'Backup system not fully configured: CRON_SECRET is missing' },
-          { status: 500 }
-        );
+      try {
+        const cronSecret = process.env.CRON_SECRET;
+        if (!cronSecret) {
+          log.error('CRON_SECRET not configured - manual backup unavailable');
+          return NextResponse.json(
+            { error: 'Backup system not fully configured: CRON_SECRET is missing' },
+            { status: 500 }
+          );
+        }
+
+        // Call the cron backup logic (reuse the same function)
+        const backupUrl = new URL('/api/cron/backup', request.url);
+
+        const response = await fetch(backupUrl.toString(), {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${cronSecret}`,
+          },
+        });
+
+        const result = await response.json();
+        const duration = ((Date.now() - startedAt) / 1000).toFixed(1);
+
+        if (!response.ok) {
+          log.error('Manual backup failed', { status: response.status, result });
+          return NextResponse.json(
+            { error: 'Backup failed', details: result },
+            { status: response.status }
+          );
+        }
+
+        log.info(`Manual backup completed in ${duration}s`, { userId: auth.user.id });
+        return NextResponse.json({
+          ...result,
+          duration_seconds: parseFloat(duration),
+          triggered_by: 'manual',
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        log.error('Manual backup error', { error: message });
+        return NextResponse.json({ error: 'Backup failed', details: message }, { status: 500 });
       }
-
-      // Call the cron backup logic (reuse the same function)
-      const backupUrl = new URL('/api/cron/backup', request.url);
-
-      const response = await fetch(backupUrl.toString(), {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${cronSecret}`,
-        },
-      });
-
-      const result = await response.json();
-      const duration = ((Date.now() - startedAt) / 1000).toFixed(1);
-
-      if (!response.ok) {
-        log.error('Manual backup failed', { status: response.status, result });
-        return NextResponse.json(
-          { error: 'Backup failed', details: result },
-          { status: response.status }
-        );
-      }
-
-      log.info(`Manual backup completed in ${duration}s`);
-      return NextResponse.json({
-        ...result,
-        duration_seconds: parseFloat(duration),
-        triggered_by: 'manual',
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error('Manual backup error', { error: message });
-      return NextResponse.json({ error: 'Backup failed', details: message }, { status: 500 });
-    }
+    });
+    return response as NextResponse;
   });
 }
 
@@ -167,39 +134,42 @@ export async function POST(request: NextRequest) {
  * Protected by CSRF + admin auth check.
  */
 export async function DELETE(request: NextRequest) {
-  const auth = await requireAdmin();
-  if (!auth.authorized) return auth.response;
+  return withApiAuth(request, async (auth) => {
+    const hasPermission = await verifyRole(auth, 'admin');
+    if (!hasPermission) return forbiddenResponse('Admin access required');
 
-  return withCSRFProtection(request, async () => {
-    const { searchParams } = new URL(request.url);
-    const filePath = searchParams.get('file');
+    const response = await withCSRFProtection(request, async () => {
+      const { searchParams } = new URL(request.url);
+      const filePath = searchParams.get('file');
 
-    if (!filePath) {
-      return NextResponse.json({ error: 'Missing ?file= parameter' }, { status: 400 });
-    }
-
-    // Prevent path traversal
-    if (!filePath.startsWith(BACKUP_PREFIX) || filePath.includes('..')) {
-      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
-    }
-
-    try {
-      const serviceClient = createServiceClient();
-
-      const { error } = await serviceClient.storage.from(STORAGE_BUCKET).remove([filePath]);
-
-      if (error) {
-        log.error('Failed to delete backup', { error, path: filePath });
-        return NextResponse.json({ error: 'Failed to delete backup' }, { status: 500 });
+      if (!filePath) {
+        return NextResponse.json({ error: 'Missing ?file= parameter' }, { status: 400 });
       }
 
-      log.info(`Backup deleted: ${filePath}`);
-      return NextResponse.json({ success: true, deleted: filePath });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error('Error deleting backup', { error: message });
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
+      // Prevent path traversal
+      if (!filePath.startsWith(BACKUP_PREFIX) || filePath.includes('..')) {
+        return NextResponse.json({ error: 'Invalid file path' }, { status: 400 });
+      }
+
+      try {
+        const serviceClient = createServiceClient();
+
+        const { error } = await serviceClient.storage.from(STORAGE_BUCKET).remove([filePath]);
+
+        if (error) {
+          log.error('Failed to delete backup', { error, path: filePath, userId: auth.user.id });
+          return NextResponse.json({ error: 'Failed to delete backup' }, { status: 500 });
+        }
+
+        log.info(`Backup deleted: ${filePath}`, { userId: auth.user.id });
+        return NextResponse.json({ success: true, deleted: filePath });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        log.error('Error deleting backup', { error: message });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      }
+    });
+    return response as NextResponse;
   });
 }
 

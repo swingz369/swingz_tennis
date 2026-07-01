@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { NoTrainersBrandedEmptyState } from '@/components/ui/empty-state';
 import {
   Table,
   TableBody,
@@ -368,7 +369,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         </div>
         <div className="flex items-center gap-3">
           <TrainerImportDialog onImportComplete={loadTrainers} />
-          <Button size="md" variant="gradient" onClick={() => setShowInviteForm(true)}>
+          <Button size="md" variant="primary" onClick={() => setShowInviteForm(true)}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline ml-2">Neuer Trainer</span>
           </Button>
@@ -403,30 +404,19 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
 
       {/* ── Empty State ────────────────────────────────────────────────────── */}
       {filteredTrainers.length === 0 ? (
-        <Card variant="flat" className="p-12 gradient-border glass text-center">
-          <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-2xl bg-brandPrimary/10 mb-6 shadow-glow-primary">
-            <GraduationCap className="h-10 w-10 text-brandPrimary" />
-          </div>
-          <h3 className="text-2xl font-bold text-brand-primary">
-            {searchQuery || statusFilter !== 'all' ? 'Keine Treffer' : 'Noch keine Trainer'}
-          </h3>
-          <p className="text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto">
-            {searchQuery || statusFilter !== 'all'
-              ? 'Passe deine Filterkriterien an, um Ergebnisse zu sehen.'
-              : 'Füge deinen ersten Trainer hinzu, um loszulegen.'}
-          </p>
-          {!searchQuery && statusFilter === 'all' && (
-            <Button
-              size="lg"
-              variant="gradient"
-              onClick={() => setShowInviteForm(true)}
-              className="mt-8"
-              leftIcon={<Plus className="h-5 w-5" />}
-            >
-              Trainer hinzufügen
-            </Button>
-          )}
-        </Card>
+        searchQuery || statusFilter !== 'all' ? (
+          <Card variant="flat" className="p-12 text-center">
+            <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-2xl bg-brand-primary/10 mb-6">
+              <GraduationCap className="h-10 w-10 text-brand-primary" />
+            </div>
+            <h3 className="text-2xl font-bold text-brand-primary">Keine Treffer</h3>
+            <p className="text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto">
+              Passe deine Filterkriterien an, um Ergebnisse zu sehen.
+            </p>
+          </Card>
+        ) : (
+          <NoTrainersBrandedEmptyState onInvite={() => setShowInviteForm(true)} />
+        )
       ) : (
         /* ── Full-Width Trainer Table ─────────────────────────────────── */
         <div className="rounded-lg border border-border/60 dark:border-white/10 overflow-x-auto">
@@ -477,8 +467,8 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 shrink-0">
-                          <User className="h-4 w-4 text-brandPrimary" />
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 shrink-0">
+                          <User className="h-4 w-4 text-brand-primary" />
                         </div>
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">
@@ -531,7 +521,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                         // the full form, so this list view stays terse.
                         <div className="inline-flex items-center justify-end gap-1.5">
                           <span
-                            className="inline-flex items-center gap-1 font-medium text-brandPrimary"
+                            className="inline-flex items-center gap-1 font-medium text-brand-primary"
                             title={`Vertragssatz (Admin-only) · ${trainer.contractedHourlyRate.toFixed(2)} €/h`}
                           >
                             <Euro className="h-3.5 w-3.5" />
@@ -540,7 +530,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                           {trainer.extraHoursRate != null && (
                             <Badge
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0"
+                              className="text-2xs px-1.5 py-0"
                               title={`Zusatzstunden-Satz · ${trainer.extraHoursRate.toFixed(2)} €/h`}
                             >
                               +Z
@@ -574,7 +564,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                           {trainer.status === 'active' ? (
                             <UserX className="h-4 w-4 text-orange-600" />
                           ) : (
-                            <UserCheck className="h-4 w-4 text-green-600" />
+                            <UserCheck className="h-4 w-4 text-success-600" />
                           )}
                         </Button>
                       </div>
@@ -737,7 +727,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               onChange={(e) => setInviteName(e.target.value)}
             />
           </div>
-          <div className="bg-brandPrimary/5 border border-brandPrimary/10 p-3 rounded-lg text-sm text-muted-foreground dark:text-muted-foreground">
+          <div className="bg-brand-primary/5 border border-brand-primary/10 p-3 rounded-lg text-sm text-muted-foreground dark:text-muted-foreground">
             Der Trainer erhält eine Einladungs-E-Mail und wird dem Verein mit der Rolle
             &quot;Trainer&quot; hinzugefügt.
           </div>
@@ -758,7 +748,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           <Button
             onClick={handleInviteTrainer}
             disabled={inviteLoading || !inviteEmail}
-            variant="gradient"
+            variant="primary"
             className="flex-1"
           >
             {inviteLoading ? 'Wird gesendet...' : 'Einladung senden'}

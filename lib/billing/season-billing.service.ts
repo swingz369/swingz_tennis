@@ -520,6 +520,12 @@ export class SeasonBillingService {
    * totals (should be < 1 cent if no member sits in multiple groups).
    */
   async generateInvoices(seasonId: string): Promise<GenerateInvoicesResult> {
+    // membership_included → Training im Jahresbeitrag abgedeckt, keine Einzelrechnungen
+    const billingConfig = await this.getConfig(seasonId);
+    if ((billingConfig as any)?.billing_model === 'membership_included') {
+      return { created: [], skipped: [], failed: [], roundingDrift: 0, previewGrandTotal: 0 };
+    }
+
     const preview = await this.calculatePreview(seasonId);
     if (preview.memberPreviews.length === 0) {
       return {

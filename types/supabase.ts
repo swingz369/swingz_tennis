@@ -1011,6 +1011,7 @@ export type Database = {
           status: string | null;
           surface: string;
           updated_at: string | null;
+          usable_for_training: boolean;
         };
         Insert: {
           club_id: string;
@@ -1027,6 +1028,7 @@ export type Database = {
           status?: string | null;
           surface?: string;
           updated_at?: string | null;
+          usable_for_training?: boolean;
         };
         Update: {
           club_id?: string;
@@ -1043,6 +1045,7 @@ export type Database = {
           status?: string | null;
           surface?: string;
           updated_at?: string | null;
+          usable_for_training?: boolean;
         };
         Relationships: [
           {

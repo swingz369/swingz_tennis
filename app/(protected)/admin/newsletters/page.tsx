@@ -196,7 +196,7 @@ export default function NewsletterPage() {
       {step === 3 && result && (
         <Card>
           <CardContent className="pt-6 space-y-4 text-center">
-            <Send className="h-10 w-10 mx-auto text-green-600" />
+            <Send className="h-10 w-10 mx-auto text-success-600" />
             <div>
               <p className="text-lg font-semibold">Newsletter versendet</p>
               <p className="text-sm text-muted-foreground mt-1">

@@ -347,7 +347,11 @@ export class MemberService {
    * "active" because their subscription is still being billed.
    */
   static async getActiveMemberCount(clubId?: string): Promise<number> {
-    let q = db.from('user_club_memberships').select('id', { count: 'exact', head: true }).eq('is_active', true);
+    let q = db
+      .from('user_club_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .eq('role', 'member');
     if (clubId) {
       q = q.eq('club_id', clubId);
     }

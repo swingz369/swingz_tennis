@@ -9,6 +9,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Search, User, Calendar, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api-fetch';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('page:search');
 
 interface SearchResult {
   id: string;
@@ -45,7 +48,7 @@ export default function SearchPage() {
       const data: SearchResult[] = await response.json();
       setResults(data);
     } catch (error) {
-      console.error('Search error:', error);
+      log.error('Search error', error);
       setResults([]);
     } finally {
       setLoading(false);

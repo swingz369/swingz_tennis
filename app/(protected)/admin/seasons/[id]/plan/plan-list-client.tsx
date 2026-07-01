@@ -46,10 +46,10 @@ interface Props {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  planned: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  planned: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
   confirmed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   cancelled: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
-  draft: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  draft: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300',
 };
 
 export function PlanListClient({ seasonId, seasonName, planningStatus }: Props) {
@@ -236,7 +236,7 @@ export function PlanListClient({ seasonId, seasonName, planningStatus }: Props) 
                             <td className="py-2 pr-3 text-muted-foreground">{e.entry_type}</td>
                             <td className="py-2 pr-3">
                               <span
-                                className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                                className={`inline-block px-2 py-0.5 rounded-full text-2xs font-medium ${
                                   STATUS_COLORS[e.status] ?? STATUS_COLORS.planned
                                 }`}
                               >
@@ -261,7 +261,7 @@ export function PlanListClient({ seasonId, seasonName, planningStatus }: Props) 
                             {e.start_time.slice(0, 5)}–{e.end_time.slice(0, 5)}
                           </span>
                           <span
-                            className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                            className={`inline-block px-2 py-0.5 rounded-full text-2xs font-medium ${
                               STATUS_COLORS[e.status] ?? STATUS_COLORS.planned
                             }`}
                           >

@@ -241,9 +241,9 @@ export default function HoursLogsClient() {
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Ausstehend
                 </p>
-                <p className="text-xl font-bold mt-0.5 text-amber-600">{stats.pending}</p>
+                <p className="text-xl font-bold mt-0.5 text-warning-600">{stats.pending}</p>
               </div>
-              <Hourglass className="h-5 w-5 text-amber-300" />
+              <Hourglass className="h-5 w-5 text-warning-300" />
             </div>
           </CardContent>
         </Card>
@@ -254,9 +254,9 @@ export default function HoursLogsClient() {
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">
                   Genehmigt
                 </p>
-                <p className="text-xl font-bold mt-0.5 text-green-600">{stats.approved}</p>
+                <p className="text-xl font-bold mt-0.5 text-success-600">{stats.approved}</p>
               </div>
-              <CheckCircle className="h-5 w-5 text-green-300" />
+              <CheckCircle className="h-5 w-5 text-success-300" />
             </div>
           </CardContent>
         </Card>
@@ -279,14 +279,14 @@ export default function HoursLogsClient() {
 
       {/* Pending Alert */}
       {stats.pending > 0 && (
-        <div className="rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/20 p-4 flex items-center justify-between">
+        <div className="rounded-xl bg-warning-50 dark:bg-warning-900/10 border border-warning-200 dark:border-warning-900/20 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <AlertTriangle className="h-5 w-5 text-warning-600" />
             <div>
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              <p className="text-sm font-medium text-warning-800 dark:text-warning-200">
                 {stats.pending} ausstehende Stundennachweise
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400">
+              <p className="text-xs text-warning-600 dark:text-warning-400">
                 {stats.pendingHours.toFixed(1)}h warten auf Genehmigung
               </p>
             </div>
@@ -419,7 +419,7 @@ export default function HoursLogsClient() {
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brandPrimary/10 text-brand-primary text-xs font-semibold shrink-0">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brand-primary/10 text-brand-primary text-xs font-semibold shrink-0">
                               {log.trainer_name.charAt(0).toUpperCase()}
                             </div>
                             <span className="font-medium text-sm text-foreground dark:text-white truncate max-w-[150px]">
@@ -449,7 +449,7 @@ export default function HoursLogsClient() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  className="h-8 w-8 text-success-600 hover:text-success-700 hover:bg-success-50"
                                   title="Genehmigen"
                                   disabled={actionLoading === log.id}
                                   onClick={() => handleApprove(log.id)}
@@ -459,7 +459,7 @@ export default function HoursLogsClient() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                  className="h-8 w-8 text-warning-600 hover:text-warning-700 hover:bg-warning-50"
                                   title="Ablehnen"
                                   disabled={actionLoading === log.id}
                                   onClick={() => setRejectId(log.id)}
@@ -471,7 +471,7 @@ export default function HoursLogsClient() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                              className="h-8 w-8 text-error-400 hover:text-error-600 hover:bg-error-50"
                               title="Löschen"
                               disabled={actionLoading === log.id}
                               onClick={() => setDeleteId(log.id)}
@@ -482,10 +482,10 @@ export default function HoursLogsClient() {
                         </td>
                       </tr>
                       {log.status === 'rejected' && log.rejection_reason && (
-                        <tr className="bg-red-50/50 dark:bg-red-900/5">
+                        <tr className="bg-error-50/50 dark:bg-error-900/5">
                           <td
                             colSpan={7}
-                            className="px-4 py-2 text-xs text-red-600 dark:text-red-400"
+                            className="px-4 py-2 text-xs text-error-600 dark:text-error-400"
                           >
                             <span className="font-medium">Ablehnungsgrund:</span>{' '}
                             {log.rejection_reason}
@@ -511,11 +511,11 @@ export default function HoursLogsClient() {
           <span>·</span>
           <span>{stats.totalHours.toFixed(1)}h gesamt</span>
           <span>·</span>
-          <span className="text-green-600">{stats.approvedHours.toFixed(1)}h genehmigt</span>
+          <span className="text-success-600">{stats.approvedHours.toFixed(1)}h genehmigt</span>
           {stats.pendingHours > 0 && (
             <>
               <span>·</span>
-              <span className="text-amber-600">{stats.pendingHours.toFixed(1)}h ausstehend</span>
+              <span className="text-warning-600">{stats.pendingHours.toFixed(1)}h ausstehend</span>
             </>
           )}
         </div>

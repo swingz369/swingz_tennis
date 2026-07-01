@@ -14,10 +14,93 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { execSync } from 'child_process';
+import { Client } from 'pg';
 
 // Load environment files (vitest auto-loads .env, we add .env.local and .env.test)
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env.test'), override: true });
+
+/**
+ * Apply targeted DDL for tests that need columns/tables NOT in the Drizzle
+ * schema. The Drizzle push covers ~38 of ~105 tables — the rest live only in
+ * supabase/migrations/*.sql and need to be applied separately.
+ *
+ * Why not just run the full supabase/migrations/*.sql suite?
+ *   - Many migrations use `BEGIN;...COMMIT;` blocks. When a statement inside
+ *     fails (e.g. CREATE POLICY on a re-run, or a constraint on a column
+ *     that already exists), PostgreSQL leaves the connection in an "aborted
+ *     transaction" state. Subsequent migrations then ALL fail with
+ *     "current transaction is aborted, commands ignored until end of
+ *     transaction block" — and `NOTIFY pgrst` silently fails too.
+ *   - Re-running a full migration suite is also slow (50+ files × RTT).
+ *
+ * Instead, we apply the specific additive DDL needed by the billing-engine
+ * test (and any other tests that hit the dunning / Verzugszins code path).
+ * All statements are idempotent (ADD COLUMN IF NOT EXISTS, CREATE TABLE IF
+ * NOT EXISTS, INSERT ... ON CONFLICT DO NOTHING).
+ *
+ * If more additive schema is needed by other tests in the future, add the
+ * DDL here — don't try to re-enable the full migration runner.
+ */
+async function applyTargetedTestDdl(dbUrl: string): Promise<void> {
+  const ddl = `
+    -- 20260624_mahnwesen_verzugszins_decisions.sql (additive columns)
+    ALTER TABLE public.dunning_records
+      ADD COLUMN IF NOT EXISTS interest_amount     NUMERIC(10, 2) NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS interest_days       INTEGER        NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS is_b2b              BOOLEAN        NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS base_rate_applied   NUMERIC(5, 4)  NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS total_due           NUMERIC(10, 2) NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS legal_basis         VARCHAR(255);
+
+    -- 20260624_mahnwesen_verzugszins_decisions.sql (base_interest_rates table + seed)
+    CREATE TABLE IF NOT EXISTS public.base_interest_rates (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      valid_from  DATE NOT NULL UNIQUE,
+      rate        NUMERIC(5, 4) NOT NULL,
+      source      VARCHAR(255),
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS base_interest_rates_valid_from_idx
+      ON public.base_interest_rates (valid_from DESC);
+
+    INSERT INTO public.base_interest_rates (valid_from, rate, source) VALUES
+      ('2024-07-01', 0.0337, 'Bundesbank H2/2024'),
+      ('2025-01-01', 0.0238, 'Bundesbank H1/2025'),
+      ('2025-07-01', 0.0153, 'Bundesbank H2/2025'),
+      ('2026-01-01', 0.0119, 'Bundesbank H1/2026')
+    ON CONFLICT (valid_from) DO NOTHING;
+  `;
+
+  const client = new Client({ connectionString: dbUrl });
+  await client.connect();
+  try {
+    await client.query(ddl);
+    console.log('   ✓ targeted DDL applied (dunning_records + base_interest_rates)');
+
+    // PostgREST (the Supabase REST API used by the test client) caches the
+    // schema at startup. After ALTER TABLE ADD COLUMN, the cache does NOT
+    // auto-refresh — queries like `.from('dunning_records').insert({...base_rate_applied})`
+    // fail with "Could not find column in schema cache". NOTIFY triggers an
+    // async reload. We then sleep briefly to give PostgREST time to actually
+    // finish reloading before the first test query.
+    try {
+      await client.query("NOTIFY pgrst, 'reload schema'");
+      console.log('   ✓ PostgREST NOTIFY sent');
+      // PostgREST reload is async; in CI on shared Supabase the worst case is
+      // ~2-3s. 3s is a safe upper bound for the test environment.
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      console.log('   ✓ PostgREST reload wait complete');
+    } catch (err: unknown) {
+      // NOTIFY pgrst only works on Supabase — silent no-op on plain PG.
+      const message = err instanceof Error ? err.message : String(err);
+      console.log(`   (PostgREST NOTIFY skipped: ${message.split('\n')[0]})`);
+    }
+  } finally {
+    await client.end();
+  }
+}
 
 export async function setup(): Promise<void> {
   const dbUrl = process.env.DATABASE_URL;
@@ -36,11 +119,21 @@ export async function setup(): Promise<void> {
         env: { ...process.env },
         stdio: 'pipe',
       });
-      console.log('✅ Migrations applied successfully');
+      console.log('✅ Drizzle migrations applied');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.warn(`⚠️  Migration push failed (may be intentional): ${message}`);
-      console.warn('   Tests requiring fresh schema may fail.');
+      console.warn(`⚠️  Drizzle push failed (may be intentional): ${message}`);
+    }
+
+    // Apply targeted DDL for additive schema (dunning, Verzugszins) that
+    // Drizzle doesn't know about. See applyTargetedTestDdl() for rationale.
+    console.log('🔄 Applying targeted test DDL (dunning_records + base_interest_rates)...');
+    try {
+      await applyTargetedTestDdl(dbUrl);
+      console.log('✅ Targeted test DDL applied');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`⚠️  Targeted test DDL step failed: ${message}`);
     }
   } else {
     console.log('⚠️  DATABASE_URL: not set — Drizzle tests will use mock DB');

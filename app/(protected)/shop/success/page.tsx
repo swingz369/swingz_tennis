@@ -57,8 +57,8 @@ function SuccessContent() {
   if (!orderId) {
     return (
       <div className="max-w-md mx-auto py-16 text-center space-y-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 mx-auto">
-          <ShoppingBag className="h-8 w-8 text-amber-600" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-warning-100 mx-auto">
+          <ShoppingBag className="h-8 w-8 text-warning-600" />
         </div>
         <h1 className="text-2xl font-bold text-foreground">Keine Bestellung gefunden</h1>
         <p className="text-muted-foreground">
@@ -78,8 +78,8 @@ function SuccessContent() {
     <div className="max-w-lg mx-auto py-8 space-y-6">
       {/* Success header */}
       <div className="text-center space-y-3">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 mx-auto">
-          <CheckCircle2 className="h-8 w-8 text-green-600" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success-100 mx-auto">
+          <CheckCircle2 className="h-8 w-8 text-success-600" />
         </div>
         <h1 className="text-2xl font-bold text-foreground">Vielen Dank für deine Bestellung!</h1>
         <p className="text-sm text-muted-foreground">
@@ -98,7 +98,7 @@ function SuccessContent() {
               <Badge
                 className={
                   order.payment_status === 'paid'
-                    ? 'bg-green-100 text-green-700 border-green-200'
+                    ? 'bg-success-100 text-success-700 border-success-200'
                     : 'bg-yellow-100 text-yellow-700 border-yellow-200'
                 }
               >

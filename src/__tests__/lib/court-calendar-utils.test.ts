@@ -19,7 +19,7 @@ function makeSession(overrides: Partial<Session> = {}): Session {
     timeslotStart: '2026-06-08T09:00:00.000Z', // 11:00 Berlin
     timeslotEnd: '2026-06-08T10:00:00.000Z', // 12:00 Berlin
     ...overrides,
-  };
+  } as Session;
 }
 
 /* ── Tests ── */

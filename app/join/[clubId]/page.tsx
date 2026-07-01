@@ -68,8 +68,8 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="p-8 max-w-sm w-full text-center space-y-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20 mx-auto">
-            <Trophy className="h-6 w-6 text-green-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success-100 dark:bg-success-900/20 mx-auto">
+            <Trophy className="h-6 w-6 text-success-600" />
           </div>
           <p className="font-semibold">Registrierung eingegangen!</p>
           <p className="text-sm text-muted-foreground">{successMsg}</p>

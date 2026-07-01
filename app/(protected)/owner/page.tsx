@@ -60,7 +60,7 @@ export default async function OwnerPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Plattform-Übersicht</h1>
+          <h1 className="text-2xl font-bold font-display text-foreground">Plattform-Übersicht</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Hallo {firstName} — Swingz Plattform-Dashboard
           </p>
@@ -87,8 +87,8 @@ export default async function OwnerPage() {
             label: 'Nutzer gesamt',
             value: totalUsers ?? 0,
             icon: Users,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50 dark:bg-blue-900/20',
+            color: 'text-info-600',
+            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Superadmins',
@@ -101,8 +101,8 @@ export default async function OwnerPage() {
             label: 'Admins',
             value: adminCount ?? 0,
             icon: GraduationCap,
-            color: 'text-green-600',
-            bg: 'bg-green-50 dark:bg-green-900/20',
+            color: 'text-success-600',
+            bg: 'bg-success-50 dark:bg-success-900/20',
           },
         ].map((stat) => (
           <Card key={stat.label} className="border-0 shadow-sm">

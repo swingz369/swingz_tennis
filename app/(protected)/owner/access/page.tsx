@@ -94,7 +94,7 @@ export default async function OwnerAccessPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 gap-1 text-green-700 border-green-300 hover:bg-green-50"
+                            className="h-7 gap-1 text-success-700 border-success-300 hover:bg-success-50"
                           >
                             <CheckCircle className="h-3 w-3" />
                             Annehmen
@@ -104,7 +104,7 @@ export default async function OwnerAccessPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 gap-1 text-red-700 border-red-300 hover:bg-red-50"
+                            className="h-7 gap-1 text-error-700 border-error-300 hover:bg-error-50"
                           >
                             <XCircle className="h-3 w-3" />
                             Ablehnen

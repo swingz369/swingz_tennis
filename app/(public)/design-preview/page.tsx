@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { IconBox } from '@/components/ui/icon-box';
+import { Sparkles, Zap, Star, Heart, Shield, Trophy, Brain, Calendar } from 'lucide-react';
 
 // ── Token Data ──
 
@@ -48,7 +52,7 @@ const typographySizes = [
   { name: 'Caption', class: 'text-xs', text: 'Premium Tennis Club Management' },
   {
     name: 'Overline',
-    class: 'text-[10px] uppercase tracking-[0.15em]',
+    class: 'text-2xs uppercase tracking-[0.15em]',
     text: 'PREMIUM TENNIS CLUB',
   },
 ];
@@ -84,8 +88,58 @@ const animations = [
   { name: 'Fade In', class: 'animate-fade-in' },
   { name: 'Scale In', class: 'animate-scale-in' },
   { name: 'Slide In Right', class: 'animate-slide-in-right' },
+  { name: 'Slide In Left', class: 'animate-slide-in-left' },
+  { name: 'Slide Down', class: 'animate-slide-down' },
+  { name: 'Aurora', class: 'animate-aurora' },
   { name: 'Gradient Shift', class: 'animate-gradient' },
 ];
+
+const badgeVariants = [
+  { variant: 'default' as const, label: 'Default' },
+  { variant: 'secondary' as const, label: 'Secondary' },
+  { variant: 'accent' as const, label: 'Accent' },
+  { variant: 'success' as const, label: 'Success' },
+  { variant: 'warning' as const, label: 'Warning' },
+  { variant: 'error' as const, label: 'Error' },
+  { variant: 'info' as const, label: 'Info' },
+  { variant: 'outline' as const, label: 'Outline' },
+];
+
+const badgeSizes = ['sm', 'md', 'lg'] as const;
+
+const buttonVariantsList = [
+  { variant: 'default' as const, label: 'Default' },
+  { variant: 'primary' as const, label: 'Primary' },
+  { variant: 'secondary' as const, label: 'Secondary' },
+  { variant: 'outline' as const, label: 'Outline' },
+  { variant: 'ghost' as const, label: 'Ghost' },
+  { variant: 'destructive' as const, label: 'Destructive' },
+  { variant: 'accent' as const, label: 'Accent' },
+  { variant: 'link' as const, label: 'Link' },
+];
+
+const buttonSizes = ['sm', 'default', 'md', 'lg', 'xl', 'icon'] as const;
+
+const iconBoxVariants = [
+  { variant: 'primary' as const, label: 'Primary' },
+  { variant: 'light' as const, label: 'Light' },
+  { variant: 'blue' as const, label: 'Blue' },
+  { variant: 'green' as const, label: 'Green' },
+  { variant: 'amber' as const, label: 'Amber' },
+  { variant: 'purple' as const, label: 'Purple' },
+  { variant: 'red' as const, label: 'Red' },
+  { variant: 'orange' as const, label: 'Orange' },
+  { variant: 'teal' as const, label: 'Teal' },
+  { variant: 'rose' as const, label: 'Rose' },
+  { variant: 'indigo' as const, label: 'Indigo' },
+  { variant: 'gray' as const, label: 'Gray' },
+  { variant: 'gradient-primary' as const, label: 'Gradient Primary' },
+  { variant: 'gradient-accent' as const, label: 'Gradient Accent' },
+];
+
+const iconBoxSizes = ['xs', 'sm', 'md', 'lg'] as const;
+
+const iconBoxIcons = [Star, Heart, Shield, Zap, Brain, Trophy, Calendar, Sparkles];
 
 const spacingScale = [0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
 
@@ -149,6 +203,9 @@ export default function DesignPreviewPage() {
     { id: 'radius', label: 'Radius' },
     { id: 'animations', label: 'Animationen' },
     { id: 'spacing', label: 'Abstände' },
+    { id: 'badges', label: 'Badges' },
+    { id: 'buttons', label: 'Buttons' },
+    { id: 'iconbox', label: 'IconBox' },
     { id: 'interactive', label: 'Interaktion' },
   ];
 
@@ -189,7 +246,7 @@ export default function DesignPreviewPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />8 Shadow Layers
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />8 Animations
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />14 Animations
             </span>
           </div>
         </div>
@@ -209,7 +266,7 @@ export default function DesignPreviewPage() {
                 className={cn(
                   'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap',
                   activeTab === tab.id
-                    ? 'bg-brand-light/10 text-brand-light dark:text-green-300'
+                    ? 'bg-brand-light/10 text-brand-light dark:text-success-300'
                     : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted dark:hover:bg-background/[0.04]'
                 )}
               >
@@ -256,7 +313,7 @@ export default function DesignPreviewPage() {
                         cls
                       )}
                     />
-                    <p className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground truncate">
+                    <p className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground truncate">
                       {cls}
                     </p>
                   </div>
@@ -284,7 +341,7 @@ export default function DesignPreviewPage() {
                     className="flex items-center gap-3 p-3 rounded-lg bg-muted dark:bg-card/[0.03]"
                   >
                     <span className={cn('text-sm font-semibold', cls)}>SwingZ</span>
-                    <span className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground">
+                    <span className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
                       {cls}
                     </span>
                   </div>
@@ -463,7 +520,7 @@ export default function DesignPreviewPage() {
                     <p className="text-xs font-semibold text-foreground dark:text-foreground">
                       {r.name}
                     </p>
-                    <p className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground">
+                    <p className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
                       {r.size}
                     </p>
                   </div>
@@ -523,12 +580,12 @@ export default function DesignPreviewPage() {
                   <p className="text-sm font-semibold text-foreground dark:text-foreground">
                     {anim.name}
                   </p>
-                  <p className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground mt-1">
+                  <p className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground mt-1">
                     {anim.class}
                   </p>
                   <button
                     onClick={() => setAnimKey((k) => k + 1)}
-                    className="mt-3 text-[10px] text-brand-light hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="mt-3 text-2xs text-brand-light hover:underline opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     Neu abspielen
                   </button>
@@ -536,8 +593,8 @@ export default function DesignPreviewPage() {
               ))}
             </div>
 
-            <div className="mt-8 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-200/50 dark:border-amber-500/20">
-              <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+            <div className="mt-8 p-4 rounded-xl bg-warning-50 dark:bg-warning-900/10 border border-warning-200/50 dark:border-warning-500/20">
+              <p className="text-xs font-medium text-warning-700 dark:text-warning-300">
                 ℹ️ <code className="text-xs">@media (prefers-reduced-motion: reduce)</code>{' '}
                 deaktiviert alle Animationen für Barrierefreiheit.
               </p>
@@ -563,7 +620,7 @@ export default function DesignPreviewPage() {
                       style={{ width: `${unit * 4}px`, maxWidth: '100%' }}
                     />
                     {unit > 0 && (
-                      <span className="ml-2 text-[10px] text-muted-foreground dark:text-muted-foreground font-mono">
+                      <span className="ml-2 text-2xs text-muted-foreground dark:text-muted-foreground font-mono">
                         {unit * 4}px
                       </span>
                     )}
@@ -587,13 +644,92 @@ export default function DesignPreviewPage() {
                         />
                       ))}
                     </div>
-                    <span className="text-[10px] font-mono text-muted-foreground dark:text-muted-foreground">
+                    <span className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
                       gap-{g}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
+          </Section>
+        )}
+
+        {/* ── BADGES ── */}
+        {activeTab === 'badges' && (
+          <Section
+            title="Badges"
+            description={`${badgeVariants.length} Varianten × ${badgeSizes.length} Größen. Semantische Farbgebung (success, warning, error, info) + neutrale (default, secondary, outline, accent).`}
+          >
+            {badgeSizes.map((size) => (
+              <div key={size} className={cn(size !== 'sm' && 'mt-6')}>
+                <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-3">
+                  Size: {size}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {badgeVariants.map((b) => (
+                    <Badge key={b.variant} variant={b.variant} size={size}>
+                      {b.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </Section>
+        )}
+
+        {/* ── BUTTONS ── */}
+        {activeTab === 'buttons' && (
+          <Section
+            title="Buttons"
+            description={`${buttonVariantsList.length} Varianten × ${buttonSizes.length} Größen + fullWidth + loading-Zustände.`}
+          >
+            {buttonSizes.map((size) => (
+              <div key={size} className={cn(size !== 'sm' && 'mt-6')}>
+                <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-3">
+                  Size: {size}
+                </h3>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {buttonVariantsList.map((b) => (
+                    <Button key={b.variant} variant={b.variant} size={size === 'default' ? undefined : size === 'icon' ? 'icon' : (size as 'sm' | 'md' | 'lg' | 'xl')}>
+                      {size === 'icon' ? '✦' : b.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-3">
+                Loading State
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="primary" isLoading>Speichern</Button>
+                <Button variant="outline" isLoading>Laden</Button>
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {/* ── ICONBOX ── */}
+        {activeTab === 'iconbox' && (
+          <Section
+            title="IconBox"
+            description={`${iconBoxVariants.length} Farb-Varianten × ${iconBoxSizes.length} Größen. Vereinheitlichte Icon-Container für Feature-Cards, Dashboards und Landing-Page.`}
+          >
+            {iconBoxSizes.map((size) => (
+              <div key={size} className={cn(size !== 'xs' && 'mt-6')}>
+                <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-3">
+                  Size: {size}
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {iconBoxVariants.map((v) => (
+                    <div key={v.variant} className="flex flex-col items-center gap-1">
+                      <IconBox icon={iconBoxIcons[iconBoxVariants.indexOf(v) % iconBoxIcons.length]} size={size} variant={v.variant} />
+                      <span className="text-2xs text-muted-foreground dark:text-muted-foreground font-mono">{v.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </Section>
         )}
 

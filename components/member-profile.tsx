@@ -273,7 +273,6 @@ export default function MemberProfile() {
       {/* ── Hero Header ── */}
       <ScrollReveal>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute inset-0 bg-noise opacity-5" />
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
@@ -305,7 +304,7 @@ export default function MemberProfile() {
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <AvatarUpload
@@ -341,7 +340,7 @@ export default function MemberProfile() {
 
         {/* ── Editing Banner ──────────────────────────────────────────── */}
         {isEditing && (
-          <div className="flex items-center gap-2 px-5 py-2 bg-brandAccent/5 border-b border-brandAccent/20 text-sm text-brandAccent">
+          <div className="flex items-center gap-2 px-5 py-2 bg-brand-accent/5 border-b border-brand-accent/20 text-sm text-brand-accent">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>
               Bearbeitungsmodus aktiv — Änderungen werden erst nach Klick auf &quot;Speichern&quot;
@@ -364,19 +363,19 @@ export default function MemberProfile() {
             <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Profil
               </TabsTrigger>
               <TabsTrigger
                 value="billing"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Zahlungen
               </TabsTrigger>
               <TabsTrigger
                 value="security"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Sicherheit
               </TabsTrigger>
@@ -388,7 +387,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brandPrimary" />
+                    <User className="h-4 w-4 text-brand-primary" />
                     Persönliche Informationen
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -411,7 +410,7 @@ export default function MemberProfile() {
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         {formData.email}
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         E-Mail kann nicht geändert werden
                       </p>
                     </div>
@@ -513,7 +512,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <Shield className="h-4 w-4 text-brandAccent" />
+                    <Shield className="h-4 w-4 text-brand-accent" />
                     Notfallkontakt
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -552,7 +551,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brandPrimary" />
+                    <User className="h-4 w-4 text-brand-primary" />
                     Über mich
                   </h3>
                   {isEditing ? (
@@ -579,14 +578,14 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <CreditCard className="h-4 w-4 text-brandAccent" />
+                    <CreditCard className="h-4 w-4 text-brand-accent" />
                     SEPA-Lastschriftmandat
                   </h3>
                   {hasActiveMandate && mandateInfo ? (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                        <span className="text-sm font-medium text-green-700">Aktives Mandat</span>
+                        <div className="w-2 h-2 rounded-full bg-success-500" />
+                        <span className="text-sm font-medium text-success-700">Aktives Mandat</span>
                       </div>
                       {mandateInfo.mandateReference && (
                         <div className="grid grid-cols-[120px_1fr] gap-2 text-sm">
@@ -611,7 +610,7 @@ export default function MemberProfile() {
                     </div>
                   ) : (
                     <div className="flex items-start gap-3 text-sm text-muted-foreground">
-                      <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                      <AlertCircle className="h-5 w-5 text-warning-500 mt-0.5 shrink-0" />
                       <div>
                         <p className="font-medium text-foreground">Kein aktives SEPA-Mandat</p>
                         <p className="mt-1">
@@ -635,7 +634,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <Mail className="h-4 w-4 text-brandPrimary" />
+                    <Mail className="h-4 w-4 text-brand-primary" />
                     E-Mail-Adresse ändern
                   </h3>
                   <div className="space-y-3 max-w-md">
@@ -679,7 +678,7 @@ export default function MemberProfile() {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-2 flex items-center gap-2 text-base">
-                    <Shield className="h-4 w-4 text-brandPrimary" />
+                    <Shield className="h-4 w-4 text-brand-primary" />
                     Zwei-Faktor-Authentifizierung (2FA)
                   </h3>
                   <p className="text-xs text-muted-foreground mb-5">
@@ -688,7 +687,7 @@ export default function MemberProfile() {
 
                   {mfaEnrolled ? (
                     <div className="space-y-4 max-w-md">
-                      <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                      <div className="flex items-center gap-2 text-sm text-success-700 dark:text-success-400">
                         <CheckCircle className="h-4 w-4" />
                         2FA ist aktiv
                       </div>
@@ -696,7 +695,7 @@ export default function MemberProfile() {
                         onClick={unenrollMfa}
                         disabled={mfaLoading}
                         variant="outline"
-                        className="gap-2 text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950"
+                        className="gap-2 text-error-600 border-error-300 hover:bg-error-50 dark:hover:bg-error-950"
                       >
                         {mfaLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

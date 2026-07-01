@@ -171,23 +171,23 @@ function DraggableSessionCard({
     <div
       className={`px-2.5 py-2 rounded-lg text-xs transition-all duration-150 group ${
         isCancelled
-          ? 'bg-red-50 text-red-700 border-l-[3px] border-red-400 opacity-70'
+          ? 'bg-error-50 text-error-700 border-l-[3px] border-error-400 opacity-70'
           : isDragging
-            ? 'opacity-40 rotate-1 scale-105 shadow-xl bg-blue-100'
-            : 'bg-gradient-to-b from-blue-50 to-blue-100/80 text-blue-800 hover:shadow-md border-l-[3px] border-blue-500 cursor-grab active:cursor-grabbing'
+            ? 'opacity-40 rotate-1 scale-105 shadow-xl bg-info-100'
+            : 'bg-gradient-to-b from-info-50 to-info-100/80 text-info-800 hover:shadow-md border-l-[3px] border-info-500 cursor-grab active:cursor-grabbing'
       }`}
     >
       {isCancelled && (
-        <div className="text-[9px] font-semibold text-red-600 uppercase tracking-wide mb-0.5">
+        <div className="text-[9px] font-semibold text-error-600 uppercase tracking-wide mb-0.5">
           Abgesagt
         </div>
       )}
       <div className="flex items-center gap-1.5">
-        <GripVertical className="h-3 w-3 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-        <span className="font-bold truncate text-[11px]">{session.trainerName || 'Trainer'}</span>
+        <GripVertical className="h-3 w-3 text-info-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+        <span className="font-bold truncate text-2xs">{session.trainerName || 'Trainer'}</span>
         {session.bookedByUser && <div className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />}
       </div>
-      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-blue-600/80">
+      <div className="flex items-center gap-2 mt-0.5 text-2xs text-info-600/80">
         <span className="flex items-center gap-0.5">
           <Clock className="h-2.5 w-2.5" />
           {session.startTime}–{session.endTime}
@@ -205,7 +205,7 @@ function DraggableSessionCard({
             e.stopPropagation();
             onCancelSession(session);
           }}
-          className="mt-1 w-full text-[9px] text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:underline text-left"
+          className="mt-1 w-full text-[9px] text-error-500 opacity-0 group-hover:opacity-100 transition-opacity hover:underline text-left"
           title="Training absagen"
         >
           Training absagen
@@ -220,7 +220,7 @@ function DraggableSessionCard({
 function PlanEntryBadge({ entry }: { entry: PlanEntry }) {
   return (
     <div
-      className="px-2 py-1 rounded-lg text-white text-[10px] leading-tight shadow-sm border border-white/20"
+      className="px-2 py-1 rounded-lg text-white text-2xs leading-tight shadow-sm border border-white/20"
       style={{ backgroundColor: entry.group_color || '#7c3aed' }}
       title={`${entry.group_name} · ${entry.trainer_name || ''} · ${entry.start_time}–${entry.end_time}`}
     >
@@ -286,9 +286,9 @@ function PositionedSessionBlock({
         ? 'booked'
         : 'session';
   const rawStyle = DAILY_BLOCK_STYLES[statusKey];
-  const bgColor = isCancelledSession ? 'bg-red-50' : rawStyle.bg;
-  const accentColor = isCancelledSession ? 'border-red-400' : rawStyle.accent;
-  const textColor = isCancelledSession ? 'text-red-700' : rawStyle.text;
+  const bgColor = isCancelledSession ? 'bg-error-50' : rawStyle.bg;
+  const accentColor = isCancelledSession ? 'border-error-400' : rawStyle.accent;
+  const textColor = isCancelledSession ? 'text-error-700' : rawStyle.text;
 
   let label = session.trainerName || 'Offene Session';
   let icon = <User className="h-3.5 w-3.5" />;
@@ -309,8 +309,8 @@ function PositionedSessionBlock({
     label = `Belegt: ${bookerInfo}`;
     icon = (
       <div className="flex-shrink-0 relative">
-        <Lock className="h-3.5 w-3.5 text-amber-700" />
-        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+        <Lock className="h-3.5 w-3.5 text-warning-700" />
+        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-warning-500 animate-pulse" />
       </div>
     );
   }
@@ -349,7 +349,7 @@ function PositionedSessionBlock({
       }}
     >
       {isCancelledSession && (
-        <div className="text-[9px] font-semibold text-red-600 uppercase tracking-wide mb-0.5">
+        <div className="text-[9px] font-semibold text-error-600 uppercase tracking-wide mb-0.5">
           Abgesagt
         </div>
       )}
@@ -360,7 +360,7 @@ function PositionedSessionBlock({
           )}
           {icon}
           <span
-            className={`font-bold text-[11px] truncate${isCancelledSession ? ' line-through opacity-60' : ''}`}
+            className={`font-bold text-2xs truncate${isCancelledSession ? ' line-through opacity-60' : ''}`}
           >
             {label}
           </span>
@@ -389,7 +389,7 @@ function PositionedSessionBlock({
         )}
       </div>
       {heightPx >= 24 && (
-        <div className="flex items-center gap-2 mt-0.5 text-[10px] opacity-90">
+        <div className="flex items-center gap-2 mt-0.5 text-2xs opacity-90">
           <span className="flex items-center gap-0.5">
             <Clock className="h-2.5 w-2.5" />
             {session.startTime}–{session.endTime}
@@ -413,7 +413,7 @@ function PositionedSessionBlock({
       )}
       {/* Booking count badge */}
       {isBooked && session.currentBookings && session.currentBookings > 0 && (
-        <div className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-amber-600 text-white text-[9px] font-bold shadow-sm">
+        <div className="absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-warning-600 text-white text-[9px] font-bold shadow-sm">
           {session.currentBookings}
         </div>
       )}
@@ -424,7 +424,7 @@ function PositionedSessionBlock({
             e.stopPropagation();
             onCancelSession(session);
           }}
-          className="absolute bottom-1 right-1 text-[9px] text-red-500 opacity-0 group-hover/block:opacity-100 transition-opacity hover:underline"
+          className="absolute bottom-1 right-1 text-[9px] text-error-500 opacity-0 group-hover/block:opacity-100 transition-opacity hover:underline"
           title="Training absagen"
         >
           Absagen
@@ -453,9 +453,9 @@ function PositionedPlanBlock({
       }}
       title={`${entry.group_name} · ${entry.trainer_name || ''} · ${entry.start_time}–${entry.end_time}`}
     >
-      <div className="font-bold text-[11px] truncate">{entry.group_name}</div>
+      <div className="font-bold text-2xs truncate">{entry.group_name}</div>
       {heightPx >= 24 && (
-        <div className="flex items-center gap-2 mt-0.5 text-[10px] opacity-90">
+        <div className="flex items-center gap-2 mt-0.5 text-2xs opacity-90">
           <span className="flex items-center gap-0.5">
             <Clock className="h-2.5 w-2.5" />
             {entry.start_time}–{entry.end_time}
@@ -519,7 +519,7 @@ function DroppableHourZone({
     >
       {isOver && draggedSession && (
         <div className="absolute inset-x-1 inset-y-0.5 rounded-md border-2 border-dashed border-primary/40 bg-primary/[0.06] flex items-center justify-center">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-primary/70">
+          <div className="flex items-center gap-1.5 text-2xs font-semibold text-primary/70">
             <Clock className="h-3 w-3" />
             <span className="truncate">{draggedSession.trainerName || 'Session'}</span>
           </div>
@@ -1089,21 +1089,21 @@ export default function UnifiedCourtCalendar({
 
         {/* Warning when no future sessions exist */}
         {visibleSessions.length === 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-amber-800">
+                <p className="text-sm font-medium text-warning-800">
                   Keine zukünftigen Sessions gefunden
                 </p>
-                <p className="text-sm text-amber-700 mt-1">
+                <p className="text-sm text-warning-700 mt-1">
                   Es sind aktuell keine Trainings-Sessions für die Zukunft geplant.{' '}
                   {isAdmin && (
                     <>
                       Bitte den{' '}
                       <Link
                         href="/admin/seasons"
-                        className="font-semibold text-amber-800 underline hover:text-amber-900 transition-colors"
+                        className="font-semibold text-warning-800 underline hover:text-warning-900 transition-colors"
                       >
                         Saisonplan
                       </Link>{' '}
@@ -1149,16 +1149,16 @@ export default function UnifiedCourtCalendar({
 
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-[10px] font-semibold text-muted-foreground border border-border/50">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-2xs font-semibold text-muted-foreground border border-border/50">
                     {getSurfaceLabel(court.surface)}
                   </span>
                   {court.hasIndoor && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-[10px] font-semibold text-blue-600 border border-blue-100">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-info-50 text-2xs font-semibold text-info-600 border border-info-100">
                       Indoor
                     </span>
                   )}
                   {court.hasLighting && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-[10px] font-semibold text-amber-700 border border-amber-100">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-warning-50 text-2xs font-semibold text-warning-700 border border-warning-100">
                       Flutlicht
                     </span>
                   )}
@@ -1169,7 +1169,7 @@ export default function UnifiedCourtCalendar({
                   {totalToday > 0 ? (
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-2 h-2 rounded-full ${bookedCount === totalToday ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                        className={`w-2 h-2 rounded-full ${bookedCount === totalToday ? 'bg-warning-500' : 'bg-emerald-500'}`}
                       />
                       <span className="text-xs text-muted-foreground">
                         {totalToday - bookedCount} von {totalToday} Slots frei
@@ -1263,7 +1263,7 @@ export default function UnifiedCourtCalendar({
                     : 'bg-muted/50 text-muted-foreground hover:bg-muted'
               }`}
             >
-              <span className="text-[10px] uppercase tracking-wide opacity-80">
+              <span className="text-2xs uppercase tracking-wide opacity-80">
                 {format(day, 'EEE', { locale: de })}
               </span>
               <span className="text-base font-bold mt-0.5 tabular-nums">{format(day, 'd')}</span>
@@ -1327,7 +1327,7 @@ export default function UnifiedCourtCalendar({
                       return (
                         <DroppableSlot key={timeSlot} id={dropTargetId} isAdmin={isAdmin}>
                           <div
-                            className={`group min-h-[44px] rounded-lg text-[11px] flex items-center transition-all duration-150 ${
+                            className={`group min-h-[44px] rounded-lg text-2xs flex items-center transition-all duration-150 ${
                               status === 'blocked' && isAdmin
                                 ? SLOT_STATUS_STYLES_ADMIN_BLOCKED
                                 : SLOT_STATUS_STYLES[status]
@@ -1370,7 +1370,7 @@ export default function UnifiedCourtCalendar({
                                     ) : (
                                       <PartyPopper className="h-3 w-3 text-zinc-500" />
                                     )}
-                                    <span className="truncate text-[10px] font-semibold">
+                                    <span className="truncate text-2xs font-semibold">
                                       {session.notes?.substring(0, 12) ||
                                         (session.sessionType === 'maintenance'
                                           ? 'Wartung'
@@ -1382,7 +1382,7 @@ export default function UnifiedCourtCalendar({
                               ) : (
                                 <div className="flex items-center gap-1.5 px-2">
                                   <Lock className="h-3 w-3 text-zinc-400" />
-                                  <span className="text-[10px] font-semibold">Gesperrt</span>
+                                  <span className="text-2xs font-semibold">Gesperrt</span>
                                 </div>
                               )
                             ) : session ? (
@@ -1397,7 +1397,7 @@ export default function UnifiedCourtCalendar({
                                   <div className="flex items-center gap-1.5 min-w-0">
                                     <div className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
                                     <div className="min-w-0">
-                                      <span className="text-[10px] font-bold truncate text-rose-700 block">
+                                      <span className="text-2xs font-bold truncate text-rose-700 block">
                                         Deine Buchung
                                       </span>
                                       <span className="text-[9px] text-rose-500 font-medium">
@@ -1435,19 +1435,19 @@ export default function UnifiedCourtCalendar({
                                   <TooltipTrigger asChild>
                                     <div className="flex items-center gap-1.5 px-2 min-w-0">
                                       <div className="flex-shrink-0 relative">
-                                        <Lock className="h-3.5 w-3.5 text-amber-700" />
-                                        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                        <Lock className="h-3.5 w-3.5 text-warning-700" />
+                                        <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-warning-500 animate-pulse" />
                                       </div>
                                       <div className="min-w-0">
-                                        <span className="text-[10px] font-bold truncate text-amber-900 block">
+                                        <span className="text-2xs font-bold truncate text-warning-900 block">
                                           Belegt
                                         </span>
-                                        <span className="text-[9px] text-amber-700 font-semibold">
+                                        <span className="text-[9px] text-warning-700 font-semibold">
                                           {session.startTime}–{session.endTime}
                                         </span>
                                       </div>{' '}
                                       {session.currentBookings && session.currentBookings > 0 && (
-                                        <span className="flex-shrink-0 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-amber-600 text-white text-[9px] font-bold">
+                                        <span className="flex-shrink-0 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-warning-600 text-white text-[9px] font-bold">
                                           {session.currentBookings}
                                         </span>
                                       )}
@@ -1475,12 +1475,12 @@ export default function UnifiedCourtCalendar({
                                 </Tooltip>
                               ) : (
                                 <div className="flex items-center gap-1.5 w-full px-2 min-w-0">
-                                  <User className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                                  <User className="h-3 w-3 text-info-500 flex-shrink-0" />
                                   <div className="min-w-0">
-                                    <span className="truncate text-[10px] font-bold text-blue-800 block">
+                                    <span className="truncate text-2xs font-bold text-info-800 block">
                                       {session.trainerName?.substring(0, 12) || 'Trainer'}
                                     </span>
-                                    <span className="text-[9px] text-blue-500 font-medium">
+                                    <span className="text-[9px] text-info-500 font-medium">
                                       {session.startTime}–{session.endTime}
                                     </span>
                                   </div>
@@ -1489,12 +1489,12 @@ export default function UnifiedCourtCalendar({
                             ) : status === 'plan' ? (
                               <div className="flex items-center gap-1.5 px-2 min-w-0">
                                 <div className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
-                                <span className="text-[10px] truncate font-semibold text-violet-700">
+                                <span className="text-2xs truncate font-semibold text-violet-700">
                                   Gruppentraining
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-[10px] px-2 text-emerald-600/70 font-medium">
+                              <span className="text-2xs px-2 text-emerald-600/70 font-medium">
                                 {timeSlot}
                               </span>
                             )}
@@ -1567,7 +1567,7 @@ export default function UnifiedCourtCalendar({
                 {format(targetDate, isMobile ? 'dd.MM.' : 'dd. MMMM yyyy', { locale: de })}
               </span>
               {isSameDay(targetDate, new Date()) && (
-                <span className="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                <span className="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-2xs font-bold">
                   Heute
                 </span>
               )}
@@ -1602,7 +1602,7 @@ export default function UnifiedCourtCalendar({
                       {getSurfaceLabel(court.surface)}
                     </span>
                     {court.hasIndoor && (
-                      <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-blue-50 text-[8px] sm:text-[9px] font-medium text-blue-600 border border-blue-100">
+                      <span className="inline-flex items-center px-1 py-0.5 rounded-md bg-info-50 text-[8px] sm:text-[9px] font-medium text-info-600 border border-info-100">
                         Indoor
                       </span>
                     )}
@@ -1624,7 +1624,7 @@ export default function UnifiedCourtCalendar({
                   }}
                 >
                   <div
-                    className="absolute left-0 top-0 text-right pr-1 sm:pr-2 -translate-y-2 text-[10px] font-medium text-muted-foreground tabular-nums"
+                    className="absolute left-0 top-0 text-right pr-1 sm:pr-2 -translate-y-2 text-2xs font-medium text-muted-foreground tabular-nums"
                     style={{ width: timeColW }}
                   >
                     {String(hour).padStart(2, '0')}:00
@@ -1864,9 +1864,9 @@ export default function UnifiedCourtCalendar({
         <div
           className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
             weatherData.recommendation === 'red'
-              ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300'
+              ? 'bg-error-50 border-error-200 text-error-800 dark:bg-error-950/30 dark:border-error-800 dark:text-error-300'
               : weatherData.recommendation === 'yellow'
-                ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300'
+                ? 'bg-warning-50 border-warning-200 text-warning-800 dark:bg-warning-950/30 dark:border-warning-800 dark:text-warning-300'
                 : 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300'
           }`}
         >
@@ -1933,18 +1933,18 @@ export default function UnifiedCourtCalendar({
 
       {/* Zero-sessions warning (admin view) */}
       {isAdmin && visibleSessions.length === 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800">
+              <p className="text-sm font-medium text-warning-800">
                 Keine zukünftigen Sessions gefunden
               </p>
-              <p className="text-sm text-amber-700 mt-1">
+              <p className="text-sm text-warning-700 mt-1">
                 Es sind aktuell keine Sessions für die Zukunft geplant. Bitte den{' '}
                 <Link
                   href="/admin/seasons"
-                  className="font-semibold text-amber-800 underline hover:text-amber-900 transition-colors"
+                  className="font-semibold text-warning-800 underline hover:text-warning-900 transition-colors"
                 >
                   Saisonplan
                 </Link>{' '}

@@ -37,15 +37,15 @@ export function FamilySwitcher({
   if (!isParent || childMembers.length === 0) return null;
 
   return (
-    <div className="mx-3 mb-4 border border-border/60 dark:border-white/[0.08] rounded-xl overflow-hidden bg-muted/50 dark:bg-card/[0.02]">
+    <div className="mx-3 mb-4 border border-white/[0.08] rounded-xl overflow-hidden bg-white/5">
       {/* Toggle */}
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground dark:text-foreground hover:bg-muted/50 dark:hover:bg-background/[0.04] transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
           {isParentViewingChild ? (
-            <Baby className="h-4 w-4 shrink-0 text-amber-500" />
+            <Baby className="h-4 w-4 shrink-0 text-warning-500" />
           ) : (
             <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
           )}
@@ -55,7 +55,7 @@ export function FamilySwitcher({
         </div>
         <ChevronDown
           className={cn(
-            'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+            'h-4 w-4 shrink-0 text-white/50 transition-transform duration-200',
             open && 'rotate-180'
           )}
         />
@@ -63,7 +63,7 @@ export function FamilySwitcher({
 
       {/* Dropdown */}
       {open && (
-        <div className="border-t border-border/60 dark:border-white/[0.06] overflow-hidden animate-slide-down">
+        <div className="border-t border-white/[0.06] overflow-hidden animate-slide-down">
           {/* Own account */}
           <button
             onClick={() => {
@@ -74,7 +74,7 @@ export function FamilySwitcher({
               'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
               !isParentViewingChild
                 ? `${colors.bg} ${colors.text} font-medium`
-                : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04]'
+                : 'text-white/70 hover:bg-white/5'
             )}
           >
             <ShieldCheck
@@ -100,20 +100,20 @@ export function FamilySwitcher({
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                   isActive
-                    ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 font-medium'
-                    : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04]'
+                    ? 'bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 font-medium'
+                    : 'text-white/70 hover:bg-white/5'
                 )}
               >
                 <ArrowLeftRight
                   className={cn(
                     'h-4 w-4 shrink-0',
-                    isActive ? 'text-amber-500' : 'text-transparent'
+                    isActive ? 'text-warning-500' : 'text-transparent'
                   )}
                 />
                 <Baby className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{child.fullName}</span>
                 {child.isMinor && (
-                  <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-semibold">
+                  <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-warning-100 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400 font-semibold">
                     Minderjährig
                   </span>
                 )}

@@ -452,11 +452,11 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brandPrimary/5 to-transparent">
+        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brandPrimary/20 to-brandPrimary/5 flex items-center justify-center shrink-0">
-                <User className="h-6 w-6 text-brandPrimary" />
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 flex items-center justify-center shrink-0">
+                <User className="h-6 w-6 text-brand-primary" />
               </div>
               <div className="min-w-0">
                 <h2 className="text-xl md:text-2xl font-bold text-foreground dark:text-white truncate">
@@ -491,7 +491,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
         {/* ── Editing Banner ──────────────────────────────────────────── */}
         {isEditing && (
-          <div className="flex items-center gap-2 px-5 py-2 bg-brandAccent/5 border-b border-brandAccent/20 text-sm text-brandAccent">
+          <div className="flex items-center gap-2 px-5 py-2 bg-brand-accent/5 border-b border-brand-accent/20 text-sm text-brand-accent">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>
               Bearbeitungsmodus aktiv — Änderungen werden erst nach Klick auf &quot;Speichern&quot;
@@ -526,31 +526,31 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
             <TabsList className="w-full justify-start bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b rounded-none px-0 gap-6 overflow-x-auto sticky top-0 z-20">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Profil
               </TabsTrigger>
               <TabsTrigger
                 value="preferences"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Präferenzen
               </TabsTrigger>
               <TabsTrigger
                 value="invoices"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Rechnungen
               </TabsTrigger>
               <TabsTrigger
                 value="bookings"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
               >
                 Buchungen
               </TabsTrigger>
               <TabsTrigger
                 value="fehlzeiten"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brandPrimary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-brand-primary data-[state=active]:shadow-none rounded-none px-0 text-sm whitespace-nowrap"
                 onClick={fetchAbsences}
               >
                 Fehlzeiten
@@ -563,7 +563,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <Shield className="h-4 w-4 text-brandPrimary" />
+                    <Shield className="h-4 w-4 text-brand-primary" />
                     Rolle & Status
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -643,7 +643,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <User className="h-4 w-4 text-brandPrimary" />
+                    <User className="h-4 w-4 text-brand-primary" />
                     Persönliche Informationen
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -713,7 +713,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <MapPin className="h-4 w-4 text-brandAccent" />
+                    <MapPin className="h-4 w-4 text-brand-accent" />
                     Adresse
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -763,7 +763,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-5 flex items-center gap-2 text-base">
-                    <Shield className="h-4 w-4 text-brandAccent" />
+                    <Shield className="h-4 w-4 text-brand-accent" />
                     Notfallkontakt
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -805,7 +805,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                    <Target className="h-4 w-4 text-brandPrimary" />
+                    <Target className="h-4 w-4 text-brand-primary" />
                     Trainings-Präferenzen
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -821,7 +821,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                    <Euro className="h-4 w-4 text-brandPrimary" />
+                    <Euro className="h-4 w-4 text-brand-primary" />
                     Rechnungen
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -914,7 +914,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
               <Card variant="bordered">
                 <CardContent className="p-5">
                   <h3 className="font-semibold mb-4 flex items-center gap-2 text-base">
-                    <Calendar className="h-4 w-4 text-brandPrimary" />
+                    <Calendar className="h-4 w-4 text-brand-primary" />
                     Buchungen
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -1001,7 +1001,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
               {/* Umbuchen-Dialog */}
               {rescheduleBooking && (
-                <Card className="border-amber-200 dark:border-amber-800">
+                <Card className="border-warning-200 dark:border-warning-800">
                   <CardContent className="p-4 space-y-3">
                     <p className="text-sm font-medium">
                       Buchung umbuchen:{' '}

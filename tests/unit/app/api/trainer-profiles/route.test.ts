@@ -39,7 +39,7 @@
  * ════════════════════════════════════════════════════════════════════════════════
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -388,9 +388,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
   describe('NaN-Guard 13-case edge bundle (parseNumOrNull closure-local)', () => {
     it('returns null for null column value', async () => {
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: null }),
-        ],
+        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: null })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -410,9 +408,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
 
     it('returns null for "not-a-number" (parseFloat → NaN → caught by guard)', async () => {
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: 'not-a-number' }),
-        ],
+        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: 'not-a-number' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -422,9 +418,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
 
     it('returns null for empty string "" (parseFloat → NaN)', async () => {
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: '' }),
-        ],
+        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -434,9 +428,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
 
     it('returns null for whitespace-only string "   " (parseFloat → NaN)', async () => {
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: '   ' }),
-        ],
+        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '   ' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -505,9 +497,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
       // aware. If behavior must change to locale-tolerant parsing, the helper
       // itself must change — re-run the test.
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: '45,50' }),
-        ],
+        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '45,50' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -520,9 +510,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
       // when trailing chars are present. Acceptable since DB columns should
       // never surface this; defense-in-depth only.
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: '45.50abc' }),
-        ],
+        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '45.50abc' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
@@ -561,9 +549,7 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
       // HTTP, no serialization layer) — see lib/utils/numeric-coerce.ts once
       // extracted.
       resetServiceClientMock({
-        trainerProfilesData: [
-          buildFallbackRow({ contracted_hourly_rate: '-0' }),
-        ],
+        trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '-0' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());

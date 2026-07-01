@@ -68,7 +68,9 @@ export function findSaasPlanItem(sub: Stripe.Subscription): Stripe.SubscriptionI
     const nickname = (item.price.nickname ?? '').toLowerCase();
     const product = item.price.product;
     const productName =
-      typeof product === 'string' ? product.toLowerCase() : (product?.name ?? '').toLowerCase();
+      typeof product === 'string'
+        ? product.toLowerCase()
+        : (product && !product.deleted ? (product.name ?? '') : '').toLowerCase();
     if (hints.some((h) => nickname.includes(h) || productName.includes(h))) {
       return item;
     }
@@ -90,10 +92,12 @@ export async function syncSubscriptionItemQuantity(args: {
   currentSyncedQuantity: number | null;
   targetQuantity: number;
 }): Promise<SyncQuantityResult> {
-  if (!shouldSyncQuantity({
-    currentSyncedQuantity: args.currentSyncedQuantity,
-    targetQuantity: args.targetQuantity,
-  })) {
+  if (
+    !shouldSyncQuantity({
+      currentSyncedQuantity: args.currentSyncedQuantity,
+      targetQuantity: args.targetQuantity,
+    })
+  ) {
     return { updated: false, newQuantity: args.currentSyncedQuantity, reason: 'no-change' };
   }
 

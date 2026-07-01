@@ -49,7 +49,7 @@ export const adminSectionColors: Record<string, AdminSectionColors> = {
   admin: {
     gradient: 'from-brand-light to-brand-primary',
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
-    text: 'text-brand-light dark:text-green-300',
+    text: 'text-brand-light dark:text-success-300',
     light: 'brand-light',
     ring: 'ring-brand-light/30',
   },
@@ -143,7 +143,7 @@ export function AdminSection({
           'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
           hasActiveChild
             ? `${colors.bg} ${colors.text} shadow-sm`
-            : 'text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-white'
+            : 'text-white/70 hover:bg-white/5 hover:text-white'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
@@ -173,7 +173,7 @@ export function AdminSection({
         )}
       >
         <div
-          className="ml-2 pl-2 border-l border-border/50 dark:border-white/[0.06] space-y-0.5 pb-0.5"
+              className="ml-2 pl-2 border-l border-white/[0.06] dark:border-white/[0.06] space-y-0.5 pb-0.5"
           role="list"
         >
           {subItems.map((item) => {
@@ -188,7 +188,7 @@ export function AdminSection({
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
                     ? `${colors.bg} ${colors.text} shadow-sm`
-                    : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-foreground'
+                    : 'text-white/60 hover:bg-white/5 hover:text-white dark:text-white/60 dark:hover:text-white'
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
@@ -213,7 +213,7 @@ export function AdminSection({
           {extraAction && (
             <button
               onClick={extraAction.onClick}
-              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-background/[0.04] hover:text-foreground dark:hover:text-foreground transition-all duration-150"
+              className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white dark:text-white/60 dark:hover:text-white transition-all duration-150"
             >
               <extraAction.icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
               <span>{extraAction.label}</span>

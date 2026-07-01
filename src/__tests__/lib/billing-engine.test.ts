@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 import { BillingEngine } from '@/lib/billing-engine';
-import type { CreateInvoice, CreatePayment, CreateDunningRecord } from '@/lib/types/billing';
-import { CreateSepaMandate } from '@/lib/types/billing';
+import type { CreateInvoice } from '@/lib/types/billing';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -13,9 +12,10 @@ const hasSepaCreditor = !!SEPA_CREDITOR_ID;
 const describeIntegration = hasSupabase ? describe : describe.skip;
 const describeSepa = hasSupabase && hasSepaCreditor ? describe : describe.skip;
 
-// Use a real auth.users UUID from seed script, or fallback to fake UUID for non-FK tests
-const TEST_MEMBER = process.env.TEST_MEMBER_UUID || '00000000-0000-0000-0000-000000000001';
-const hasRealTestUser = !!process.env.TEST_MEMBER_UUID;
+// A real public.users UUID is created in beforeAll so FK constraints to
+// public.users(id) (e.g. invoices.member_id, sepa_mandates.member_id) are
+// satisfied. We use crypto.randomUUID() so each test run is isolated.
+let TEST_MEMBER = '';
 
 describeIntegration('BillingEngine (Integration Tests - Requires Database)', () => {
   let supabase: ReturnType<typeof createClient>;
@@ -26,10 +26,26 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
     supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     billingEngine = BillingEngine.getInstance();
 
+    // Create a real public.users row so foreign keys to users(id) succeed.
+    // Service-role bypasses RLS, but FK constraints are still enforced.
+    // NOTE: users table only has id, email, full_name, ... — no first_name/last_name
+    // (those live in trainer_profiles / trial_trainings). Keep insert minimal.
+    TEST_MEMBER = crypto.randomUUID();
+    const { error: userError } = await supabase
+      .from('users')
+      .insert({
+        id: TEST_MEMBER,
+        email: `billing-test-${TEST_MEMBER}@example.com`,
+      } as never);
+    if (userError) {
+      throw new Error(`Failed to seed test user: ${userError.message}`);
+    }
+
     // Create test club
     const { data: club, error: clubError } = await supabase
       .from('clubs')
-      .insert({ name: `Billing Test Club ${Date.now()}`, opening_hours: {} })
+      // Cast: untyped Supabase client infers never[] for inserts.
+      .insert({ name: `Billing Test Club ${Date.now()}`, opening_hours: {} } as never)
       .select()
       .single();
 
@@ -178,7 +194,7 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
         const i1 = await billingEngine.createInvoice(d);
         const i2 = await billingEngine.createInvoice(d);
         await billingEngine.updateInvoiceStatus(i1.id, 'open');
-        await billingEngine.updateInvoiceStatus(i2.id, 'paid');
+        await billingEngine.updateInvoiceStatus(i2!.id, 'paid');
 
         const openInvoices = await billingEngine.getInvoicesByClub(testClubId, { status: 'open' });
         const paidInvoices = await billingEngine.getInvoicesByClub(testClubId, { status: 'paid' });
@@ -397,6 +413,7 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
           invoice_id: invoice.id,
           level: 1,
           due_date: '2026-05-29',
+          is_b2b: false,
         });
         expect(dunning).toBeDefined();
         expect(dunning.invoice_id).toBe(invoice.id);
@@ -423,16 +440,19 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
           invoice_id: invoice.id,
           level: 1,
           due_date: '2026-05-29',
+          is_b2b: false,
         });
         const l2 = await billingEngine.createDunningRecord({
           invoice_id: invoice.id,
           level: 2,
           due_date: '2026-06-12',
+          is_b2b: false,
         });
         const l3 = await billingEngine.createDunningRecord({
           invoice_id: invoice.id,
           level: 3,
           due_date: '2026-06-26',
+          is_b2b: false,
         });
         expect(l1.fee_amount).toBe(5.0);
         expect(l2.fee_amount).toBe(10.0);
@@ -459,11 +479,13 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
           invoice_id: invoice.id,
           level: 1,
           due_date: '2026-05-29',
+          is_b2b: false,
         });
         await billingEngine.createDunningRecord({
           invoice_id: invoice.id,
           level: 2,
           due_date: '2026-06-12',
+          is_b2b: false,
         });
         const records = await billingEngine.getDunningRecordsByInvoice(invoice.id);
         expect(records).toHaveLength(2);
@@ -474,8 +496,7 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
 
   describe('Reporting', () => {
     describe('getMemberBillingSummary', () => {
-      const itMember = hasRealTestUser ? it : it.skip;
-      itMember('should calculate member billing summary', async () => {
+      it('should calculate member billing summary', async () => {
         const memberId = TEST_MEMBER;
         const d = makeInvoice({
           member_id: memberId,
@@ -489,6 +510,8 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
             },
           ],
         });
+        // Create 2 invoices so the summary has >=2 to aggregate
+        // (the assertion is `toBeGreaterThanOrEqual(2)`).
         const i1 = await billingEngine.createInvoice(d);
         const i2 = await billingEngine.createInvoice(d);
         await billingEngine.updateInvoiceStatus(i1.id, 'paid');
@@ -502,6 +525,8 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
         expect(summary.member_id).toBe(memberId);
         expect(summary.total_invoices).toBeGreaterThanOrEqual(2);
         expect(summary.total_amount).toBeGreaterThan(0);
+        // Sanity: i2 must exist and be unique-numbered vs i1
+        expect(i2.id).not.toBe(i1.id);
       });
     });
 
@@ -519,7 +544,6 @@ describeIntegration('BillingEngine (Integration Tests - Requires Database)', () 
           ],
         });
         const i1 = await billingEngine.createInvoice(d);
-        const i2 = await billingEngine.createInvoice(d);
         await billingEngine.updateInvoiceStatus(i1.id, 'paid');
         await billingEngine.createPayment({
           invoice_id: i1.id,

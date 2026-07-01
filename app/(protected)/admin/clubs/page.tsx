@@ -71,7 +71,7 @@ export default async function ClubsAdminPage({
   }
 
   if (errorMsg) {
-    return <div className="p-6 text-red-600">Fehler beim Laden der Vereine: {errorMsg}</div>;
+    return <div className="p-6 text-error-600">Fehler beim Laden der Vereine: {errorMsg}</div>;
   }
 
   return <ClubsClient initialClubs={initialClubs} pagination={pagination} searchParams={params} />;

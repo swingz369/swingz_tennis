@@ -118,8 +118,8 @@ export function MemberSelector() {
   };
 
   const levelBadgeColor: Record<string, string> = {
-    beginner: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    intermediate: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    beginner: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
+    intermediate: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400',
     advanced: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     professional: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   };
@@ -153,10 +153,10 @@ export function MemberSelector() {
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50">
+      <Card className="border-error-200 bg-error-50">
         <CardContent className="py-8 text-center">
-          <AlertCircle className="h-8 w-8 text-red-500 mx-auto" />
-          <p className="mt-2 text-sm text-red-600">{error}</p>
+          <AlertCircle className="h-8 w-8 text-error-500 mx-auto" />
+          <p className="mt-2 text-sm text-error-600">{error}</p>
         </CardContent>
       </Card>
     );
@@ -182,7 +182,7 @@ export function MemberSelector() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Star className="h-4 w-4 text-amber-500" />
+              <Star className="h-4 w-4 text-warning-500" />
               Höherstufungen
             </CardTitle>
           </CardHeader>
@@ -195,7 +195,7 @@ export function MemberSelector() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-500" />
+              <Clock className="h-4 w-4 text-info-500" />
               Warteliste
             </CardTitle>
           </CardHeader>
@@ -208,7 +208,7 @@ export function MemberSelector() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-green-500" />
+              <TrendingUp className="h-4 w-4 text-success-500" />
               Auswahl
             </CardTitle>
           </CardHeader>
@@ -327,7 +327,7 @@ export function MemberSelector() {
                       </Badge>
                       {isPromoted && (
                         <div className="mt-1">
-                          <Badge className="text-xs bg-amber-100 text-amber-700 border-amber-200">
+                          <Badge className="text-xs bg-warning-100 text-warning-700 border-warning-200">
                             ↑ {member.recommendedLevel}
                           </Badge>
                         </div>
@@ -339,10 +339,10 @@ export function MemberSelector() {
                         <span
                           className={
                             member.attendanceQuote >= 80
-                              ? 'text-green-600'
+                              ? 'text-success-600'
                               : member.attendanceQuote >= 50
-                                ? 'text-amber-600'
-                                : 'text-red-600'
+                                ? 'text-warning-600'
+                                : 'text-error-600'
                           }
                         >
                           {member.attendanceQuote}%
@@ -360,13 +360,13 @@ export function MemberSelector() {
                           </Badge>
                         )}
                         {isPromoted && (
-                          <Badge className="text-xs bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1">
+                          <Badge className="text-xs bg-warning-50 text-warning-700 border-warning-200 flex items-center gap-1">
                             <Star className="h-3 w-3" />
                             Höherstufung
                           </Badge>
                         )}
                         {isWaitlisted && (
-                          <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1">
+                          <Badge className="text-xs bg-info-50 text-info-700 border-info-200 flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             Warteliste Vorsaison
                           </Badge>
@@ -392,10 +392,10 @@ export function MemberSelector() {
 
       {/* Promoted Members Detail */}
       {promotedMembers.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-900/10">
+        <Card className="border-warning-200 bg-warning-50/50 dark:bg-warning-900/10">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Star className="h-4 w-4 text-amber-500" />
+              <Star className="h-4 w-4 text-warning-500" />
               Automatische Höherstufungen
             </CardTitle>
             <CardDescription>
@@ -406,7 +406,7 @@ export function MemberSelector() {
             <ul className="space-y-2">
               {promotedMembers.map((p) => (
                 <li key={p.memberId} className="flex items-center gap-3 text-sm">
-                  <CheckCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  <CheckCircle className="h-4 w-4 text-warning-500 flex-shrink-0" />
                   <span className="font-medium">{p.memberName}</span>
                   <span className="text-muted-foreground">→</span>
                   <Badge variant="outline" className="text-xs">

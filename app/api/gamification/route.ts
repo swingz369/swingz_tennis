@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { withAuth } from '@/lib/api-auth';
+import { withApiAuth } from '@/lib/api-auth';
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, async (auth) => {
+  return withApiAuth(request, async (auth) => {
     const { supabase, user } = auth;
 
     // Get user points

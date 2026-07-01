@@ -12,7 +12,7 @@ function makeSlot(overrides: Partial<ScheduleSlot> = {}): ScheduleSlot {
     groupColor: '#3B82F6',
     trainerId: 't1',
     trainerName: 'Trainer Müller',
-    dayOfWeek: 1, // Monday
+    dayOfWeek: 1, // 0=Monday..6=Sunday convention — 1 = Tuesday
     startTime: '17:00',
     endTime: '18:30',
     durationMin: 90,
@@ -361,7 +361,7 @@ describe('useSchedulePlan — slotUpdate', () => {
 // ============================================
 
 describe('useSchedulePlan — byDay', () => {
-  it('should group slots by day of week', () => {
+  it('should group slots by day of week (0=Monday..6=Sunday, no wrap)', () => {
     const { result } = renderHook(() => useSchedulePlan());
     const plan = makePlan();
 
@@ -371,45 +371,46 @@ describe('useSchedulePlan — byDay', () => {
 
     const grouped = result.current.byDay();
 
-    // Monday (1): slot-1, slot-2
+    // dayOfWeek=1: slot-1, slot-2
     expect(grouped[1]).toHaveLength(2);
     expect(grouped[1][0].id).toBe('slot-1');
     expect(grouped[1][1].id).toBe('slot-2');
 
-    // Tuesday (2): slot-3
+    // dayOfWeek=2: slot-3
     expect(grouped[2]).toHaveLength(1);
     expect(grouped[2][0].id).toBe('slot-3');
 
     // Other days should be empty arrays
+    expect(grouped[0]).toEqual([]);
     expect(grouped[3]).toEqual([]);
     expect(grouped[4]).toEqual([]);
     expect(grouped[5]).toEqual([]);
     expect(grouped[6]).toEqual([]);
-    expect(grouped[7]).toEqual([]);
   });
 
-  it('should map dayOfWeek 0 (Sunday) to group 7', () => {
+  it('should map dayOfWeek directly with no wrap (0=Monday stays 0, 6=Sunday stays 6)', () => {
     const { result } = renderHook(() => useSchedulePlan());
 
-    const sundaySlot = makeSlot({ id: 'sun', dayOfWeek: 0, groupName: 'Sunday Group' });
+    const mondaySlot = makeSlot({ id: 'mon', dayOfWeek: 0, groupName: 'Monday Group' });
+    const sundaySlot = makeSlot({ id: 'sun', dayOfWeek: 6, groupName: 'Sunday Group' });
 
     act(() => {
-      result.current.setPlan([sundaySlot]);
+      result.current.setPlan([mondaySlot, sundaySlot]);
     });
 
     const grouped = result.current.byDay();
-    expect(grouped[7]).toHaveLength(1);
-    expect(grouped[7][0].id).toBe('sun');
-    // Day 0 should be empty
-    expect(grouped[0]).toBeUndefined();
+    expect(grouped[0]).toHaveLength(1);
+    expect(grouped[0][0].id).toBe('mon');
+    expect(grouped[6]).toHaveLength(1);
+    expect(grouped[6][0].id).toBe('sun');
   });
 
-  it('should return all 7 days initialized with empty arrays', () => {
+  it('should return all 7 days (0-6) initialized with empty arrays', () => {
     const { result } = renderHook(() => useSchedulePlan());
 
     const grouped = result.current.byDay();
     expect(Object.keys(grouped)).toHaveLength(7);
-    for (let d = 1; d <= 7; d++) {
+    for (let d = 0; d <= 6; d++) {
       expect(grouped[d]).toEqual([]);
     }
   });
@@ -439,16 +440,16 @@ describe('useSchedulePlan — activeDays', () => {
     expect(active).toEqual([]);
   });
 
-  it('should include Sunday (7) when dayOfWeek is 0', () => {
+  it('should include Sunday (6) directly when dayOfWeek is 6, no wrap', () => {
     const { result } = renderHook(() => useSchedulePlan());
 
-    const sundaySlot = makeSlot({ id: 'sun', dayOfWeek: 0 });
+    const sundaySlot = makeSlot({ id: 'sun', dayOfWeek: 6 });
     act(() => {
       result.current.setPlan([sundaySlot]);
     });
 
     const active = result.current.activeDays();
-    expect(active).toContain(7);
+    expect(active).toContain(6);
   });
 
   it('should update after slotMove changes the day', () => {
