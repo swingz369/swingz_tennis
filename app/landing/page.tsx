@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 import { analytics } from '@/lib/analytics';
-import { useExperiment } from '@/lib/experiments';
 import {
   Trophy,
   BarChart3,
@@ -21,126 +20,10 @@ import {
   Brain,
   Zap,
   ChevronRight,
-  Play,
   CheckCircle2,
   CreditCard,
   MessageCircle,
 } from 'lucide-react';
-
-/* ── Animated Counter Hook ── */
-function useCountUp(end: number, duration = 2000, startCounting: boolean) {
-  const [count, setCount] = useState(0);
-  const rafRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!startCounting) return;
-    startTimeRef.current = performance.now();
-
-    const animate = (now: number) => {
-      const elapsed = now - startTimeRef.current;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-      setCount(Math.floor(eased * end));
-      if (progress < 1) {
-        rafRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [end, duration, startCounting]);
-
-  return count;
-}
-
-/* ── Scroll Reveal Observer ── */
-function useRevealOnScroll() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.unobserve(el);
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return { ref, visible };
-}
-
-/* ── Stat Item ── */
-function StatItem({
-  value,
-  suffix,
-  label,
-  icon: Icon,
-  color,
-  visible,
-}: {
-  value: number;
-  suffix: string;
-  label: string;
-  icon: React.ElementType;
-  color: string;
-  visible: boolean;
-}) {
-  const count = useCountUp(value, 2000, visible);
-
-  return (
-    <div className="text-center group">
-      <div
-        className={`inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-white shadow-lg mb-5 group-hover:scale-110 transition-transform duration-500 group-hover:shadow-xl`}
-      >
-        <Icon className="h-8 w-8" />
-      </div>
-      <p className="text-5xl font-extrabold text-foreground tracking-tight tabular-nums">
-        {count.toLocaleString()}
-        {suffix}
-      </p>
-      <p className="text-sm text-muted-foreground mt-2 font-medium">{label}</p>
-    </div>
-  );
-}
-
-/* ── Testimonial Data ── */
-const TESTIMONIALS = [
-  {
-    quote:
-      'Seit SwingZ läuft unser Buchungssystem komplett automatisch. Kein Excel mehr, keine Doppelbelegungen.',
-    name: 'Thomas K.',
-    role: 'Vereinsvorsitzender, TC Musterstadt',
-    initials: 'TK',
-    avatarGradient: 'from-brand-primary to-brand-light',
-  },
-  {
-    quote:
-      'Das Onboarding war in 10 Minuten erledigt. Die KI-Planung hat unsere Hallenbelegung um 40 % verbessert.',
-    name: 'Sandra M.',
-    role: 'Geschäftsführerin, Tennisschule Bergmann',
-    initials: 'SM',
-    avatarGradient: 'from-brand-accent to-orange-600',
-  },
-  {
-    quote:
-      'Endlich ein Tool das Mannschafts-Meldungen und Mitglieder-Verwaltung unter einem Dach vereint.',
-    name: 'Ralf D.',
-    role: 'Admin, TC Rheinland e.V.',
-    initials: 'RD',
-    avatarGradient: 'from-brand-secondary to-info-700',
-  },
-];
 
 /* ── Feature Data ── */
 const FEATURES = [
@@ -150,8 +33,8 @@ const FEATURES = [
     description:
       'Automatische Wochenplanung mit Berücksichtigung von Trainer-Kapazitäten, Gruppenbedürfnissen und Hallenverfügbarkeit.',
     gradient: 'from-brand-primary to-brand-light',
-    stat: '+47%',
-    statLabel: 'Effizienz',
+    stat: '',
+    statLabel: '',
     highlight: true,
   },
   {
@@ -250,31 +133,9 @@ const PRICING_PLANS = [
   },
 ];
 
-/* ── Platform Stats Hook ── */
-function usePlatformStats() {
-  const [stats, setStats] = useState({ clubs: 0, sessions: 0, members: 0 });
-
-  useEffect(() => {
-    fetch('/api/public/stats')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setStats(data);
-      })
-      .catch(() => {
-        /* silent fail — keeps default values */
-      });
-  }, []);
-
-  return stats;
-}
-
 export default function LandingPage() {
   const router = useRouter();
-  const { variant: heroCtaVariant } = useExperiment('landing_hero_cta');
-  const platformStats = usePlatformStats();
   const [billingYearly, setBillingYearly] = useState(false);
-
-  const { ref: statsRef, visible: statsVisible } = useRevealOnScroll();
 
   useEffect(() => {
     const supabase = createClient();
@@ -283,16 +144,7 @@ export default function LandingPage() {
         router.replace('/dashboard');
       }
     });
-  }, [router, heroCtaVariant]);
-
-  useEffect(() => {
-    if (heroCtaVariant) {
-      analytics.trackEvent('experiment_exposure', {
-        experiment_key: 'landing_hero_cta',
-        variant: heroCtaVariant,
-      });
-    }
-  }, [heroCtaVariant]);
+  }, [router]);
 
   return (
     <div
@@ -402,35 +254,25 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Text Column */}
             <div className="text-center lg:text-left">
-              <div className="animate-in animate-in-delay-1">
-                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-brand-accent/20 backdrop-blur-md border border-brand-accent/40 text-white/90 text-sm font-medium mb-8">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent" />
-                  </span>
-                  Jetzt verfügbar
-                </div>
-              </div>
-
               <h1 id="hero-heading" className="animate-in animate-in-delay-2">
                 <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-white leading-none tracking-tight">
-                  Optimale
+                  Alles für deinen
                 </span>
                 <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold leading-none tracking-tight mt-3 text-gradient-primary bg-clip-text text-transparent">
-                  Trainingspläne.
+                  Tennisverein.
                 </span>
                 <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-white leading-none tracking-tight mt-3">
-                  Maximale
+                  An einem
                 </span>
                 <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-semibold leading-none tracking-tight mt-3 text-gradient-accent bg-clip-text text-transparent">
-                  Performance.
+                  Ort.
                 </span>
               </h1>
 
               <p className="mt-6 sm:mt-8 text-base sm:text-lg md:text-xl text-white/65 leading-relaxed max-w-xl mx-auto lg:mx-0 animate-in animate-in-delay-3">
-                Die KI-gesteuerte Plattform für Tennisclub-Management. Optimiere Trainingspläne,
-                verwalte Mitglieder und steigere die Effizienz deines Vereins —{' '}
-                <span className="text-white font-semibold">ab sofort verfügbar</span>.
+                Mitgliederverwaltung, Trainingsplanung, Buchungen und Abrechnung —{' '}
+                <span className="text-white font-semibold">deine All-in-One-Plattform</span> für den
+                kompletten Vereinsbetrieb.
               </p>
 
               <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start animate-in animate-in-delay-4">
@@ -438,26 +280,12 @@ export default function LandingPage() {
                   <button
                     type="button"
                     className="group relative inline-flex items-center justify-center gap-2.5 rounded-full bg-gradient-to-r from-brand-primary via-brand-primary/85 to-brand-light px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-brand-light focus:ring-offset-2 focus:ring-offset-brand-950 overflow-hidden min-h-[52px] shadow-glow-primary"
-                    onClick={() =>
-                      analytics.signUp('landing_hero_cta', heroCtaVariant || 'default')
-                    }
+                    onClick={() => analytics.signUp('landing_hero_cta', 'default')}
                   >
                     <span className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
                     <Sparkles className="h-5 w-5 relative z-10" />
-                    <span className="relative z-10">
-                      {heroCtaVariant === 'kostenlos_testen' ? 'Kostenlos testen' : 'Demo starten'}
-                    </span>
+                    <span className="relative z-10">Kostenlos testen</span>
                     <ChevronRight className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </Link>
-                <Link href="/contact">
-                  <button
-                    type="button"
-                    className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-background/10 backdrop-blur-sm border border-white/20 px-7 sm:px-8 py-4 sm:py-4 text-base sm:text-lg font-medium text-white transition-all duration-300 hover:bg-background/20 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-brand-950 min-h-[52px]"
-                    onClick={() => analytics.featureUsed('landing_learn_more')}
-                  >
-                    <Play className="h-5 w-5" />
-                    Demo ansehen
                   </button>
                 </Link>
               </div>
@@ -549,7 +377,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <p className="text-white font-semibold text-sm">KI-Optimierung</p>
-                      <p className="text-white/60 text-xs">+47% Effizienzsteigerung</p>
+                      <p className="text-white/60 text-xs">Automatische Saisonplanung</p>
                     </div>
                   </div>
                 </div>
@@ -563,7 +391,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <p className="text-white font-semibold text-sm">Auto-Scheduling</p>
-                      <p className="text-white/60 text-xs">50+ Plätze parallel</p>
+                      <p className="text-white/60 text-xs">Court- & Trainerplanung</p>
                     </div>
                   </div>
                 </div>
@@ -576,8 +404,8 @@ export default function LandingPage() {
                       <Shield className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <p className="text-white font-semibold text-sm">SOC 2 Security</p>
-                      <p className="text-white/60 text-xs">Enterprise-Grade</p>
+                      <p className="text-white font-semibold text-sm">DSGVO-konform</p>
+                      <p className="text-white/60 text-xs">Hosting in der EU</p>
                     </div>
                   </div>
                 </div>
@@ -607,93 +435,6 @@ export default function LandingPage() {
           </svg>
         </div>
       </section>{' '}
-      {/* ═══════════ VISION ═══════════ */}
-      <section
-        ref={statsRef}
-        className="relative z-10 bg-background py-20 sm:py-28"
-        aria-labelledby="vision-heading"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-accent/10 text-brand-accent text-sm font-semibold mb-5">
-              <Zap className="h-3.5 w-3.5" /> Unsere Vision
-            </span>
-            <h2
-              id="vision-heading"
-              className="text-3xl sm:text-4xl md:text-5xl font-display font-semibold text-foreground tracking-tight"
-            >
-              Was wir{' '}
-              <span className="text-gradient-accent bg-clip-text text-transparent">vorhaben</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
-            <StatItem
-              value={platformStats.clubs || 1}
-              suffix="+"
-              label="Aktive Vereine"
-              icon={Shield}
-              color="from-brand-primary to-brand-light"
-              visible={statsVisible}
-            />
-            <StatItem
-              value={50}
-              suffix="%"
-              label="Weniger Planungsaufwand"
-              icon={Brain}
-              color="from-success-500 to-success-700"
-              visible={statsVisible}
-            />
-            <StatItem
-              value={platformStats.sessions || 10}
-              suffix="+"
-              label="Trainings geplant"
-              icon={Calendar}
-              color="from-brand-accent to-orange-600"
-              visible={statsVisible}
-            />
-          </div>
-        </div>
-      </section>
-      {/* ═══════════ SOCIAL PROOF ═══════════ */}
-      <section className="bg-muted/40 border-y border-border py-14 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-3 gap-6 text-center mb-14 divide-x divide-border/60">
-            {[
-              { value: '47+', label: 'Vereine verwalten SwingZ' },
-              { value: '12.400+', label: 'aktive Mitglieder' },
-              { value: '98 %', label: 'Weiterempfehlungsrate' },
-            ].map((s) => (
-              <div key={s.label} className="first:pr-6 last:pl-6 px-6">
-                <p className="text-3xl sm:text-4xl font-display font-semibold text-brand-primary">{s.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <blockquote
-                key={t.name}
-                className="bg-background rounded-2xl p-8 shadow-sm border border-border/60 flex flex-col gap-5"
-              >
-                {/* Avatar + Attribution */}
-                <header className="flex items-center gap-3">
-                  <div
-                    className={`h-11 w-11 rounded-full bg-gradient-to-br ${t.avatarGradient} flex items-center justify-center text-white text-sm font-bold shadow-md flex-shrink-0`}
-                    aria-hidden="true"
-                  >
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </header>
-                <p className="text-sm text-foreground leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
-              </blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
       {/* ═══════════ FEATURES ═══════════ */}
       <section
         className="bg-muted py-20 sm:py-32 relative overflow-hidden"
@@ -714,7 +455,7 @@ export default function LandingPage() {
               Warum{' '}
               <span className="text-gradient-primary bg-clip-text text-transparent">SWINGZ</span>?
             </h2>
-              <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Revolutioniere deine Trainingsplanung mit modernster KI und durchdachtem Design.
             </p>
           </div>
@@ -743,7 +484,9 @@ export default function LandingPage() {
                 </p>
                 {feature.stat && (
                   <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
-                    <span className="text-2xl font-display font-semibold text-foreground">{feature.stat}</span>
+                    <span className="text-2xl font-display font-semibold text-foreground">
+                      {feature.stat}
+                    </span>
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {feature.statLabel}
                     </span>
@@ -878,21 +621,38 @@ export default function LandingPage() {
                   )}
                   <div className={`p-8 ${plan.popular ? 'pt-16' : 'pt-10'}`}>
                     <div className="text-center">
-                      <h3 className={`text-2xl font-bold ${plan.popular ? 'text-white' : 'text-foreground'}`}>{plan.name}</h3>
-                      <p className={`text-sm mt-1 ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>{plan.subtitle}</p>
+                      <h3
+                        className={`text-2xl font-bold ${plan.popular ? 'text-white' : 'text-foreground'}`}
+                      >
+                        {plan.name}
+                      </h3>
+                      <p
+                        className={`text-sm mt-1 ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}
+                      >
+                        {plan.subtitle}
+                      </p>
                       <div className="mt-6 flex items-baseline justify-center gap-1">
-                        <span className={`text-5xl font-extrabold tracking-tight ${plan.popular ? 'text-white' : 'text-foreground'}`}>
+                        <span
+                          className={`text-5xl font-extrabold tracking-tight ${plan.popular ? 'text-white' : 'text-foreground'}`}
+                        >
                           €{billingYearly ? plan.yearlyPrice : plan.price}
                         </span>
-                        <span className={`text-sm font-medium ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>
+                        <span
+                          className={`text-sm font-medium ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}
+                        >
                           {billingYearly ? '/Jahr' : plan.period}
                         </span>
                       </div>
-                      {billingYearly && (                          <p className={`mt-1.5 text-xs ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>
+                      {billingYearly && (
+                        <p
+                          className={`mt-1.5 text-xs ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}
+                        >
                           €{plan.yearlyPricePerMonth}/Monat · {plan.savings} gespart
                         </p>
                       )}
-                      <p className={`mt-4 text-sm leading-relaxed ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}>
+                      <p
+                        className={`mt-4 text-sm leading-relaxed ${plan.popular ? 'text-white/60' : 'text-muted-foreground'}`}
+                      >
                         {plan.description}
                       </p>
                     </div>
@@ -903,7 +663,11 @@ export default function LandingPage() {
                           <CheckCircle2
                             className={`h-5 w-5 flex-shrink-0 mt-0.5 ${plan.popular ? 'text-brand-accent' : plan.iconColor}`}
                           />
-                          <span className={`text-sm ${plan.popular ? 'text-white/70' : 'text-muted-foreground'}`}>{feature}</span>
+                          <span
+                            className={`text-sm ${plan.popular ? 'text-white/70' : 'text-muted-foreground'}`}
+                          >
+                            {feature}
+                          </span>
                         </li>
                       ))}
                     </ul>

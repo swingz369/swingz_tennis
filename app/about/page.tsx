@@ -6,7 +6,7 @@ import { IconBox } from '@/components/ui/icon-box';
 export const metadata: Metadata = {
   title: 'Über uns — SWINGZ',
   description:
-    'SWINGZ ist ein Early-Access-Startup: Trainingsplanung soll einfach, intelligent und für jeden Club zugänglich sein.',
+    'SWINGZ ist ein junges Startup: Trainingsplanung soll einfach, intelligent und für jeden Club zugänglich sein.',
   alternates: {
     canonical: '/about',
   },
@@ -28,17 +28,34 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-brand-secondary">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <header className="relative overflow-hidden bg-brand-secondary">
+        <div className="absolute inset-0">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `
+                radial-gradient(ellipse 100% 100% at 30% 0%, hsl(var(--brand-primary-light) / 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 100% at 100% 100%, hsl(var(--brand-accent) / 0.12) 0%, transparent 50%),
+                linear-gradient(135deg, hsl(150 55% 10%) 0%, hsl(var(--brand-secondary)) 60%, hsl(150 30% 8%) 100%)
+              `,
+            }}
+          />
+          <div className="absolute inset-0 opacity-25 overflow-hidden">
+            <div className="absolute -top-10 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
+            <div
+              className="absolute -bottom-16 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
+              style={{ animationDelay: '5s' }}
+            />
+          </div>
+          <div className="absolute inset-0 noise opacity-[0.04]" />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <IconBox
-                icon={Trophy}
-                size="md"
-                variant="gradient-primary"
-                className="h-10 w-10"
-                iconClassName="h-5 w-5"
-              />
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
+              </div>
               <span className="text-2xl font-bold text-white font-display">SWINGZ</span>
             </Link>
             <div className="flex items-center gap-3">
@@ -50,8 +67,8 @@ export default function AboutPage() {
                   Anmelden
                 </Button>
               </Link>
-              <Link href="/contact">
-                <Button variant="accent">Early Access anfragen</Button>
+              <Link href="/register">
+                <Button variant="accent">Kostenlos registrieren</Button>
               </Link>
             </div>
           </nav>
@@ -71,9 +88,9 @@ export default function AboutPage() {
             </span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            SWINGZ ist ein Early-Access-Startup mit einer klaren Vision: Trainingsplanung soll
-            einfach, intelligent und für jeden Club zugänglich sein — vom kleinen Verein bis zum
-            großen Verband.
+            SWINGZ ist ein junges Startup mit einer klaren Vision: Trainingsplanung soll einfach,
+            intelligent und für jeden Club zugänglich sein — vom kleinen Verein bis zum großen
+            Verband.
           </p>
         </div>
       </section>
@@ -233,13 +250,12 @@ export default function AboutPage() {
             Bereit, die Zukunft mitzugestalten?
           </h2>
           <p className="mt-4 text-lg text-white/70">
-            Werde Early Adopter und hilf uns, die beste Plattform für Tennisclub-Management zu
-            bauen.
+            Teste SWINGZ 14 Tage kostenlos und überzeuge dich selbst — ohne Kreditkarte.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/contact">
+            <Link href="/register">
               <Button variant="accent" size="lg">
-                Early Access anfragen <ArrowRight className="ml-2 h-4 w-4" />
+                Kostenlos registrieren <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/contact">

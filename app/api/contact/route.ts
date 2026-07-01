@@ -67,11 +67,11 @@ export async function POST(request: NextRequest) {
         await resend.emails.send({
           from: env.EMAIL_FROM || 'SwingZ <noreply@swingz.cloud>',
           to: 'info@swingz.cloud',
-          subject: `🎾 Neue Early Access Anfrage von ${firstName} ${lastName}`,
+          subject: `🎾 Neue Kontaktanfrage von ${firstName} ${lastName}`,
           html: `
             <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;padding:20px">
               <div style="background:#1B4332;color:white;padding:24px;border-radius:12px 12px 0 0">
-                <h1 style="margin:0;font-size:20px">🎾 Neue Early Access Anfrage</h1>
+                <h1 style="margin:0;font-size:20px">🎾 Neue Kontaktanfrage</h1>
               </div>
               <div style="background:#f9f9f9;padding:24px;border-radius:0 0 12px 12px">
                 <table style="width:100%;border-collapse:collapse">
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
               </div>
             </div>
           `,
-          text: `Neue Early Access Anfrage\n\nName: ${firstName} ${lastName}\nE-Mail: ${email}\nVerein: ${clubName || '—'}\nNachricht: ${message}\n\nID: ${contactRequest?.id}`,
+          text: `Neue Kontaktanfrage\n\nName: ${firstName} ${lastName}\nE-Mail: ${email}\nVerein: ${clubName || '—'}\nNachricht: ${message}\n\nID: ${contactRequest?.id}`,
         });
       } catch (emailError) {
         // Non-blocking — log but don't fail the request

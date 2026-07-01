@@ -23,18 +23,6 @@ export interface ExperimentDefinition {
 // Experiment definitions
 export const experiments: Record<string, ExperimentDefinition> = {
   /**
-   * Landing page hero CTA text test.
-   * Goal: measure which CTA phrasing drives more trial-training signups.
-   * Variants are consumed in the landing page hero component.
-   */
-  landing_hero_cta: {
-    key: 'landing_hero_cta',
-    variants: ['demo_starten', 'kostenlos_testen'],
-    weights: [0.5, 0.5],
-    enabled: true,
-  },
-
-  /**
    * Register page CTA text test.
    * Goal: measure which phrasing drives more completed registrations.
    */
@@ -172,7 +160,7 @@ export function trackConversion(
  * In prod, enabled experiments are controlled via environment or feature flags.
  */
 export function isExperimentEnabled(key: string): boolean {
-  // Can be overridden by env variable like NEXT_PUBLIC_EXPERIMENTS=landing_hero_cta:pricing_layout
+  // Can be overridden by env variable like NEXT_PUBLIC_EXPERIMENTS=register_cta:pricing_layout
   const enabledList = process.env.NEXT_PUBLIC_EXPERIMENTS?.split(',') ?? [];
   if (enabledList.includes(key)) {
     return true;

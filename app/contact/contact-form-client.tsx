@@ -53,7 +53,7 @@ export function ContactFormClient() {
         <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <h3 className="text-xl font-bold text-foreground mb-2">Early Access angefragt!</h3>
+        <h3 className="text-xl font-bold text-foreground mb-2">Nachricht gesendet!</h3>
         <p className="text-muted-foreground">
           Danke für dein Interesse! Wir melden uns persönlich bei dir — in der Regel innerhalb von
           24 Stunden.
@@ -141,7 +141,7 @@ export function ContactFormClient() {
         ) : (
           <>
             <Send className="h-4 w-4 mr-2" />
-            Early Access anfragen
+            Nachricht senden
           </>
         )}
       </Button>

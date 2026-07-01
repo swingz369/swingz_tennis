@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { IconBox } from '@/components/ui/icon-box';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Trophy, Sparkles, ArrowRight, Eye, EyeOff, Shield, Zap } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
@@ -57,33 +59,54 @@ export default function LoginPage() {
             className="absolute inset-0"
             style={{
               background: `
-                radial-gradient(ellipse 100% 100% at 30% 0%, hsl(var(--brand-primary-light) / 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse 80% 80% at 70% 100%, hsl(var(--brand-accent) / 0.18) 0%, transparent 50%),
-                linear-gradient(135deg, hsl(150 55% 10%) 0%, hsl(var(--brand-primary)) 50%, hsl(150 30% 8%) 100%)
+                radial-gradient(ellipse 100% 60% at 50% -20%, hsl(var(--brand-primary-light) / 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 50% at 100% 50%, hsl(var(--brand-secondary) / 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 60% at 0% 80%, hsl(var(--brand-accent) / 0.08) 0%, transparent 50%),
+                linear-gradient(180deg, hsl(var(--brand-secondary)) 0%, hsl(150 50% 12%) 100%)
               `,
             }}
           />
-          <div className="absolute inset-0 noise opacity-[0.015]" />
-          {/* Floating orbs */}
-          <div className="absolute top-20 left-20 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-          <div
-            className="absolute bottom-20 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
-            style={{ animationDelay: '5s' }}
-          />
+          {/* Aurora blobs */}
+          <div className="absolute inset-0 opacity-25 overflow-hidden">
+            <div className="absolute top-20 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
+            <div
+              className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
+              style={{ animationDelay: '5s' }}
+            />
+            <div
+              className="absolute bottom-20 left-1/3 w-56 h-56 bg-brand-secondary/10 rounded-full blur-3xl animate-aurora"
+              style={{ animationDelay: '10s' }}
+            />
+          </div>
+          <div className="absolute inset-0 noise opacity-[0.04]" />
+          <svg
+            className="absolute inset-0 w-full h-full opacity-[0.025]"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <pattern id="login-dotgrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="1" fill="white" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#login-dotgrid)" />
+          </svg>
         </div>
 
         <div className="relative z-10 flex flex-col justify-between p-16 text-white">
-          {/* Theme Toggle — top right */}
-          <div className="absolute top-6 right-6">
-            <ThemeToggle className="h-9 w-9 rounded-full text-white/70 hover:text-white hover:bg-background/10" />
-          </div>
           <div>
-            <div className="flex items-center gap-3 mb-12 group">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                <Trophy className="h-7 w-7 text-white" />
+            <Link href="/" className="flex items-center gap-3 mb-12 group w-fit">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <IconBox
+                  icon={Trophy}
+                  size="md"
+                  variant="gradient-primary"
+                  className="h-12 w-12"
+                  iconClassName="h-7 w-7"
+                />
               </div>
               <span className="text-2xl font-bold font-display">SWINGZ</span>
-            </div>
+            </Link>
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
               Die Zukunft des{' '}
@@ -141,14 +164,14 @@ export default function LoginPage() {
         <div className="relative w-full max-w-md animate-fade-in-up">
           {/* Mobile logo */}
           <div className="lg:hidden mb-8 text-center">
-            <div className="inline-flex items-center gap-3 mb-4">
+            <Link href="/" className="inline-flex items-center gap-3 mb-4">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-light to-brand-primary flex items-center justify-center shadow-lg">
                 <Trophy className="h-6 w-6 text-white" />
               </div>
               <span className="text-2xl font-bold text-foreground dark:text-white font-display">
                 SWINGZ
               </span>
-            </div>
+            </Link>
           </div>
 
           <Card variant="elevated" className="p-6 sm:p-8 border-0 shadow-premium">
@@ -291,7 +314,7 @@ export default function LoginPage() {
             </a>{' '}
             und{' '}
             <a
-              href="/privacy"
+              href="/datenschutz"
               className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
               Datenschutzrichtlinie
