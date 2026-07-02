@@ -36,6 +36,14 @@ import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface MembersClientProps {
   initialMembers: Member[];
@@ -379,144 +387,122 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
       {/* Members Table / Grid */}
       {viewMode === 'table' ? (
         <div className="rounded-md border border-border dark:border-white/10 bg-background dark:bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted dark:bg-muted">
-                <tr>
-                  <th className="w-10 px-2 py-3">
-                    <Checkbox
-                      checked={allSelected || (someSelected ? 'indeterminate' : false)}
-                      onCheckedChange={toggleSelectAll}
-                      aria-label="Alle auswählen"
-                    />
-                  </th>
-                  <th className="px-2 md:px-3 py-3 text-center text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
-                    Planung
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
-                    E-Mail
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider hidden lg:table-cell">
-                    Telefon
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider hidden md:table-cell">
-                    Beigetreten
-                  </th>
-                  <th className="px-4 md:px-6 py-3 text-right text-xs font-semibold text-foreground dark:text-foreground uppercase tracking-wider">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border dark:divide-white/10">
-                {filteredMembers.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-4 md:px-6 py-8 text-center text-muted-foreground dark:text-muted-foreground"
-                    >
-                      Keine Mitglieder gefunden
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedMembers.map((member) => (
-                    <tr
-                      key={member.id}
-                      className="hover:bg-muted dark:hover:bg-background/5 transition-colors"
-                    >
-                      <td className="w-10 px-2 py-4">
-                        <Checkbox
-                          checked={selectedIds.has(member.id)}
-                          onCheckedChange={() => toggleSelect(member.id)}
-                          aria-label={`${member.full_name} auswählen`}
-                        />
-                      </td>
-                      <td className="px-2 md:px-3 py-4 text-center">
-                        {member.role === 'member' ? (
-                          <button
-                            onClick={() =>
-                              handleTogglePlanning(member.id, member.include_in_planning)
-                            }
-                            className="hover:scale-110 transition-transform"
-                            title={
-                              member.include_in_planning
-                                ? 'Von Planung ausschließen'
-                                : 'In Planung einbeziehen'
-                            }
-                          >
-                            {member.include_in_planning !== false ? (
-                              <CheckSquare className="h-4 w-4 text-success-600" />
-                            ) : (
-                              <Square className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground/50">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                        <span className="font-medium text-foreground dark:text-white">
-                          {member.full_name}
-                        </span>
-                        {member.is_honorary && (
-                          <span className="ml-1.5 inline-flex items-center rounded-full bg-warning-100 dark:bg-warning-900/30 px-1.5 py-0.5 text-2xs font-medium text-warning-700 dark:text-warning-400">
-                            Ehren
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground text-sm">
-                        {member.email}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground text-sm hidden lg:table-cell">
-                        {member.phone || '—'}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected || (someSelected ? 'indeterminate' : false)}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Alle auswählen"
+                  />
+                </TableHead>
+                <TableHead className="text-center">Planung</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>E-Mail</TableHead>
+                <TableHead className="hidden lg:table-cell">Telefon</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden md:table-cell">Beigetreten</TableHead>
+                <TableHead className="text-right">Aktionen</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredMembers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    Keine Mitglieder gefunden
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedMembers.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={selectedIds.has(member.id)}
+                        onCheckedChange={() => toggleSelect(member.id)}
+                        aria-label={`${member.full_name} auswählen`}
+                      />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {member.role === 'member' ? (
                         <button
-                          onClick={() => handleToggleActive(member.id, member.is_active)}
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
-                            member.is_active
-                              ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400'
-                              : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
-                          }`}
+                          onClick={() =>
+                            handleTogglePlanning(member.id, member.include_in_planning)
+                          }
+                          className="hover:scale-110 transition-transform"
+                          title={
+                            member.include_in_planning
+                              ? 'Von Planung ausschließen'
+                              : 'In Planung einbeziehen'
+                          }
                         >
-                          {member.is_active ? 'Aktiv' : 'Inaktiv'}
+                          {member.include_in_planning !== false ? (
+                            <CheckSquare className="h-4 w-4 text-success-600" />
+                          ) : (
+                            <Square className="h-4 w-4 text-muted-foreground" />
+                          )}
                         </button>
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-muted-foreground dark:text-muted-foreground hidden md:table-cell">
-                        {formatDate(member.joined_at)}
-                      </td>
-                      <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" title="Details" asChild>
-                            <Link href={`/admin/members/${member.id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
-                            onClick={() => handleToggleActive(member.id, member.is_active)}
-                          >
-                            {member.is_active ? (
-                              <UserX className="h-4 w-4 text-orange-600" />
-                            ) : (
-                              <UserCheck className="h-4 w-4 text-success-600" />
-                            )}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <span className="font-medium text-foreground dark:text-white">
+                        {member.full_name}
+                      </span>
+                      {member.is_honorary && (
+                        <span className="ml-1.5 inline-flex items-center rounded-full bg-warning-100 dark:bg-warning-900/30 px-1.5 py-0.5 text-2xs font-medium text-warning-700 dark:text-warning-400">
+                          Ehren
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground text-sm">
+                      {member.email}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground text-sm hidden lg:table-cell">
+                      {member.phone || '—'}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      <button
+                        onClick={() => handleToggleActive(member.id, member.is_active)}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:opacity-80 ${
+                          member.is_active
+                            ? 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400'
+                            : 'bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground'
+                        }`}
+                      >
+                        {member.is_active ? 'Aktiv' : 'Inaktiv'}
+                      </button>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground hidden md:table-cell">
+                      {formatDate(member.joined_at)}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" title="Details" asChild>
+                          <Link href={`/admin/members/${member.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                          onClick={() => handleToggleActive(member.id, member.is_active)}
+                        >
+                          {member.is_active ? (
+                            <UserX className="h-4 w-4 text-orange-600" />
+                          ) : (
+                            <UserCheck className="h-4 w-4 text-success-600" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">

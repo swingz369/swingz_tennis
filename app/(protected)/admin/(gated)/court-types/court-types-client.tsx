@@ -293,7 +293,7 @@ export function CourtTypesClient() {
                           </span>
                         )}
                         {type.requires_lighting && (
-                          <span className="flex items-center gap-1 text-yellow-600">
+                          <span className="flex items-center gap-1 text-warning-600 dark:text-warning-400">
                             <Lightbulb className="h-3 w-3" /> Flutlicht
                           </span>
                         )}
@@ -309,7 +309,7 @@ export function CourtTypesClient() {
                         variant={type.is_active ? 'default' : 'secondary'}
                         className={
                           type.is_active
-                            ? 'bg-success-100 text-success-700'
+                            ? 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-300'
                             : 'bg-muted text-foreground'
                         }
                       >

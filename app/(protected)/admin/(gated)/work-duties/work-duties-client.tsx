@@ -108,9 +108,9 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; c
 };
 
 const priorityColors: Record<string, string> = {
-  low: 'bg-gray-100 text-gray-600',
-  medium: 'bg-info-100 text-info-700',
-  high: 'bg-error-100 text-error-700',
+  low: 'bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-300',
+  medium: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
+  high: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
 };
 
 export default function WorkDutiesClient({
@@ -705,7 +705,7 @@ export default function WorkDutiesClient({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-error-600 hover:text-error-700 hover:bg-error-50 gap-1.5"
+                          className="text-error-600 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20 gap-1.5"
                           onClick={() => handleDeleteDuty(duty.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Löschen

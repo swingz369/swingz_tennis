@@ -2,8 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { TrendingUp, Users, DollarSign, Calendar, Brain } from 'lucide-react';
-import { AnimatedCounter, ScrollReveal } from '@/components/animations';
+import { ScrollReveal } from '@/components/animations';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Lazy-load recharts (~360 KB) — only needed when charts are visible
@@ -56,62 +57,47 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
       title: 'Mitglieder',
       value: data.totalMembers,
       icon: Users,
-      gradient: 'from-brand-primary to-brand-dark',
+      color: 'brand' as const,
+      animate: true,
     },
     {
       title: 'Buchungen',
       value: data.totalBookings,
       icon: TrendingUp,
-      gradient: 'from-info-500 to-info-600',
+      color: 'blue' as const,
+      animate: true,
     },
     {
       title: 'Umsatz',
-      value: data.totalRevenue,
-      prefix: '€',
+      value: new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(
+        data.totalRevenue
+      ),
       icon: DollarSign,
-      gradient: 'from-emerald-500 to-emerald-600',
+      color: 'green' as const,
+      animate: false,
     },
     {
       title: 'Sessions',
       value: data.totalSessions,
       icon: Calendar,
-      gradient: 'from-orange-500 to-orange-600',
+      color: 'orange' as const,
+      animate: true,
     },
   ];
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <ScrollReveal>
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Analytics</h1>
-          <p className="text-muted-foreground">Vereinsstatistiken und Leistungskennzahlen</p>
-        </div>
-      </ScrollReveal>
-
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((kpi, i) => (
           <ScrollReveal key={kpi.title} delay={i * 80}>
-            <Card
-              variant="elevated"
-              className="group hover-lift transition-all duration-300 hover:shadow-lg p-6"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{kpi.title}</p>
-                  <p className="text-3xl font-bold text-foreground mt-1 tabular-nums">
-                    {kpi.prefix && <span>{kpi.prefix}</span>}
-                    <AnimatedCounter value={kpi.value} duration={1500} />
-                  </p>
-                </div>
-                <div
-                  className={`p-3 rounded-xl bg-gradient-to-br ${kpi.gradient} text-white flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
-                >
-                  <kpi.icon className="h-6 w-6" />
-                </div>
-              </div>
-            </Card>
+            <StatCard
+              icon={kpi.icon}
+              label={kpi.title}
+              value={kpi.value}
+              color={kpi.color}
+              animate={kpi.animate}
+            />
           </ScrollReveal>
         ))}
       </div>
@@ -125,10 +111,10 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
           <div className="lg:col-span-2">
             <ChurnRiskPanel />
           </div>
-          <Card variant="bordered" className="p-6 transition-all duration-300 hover:shadow-md">
+          <Card variant="bordered" className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-purple-50">
-                <Brain className="h-5 w-5 text-purple-500" />
+              <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                <Brain className="h-5 w-5 text-purple-500 dark:text-purple-400" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold">KI Insights</h3>
@@ -136,15 +122,17 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </div>
             </div>
             <div className="space-y-3">
-              <div className="p-3 bg-info-50 rounded-lg border border-info-100">
-                <p className="text-sm font-medium text-info-800">Matchmaking</p>
-                <p className="text-xs text-info-600 mt-1">
+              <div className="p-3 bg-info-50 dark:bg-info-900/20 rounded-lg border border-info-100 dark:border-info-800/30">
+                <p className="text-sm font-medium text-info-800 dark:text-info-300">Matchmaking</p>
+                <p className="text-xs text-info-600 dark:text-info-400 mt-1">
                   Finde Trainingspartner mit passendem Level und freien Zeiten.
                 </p>
               </div>
-              <div className="p-3 bg-success-50 rounded-lg border border-success-100">
-                <p className="text-sm font-medium text-success-800">Empfehlungen</p>
-                <p className="text-xs text-success-600 mt-1">
+              <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-100 dark:border-success-800/30">
+                <p className="text-sm font-medium text-success-800 dark:text-success-300">
+                  Empfehlungen
+                </p>
+                <p className="text-xs text-success-600 dark:text-success-400 mt-1">
                   Basierend auf Buchungs- und Anwesenheitsdaten generiert.
                 </p>
               </div>

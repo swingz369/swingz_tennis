@@ -402,10 +402,10 @@ function DecisionRow({
               decision.votes_abstain > 0 ||
               votes.length > 0) && (
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
-                <span className="flex items-center gap-1 font-medium text-success-700">
+                <span className="flex items-center gap-1 font-medium text-success-700 dark:text-success-400">
                   <CheckCircle2 className="h-3.5 w-3.5" /> Dafür: {decision.votes_for || tally.for}
                 </span>
-                <span className="flex items-center gap-1 font-medium text-error-700">
+                <span className="flex items-center gap-1 font-medium text-error-700 dark:text-error-400">
                   <XCircle className="h-3.5 w-3.5" /> Dagegen:{' '}
                   {decision.votes_against || tally.against}
                 </span>
@@ -446,13 +446,13 @@ function DecisionRow({
                   <DropdownMenuItem
                     onClick={() => onUpdateStatus(decision.id, 'completed', 'approved')}
                   >
-                    <CheckCircle2 className="h-4 w-4 mr-2 text-success-600" />
+                    <CheckCircle2 className="h-4 w-4 mr-2 text-success-600 dark:text-success-400" />
                     Annehmen (completed)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onUpdateStatus(decision.id, 'completed', 'rejected')}
                   >
-                    <XCircle className="h-4 w-4 mr-2 text-error-600" />
+                    <XCircle className="h-4 w-4 mr-2 text-error-600 dark:text-error-400" />
                     Ablehnen (completed)
                   </DropdownMenuItem>
                 </>

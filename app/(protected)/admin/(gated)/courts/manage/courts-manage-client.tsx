@@ -85,11 +85,14 @@ interface CourtsManageClientProps {
 type ViewMode = 'grid' | 'list';
 
 const SURFACE_COLORS: Record<string, string> = {
-  clay: 'bg-orange-100 text-orange-800 border-orange-200',
-  hard: 'bg-info-100 text-info-800 border-info-200',
-  grass: 'bg-success-100 text-success-800 border-success-200',
-  carpet: 'bg-purple-100 text-purple-800 border-purple-200',
-  artificial_grass: 'bg-teal-100 text-teal-800 border-teal-200',
+  clay: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800/40',
+  hard: 'bg-info-100 text-info-800 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800/40',
+  grass:
+    'bg-success-100 text-success-800 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800/40',
+  carpet:
+    'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800/40',
+  artificial_grass:
+    'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-800/40',
 };
 
 function getSurfaceColorClass(surface: string) {
@@ -712,8 +715,8 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
 
       {/* Inline Create/Edit Form */}
       {showInlineForm && (
-        <Card className="border-brand-primary/20 shadow-md animate-in">
-          <CardHeader className="border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
+        <Card className="animate-in">
+          <CardHeader className="border-b border-border dark:border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" onClick={handleCloseForm} className="shrink-0">
@@ -874,7 +877,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           {getSurfaceLabel(surface) || getCourtTypeName(court.court_type_id)}
                         </span>
                         {court.has_lighting && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-50 text-warning-700 border border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800/40">
                             <Lightbulb className="h-3 w-3" />
                             Flutlicht
                           </span>
@@ -976,7 +979,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           </TableCell>
                           <TableCell>
                             {court.has_lighting ? (
-                              <span className="flex items-center gap-1 text-yellow-600 text-sm">
+                              <span className="flex items-center gap-1 text-warning-600 dark:text-warning-400 text-sm">
                                 <Lightbulb className="h-4 w-4" /> Ja
                               </span>
                             ) : (
@@ -1004,7 +1007,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                                 className={cn(
                                   'text-xs transition-colors',
                                   court.is_active
-                                    ? 'bg-success-100 text-success-700 hover:bg-success-200'
+                                    ? 'bg-success-100 text-success-700 hover:bg-success-200 dark:bg-success-900/20 dark:text-success-300 dark:hover:bg-success-900/30'
                                     : 'bg-muted text-muted-foreground hover:bg-muted'
                                 )}
                               >
@@ -1159,7 +1162,10 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             </Badge>
                           )}
                           {type.requires_lighting && (
-                            <Badge variant="outline" className="text-xs gap-1 text-yellow-600">
+                            <Badge
+                              variant="outline"
+                              className="text-xs gap-1 text-warning-600 dark:text-warning-400"
+                            >
                               <Lightbulb className="h-3 w-3" /> Flutlicht
                             </Badge>
                           )}
@@ -1176,7 +1182,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                             className={cn(
                               'text-xs',
                               type.is_active
-                                ? 'bg-success-100 text-success-700'
+                                ? 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-300'
                                 : 'bg-muted text-foreground'
                             )}
                           >

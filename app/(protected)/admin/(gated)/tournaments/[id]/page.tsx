@@ -310,8 +310,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-success-100 shrink-0">
-              <CheckCircle className="h-5 w-5 text-success-700" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-success-100 dark:bg-success-900/20 shrink-0">
+              <CheckCircle className="h-5 w-5 text-success-700 dark:text-success-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Bestätigt</p>
@@ -322,8 +322,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-warning-100 shrink-0">
-              <Calendar className="h-5 w-5 text-warning-700" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-warning-100 dark:bg-warning-900/20 shrink-0">
+              <Calendar className="h-5 w-5 text-warning-700 dark:text-warning-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Start</p>
@@ -334,8 +334,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-info-100 shrink-0">
-              <Clock className="h-5 w-5 text-info-700" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-info-100 dark:bg-info-900/20 shrink-0">
+              <Clock className="h-5 w-5 text-info-700 dark:text-info-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Auslastung</p>

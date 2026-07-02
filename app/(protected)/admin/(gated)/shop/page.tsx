@@ -10,6 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { toast } from 'sonner';
 import {
   Loader2,
@@ -494,7 +502,7 @@ export default function AdminShopPage() {
         <TabsContent value="products" className="space-y-6 mt-4">
           {/* Create/Edit Form */}
           {showForm && (
-            <Card className="border-brand-light/30 shadow-md bg-gradient-to-br from-white to-brand-light/5 dark:from-surface-dark dark:to-brand-light/5">
+            <Card className="border-brand-light/30">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <IconBox icon={Package} size="sm" variant="light" />
@@ -784,108 +792,93 @@ export default function AdminShopPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="px-5 pb-5">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border dark:border-white/5">
-                            <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                              Produkt
-                            </th>
-                            <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
-                              Kategorie
-                            </th>
-                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                              Preis
-                            </th>
-                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">
-                              Bestand
-                            </th>
-                            <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                              Aktionen
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/30 dark:divide-white/[0.02]">
-                          {activeProducts.map((product) => (
-                            <tr
-                              key={product.id}
-                              className="hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors"
-                            >
-                              <td className="py-3 px-2">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted dark:bg-card/5 shrink-0">
-                                    {product.image_url ? (
-                                      <Image
-                                        src={product.image_url}
-                                        alt={product.name}
-                                        width={36}
-                                        height={36}
-                                        className="h-9 w-9 rounded-lg object-cover"
-                                      />
-                                    ) : (
-                                      <Package className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="font-medium text-foreground dark:text-white truncate max-w-[200px]">
-                                      {product.name}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produkt</TableHead>
+                          <TableHead className="hidden sm:table-cell">Kategorie</TableHead>
+                          <TableHead className="text-right">Preis</TableHead>
+                          <TableHead className="text-right hidden md:table-cell">Bestand</TableHead>
+                          <TableHead className="text-right">Aktionen</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {activeProducts.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted dark:bg-card/5 shrink-0">
+                                  {product.image_url ? (
+                                    <Image
+                                      src={product.image_url}
+                                      alt={product.name}
+                                      width={36}
+                                      height={36}
+                                      className="h-9 w-9 rounded-lg object-cover"
+                                    />
+                                  ) : (
+                                    <Package className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium text-foreground dark:text-white truncate max-w-[200px]">
+                                    {product.name}
+                                  </p>
+                                  {product.description && (
+                                    <p className="text-xs text-muted-foreground truncate max-w-[200px] hidden sm:block">
+                                      {product.description}
                                     </p>
-                                    {product.description && (
-                                      <p className="text-xs text-muted-foreground truncate max-w-[200px] hidden sm:block">
-                                        {product.description}
-                                      </p>
-                                    )}
-                                  </div>
+                                  )}
                                 </div>
-                              </td>
-                              <td className="py-3 px-2 hidden sm:table-cell">
-                                <Badge variant="outline" className="text-xs">
-                                  {product.category}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-2 text-right font-medium text-foreground dark:text-white tabular-nums">
-                                {formatCurrency(product.price)}
-                              </td>
-                              <td className="py-3 px-2 text-right hidden md:table-cell">
-                                <span
-                                  className={
-                                    product.stock <= 0
-                                      ? 'text-error-500 font-medium'
-                                      : product.stock < 5
-                                        ? 'text-orange-500 font-medium'
-                                        : 'text-muted-foreground dark:text-muted-foreground'
-                                  }
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <Badge variant="outline" className="text-xs">
+                                {product.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-foreground dark:text-white tabular-nums">
+                              {formatCurrency(product.price)}
+                            </TableCell>
+                            <TableCell className="text-right hidden md:table-cell">
+                              <span
+                                className={
+                                  product.stock <= 0
+                                    ? 'text-error-500 font-medium'
+                                    : product.stock < 5
+                                      ? 'text-orange-500 font-medium'
+                                      : 'text-muted-foreground dark:text-muted-foreground'
+                                }
+                              >
+                                {product.stock}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openEditForm(product)}
+                                  className="h-8 w-8 p-0"
+                                  aria-label={`${product.name} bearbeiten`}
                                 >
-                                  {product.stock}
-                                </span>
-                              </td>
-                              <td className="py-3 px-2">
-                                <div className="flex items-center justify-end gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openEditForm(product)}
-                                    className="h-8 w-8 p-0"
-                                    aria-label={`${product.name} bearbeiten`}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setDeleteId(product.id)}
-                                    className="h-8 w-8 p-0 text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20"
-                                    aria-label={`${product.name} löschen`}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteId(product.id)}
+                                  className="h-8 w-8 p-0 text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20"
+                                  aria-label={`${product.name} löschen`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               )}
@@ -901,37 +894,32 @@ export default function AdminShopPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="px-5 pb-5">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <tbody className="divide-y divide-border/30 dark:divide-white/[0.02]">
-                          {inactiveProducts.map((product) => (
-                            <tr
-                              key={product.id}
-                              className="hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors"
-                            >
-                              <td className="py-2.5 px-2">
-                                <div className="flex items-center gap-3">
-                                  <Package className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-                                  <span className="text-muted-foreground line-through">
-                                    {product.name}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="py-2.5 px-2 text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openEditForm(product)}
-                                  className="h-7 text-xs"
-                                >
-                                  Aktivieren
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <Table>
+                      <TableBody>
+                        {inactiveProducts.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Package className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                                <span className="text-muted-foreground line-through">
+                                  {product.name}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditForm(product)}
+                                className="h-7 text-xs"
+                              >
+                                Aktivieren
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               )}
@@ -1042,130 +1030,91 @@ export default function AdminShopPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-5 pb-5">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border dark:border-white/5">
-                        <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Bestellung
-                        </th>
-                        <th className="text-left py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">
-                          Artikel
-                        </th>
-                        <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Betrag
-                        </th>
-                        <th className="text-center py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
-                          Zahlung
-                        </th>
-                        <th className="text-center py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Status
-                        </th>
-                        <th className="text-right py-3 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          Aktion
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/30 dark:divide-white/[0.02]">
-                      {orders.map((order) => {
-                        const StatusIcon = STATUS_ICONS[order.status] || Clock;
-                        const nextAction = STATUS_NEXT_ACTION[order.status] || null;
-                        return (
-                          <tr
-                            key={order.id}
-                            className="hover:bg-muted/50 dark:hover:bg-background/[0.02] transition-colors"
-                          >
-                            <td className="py-3 px-2">
-                              <div className="min-w-0">
-                                <p className="font-medium text-foreground dark:text-white text-xs font-mono truncate max-w-[100px]">
-                                  {order.id.slice(0, 8)}…
-                                </p>
-                                <p className="text-2xs text-muted-foreground mt-0.5">
-                                  {order.created_at ? formatDate(order.created_at) : '—'}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="py-3 px-2 hidden md:table-cell">
-                              <div className="space-y-0.5 max-w-[200px]">
-                                {(order.items ?? []).slice(0, 2).map((item, i) => (
-                                  <div
-                                    key={i}
-                                    className="text-xs text-muted-foreground dark:text-muted-foreground truncate"
-                                  >
-                                    {item.quantity}× {item.product_name}
-                                  </div>
-                                ))}
-                                {(order.items ?? []).length > 2 && (
-                                  <p className="text-2xs text-muted-foreground">
-                                    +{(order.items ?? []).length - 2} weitere
-                                  </p>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-3 px-2 text-right font-medium text-foreground dark:text-white tabular-nums">
-                              {formatCurrency(order.total_amount)}
-                            </td>
-                            <td className="py-3 px-2 text-center hidden sm:table-cell">
-                              <Badge
-                                variant={order.payment_status === 'paid' ? 'default' : 'secondary'}
-                                className={`text-2xs px-1.5 py-0 ${
-                                  order.payment_status === 'paid'
-                                    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30'
-                                    : ''
-                                }`}
-                              >
-                                {order.payment_status === 'paid' ? 'Bezahlt' : 'Ausstehend'}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-2 text-center">
-                              <Badge
-                                className={`text-2xs px-2 py-0.5 border ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}
-                              >
-                                <StatusIcon className="h-3 w-3 mr-1 inline" />
-                                {STATUS_LABELS[order.status] || order.status}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-2 text-right">
-                              {nextAction && order.payment_status === 'paid' ? (
-                                <div className="flex items-center justify-end gap-1">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 text-xs gap-1 border-brand-light/30 text-brand-light hover:bg-brand-light/5"
-                                    disabled={updatingOrderId === order.id}
-                                    onClick={() => handleAdvanceStatus(order.id, nextAction.next)}
-                                  >
-                                    {updatingOrderId === order.id ? (
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      <nextAction.icon className="h-3 w-3" />
-                                    )}
-                                    {nextAction.label}
-                                  </Button>
-                                  {order.status === 'pending' && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-7 w-7 p-0 text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20"
-                                      disabled={updatingOrderId === order.id}
-                                      onClick={() => handleCancelOrder(order.id)}
-                                      title="Stornieren"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  )}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Bestellung</TableHead>
+                      <TableHead className="hidden md:table-cell">Artikel</TableHead>
+                      <TableHead className="text-right">Betrag</TableHead>
+                      <TableHead className="text-center hidden sm:table-cell">Zahlung</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-right">Aktion</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((order) => {
+                      const StatusIcon = STATUS_ICONS[order.status] || Clock;
+                      const nextAction = STATUS_NEXT_ACTION[order.status] || null;
+                      return (
+                        <TableRow key={order.id}>
+                          <TableCell>
+                            <div className="min-w-0">
+                              <p className="font-medium text-foreground dark:text-white text-xs font-mono truncate max-w-[100px]">
+                                {order.id.slice(0, 8)}…
+                              </p>
+                              <p className="text-2xs text-muted-foreground mt-0.5">
+                                {order.created_at ? formatDate(order.created_at) : '—'}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="space-y-0.5 max-w-[200px]">
+                              {(order.items ?? []).slice(0, 2).map((item, i) => (
+                                <div
+                                  key={i}
+                                  className="text-xs text-muted-foreground dark:text-muted-foreground truncate"
+                                >
+                                  {item.quantity}× {item.product_name}
                                 </div>
-                              ) : order.status === 'shipped' ? (
-                                <span className="text-2xs text-muted-foreground italic">
-                                  Erledigt
-                                </span>
-                              ) : order.status === 'cancelled' ? (
-                                <span className="text-2xs text-error-400 italic">Storniert</span>
-                              ) : order.payment_status !== 'paid' ? (
-                                <div className="flex items-center justify-end gap-1">
-                                  <span className="text-2xs text-muted-foreground italic">
-                                    Warte auf Zahlung
-                                  </span>
+                              ))}
+                              {(order.items ?? []).length > 2 && (
+                                <p className="text-2xs text-muted-foreground">
+                                  +{(order.items ?? []).length - 2} weitere
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-medium text-foreground dark:text-white tabular-nums">
+                            {formatCurrency(order.total_amount)}
+                          </TableCell>
+                          <TableCell className="text-center hidden sm:table-cell">
+                            <Badge
+                              variant={order.payment_status === 'paid' ? 'default' : 'secondary'}
+                              className={`text-2xs px-1.5 py-0 ${
+                                order.payment_status === 'paid'
+                                  ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30'
+                                  : ''
+                              }`}
+                            >
+                              {order.payment_status === 'paid' ? 'Bezahlt' : 'Ausstehend'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              className={`text-2xs px-2 py-0.5 border ${STATUS_COLORS[order.status] || STATUS_COLORS.pending}`}
+                            >
+                              <StatusIcon className="h-3 w-3 mr-1 inline" />
+                              {STATUS_LABELS[order.status] || order.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {nextAction && order.payment_status === 'paid' ? (
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs gap-1 border-brand-light/30 text-brand-light hover:bg-brand-light/5"
+                                  disabled={updatingOrderId === order.id}
+                                  onClick={() => handleAdvanceStatus(order.id, nextAction.next)}
+                                >
+                                  {updatingOrderId === order.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <nextAction.icon className="h-3 w-3" />
+                                  )}
+                                  {nextAction.label}
+                                </Button>
+                                {order.status === 'pending' && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
@@ -1176,15 +1125,37 @@ export default function AdminShopPage() {
                                   >
                                     <X className="h-4 w-4" />
                                   </Button>
-                                </div>
-                              ) : null}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                                )}
+                              </div>
+                            ) : order.status === 'shipped' ? (
+                              <span className="text-2xs text-muted-foreground italic">
+                                Erledigt
+                              </span>
+                            ) : order.status === 'cancelled' ? (
+                              <span className="text-2xs text-error-400 italic">Storniert</span>
+                            ) : order.payment_status !== 'paid' ? (
+                              <div className="flex items-center justify-end gap-1">
+                                <span className="text-2xs text-muted-foreground italic">
+                                  Warte auf Zahlung
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-error-500 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20"
+                                  disabled={updatingOrderId === order.id}
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  title="Stornieren"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : null}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           )}

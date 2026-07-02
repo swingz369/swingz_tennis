@@ -66,17 +66,44 @@ interface LineItem {
 function InvoiceStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
     draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
-    open: { label: 'Offen', className: 'bg-sky-100 text-sky-700' },
-    sent: { label: 'Versendet', className: 'bg-info-100 text-info-700' },
-    reminder_sent: { label: 'Erinnerung', className: 'bg-yellow-100 text-yellow-700' },
-    partially_paid: { label: 'Teilbezahlt', className: 'bg-orange-100 text-orange-700' },
-    paid: { label: 'Bezahlt', className: 'bg-success-100 text-success-700' },
-    overdue: { label: 'Überfällig', className: 'bg-error-100 text-error-700' },
-    dunning: { label: 'Mahnung', className: 'bg-error-200 text-error-900 font-bold' },
+    open: {
+      label: 'Offen',
+      className: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+    },
+    sent: {
+      label: 'Versendet',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
+    },
+    reminder_sent: {
+      label: 'Erinnerung',
+      className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+    },
+    partially_paid: {
+      label: 'Teilbezahlt',
+      className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    },
+    paid: {
+      label: 'Bezahlt',
+      className: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
+    },
+    overdue: {
+      label: 'Überfällig',
+      className: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
+    },
+    dunning: {
+      label: 'Mahnung',
+      className: 'bg-error-200 text-error-900 font-bold dark:bg-error-900/50 dark:text-error-200',
+    },
     cancelled: { label: 'Storniert', className: 'bg-muted text-muted-foreground line-through' },
     void: { label: 'Ungültig', className: 'bg-muted text-muted-foreground line-through' },
-    uncollectible: { label: 'Uneinbringlich', className: 'bg-error-100 text-error-700 italic' },
-    refunded: { label: 'Erstattet', className: 'bg-purple-100 text-purple-700' },
+    uncollectible: {
+      label: 'Uneinbringlich',
+      className: 'bg-error-100 text-error-700 italic dark:bg-error-900/30 dark:text-error-300',
+    },
+    refunded: {
+      label: 'Erstattet',
+      className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    },
   };
   const c = config[status] ?? config.draft;
   return (
@@ -86,8 +113,14 @@ function InvoiceStatusBadge({ status }: { status: string }) {
 
 function InvoiceTypeBadge({ type }: { type: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    season: { label: 'Saison', className: 'bg-purple-100 text-purple-700' },
-    membership: { label: 'Mitgliedsbeitrag', className: 'bg-info-100 text-info-700' },
+    season: {
+      label: 'Saison',
+      className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    },
+    membership: {
+      label: 'Mitgliedsbeitrag',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
+    },
     adhoc: { label: 'Zusatz', className: 'bg-muted text-muted-foreground' },
   };
   const c = config[type] ?? config.adhoc;
@@ -415,12 +448,8 @@ export default function BillingClient({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Abrechnung</h1>
-          <p className="text-muted-foreground">Rechnungen und Abrechnungen verwalten</p>
-        </div>
+      {/* Actions */}
+      <div className="flex justify-end items-center">
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleOpenPreview} disabled={previewLoading}>
             {previewLoading ? (

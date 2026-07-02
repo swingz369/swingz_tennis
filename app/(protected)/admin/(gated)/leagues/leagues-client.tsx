@@ -143,7 +143,7 @@ export default function LeaguesClient() {
           {leagues.map((league) => (
             <Card
               key={league.id}
-              className="hover:shadow-lg hover:border-brand-primary/30 transition-all duration-200 cursor-pointer group"
+              className="hover:shadow-md hover:border-brand-primary/30 transition-all duration-200 cursor-pointer group"
               onClick={() => router.push(`/admin/leagues/${league.id}`)}
             >
               <CardHeader className="pb-3">
@@ -174,8 +174,8 @@ export default function LeaguesClient() {
                   <Badge
                     className={
                       league.status === 'active'
-                        ? 'bg-success-100 text-success-800'
-                        : 'bg-gray-100 text-gray-600'
+                        ? 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300'
+                        : 'bg-muted text-muted-foreground'
                     }
                   >
                     {league.status === 'active' ? 'Aktiv' : 'Abgeschlossen'}
@@ -265,8 +265,8 @@ export default function LeaguesClient() {
 
       {/* New League Form */}
       {showNew && (
-        <Card className="border-2 border-brand-primary/20">
-          <CardHeader>
+        <Card>
+          <CardHeader className="border-b border-border dark:border-white/10">
             <CardTitle className="text-base">Neue Liga anlegen</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">

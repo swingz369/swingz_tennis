@@ -5,6 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { CheckCircle2, XCircle, Clock, Users, Search, BarChart3, ArrowUpDown } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
@@ -328,68 +336,66 @@ export default function AssignmentsClient({
             {memberStatsArray.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">Keine Daten vorhanden</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2 px-3">
-                        <button
-                          onClick={() => toggleSort('name')}
-                          className="flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground"
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <button
+                        onClick={() => toggleSort('name')}
+                        className="flex items-center gap-1 font-medium hover:text-foreground"
+                      >
+                        Mitglied <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button
+                        onClick={() => toggleSort('assigned')}
+                        className="flex items-center gap-1 font-medium hover:text-foreground ml-auto"
+                      >
+                        Zugewiesen <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button
+                        onClick={() => toggleSort('completed')}
+                        className="flex items-center gap-1 font-medium hover:text-foreground ml-auto"
+                      >
+                        Erledigt <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <button
+                        onClick={() => toggleSort('rate')}
+                        className="flex items-center gap-1 font-medium hover:text-foreground ml-auto"
+                      >
+                        Quote <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {memberStatsArray.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium">{m.name}</TableCell>
+                      <TableCell className="text-right">{m.assigned}</TableCell>
+                      <TableCell className="text-right text-success-600">{m.completed}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          className={`text-xs ${
+                            m.rate >= 80
+                              ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
+                              : m.rate >= 50
+                                ? 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300'
+                                : 'bg-error-100 text-error-800 dark:bg-error-900/30 dark:text-error-300'
+                          }`}
                         >
-                          Mitglied <ArrowUpDown className="h-3 w-3" />
-                        </button>
-                      </th>
-                      <th className="text-right py-2 px-3">
-                        <button
-                          onClick={() => toggleSort('assigned')}
-                          className="flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground ml-auto"
-                        >
-                          Zugewiesen <ArrowUpDown className="h-3 w-3" />
-                        </button>
-                      </th>
-                      <th className="text-right py-2 px-3">
-                        <button
-                          onClick={() => toggleSort('completed')}
-                          className="flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground ml-auto"
-                        >
-                          Erledigt <ArrowUpDown className="h-3 w-3" />
-                        </button>
-                      </th>
-                      <th className="text-right py-2 px-3">
-                        <button
-                          onClick={() => toggleSort('rate')}
-                          className="flex items-center gap-1 font-medium text-muted-foreground hover:text-foreground ml-auto"
-                        >
-                          Quote <ArrowUpDown className="h-3 w-3" />
-                        </button>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {memberStatsArray.map((m) => (
-                      <tr key={m.id} className="border-b last:border-0 hover:bg-muted/50">
-                        <td className="py-2.5 px-3 font-medium">{m.name}</td>
-                        <td className="py-2.5 px-3 text-right">{m.assigned}</td>
-                        <td className="py-2.5 px-3 text-right text-success-600">{m.completed}</td>
-                        <td className="py-2.5 px-3 text-right">
-                          <Badge
-                            className={`text-xs ${
-                              m.rate >= 80
-                                ? 'bg-success-100 text-success-800'
-                                : m.rate >= 50
-                                  ? 'bg-warning-100 text-warning-800'
-                                  : 'bg-error-100 text-error-800'
-                            }`}
-                          >
-                            {m.rate}%
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          {m.rate}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

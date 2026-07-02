@@ -452,10 +452,10 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
+        <div className="p-5 border-b border-border dark:border-white/10">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 flex items-center justify-center shrink-0">
+              <div className="h-12 w-12 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
                 <User className="h-6 w-6 text-brand-primary" />
               </div>
               <div className="min-w-0">

@@ -1,4 +1,5 @@
 import { requireAdminClub } from '@/lib/admin-context';
+import { PageHeader } from '@/components/ui/page-header';
 import AssignmentsClient from './assignments-client';
 
 export const metadata = {
@@ -63,12 +64,14 @@ export default async function AssignmentsPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Zuweisungen</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Übersicht aller Arbeitsdienst-Zuweisungen und deren Status
-        </p>
-      </div>
+      <PageHeader
+        title="Zuweisungen"
+        description="Übersicht aller Arbeitsdienst-Zuweisungen und deren Status"
+        breadcrumbs={[
+          { label: 'Arbeitsdienste', href: '/admin/work-duties' },
+          { label: 'Zuweisungen' },
+        ]}
+      />
       <AssignmentsClient duties={enrichedDuties} memberStats={memberStats} />
     </div>
   );

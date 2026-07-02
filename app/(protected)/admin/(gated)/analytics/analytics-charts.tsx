@@ -43,8 +43,10 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                 <Tooltip
                   contentStyle={{
                     borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid hsl(var(--border))',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    backgroundColor: 'hsl(var(--popover))',
+                    color: 'hsl(var(--popover-foreground))',
                   }}
                   formatter={(value) => [value, 'Buchungen']}
                 />
@@ -89,8 +91,10 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                   formatter={(value) => `€${Number(value).toLocaleString()}`}
                   contentStyle={{
                     borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid hsl(var(--border))',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    backgroundColor: 'hsl(var(--popover))',
+                    color: 'hsl(var(--popover-foreground))',
                   }}
                 />
               </PieChart>
@@ -123,8 +127,10 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                 <Tooltip
                   contentStyle={{
                     borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid hsl(var(--border))',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    backgroundColor: 'hsl(var(--popover))',
+                    color: 'hsl(var(--popover-foreground))',
                   }}
                   formatter={(value) => [value, 'Sessions']}
                 />
@@ -165,8 +171,10 @@ export function AnalyticsCharts({ data }: { data: ChartData }) {
                 <Tooltip
                   contentStyle={{
                     borderRadius: '8px',
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid hsl(var(--border))',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    backgroundColor: 'hsl(var(--popover))',
+                    color: 'hsl(var(--popover-foreground))',
                   }}
                   formatter={(value) => [`${value}%`, 'Auslastung']}
                 />

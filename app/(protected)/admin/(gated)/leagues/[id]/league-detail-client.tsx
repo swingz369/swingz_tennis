@@ -8,6 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   ArrowLeft,
   Users,
   Plus,
@@ -477,7 +485,10 @@ export default function LeagueDetailClient({
             <h1 className="text-2xl font-bold text-brand-primary">{league.name}</h1>
             <div className="flex gap-2 mt-2 flex-wrap">
               {league.nuliga_url && (
-                <Badge variant="outline" className="gap-1 text-info-600 border-info-200">
+                <Badge
+                  variant="outline"
+                  className="gap-1 text-info-600 dark:text-info-400 border-info-200 dark:border-info-800/40"
+                >
                   <Link2 className="h-3 w-3" /> nuLiga verbunden
                 </Badge>
               )}
@@ -488,8 +499,8 @@ export default function LeagueDetailClient({
               <Badge
                 className={
                   league.status === 'active'
-                    ? 'bg-success-100 text-success-800'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300'
+                    : 'bg-muted text-muted-foreground'
                 }
               >
                 {league.status === 'active' ? 'Aktiv' : 'Abgeschlossen'}
@@ -932,10 +943,10 @@ export default function LeagueDetailClient({
                               <Badge
                                 className={`text-xs font-semibold ${
                                   md.result === 'win'
-                                    ? 'bg-success-100 text-success-800'
+                                    ? 'bg-success-100 text-success-800 dark:bg-success-900/20 dark:text-success-300'
                                     : md.result === 'loss'
-                                      ? 'bg-error-100 text-error-800'
-                                      : 'bg-warning-100 text-warning-800'
+                                      ? 'bg-error-100 text-error-800 dark:bg-error-900/20 dark:text-error-300'
+                                      : 'bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-300'
                                 }`}
                               >
                                 {md.result === 'win'
@@ -1422,60 +1433,46 @@ export default function LeagueDetailClient({
             </div>
           ) : (
             <div className="rounded-md border overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider w-10">
-                      #
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
-                      Team
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
-                      Sp
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
-                      S
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
-                      U
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
-                      N
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">
-                      Punkte
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">#</TableHead>
+                    <TableHead>Team</TableHead>
+                    <TableHead className="text-center">Sp</TableHead>
+                    <TableHead className="text-center">S</TableHead>
+                    <TableHead className="text-center">U</TableHead>
+                    <TableHead className="text-center">N</TableHead>
+                    <TableHead className="text-right">Punkte</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {[...league.teams]
                     .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
                     .map((team, idx) => (
-                      <tr key={team.id} className="hover:bg-muted/50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-mono text-muted-foreground">
+                      <TableRow key={team.id}>
+                        <TableCell className="font-mono text-muted-foreground">
                           {team.position ?? idx + 1}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-medium">{team.name}</td>
-                        <td className="px-4 py-3 text-sm text-center tabular-nums">
+                        </TableCell>
+                        <TableCell className="font-medium">{team.name}</TableCell>
+                        <TableCell className="text-center tabular-nums">
                           {team.matches_played}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-center tabular-nums text-success-600">
+                        </TableCell>
+                        <TableCell className="text-center tabular-nums text-success-600 dark:text-success-400">
                           {team.matches_won}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-center tabular-nums text-warning-600">
+                        </TableCell>
+                        <TableCell className="text-center tabular-nums text-warning-600 dark:text-warning-400">
                           {team.matches_drawn}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-center tabular-nums text-error-600">
+                        </TableCell>
+                        <TableCell className="text-center tabular-nums text-error-600 dark:text-error-400">
                           {team.matches_lost}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right font-bold tabular-nums">
+                        </TableCell>
+                        <TableCell className="text-right font-bold tabular-nums">
                           {team.points}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </TabsContent>

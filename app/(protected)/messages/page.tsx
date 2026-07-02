@@ -35,8 +35,9 @@ import {
   CheckCircle2,
   Newspaper,
 } from 'lucide-react';
-import { AnimatedCounter, ScrollReveal } from '@/components/animations';
-import { Card, CardContent } from '@/components/ui/card';
+import { ScrollReveal } from '@/components/animations';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
 import { RichTextEditor } from '@/components/messages/RichTextEditor';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
@@ -200,123 +201,62 @@ function MessagesContent() {
 
   return (
     <div className="space-y-6">
-      {/* ── Hero Header ── */}
+      {/* ── Header ── */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/70 mb-1">Kommunikation</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Nachrichten</h1>
-                <p className="text-white/70 mt-2">Verwalte deine Nachrichten und Kommunikation</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => setComposeOpen(true)}
-                  className="bg-background/15 backdrop-blur-sm border-white/20 text-white hover:bg-background/25 gap-2"
-                >
-                  <PenSquare className="h-4 w-4" />
-                  Neue Nachricht
-                </Button>
-                {unreadCount > 0 && (
-                  <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">
-                    <Mail className="h-5 w-5 text-brand-accent" />
-                    <span className="text-sm font-medium">
-                      <AnimatedCounter value={unreadCount} /> ungelesen
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Nachrichten"
+          description="Verwalte deine Nachrichten und Kommunikation"
+          actions={[
+            { label: 'Neue Nachricht', icon: PenSquare, onClick: () => setComposeOpen(true) },
+          ]}
+        />
       </ScrollReveal>
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ScrollReveal delay={0}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Ungelesen</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={unreadCount} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">im Posteingang</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-error-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <Mail className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={Mail}
+            label="Ungelesen"
+            value={unreadCount}
+            sub="im Posteingang"
+            color="red"
+            animate
+          />
         </ScrollReveal>
 
         <ScrollReveal delay={80}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {folder === 'inbox' ? 'Posteingang' : 'Gesendet'}
-                  </p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={totalMessages} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Nachrichten</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={MessageSquare}
+            label={folder === 'inbox' ? 'Posteingang' : 'Gesendet'}
+            value={totalMessages}
+            sub="Nachrichten"
+            color="blue"
+            animate
+          />
         </ScrollReveal>
 
         <ScrollReveal delay={160}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Gelesen</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter value={readMessages} />
-                  </p>
-                  <p className="text-xs text-muted-foreground">Nachrichten</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={CheckCircle2}
+            label="Gelesen"
+            value={readMessages}
+            sub="Nachrichten"
+            color="green"
+            animate
+          />
         </ScrollReveal>
 
         <ScrollReveal delay={240}>
-          <Card className="group cursor-pointer hover-lift transition-all duration-300 border border-border dark:border-white/10">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Leserate</p>
-                  <p className="text-3xl font-bold text-foreground dark:text-white">
-                    <AnimatedCounter
-                      value={
-                        totalMessages > 0 ? Math.round((readMessages / totalMessages) * 100) : 0
-                      }
-                      suffix="%"
-                    />
-                  </p>
-                  <p className="text-xs text-muted-foreground">gelesen</p>
-                </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
-                  <MailOpen className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={MailOpen}
+            label="Leserate"
+            value={totalMessages > 0 ? Math.round((readMessages / totalMessages) * 100) : 0}
+            sub="gelesen"
+            color="orange"
+            suffix="%"
+            animate
+          />
         </ScrollReveal>
       </div>
 
@@ -496,7 +436,7 @@ function MessageList({
                   {person.full_name}
                 </span>
                 {isBroadcast && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 text-[9px] font-semibold text-info-700 border border-info-100">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-info-50 dark:bg-info-900/20 text-[9px] font-semibold text-info-700 dark:text-info-300 border border-info-100 dark:border-info-700/30">
                     <Users className="h-2.5 w-2.5" />
                     Rundnachricht
                   </span>
