@@ -4,14 +4,11 @@ import { useMemo } from 'react';
 import { Clock, User, MapPin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSessions, type Session } from '@/hooks/use-sessions';
 import { useUserRoles, useUserClub } from '@/hooks/use-user-data';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { CalendarShell } from '@/components/calendar/CalendarShell';
-import { apiFetch } from '@/lib/api-fetch';
-import { toast } from 'sonner';
 
 // ponytail: module-level so Date.now() isn't called on each render (react-hooks/purity)
 const ADMIN_DATE_FROM = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -97,19 +94,6 @@ export default function SchedulerPage() {
     return slotMap.get(`${dayOfWeek}-${time}`) ?? [];
   };
 
-  const handleOptimize = async () => {
-    if (!clubId) return;
-    try {
-      await apiFetch('/api/schedule/optimize', {
-        method: 'POST',
-        body: JSON.stringify({ clubId }),
-      });
-      toast.success('Stundenplan optimiert');
-    } catch {
-      toast.error('Optimierung fehlgeschlagen');
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -144,79 +128,78 @@ export default function SchedulerPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <CalendarShell
-        title="Stundenplan"
-        subtitle={subtitle}
-        controls={
-          isAdmin ? (
-            <Button onClick={handleOptimize} variant="accent" className="flex items-center gap-2">
-              <Sparkles size={16} />
-              KI-Optimierung
-            </Button>
-          ) : undefined
-        }
-      />
+      <CalendarShell title="Stundenplan" subtitle={subtitle} />
 
-      {/* Weekly template grid */}
-      <Card variant="elevated" padding="none" className="overflow-x-auto">
-        <div className="min-w-[768px]">
-          {/* Header: days */}
-          <div className="grid grid-cols-8 border-b border-border bg-muted">
-            <div className="p-3 text-sm font-medium text-muted-foreground border-r border-border">
-              Uhrzeit
-            </div>
-            {DAYS.map((day) => (
-              <div
-                key={day}
-                className="p-3 text-sm font-semibold text-center text-brand-primary border-r border-border last:border-r-0"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
+      <Tabs defaultValue="grid">
+        <TabsList>
+          <TabsTrigger value="grid">Tabellenansicht</TabsTrigger>
+          <TabsTrigger value="list">
+            {isMember
+              ? 'Meine gebuchten Sessions'
+              : isTrainer
+                ? 'Meine Einheiten'
+                : 'Alle Sessions'}
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Time rows */}
-          {TIME_SLOTS.map((time) => (
-            <div key={time} className="grid grid-cols-8 border-b border-border last:border-b-0">
-              <div className="p-2 text-sm text-muted-foreground border-r border-border text-center bg-muted">
-                {time}
-              </div>
-              {DAYS.map((_, dayIdx) => {
-                const sessions = getSessionsForSlot(dayIdx, time);
-                return (
+        <TabsContent value="grid">
+          {/* Weekly template grid */}
+          <Card variant="elevated" padding="none" className="overflow-x-auto">
+            <div className="min-w-[768px]">
+              {/* Header: days */}
+              <div className="grid grid-cols-8 border-b border-border bg-muted">
+                <div className="p-3 text-sm font-medium text-muted-foreground border-r border-border">
+                  Uhrzeit
+                </div>
+                {DAYS.map((day) => (
                   <div
-                    key={dayIdx}
-                    className="min-h-[60px] border-r border-border last:border-r-0 p-1.5 hover:bg-muted/50"
+                    key={day}
+                    className="p-3 text-sm font-semibold text-center text-brand-primary border-r border-border last:border-r-0"
                   >
-                    {sessions.map((s) => (
-                      <SessionSlotCard key={s.id} session={s} />
-                    ))}
+                    {day}
                   </div>
-                );
-              })}
+                ))}
+              </div>
+
+              {/* Time rows */}
+              {TIME_SLOTS.map((time) => (
+                <div key={time} className="grid grid-cols-8 border-b border-border last:border-b-0">
+                  <div className="p-2 text-sm text-muted-foreground border-r border-border text-center bg-muted">
+                    {time}
+                  </div>
+                  {DAYS.map((_, dayIdx) => {
+                    const sessions = getSessionsForSlot(dayIdx, time);
+                    return (
+                      <div
+                        key={dayIdx}
+                        className="min-h-[60px] border-r border-border last:border-r-0 p-1.5 hover:bg-muted/50"
+                      >
+                        {sessions.map((s) => (
+                          <SessionSlotCard key={s.id} session={s} />
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </Card>
+          </Card>
+        </TabsContent>
 
-      {/* Session list */}
-      <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-brand-primary">
-          {isMember ? 'Meine gebuchten Sessions' : isTrainer ? 'Meine Einheiten' : 'Alle Sessions'}
-        </h3>
-
-        {listSessions.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-4 text-center">
-            {isMember ? 'Du hast noch keine Sessions gebucht.' : 'Keine Sessions gefunden.'}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {listSessions.slice(0, 30).map((session: Session) => (
-              <SessionCard key={session.id} session={session} />
-            ))}
-          </div>
-        )}
-      </div>
+        <TabsContent value="list">
+          {listSessions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              {isMember ? 'Du hast noch keine Sessions gebucht.' : 'Keine Sessions gefunden.'}
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {listSessions.slice(0, 30).map((session: Session) => (
+                <SessionCard key={session.id} session={session} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -42,6 +42,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { Checkbox } from '@/components/ui/checkbox';
 import TrainerImportDialog from '@/components/admin/trainer-import-dialog';
+import { PageHeader } from '@/components/ui/page-header';
 
 export interface TrainerAvailabilitySlot {
   id: string;
@@ -359,14 +360,12 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in space-y-6">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-brand-primary">Trainer-Verwaltung</h1>
-          <p className="text-muted-foreground dark:text-muted-foreground mt-1 text-sm">
-            Übersicht und Management aller Trainerprofile
-          </p>
-        </div>
+        <PageHeader
+          title="Trainer-Verwaltung"
+          description="Übersicht und Management aller Trainerprofile"
+          breadcrumbs={[{ label: 'Trainer-Profile' }]}
+        />
         <div className="flex items-center gap-3">
           <TrainerImportDialog onImportComplete={loadTrainers} />
           <Button size="md" variant="primary" onClick={() => setShowInviteForm(true)}>

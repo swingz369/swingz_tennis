@@ -73,7 +73,12 @@ export async function requireAdminClub(): Promise<AdminContext> {
   let clubId: string | null = null;
 
   if (isSuperadmin) {
-    clubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+    const isValid = (memberships ?? []).some(
+      (m: { role: string; club_id: string | null }) =>
+        m.role === 'superadmin' && m.club_id === cookieClubId
+    );
+    clubId = isValid ? cookieClubId : null;
     if (!clubId) redirect('/select-admin-club');
   } else {
     // Also honor ADMIN_CLUB_COOKIE for regular admins (allows club switching across managed clubs)

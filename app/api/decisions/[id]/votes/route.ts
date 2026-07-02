@@ -18,6 +18,28 @@ import { decisionService } from '@/lib/decisions/decision.service';
 const log = createLogger('api:decisions/votes');
 const sb = createServiceClient();
 
+/** GET /api/decisions/[id]/votes → current user's own vote on this decision (or null). */
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  return withApiAuth(request, async (auth) => {
+    const hasRole = await verifyRole(auth, 'member');
+    if (!hasRole) return forbiddenResponse('Login erforderlich');
+
+    const { id } = await params;
+    const { data, error } = await sb
+      .from('decision_votes')
+      .select('id, decision_id, voter_id, choice, voted_at')
+      .eq('decision_id', id)
+      .eq('voter_id', auth.user.id)
+      .maybeSingle();
+
+    if (error) {
+      log.error('vote lookup failed', { decisionId: id, error: error.message });
+      return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 });
+    }
+    return NextResponse.json({ vote: data ?? null });
+  });
+}
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withCSRFProtection(request, async () => {
     return withApiAuth(request, async (auth) => {

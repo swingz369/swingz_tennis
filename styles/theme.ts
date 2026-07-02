@@ -127,6 +127,9 @@ export const typography = {
   fontFamily: {
     sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
     display: ['"Clash Display"', '"DM Sans"', 'system-ui', 'sans-serif'],
+    // Marketing-only (Editorial Sports theme). Pally via Fontshare CDN — switch
+    // to PP Editorial New once Pangram license is procured (~next/font/local).
+    editorial: ['"Pally"', '"PP Editorial New"', 'Georgia', 'serif'],
     mono: ['"JetBrains Mono"', 'Consolas', 'monospace'],
   },
   fontSize: {

@@ -20,8 +20,6 @@ interface PremiumAdminHeroProps {
   firstName: string;
   clubName: string;
   isSuperadmin: boolean;
-  memberCount: number;
-  trainerCount: number;
   todaySessionCount: number;
 }
 
@@ -35,8 +33,6 @@ export function PremiumAdminHero({
   firstName,
   clubName,
   isSuperadmin,
-  memberCount,
-  trainerCount,
   todaySessionCount,
 }: PremiumAdminHeroProps) {
   const todayLabel = new Date().toLocaleDateString('de-DE', {
@@ -119,36 +115,6 @@ export function PremiumAdminHero({
             </strong>{' '}
             {todaySessionCount === 1 ? 'Session' : 'Sessions'} auf dem Plan.
           </p>
-
-          {/* Compact stat strip */}
-          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-mono font-bold tracking-tighter tabular-nums">
-                <AnimatedCounter value={memberCount} />
-              </span>
-              <span className="text-white/60 text-xs uppercase tracking-wider font-medium">
-                Mitglieder
-              </span>
-            </div>
-            <span className="hidden sm:inline-block h-6 w-px bg-white/15" />
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-mono font-bold tracking-tighter tabular-nums">
-                <AnimatedCounter value={trainerCount} />
-              </span>
-              <span className="text-white/60 text-xs uppercase tracking-wider font-medium">
-                Trainer
-              </span>
-            </div>
-            <span className="hidden sm:inline-block h-6 w-px bg-white/15" />
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-mono font-bold tracking-tighter tabular-nums">
-                <AnimatedCounter value={todaySessionCount} />
-              </span>
-              <span className="text-white/60 text-xs uppercase tracking-wider font-medium">
-                Heute Sessions
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 
@@ -37,30 +37,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
     const { data: club } = await supabase.from('clubs').select('id').eq('id', clubId).maybeSingle();
     if (!club) redirect('/select-admin-club');
-  }
-
-  // Onboarding check for non-superadmin admins only
-  // (superadmin always has access regardless of setup state)
-  if (!isSuperadmin && isAdmin) {
-    const adminMembership = memberships.find((m: any) => m.role === 'admin');
-    const clubId = adminMembership?.club_id;
-
-    if (clubId) {
-      const { data: clubData } = await supabase
-        .from('clubs')
-        .select('setup_completed_at')
-        .eq('id', clubId)
-        .maybeSingle();
-
-      if (clubData && !clubData.setup_completed_at) {
-        const headersList = await headers();
-        const pathname = headersList.get('x-pathname') ?? headersList.get('x-invoke-path') ?? '';
-        const isOnboarding = pathname.includes('/admin/onboarding');
-        if (!isOnboarding) {
-          redirect('/admin/onboarding');
-        }
-      }
-    }
   }
 
   return <>{children}</>;

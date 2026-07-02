@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, STALE_TIMES } from '@/lib/cache';
 import { fetchJSON } from '@/lib/fetch-utils';
 
-export type UserRole = 'superadmin' | 'admin' | 'trainer' | 'member';
+export type UserRole = 'owner' | 'superadmin' | 'admin' | 'trainer' | 'member';
 
 export interface UserClubData {
   clubId: string | null;
@@ -45,6 +45,7 @@ export interface UserMemberData {
 }
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
+  owner: 5,
   superadmin: 4,
   admin: 3,
   trainer: 2,
@@ -123,6 +124,10 @@ export function useHasRole(requiredRole: UserRole) {
     isLoading: false,
     currentRole: highestRole,
   };
+}
+
+export function useIsOwner() {
+  return useHasRole('owner');
 }
 
 export function useIsSuperadmin() {

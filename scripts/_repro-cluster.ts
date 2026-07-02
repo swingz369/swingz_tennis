@@ -47,7 +47,7 @@ async function probeWhitelist(
   sb: ReturnType<typeof createServiceClient>,
   seasonId: string,
   clubId: string,
-  candidates: string[],
+  candidates: string[]
 ): Promise<WhitelistProbeResult[]> {
   const results: WhitelistProbeResult[] = [];
   for (const value of candidates) {
@@ -117,9 +117,13 @@ async function main(): Promise<void> {
   console.log('=== Layer 1: 23514-fix precondition probe ===');
   const candidates = [
     // Trigger-emitted values (Variante A: Whitelist widens these)
-    'created', 'updated', 'deleted',
+    'created',
+    'updated',
+    'deleted',
     // Trigger-mapped values (Variante B: Trigger uses these instead)
-    'entry_added', 'entry_modified', 'entry_removed',
+    'entry_added',
+    'entry_modified',
+    'entry_removed',
   ];
   const probeResults = await probeWhitelist(sb, season.id, club.id, candidates);
   for (const p of probeResults) console.log(fmtProbeRow(p));
@@ -132,8 +136,12 @@ async function main(): Promise<void> {
     .every((p) => p.ok);
 
   console.log('');
-  console.log(`  Trigger-emitted ('created'/'updated'/'deleted') accepted?     ${triggerEmittedOk}`);
-  console.log(`  Trigger-mapped   ('entry_added'/'entry_modified'/'entry_removed') accepted? ${triggerMappedOk}`);
+  console.log(
+    `  Trigger-emitted ('created'/'updated'/'deleted') accepted?     ${triggerEmittedOk}`
+  );
+  console.log(
+    `  Trigger-mapped   ('entry_added'/'entry_modified'/'entry_removed') accepted? ${triggerMappedOk}`
+  );
 
   // Explicit MIXED detection: if BOTH sets accepted, the CHECK was widened AND
   // the trigger was mapped — semantically dirty state (the trigger now writes
@@ -157,14 +165,20 @@ async function main(): Promise<void> {
           : 'NICHT angewendet — 23514 fix noch ausstehend';
   console.log(`  Detected fix variant: ${fixVariant}  //  ${fixLabel}`);
   if (fixVariant === 'MIXED') {
-    console.log('  [advisory] Trigger emittiert eventuell beide Sets — Whitelist dedupliziert nicht.');
-    console.log('  [advisory] Empfehlung: Trigger-Emission normalisieren ODER Whitelist auf exakt 11 Werte reduzieren.');
+    console.log(
+      '  [advisory] Trigger emittiert eventuell beide Sets — Whitelist dedupliziert nicht.'
+    );
+    console.log(
+      '  [advisory] Empfehlung: Trigger-Emission normalisieren ODER Whitelist auf exakt 11 Werte reduzieren.'
+    );
   }
   console.log('');
 
   if (fixVariant === 'NONE') {
     console.log('=== Layer 2 SKIPPED: 23514 fix not yet applied on live DB. ===');
-    console.log('Apply ticket 3.7.3 (Variant A or B) via `npx supabase db push` on dev-machine first,');
+    console.log(
+      'Apply ticket 3.7.3 (Variant A or B) via `npx supabase db push` on dev-machine first,'
+    );
     console.log('then re-run `npx tsx scripts/_repro-cluster.ts`.');
     process.exit(2);
   }
@@ -180,28 +194,29 @@ async function main(): Promise<void> {
   console.log(`  season_plan_entries rows BEFORE run: ${beforeCount ?? 0}`);
 
   try {
-    const engine = new SeasonClusteringEngine({
-      seasonId: season.id,
-      clubId: club.id,
-      autoResolveConflicts: true,
-    });
+    const engine = new SeasonClusteringEngine(season.id, club.id);
     const result = await engine.runClustering(false);
-    const success = result.success === true;
-    const entriesCount = result.entries?.length ?? 0;
+    // ClusteringResult has no success/error field — a thrown exception (caught
+    // below, exit 5) is the only failure signal; reaching here means success.
+    const success = true;
+    const entriesCount = result.groups?.length ?? 0;
 
-    console.log('  runClustering returned:', JSON.stringify({
-      success: result.success,
-      entries_count: entriesCount,
-      conflicts_count: result.conflicts?.length ?? 0,
-      error: result.error ?? null,
-    }));
+    console.log(
+      '  runClustering returned:',
+      JSON.stringify({
+        groups_count: entriesCount,
+        unassigned_count: result.unassignedMembers?.length ?? 0,
+      })
+    );
 
     // Snapshot AFTER run.
     const { count: afterCount } = await sb
       .from('season_plan_entries')
       .select('*', { count: 'exact', head: true })
       .eq('season_id', season.id);
-    console.log(`  season_plan_entries rows AFTER  run: ${afterCount ?? 0}  (delta: ${(afterCount ?? 0) - (beforeCount ?? 0)})`);
+    console.log(
+      `  season_plan_entries rows AFTER  run: ${afterCount ?? 0}  (delta: ${(afterCount ?? 0) - (beforeCount ?? 0)})`
+    );
 
     const pipelineOk = success && entriesCount >= 1;
     // Re-running against an already-clustered season can produce 0 new rows
@@ -215,8 +230,12 @@ async function main(): Promise<void> {
     console.log('');
     console.log('=== Layer 2 verdict ===');
     console.log(`  runClustering success (HTTP 200 implicit):   ${success}`);
-    console.log(`  entries.length >= 1:                          ${entriesCount >= 1}  (entries=${entriesCount})`);
-    console.log(`  season_plan_entries delta > 0:                ${deltaOk}  (delta=${rowcountDelta}, advisory only)`);
+    console.log(
+      `  entries.length >= 1:                          ${entriesCount >= 1}  (entries=${entriesCount})`
+    );
+    console.log(
+      `  season_plan_entries delta > 0:                ${deltaOk}  (delta=${rowcountDelta}, advisory only)`
+    );
     console.log(`  pipeline_ok:                                  ${pipelineOk}`);
 
     if (!success) {
@@ -235,19 +254,31 @@ async function main(): Promise<void> {
       if (beforeCount === null) {
         console.error('=== INFRA FAIL — season_plan_entries count query returned null ===');
         console.error('  Supabase could not compute row count (table missing / RLS / network).');
-        console.error(`  Hint: verify SELECT COUNT(*) FROM season_plan_entries works manually as service-role;`);
-        console.error('  Hint: check RLS policies on season_plan_entries, SUPABASE_SERVICE_ROLE_KEY env, table presence.');
+        console.error(
+          `  Hint: verify SELECT COUNT(*) FROM season_plan_entries works manually as service-role;`
+        );
+        console.error(
+          '  Hint: check RLS policies on season_plan_entries, SUPABASE_SERVICE_ROLE_KEY env, table presence.'
+        );
         console.error(`  delta=${rowcountDelta} → cannot verify acceptance criterion.`);
         process.exit(6);
       }
       if (beforeCount === 0) {
         console.error('=== PIPELINE FAIL — fresh season (beforeCount=0) but no row landed ===');
-        console.error(`  delta=${rowcountDelta}, but user acceptance is "≥1 row landed in season_plan_entries".`);
-        console.error('  Hint: engine.persistEntries() may be silently dropping plan rows. Inspect season_plan_entries schema drift.');
+        console.error(
+          `  delta=${rowcountDelta}, but user acceptance is "≥1 row landed in season_plan_entries".`
+        );
+        console.error(
+          '  Hint: engine.persistEntries() may be silently dropping plan rows. Inspect season_plan_entries schema drift.'
+        );
         process.exit(4);
       }
-      console.warn(`  [advisory] season_plan_entries row count did not increase (delta=${rowcountDelta}).`);
-      console.warn('  [advisory] Likely root cause: re-run against already-clustered season, engine deduplicates.');
+      console.warn(
+        `  [advisory] season_plan_entries row count did not increase (delta=${rowcountDelta}).`
+      );
+      console.warn(
+        '  [advisory] Likely root cause: re-run against already-clustered season, engine deduplicates.'
+      );
       console.warn('  [advisory] Re-running against a fresh season_id will show delta > 0.');
     }
     console.log('');
@@ -266,7 +297,13 @@ async function main(): Promise<void> {
     const err = e as Error;
     console.error('=== Pipeline threw ===');
     console.error('  message:', err?.message);
-    console.error('  stack head:', String(err?.stack ?? '').split('\n').slice(0, 6).join('\n'));
+    console.error(
+      '  stack head:',
+      String(err?.stack ?? '')
+        .split('\n')
+        .slice(0, 6)
+        .join('\n')
+    );
     process.exit(5);
   }
 }

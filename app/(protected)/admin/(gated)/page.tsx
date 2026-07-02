@@ -48,6 +48,8 @@ export default async function AdminPage() {
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
+  const nowISO = new Date().toISOString();
+
   // Current month range
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -109,7 +111,7 @@ export default async function AdminPage() {
           'id, timeslot_start, timeslot_end, courts(name), schedules!inner(club_id), trainers(name)'
         )
         .eq('schedules.club_id', clubId)
-        .gte('timeslot_start', todayStart.toISOString())
+        .gte('timeslot_end', nowISO)
         .lte('timeslot_start', todayEnd.toISOString())
         .order('timeslot_start', { ascending: true })
         .limit(6)
@@ -265,7 +267,7 @@ export default async function AdminPage() {
   smartActions.push({
     label: 'Platz verwalten',
     description: 'Plätze sperren oder Kalender einsehen',
-    href: '/admin/courts/manage',
+    href: '/bookings?tab=manage',
     icon: LockKeyhole,
     variant: 'purple',
   });
@@ -370,8 +372,6 @@ export default async function AdminPage() {
           firstName={firstName}
           clubName={club.name}
           isSuperadmin={isSuperadmin}
-          memberCount={memberCount ?? 0}
-          trainerCount={trainerCount ?? 0}
           todaySessionCount={activeSessions ?? 0}
         />
       </ScrollReveal>

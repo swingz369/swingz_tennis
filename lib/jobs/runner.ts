@@ -14,26 +14,23 @@ export async function runJob(
   payload: Record<string, unknown>,
   fn: () => Promise<unknown>
 ): Promise<void> {
-  const sb = createServiceClient() as any;
+  const sb = createServiceClient();
 
-  // Anlegen oder existierenden Job übernehmen
-  const { data: job, error: claimErr } = await sb
-    .from('background_jobs')
-    .upsert(
-      {
-        job_name: jobName,
-        job_type: 'recurring',
-        status: 'running',
-        payload,
-        started_at: new Date().toISOString(),
-      },
-      { onConflict: 'job_name' }
-    )
-    .select('id, retry_count, max_retries')
-    .single();
+  // Atomarer Claim: schlägt fehl (0 Zeilen), wenn ein anderer Cron-Trigger
+  // den Job bereits laufen hat und dessen Lauf nicht stale ist.
+  const { data: claimed, error: claimErr } = await sb.rpc('claim_background_job', {
+    p_job_name: jobName,
+    p_job_type: 'recurring',
+    p_payload: payload,
+  });
 
-  if (claimErr || !job) {
+  if (claimErr) {
     log.error(`Job ${jobName}: Claim fehlgeschlagen`, claimErr);
+    return;
+  }
+  const job = claimed?.[0];
+  if (!job) {
+    log.info(`Job ${jobName}: läuft bereits (anderer Trigger hält den Lock), übersprungen`);
     return;
   }
 

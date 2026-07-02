@@ -57,6 +57,7 @@ const config: Config = {
       fontFamily: {
         sans: typography.fontFamily.sans,
         display: typography.fontFamily.display,
+        editorial: typography.fontFamily.editorial,
         mono: typography.fontFamily.mono,
       },
       fontSize: {

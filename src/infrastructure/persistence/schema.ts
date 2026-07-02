@@ -72,6 +72,7 @@ export const clubs = pgTable(
       weather_integration: false,
       league_lineup: false,
       work_duty: false,
+      dynamic_pricing: false,
     }),
     status: varchar('status', { length: 20 }).notNull().default('active'),
     created_at: timestamp('created_at').notNull().defaultNow(),
@@ -1936,6 +1937,12 @@ export const trialTrainings = pgTable(
     feedback_would_recommend: boolean('feedback_would_recommend'),
     // Conversion
     converted_to_member_id: uuid('converted_to_member_id'),
+    // Marketing consent (double opt-in) — see 20260730_trial_training_marketing_consent.sql
+    marketing_consent: boolean('marketing_consent').notNull().default(false),
+    marketing_consent_token: text('marketing_consent_token'),
+    marketing_consent_confirmed_at: timestamp('marketing_consent_confirmed_at', {
+      withTimezone: true,
+    }),
     // Timestamps
     created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -1951,6 +1958,9 @@ export const trialTrainings = pgTable(
     scheduled_date_idx: index('trial_trainings_scheduled_date_idx').on(table.scheduled_date),
     club_status_idx: index('trial_trainings_club_status_idx').on(table.club_id, table.status),
     club_date_idx: index('trial_trainings_club_date_idx').on(table.club_id, table.scheduled_date),
+    marketing_consent_token_idx: index('trial_trainings_marketing_consent_token_idx').on(
+      table.marketing_consent_token
+    ),
   })
 );
 

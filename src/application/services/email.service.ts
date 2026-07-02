@@ -1397,4 +1397,178 @@ Dein ${clubName}-Team
     const email = this.generateTrialRequestConfirmationEmail(data);
     return this.sendEmail(data.participantEmail, email);
   }
+
+  /**
+   * Generate the double opt-in (DOI) marketing consent confirmation email.
+   * Sent only when the participant checked the marketing consent box during
+   * trial-training signup. Clicking the link is the only way consent is
+   * confirmed — ignoring the email means no marketing mail is ever sent.
+   */
+  static generateMarketingConsentConfirmationEmail(data: {
+    participantName: string;
+    clubName: string;
+    confirmUrl: string;
+  }): EmailTemplate {
+    const { participantName, clubName, confirmUrl } = data;
+
+    const subject = 'Bitte bestätige, dass wir dir Neuigkeiten schicken dürfen';
+
+    const html = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Newsletter-Anmeldung bestätigen</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0 0 10px 0;
+      font-size: 26px;
+      font-weight: bold;
+    }
+    .header p {
+      margin: 0;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .content {
+      padding: 30px;
+    }
+    .greeting {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .button-wrap {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .button {
+      display: inline-block;
+      background: #10b981;
+      color: white !important;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .info-box {
+      background: #f8f9fa;
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #666;
+    }
+    .footer {
+      background: #f8f9fa;
+      padding: 20px 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Fast geschafft!</h1>
+      <p>${clubName}</p>
+    </div>
+
+    <div class="content">
+      <p class="greeting">
+        Hallo ${participantName},
+      </p>
+
+      <p>
+        du hast bei deiner Probetraining-Anfrage angegeben, dass du gelegentlich Neuigkeiten
+        und Angebote von SwingZ per E-Mail erhalten möchtest. Damit wir dir wirklich nur dann
+        schreiben, wenn du das auch willst, bestätige das bitte einmal mit einem Klick:
+      </p>
+
+      <div class="button-wrap">
+        <a href="${confirmUrl}" class="button">Ja, ich möchte Neuigkeiten erhalten</a>
+      </div>
+
+      <div class="info-box">
+        <p style="margin: 0;">
+          Falls du diese Anfrage nicht gestellt hast oder es dir anders überlegt hast: Du musst
+          nichts tun. Ohne deine Bestätigung erhältst du keine Marketing-E-Mails von uns — auch
+          nicht später. Deine Probetraining-Anfrage selbst ist davon nicht betroffen, die wird
+          in jedem Fall bearbeitet.
+        </p>
+      </div>
+
+      <p style="font-size: 14px; color: #555;">
+        Beste Grüße,<br>
+        Dein ${clubName}-Team
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von SwingZ generiert.</p>
+      <p>&copy; ${new Date().getFullYear()} SwingZ. Alle Rechte vorbehalten.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const text = `
+Bitte bestätige, dass wir dir Neuigkeiten schicken dürfen - ${clubName}
+
+Hallo ${participantName},
+
+du hast bei deiner Probetraining-Anfrage angegeben, dass du gelegentlich Neuigkeiten
+und Angebote von SwingZ per E-Mail erhalten möchtest. Bitte bestätige das über diesen Link:
+
+${confirmUrl}
+
+Falls du diese Anfrage nicht gestellt hast oder es dir anders überlegt hast: Du musst nichts
+tun. Ohne deine Bestätigung erhältst du keine Marketing-E-Mails von uns — auch nicht später.
+Deine Probetraining-Anfrage selbst ist davon nicht betroffen, die wird in jedem Fall bearbeitet.
+
+Beste Grüße,
+Dein ${clubName}-Team
+    `.trim();
+
+    return { subject, html, text };
+  }
+
+  /**
+   * Send the double opt-in marketing consent confirmation email.
+   */
+  static async sendMarketingConsentConfirmation(data: {
+    participantName: string;
+    participantEmail: string;
+    clubName: string;
+    confirmUrl: string;
+  }): Promise<boolean> {
+    const email = this.generateMarketingConsentConfirmationEmail(data);
+    return this.sendEmail(data.participantEmail, email);
+  }
 }

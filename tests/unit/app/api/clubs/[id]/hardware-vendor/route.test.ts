@@ -156,7 +156,8 @@ describe('PUT /api/clubs/[id]/hardware-vendor — auth + RBAC', () => {
     // auth.clubId = c1, url clubId = c2 → forbidden
     mockAuth.clubId = '11111111-1111-4111-8111-111111111111';
     const res = await callPUT(
-      makePutRequest({ hardware_vendor: 'shelly' }, '22222222-2222-4222-8222-222222222222')
+      makePutRequest({ hardware_vendor: 'shelly' }, '22222222-2222-4222-8222-222222222222'),
+      '22222222-2222-4222-8222-222222222222'
     );
     expect(res.status).toBe(403);
   });

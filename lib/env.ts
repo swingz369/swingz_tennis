@@ -41,7 +41,7 @@ export const env = createEnv({
     SENTRY_AUTH_TOKEN: z.string().optional(),
     RESEND_API_KEY: z.string().min(1),
     EMAIL_FROM: z.string().optional(),
-    CRON_SECRET: z.string().optional(),
+    CRON_SECRET: z.string().min(1),
   },
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),

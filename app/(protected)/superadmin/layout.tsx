@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { requireAuth } from '@/lib/auth';
 
 /**
@@ -43,23 +42,6 @@ export default async function SuperadminLayout({ children }: { children: React.R
       redirect('/trainer');
     } else {
       redirect('/dashboard');
-    }
-  }
-
-  // Onboarding check: superadmin must complete setup before accessing dashboard
-  const headersList = await headers();
-  const pathname = headersList.get('x-pathname') ?? headersList.get('x-invoke-path') ?? '';
-  const isOnboardingPage = pathname.includes('/superadmin/onboarding');
-
-  if (!isOnboardingPage) {
-    const { data: userData } = await supabase
-      .from('users')
-      .select('superadmin_setup_completed_at')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (!userData?.superadmin_setup_completed_at) {
-      redirect('/superadmin/onboarding');
     }
   }
 

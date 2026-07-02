@@ -33,6 +33,14 @@ export interface TrialTraining {
   convertedToMemberId?: string;
   createdAt: string;
   updatedAt: string;
+  /** Participant opted in to marketing emails (raw checkbox state, not yet DOI-confirmed) */
+  marketingConsent?: boolean;
+  /**
+   * Single-use double opt-in confirmation token. Only populated right after
+   * creation so the caller can send the DOI confirmation email — never
+   * exposed via API responses.
+   */
+  marketingConsentToken?: string;
 }
 
 export interface CreateTrialTrainingInput {
@@ -43,6 +51,8 @@ export interface CreateTrialTrainingInput {
   trainerId: string;
   courtId: string;
   notes?: string;
+  /** Opt-in to occasional marketing emails — requires double opt-in confirmation before any send */
+  marketingConsent?: boolean;
 }
 
 export interface UpdateTrialTrainingInput {

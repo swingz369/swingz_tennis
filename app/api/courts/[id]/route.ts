@@ -68,12 +68,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.isActive !== undefined) updates.is_active = body.isActive;
     if (body.usableForTraining !== undefined) updates.usable_for_training = body.usableForTraining;
 
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
     const { data: court, error } = await auth.supabase
       .from('courts')
-      .select(
-        'id, club_id, name, number, surface, status, has_indoor, has_lighting, is_active, usable_for_training, created_at'
-      )
+      .update(updates as any)
       .eq('id', courtId)
+      .select(
+        'id, club_id, court_type_id, name, number, surface, status, has_indoor, has_lighting, is_active, usable_for_training, created_at'
+      )
       .single();
 
     if (error) {
@@ -81,30 +86,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Apply updates after reading current state
-    if (Object.keys(updates).length > 0) {
-      const { error: updateError } = await auth.supabase
-        .from('courts')
-        .update(updates as any)
-        .eq('id', courtId);
-      if (updateError) {
-        log.error('[Courts PATCH update]', updateError);
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      court: {
-        id: court.id,
-        name: court.name,
-        number: court.number,
-        hasLighting: court.has_lighting,
-        isActive: court.is_active,
-        usableForTraining: court.usable_for_training,
-        status: court.status,
-      },
-    });
+    return NextResponse.json({ success: true, court });
   });
 }
 

@@ -53,7 +53,7 @@ describe('StatCard Component', () => {
   it('should render with default blue icon background', () => {
     const { container } = render(<StatCard icon={Users} value={7} label="Test" />);
     const iconContainer = container.querySelector('.h-10.w-10');
-    expect(iconContainer).toHaveClass('bg-blue-50');
+    expect(iconContainer).toHaveClass('bg-info-50');
   });
 
   it('should handle zero value', () => {

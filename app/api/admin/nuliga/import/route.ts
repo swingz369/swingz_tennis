@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         const csv = await readFilePart(standingsFile);
         const rows = parseStandingsCsv(csv);
         for (const row of rows) {
-          await (sb as any).from('teams').upsert(
+          const { error } = await (sb as any).from('teams').upsert(
             {
               league_id: leagueId,
               club_id: auth.clubId,
@@ -61,6 +61,8 @@ export async function POST(req: NextRequest) {
             },
             { onConflict: 'league_id,name' }
           );
+          if (error)
+            throw new Error(`Tabellen-Import fehlgeschlagen (${row.name}): ${error.message}`);
           standingsImported++;
         }
       }
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
         const csv = await readFilePart(matchesFile);
         const rows = parseMatchesCsv(csv, teamName);
         for (const row of rows) {
-          await (sb as any).from('match_days').upsert(
+          const { error } = await (sb as any).from('match_days').upsert(
             {
               league_id: leagueId,
               matchday_number: row.matchdayNumber,
@@ -80,6 +82,10 @@ export async function POST(req: NextRequest) {
             },
             { onConflict: 'league_id,matchday_number' }
           );
+          if (error)
+            throw new Error(
+              `Spielplan-Import fehlgeschlagen (Spieltag ${row.matchdayNumber}): ${error.message}`
+            );
           matchesImported++;
         }
       }

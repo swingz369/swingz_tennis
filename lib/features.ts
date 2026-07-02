@@ -148,6 +148,16 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     sidebarSection: 'smart_court',
     order: 12,
   },
+  {
+    key: 'dynamic_pricing',
+    label: 'Dynamische Preisgestaltung',
+    description:
+      'Zeitbasierte Preise für Plätze: Peak/Off-Peak, Tagespreise und Saison-Aufschläge.',
+    icon: 'TrendingUp',
+    category: 'optional',
+    sidebarSection: 'pricing',
+    order: 13,
+  },
 ] as const;
 
 export type FeatureKey = (typeof CLUB_FEATURES)[number]['key'];

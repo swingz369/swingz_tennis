@@ -266,6 +266,9 @@ export default function TermsPage() {
             <Link href="/datenschutz" className="hover:text-white transition-colors">
               Datenschutz
             </Link>
+            <Link href="/avv" className="hover:text-white transition-colors">
+              AVV
+            </Link>
           </div>
           <p>© 2026 SWINGZ – Premium Tennis Club Management</p>
         </div>

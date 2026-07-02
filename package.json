@@ -29,6 +29,7 @@
     "test:teardown": "docker compose -f docker-compose.test.yml down",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e-browser": "RUN_BROWSER_E2E=true vitest run e2e/",
     "bench:ci": "vitest bench tests/bench/clustering.bench.ts",
     "bench:report": "tsx scripts/generate-perf-report.ts",
     "bench:full": "npm run bench:ci && npm run bench:report",
@@ -37,6 +38,7 @@
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "seed": "npx tsx scripts/seed-users.ts",
+    "db:restore": "npx tsx scripts/restore-backup.ts",
     "analyze": "ANALYZE=true next build --webpack",
     "gen:types": "bash scripts/gen-supabase-types.sh",
     "gen:types:clean": "bash scripts/clean-supabase-types.sh",
@@ -46,7 +48,10 @@
     "depcheck": "depcheck",
     "dead-code": "npm run knip ; npm run depcheck",
     "knip:ci": "knip --reporter json",
-    "tsc:strict": "tsc --noEmit -p tsconfig.strict.json"
+    "tsc:strict": "tsc --noEmit -p tsconfig.strict.json",
+    "tsc:scripts": "tsc --noEmit -p tsconfig.scripts.json",
+    "docs:autogen": "tsx scripts/docs-autogen.ts",
+    "docs:check": "tsx scripts/docs-autogen.ts --check"
   },
   "overrides": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -116,6 +121,7 @@
     "recharts": "^3.8.1",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.1.3",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "stripe": "^22.1.0",
     "swagger-ui-react": "^5.32.5",

@@ -51,8 +51,6 @@
  * row is the durable idempotency sentinel.
  *
  * Out-of-scope here:
- *   - Hard-delete of `trainer_member_notes` (F6.5 follow-up —
- *     trainer notes are sensitive PII, not GoBD-locked).
  *   - Supabase-Auth deletion (caller orchestrates — same as the
  *     existing flow which calls `deleteSupabaseAuthUser` from the
  *     caller).
@@ -63,7 +61,13 @@
 
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/src/infrastructure/persistence/db';
-import { users, userClubMemberships, auditLogs } from '@/src/infrastructure/persistence/schema';
+import {
+  users,
+  userClubMemberships,
+  auditLogs,
+  sepaMandates,
+  trainerMemberNotes,
+} from '@/src/infrastructure/persistence/schema';
 import { hashIdentifier } from '@/lib/dsgvo/anonymize';
 
 // ═══════════════════════════════════════════════
@@ -271,6 +275,39 @@ export class AnonymizeService {
           avatar_url: WIPE_USER_COLUMNS.avatar_url(),
         })
         .where(eq(users.id, userId));
+
+      // ─── Step 5b: Wipe address/emergency-contact raw columns ───────
+      // Not in the Drizzle schema (schema drift, see comment above) —
+      // written via raw SQL against the live `users` table.
+      await db.execute(sql`
+        UPDATE users SET
+          address = NULL,
+          city = NULL,
+          postal_code = NULL,
+          emergency_contact = NULL,
+          emergency_phone = NULL
+        WHERE id = ${userId}
+      `);
+
+      // ─── Step 5c: Wipe SEPA bank details (direct financial PII) ────
+      // Mandate row is kept (GoBD reference from invoices/payments) but
+      // its IBAN/account holder/bank name/address are scrubbed and the
+      // mandate is revoked so it can no longer be used for debits.
+      await db
+        .update(sepaMandates)
+        .set({
+          iban: 'DE00000000000000000000',
+          accountHolder: 'Gelöschter Nutzer',
+          bankName: 'Gelöscht',
+          address: { street: '', houseNumber: '', postalCode: '', city: '' },
+          isActive: false,
+          revokedAt: new Date().toISOString(),
+          revokeReason: 'dsgvo_delete',
+        })
+        .where(eq(sepaMandates.memberId, userId));
+
+      // ─── Step 5d: Hard-delete trainer notes (sensitive PII, not GoBD-locked) ─
+      await db.delete(trainerMemberNotes).where(eq(trainerMemberNotes.member_id, userId));
 
       // ─── Step 6: Soft-deactivate memberships (not hard-delete — GoBD) ─
       const deactivated = await db

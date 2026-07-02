@@ -40,7 +40,7 @@ export default function LoginPage() {
       }
 
       analytics.login('email', true);
-      window.location.href = '/';
+      window.location.href = '/dashboard';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login fehlgeschlagen';
       analytics.login('email', false);

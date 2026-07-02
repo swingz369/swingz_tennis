@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -46,6 +47,7 @@ interface FormData {
   preferredTime: string;
   experienceLevel: string;
   notes: string;
+  marketingConsent: boolean;
 }
 
 const initialFormData: FormData = {
@@ -58,6 +60,7 @@ const initialFormData: FormData = {
   preferredTime: '',
   experienceLevel: 'intermediate',
   notes: '',
+  marketingConsent: false,
 };
 
 export default function PublicTrialBooking({
@@ -119,6 +122,7 @@ export default function PublicTrialBooking({
           experienceLevel: form.experienceLevel,
           notes: form.notes.trim() || undefined,
           clubId: clubId || undefined,
+          marketingConsent: form.marketingConsent,
         }),
       });
 
@@ -165,6 +169,12 @@ export default function PublicTrialBooking({
             <Mail className="h-4 w-4" />
             <span>Bestätigung an: {form.email}</span>
           </div>
+          {form.marketingConsent && (
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">
+              Falls du zugestimmt hast, prüfe dein Postfach für eine Bestätigungs-Mail zu
+              Neuigkeiten und Angeboten.
+            </p>
+          )}
           <Button
             variant="outline"
             onClick={() => {
@@ -376,6 +386,25 @@ export default function PublicTrialBooking({
                 rows={3}
               />
             </div>
+          </div>
+
+          {/* Marketing-Einwilligung (optional) */}
+          <div className="flex items-start gap-2 pt-2">
+            <Checkbox
+              id="marketingConsent"
+              checked={form.marketingConsent}
+              onCheckedChange={(checked) =>
+                setForm((prev) => ({ ...prev, marketingConsent: checked === true }))
+              }
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor="marketingConsent"
+              className="text-sm font-normal text-muted-foreground leading-snug cursor-pointer"
+            >
+              Ich möchte gelegentlich Neuigkeiten und Angebote von SwingZ per E-Mail erhalten
+              (optional, jederzeit widerrufbar).
+            </Label>
           </div>
 
           <Button type="submit" className="w-full gap-2" disabled={loading}>

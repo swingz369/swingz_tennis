@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 // Increase timeout for dynamic imports of route modules (Next.js compilation overhead)
 vi.setConfig({ hookTimeout: 30000, testTimeout: 15000 });
@@ -34,8 +35,12 @@ function createMockQueryBuilder(overrides: Partial<MockQueryBuilder> = {}): Mock
     gte: vi.fn(() => self),
     order: vi.fn(() => self),
     limit: vi.fn(() => self),
-    maybeSingle: vi.fn(),
-    single: vi.fn(),
+    // Default to a benign "not found" resolution so the withApiAuth mock's
+    // internal user_club_memberships lookup (which every route's auth check
+    // triggers first) doesn't throw when a test only cares about a later
+    // query in the chain and never overrides these terminal methods.
+    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    single: vi.fn().mockResolvedValue({ data: null, error: null }),
     ...overrides,
   };
   return self;
@@ -57,6 +62,15 @@ const mockCreateAdminClient = vi.fn();
 vi.mock('@/lib/supabase/server', () => ({
   createClient: () => mockCreateClient(),
   createAdminClient: () => mockCreateAdminClient(),
+}));
+
+// POST /api/public/register applies RATE_LIMITS.STRICT (5/15min) via the real
+// in-memory limiter. Without this mock, the 6+ POSTs fired across this
+// describe block (all from the same test-process "IP") trip the real limiter
+// and start returning 429s — unrelated to the registration logic under test.
+vi.mock('@/lib/rate-limit', () => ({
+  RATE_LIMITS: { STRICT: { max: 5, windowMs: 15 * 60 * 1000 } },
+  checkRateLimitOrFail: vi.fn().mockResolvedValue(null),
 }));
 
 // Mock @/lib/api-auth — used by admin/approvals, gamification, shop, coupons, and other routes.
@@ -145,7 +159,17 @@ function buildRequest(method: string, body?: unknown, url = 'http://localhost:30
     init.body = JSON.stringify(body);
     init.headers = { 'Content-Type': 'application/json' };
   }
-  return new NextRequest(new URL(url), init as unknown as ConstructorParameters<typeof NextRequest>[1]);
+  return new NextRequest(
+    new URL(url),
+    init as unknown as ConstructorParameters<typeof NextRequest>[1]
+  );
+}
+
+// /api/qr-checkin (Sprint-4 audit fix) binds every token to its generator's
+// userId and rejects anything else — including bare sessionId — with 403.
+// Build a validly-bound token so tests exercise the intended flow.
+function makeQrToken(sessionId: string, userId: string): string {
+  return Buffer.from(JSON.stringify({ sessionId, userId })).toString('base64');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -426,7 +450,9 @@ describe('GET /api/shop', () => {
       eq: vi.fn(() => qb),
       order: vi.fn().mockResolvedValue({ data: mockProducts, error: null }),
     });
-    mockCreateClient.mockResolvedValue(createMockSupabase(() => qb));
+    const mockSupabase = createMockSupabase(() => qb);
+    mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    mockCreateClient.mockResolvedValue(mockSupabase);
 
     const res = await GET();
     expect(res.status).toBe(200);
@@ -477,7 +503,7 @@ describe('POST /api/qr-checkin', () => {
   });
 
   it('decodes valid QR token to get sessionId', async () => {
-    const token = Buffer.from(JSON.stringify({ sessionId: 'sess-decoded' })).toString('base64');
+    const token = makeQrToken('sess-decoded', 'u1');
 
     // Session query returns null (not found)
     const qbSession = createMockQueryBuilder({
@@ -499,7 +525,7 @@ describe('POST /api/qr-checkin', () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
     mockCreateClient.mockResolvedValue(mockSupabase);
 
-    const res = await POST(buildRequest('POST', { sessionId: 'sess-404' }));
+    const res = await POST(buildRequest('POST', { qrToken: makeQrToken('sess-404', 'u1') }));
     expect(res.status).toBe(404);
   });
 
@@ -515,7 +541,7 @@ describe('POST /api/qr-checkin', () => {
     mockSupabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
     mockCreateClient.mockResolvedValue(mockSupabase);
 
-    const res = await POST(buildRequest('POST', { sessionId: 'sess-1' }));
+    const res = await POST(buildRequest('POST', { qrToken: makeQrToken('sess-1', 'u1') }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toContain('Tag der Session');
@@ -581,7 +607,7 @@ describe('POST /api/qr-checkin', () => {
     const mockAdminSupabase = createMockSupabase(() => qbGamification);
     mockCreateAdminClient.mockResolvedValue(mockAdminSupabase);
 
-    const res = await POST(buildRequest('POST', { sessionId: 'sess-1' }));
+    const res = await POST(buildRequest('POST', { qrToken: makeQrToken('sess-1', 'u1') }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

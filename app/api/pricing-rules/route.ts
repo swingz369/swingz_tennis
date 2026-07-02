@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { DrizzlePricingRuleRepository } from '@/infrastructure/persistence/repositories/pricing-rule.repository';
 import { ClubId, CourtId } from '@/domain/value-objects';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
@@ -55,6 +55,9 @@ export async function GET(req: NextRequest) {
 
     if (!clubId) {
       return NextResponse.json({ error: 'clubId query parameter required' }, { status: 400 });
+    }
+    if (!verifyClubAccess(auth, clubId)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
     try {
@@ -112,6 +115,9 @@ export async function POST(req: NextRequest) {
       }
 
       const data = validation.data;
+      if (!verifyClubAccess(auth, data.clubId)) {
+        return forbiddenResponse('Kein Zugriff auf diesen Verein');
+      }
       const rule = {
         id: randomUUID(),
         clubId: ClubId.fromString(data.clubId),

@@ -87,10 +87,20 @@ vi.mock('@/lib/rate-limit', () => ({
 // ── @/lib/supabase/service ───────────────────────────────────────────────────
 // Chainable stateful mock. Routes by table-name. Captures `from()` calls into
 // `mockServiceClient.fromCallsTable` so test-assertions can verify call-patterns.
-const mockServiceClient = {
+// `from` is the SAME vi.fn() instance as `fromMock` (not a copy) — the route
+// under test calls `serviceClient.from(...)`, while `resetServiceClientMock`
+// below programs behavior via the `fromMock` alias; both must resolve to one
+// underlying mock or the route's calls go through unconfigured.
+const mockServiceClient: {
+  fromCallsTable: string[];
+  fromMock: ReturnType<typeof vi.fn>;
+  from: ReturnType<typeof vi.fn>;
+} = {
   fromCallsTable: [] as string[],
   fromMock: vi.fn(),
+  from: vi.fn(),
 };
+mockServiceClient.from = mockServiceClient.fromMock;
 vi.mock('@/lib/supabase/service', () => ({
   createServiceClient: () => mockServiceClient,
 }));
@@ -317,9 +327,14 @@ describe('GET /api/trainer-profiles — Drizzle path: dual-rate propagation', ()
   });
 
   it('returns undefined for null hourlyRate (Domain-Type-Hygiene: hourlyRate is not nullable)', async () => {
+    // The real repository (TrainerProfileRepository.mapToEntity) already
+    // coerces a null DB column to `undefined` via `parseNumericField(...) ??
+    // undefined` before the entity ever reaches this route — the route
+    // itself does no further transform on the Drizzle path. Simulate that
+    // already-mapped shape here (not a raw `null` column value).
     mockTrainerProfileService.getTrainerProfilesByClubId.mockResolvedValueOnce([
       buildDrizzleEntity({
-        hourlyRate: null,
+        hourlyRate: undefined,
         contractedHourlyRate: 45,
         extraHoursRate: 50,
       }),
@@ -505,17 +520,19 @@ describe('GET /api/trainer-profiles — Service-Client-Fallback path: dual-rate 
       expect(json.profiles[0].contractedHourlyRate).toBe(45);
     });
 
-    it('parses "45.50abc" leniently to 45 (parseFloat reads numeric prefix)', async () => {
+    it('parses "45.50abc" leniently to 45.5 (parseFloat reads numeric prefix)', async () => {
       // Same lenient-storey behavior — parseFloat reads leading prefix even
-      // when trailing chars are present. Acceptable since DB columns should
-      // never surface this; defense-in-depth only.
+      // when trailing chars are present. `parseFloat('45.50abc')` reads the
+      // full "45.50" numeric prefix (including the decimal portion) → 45.5,
+      // not 45. Acceptable since DB columns should never surface this;
+      // defense-in-depth only.
       resetServiceClientMock({
         trainerProfilesData: [buildFallbackRow({ contracted_hourly_rate: '45.50abc' })],
       });
       const { GET } = await import('@/app/api/trainer-profiles/route');
       const res = await GET(makeGetReq());
       const json = await res.json();
-      expect(json.profiles[0].contractedHourlyRate).toBe(45);
+      expect(json.profiles[0].contractedHourlyRate).toBe(45.5);
     });
 
     it('preserves 0 (parseNumOrNull returns 0, not false/null/zombie)', async () => {

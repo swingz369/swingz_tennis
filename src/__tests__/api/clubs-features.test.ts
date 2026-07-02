@@ -45,39 +45,28 @@ vi.mock('@/lib/api-auth', () => ({
     }),
 }));
 
-vi.mock('@/infrastructure/persistence/db', () => ({
-  db: {
-    select: vi.fn(() => ({
-      from: () => ({
-        where: () => ({
-          limit: async () => {
+// The real route uses createServiceClient() (raw Supabase client), not Drizzle —
+// mock that surface so tests actually exercise the route's real code path.
+vi.mock('@/lib/supabase/service', () => ({
+  createServiceClient: () => ({
+    from: (_table: string) => ({
+      select: (_cols: string) => ({
+        eq: (_col: string, _val: string) => ({
+          maybeSingle: async () => {
             if (mock.throwOnSelect) throw new Error('DB select failed');
-            return mock.dbRows;
+            return { data: mock.dbRows[0] ?? null, error: null };
           },
         }),
       }),
-    })),
-    update: vi.fn(() => ({
-      set: (values: any) => ({
-        where: async (_condition: any) => {
-          if (mock.throwOnUpdate) throw new Error('DB update failed');
+      update: (values: { features: Record<string, boolean> }) => ({
+        eq: async (_col: string, _val: string) => {
+          if (mock.throwOnUpdate) return { error: new Error('DB update failed') };
           mock.lastUpdate = { features: values.features };
-          return { rowCount: 1 };
+          return { error: null };
         },
       }),
-    })),
-  },
-}));
-
-vi.mock('@/infrastructure/persistence/schema', () => ({
-  clubs: {
-    id: { name: 'id' },
-    features: { name: 'features' },
-  },
-}));
-
-vi.mock('drizzle-orm', () => ({
-  eq: vi.fn((_a: any, b: any) => ({ __eq: b })),
+    }),
+  }),
 }));
 
 // Route handlers are imported AFTER all mocks are registered.

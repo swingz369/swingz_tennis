@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 
+const { withSentryConfig } = require('@sentry/nextjs');
+
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
@@ -157,6 +159,14 @@ const nextConfig = {
   // Redirects
   async redirects() {
     return [
+      // Duplicate/contradictory privacy page removed — /datenschutz is canonical
+      // (linked from landing/terms/support/impressum; /privacy was only linked
+      // from login and falsely claimed data never leaves the EU).
+      {
+        source: '/privacy',
+        destination: '/datenschutz',
+        permanent: true,
+      },
       // Navigation consolidation: old routes → new merged pages
       {
         source: '/admin/season-plan',
@@ -262,4 +272,13 @@ const nextConfig = {
   },
 };
 
-module.exports = withBundleAnalyzer(nextConfig);
+module.exports = withSentryConfig(withBundleAnalyzer(nextConfig), {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+  },
+});

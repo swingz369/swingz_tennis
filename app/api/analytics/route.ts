@@ -6,7 +6,7 @@ import { DrizzleScheduleRepository } from '@/infrastructure/persistence/reposito
 import { DrizzleTrainerRepository } from '@/infrastructure/persistence/repositories/trainer.repository';
 import { DrizzleCourtRepository } from '@/infrastructure/persistence/repositories/court.repository';
 import { DrizzleBookingRepository } from '@/infrastructure/persistence/repositories/booking.repository';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 
 export async function GET(_request: NextRequest) {
@@ -34,6 +34,9 @@ export async function GET(_request: NextRequest) {
 
     if (!clubId) {
       return NextResponse.json({ error: 'Missing required parameter: clubId' }, { status: 400 });
+    }
+    if (!verifyClubAccess(auth, clubId)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
     }
 
     try {

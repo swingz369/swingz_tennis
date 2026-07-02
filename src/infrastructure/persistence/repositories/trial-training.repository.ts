@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { eq, and, desc, ilike, or, sql } from 'drizzle-orm';
 import { db } from '../db';
 import { trialTrainings, trainers, courts } from '../schema';
@@ -271,6 +272,23 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
     return result.length > 0;
   }
 
+  async confirmMarketingConsentByToken(token: string): Promise<boolean> {
+    try {
+      const result = await db
+        .update(trialTrainings)
+        .set({
+          marketing_consent_confirmed_at: new Date(),
+          marketing_consent_token: null, // Single-use — invalidate immediately
+        })
+        .where(eq(trialTrainings.marketing_consent_token, token))
+        .returning({ id: trialTrainings.id });
+
+      return result.length > 0;
+    } catch (error) {
+      throw parsePostgresError(error);
+    }
+  }
+
   /** Unassigned placeholder UUID for public trial training requests */
   private static readonly UNASSIGNED_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -280,6 +298,10 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
    */
   async createRequested(input: CreateTrialTrainingInput, clubId: string): Promise<TrialTraining> {
     const now = new Date();
+    const marketingConsent = input.marketingConsent ?? false;
+    // Only generate a DOI token when consent was actually given — no token
+    // means no confirmation link can ever be produced, i.e. no marketing mail.
+    const marketingConsentToken = marketingConsent ? randomBytes(32).toString('hex') : null;
 
     try {
       const result = await db.transaction(async (tx) => {
@@ -329,13 +351,21 @@ export class DrizzleTrialTrainingRepository implements ITrialTrainingRepository 
             court_name: 'Noch nicht zugewiesen',
             status: 'requested',
             notes: input.notes,
+            marketing_consent: marketingConsent,
+            marketing_consent_token: marketingConsentToken,
             created_at: now,
             updated_at: now,
           })
           .returning();
       });
 
-      return this.mapToDomain(result[0]);
+      // Include the freshly generated token so the caller can send the DOI
+      // confirmation email — mapToDomain never reads it back from the row
+      // for other call sites (kept out of the standard read path).
+      return {
+        ...this.mapToDomain(result[0]),
+        ...(marketingConsentToken ? { marketingConsentToken } : {}),
+      };
     } catch (error) {
       throw parsePostgresError(error);
     }

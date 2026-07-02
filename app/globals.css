@@ -458,6 +458,114 @@ body {
   .overlay-gradient-b {
     background: linear-gradient(to top, hsl(var(--brand-primary) / 0.9) 0%, transparent 100%);
   }
+
+  /* ── Viewport-aware min-height (with iOS Safari / old WebView fallback) ──
+   * Modern browsers (Chrome 108+, Safari 15.4+) prefer the dynamic 100dvh,
+   * older browsers discard the second declaration entirely and keep 100vh.
+   * Inside a single rule, the cascade order is deterministic — unlike
+   * two chained Tailwind arbitrary-value classes where emission order
+   * can vary between Tailwind versions.
+   */
+  .min-h-viewport {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* ── Editorial Typography ──
+   * Phase 2 hero primitives — Pally/PP Editorial New serif pairing.
+   * Fluid clamp() scales headline-to-mobile smoothly without media queries.
+   */
+  .font-editorial {
+    font-family: var(--font-editorial, 'Pally', Georgia, serif);
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1,
+      'calt' 1;
+    letter-spacing: -0.015em;
+  }
+  .editorial-display {
+    font-family: var(--font-editorial, 'Pally', Georgia, serif);
+    font-weight: 500;
+    line-height: 0.96;
+    letter-spacing: -0.025em;
+    font-size: clamp(3rem, 8vw + 1rem, 6.75rem);
+  }
+  .editorial-eyebrow {
+    font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 500;
+  }
+
+  /* ── Editorial Hairlines ──
+   * 1px crisp borders in Court-Clay / Forest hues, anti-aliased for retina.
+   */
+  .hairline-t {
+    border-top: 1px solid hsl(var(--brand-primary) / 0.08);
+  }
+  .hairline-b {
+    border-bottom: 1px solid hsl(var(--brand-primary) / 0.08);
+  }
+  .hairline-x {
+    border-left: 1px solid hsl(var(--brand-primary) / 0.08);
+    border-right: 1px solid hsl(var(--brand-primary) / 0.08);
+  }
+  .hairline-y {
+    border-top: 1px solid hsl(var(--brand-primary) / 0.08);
+    border-bottom: 1px solid hsl(var(--brand-primary) / 0.08);
+  }
+  .hairline-clay-t {
+    border-top: 1px solid hsl(var(--brand-accent) / 0.35);
+  }
+
+  /* ── Editorial Paper Grain ──
+   * Static grain overlay for cream backgrounds — a notch above the global
+   * `.noise` so it reads as paper, not digital-noise.
+   */
+  .paper-grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.11 0 0 0 0 0.27 0 0 0 0 0.20 0 0 0 0.85 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
+  }
+
+  /* ── Editorial Roman Seperators ──
+   * Used as decorative ornament between sections (I. II. III. … I•••II)
+   */
+  .rule-clay {
+    display: inline-block;
+    width: 2.25rem;
+    height: 1px;
+    background: hsl(var(--brand-accent));
+    vertical-align: middle;
+  }
+  .rule-forest {
+    display: inline-block;
+    width: 2.25rem;
+    height: 1px;
+    background: hsl(var(--brand-primary));
+    vertical-align: middle;
+  }
+
+  /* ── Editorial Underline Mask (Kinetic Type Hover) ──
+   * A clean animated underline for nav- and pricing-link hover states.
+   * Reset on focus-visible for accessibility.
+   */
+  .link-mask {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    transition: background-size 350ms cubic-bezier(0.16, 1, 0.3, 1);
+    padding-bottom: 2px;
+  }
+  .link-mask:hover {
+    background-size: 100% 1px;
+  }
 }
 
 /* ── KEYFRAMES ── */
@@ -641,6 +749,52 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Marketing Theme Override (.theme-editorial) ──
+ * Scope: ONLY the (marketing) route group. The (protected)/(app) dashboards
+ * continue to inherit from :root / .dark and are NOT affected.
+ * Override strategy: redefine the same shadcn token names so that
+ * `bg-background`, `text-foreground`, `bg-brand-primary`, etc. resolve
+ * automatically via the existing Tailwind utilities inside the scope.
+ */
+@layer base {
+  .theme-editorial {
+    /* Cream / Alabaster background, Deep Forest text, Court Clay accent */
+    --background: 38 30% 96%;
+    --foreground: 150 48% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 150 48% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 48% 18%;
+    --primary: 150 48% 18%;
+    --primary-foreground: 38 30% 96%;
+    --secondary: 38 30% 92%;
+    --secondary-foreground: 150 48% 18%;
+    --muted: 38 30% 92%;
+    --muted-foreground: 150 10% 40%;
+    --accent: 18 50% 42%; /* Court Clay #C25934 */
+    --accent-foreground: 38 30% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 150 10% 88%;
+    --input: 150 10% 88%;
+    --ring: 150 48% 18%;
+
+    /* Brand tokens — Forest stays, Sunrise Orange → Court Clay */
+    --brand-primary: 150 48% 18%;
+    --brand-primary-light: 150 45% 35%;
+    --brand-secondary: 217 33% 24%;
+    --brand-accent: 18 50% 42%;
+    --surface: 38 30% 96%;
+    --surface-elevated: 0 0% 100%;
+    --border-subtle: 150 10% 88%;
+    --text-primary: 150 48% 18%;
+    --text-secondary: 150 10% 35%;
+
+    /* Typography — Editorial Serif via --font-editorial */
+    --font-editorial: 'Pally', 'PP Editorial New', Georgia, serif;
   }
 }
 

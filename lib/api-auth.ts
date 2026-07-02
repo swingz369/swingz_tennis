@@ -192,7 +192,7 @@ export async function verifyRole(
  * Superadmin has access to ALL clubs (even without cookie).
  */
 export function verifyClubAccess(auth: AuthContext, requestedClubId: string): boolean {
-  if (auth.role === 'superadmin') return true;
+  if (auth.role === 'owner' || auth.role === 'superadmin') return true;
   return auth.clubId === requestedClubId;
 }
 

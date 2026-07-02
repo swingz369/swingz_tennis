@@ -82,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=clash-display@1&display=swap"
+          href="https://api.fontshare.com/v2/css?f[]=clash-display@1&f[]=pally@1,400,500,600,700,400i,500i,700i&display=swap"
         />
         {process.env.NEXT_PUBLIC_SUPABASE_URL && (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />

@@ -218,8 +218,8 @@ describe('ScheduleReadinessCheck — chips', () => {
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
     await waitFor(() => {
       expect(screen.getByText(/8 Mitglieder für Planung/)).toBeInTheDocument();
-      expect(screen.getByText(/4 Trainer-Verfügbarkeiten/)).toBeInTheDocument();
-      expect(screen.getByText(/3 Aktive Plätze/)).toBeInTheDocument();
+      expect(screen.getByText(/4 Trainer-Präferenzen/)).toBeInTheDocument();
+      expect(screen.getByText(/3 Plätze für Trainingsplanung/)).toBeInTheDocument();
       expect(screen.getByText(/12 Mitglieder-Präferenzen/)).toBeInTheDocument();
     });
   });
@@ -234,6 +234,6 @@ describe('ScheduleReadinessCheck — chips', () => {
   it('should show red chips for error items', async () => {
     mockFetchResponse({ planningMembers: 0, trainerCount: 0, availabilityCount: 0, courtCount: 0 });
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
-    await waitFor(() => expect(document.querySelectorAll('.bg-red-100').length).toBe(3));
+    await waitFor(() => expect(document.querySelectorAll('.bg-red-100').length).toBe(2));
   });
 });

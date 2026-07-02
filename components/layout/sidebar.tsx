@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import { isActivePath, isExactActive } from '@/lib/navigation-utils';
 import { useUserRole } from '@/hooks/use-user-role';
 import { useClubFeatures } from '@/hooks/use-club-features';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { AdminSection } from './admin-section';
 import { FamilySwitcher } from './family-switcher';
@@ -30,6 +29,9 @@ import {
   MessageSquare,
   HardHat,
   Shuffle,
+  Landmark,
+  ShoppingBag,
+  Gavel,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { useTenant } from '@/lib/tenant-context';
@@ -91,6 +93,7 @@ export function Sidebar({
   const sidebarRef = useRef<HTMLElement>(null);
   const [clubSwitcherOpen, setClubSwitcherOpen] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [approvalCount, setApprovalCount] = useState(0);
 
   // Detect mobile to apply aria-hidden correctly on desktop vs mobile
   useEffect(() => {
@@ -140,6 +143,17 @@ export function Sidebar({
   // Centralised role detection via hook
   const { currentRole, isOwner, isSuperAdmin, isAdmin } = useUserRole(roles);
   const colors = roleColors[currentRole];
+
+  // Pending member registrations — surfaced as a nav badge instead of only inside the Mitglieder tab
+  useEffect(() => {
+    if (!isAdmin) return undefined;
+    const controller = new AbortController();
+    apiFetch('/api/admin/approvals/count', { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data) => setApprovalCount(data?.count ?? 0))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [isAdmin]);
 
   // Feature flags — hide sidebar sections for disabled modules
   const activeClubId = selectedClubId ?? clubs?.[0]?.id;
@@ -208,7 +222,11 @@ export function Sidebar({
           label: 'Mitglieder',
           icon: Users,
           subItems: [
-            { name: 'Alle Mitglieder', href: '/admin/members' },
+            {
+              name: 'Alle Mitglieder',
+              href: '/admin/members',
+              ...(approvalCount > 0 ? { badge: approvalCount } : {}),
+            },
             { name: 'Familienkonten', href: '/admin/members/family' },
             ...(!hiddenSections.has('trial_training')
               ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
@@ -245,6 +263,7 @@ export function Sidebar({
           icon: Trophy,
           subItems: [
             { name: 'Platzverwaltung', href: '/admin/courts' },
+            { name: 'Wartungsplan', href: '/admin/maintenance' },
             ...(!hiddenSections.has('weather_integration')
               ? [{ name: 'Platzsperren & Wetter', href: '/admin/weather' }]
               : []),
@@ -265,19 +284,18 @@ export function Sidebar({
           subItems: [
             { name: 'Abrechnung', href: '/admin/billing' },
             { name: 'Abonnement', href: '/admin/subscription' },
+            ...(!hiddenSections.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
           ],
         },
         {
-          label: 'Einstellungen',
-          icon: Settings,
+          label: 'Vereinsführung',
+          icon: Landmark,
           subItems: [
             { name: 'Vereinseinstellungen', href: '/admin/settings' },
             { name: 'Auswertungen & Berichte', href: '/admin/analytics' },
             { name: 'Dokumente', href: '/admin/documents' },
             { name: 'Versammlungen', href: '/admin/meetings' },
             { name: 'Board-Beschlüsse', href: '/admin/decisions' },
-            { name: 'Wartungsplan', href: '/admin/maintenance' },
-            ...(!hiddenSections.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
           ],
         },
       ];
@@ -375,6 +393,12 @@ export function Sidebar({
     ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Arbeitsdienste', href: '/member/work-duties', icon: HardHat }]
       : []),
+    ...(!isAdmin && !isSuperAdmin && !isOwner && !hiddenSections.has('shop')
+      ? [{ name: 'Shop', href: '/shop', icon: ShoppingBag }]
+      : []),
+    ...(!isAdmin && !isSuperAdmin && !isOwner
+      ? [{ name: 'Board-Beschlüsse', href: '/decisions', icon: Gavel }]
+      : []),
   ];
 
   const dashboardHref = isOwner ? '/owner' : isSuperAdmin ? '/superadmin' : '/admin';
@@ -388,7 +412,7 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'h-[calc(100vh-4rem)] w-64 border-r border-white/[0.04] dark:border-white/[0.06] bg-gradient-to-b from-[hsl(150,48%,14%)] via-[hsl(150,48%,11%)] to-[hsl(150,48%,8%)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
+        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-white/[0.04] dark:border-white/[0.06] bg-gradient-to-b from-[hsl(150,48%,14%)] via-[hsl(150,48%,11%)] to-[hsl(150,48%,8%)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
@@ -399,9 +423,10 @@ export function Sidebar({
       aria-hidden={isMobile === true && !open ? true : undefined}
     >
       {/* Mobile close button */}
-      {open && (          <button
-            onClick={onClose}
-            className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-white/5 text-white/70 focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
+      {open && (
+        <button
+          onClick={onClose}
+          className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-white/5 text-white/70 focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
           aria-label="Menü schließen"
         >
           <X className="h-5 w-5" />
@@ -409,7 +434,7 @@ export function Sidebar({
         </button>
       )}
 
-      <ScrollArea className="h-full py-6">
+      <div className="py-6">
         {/* Logo + Role badge */}
         <div className="px-4 mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -604,7 +629,7 @@ export function Sidebar({
             </div>
           )}
         </nav>
-      </ScrollArea>
+      </div>
     </aside>
   );
 }

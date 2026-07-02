@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserClub } from '@/hooks/use-user-data';
+import { PageHeader } from '@/components/ui/page-header';
 interface TrialParticipant {
   id: string;
   firstName: string;
@@ -313,15 +314,11 @@ export default function AdminTrialApprovals() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Probetraining-Genehmigungen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {requestedCount} ausstehende{requestedCount !== 1 ? '' : 's'} von {requests.length}{' '}
-            Probetrainings
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Probetraining-Genehmigungen"
+        description={`${requestedCount} ausstehende${requestedCount !== 1 ? '' : 's'} von ${requests.length} Probetrainings`}
+        breadcrumbs={[{ label: 'Probetrainings' }]}
+      />
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">

@@ -127,12 +127,14 @@ function resetSupabaseMock({
   clubRow,
   clubError,
   auditInsertError,
+  bookingRow,
 }: {
   auditExisting?: unknown;
   auditLookupError?: { message: string } | null;
   clubRow?: unknown;
   clubError?: { message: string } | null;
   auditInsertError?: { message: string } | null;
+  bookingRow?: unknown;
 }) {
   // clear accumulated from() call-history to prevent test-pollution in
   // assertion-counters that read `mockSupabase.from.mock.calls.length`
@@ -179,14 +181,37 @@ function resetSupabaseMock({
         }),
       };
     }
+    if (table === 'bookings') {
+      // Step 7 (audit-trail write) fetches the booking owner (user_id) to
+      // populate audit_logs.actor_id (NOT NULL). Default to a benign owner
+      // so tests that don't care about this specifically don't need to
+      // program it themselves.
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: bookingRow ?? { user_id: 'booking-owner-uuid' },
+              error: null,
+            }),
+          }),
+        }),
+      };
+    }
     throw new Error('Unexpected-table-in-mock: ' + table);
   });
 }
 
-// Set the secret BEFORE each test (in case other tests modify it)
+// Set the secret BEFORE each test (in case other tests modify it), and clear
+// adapter call-history so a prior test's dispatch (e.g. "accepts valid
+// signature") doesn't leak into a later test's `.not.toHaveBeenCalled()`
+// assertion (e.g. the 413 body-size-cap test, which never calls
+// resetSupabaseMock()/mockAdapter.mockReset() itself).
 beforeEach(() => {
   process.env.HARDWARE_WEBHOOK_SECRET = WEBHOOK_SECRET;
   process.env.HARDWARE_DEFAULT_VENDOR = 'shelly';
+  mockAdapter.setLight.mockClear();
+  mockAdapter.lockCourt.mockClear();
+  mockAdapter.unlockCourt.mockClear();
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

@@ -264,6 +264,71 @@ emerges in a sprint, add a Rule here with the Sprint reference.
 
 ---
 
+## 🟢 Rule 10: Handbuch-Pflege bei Code-Änderungen
+
+**Verbindlich:** SwingZ führt ein fortlaufendes Master-Handbuch unter
+[`docs/HANDBOOK.md`](docs/HANDBOOK.md). Es integriert Rollen-Walkthroughs
+(User-Sicht) und Implementierungs-Details (Dev-Sicht) pro Thema.
+
+### Wenn muss ich das Handbuch anfassen?
+
+| Code-Änderung                            | Pflicht-Update in                                                             |
+| ---------------------------------------- | ----------------------------------------------------------------------------- |
+| Neue `app/api/*/route.ts`                | `docs/handbook/dev/api-reference.md` (Auto-Gen)                               |
+| Neue `app/(protected)/*/page.tsx`        | betroffenes `docs/handbook/user/<rolle>.md` Walkthrough                       |
+| Neue DB-Tabelle / Spalte                 | `docs/handbook/dev/data-model.md` (Auto-Gen)                                  |
+| Neuer Modul-Eintrag in `lib/features.ts` | `docs/handbook/dev/feature-flags.md` **und** `docs/HANDBOOK.md` Modul-Tabelle |
+| Stripe-Webhook-Event                     | `docs/handbook/dev/stripe-integration.md`                                     |
+| Neue Cron-Route                          | `docs/handbook/dev/background-jobs.md`                                        |
+| Breaking-Change an Rollen / Guards       | `docs/handbook/dev/auth-rbac.md`                                              |
+
+### Auto-Gen für stabile Kapitel
+
+Zwei Kapitel werden automatisch aus Code generiert und sollten **nicht manuell editiert** werden:
+
+```bash
+npm run docs:autogen
+# regeneriert docs/handbook/dev/data-model.md
+# regeneriert docs/handbook/dev/api-reference.md
+# Quelle: scripts/docs-autogen.ts
+```
+
+Pflicht vor jedem PR, der `app/api/**` oder Schema-Dateien berührt:
+
+1. `npm run docs:autogen` ausführen
+2. Diff-Inspektion — falls die generierten Listen inkorrekt sind, liegt's am Skript (Skript fixen, nicht Output editieren).
+3. Hand-edits ausserhalb der `<!-- AUTOGEN:… -->`-Marker bleiben erhalten.
+
+Marker-Syntax:
+
+```markdown
+<!-- AUTOGEN:BEGIN <name> … -->
+
+(Inhalt wird bei jedem Auto-Gen-Lauf ersetzt)
+
+<!-- AUTOGEN:END -->
+```
+
+### Pflege im PR-Template
+
+Jede PR-Beschreibung enthält Zeile:
+
+```
+☐ docs/HANDBOOK.md berührt (welches Kapitel, was geändert)
+☐ docs:autogen ausgeführt (falls Schema oder Routes)
+☐ Glossar-Begriff ergänzt (falls neue Begriffe)
+```
+
+Reviewer müssen diese Zeile bestätigen, sonst kein Merge.
+
+### Verwante Dateien
+
+- `docs/HANDBOOK.md` — Master-TOC + Rollen-Index
+- `docs/handbook/README.md` — Detail-Pflege-Regeln, Marker-Syntax
+- `docs/handbook/glossary.md` — Begriffswörterbuch (PR mit `docs(glossary)` Label ergänzen)
+- `scripts/docs-autogen.ts` — Auto-Gen-Skript
+- `.lintstagedrc.js` (optional): Auto-Gen bei jedem Commit
+
 ## 🟢 Rule 9: Maintainer git-identity policy (anti Vercel-block on wrong commit-email)
 
 **Lesson from Sprint-4/5 (2026-06-28):** 12 consecutive commits were

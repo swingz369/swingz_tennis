@@ -97,14 +97,27 @@ export async function GET(request: NextRequest) {
       }
 
       if (active) {
-        // Note: Active members are filtered by RLS policies at database level
-        const members = await memberService.getActiveMembers();
+        // SECURITY: memberService uses a service-role client (bypasses RLS), so club
+        // scoping must happen here explicitly — getActiveMembers() has none.
+        const requestedClubId = searchParams.get('clubId');
+        const activeClubId =
+          requestedClubId && auth.role === 'superadmin' ? requestedClubId : auth.clubId;
+        const members = await memberService.queryMembers({
+          status: 'active',
+          clubId: activeClubId ?? undefined,
+        });
         return NextResponse.json({ members });
       }
 
       if (search) {
-        // Note: Search results are filtered by RLS policies at database level
-        const members = await memberService.searchMembers(search);
+        // SECURITY: same club-scoping fix as the `active` branch above.
+        const requestedClubId = searchParams.get('clubId');
+        const searchClubId =
+          requestedClubId && auth.role === 'superadmin' ? requestedClubId : auth.clubId;
+        const members = await memberService.queryMembers({
+          search,
+          clubId: searchClubId ?? undefined,
+        });
         return NextResponse.json({ members });
       }
 

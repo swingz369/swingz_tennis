@@ -5,7 +5,7 @@ import { ClubId } from '@/domain/value-objects';
 import { updateClubSchema } from '@/application/validation/schemas';
 import { withValidation } from '@/application/validation/validator';
 import { AuditServiceImpl } from '@/infrastructure/audit/audit.service';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyClubAccess, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { clubs } from '@/infrastructure/persistence/schema';
 import { db } from '@/infrastructure/persistence/db';
@@ -82,6 +82,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (rateLimitError) return rateLimitError;
 
     const { id } = await params;
+    if (!verifyClubAccess(auth, id)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
+    }
 
     return withValidation(updateClubSchema, async (input) => {
       try {
@@ -173,6 +176,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (rateLimitError) return rateLimitError;
 
     const { id } = await params;
+    if (!verifyClubAccess(auth, id)) {
+      return forbiddenResponse('Kein Zugriff auf diesen Verein');
+    }
 
     try {
       const clubId = ClubId.fromString(id);

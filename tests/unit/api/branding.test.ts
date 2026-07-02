@@ -41,11 +41,21 @@ const adminCtx: AdminCtx = {
   clubId: 'club-uuid-1',
 };
 
+const ROLE_HIERARCHY: Record<string, number> = {
+  owner: 5,
+  superadmin: 4,
+  admin: 3,
+  trainer: 2,
+  member: 1,
+};
+
 vi.mock('@/lib/api-auth', () => ({
   withApiAuth: async (_req: Request, handler: (auth: AdminCtx) => Promise<Response>) =>
     handler(adminCtx),
   withAuth: async (_req: Request, handler: (auth: AdminCtx) => Promise<Response>) =>
     handler(adminCtx),
+  verifyRole: async (auth: AdminCtx, requiredRole: string) =>
+    (ROLE_HIERARCHY[auth.role] ?? 0) >= (ROLE_HIERARCHY[requiredRole] ?? 0),
 }));
 
 // ───────────────────────────────────────────────────────────────────────
@@ -70,7 +80,7 @@ const FULL_PAYLOAD = {
 const makePutRequest = (body: unknown) =>
   new NextRequest('http://localhost/api/branding', {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-club-id': adminCtx.clubId },
     body: JSON.stringify(body),
   });
 

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Mermaid Preview — Mikro-Flows (themen-interplay §9–15)</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      if (window.mermaid) {
+        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: 'default' });
+        window.__mermaidReady = true;
+      } else {
+        window.__mermaidReady = false;
+        window.__mermaidError = 'mermaid.min.js not loaded from CDN';
+      }
+    });
+  </script>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 1100px; margin: 24px auto; padding: 0 24px; color: #222; }
+    h1 { font-size: 22px; }
+    h2 { margin-top: 36px; padding-top: 18px; border-top: 1px solid #ddd; font-size: 17px; }
+    .risk-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
+    .risk-loop { background: #fde68a; color: #92400e; }
+    .risk-br { background: #fecaca; color: #991b1b; }
+    .mermaid { background: #fafafa; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin: 12px 0 28px; }
+    #mermaid-status { padding: 8px 14px; background: #ecfdf5; border-radius: 4px; margin: 12px 0; }
+    #mermaid-status.failed { background: #fef2f2; }
+  </style>
+</head>
+<body>
+  <h1>Mermaid-Diagramm-Preview</h1>
+  <p>Quelle: <code>docs/handbook/dev/themen-interplay.md</code> §§ 1, 3, 8, 9–15. Rendert via mermaid@10.9.1 (CDN).</p>
+  <div id="mermaid-status">Loading…</div>
+
+  <h2>§9 · Trainer pflegt Verfügbarkeit (Save: DELETE-before-POST) <span class="risk-tag risk-loop">RISK: TOP-LEVEL LOOP × 2</span></h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor T as Trainer (Browser)
+    participant C as TrainerAvailabilityManager
+    participant API as /api/trainer/availability
+    participant PG as Postgres
+
+    T->>C: Klick "Speichern"
+    C->>API: GET ?from=&lt;weekstart&gt;&to=&lt;weekend&gt;
+    API->>PG: SELECT trainer_availability WHERE date IN (week)
+    PG-->>API: vorhandene Slots
+    API-->>C: rows[]
+    C->>C: existingKeys = Set("date|time|time")
+    C->>C: uiKeys = Set aus aktuellem UI-State
+    loop Slot in apiKeys und nicht in uiKeys
+        C->>API: DELETE /api/trainer/availability/{id}
+        alt 409 (slot mit session verknüpft)
+            API-->>C: 409 — Slot bleibt in DB
+            C->>C: silently ignore
+        end
+    end
+    loop Slot in uiKeys und nicht in existingKeys
+        C->>API: POST { date, start_time, end_time, notes: null }
+        API->>PG: INSERT trainer_availability
+        API-->>C: 201 Created
+    end
+    C-->>T: grünes Banner "X gespeichert, Y bereits vorhanden, Z gelöscht"
+  </div>
+
+  <h2>§10 · Trainer bulked — "Auf alle Wochen im Monat" <span class="risk-tag risk-loop">RISK: NESTED LOOP > LOOP > ALT</span></h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor T as Trainer
+    participant C as TrainerAvailabilityManager
+    participant API as /api/trainer/availability
+
+    T->>C: Klick "Auf alle Wochen im Monat anwenden"
+    C->>C: weeks = computeWeeksInMonth(currentMonth) (4 bis 6 Wochen)
+    loop pro Woche in weeks (ausser currentVisibleWeek)
+        C->>API: GET ?from=weekStart&to=weekEnd
+        API-->>C: existingKeys (Set)
+        loop UI-Slot pro Wochentag
+            alt Key noch nicht in existingKeys
+                C->>API: POST { date, start_time, end_time }
+                API-->>C: 201 Created
+            else bereits vorhanden
+                C->>C: skip — niemals überschreiben
+            end
+        end
+    end
+    C-->>T: Banner "12 erstellt, 4 bereits vorhanden" (4s auto-dismiss)
+  </div>
+
+  <h2>§11 · Trainer-Check-in (RSVP → Attendance) — kein Optimistic Update</h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor T as Trainer
+    participant C as TrainerDashboardClient + RsvpList
+    participant API as /api/attendance-records
+    participant PG as Postgres
+
+    T->>C: Klick "Check-in" bei Member (Pill noch im IDLE-State)
+    C->>API: POST { sessionId, participantId, status: "present", checkInTime: "HH:MM", date: now }
+    API->>PG: INSERT attendance_records
+    alt 200 OK
+        PG-->>API: row inserted
+        API-->>C: 200 (Attendance written)
+        C->>C: Pill wechselt auf grünen Hintergrund + "Eingecheckt"-Badge
+        C-->>T: Toast "Teilnehmer eingecheckt"
+    else 4xx oder 5xx
+        API-->>C: error
+        C->>C: Pill bleibt im IDLE-State (kein Rollback noetig)
+        C-->>T: Toast "Check-in fehlgeschlagen"
+    end
+  </div>
+
+  <h2>§12 · 2FA-Enrollment (TOTP) — Enroll → Verify → optional Unenroll</h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor M as Member
+    participant C as MemberProfile (Sicherheit-Tab)
+    participant SB as supabase.auth.mfa
+
+    M->>C: Mount der Sicherheit-Card
+    C->>SB: mfa.listFactors()
+    SB-->>C: { totp: [verified-oder-leer] }
+
+    alt kein verified TOTP
+        C->>SB: mfa.enroll({ factorType: "totp", issuer: "SwingZ" })
+        SB-->>C: enroll Response (id, qr_code als base64 PNG, secret)
+        C-->>M: QR-Code-Image + manueller Secret + 6-digit Input
+        M->>C: 6-stelliger Code (Enter oder "Bestätigen")
+        C->>SB: mfa.challengeAndVerify({ factorId, code })
+        alt gültig
+            SB-->>C: 200 OK
+            C-->>M: Toast "2FA aktiviert" + Status "2FA ist aktiv"
+        else ungültig
+            SB-->>C: 401 invalid
+            C-->>M: Toast "Ungültiger Code — erneut versuchen"
+        end
+    else bereits verified TOTP
+        C-->>M: Badge "2FA ist aktiv" + Danger-Outline "2FA deaktivieren"
+        M->>C: Klick
+        C->>SB: mfa.unenroll({ factorId })
+        SB-->>C: 200 OK
+        C-->>M: Toast "2FA deaktiviert"
+    end
+  </div>
+
+  <h2>§13 · Account löschen (Anonymize-Service) <span class="risk-tag risk-br">RISK: Note mit &lt;br/&gt;</span></h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor M as Member
+    participant C as MemberProfile (Gefahrenzone)
+    participant API as DELETE /api/user/delete
+    participant S as lib/services/anonymize.service.ts
+    participant PG as Postgres
+
+    M->>C: Klick "Konto löschen" → ConfirmDialog → "Bestätigen"
+    C->>API: DELETE /api/user/delete
+    API->>S: anonymizeUser(userId)
+    S->>PG: UPDATE users SET full_name='Anonym', email='anon-&lt;hash&gt;@deleted.local', phone=NULL
+    S->>PG: UPDATE user_club_memberships SET is_active=false (soft, kein DELETE)
+    Note over S,PG: bookings + invoices + attendance bleiben unverändert<br/>(GoBD §147 AO — 10 Jahre Aufbewahrung)
+    S->>PG: INSERT audit_logs (action='user_anonymized', actor=system)
+    API-->>C: 200 OK
+    C->>C: router.push('/login') (Auth-Cookie gelöscht)
+  </div>
+
+  <h2>§14 · Admin konvertiert Probetraining → Mitglied</h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor A as Admin
+    participant C as AdminTrialApprovals (Konvertieren-Modal)
+    participant API as POST /api/admin/trial-training/[id]/convert-to-member
+    participant SB as Supabase Admin SDK
+    participant PG as Postgres
+    participant R as Resend SMTP
+
+    A->>C: Klick "Zu Mitglied konvertieren" (UserPlus-Icon)
+    C-->>A: Modal mit Name + E-Mail + Hinweistext (Supabase-Account + Magic-Link)
+    A->>C: Bestätigen
+    C->>API: POST { email, fullName, clubId }
+    API->>SB: auth.admin.inviteUserByEmail(email)
+    SB-->>API: User-Invite (Magic-Link generiert)
+    API->>PG: INSERT user_club_memberships { role: 'member', club_id, is_active: true }
+    alt Success
+        API->>R: sendEmail(new_member, 'welcome_to_club')
+        API-->>C: 200 OK
+        C-->>A: Badge "Konvertiert" ersetzt Button — irreversible
+    else 409 "Email existiert bereits"
+        API-->>C: error
+        C-->>A: rote Error-Banner im Modal ("Manuelle Account-Migration via Support")
+    end
+  </div>
+
+  <h2>§15 · Admin erstellt Rechnung — Membership-Fee-Gate <span class="risk-tag risk-br">RISK: Note mit &lt;br/&gt;</span></h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor A as Admin
+    participant P as Billing-Page (Server Component)
+    participant PG as Postgres
+    participant N as Notification-Service
+
+    P->>PG: 3x parallel — fee_configs, clubMemberships (role IN member,trainer), invoices (paginiert)
+    PG-->>P: rows[]
+    P->>P: hasActiveMembershipFee = fee_configs.some(type='membership' AND is_active)
+
+    alt hasActiveMembershipFee === false
+        P-->>A: Warnung gelb — "Keine aktive Mitgliedsgebühr konfiguriert"
+        Note over A,P: "+ Rechnung" ist deaktiviert —<br/>Link "Jetzt Mitgliedsgebühr anlegen" fuehrt auf ?tab=categories
+    else hat aktive Membership-Gebühr
+        A->>P: "+ Rechnung" → Modal: { Member, Betrag, Fälligkeit, type }
+        P->>PG: INSERT invoices { club_id, member_id, period_start, type, subtotal }
+        alt 200 OK
+            PG-->>P: row inserted
+            P->>N: INSERT notifications { type: 'invoice_created' }
+            P->>PG: notification-dispatch Cron (5 min) → E-Mail
+            P-->>A: Rechnung erscheint in Liste
+        else 409 (club × member × period × type) bereits vorhanden
+            PG-->>P: 409 Conflict
+            P-->>A: rote Fehler-Banner "Doppelte Rechnung — bereits angelegt?"
+        end
+    end
+  </div>
+
+  <h2>§1 · Mitglied bucht Training <span class="risk-tag risk-br">RISK: Note mit &lt;br/&gt;</span></h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor M as Member (Browser)
+    participant SC as App-Server (Next.js Server Component)
+    participant N as Notification-Service
+    participant Email as Resend-SMTP
+    participant PG as Postgres (Supabase)
+    participant Cal as Calendar-Export (ICS)
+
+    M->>SC: Klick "Buchen" auf /sessions/[id]
+    SC->>PG: POST /api/bookings { session_id }
+    Note over SC,PG: withApiAuth(verifyRole 'member')<br/>BookingUseCase.create()
+    PG->>PG: RPC create_booking_safe<br/>(FOR UPDATE + Capacity-Check + GIST-Exclusion)
+    PG-->>SC: Return Booking (status='confirmed')
+    SC->>N: notifyBookingCreated(booking)
+    N->>PG: INSERT notifications { type: 'booking_created' }
+    SC-->>M: 201 Created (JSON)
+    Note over M,SC: Polling oder Push-Update
+
+    par Async Dispatch (5 min later)
+        N->>PG: CRON notification-dispatch
+        N->>Email: sendEmail(member, template 'booking_confirmed')
+        Email-->>M: "Buchung bestätigt" E-Mail
+    and
+        N->>Cal: UPDATE ical-feed-signed-url
+    end
+  </div>
+
+  <h2>§3 · Member zahlt Rechnung via Stripe <span class="risk-tag risk-br">RISK: Note mit &lt;br/&gt;</span></h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor M as Member (Browser)
+    participant SC as App-Server
+    participant Stripe
+    participant W as Stripe-Webhook-Receiver
+    participant PG as Postgres
+    participant Dunning as Dunning-Cron
+
+    M->>SC: /member/billing/invoice/[id] → "Pay"
+    SC->>Stripe: POST /v1/checkout/sessions { invoice_id, customer_id }
+    Stripe-->>SC: checkout URL
+    SC-->>M: Redirect zu Stripe
+    M->>Stripe: Zahlt (Kreditkarte / SEPA / Stripe-Default)
+    Stripe->>W: POST /api/webhooks/stripe { event: 'invoice.paid' }
+    W->>W: stripe.webhooks.constructEvent (verify sig)
+    W->>PG: RPC check_and_record_stripe_event
+    W->>PG: UPDATE invoices { status: 'paid', paid_at: now() }
+    W->>PG: INSERT notifications { type: 'invoice_paid' }
+    W-->>Stripe: 200 OK
+    Note over Stripe,M: Stripe → Member E-Mail "Receipt"
+    Note over Dunning: Später (1 Tag):<br/>Dunning-Cron läuft<br/> sieht Invoice paid → keine Aktion
+  </div>
+
+  <h2>§8 · Owner lädt Admin ein <span class="risk-tag risk-br">RISK: Note mit &lt;br/&gt;</span></h2>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor O as Owner
+    participant SC as App-Server (owner-route)
+    participant SB as Supabase Auth (Admin SDK)
+    participant PG as Postgres
+    participant R as Resend
+
+    O->>SC: /owner/admins → "Admin einladen" → email, club_id
+    SC->>SB: auth.admin.inviteUserByEmail(email)
+    SB-->>SC: User-Invite (Magic-Link)
+    SC->>PG: INSERT user_club_memberships { user_id, club_id, role: 'admin', is_active: true }
+    Note over SB,M: Aber User existiert noch nicht in users,<br/>Membership wird verknüpft sobald Magic-Link angeklickt wird
+    SC->>R: sendEmail(email, 'invite_to_admin')
+    R-->>Admin-Email: Magic-Link
+    Note over O,M: Identity-Problematik:<br/>Falls bereits auth.users-Row existiert (z. B. Member → Admin-Promo),<br/>User wird reused, keine neue Row.
+  </div>
+</body>
+</html>

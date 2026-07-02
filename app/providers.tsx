@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { AnalyticsProvider } from '@/components/analytics-provider';
+import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { TenantProvider } from '@/lib/tenant-context';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { NextIntlClientProvider } from 'next-intl';
@@ -43,6 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <Suspense fallback={null}>
             <AnalyticsProvider />
           </Suspense>
+          <CookieConsentBanner />
         </TenantProvider>
       </ThemeProvider>
     </NextIntlClientProvider>

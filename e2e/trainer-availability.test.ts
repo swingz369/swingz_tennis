@@ -1,5 +1,5 @@
 /**
- * E2E Test: Trainer Availability Manager (Midscene + Vitest + Playwright)
+ * E2E Test: Trainer Availability Manager (Playwright + Vitest)
  *
  * Abgedeckter Flow:
  *   Admin-Login → Verfügbarkeitsseite öffnen → Woche navigieren (Nächste/Vorherige/Heute)
@@ -7,7 +7,6 @@
  *
  * Voraussetzungen:
  *   - Dev-Server läuft (npm run dev)
- *   - OPENAI_API_KEY in .env gesetzt
  *   - TEST_ADMIN_EMAIL / TEST_ADMIN_PASSWORD in .env gesetzt
  *   - Trainer-Profil existiert (Admin muss auch Trainer-Rolle haben)
  *
@@ -16,6 +15,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import type { Page } from 'playwright';
 import { WebTest, type WebTestContext } from './helpers/web-test';
 import { loginAs } from './helpers/auth';
 
@@ -26,26 +26,22 @@ const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL!;
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD!;
 
 // ═══ Timeouts ═══
-const TEST_TIMEOUT = 300_000; // 5 min per phase
-const POLL_INTERVAL = 5_000;
-const MAX_POLLS = 24;
+const TEST_TIMEOUT = 120_000; // 2 min per phase
+const NAV_TIMEOUT = 15_000;
 
-// ═══ Polling helper ═══
-async function pollFor(
-  agent: any,
-  page: any,
-  query: string,
-  maxPolls = MAX_POLLS
-): Promise<boolean> {
-  for (let i = 0; i < maxPolls; i++) {
-    const result = await agent.aiQuery(query);
-    if (result) return true;
-    if (i < maxPolls - 1) await page.waitForTimeout(POLL_INTERVAL);
+// ═══ Helpers ═══
+
+/** Wait for an element matching `selector` to be visible, polling up to `timeout` ms. */
+async function waitForVisible(page: Page, selector: string, timeout = 10_000): Promise<boolean> {
+  try {
+    await page.waitForSelector(selector, { state: 'visible', timeout });
+    return true;
+  } catch {
+    return false;
   }
-  return false;
 }
 
-describe.skip('Trainer Availability E2E', () => {
+describe('Trainer Availability E2E', () => {
   let ctx: WebTestContext;
 
   beforeAll(async () => {
@@ -64,39 +60,25 @@ describe.skip('Trainer Availability E2E', () => {
   it(
     'Phase 1: Admin login → navigate to availability page',
     async () => {
-      ctx = await WebTest.start(BASE_URL, {
-        aiActionContext:
-          'You are a German-speaking QA tester for a tennis club management app called SwingZ. The app is in German.',
-      });
+      ctx = await WebTest.start(BASE_URL);
 
       // Login
       await loginAs(ctx.page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
-      // Navigate to availability page
-      await ctx.agent.aiAct(
-        'Click on "Training" in the sidebar to expand it, then look for "Verfügbarkeit" or availability and click it'
-      );
-      await ctx.page.waitForTimeout(3000);
+      // Navigate to trainer availability page
+      await ctx.page.goto(`${BASE_URL}/trainer/availability`, {
+        waitUntil: 'networkidle',
+        timeout: NAV_TIMEOUT,
+      });
 
-      // Verify availability page loaded
-      const pageLoaded = await ctx.agent.aiQuery(
-        'Is there a page heading saying "Verfügbarkeit" and week navigation buttons like "Heute", arrows, and "Speichern"?'
-      );
+      // Verify heading is visible
+      const heading = ctx.page.getByRole('heading', { name: 'Verfügbarkeit' });
+      await heading.waitFor({ state: 'visible', timeout: 10_000 });
+      expect(await heading.isVisible()).toBe(true);
 
-      if (!pageLoaded) {
-        // Try direct navigation
-        await ctx.page.goto(`${BASE_URL}/admin/availability`, {
-          waitUntil: 'networkidle',
-          timeout: 15000,
-        });
-      }
-
-      const headingVisible = await pollFor(
-        ctx.agent,
-        ctx.page,
-        'Is the "Verfügbarkeit" heading or a calendar-like week view visible on the page?'
-      );
-      expect(headingVisible).toBe(true);
+      // Verify "Heute" button exists
+      const heuteButton = ctx.page.getByRole('button', { name: 'Heute' });
+      expect(await heuteButton.isVisible()).toBe(true);
     },
     TEST_TIMEOUT
   );
@@ -107,34 +89,31 @@ describe.skip('Trainer Availability E2E', () => {
   it(
     'Phase 2: Navigate weeks — next week changes date range, today returns to current week',
     async () => {
-      // Verify we're on current week (Heute should be disabled)
-      await ctx.agent.aiQuery('Is the "Heute" button in the navigation bar disabled/grayed out?');
+      const page = ctx.page;
+      const heuteButton = page.getByRole('button', { name: 'Heute' });
 
-      // Click "Nächste Woche" arrow
-      await ctx.agent.aiAct(
-        'Click the right arrow button next to the week date range to go to next week'
-      );
-      await ctx.page.waitForTimeout(2000);
+      // Verify we're on current week — "Heute" should be disabled
+      expect(await heuteButton.isDisabled()).toBe(true);
 
-      // Verify "Heute" is now enabled (we navigated away from current week)
-      const heuteNowEnabled = await ctx.agent.aiQuery('Is the "Heute" button enabled/clickable?');
-      expect(heuteNowEnabled).toBe(true);
+      // Click "Nächste Woche" (right chevron button with title)
+      const nextWeekBtn = page.getByRole('button', { name: 'Nächste Woche' });
+      await nextWeekBtn.click();
+      await page.waitForTimeout(2000);
 
-      // Click "Vorherige Woche" arrow
-      await ctx.agent.aiAct(
-        'Click the left arrow button next to the week date range to go to previous week'
-      );
-      await ctx.page.waitForTimeout(2000);
+      // "Heute" should now be enabled (we navigated away from current week)
+      expect(await heuteButton.isEnabled()).toBe(true);
 
-      // Click "Heute" to return
-      await ctx.agent.aiAct('Click the "Heute" button');
-      await ctx.page.waitForTimeout(2000);
+      // Click "Vorherige Woche" (left chevron button with title)
+      const prevWeekBtn = page.getByRole('button', { name: 'Vorherige Woche' });
+      await prevWeekBtn.click();
+      await page.waitForTimeout(2000);
+
+      // Click "Heute" to return to current week
+      await heuteButton.click();
+      await page.waitForTimeout(2000);
 
       // Verify we're back to current week — "Heute" disabled again
-      const backToCurrent = await ctx.agent.aiQuery(
-        'Is the "Heute" button now disabled (grayed out, not clickable)?'
-      );
-      expect(backToCurrent).toBe(true);
+      expect(await heuteButton.isDisabled()).toBe(true);
     },
     TEST_TIMEOUT
   );
@@ -145,65 +124,55 @@ describe.skip('Trainer Availability E2E', () => {
   it(
     'Phase 3: Toggle preset slots → save → reload → verify slots persist',
     async () => {
-      // Go to current week first
-      const heuteDisabled = await ctx.agent.aiQuery('Is the "Heute" button disabled?');
-      if (!heuteDisabled) {
-        await ctx.agent.aiAct('Click the "Heute" button');
-        await ctx.page.waitForTimeout(2000);
+      const page = ctx.page;
+
+      // Ensure we're on current week
+      const heuteButton = page.getByRole('button', { name: 'Heute' });
+      if (!(await heuteButton.isDisabled())) {
+        await heuteButton.click();
+        await page.waitForTimeout(2000);
       }
 
-      // Select a specific weekday card (Montag if visible, otherwise first available)
-      await ctx.agent.aiAct(
-        'Click on the preset time chip "08:00" under the "Montag" (Monday) card. If Monday is not visible, click the first visible day card\'s "08:00" chip.'
-      );
-      await ctx.page.waitForTimeout(1000);
+      // Click preset chip "08:00" for Montag (Monday = second day card in DAYS array).
+      // The component renders Sonntag first, so Montag's chips are at index 1 of all matching buttons.
+      await page
+        .locator('button')
+        .filter({ hasText: /^08:00$/ })
+        .nth(1)
+        .click();
+      await page.waitForTimeout(500);
 
-      // Toggle a second slot
-      await ctx.agent.aiAct('Click on the preset time chip "11:00" under the same day card');
-      await ctx.page.waitForTimeout(1000);
+      // Click preset chip "11:00" for Montag (same approach)
+      await page
+        .locator('button')
+        .filter({ hasText: /^11:00$/ })
+        .nth(1)
+        .click();
+      await page.waitForTimeout(500);
 
-      // Verify at least one slot is active (colored/highlighted)
-      const hasActiveSlots = await ctx.agent.aiQuery(
-        'Are there any highlighted/active preset time chips visible (usually shown in a brand color)?'
-      );
-      expect(hasActiveSlots).toBe(true);
+      // Verify at least 2 active chips are visible (bg-brand-primary class = active)
+      const activeChips = page.locator('button.bg-brand-primary');
+      expect(await activeChips.count()).toBeGreaterThanOrEqual(2);
 
-      // Click "Speichern"
-      await ctx.agent.aiAct('Click the "Speichern" button in the header');
-      await ctx.page.waitForTimeout(3000);
+      // Click "Speichern" button
+      const saveBtn = page.getByRole('button', { name: 'Speichern' });
+      await saveBtn.click();
 
-      // Check for save completion — either a success or the loading spinner stopped
-      const saveDone = await pollFor(
-        ctx.agent,
-        ctx.page,
-        'Is the loading spinner on the "Speichern" button gone and is there either a success message, a result count (like "X gespeichert"), or no error message visible?',
-        MAX_POLLS / 2
-      );
-      expect(saveDone).toBe(true);
+      // Wait for save to complete — success message contains "gespeichert"
+      const successMsg = await waitForVisible(page, 'text=/gespeichert/', 15_000);
+      expect(successMsg).toBe(true);
 
-      // Check no error message (must be a fresh check after saveDone)
-      const hasError = await ctx.agent.aiQuery(
-        'Is there a red error message starting with "Fehler" visible on the page?'
-      );
-      expect(hasError).toBe(false);
+      // Verify no error message
+      const errorMsg = page.locator('.bg-error-50');
+      expect(await errorMsg.count()).toBe(0);
 
       // Reload the page
-      await ctx.page.reload({ waitUntil: 'networkidle' });
-      await ctx.page.waitForTimeout(2000);
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForTimeout(2000);
 
-      // Verify slots persist — at least one active chip visible
-      const slotsPersist = await pollFor(
-        ctx.agent,
-        ctx.page,
-        'Are there highlighted/active preset time chips visible on the page after reload?',
-        MAX_POLLS / 3
-      );
-      expect(slotsPersist).toBe(true);
-
-      // Verify at least 2 active slots are visible
-      await ctx.agent.aiQuery(
-        'Are there at least 2 or more active/highlighted time chip slots visible across all day cards?'
-      );
+      // Verify at least 1 active chip persists after reload
+      const activeChipsAfterReload = page.locator('button.bg-brand-primary');
+      expect(await activeChipsAfterReload.count()).toBeGreaterThanOrEqual(1);
     },
     TEST_TIMEOUT
   );
@@ -214,35 +183,31 @@ describe.skip('Trainer Availability E2E', () => {
   it(
     'Phase 4: Clear all slots → save → reload → verify empty state',
     async () => {
-      // Click all active preset chips to deactivate them
-      const hasActiveSlots = await ctx.agent.aiQuery(
-        'Are there any highlighted/active preset time chips visible?'
-      );
+      const page = ctx.page;
 
-      if (hasActiveSlots) {
-        // Deactivate all visible active chips
-        await ctx.agent.aiAct(
-          'Click on all highlighted/active preset time chips to deactivate them. Click each one that looks selected/colored.'
-        );
-        await ctx.page.waitForTimeout(1500);
+      // Click all active preset chips to deactivate them.
+      // Playwright locators are "live" — nth(0) re-evaluates each iteration.
+      const activeChips = page.locator('button.bg-brand-primary');
+      const activeCount = await activeChips.count();
+
+      for (let i = 0; i < activeCount; i++) {
+        await activeChips.nth(0).click();
+        await page.waitForTimeout(200);
       }
 
       // Save the cleared state
-      await ctx.agent.aiAct('Click the "Speichern" button');
-      await ctx.page.waitForTimeout(3000);
+      const saveBtn = page.getByRole('button', { name: 'Speichern' });
+      await saveBtn.click();
+      await page.waitForTimeout(3000);
 
       // Reload
-      await ctx.page.reload({ waitUntil: 'networkidle' });
-      await ctx.page.waitForTimeout(2000);
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForTimeout(2000);
 
-      // Verify empty state
-      const isEmpty = await pollFor(
-        ctx.agent,
-        ctx.page,
-        'Is the page showing an empty state message like "Keine Verfügbarkeiten eingetragen" or no highlighted time chips at all?',
-        MAX_POLLS / 3
-      );
-      expect(isEmpty).toBe(true);
+      // Verify empty state — "Keine Verfügbarkeiten eingetragen" text visible
+      const emptyMsg = page.getByText('Keine Verfügbarkeiten eingetragen');
+      await emptyMsg.waitFor({ state: 'visible', timeout: 10_000 });
+      expect(await emptyMsg.isVisible()).toBe(true);
     },
     TEST_TIMEOUT
   );

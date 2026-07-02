@@ -131,7 +131,7 @@ export function CommandPalette() {
     { label: 'Admin Dashboard', href: '/admin', icon: Home },
     { label: 'Mitglieder', href: '/admin/members', icon: Users },
     { label: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
-    { label: 'Plätze', href: '/admin/courts/manage', icon: MapPin },
+    { label: 'Plätze', href: '/bookings?tab=manage', icon: MapPin },
     { label: 'Abrechnung', href: '/admin/billing', icon: FileText },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { label: 'Einstellungen', href: '/admin/settings', icon: Settings },

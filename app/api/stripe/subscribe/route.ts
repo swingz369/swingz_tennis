@@ -71,12 +71,45 @@ export async function POST(request: NextRequest) {
     const { user, supabase } = auth;
     const { data: profile } = await supabase
       .from('users')
-      .select('email, full_name, stripe_customer_id')
+      .select('email, full_name, stripe_customer_id, stripe_subscription_id, subscription_status')
       .eq('id', user.id)
       .maybeSingle();
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://swingz.vercel.app';
     const returnPath = plan.startsWith('solo') ? '/admin/subscription' : '/superadmin/subscription';
+
+    const existingSubscriptionId = (profile as any)?.stripe_subscription_id as string | undefined;
+    const existingStatus = (profile as any)?.subscription_status as string | undefined;
+
+    // Plan-Wechsel bei bereits aktivem Abo: bestehende Subscription updaten
+    // statt eine zweite Checkout-Session zu erzeugen (verhindert Doppelbelastung).
+    // `customer.subscription.updated`-Webhook synct subscription_tier/status danach.
+    if (existingSubscriptionId && (existingStatus === 'active' || existingStatus === 'trialing')) {
+      try {
+        const subscription = await stripe.subscriptions.retrieve(existingSubscriptionId);
+        const currentItem = subscription.items.data[0];
+        if (!currentItem) {
+          return NextResponse.json(
+            { error: 'Bestehendes Abonnement hat keine Position zum Wechseln' },
+            { status: 500 }
+          );
+        }
+        await stripe.subscriptions.update(existingSubscriptionId, {
+          items: [{ id: currentItem.id, price: priceId }],
+          proration_behavior: 'create_prorations',
+          metadata: { adminUserId: user.id, plan, interval, saasSubscription: 'true' },
+        });
+        log.info('Stripe subscription plan switched in place', {
+          plan,
+          interval,
+          subscriptionId: existingSubscriptionId,
+        });
+        return NextResponse.json({ success: true });
+      } catch (err) {
+        log.error('Stripe plan-switch error', err instanceof Error ? err : undefined);
+        return NextResponse.json({ error: 'Stripe-Fehler beim Plan-Wechsel' }, { status: 500 });
+      }
+    }
 
     try {
       const customerId = (profile as any)?.stripe_customer_id as string | undefined;

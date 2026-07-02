@@ -10,32 +10,34 @@ type ClubsBrandingKey = keyof Database['public']['Tables']['clubs']['Update'];
 
 const log = createLogger('api:branding');
 
-const BrandingUpdateSchema = z.object({
-  brand: z
-    .object({
-      primaryColor: z
-        .string()
-        .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-        .optional(),
-      secondaryColor: z
-        .string()
-        .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-        .optional(),
-      accentColor: z
-        .string()
-        .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
-        .optional(),
-    })
-    .optional(),
-  logos: z
-    .object({
-      light: z.string().url().optional().nullable(),
-      dark: z.string().url().optional().nullable(),
-      favicon: z.string().url().optional().nullable(),
-    })
-    .optional(),
-  customDomain: z.string().url().optional().nullable(),
-});
+const BrandingUpdateSchema = z
+  .object({
+    brand: z
+      .object({
+        primaryColor: z
+          .string()
+          .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
+          .optional(),
+        secondaryColor: z
+          .string()
+          .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
+          .optional(),
+        accentColor: z
+          .string()
+          .regex(/^#[0-9A-Fa-f]{6}$/, 'Hex color required')
+          .optional(),
+      })
+      .optional(),
+    logos: z
+      .object({
+        light: z.string().url().optional().nullable(),
+        dark: z.string().url().optional().nullable(),
+        favicon: z.string().url().optional().nullable(),
+      })
+      .optional(),
+    customDomain: z.string().url().optional().nullable(),
+  })
+  .strict();
 
 export async function GET(request: NextRequest) {
   return withApiAuth(request, async (auth) => {

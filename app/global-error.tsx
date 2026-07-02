@@ -7,6 +7,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -18,8 +19,11 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to error tracking service
-    console.error('Global error:', error);
+    Sentry.captureException(error, {
+      level: 'error',
+      tags: { boundary: 'global-root' },
+      extra: { digest: error.digest },
+    });
   }, [error]);
 
   const handleGoHome = () => {

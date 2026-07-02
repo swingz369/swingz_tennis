@@ -44,9 +44,10 @@ export async function GET(req: NextRequest) {
     const { data: courts, error } = await auth.supabase
       .from('courts')
       .select(
-        'id, club_id, court_type_id, name, surface, has_indoor, has_lighting, is_active, usable_for_training, created_at'
+        'id, club_id, court_type_id, name, number, surface, has_indoor, has_lighting, is_active, usable_for_training, created_at'
       )
       .eq('club_id', clubId)
+      .eq('is_active', true)
       .order('name', { ascending: true });
 
     if (error) {
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
       clubId: c.club_id,
       courtTypeId: c.court_type_id,
       name: c.name,
-      number: null,
+      number: c.number,
       surface: c.surface ?? 'clay',
       location: null,
       description: null,
@@ -86,10 +87,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-    const { name, hasLighting, clubId: bodyClubId, isActive, usableForTraining } = body;
+    const {
+      name,
+      hasLighting,
+      clubId: bodyClubId,
+      isActive,
+      usableForTraining,
+      courtTypeId,
+      number,
+    } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'name is required' }, { status: 400 });
+    }
+
+    if (!courtTypeId) {
+      return NextResponse.json({ error: 'courtTypeId is required' }, { status: 400 });
+    }
+
+    if (!Number.isInteger(number) || number <= 0) {
+      return NextResponse.json({ error: 'number must be a positive integer' }, { status: 400 });
     }
 
     // Determine effective clubId
@@ -111,14 +128,18 @@ export async function POST(req: NextRequest) {
       .from('courts')
       .insert({
         club_id: effectiveClubId,
+        court_type_id: courtTypeId,
         name,
+        number,
         surface: body.surface ?? 'clay',
         has_indoor: body.hasIndoor ?? false,
         has_lighting: hasLighting ?? false,
         is_active: isActive ?? true,
         usable_for_training: usableForTraining ?? true,
       })
-      .select()
+      .select(
+        'id, club_id, court_type_id, name, number, location, surface, status, has_indoor, has_lighting, is_active, usable_for_training, created_at'
+      )
       .single();
 
     if (error) {
@@ -126,23 +147,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        court: {
-          id: court.id,
-          clubId: court.club_id,
-          name: court.name,
-          number: court.number,
-          location: court.location,
-          hasLighting: court.has_lighting,
-          isActive: court.is_active,
-          usableForTraining: court.usable_for_training,
-          status: court.status,
-          createdAt: court.created_at,
-        },
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ success: true, court }, { status: 201 });
   });
 }

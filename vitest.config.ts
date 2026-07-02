@@ -12,7 +12,10 @@ export default defineConfig({
     include: [
       'src/**/__tests__/**/*.test.{ts,tsx}',
       'tests/unit/**/*.test.{ts,tsx}',
-      'e2e/**/*.test.ts',
+      // e2e/**/*.test.ts need a live `npm run dev` server (see each file's header) —
+      // only included when explicitly opted into via `npm run test:e2e-browser`,
+      // so a plain `vitest run` doesn't falsely report them as broken.
+      ...(process.env.RUN_BROWSER_E2E === 'true' ? ['e2e/**/*.test.ts'] : []),
     ],
     exclude: [
       'node_modules/**',
@@ -57,6 +60,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      'server-only': path.resolve(__dirname, './src/__tests__/mocks/server-only.ts'),
       '@/domain': path.resolve(__dirname, './src/domain'),
       '@/application': path.resolve(__dirname, './src/application'),
       '@/infrastructure': path.resolve(__dirname, './src/infrastructure'),

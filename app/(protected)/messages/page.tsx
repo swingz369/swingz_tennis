@@ -632,7 +632,7 @@ function ComposeDialog({
       .then((data) => {
         const items = (data.members ?? []).map((m: any) => ({
           id: m.userId ?? m.id,
-          full_name: m.fullName ?? m.full_name ?? m.email,
+          full_name: [m.firstName, m.lastName].filter(Boolean).join(' ') || m.email,
           email: m.email,
           role: m.role ?? 'member',
         }));

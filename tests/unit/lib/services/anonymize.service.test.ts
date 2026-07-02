@@ -89,6 +89,26 @@ vi.mock('@/src/infrastructure/persistence/schema', () => ({
     ip_address: { __kind: 'col' },
     user_agent: { __kind: 'col' },
   },
+  // Step 5c (SEPA bank-detail scrub) + step 5d (trainer-note hard-delete)
+  // added after this test was authored — the service imports both from
+  // schema, so they must exist here even though no test asserts their
+  // mutated state (the mocked `db.update`/`db.delete` below no-op for
+  // any table that isn't 'users' or 'userClubMemberships').
+  sepaMandates: {
+    _: 'sepaMandates',
+    memberId: { __kind: 'user_id' },
+    iban: { __kind: 'col' },
+    accountHolder: { __kind: 'col' },
+    bankName: { __kind: 'col' },
+    address: { __kind: 'col' },
+    isActive: { __kind: 'col' },
+    revokedAt: { __kind: 'col' },
+    revokeReason: { __kind: 'col' },
+  },
+  trainerMemberNotes: {
+    _: 'trainerMemberNotes',
+    member_id: { __kind: 'user_id' },
+  },
 }));
 
 // ── Mocked db: stateful in-memory. select / update / insert / chain. ────
@@ -167,6 +187,15 @@ vi.mock('@/src/infrastructure/persistence/db', () => {
           }
           return Promise.resolve();
         },
+      }),
+      // Step 5b: raw-SQL address/emergency-contact wipe (not modeled in the
+      // Drizzle schema — the service issues `db.execute(sql\`...\`)` directly).
+      // No test asserts on this; a resolving no-op is sufficient.
+      execute: async (_query: unknown) => ({ rows: [] }),
+      // Step 5d: hard-delete trainer notes (sensitive PII, not GoBD-locked).
+      // No test asserts on this table's contents; no-op resolve.
+      delete: (_table: unknown) => ({
+        where: async (_predicate: unknown) => Promise.resolve(),
       }),
     },
   };

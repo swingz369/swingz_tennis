@@ -154,23 +154,43 @@ export async function POST(req: NextRequest) {
       }
     })();
 
-    // Calculate dynamic price for this booking
-    let priceInfo: { pricePerHour: number; effectivePricePerHour: number; source: string } | null = null;
+    // Calculate dynamic price only if the club has dynamic_pricing feature enabled
+    let priceInfo: { pricePerHour: number; effectivePricePerHour: number; source: string } | null =
+      null;
     try {
-      const sessionStart = new Date(session.timeslot_start);
-      const sessionEnd = new Date(session.timeslot_end);
-      const bookingHours = (sessionEnd.getTime() - sessionStart.getTime()) / 3_600_000;
-      const result = await pricingRepo.calculatePrice(ClubId.fromString(clubId), {
-        courtId: session.court_id ? CourtId.fromString(session.court_id) : undefined,
-        startTime: sessionStart,
-        dayOfWeek: sessionStart.getDay(),
-        bookingHours,
-      });
-      priceInfo = {
-        pricePerHour: result.pricePerHour,
-        effectivePricePerHour: +(result.pricePerHour * result.multiplier).toFixed(2),
-        source: result.source,
-      };
+      const { data: clubData } = await supabase
+        .from('clubs')
+        .select('features, default_hourly_rate')
+        .eq('id', clubId)
+        .single();
+
+      const features = clubData?.features as Record<string, unknown> | null;
+      const dynamicPricingEnabled = features?.dynamic_pricing === true;
+
+      if (dynamicPricingEnabled) {
+        const sessionStart = new Date(session.timeslot_start);
+        const sessionEnd = new Date(session.timeslot_end);
+        const bookingHours = (sessionEnd.getTime() - sessionStart.getTime()) / 3_600_000;
+        const result = await pricingRepo.calculatePrice(ClubId.fromString(clubId), {
+          courtId: session.court_id ? CourtId.fromString(session.court_id) : undefined,
+          startTime: sessionStart,
+          dayOfWeek: sessionStart.getDay(),
+          bookingHours,
+        });
+        priceInfo = {
+          pricePerHour: result.pricePerHour,
+          effectivePricePerHour: +(result.pricePerHour * result.multiplier).toFixed(2),
+          source: result.source,
+        };
+      } else {
+        // Default: uniform price from club's default_hourly_rate
+        const defaultRate = clubData?.default_hourly_rate ?? 15;
+        priceInfo = {
+          pricePerHour: Number(defaultRate),
+          effectivePricePerHour: Number(defaultRate),
+          source: 'default',
+        };
+      }
     } catch {
       // Non-blocking: price calculation failure should not prevent booking
       log.warn('[Bookings] Price calculation failed (non-blocking)');

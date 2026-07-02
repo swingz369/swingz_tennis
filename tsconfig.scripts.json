@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "types": ["node"],
+    "verbatimModuleSyntax": false
+  },
+  "include": ["scripts/**/*"],
+  "exclude": ["node_modules", ".next", "app", "src", "components", "lib"]
+}
