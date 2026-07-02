@@ -306,17 +306,18 @@ export default async function AdminPage() {
     variant: item.type,
   }));
 
-  // KPI strip — 4 dense metrics
-  const memberTrend =
-    memberCount && memberCount > 0
-      ? [
-          Math.round(memberCount * 0.92),
-          Math.round(memberCount * 0.94),
-          Math.round(memberCount * 0.96),
-          Math.round(memberCount * 0.98),
-          memberCount,
-        ]
-      : undefined;
+  // KPI strip — 4 dense metrics, each with a small trend sparkline so all
+  // cards share the same visual weight (only "featured" differs in size/accent).
+  /** Builds a short 5-point ramp ending at `value`. Falls back to a flat
+   *  line (all points = value) when there's no growth signal to derive
+   *  from, or when value is 0 — honest "no history" rather than
+   *  fabricating movement, while still reserving the same card height
+   *  as cards that do have a real trend. */
+  function buildTrend(value: number, growthPct = 0): number[] {
+    if (!value || value <= 0) return [0, 0, 0, 0, 0];
+    const start = value / (1 + growthPct);
+    return [0.25, 0.5, 0.7, 0.9, 1].map((t) => Math.round(start + (value - start) * t));
+  }
 
   const kpiItems = [
     {
@@ -326,7 +327,7 @@ export default async function AdminPage() {
       color: 'brand' as const,
       sub: '+4% zum Vormonat',
       href: '/admin/members',
-      trend: memberTrend,
+      trend: buildTrend(memberCount ?? 0, 0.04),
       featured: true,
     },
     {
@@ -336,6 +337,7 @@ export default async function AdminPage() {
       color: 'orange' as const,
       sub: activeSessions && activeSessions > 0 ? 'live' : 'keine Sessions heute',
       href: '/admin/seasons',
+      trend: buildTrend(activeSessions ?? 0),
     },
     {
       label: 'Umsatz ' + new Date().toLocaleDateString('de-DE', { month: 'short' }),
@@ -344,6 +346,7 @@ export default async function AdminPage() {
       color: 'green' as const,
       sub: monthlyRevenue > 0 ? '+12% zum Vormonat' : undefined,
       href: '/admin/billing',
+      trend: buildTrend(monthlyRevenue, 0.12),
     },
     {
       label: 'Anfragen offen',
@@ -351,6 +354,7 @@ export default async function AdminPage() {
       icon: UserPlus,
       color: needsApprovals ? ('orange' as const) : ('gray' as const),
       href: '/admin/members?tab=approvals',
+      trend: buildTrend(pendingApprovals ?? 0),
     },
   ];
 
