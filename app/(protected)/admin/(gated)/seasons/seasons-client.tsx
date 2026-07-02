@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatCard } from '@/components/ui/stat-card';
 import {
   Plus,
   Calendar,
@@ -64,57 +65,34 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
       {/* Stats Overview */}
       {seasons.length > 0 && (
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Seasons Gesamt</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{seasons.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {seasons.filter((s) => s.is_active).length} aktiv
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Präferenzen</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {seasons.reduce((sum, s) => sum + (Number(s.submitted_preferences) || 0), 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">Eingereicht</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Geplante Einheiten</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {seasons.reduce((sum, s) => sum + (Number(s.planned_entries) || 0), 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">Training-Sessions</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Offene Konflikte</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {seasons.reduce((sum, s) => sum + (Number(s.open_conflicts) || 0), 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">Zu lösen</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            icon={Calendar}
+            label="Seasons Gesamt"
+            value={seasons.length}
+            sub={`${seasons.filter((s) => s.is_active).length} aktiv`}
+            color="brand"
+          />
+          <StatCard
+            icon={Users}
+            label="Präferenzen"
+            value={seasons.reduce((sum, s) => sum + (Number(s.submitted_preferences) || 0), 0)}
+            sub="Eingereicht"
+            color="blue"
+          />
+          <StatCard
+            icon={TrendingUp}
+            label="Geplante Einheiten"
+            value={seasons.reduce((sum, s) => sum + (Number(s.planned_entries) || 0), 0)}
+            sub="Training-Sessions"
+            color="green"
+          />
+          <StatCard
+            icon={AlertCircle}
+            label="Offene Konflikte"
+            value={seasons.reduce((sum, s) => sum + (Number(s.open_conflicts) || 0), 0)}
+            sub="Zu lösen"
+            color="red"
+          />
         </div>
       )}
 

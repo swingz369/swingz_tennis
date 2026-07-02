@@ -466,7 +466,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 shrink-0">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brand-primary/10 shrink-0">
                           <User className="h-4 w-4 text-brand-primary" />
                         </div>
                         <div className="min-w-0">

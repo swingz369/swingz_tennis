@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StatCard } from '@/components/ui/stat-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,49 +76,26 @@ export default async function OwnerPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Vereine gesamt',
-            value: clubCount ?? 0,
-            icon: Building2,
-            color: 'text-indigo-600',
-            bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-          },
-          {
-            label: 'Nutzer gesamt',
-            value: totalUsers ?? 0,
-            icon: Users,
-            color: 'text-info-600',
-            bg: 'bg-info-50 dark:bg-info-900/20',
-          },
-          {
-            label: 'Superadmins',
-            value: superadminCount ?? 0,
-            icon: UserCog,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50 dark:bg-purple-900/20',
-          },
-          {
-            label: 'Admins',
-            value: adminCount ?? 0,
-            icon: GraduationCap,
-            color: 'text-success-600',
-            bg: 'bg-success-50 dark:bg-success-900/20',
-          },
-        ].map((stat) => (
-          <Card key={stat.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value.toLocaleString('de-DE')}</p>
-                </div>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {(
+          [
+            { label: 'Vereine gesamt', value: clubCount ?? 0, icon: Building2, color: 'brand' },
+            { label: 'Nutzer gesamt', value: totalUsers ?? 0, icon: Users, color: 'blue' },
+            {
+              label: 'Superadmins',
+              value: superadminCount ?? 0,
+              icon: UserCog,
+              color: 'purple',
+            },
+            { label: 'Admins', value: adminCount ?? 0, icon: GraduationCap, color: 'green' },
+          ] as const
+        ).map((stat) => (
+          <StatCard
+            key={stat.label}
+            icon={stat.icon}
+            label={stat.label}
+            value={stat.value.toLocaleString('de-DE')}
+            color={stat.color}
+          />
         ))}
       </div>
 

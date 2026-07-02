@@ -586,7 +586,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
 
       <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
-        <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
+        <div className="p-5 border-b border-border dark:border-white/10">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div>
@@ -1020,7 +1020,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                     <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                       Branchenerfahrung
                     </p>
-                    <div className="text-3xl font-bold text-gradient-primary">
+                    <div className="text-3xl font-bold font-mono text-foreground dark:text-white tabular-nums">
                       {trainer.experience.years} <span className="text-xl">Jahre</span>
                     </div>
                   </CardContent>
@@ -1030,7 +1030,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                     <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-1">
                       Vorherige Vereine
                     </p>
-                    <div className="text-3xl font-bold text-gradient-accent">
+                    <div className="text-3xl font-bold font-mono text-foreground dark:text-white tabular-nums">
                       {trainer.experience.previousClubs.length}
                     </div>
                   </CardContent>
@@ -1486,10 +1486,10 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                                 <Badge
                                   className={`text-xs ${
                                     trial.status === 'requested'
-                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800'
                                       : trial.status === 'scheduled'
-                                        ? 'bg-success-100 text-success-700 border-success-200'
-                                        : 'bg-error-100 text-error-700 border-error-200'
+                                        ? 'bg-success-100 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800'
+                                        : 'bg-error-100 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800'
                                   }`}
                                 >
                                   {trial.status === 'requested'

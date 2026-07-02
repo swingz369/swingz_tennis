@@ -2,6 +2,7 @@ import { requireAuth } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatCard } from '@/components/ui/stat-card';
 import { Euro, Building2, CheckCircle, Clock, AlertCircle, Users, Wifi } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -104,40 +105,27 @@ export default async function OwnerBillingPage() {
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {(
           [
-            {
-              label: 'Vereine gesamt',
-              value: rows.length,
-              Icon: Building2,
-              color: 'text-indigo-600',
-            },
-            { label: 'Aktive Abos', value: active, Icon: CheckCircle, color: 'text-success-600' },
+            { label: 'Vereine gesamt', value: rows.length, Icon: Building2, color: 'brand' },
+            { label: 'Aktive Abos', value: active, Icon: CheckCircle, color: 'green' },
             {
               label: 'Premium-Pläne',
               value: rows.filter(({ admin }) =>
                 ['solo_l', 'school_l', 'professional'].includes(admin?.subscription_tier ?? '')
               ).length,
               Icon: Euro,
-              color: 'text-violet-600',
+              color: 'purple',
             },
-            { label: 'Mitglieder gesamt', value: totalMembers, Icon: Users, color: 'text-sky-600' },
+            { label: 'Mitglieder gesamt', value: totalMembers, Icon: Users, color: 'blue' },
             {
               label: 'Smart Court Add-Ons',
               value: smartCourtCount,
               Icon: Wifi,
-              color: 'text-orange-600',
+              color: 'orange',
             },
-            { label: 'MRR (ca.)', value: `€ ${mrr}`, Icon: Euro, color: 'text-emerald-600' },
+            { label: 'MRR (ca.)', value: `€ ${mrr}`, Icon: Euro, color: 'green' },
           ] as const
         ).map(({ label, value, Icon, color }) => (
-          <Card key={label}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-2xl font-bold mt-0.5">{value}</p>
-              </div>
-              <Icon className={`h-6 w-6 ${color} opacity-60`} />
-            </CardContent>
-          </Card>
+          <StatCard key={label} icon={Icon} label={label} value={value} color={color} />
         ))}
       </div>
 
@@ -166,7 +154,7 @@ export default async function OwnerBillingPage() {
                     {hasSmartCourt && (
                       <Badge
                         variant="outline"
-                        className="gap-1 text-xs text-orange-600 border-orange-300"
+                        className="gap-1 text-xs text-orange-600 border-orange-300 dark:text-orange-400 dark:border-orange-700/50"
                       >
                         <Wifi className="h-3 w-3" />
                         Smart Court

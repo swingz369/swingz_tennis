@@ -190,7 +190,7 @@ export function MemberProfileClient({ member }: Props) {
       </div>
 
       {isEditing && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-info-50 border border-info-200 rounded-xl text-sm text-info-700">
+        <div className="flex items-center gap-2 px-4 py-2 bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800 rounded-xl text-sm text-info-700 dark:text-info-300">
           <AlertCircle className="h-4 w-4 shrink-0" />
           Bearbeitungsmodus aktiv
           <Button
@@ -209,8 +209,8 @@ export function MemberProfileClient({ member }: Props) {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-info-100 to-info-50 flex items-center justify-center">
-                <User className="h-8 w-8 text-info-600" />
+              <div className="h-16 w-16 rounded-full bg-info-50 dark:bg-info-900/20 flex items-center justify-center">
+                <User className="h-8 w-8 text-info-600 dark:text-info-400" />
               </div>
               <div>
                 <CardTitle>{member.full_name}</CardTitle>

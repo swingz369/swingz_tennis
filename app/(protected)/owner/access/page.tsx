@@ -73,7 +73,7 @@ export default async function OwnerAccessPage() {
                     {r.club_name && <p className="text-xs text-muted-foreground">{r.club_name}</p>}
                     <a
                       href={`mailto:${r.email}`}
-                      className="flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                      className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                     >
                       <Mail className="h-3 w-3" />
                       {r.email}
@@ -94,7 +94,7 @@ export default async function OwnerAccessPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 gap-1 text-success-700 border-success-300 hover:bg-success-50"
+                            className="h-7 gap-1 text-success-700 border-success-300 hover:bg-success-50 dark:text-success-300 dark:border-success-700/50 dark:hover:bg-success-900/20"
                           >
                             <CheckCircle className="h-3 w-3" />
                             Annehmen
@@ -104,7 +104,7 @@ export default async function OwnerAccessPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 gap-1 text-error-700 border-error-300 hover:bg-error-50"
+                            className="h-7 gap-1 text-error-700 border-error-300 hover:bg-error-50 dark:text-error-300 dark:border-error-700/50 dark:hover:bg-error-900/20"
                           >
                             <XCircle className="h-3 w-3" />
                             Ablehnen

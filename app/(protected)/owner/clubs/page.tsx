@@ -145,7 +145,7 @@ export default function OwnerClubsPage() {
             <Card key={club.id} className="border shadow-sm">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 shrink-0">
-                  <Building2 className="h-5 w-5 text-indigo-600" />
+                  <Building2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{club.name}</p>
@@ -182,7 +182,7 @@ export default function OwnerClubsPage() {
                   </Button>
                   <Link
                     href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                    className="inline-flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
                     <ExternalLink className="h-3 w-3" /> Als Admin
                   </Link>

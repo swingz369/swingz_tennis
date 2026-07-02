@@ -78,12 +78,17 @@ export default function ClubsAdminPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Vereine verwalten</h1>
-        <div className="flex gap-2">
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-brand-primary">Vereine verwalten</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Vereine deiner Gruppe anlegen und verwalten
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={handleSeedDemo} disabled={seedingDemo}>
-            {seedingDemo ? 'Wird erstellt…' : '🎯 TC Demo anlegen'}
+            {seedingDemo ? 'Wird erstellt…' : 'TC Demo anlegen'}
           </Button>
           <Button onClick={() => setShowDialog(true)}>Neuer Verein</Button>
         </div>
@@ -97,7 +102,7 @@ export default function ClubsAdminPage() {
           <CardContent>
             <form onSubmit={handleCreateClub} className="space-y-4">
               {error && (
-                <div className="p-3 bg-error-50 border border-error-200 rounded-lg text-error-700 text-sm">
+                <div className="p-3 bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 rounded-lg text-error-700 dark:text-error-400 text-sm">
                   {error}
                 </div>
               )}

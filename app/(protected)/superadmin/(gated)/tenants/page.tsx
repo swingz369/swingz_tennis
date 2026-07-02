@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, Calendar, DollarSign, ArrowRight } from 'lucide-react';
+import { Building2, Users, Calendar, DollarSign, ArrowRight, Loader2 } from 'lucide-react';
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
@@ -109,16 +109,16 @@ export default function SuperadminTenantsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+        <Loader2 className="h-8 w-8 animate-spin text-brand-light" />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-brand-primary mb-2">Tenant Übersicht</h1>
-        <p className="text-muted-foreground dark:text-muted-foreground">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-brand-primary">Tenant Übersicht</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Wählen Sie einen Verein aus, um dessen Administration zu öffnen.
         </p>
       </div>
@@ -134,18 +134,20 @@ export default function SuperadminTenantsPage() {
           {clubs.map((club) => (
             <Card
               key={club.id}
-              className="hover:shadow-xl transition-all duration-200 border-2 hover:border-brand-primary"
+              className="hover:border-brand-primary/50 hover:shadow-sm transition-all"
             >
-              <CardHeader className="bg-gradient-primary text-white">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <Building2 className="h-6 w-6" />
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-primary/10 shrink-0">
+                    <Building2 className="h-4 w-4 text-brand-primary" />
+                  </div>
                   <span className="truncate">{club.name}</span>
                 </CardTitle>
-                <p className="text-sm text-white/80 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {club.member_count}/{club.max_members} Mitglieder
                 </p>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-0">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2 text-muted-foreground dark:text-foreground">

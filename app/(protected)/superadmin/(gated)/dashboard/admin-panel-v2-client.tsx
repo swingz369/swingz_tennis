@@ -54,10 +54,10 @@ export function AdminPanelV2Client({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-brand-primary">
+          <h1 className="text-2xl font-bold font-display text-brand-primary">
             Superadmin Dashboard
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Hallo {firstName} — Plattform-Übersicht über alle Vereine
           </p>
         </div>
@@ -65,14 +65,14 @@ export function AdminPanelV2Client({
           {/* Club Switcher Dropdown */}
           <Select onValueChange={handleClubSwitch}>
             <SelectTrigger className="w-full sm:w-[260px] border-purple-200 dark:border-purple-800 hover:border-purple-400 transition-colors">
-              <ArrowRightLeft className="h-4 w-4 text-purple-500 mr-2 shrink-0" />
+              <ArrowRightLeft className="h-4 w-4 text-purple-500 dark:text-purple-400 mr-2 shrink-0" />
               <SelectValue placeholder="Verein auswählen…" />
             </SelectTrigger>
             <SelectContent>
               {clubs.map((club) => (
                 <SelectItem key={club.id} value={club.id}>
                   <div className="flex items-center gap-2 truncate">
-                    <Building2 className="h-3.5 w-3.5 text-purple-500 shrink-0" />
+                    <Building2 className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
                     <span className="truncate">{club.name}</span>
                     {club.status === 'inactive' && (
                       <Badge variant="secondary" className="text-2xs px-1 py-0 leading-none">
@@ -103,7 +103,7 @@ export function AdminPanelV2Client({
             label: 'Vereine',
             value: platformStats.totalClubs,
             icon: Building2,
-            color: 'text-purple-600',
+            color: 'text-purple-600 dark:text-purple-400',
             bg: 'bg-purple-50 dark:bg-purple-900/20',
           },
           {
@@ -150,7 +150,7 @@ export function AdminPanelV2Client({
           <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">Alle Vereine</h2>
           <Link
             href="/superadmin/clubs"
-            className="text-xs text-purple-600 hover:underline font-medium flex items-center gap-1"
+            className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium flex items-center gap-1"
           >
             Verwalten <ChevronRight className="h-3 w-3" />
           </Link>
@@ -214,7 +214,10 @@ export function AdminPanelV2Client({
               <p className="font-medium">Keine Vereine gefunden</p>
               <p className="text-sm mt-1">
                 Erstelle einen neuen Verein unter{' '}
-                <Link href="/superadmin/clubs" className="text-purple-600 hover:underline">
+                <Link
+                  href="/superadmin/clubs"
+                  className="text-purple-600 dark:text-purple-400 hover:underline"
+                >
                   Club-Verwaltung
                 </Link>
               </p>
@@ -252,7 +255,7 @@ export function AdminPanelV2Client({
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-purple-600" />
+                <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 Plattform-Statistiken
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -284,7 +287,7 @@ export function AdminPanelV2Client({
                     key={item.label}
                     className="text-center p-4 bg-muted dark:bg-card/5 rounded-lg"
                   >
-                    <p className="text-2xl font-bold text-purple-600">
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                       {item.value.toLocaleString('de-DE')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
@@ -314,7 +317,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-purple-600 hover:underline font-medium"
+                className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium"
               >
                 Zur Vereinsübersicht ↑
               </Link>
@@ -333,7 +336,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-purple-600 hover:underline font-medium"
+                className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium"
               >
                 Zur Vereinsübersicht ↑
               </Link>

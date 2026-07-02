@@ -230,7 +230,7 @@ export default function TrainerPlanningPreferencesPage() {
       )}
 
       {seasons.length === 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-warning-200 bg-warning-50/60 px-3 py-2 text-sm text-warning-700">
+        <div className="flex items-center gap-2 rounded-lg border border-warning-200 dark:border-warning-800 bg-warning-50/60 dark:bg-warning-900/20 px-3 py-2 text-sm text-warning-700 dark:text-warning-300">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           Keine aktiven Saisons gefunden.
         </div>
@@ -340,12 +340,12 @@ export default function TrainerPlanningPreferencesPage() {
 
       {/* Feedback */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-error-200 bg-error-50 px-3 py-2 text-sm text-error-600">
+        <div className="flex items-center gap-2 rounded-lg border border-error-200 dark:border-error-800 bg-error-50 dark:bg-error-900/20 px-3 py-2 text-sm text-error-600 dark:text-error-400">
           <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
         </div>
       )}
       {savedOk && (
-        <div className="flex items-center gap-2 rounded-lg border border-success-200 bg-success-50 px-3 py-2 text-sm text-success-700">
+        <div className="flex items-center gap-2 rounded-lg border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-900/20 px-3 py-2 text-sm text-success-700 dark:text-success-300">
           <CheckCircle className="h-4 w-4 shrink-0" /> Gespeichert
         </div>
       )}

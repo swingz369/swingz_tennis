@@ -155,16 +155,16 @@ export default function SuperadminOnboardingPage() {
                 {stepNum < TOTAL_STEPS && (
                   <div
                     className={`absolute top-5 left-full h-0.5 w-[calc(100%+0.5rem)] -translate-y-1/2 transition-colors duration-500 ${
-                      isCompleted ? 'bg-purple-600' : 'bg-muted'
+                      isCompleted ? 'bg-purple-600 dark:bg-purple-500' : 'bg-muted'
                     }`}
                   />
                 )}
                 <div
                   className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted
-                      ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                      ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-md shadow-purple-600/20'
                       : isCurrent
-                        ? 'bg-purple-600 text-white ring-4 ring-purple-600/20 shadow-lg shadow-purple-600/30 scale-110'
+                        ? 'bg-purple-600 dark:bg-purple-500 text-white ring-4 ring-purple-600/20 shadow-lg shadow-purple-600/30 scale-110'
                         : 'bg-background border-2 border-border text-muted-foreground'
                   }`}
                 >
@@ -179,9 +179,9 @@ export default function SuperadminOnboardingPage() {
                 <span
                   className={`text-xs font-medium whitespace-nowrap hidden sm:block transition-colors duration-300 ${
                     isCurrent
-                      ? 'text-purple-600 font-semibold'
+                      ? 'text-purple-600 dark:text-purple-400 font-semibold'
                       : isCompleted
-                        ? 'text-purple-600/70'
+                        ? 'text-purple-600/70 dark:text-purple-400/70'
                         : 'text-muted-foreground'
                   }`}
                 >
@@ -202,8 +202,8 @@ export default function SuperadminOnboardingPage() {
       case 1:
         return (
           <div className="text-center space-y-8 py-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-purple-100 rounded-full">
-              <Zap className="w-12 h-12 text-purple-600" />
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+              <Zap className="w-12 h-12 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="space-y-3">
               <h2 className="text-3xl font-bold text-foreground">
@@ -213,7 +213,7 @@ export default function SuperadminOnboardingPage() {
                 Als{' '}
                 <Badge
                   variant="secondary"
-                  className="mx-1 bg-purple-100 text-purple-700 border-purple-200"
+                  className="mx-1 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700"
                 >
                   Superadmin
                 </Badge>{' '}
@@ -250,11 +250,11 @@ export default function SuperadminOnboardingPage() {
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Card className="border-purple-200 bg-purple-50/30">
+              <Card className="border-purple-200 dark:border-purple-700/30 bg-purple-50/30 dark:bg-purple-900/10">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <BarChart3 className="w-4 h-4 text-purple-600" />
+                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <h3 className="font-semibold text-sm">Dashboard</h3>
                   </div>
@@ -264,11 +264,11 @@ export default function SuperadminOnboardingPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-purple-200 bg-purple-50/30">
+              <Card className="border-purple-200 dark:border-purple-700/30 bg-purple-50/30 dark:bg-purple-900/10">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Building2 className="w-4 h-4 text-purple-600" />
+                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                      <Building2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <h3 className="font-semibold text-sm">Vereinsübersicht</h3>
                   </div>
@@ -277,11 +277,11 @@ export default function SuperadminOnboardingPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-purple-200 bg-purple-50/30">
+              <Card className="border-purple-200 dark:border-purple-700/30 bg-purple-50/30 dark:bg-purple-900/10">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-purple-600" />
+                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                      <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <h3 className="font-semibold text-sm">Club-Verwaltung</h3>
                   </div>
@@ -290,11 +290,11 @@ export default function SuperadminOnboardingPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-purple-200 bg-purple-50/30">
+              <Card className="border-purple-200 dark:border-purple-700/30 bg-purple-50/30 dark:bg-purple-900/10">
                 <CardContent className="pt-5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                      <ArrowLeftRight className="w-4 h-4 text-purple-600" />
+                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                      <ArrowLeftRight className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <h3 className="font-semibold text-sm">Club-Wechsel</h3>
                   </div>
@@ -304,8 +304,8 @@ export default function SuperadminOnboardingPage() {
                 </CardContent>
               </Card>
             </div>
-            <Card className="bg-purple-50/50 border-purple-200">
-              <CardContent className="pt-4 text-sm text-purple-800">
+            <Card className="bg-purple-50/50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-700/30">
+              <CardContent className="pt-4 text-sm text-purple-800 dark:text-purple-300">
                 <strong>Tipp:</strong> Du kannst jederzeit zwischen deiner Superadmin-Ansicht und
                 der Admin-Ansicht einzelner Vereine wechseln.
               </CardContent>
@@ -325,8 +325,8 @@ export default function SuperadminOnboardingPage() {
 
             {createdClubId ? (
               <div className="text-center space-y-6 py-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 rounded-full">
-                  <CheckCircle2 className="w-8 h-8 text-success-600" />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-success-100 dark:bg-success-900/20 rounded-full">
+                  <CheckCircle2 className="w-8 h-8 text-success-600 dark:text-success-400" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">
@@ -400,8 +400,8 @@ export default function SuperadminOnboardingPage() {
       case 4:
         return (
           <div className="text-center space-y-8 py-6">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-purple-100 rounded-full">
-              <CheckCircle2 className="w-12 h-12 text-purple-600" />
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+              <CheckCircle2 className="w-12 h-12 text-purple-600 dark:text-purple-400" />
             </div>
             <div className="space-y-3">
               <h2 className="text-3xl font-bold text-foreground">
@@ -416,9 +416,9 @@ export default function SuperadminOnboardingPage() {
                 <Badge
                   key={s.label}
                   variant="secondary"
-                  className="gap-1.5 px-3 py-1.5 bg-purple-100 border-purple-200"
+                  className="gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                   {s.label}
                 </Badge>
               ))}
@@ -447,9 +447,9 @@ export default function SuperadminOnboardingPage() {
   const isOptionalStep = step === 3;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <Card className="border-0 shadow-xl shadow-gray-200/50 ring-1 ring-gray-100">
+        <Card className="border border-border dark:border-white/10">
           <CardHeader className="pb-2">{renderStepper()}</CardHeader>
 
           <Separator />
