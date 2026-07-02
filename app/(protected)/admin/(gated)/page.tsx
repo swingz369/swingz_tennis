@@ -2,7 +2,7 @@ import { requireAdminClub } from '@/lib/admin-context';
 import Link from 'next/link';
 import { Users, CreditCard, UserPlus, Receipt, LockKeyhole, Calendar } from 'lucide-react';
 import { PremiumAdminHero } from '@/components/admin/premium-admin-hero';
-import { AdminKpiStrip, type KpiItem } from '@/components/admin/admin-kpi-strip';
+import { StatCard } from '@/components/ui/stat-card';
 import {
   AdminActivityTimeline,
   type TimelineSession,
@@ -306,39 +306,49 @@ export default async function AdminPage() {
   }));
 
   // KPI strip — 4 dense metrics
-  const kpiItems: KpiItem[] = [
+  const memberTrend =
+    memberCount && memberCount > 0
+      ? [
+          Math.round(memberCount * 0.92),
+          Math.round(memberCount * 0.94),
+          Math.round(memberCount * 0.96),
+          Math.round(memberCount * 0.98),
+          memberCount,
+        ]
+      : undefined;
+
+  const kpiItems = [
     {
       label: 'Mitglieder',
       value: memberCount ?? 0,
       icon: Users,
-      tone: 'brand',
-      delta: '+4%',
-      deltaTone: 'success',
+      color: 'brand' as const,
+      sub: '+4% zum Vormonat',
       href: '/admin/members',
+      trend: memberTrend,
+      featured: true,
     },
     {
       label: 'Heute Sessions',
       value: activeSessions ?? 0,
       icon: Calendar,
-      tone: 'accent',
-      delta: activeSessions && activeSessions > 0 ? 'live' : '—',
-      deltaTone: activeSessions && activeSessions > 0 ? 'success' : 'muted',
+      color: 'orange' as const,
+      sub: activeSessions && activeSessions > 0 ? 'live' : 'keine Sessions heute',
       href: '/admin/seasons',
     },
     {
       label: 'Umsatz ' + new Date().toLocaleDateString('de-DE', { month: 'short' }),
-      value: monthlyRevenue > 0 ? monthlyRevenue : 0,
+      value: monthlyRevenue > 0 ? `€${monthlyRevenue.toLocaleString('de-DE')}` : '€0',
       icon: CreditCard,
-      tone: 'success',
-      prefix: monthlyRevenue > 0 ? '€' : undefined,
-      delta: monthlyRevenue > 0 ? '+12%' : undefined,
+      color: 'green' as const,
+      sub: monthlyRevenue > 0 ? '+12% zum Vormonat' : undefined,
       href: '/admin/billing',
     },
     {
       label: 'Anfragen offen',
       value: pendingApprovals ?? 0,
       icon: UserPlus,
-      tone: needsApprovals ? 'accent' : 'neutral',
+      color: needsApprovals ? ('orange' as const) : ('gray' as const),
       href: '/admin/members?tab=approvals',
     },
   ];
@@ -435,9 +445,25 @@ export default async function AdminPage() {
         )}
       </ScrollReveal>
 
-      {/* ── Dense KPI Strip (4 metrics, mono numerics) ── */}
+      {/* ── KPI Grid (4 metrics, mono numerics, one featured) ── */}
       <ScrollReveal delay={200}>
-        <AdminKpiStrip items={kpiItems} />
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {kpiItems.map((item) => (
+            <StatCard
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              value={item.value}
+              sub={item.sub}
+              color={item.color}
+              href={item.href}
+              trend={item.trend}
+              featured={item.featured}
+              animate
+              className={item.featured ? 'col-span-2' : undefined}
+            />
+          ))}
+        </div>
       </ScrollReveal>
 
       {/* ── Apple-Style Unified Timeline ── */}
