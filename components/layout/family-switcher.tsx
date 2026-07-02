@@ -37,11 +37,11 @@ export function FamilySwitcher({
   if (!isParent || childMembers.length === 0) return null;
 
   return (
-    <div className="mx-3 mb-4 border border-white/[0.08] rounded-xl overflow-hidden bg-white/5">
+    <div className="mx-3 mb-4 border border-border rounded-xl overflow-hidden bg-muted/50">
       {/* Toggle */}
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
           {isParentViewingChild ? (
@@ -55,7 +55,7 @@ export function FamilySwitcher({
         </div>
         <ChevronDown
           className={cn(
-            'h-4 w-4 shrink-0 text-white/50 transition-transform duration-200',
+            'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
             open && 'rotate-180'
           )}
         />
@@ -63,7 +63,7 @@ export function FamilySwitcher({
 
       {/* Dropdown */}
       {open && (
-        <div className="border-t border-white/[0.06] overflow-hidden animate-slide-down">
+        <div className="border-t border-border overflow-hidden animate-slide-down">
           {/* Own account */}
           <button
             onClick={() => {
@@ -74,7 +74,7 @@ export function FamilySwitcher({
               'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
               !isParentViewingChild
                 ? `${colors.bg} ${colors.text} font-medium`
-                : 'text-white/70 hover:bg-white/5'
+                : 'text-muted-foreground hover:bg-muted'
             )}
           >
             <ShieldCheck
@@ -101,7 +101,7 @@ export function FamilySwitcher({
                   'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                   isActive
                     ? 'bg-warning-50 dark:bg-warning-900/20 text-warning-700 dark:text-warning-300 font-medium'
-                    : 'text-white/70 hover:bg-white/5'
+                    : 'text-muted-foreground hover:bg-muted'
                 )}
               >
                 <ArrowLeftRight

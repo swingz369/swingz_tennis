@@ -9,6 +9,7 @@ import {
   type TimelineActivityItem,
 } from '@/components/admin/admin-activity-timeline';
 import { AdminInboxBanner, type AttentionAction } from '@/components/admin/admin-inbox-banner';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconBox } from '@/components/ui/icon-box';
 import { ScrollReveal } from '@/components/animations';
@@ -378,12 +379,20 @@ export default async function AdminPage() {
     <div className="space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
       {/* ── Premium Hero Identity Moment ── */}
       <ScrollReveal>
-        <PremiumAdminHero
-          firstName={firstName}
-          clubName={club.name}
-          isSuperadmin={isSuperadmin}
-          todaySessionCount={activeSessions ?? 0}
-        />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <PremiumAdminHero
+            firstName={firstName}
+            clubName={club.name}
+            isSuperadmin={isSuperadmin}
+            todaySessionCount={activeSessions ?? 0}
+          />
+          <Button asChild variant="primary" size="sm" className="shrink-0">
+            <Link href="/admin/members">
+              <UserPlus className="h-4 w-4" />
+              Mitglied einladen
+            </Link>
+          </Button>
+        </div>
       </ScrollReveal>
 
       {/* ── Erste Schritte Checklist — nur kurz nach Onboarding ── */}

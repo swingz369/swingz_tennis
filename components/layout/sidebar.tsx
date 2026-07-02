@@ -412,7 +412,7 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-white/[0.04] dark:border-white/[0.06] bg-[hsl(150,40%,10%)] transition-transform duration-300 ease-out will-change-transform',
+        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-border bg-background transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
@@ -426,7 +426,7 @@ export function Sidebar({
       {open && (
         <button
           onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-white/5 text-white/70 focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
+          className="md:hidden absolute top-4 right-4 p-2 rounded-xl hover:bg-muted text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-light transition-colors"
           aria-label="Menü schließen"
         >
           <X className="h-5 w-5" />
@@ -451,10 +451,10 @@ export function Sidebar({
                     onLoad={() => setImgFailed(false)}
                   />
                 ) : (
-                  <Trophy className="h-5 w-5 text-white/70 relative" />
+                  <Trophy className="h-5 w-5 text-muted-foreground relative" />
                 )}
               </div>
-              <span className="text-sm font-bold tracking-tight text-white">
+              <span className="text-sm font-bold tracking-tight text-foreground">
                 {activeClub?.name || 'SWINGZ'}
               </span>
             </Link>
@@ -468,7 +468,7 @@ export function Sidebar({
               {sectionLabel}
             </span>
           </div>
-          <div className="h-px bg-white/[0.08]" />
+          <div className="h-px bg-border" />
         </div>
 
         {/* Family Account Switcher — for parents with minor children */}
@@ -486,10 +486,10 @@ export function Sidebar({
 
         {/* Owner / Superadmin Club Switcher */}
         {(isOwner || isSuperAdmin) && hasMultipleClubs && (
-          <div className="mx-3 mb-4 border border-white/[0.08] rounded-xl overflow-hidden bg-white/5">
+          <div className="mx-3 mb-4 border border-border rounded-xl overflow-hidden bg-muted/50">
             <button
               onClick={() => setClubSwitcherOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/5 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
@@ -497,13 +497,13 @@ export function Sidebar({
               </div>
               <ChevronDown
                 className={cn(
-                  'h-4 w-4 shrink-0 text-white/50 transition-transform duration-200',
+                  'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
                   clubSwitcherOpen && 'rotate-180'
                 )}
               />
             </button>
             {clubSwitcherOpen && (
-              <div className="border-t border-border/60 dark:border-white/[0.06] overflow-hidden animate-slide-down">
+              <div className="border-t border-border overflow-hidden animate-slide-down">
                 {clubs?.map((club) => (
                   <button
                     key={club.id}
@@ -512,7 +512,7 @@ export function Sidebar({
                       'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                       club.id === (selectedClubId ?? activeClub?.id)
                         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-medium'
-                        : 'text-white/70 hover:bg-white/5'
+                        : 'text-muted-foreground hover:bg-muted'
                     )}
                   >
                     <CheckCircle
@@ -541,7 +541,7 @@ export function Sidebar({
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
               isExactActive(pathname, dashboardHref)
                 ? `${colors.bg} ${colors.text}`
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
             aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
           >
@@ -572,7 +572,7 @@ export function Sidebar({
                             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                             isActive
                               ? `${colors.bg} ${colors.text}`
-                              : 'text-white/70 hover:bg-white/5 hover:text-white'
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                           )}
                           aria-current={isActive ? 'page' : undefined}
                         >
@@ -609,7 +609,7 @@ export function Sidebar({
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
                         ? `${colors.bg} ${colors.text}`
-                        : 'text-white/70 hover:bg-white/5 hover:text-white'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                     aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
