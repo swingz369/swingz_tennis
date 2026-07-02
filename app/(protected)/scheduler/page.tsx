@@ -211,7 +211,7 @@ function SessionSlotCard({ session }: { session: Session }) {
       className={`p-1.5 rounded text-xs border ${
         session.bookedByUser
           ? 'bg-brand-light/15 border-brand-light/40 text-brand-light'
-          : 'bg-info-50 border-info-200 text-info-800'
+          : 'bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800 text-info-800 dark:text-info-300'
       }`}
     >
       <div className="font-medium truncate">{session.trainerName || 'Trainer'}</div>

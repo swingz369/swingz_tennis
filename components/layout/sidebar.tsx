@@ -412,7 +412,7 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-white/[0.04] dark:border-white/[0.06] bg-gradient-to-b from-[hsl(150,48%,14%)] via-[hsl(150,48%,11%)] to-[hsl(150,48%,8%)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform',
+        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-white/[0.04] dark:border-white/[0.06] bg-[hsl(150,40%,10%)] transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
@@ -440,7 +440,6 @@ export function Sidebar({
           <div className="flex items-center justify-between mb-2">
             <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="relative">
-                <div className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
                 {clubLogoUrl && !imgFailed ? (
                   // eslint-disable-next-line @next/next/no-img-element,jsx-a11y/no-noninteractive-element-interactions -- external dynamic logo URL
                   <img
@@ -469,7 +468,7 @@ export function Sidebar({
               {sectionLabel}
             </span>
           </div>
-          <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+          <div className="h-px bg-white/[0.08]" />
         </div>
 
         {/* Family Account Switcher — for parents with minor children */}
@@ -541,7 +540,7 @@ export function Sidebar({
             className={cn(
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
               isExactActive(pathname, dashboardHref)
-                ? `${colors.bg} ${colors.text} shadow-sm`
+                ? `${colors.bg} ${colors.text}`
                 : 'text-white/70 hover:bg-white/5 hover:text-white'
             )}
             aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
@@ -572,7 +571,7 @@ export function Sidebar({
                           className={cn(
                             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                             isActive
-                              ? `${colors.bg} ${colors.text} shadow-sm`
+                              ? `${colors.bg} ${colors.text}`
                               : 'text-white/70 hover:bg-white/5 hover:text-white'
                           )}
                           aria-current={isActive ? 'page' : undefined}
@@ -609,7 +608,7 @@ export function Sidebar({
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? `${colors.bg} ${colors.text} shadow-sm`
+                        ? `${colors.bg} ${colors.text}`
                         : 'text-white/70 hover:bg-white/5 hover:text-white'
                     )}
                     aria-current={isActive ? 'page' : undefined}

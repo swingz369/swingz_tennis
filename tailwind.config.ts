@@ -44,6 +44,7 @@ const config: Config = {
           primary: 'hsl(var(--brand-primary))',
           secondary: 'hsl(var(--brand-secondary))',
           accent: 'hsl(var(--brand-accent))',
+          'accent-dashboard': 'hsl(var(--brand-accent-dashboard))',
         },
         gray: colors.gray,
         success: colors.success,

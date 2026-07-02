@@ -48,7 +48,10 @@
   color-scheme: light;
 
   /* ── shadcn/ui Theme Variables (Light) ── */
-  --background: 0 0% 100%;
+  /* Background/muted/border carry a very subtle warm (hue 35) nudge instead
+     of a cold gray — calm dashboard chrome, matches the editorial palette's
+     warmth without importing its cream/serif identity. Small nudge only. */
+  --background: 35 20% 99%;
   --foreground: 150 20% 10%;
   --card: 0 0% 100%;
   --card-foreground: 150 20% 10%;
@@ -56,16 +59,16 @@
   --popover-foreground: 150 20% 10%;
   --primary: 150 48% 18%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 150 10% 96%;
+  --secondary: 35 12% 95%;
   --secondary-foreground: 150 20% 10%;
-  --muted: 150 10% 96%;
+  --muted: 35 12% 95%;
   --muted-foreground: 150 10% 40%;
   --accent: 150 10% 94%;
   --accent-foreground: 150 20% 10%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 150 10% 90%;
-  --input: 150 10% 90%;
+  --border: 35 8% 89%;
+  --input: 35 8% 89%;
   --ring: 150 48% 18%;
 
   /* ── Brand Tokens ── */
@@ -73,6 +76,11 @@
   --brand-primary-light: 150 45% 35%;
   --brand-secondary: 217 33% 24%;
   --brand-accent: 26 100% 60%;
+  /* Dashboard-only "action" accent — desaturated clay/terracotta, same value
+     as the .theme-editorial "Court Clay" token, reused here for consistency.
+     Scoped separately from --brand-accent so public/marketing pages (which
+     read --brand-accent directly, outside .theme-editorial) are unaffected. */
+  --brand-accent-dashboard: 18 50% 42%;
   --surface: 0 0% 100%;
   --surface-elevated: 0 0% 99%;
   --border-subtle: 150 10% 92%;
@@ -106,7 +114,8 @@
   color-scheme: dark;
 
   /* ── shadcn/ui Theme Variables (Dark) ── */
-  --background: 150 20% 8%;
+  /* Same subtle warm (hue 35) nudge as :root — small nudge, not a redesign. */
+  --background: 35 10% 8%;
   --foreground: 0 0% 98%;
   --card: 150 15% 12%;
   --card-foreground: 0 0% 98%;
@@ -114,16 +123,16 @@
   --popover-foreground: 0 0% 98%;
   --primary: 150 70% 28%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 150 15% 18%;
+  --secondary: 35 8% 17%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 150 15% 18%;
+  --muted: 35 8% 17%;
   --muted-foreground: 150 5% 60%;
   --accent: 150 15% 20%;
   --accent-foreground: 0 0% 98%;
   --destructive: 0 62% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 150 15% 18%;
-  --input: 150 15% 18%;
+  --border: 35 8% 17%;
+  --input: 35 8% 17%;
   --ring: 150 60% 40%;
 
   /* ── Brand Tokens ── */
@@ -131,6 +140,9 @@
   --brand-primary-light: 150 60% 40%;
   --brand-secondary: 217 40% 35%;
   --brand-accent: 26 100% 65%;
+  /* Lighter Court Clay variant for dark dashboard surfaces — same hue/sat
+     as the light-mode token, lifted lightness for contrast on dark bg. */
+  --brand-accent-dashboard: 18 55% 58%;
   --surface: 150 20% 8%;
   --surface-elevated: 150 15% 12%;
   --border-subtle: 150 15% 18%;
@@ -566,6 +578,65 @@ body {
   .link-mask:hover {
     background-size: 100% 1px;
   }
+
+  /* ── Hero Video Slot (Phase 2 + Phase 6 — Editorial Sports) ──
+   * Multi-format <video> sits behind the hero type column.
+   * `inset` is interpolated by the `--hero-progress` CSS custom property
+   * (set by HeroScrollProgress via rAF scroll listener). Continuous
+   * interpolation: contained (progress=0) → full-bleed (progress=1).
+   * `mix-blend-mode: multiply` lets the Cream paper read through.
+   * Reduced-motion: video display:none; poster image (inline
+   * background-image on the layer) remains visible statically.
+   * NOTE: NO CSS transition on inset/border-radius — the rAF scroll
+   * listener writes to --hero-progress at ~60fps, any CSS transition
+   * would fight the JS updates and produce rubber-band lag. Frame-perfect
+   * scroll-linked values.
+   * See: app/(marketing)/landing/_components/hero-video-slot.tsx
+   *      app/(marketing)/landing/_components/hero-scroll-progress.tsx
+   *      docs/hero-video-briefing.md
+   */
+  .hero-video-layer {
+    position: absolute;
+    z-index: 0;
+    inset: calc(22% * (1 - var(--hero-progress, 0))) calc(24% * (1 - var(--hero-progress, 0)))
+      calc(22% * (1 - var(--hero-progress, 0))) calc(24% * (1 - var(--hero-progress, 0)));
+    border-radius: calc(4px * (1 - var(--hero-progress, 0)));
+    overflow: hidden;
+    background-color: hsl(var(--brand-primary) / 0.04);
+  }
+  .hero-video-layer video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    mix-blend-mode: multiply;
+    opacity: 0.92;
+  }
+
+  /* ── Hero Scroll-Progress Anchor (Phase 4) ──
+   * 1px absolute marker; its offsetParent resolves to the SectionReveal
+   * <section>. HeroScrollProgress writes --hero-progress into it.
+   */
+  .hero-progress-sentinel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ── Hero Headline Accent — Scroll-Linked Editorial Breathing (Phase 4) ──
+   * The italic Court-Clay "<em>" accent subtly lifts and scales proportional
+   * to --hero-progress: 0% at hero fully visible, 0.3em Y-shift + 1.04× scale
+   * when fully scrolled past. NO transition — the variable is rAF-driven
+   * frame-by-frame, transition would create rubber-band lag.
+   */
+  .hero-headline-accent {
+    display: inline-block;
+    transform: translateY(calc(var(--hero-progress, 0) * -0.3em))
+      scale(calc(1 + var(--hero-progress, 0) * 0.04));
+    transform-origin: left bottom;
+  }
 }
 
 /* ── KEYFRAMES ── */
@@ -749,6 +820,12 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  /* Hero video: suppress playback entirely. The poster image is set
+   * as a CSS background-image on the layer inline by the component,
+   * so users see the still frame where the video would have animated. */
+  .hero-video-layer video {
+    display: none;
   }
 }
 

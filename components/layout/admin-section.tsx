@@ -136,29 +136,24 @@ export function AdminSection({
       role="group"
       aria-label={`${label} Bereich`}
     >
-      {/* Section header / toggle — unified with Dashboard + secondary nav items */}
+      {/* Section header / toggle — small uppercase label above the group,
+          still a disclosure button so collapse behaviour is unchanged. */}
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          'w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+          'w-full flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider transition-colors duration-200',
           hasActiveChild
-            ? `${colors.bg} ${colors.text} shadow-sm`
-            : 'text-white/70 hover:bg-white/5 hover:text-white'
+            ? `${colors.bg} ${colors.text}`
+            : 'text-white/40 hover:bg-white/5 hover:text-white/70'
         )}
         aria-expanded={isOpen}
         aria-label={`${label} ${isOpen ? 'einklappen' : 'ausklappen'}`}
       >
-        <Icon
-          className={cn(
-            'h-5 w-5 shrink-0 transition-transform duration-200',
-            hasActiveChild && 'scale-110'
-          )}
-          aria-hidden="true"
-        />
+        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span className="flex-1 text-left">{label}</span>
         <ChevronDown
           className={cn(
-            'h-4 w-4 shrink-0 transition-all duration-300 opacity-50',
+            'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
             isOpen && 'rotate-180'
           )}
           aria-hidden="true"
@@ -173,7 +168,7 @@ export function AdminSection({
         )}
       >
         <div
-              className="ml-2 pl-2 border-l border-white/[0.06] dark:border-white/[0.06] space-y-0.5 pb-0.5"
+          className="ml-2 pl-2 border-l border-white/[0.06] dark:border-white/[0.06] space-y-0.5 pb-0.5"
           role="list"
         >
           {subItems.map((item) => {
@@ -187,7 +182,7 @@ export function AdminSection({
                 className={cn(
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive
-                    ? `${colors.bg} ${colors.text} shadow-sm`
+                    ? `${colors.bg} ${colors.text}`
                     : 'text-white/60 hover:bg-white/5 hover:text-white dark:text-white/60 dark:hover:text-white'
                 )}
                 aria-current={isActive ? 'page' : undefined}

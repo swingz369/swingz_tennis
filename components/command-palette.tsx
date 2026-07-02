@@ -37,6 +37,7 @@ import {
 import { useTheme } from 'next-themes';
 import { useUserRole } from '@/hooks/use-user-role';
 import { apiFetch } from '@/lib/api-fetch';
+import { useCommandPalette } from '@/components/command-palette-context';
 
 interface SearchResult {
   id: string;
@@ -47,7 +48,7 @@ interface SearchResult {
 }
 
 export function CommandPalette() {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useCommandPalette();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,7 +66,7 @@ export function CommandPalette() {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setOpen]);
 
   // Search API when query changes
   useEffect(() => {
@@ -98,7 +99,7 @@ export function CommandPalette() {
       setQuery('');
       router.push(path);
     },
-    [router]
+    [router, setOpen]
   );
 
   const isMac =

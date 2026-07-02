@@ -222,7 +222,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // ALLE Routen außer Static Files, Images, Favicon
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
+    // ALLE Routen außer Static Files, Images, Videos, Favicon.
+    // Video-Container (webm|mp4|m4v|mov|ogv) sind statische Assets wie Bilder.
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|mp4|m4v|mov|ogv|ico|css|js)$).*)',
   ],
 };

@@ -149,32 +149,32 @@ export default async function MemberPage() {
       {/* ── Next Session (Hero Card) ── */}
       {nextSession ? (
         <Link href="/bookings">
-          <Card className="border-0 bg-gradient-to-br from-brand-primary to-brand-light text-white cursor-pointer hover:shadow-lg transition-all duration-300 group">
+          <Card className="border border-border dark:border-white/10 cursor-pointer hover:border-brand-light/40 hover:shadow-sm transition-all duration-300 group">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
-                    <Zap className="h-4 w-4 text-white" />
-                  </div>
-                  <p className="text-xs font-semibold text-white/75 uppercase tracking-wider">
+                  <IconBox icon={Zap} size="sm" variant="light" />
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Nächste Session
                   </p>
                 </div>
                 {isToday(nextSession.timeslot_start) && (
-                  <span className="text-2xs font-bold bg-white/25 text-white px-3 py-1 rounded-full">
+                  <span className="text-2xs font-bold bg-brand-light/10 text-brand-light px-3 py-1 rounded-full">
                     HEUTE
                   </span>
                 )}
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-bold text-white">{nextCourt?.name ?? 'Training'}</p>
-                  <p className="text-sm text-white/75 mt-0.5">
+                  <p className="text-lg font-bold text-foreground dark:text-white">
+                    {nextCourt?.name ?? 'Training'}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {formatDate(nextSession.timeslot_start)} ·{' '}
                     {formatTime(nextSession.timeslot_start)}–{formatTime(nextSession.timeslot_end)}
                   </p>
                 </div>
-                <ArrowRight className="h-5 w-5 text-white/60 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="h-5 w-5 text-muted-foreground/40 group-hover:translate-x-1 transition-transform" />
               </div>
             </CardContent>
           </Card>

@@ -7,11 +7,20 @@ import { Button } from '@/components/ui/button';
 import { IconBox } from '@/components/ui/icon-box';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { Menu, LogOut, Settings, Trophy, ChevronDown, LayoutDashboard, User } from 'lucide-react';
+import {
+  Menu,
+  LogOut,
+  Settings,
+  Trophy,
+  ChevronDown,
+  LayoutDashboard,
+  User,
+  Search,
+} from 'lucide-react';
 import { useTenant } from '@/lib/tenant-context';
-import { GlobalSearch } from '@/components/layout/global-search';
 import { NotificationBell } from '@/components/layout/notification-bell';
 import { createClient } from '@/infrastructure/external/supabase/client';
+import { useCommandPalette } from '@/components/command-palette-context';
 
 interface HeaderProps {
   user?: {
@@ -32,6 +41,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const { branding } = useTenant();
   const clubLogoUrl = branding.logos.light || branding.logos.dark;
+  const { setOpen: setCommandPaletteOpen } = useCommandPalette();
 
   // Close user menu on outside click
   useEffect(() => {
@@ -86,10 +96,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           aria-label="SwingZ Home"
         >
           <div className="relative">
-            <div
-              className="absolute -inset-1.5 bg-gradient-to-br from-brand-light/40 via-brand-primary/30 to-brand-light/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"
-              aria-hidden="true"
-            />
             {clubLogoUrl && !imgFailed ? (
               // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions
               <img
@@ -109,13 +115,21 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           </span>
         </Link>
 
-        {/* Global Search */}
-        <div
-          className="hidden md:block flex-1 max-w-md mx-8"
-          role="search"
-          aria-label="Suchfunktion"
-        >
-          <GlobalSearch />
+        {/* Command palette trigger — styled like a disabled input, opens the
+            command palette (also reachable via Cmd/Ctrl+K anywhere). */}
+        <div className="hidden md:block flex-1 max-w-md mx-8">
+          <button
+            type="button"
+            onClick={() => setCommandPaletteOpen(true)}
+            className="flex w-full items-center gap-2 rounded-lg border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Suche oder Befehl öffnen"
+          >
+            <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="flex-1 text-left">Suche oder Befehl…</span>
+            <span className="rounded border border-border bg-background px-1.5 py-0.5 text-2xs font-medium text-muted-foreground">
+              ⌘K
+            </span>
+          </button>
         </div>
 
         {/* Right actions */}

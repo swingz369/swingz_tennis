@@ -60,6 +60,39 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
   },
 };
 
+/** Minimal inline sparkline — no charting library, just a normalized polyline. */
+function Sparkline({ points, className }: { points: number[]; className?: string }) {
+  if (points.length < 2) return null;
+  const width = 64;
+  const height = 20;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const step = width / (points.length - 1);
+  const coords = points
+    .map((p, i) => `${i * step},${height - ((p - min) / range) * height}`)
+    .join(' ');
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline
+        points={coords}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 interface StatCardProps {
   icon: LucideIcon;
   label: string;
@@ -80,6 +113,11 @@ interface StatCardProps {
   /** Extra class for the value text */
   valueClassName?: string;
   className?: string;
+  /** Optional trend series rendered as a small inline sparkline */
+  trend?: number[];
+  /** Highlights this card as the dashboard's primary KPI — accent top
+   * border + subtle tinted background. Use on at most one card per row. */
+  featured?: boolean;
 }
 
 export function StatCard({
@@ -96,6 +134,8 @@ export function StatCard({
   iconClassName,
   valueClassName,
   className,
+  trend,
+  featured = false,
 }: StatCardProps) {
   const colors = COLOR_MAP[color];
 
@@ -105,8 +145,10 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        'border border-border dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group rounded-2xl',
+        'border border-border dark:border-white/10 rounded-2xl cursor-pointer group transition-colors',
         colors.border,
+        featured &&
+          'border-t-[3px] border-t-[hsl(var(--brand-accent-dashboard))] bg-gradient-to-b from-[hsl(var(--brand-accent-dashboard)/0.06)] to-transparent',
         className
       )}
     >
@@ -119,7 +161,7 @@ export function StatCard({
             <div className="flex items-baseline gap-2 mt-1.5">
               <p
                 className={cn(
-                  'text-2xl font-bold text-foreground dark:text-white tabular-nums',
+                  'text-2xl font-bold font-mono text-foreground dark:text-white tabular-nums',
                   valueClassName
                 )}
               >
@@ -146,12 +188,14 @@ export function StatCard({
                 {sub || sublabel}
               </p>
             )}
+            {trend && trend.length > 1 && (
+              <Sparkline points={trend} className={cn('mt-2', colors.text)} />
+            )}
           </div>
           <div
             className={cn(
               'flex h-10 w-10 items-center justify-center rounded-xl shrink-0',
               colors.bg,
-              'group-hover:scale-105 transition-transform',
               iconClassName
             )}
           >

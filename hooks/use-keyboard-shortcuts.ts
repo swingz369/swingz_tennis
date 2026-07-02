@@ -100,16 +100,9 @@ export function useGlobalKeyboardShortcuts() {
       description: 'Einstellungen öffnen',
       category: 'navigation',
     },
-    // Search
-    {
-      key: 'k',
-      metaKey: true,
-      action: () => {
-        router.push('/search');
-      },
-      description: 'Suche öffnen',
-      category: 'search',
-    },
+    // Note: Cmd/Ctrl+K is intentionally NOT bound here — the command palette
+    // (components/command-palette.tsx) owns that shortcut globally so it
+    // opens the palette instead of navigating away from it.
     // Help
     {
       key: '?',

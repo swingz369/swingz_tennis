@@ -30,47 +30,16 @@ export function AdminInboxBanner({
 }) {
   if (variant === 'inbox-zero') {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-emerald-300/30 dark:border-emerald-700/30 shadow-sm">
-        {/* Mesh background */}
-        <div
-          className="absolute inset-0 -z-10"
-          aria-hidden="true"
-          style={{
-            background: `
-              radial-gradient(ellipse 60% 80% at 0% 50%, hsl(150 70% 80% / 0.4) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 70% at 100% 50%, hsl(150 60% 70% / 0.25) 0%, transparent 60%),
-              linear-gradient(135deg, hsl(150 50% 96%) 0%, hsl(150 40% 92%) 100%)
-            `,
-          }}
-        />
-        <div className="absolute inset-0 noise opacity-[0.025] -z-10" aria-hidden="true" />
-        <div
-          className="absolute inset-0 -z-10 opacity-30"
-          aria-hidden="true"
-          style={
-            {
-              backgroundImage:
-                'radial-gradient(hsl(var(--brand-primary) / 0.05) 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-            } as React.CSSProperties
-          }
-        />
-
-        <div className="relative flex items-center gap-4 px-5 sm:px-6 py-5">
-          <div className="relative shrink-0">
-            <div
-              className="absolute inset-0 rounded-2xl bg-emerald-400/30 blur-xl animate-pulse-glow"
-              aria-hidden="true"
-            />
-            <div className="relative h-12 w-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg">
-              <CheckCircle2 className="h-6 w-6 text-white" />
-            </div>
+      <div className="rounded-2xl border border-success-200 dark:border-success-800/50 bg-success-50 dark:bg-success-900/20">
+        <div className="flex items-center gap-4 px-5 sm:px-6 py-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success-100 dark:bg-success-800/40 shrink-0">
+            <CheckCircle2 className="h-6 w-6 text-success-600 dark:text-success-400" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-display font-semibold text-emerald-900 dark:text-emerald-100">
+            <p className="text-base font-display font-semibold text-success-900 dark:text-success-100">
               Alles erledigt.
             </p>
-            <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-0.5">
+            <p className="text-sm text-success-700 dark:text-success-300 mt-0.5">
               Keine offenen Aufgaben. Dein Dashboard ist sauber.
             </p>
           </div>
