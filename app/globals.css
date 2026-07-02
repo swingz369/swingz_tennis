@@ -51,7 +51,7 @@
   /* Background/muted/border carry a very subtle warm (hue 35) nudge instead
      of a cold gray — calm dashboard chrome, matches the editorial palette's
      warmth without importing its cream/serif identity. Small nudge only. */
-  --background: 35 20% 99%;
+  --background: 35 25% 97%;
   --foreground: 150 20% 10%;
   --card: 0 0% 100%;
   --card-foreground: 150 20% 10%;
@@ -63,7 +63,7 @@
   --secondary-foreground: 150 20% 10%;
   --muted: 35 12% 95%;
   --muted-foreground: 150 10% 40%;
-  --accent: 150 10% 94%;
+  --accent: 35 12% 94%;
   --accent-foreground: 150 20% 10%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
@@ -117,9 +117,9 @@
   /* Same subtle warm (hue 35) nudge as :root — small nudge, not a redesign. */
   --background: 35 10% 8%;
   --foreground: 0 0% 98%;
-  --card: 150 15% 12%;
+  --card: 35 12% 12%;
   --card-foreground: 0 0% 98%;
-  --popover: 150 15% 12%;
+  --popover: 35 12% 12%;
   --popover-foreground: 0 0% 98%;
   --primary: 150 70% 28%;
   --primary-foreground: 0 0% 100%;
@@ -127,7 +127,7 @@
   --secondary-foreground: 0 0% 98%;
   --muted: 35 8% 17%;
   --muted-foreground: 150 5% 60%;
-  --accent: 150 15% 20%;
+  --accent: 35 12% 20%;
   --accent-foreground: 0 0% 98%;
   --destructive: 0 62% 50%;
   --destructive-foreground: 0 0% 100%;

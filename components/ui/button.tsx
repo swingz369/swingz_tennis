@@ -9,9 +9,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-gradient-primary text-white shadow-md hover:shadow-lg hover:brightness-105 focus-visible:ring-brand-light/50',
+          'bg-[hsl(var(--brand-accent-dashboard))] text-white shadow-sm hover:brightness-110 focus-visible:ring-[hsl(var(--brand-accent-dashboard)/0.5)]',
         primary:
-          'bg-gradient-primary text-white shadow-lg hover:shadow-xl hover:brightness-110 focus-visible:ring-brand-light/50',
+          'bg-[hsl(var(--brand-accent-dashboard))] text-white shadow-sm hover:brightness-110 focus-visible:ring-[hsl(var(--brand-accent-dashboard)/0.5)]',
         secondary:
           'bg-brand-secondary text-white shadow-md hover:bg-brand-secondary/90 hover:shadow-lg focus-visible:ring-brand-secondary/50',
         outline:

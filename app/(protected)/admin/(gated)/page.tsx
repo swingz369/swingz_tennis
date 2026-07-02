@@ -1,17 +1,33 @@
 import { requireAdminClub } from '@/lib/admin-context';
 import Link from 'next/link';
-import { Users, CreditCard, UserPlus, Receipt, LockKeyhole, Calendar } from 'lucide-react';
+import {
+  Users,
+  CreditCard,
+  UserPlus,
+  Receipt,
+  LockKeyhole,
+  Calendar,
+  Sparkles,
+} from 'lucide-react';
 import { PremiumAdminHero } from '@/components/admin/premium-admin-hero';
 import { StatCard } from '@/components/ui/stat-card';
 import {
   AdminActivityTimeline,
-  type TimelineSession,
   type TimelineActivityItem,
 } from '@/components/admin/admin-activity-timeline';
 import { AdminInboxBanner, type AttentionAction } from '@/components/admin/admin-inbox-banner';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconBox } from '@/components/ui/icon-box';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { ScrollReveal } from '@/components/animations';
 
 export const dynamic = 'force-dynamic';
@@ -49,8 +65,6 @@ export default async function AdminPage() {
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
-  const nowISO = new Date().toISOString();
-
   // Current month range
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -67,7 +81,6 @@ export default async function AdminPage() {
     { count: trainerCount },
     { count: pendingApprovals },
     { count: activeSessions },
-    { data: todaySessions },
     { data: recentMembers },
     { data: recentBookings },
     { data: paidInvoices },
@@ -107,18 +120,6 @@ export default async function AdminPage() {
     ),
     safe(
       supabase
-        .from('sessions')
-        .select(
-          'id, timeslot_start, timeslot_end, courts(name), schedules!inner(club_id), trainers(name)'
-        )
-        .eq('schedules.club_id', clubId)
-        .gte('timeslot_end', nowISO)
-        .lte('timeslot_start', todayEnd.toISOString())
-        .order('timeslot_start', { ascending: true })
-        .limit(6)
-    ),
-    safe(
-      supabase
         .from('user_club_memberships')
         .select('id, created_at, users(full_name, email)')
         .eq('club_id', clubId)
@@ -130,9 +131,11 @@ export default async function AdminPage() {
     safe(
       supabase
         .from('bookings')
-        .select('id, created_at, session_start_time, users!bookings_member_id_fkey(full_name)')
+        .select(
+          'id, booked_at, session_start_time, status, users!bookings_member_id_fkey(full_name), courts(name)'
+        )
         .eq('club_id', clubId)
-        .order('created_at', { ascending: false })
+        .order('booked_at', { ascending: false })
         .limit(5)
     ),
     safe(
@@ -187,13 +190,55 @@ export default async function AdminPage() {
         id: `booking-${b.id}`,
         type: 'booking' as const,
         name: (u as Record<string, string>)?.full_name || 'Mitglied',
-        created_at: b.created_at as string,
+        created_at: b.booked_at as string,
         sub: 'Buchung erstellt',
       };
     }),
   ]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8);
+
+  // "Letzte Buchungen" table — member, court, time, status (mirrors the
+  // status vocabulary used in components/bookings/session-bookings.tsx).
+  const bookingStatusLabel: Record<string, string> = {
+    confirmed: 'Bestätigt',
+    cancelled: 'Storniert',
+    no_show: 'Nicht erschienen',
+    pending: 'Ausstehend',
+  };
+  const bookingStatusTone: Record<string, 'success' | 'error' | 'warning' | 'default'> = {
+    confirmed: 'success',
+    cancelled: 'error',
+    no_show: 'warning',
+    pending: 'default',
+  };
+  type LatestBooking = {
+    id: string;
+    memberName: string;
+    courtName: string;
+    time: string;
+    statusLabel: string;
+    statusTone: 'success' | 'error' | 'warning' | 'default';
+  };
+  const latestBookings: LatestBooking[] = (recentBookings ?? []).map(
+    (b: Record<string, unknown>) => {
+      const u = Array.isArray(b.users) ? b.users[0] : b.users;
+      const court = Array.isArray(b.courts) ? b.courts[0] : b.courts;
+      const status = (b.status as string) ?? 'pending';
+      return {
+        id: b.id as string,
+        memberName: (u as Record<string, string>)?.full_name || 'Unbekannt',
+        courtName: (court as Record<string, string>)?.name ?? '—',
+        time: new Date(b.session_start_time as string).toLocaleTimeString('de-DE', {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Europe/Berlin',
+        }),
+        statusLabel: bookingStatusLabel[status] ?? status,
+        statusTone: bookingStatusTone[status] ?? 'default',
+      };
+    }
+  );
 
   // Onboarding checklist — show within 30 days of setup completion
   const setupCompletedAt = (club as any).setup_completed_at as string | null;
@@ -275,26 +320,6 @@ export default async function AdminPage() {
 
   // ─── Derived data for new premium components ───
 
-  // Map todaySessions → TimelineSession[], keeping only sessions that haven't
-  // ended yet — the widget shows "what's next", not sessions already over.
-  // eslint-disable-next-line react-hooks/purity -- Server Component, Date.now() is fine on server
-  const now = Date.now();
-  const timelineSessions: TimelineSession[] = (todaySessions ?? [])
-    .filter((s: Record<string, unknown>) => new Date(s.timeslot_end as string).getTime() >= now)
-    .map((s: Record<string, unknown>) => {
-      const court = Array.isArray(s.courts) ? s.courts[0] : s.courts;
-      const trainer = Array.isArray(s.trainers) ? s.trainers[0] : s.trainers;
-      return {
-        id: `session-${s.id as string}`,
-        type: 'session',
-        title: (court as Record<string, string>)?.name ?? 'Platz',
-        subtitle: (trainer as Record<string, string>)?.name ?? undefined,
-        startISO: s.timeslot_start as string,
-        endISO: s.timeslot_end as string,
-        href: '/admin/seasons',
-      };
-    });
-
   // Map recentActivity → TimelineActivityItem[] (rename created_at → startISO)
   const timelineActivity: TimelineActivityItem[] = recentActivity.map((item) => ({
     id: item.id,
@@ -328,7 +353,6 @@ export default async function AdminPage() {
       sub: '+4% zum Vormonat',
       href: '/admin/members',
       trend: buildTrend(memberCount ?? 0, 0.04),
-      featured: true,
     },
     {
       label: 'Heute Sessions',
@@ -344,7 +368,7 @@ export default async function AdminPage() {
       value: monthlyRevenue > 0 ? `€${monthlyRevenue.toLocaleString('de-DE')}` : '€0',
       icon: CreditCard,
       color: 'green' as const,
-      sub: monthlyRevenue > 0 ? '+12% zum Vormonat' : undefined,
+      sub: monthlyRevenue > 0 ? '+12% zum Vormonat' : 'noch keine Zahlung diesen Monat',
       href: '/admin/billing',
       trend: buildTrend(monthlyRevenue, 0.12),
     },
@@ -353,6 +377,7 @@ export default async function AdminPage() {
       value: pendingApprovals ?? 0,
       icon: UserPlus,
       color: needsApprovals ? ('orange' as const) : ('gray' as const),
+      sub: needsApprovals ? 'wartet auf Prüfung' : 'alles bearbeitet',
       href: '/admin/members?tab=approvals',
       trend: buildTrend(pendingApprovals ?? 0),
     },
@@ -383,7 +408,7 @@ export default async function AdminPage() {
     <div className="space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
       {/* ── Premium Hero Identity Moment ── */}
       <ScrollReveal>
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <PremiumAdminHero
             firstName={firstName}
             clubName={club.name}
@@ -458,9 +483,9 @@ export default async function AdminPage() {
         )}
       </ScrollReveal>
 
-      {/* ── KPI Grid (4 metrics, mono numerics, one featured) ── */}
+      {/* ── KPI Grid (4 metrics, mono numerics, flat/uniform) ── */}
       <ScrollReveal delay={200}>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {kpiItems.map((item) => (
             <StatCard
               key={item.label}
@@ -471,32 +496,75 @@ export default async function AdminPage() {
               color={item.color}
               href={item.href}
               trend={item.trend}
-              featured={item.featured}
               animate
-              className={item.featured ? 'col-span-2' : undefined}
             />
           ))}
         </div>
       </ScrollReveal>
 
-      {/* ── Apple-Style Unified Timeline ── */}
+      {/* ── Letzte Buchungen + Aktivität (zweispaltig) ── */}
       <ScrollReveal delay={300}>
-        <Card className="border border-border dark:border-white/10 shadow-sm p-0">
-          <CardHeader className="px-5 pt-5 pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
-              <IconBox icon={Calendar} size="xs" variant="light" />
-              Heute &amp; Aktivität
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-5 pb-5">
-            <AdminActivityTimeline
-              totalCount={timelineSessions.length + timelineActivity.length}
-              todaySessionCount={timelineSessions.length}
-              todaySessions={timelineSessions}
-              recentActivity={timelineActivity}
-            />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+          <Card className="lg:col-span-3 border border-border dark:border-white/10 shadow-sm p-0">
+            <CardHeader className="px-5 pt-5 pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                <IconBox icon={Calendar} size="xs" variant="light" />
+                Letzte Buchungen
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+              {latestBookings.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mitglied</TableHead>
+                      <TableHead>Platz</TableHead>
+                      <TableHead>Zeit</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {latestBookings.map((b) => (
+                      <TableRow key={b.id}>
+                        <TableCell className="font-medium">{b.memberName}</TableCell>
+                        <TableCell className="text-muted-foreground">{b.courtName}</TableCell>
+                        <TableCell className="text-muted-foreground font-mono text-sm">
+                          {b.time}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={b.statusTone} size="sm">
+                            {b.statusLabel}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-sm text-muted-foreground px-5 pb-5">
+                  Noch keine Buchungen vorhanden.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2 border border-border dark:border-white/10 shadow-sm p-0">
+            <CardHeader className="px-5 pt-5 pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground dark:text-white">
+                <IconBox icon={Sparkles} size="xs" variant="light" />
+                Aktivität
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-5">
+              <AdminActivityTimeline
+                totalCount={timelineActivity.length}
+                todaySessionCount={0}
+                todaySessions={[]}
+                recentActivity={timelineActivity}
+              />
+            </CardContent>
+          </Card>
+        </div>
       </ScrollReveal>
 
       {/* ── Smart Contextual Actions ── */}

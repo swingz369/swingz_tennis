@@ -30,16 +30,16 @@ export function AdminInboxBanner({
 }) {
   if (variant === 'inbox-zero') {
     return (
-      <div className="rounded-2xl border border-success-200 dark:border-success-800/50 bg-success-50 dark:bg-success-900/20">
+      <div className="rounded-2xl border border-border dark:border-white/10 bg-card">
         <div className="flex items-center gap-4 px-5 sm:px-6 py-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success-100 dark:bg-success-800/40 shrink-0">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success-50 dark:bg-success-900/20 shrink-0">
             <CheckCircle2 className="h-6 w-6 text-success-600 dark:text-success-400" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-base font-display font-semibold text-success-900 dark:text-success-100">
+            <p className="text-base font-display font-semibold text-foreground dark:text-white">
               Alles erledigt.
             </p>
-            <p className="text-sm text-success-700 dark:text-success-300 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               Keine offenen Aufgaben. Dein Dashboard ist sauber.
             </p>
           </div>
