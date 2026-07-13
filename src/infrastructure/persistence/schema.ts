@@ -19,7 +19,8 @@ import {
   text,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
-import type { OfficeFlagMap } from '@/lib/auth-common';
+
+type OfficeFlagMap = Record<string, boolean>;
 
 // A2-Vertrag: user_club_memberships.office_flags ist JSONB mit Shape
 // OfficeFlagMap = Partial<Record<OfficeRole, boolean>>. Der Migration-SQL ist

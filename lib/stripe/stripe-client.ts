@@ -11,7 +11,7 @@ function getStripeClient(): Stripe {
       throw new Error('STRIPE_SECRET_KEY is not configured');
     }
     stripeInstance = new Stripe(apiKey, {
-      apiVersion: '2026-05-27.dahlia' as unknown as '2026-04-22.dahlia',
+      apiVersion: '2026-05-27.dahlia',
     });
   }
   return stripeInstance;

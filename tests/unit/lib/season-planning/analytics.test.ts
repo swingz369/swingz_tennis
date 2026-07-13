@@ -32,7 +32,6 @@ function makeInput(
       totalTrainerHours: 80,
       expectedAcceptanceRate: 0.66,
       rsvpSampleSize: 100,
-      unassignedCourtCount: 0,
       ...overrides,
     },
     billing: billing ?? null,
