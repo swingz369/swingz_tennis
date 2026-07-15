@@ -51,35 +51,35 @@ CREATE TABLE IF NOT EXISTS trial_trainings (
 -- ============================================================================
 
 -- Query by club (tenant isolation)
-CREATE INDEX idx_trial_trainings_club_id ON trial_trainings(club_id);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_club_id ON trial_trainings(club_id);
 
 -- Query by participant email (duplicate detection)
-CREATE INDEX idx_trial_trainings_participant_email ON trial_trainings(participant_email);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_participant_email ON trial_trainings(participant_email);
 
 -- Query by trainer
-CREATE INDEX idx_trial_trainings_trainer_id ON trial_trainings(trainer_id);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_trainer_id ON trial_trainings(trainer_id);
 
 -- Query by court
-CREATE INDEX idx_trial_trainings_court_id ON trial_trainings(court_id);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_court_id ON trial_trainings(court_id);
 
 -- Query by status
-CREATE INDEX idx_trial_trainings_status ON trial_trainings(status);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_status ON trial_trainings(status);
 
 -- Query by scheduled date (upcoming sessions)
-CREATE INDEX idx_trial_trainings_scheduled_date ON trial_trainings(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_scheduled_date ON trial_trainings(scheduled_date);
 
 -- Composite index for club + status queries
-CREATE INDEX idx_trial_trainings_club_status ON trial_trainings(club_id, status);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_club_status ON trial_trainings(club_id, status);
 
 -- Composite index for club + date queries
-CREATE INDEX idx_trial_trainings_club_date ON trial_trainings(club_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_club_date ON trial_trainings(club_id, scheduled_date);
 
 -- Composite index for upcoming scheduled sessions
-CREATE INDEX idx_trial_trainings_upcoming ON trial_trainings(scheduled_date, scheduled_time) 
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_upcoming ON trial_trainings(scheduled_date, scheduled_time) 
   WHERE status = 'scheduled';
 
 -- Full-text search on participant name
-CREATE INDEX idx_trial_trainings_participant_name ON trial_trainings USING gin(
+CREATE INDEX IF NOT EXISTS idx_trial_trainings_participant_name ON trial_trainings USING gin(
   to_tsvector('simple', participant_first_name || ' ' || participant_last_name)
 );
 
@@ -91,12 +91,14 @@ CREATE INDEX idx_trial_trainings_participant_name ON trial_trainings USING gin(
 ALTER TABLE trial_trainings ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Superadmins have full access (cross-tenant)
+DROP POLICY IF EXISTS "Superadmins have full access to all trial trainings" ON trial_trainings;
 CREATE POLICY "Superadmins have full access to all trial trainings"
   ON trial_trainings
   FOR ALL
   USING (is_superadmin());
 
 -- Policy 2: Club admins can view all trial trainings in their clubs
+DROP POLICY IF EXISTS "Club admins can view trial trainings in their clubs" ON trial_trainings;
 CREATE POLICY "Club admins can view trial trainings in their clubs"
   ON trial_trainings
   FOR SELECT
@@ -111,6 +113,7 @@ CREATE POLICY "Club admins can view trial trainings in their clubs"
   );
 
 -- Policy 3: Club admins can create trial trainings in their clubs
+DROP POLICY IF EXISTS "Club admins can create trial trainings in their clubs" ON trial_trainings;
 CREATE POLICY "Club admins can create trial trainings in their clubs"
   ON trial_trainings
   FOR INSERT
@@ -125,6 +128,7 @@ CREATE POLICY "Club admins can create trial trainings in their clubs"
   );
 
 -- Policy 4: Club admins can update trial trainings in their clubs
+DROP POLICY IF EXISTS "Club admins can update trial trainings in their clubs" ON trial_trainings;
 CREATE POLICY "Club admins can update trial trainings in their clubs"
   ON trial_trainings
   FOR UPDATE
@@ -139,6 +143,7 @@ CREATE POLICY "Club admins can update trial trainings in their clubs"
   );
 
 -- Policy 5: Club admins can delete trial trainings in their clubs
+DROP POLICY IF EXISTS "Club admins can delete trial trainings in their clubs" ON trial_trainings;
 CREATE POLICY "Club admins can delete trial trainings in their clubs"
   ON trial_trainings
   FOR DELETE
@@ -153,6 +158,7 @@ CREATE POLICY "Club admins can delete trial trainings in their clubs"
   );
 
 -- Policy 6: Trainers can view their assigned trial trainings
+DROP POLICY IF EXISTS "Trainers can view their assigned trial trainings" ON trial_trainings;
 CREATE POLICY "Trainers can view their assigned trial trainings"
   ON trial_trainings
   FOR SELECT
@@ -169,6 +175,7 @@ CREATE POLICY "Trainers can view their assigned trial trainings"
   );
 
 -- Policy 7: Trainers can update status/feedback for their assigned trial trainings
+DROP POLICY IF EXISTS "Trainers can update their assigned trial trainings" ON trial_trainings;
 CREATE POLICY "Trainers can update their assigned trial trainings"
   ON trial_trainings
   FOR UPDATE
@@ -196,6 +203,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trial_trainings_updated_at ON trial_trainings;
 CREATE TRIGGER trial_trainings_updated_at
   BEFORE UPDATE ON trial_trainings
   FOR EACH ROW

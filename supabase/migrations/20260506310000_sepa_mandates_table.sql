@@ -5,8 +5,7 @@
 -- =====================================================
 
 -- =====================================================
--- 1. CREATE TABLE
--- =====================================================
+-- 1. CREATE TABLE IF NOT EXISTS -- =====================================================
 
 CREATE TABLE IF NOT EXISTS public.sepa_mandates (
   -- Primary key
@@ -52,11 +51,11 @@ CREATE TABLE IF NOT EXISTS public.sepa_mandates (
 -- 2. CREATE INDEXES
 -- =====================================================
 
-CREATE INDEX idx_sepa_mandates_club_id ON public.sepa_mandates(club_id);
-CREATE INDEX idx_sepa_mandates_member_id ON public.sepa_mandates(member_id);
-CREATE INDEX idx_sepa_mandates_is_active ON public.sepa_mandates(is_active) WHERE is_active = true;
-CREATE INDEX idx_sepa_mandates_member_active ON public.sepa_mandates(member_id, is_active) WHERE is_active = true;
-CREATE UNIQUE INDEX idx_sepa_mandates_mandate_reference ON public.sepa_mandates(mandate_reference);
+CREATE INDEX IF NOT EXISTS idx_sepa_mandates_club_id ON public.sepa_mandates(club_id);
+CREATE INDEX IF NOT EXISTS idx_sepa_mandates_member_id ON public.sepa_mandates(member_id);
+CREATE INDEX IF NOT EXISTS idx_sepa_mandates_is_active ON public.sepa_mandates(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_sepa_mandates_member_active ON public.sepa_mandates(member_id, is_active) WHERE is_active = true;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sepa_mandates_mandate_reference ON public.sepa_mandates(mandate_reference);
 
 -- =====================================================
 -- 3. ROW LEVEL SECURITY (RLS)
@@ -66,24 +65,28 @@ CREATE UNIQUE INDEX idx_sepa_mandates_mandate_reference ON public.sepa_mandates(
 ALTER TABLE public.sepa_mandates ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Superadmins have full access
+DROP POLICY IF EXISTS sepa_mandates_superadmin_all ON public.sepa_mandates;
 CREATE POLICY sepa_mandates_superadmin_all
   ON public.sepa_mandates
   FOR ALL
   USING (is_superadmin());
 
 -- Policy 2: Club admins can manage their club's mandates
+DROP POLICY IF EXISTS sepa_mandates_admin_manage ON public.sepa_mandates;
 CREATE POLICY sepa_mandates_admin_manage
   ON public.sepa_mandates
   FOR ALL
   USING (user_is_admin_of_club(club_id));
 
 -- Policy 3: Members can view their own mandates
+DROP POLICY IF EXISTS sepa_mandates_member_view_own ON public.sepa_mandates;
 CREATE POLICY sepa_mandates_member_view_own
   ON public.sepa_mandates
   FOR SELECT
   USING (member_id = auth.uid());
 
 -- Policy 4: Members can create their own mandates
+DROP POLICY IF EXISTS sepa_mandates_member_create_own ON public.sepa_mandates;
 CREATE POLICY sepa_mandates_member_create_own
   ON public.sepa_mandates
   FOR INSERT

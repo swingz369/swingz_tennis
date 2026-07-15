@@ -12,12 +12,11 @@ import {
 import { PremiumAdminHero } from '@/components/admin/premium-admin-hero';
 import { StatCard } from '@/components/ui/stat-card';
 import {
-  AdminActivityTimeline,
+  ActivityFeedCompact,
   type TimelineActivityItem,
-} from '@/components/admin/admin-activity-timeline';
+} from '@/components/admin/activity-feed-compact';
 import { AdminInboxBanner, type AttentionAction } from '@/components/admin/admin-inbox-banner';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconBox } from '@/components/ui/icon-box';
 import {
@@ -29,18 +28,67 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ScrollReveal } from '@/components/animations';
+import { formatAdminTimeHM } from '@/lib/utils/admin-date';
 
 export const dynamic = 'force-dynamic';
+
+// ─── Types ─────────────────────────────────────────────────────────────
+
+// Explicit shape for the awaited `clubs` row. Used as the generic
+// argument on `.maybeSingle<T>()` so the page no longer has to cast
+// `club` (or its sub-fields) to `any` to satisfy TS strict mode
+// (P0-B). Mirrors the columns the page actually reads.
+type ClubRow = {
+  id: string;
+  name: string;
+  status: string | null;
+  setup_completed_at: string | null;
+};
+
+type SmartAction = {
+  label: string;
+  description: string;
+  href: string;
+  icon: typeof UserPlus;
+  variant: 'blue' | 'orange' | 'purple' | 'light';
+  urgent?: boolean;
+};
+
+/**
+ * Type-safe Supabase wrapper that preserves the upstream response shape.
+ *
+ * Why a generic wrapper? Returning a fixed `SafeResult = { data: unknown }`
+ * would strip PostgREST's row inference off the destructured `data`
+ * field. By parameterising on `T extends { data: unknown; ... }`, the
+ * original row shape (e.g. `{ amount?: number }[]` or the embedded
+ * booking join shape) flows through, and only the catch branch falls
+ * back to a null payload.
+ *
+ * We DO NOT use `as any` anywhere — the upstream generic carries the
+ * real types.
+ */
+async function safe<T extends { count: number | null; data: unknown; error: unknown }>(
+  q: PromiseLike<T>
+): Promise<T | { count: null; data: null; error: null }> {
+  try {
+    return await q;
+  } catch {
+    return { count: null, data: null, error: null };
+  }
+}
+
+// ─── Component ─────────────────────────────────────────────────────────
 
 export default async function AdminPage() {
   const { supabase, user, clubId, isSuperadmin } = await requireAdminClub();
 
-  // Club info
+  // Club info — explicit generic keeps `setup_completed_at` available
+  // without an `any`-cast downstream.
   const { data: club } = await supabase
     .from('clubs')
     .select('id, name, status, setup_completed_at')
     .eq('id', clubId)
-    .maybeSingle();
+    .maybeSingle<ClubRow>();
 
   if (!club) {
     return (
@@ -59,23 +107,34 @@ export default async function AdminPage() {
 
   const firstName = profile?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'Admin';
 
-  // Today's date range
+  // Date ranges
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
-  // Current month range
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59);
+  // Prior-month range — feeds the honest "+X% zum Vormonat" growth
+  // signal the KPI subs now show (P0-A). Previously hardcoded as
+  // "+4%"/"+12%" with a fabricated trend-sparkline ramp.
+  const priorMonthStart = new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1);
+  const priorMonthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth(), 0, 23, 59, 59);
 
-  // All parallel fetches — Promise.resolve wraps PromiseLike so .catch() is available
-  type SafeResult = { count: number | null; data: any; error: any };
-  const safe = (q: PromiseLike<SafeResult>): Promise<SafeResult> =>
-    Promise.resolve(q).catch(() => ({ count: null, data: null, error: null }));
-
+  // Parallel fetches split across TWO `Promise.all` blocks.
+  //
+  // Why nested? TypeScript's built-in `Promise.all` provides tuple
+  // overloads only up to **10** elements. Passing 11+ collapses the
+  // signature to the generic `Promise.all<T>(Iterable<T>)` form,
+  // which mixes every response shape into one heterogeneous union
+  // and forces PostgREST's inferred row type down to `{}` — so
+  // `.map` / `.reduce` on `data` no longer typecheck. Splitting 11
+  // into 6 + 5 keeps each block under the tuple limit while
+  // preserving the exact response shape for every destructured
+  // position. Both blocks run in parallel because `Promise.all([a,
+  // b])` itself awaits them concurrently.
   const [
     { count: memberCount },
     { count: trainerCount },
@@ -83,9 +142,6 @@ export default async function AdminPage() {
     { count: activeSessions },
     { data: recentMembers },
     { data: recentBookings },
-    { data: paidInvoices },
-    { count: totalInvoiceCount },
-    { count: seasonCount },
   ] = await Promise.all([
     safe(
       supabase
@@ -104,7 +160,7 @@ export default async function AdminPage() {
         .eq('is_active', true)
     ),
     safe(
-      (supabase as any)
+      supabase
         .from('registration_requests')
         .select('id', { count: 'exact', head: true })
         .eq('club_id', clubId)
@@ -121,7 +177,7 @@ export default async function AdminPage() {
     safe(
       supabase
         .from('user_club_memberships')
-        .select('id, created_at, users(full_name, email)')
+        .select('id, created_at, user_id')
         .eq('club_id', clubId)
         .eq('is_active', true)
         .not('role', 'in', '(trainer,superadmin)')
@@ -138,6 +194,17 @@ export default async function AdminPage() {
         .order('booked_at', { ascending: false })
         .limit(5)
     ),
+  ]);
+
+  // Second batch — counts + amount arrays for the KPI strip and the
+  // honest prior-month growth comparison (P0-A).
+  const [
+    { data: paidInvoices },
+    { count: totalInvoiceCount },
+    { count: seasonCount },
+    { data: priorPaidInvoices },
+    { count: priorMemberCount },
+  ] = await Promise.all([
     safe(
       supabase
         .from('invoices')
@@ -153,15 +220,63 @@ export default async function AdminPage() {
     safe(
       supabase.from('seasons').select('id', { count: 'exact', head: true }).eq('club_id', clubId)
     ),
+    // NEW for P0-A: prior month paid invoices for honest revenue growth.
+    safe(
+      supabase
+        .from('invoices')
+        .select('amount')
+        .eq('club_id', clubId)
+        .eq('status', 'paid')
+        .gte('created_at', priorMonthStart.toISOString())
+        .lte('created_at', priorMonthEnd.toISOString())
+    ),
+    // NEW for P0-A: prior month active-member snapshot for honest
+    // membership growth.
+    safe(
+      supabase
+        .from('user_club_memberships')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', clubId)
+        .eq('is_active', true)
+        .not('role', 'in', '(trainer,superadmin)')
+        .lte('created_at', priorMonthEnd.toISOString())
+    ),
   ]);
 
-  // Calculate monthly revenue
+  // Monthly revenue (current + prior for honest growth comparison).
   const monthlyRevenue = (paidInvoices ?? []).reduce(
-    (sum: number, inv: { amount?: number }) => sum + (inv.amount ?? 0),
+    (sum: number, inv: { amount?: number | null }) => sum + (inv.amount ?? 0),
+    0
+  );
+  const priorMonthRevenue = (priorPaidInvoices ?? []).reduce(
+    (sum: number, inv: { amount?: number | null }) => sum + (inv.amount ?? 0),
     0
   );
 
-  // Merge recent activity
+  // P0-A: honest growth percentages — null when no prior data exists.
+  // Sparkline `buildTrend` consumes the same number so the card's
+  // visual rhythm matches the speech bubble.
+  const revenueGrowthPct =
+    priorMonthRevenue > 0
+      ? Math.round(((monthlyRevenue - priorMonthRevenue) / priorMonthRevenue) * 100)
+      : null;
+  const memberGrowthPct =
+    priorMemberCount != null && priorMemberCount > 0
+      ? Math.round((((memberCount ?? 0) - priorMemberCount) / priorMemberCount) * 100)
+      : null;
+
+  // user_club_memberships has no direct FK relationship PostgREST can
+  // embed (user_id isn't declared against public.users), so `users(...)`
+  // silently resolves to null instead of erroring. Two-step lookup.
+  const recentMemberUserIds = (recentMembers ?? [])
+    .map((m: Record<string, unknown>) => m.user_id as string)
+    .filter(Boolean);
+  const { data: recentMemberUsers } = recentMemberUserIds.length
+    ? await supabase.from('users').select('id, full_name, email').in('id', recentMemberUserIds)
+    : { data: [] as { id: string; full_name: string | null; email: string | null }[] };
+  const recentMemberUserMap = new Map((recentMemberUsers ?? []).map((u) => [u.id, u]));
+
+  // Activity merge
   type ActivityItem = {
     id: string;
     type: 'join' | 'booking';
@@ -172,14 +287,11 @@ export default async function AdminPage() {
 
   const recentActivity: ActivityItem[] = [
     ...(recentMembers ?? []).map((m: Record<string, unknown>) => {
-      const u = Array.isArray(m.users) ? m.users[0] : m.users;
+      const u = recentMemberUserMap.get(m.user_id as string);
       return {
         id: `join-${m.id}`,
         type: 'join' as const,
-        name:
-          (u as Record<string, string>)?.full_name ||
-          (u as Record<string, string>)?.email ||
-          'Unbekannt',
+        name: u?.full_name || u?.email || 'Unbekannt',
         created_at: m.created_at as string,
         sub: 'Neues Mitglied',
       };
@@ -198,19 +310,23 @@ export default async function AdminPage() {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8);
 
-  // "Letzte Buchungen" table — member, court, time, status (mirrors the
-  // status vocabulary used in components/bookings/session-bookings.tsx).
+  // ─── Canonical booking-status vocabulary (Dashboard "Letzte Buchungen") ──
+  // Single Source of Truth for the dashboard's German status labels.
+  // When you add a new booking status (e.g. `completed`, `rescheduled`),
+  // extend both maps AND `BookingStatus` in lib/types/index.ts.
   const bookingStatusLabel: Record<string, string> = {
     confirmed: 'Bestätigt',
     cancelled: 'Storniert',
     no_show: 'Nicht erschienen',
-    pending: 'Ausstehend',
+    pending: 'Warteliste',
+    waitlist: 'Warteliste',
   };
   const bookingStatusTone: Record<string, 'success' | 'error' | 'warning' | 'default'> = {
     confirmed: 'success',
     cancelled: 'error',
     no_show: 'warning',
-    pending: 'default',
+    pending: 'warning',
+    waitlist: 'warning',
   };
   type LatestBooking = {
     id: string;
@@ -229,23 +345,18 @@ export default async function AdminPage() {
         id: b.id as string,
         memberName: (u as Record<string, string>)?.full_name || 'Unbekannt',
         courtName: (court as Record<string, string>)?.name ?? '—',
-        time: new Date(b.session_start_time as string).toLocaleTimeString('de-DE', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Europe/Berlin',
-        }),
+        time: formatAdminTimeHM(b.session_start_time as string),
         statusLabel: bookingStatusLabel[status] ?? status,
         statusTone: bookingStatusTone[status] ?? 'default',
       };
     }
   );
 
-  // Onboarding checklist — show within 30 days of setup completion
-  const setupCompletedAt = (club as any).setup_completed_at as string | null;
-  // ponytail: Server Component — Date.now() is fine on server, disable client purity rule
-
+  // Onboarding checklist — no `any`-cast: `club.setup_completed_at`
+  // is now properly inferred via `ClubRow` (P0-B).
+  const setupCompletedAt = club.setup_completed_at ?? null;
   const daysSinceSetup = setupCompletedAt
-    ? // eslint-disable-next-line react-hooks/purity
+    ? // eslint-disable-next-line react-hooks/purity -- Server Component: läuft pro Request, nicht pro Re-Render
       (Date.now() - new Date(setupCompletedAt).getTime()) / 86400000
     : null;
   const showChecklist = daysSinceSetup !== null && daysSinceSetup < 30;
@@ -262,16 +373,8 @@ export default async function AdminPage() {
   const needsBilling = (totalInvoiceCount ?? 0) === 0;
   const hasSessions = (activeSessions ?? 0) > 0;
 
-  const smartActions: {
-    label: string;
-    description: string;
-    href: string;
-    icon: typeof UserPlus;
-    variant: 'blue' | 'orange' | 'purple' | 'light';
-    urgent?: boolean;
-  }[] = [];
+  const smartActions: SmartAction[] = [];
 
-  // Always show the most relevant contextual actions
   if (needsApprovals) {
     smartActions.push({
       label: `${pendingApprovals} Anfrage${(pendingApprovals ?? 0) > 1 ? 'n' : ''} genehmigen`,
@@ -293,16 +396,16 @@ export default async function AdminPage() {
     });
   }
   if (hasSessions) {
+    // P0-C fix: singularize when activeSessions === 1.
     smartActions.push({
-      label: 'Sessions überprüfen',
-      description: `${activeSessions} Sessions heute aktiv`,
+      label: `${activeSessions === 1 ? '1 Session' : `${activeSessions} Sessions`} überprüfen`,
+      description: `${activeSessions === 1 ? '1 Session' : `${activeSessions} Sessions`} heute aktiv`,
       href: '/admin/seasons',
       icon: Calendar,
       variant: 'light',
     });
   }
 
-  // Always-available actions
   smartActions.push({
     label: 'Mitglied einladen',
     description: 'Neues Mitglied zum Verein hinzufügen',
@@ -320,7 +423,6 @@ export default async function AdminPage() {
 
   // ─── Derived data for new premium components ───
 
-  // Map recentActivity → TimelineActivityItem[] (rename created_at → startISO)
   const timelineActivity: TimelineActivityItem[] = recentActivity.map((item) => ({
     id: item.id,
     type: 'activity',
@@ -331,16 +433,23 @@ export default async function AdminPage() {
     variant: item.type,
   }));
 
-  // KPI strip — 4 dense metrics, each with a small trend sparkline so all
-  // cards share the same visual weight (only "featured" differs in size/accent).
-  /** Builds a short 5-point ramp ending at `value`. Falls back to a flat
-   *  line (all points = value) when there's no growth signal to derive
-   *  from, or when value is 0 — honest "no history" rather than
-   *  fabricating movement, while still reserving the same card height
-   *  as cards that do have a real trend. */
-  function buildTrend(value: number, growthPct = 0): number[] {
+  const activityFooterHref =
+    timelineActivity.length === 0
+      ? '/admin/seasons'
+      : timelineActivity.some((i) => i.variant === 'booking')
+        ? '/admin/billing'
+        : '/admin/members';
+
+  /**
+   * Builds a short 5-point ramp ending at `value`, anchored at a starting
+   * point derived from the honest growth percentage (P0-A). Falls back to
+   * a flat line (all points = value) when no growth signal exists, so
+   * the card height stays stable across the four KPIs.
+   */
+  function buildTrend(value: number, growthPct: number | null = 0): number[] {
     if (!value || value <= 0) return [0, 0, 0, 0, 0];
-    const start = value / (1 + growthPct);
+    const growth = typeof growthPct === 'number' && Number.isFinite(growthPct) ? growthPct : 0;
+    const start = value / (1 + growth / 100);
     return [0.25, 0.5, 0.7, 0.9, 1].map((t) => Math.round(start + (value - start) * t));
   }
 
@@ -350,15 +459,19 @@ export default async function AdminPage() {
       value: memberCount ?? 0,
       icon: Users,
       color: 'brand' as const,
-      sub: '+4% zum Vormonat',
+      // P0-A: honest growth percentage, not hardcoded.
+      sub:
+        memberGrowthPct === null
+          ? 'noch keine Vergleichsdaten'
+          : `${memberGrowthPct >= 0 ? '+' : ''}${memberGrowthPct}% zum Vormonat`,
       href: '/admin/members',
-      trend: buildTrend(memberCount ?? 0, 0.04),
+      trend: buildTrend(memberCount ?? 0, memberGrowthPct),
     },
     {
       label: 'Heute Sessions',
       value: activeSessions ?? 0,
       icon: Calendar,
-      color: 'orange' as const,
+      color: hasSessions ? ('orange' as const) : ('gray' as const),
       sub: activeSessions && activeSessions > 0 ? 'live' : 'keine Sessions heute',
       href: '/admin/seasons',
       trend: buildTrend(activeSessions ?? 0),
@@ -367,10 +480,16 @@ export default async function AdminPage() {
       label: 'Umsatz ' + new Date().toLocaleDateString('de-DE', { month: 'short' }),
       value: monthlyRevenue > 0 ? `€${monthlyRevenue.toLocaleString('de-DE')}` : '€0',
       icon: CreditCard,
-      color: 'green' as const,
-      sub: monthlyRevenue > 0 ? '+12% zum Vormonat' : 'noch keine Zahlung diesen Monat',
+      color: monthlyRevenue > 0 ? ('green' as const) : ('gray' as const),
+      // P0-A: honest revenue growth percentage, not hardcoded.
+      sub:
+        revenueGrowthPct === null
+          ? monthlyRevenue > 0
+            ? 'noch keine Vergleichsdaten'
+            : 'noch keine Zahlung diesen Monat'
+          : `${revenueGrowthPct >= 0 ? '+' : ''}${revenueGrowthPct}% zum Vormonat`,
       href: '/admin/billing',
-      trend: buildTrend(monthlyRevenue, 0.12),
+      trend: buildTrend(monthlyRevenue, revenueGrowthPct),
     },
     {
       label: 'Anfragen offen',
@@ -382,6 +501,12 @@ export default async function AdminPage() {
       trend: buildTrend(pendingApprovals ?? 0),
     },
   ];
+
+  // Featured KPI — Umsatz (`index 2`) always spans 2 columns of the
+  // lg:grid-cols-5 layout, but only gets the accent-border treatment when
+  // there's actually revenue to highlight — at €0 the warm accent read
+  // as a false alarm next to the neutral "alles erledigt" banner above.
+  const FEATURED_KPI_INDEX = 2;
 
   // Attention actions for InboxBanner
   const attentionActions: AttentionAction[] = [];
@@ -404,23 +529,74 @@ export default async function AdminPage() {
     });
   }
 
+  // Smart-action card markup — extracted as a closure so the Side-Column
+  // layout (P0-D) can render the same cards inside the right Hero column
+  // without duplicating the whole JSX block.
+  const renderSmartAction = (action: SmartAction) => (
+    <Link key={action.href + action.label} href={action.href}>
+      <div
+        className={`group relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
+          action.urgent
+            ? 'border-orange-200/70 dark:border-orange-700/40 bg-gradient-to-br from-orange-50 via-warning-50 to-background dark:from-orange-900/20 dark:via-warning-900/10 dark:to-card'
+            : 'border-border dark:border-white/10 bg-card'
+        }`}
+      >
+        <div className="flex items-start gap-3 h-full relative">
+          <IconBox
+            icon={action.icon}
+            size="sm"
+            variant={action.variant}
+            className="group-hover:scale-110 transition-transform shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground dark:text-white truncate">
+                {action.label}
+              </p>
+              {action.urgent && (
+                <span className="shrink-0 h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+              {action.description}
+            </p>
+          </div>
+          <span className="text-muted-foreground/40 group-hover:text-brand-light group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5 text-base leading-none">
+            →
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+
   return (
     <div className="space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
-      {/* ── Premium Hero Identity Moment ── */}
+      {/* ── Side-Column Hero + Schnellaktionen (war P0-D / P1-G) ──
+          SmartActions sitzen jetzt rechts neben dem PremiumAdminHero
+          (lg+:col-span-2), sind also sofort über dem Fold. Auf Mobile
+          stacken sie sauber unter den Hero. Der redundante
+          "Mitglied einladen"-Hero-Button ist entfernt — die Karte unten
+          rechts hat denselben CTA ohne Echo. Semantisch liest sich
+          die Reihenfolge für Screenreader jetzt: Identifikation →
+          Schnellwerkzeuge → dringende Aufgaben → Statistik. */}
       <ScrollReveal>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <PremiumAdminHero
-            firstName={firstName}
-            clubName={club.name}
-            isSuperadmin={isSuperadmin}
-            todaySessionCount={activeSessions ?? 0}
-          />
-          <Button asChild variant="primary" size="sm" className="shrink-0">
-            <Link href="/admin/members">
-              <UserPlus className="h-4 w-4" />
-              Mitglied einladen
-            </Link>
-          </Button>
+        <div className="grid gap-4 lg:grid-cols-5 lg:items-start">
+          <div className="lg:col-span-3">
+            <PremiumAdminHero
+              firstName={firstName}
+              clubName={club.name}
+              isSuperadmin={isSuperadmin}
+              todaySessionCount={activeSessions ?? 0}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+              Schnellaktionen
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {smartActions.map(renderSmartAction)}
+            </div>
+          </div>
         </div>
       </ScrollReveal>
 
@@ -483,10 +659,13 @@ export default async function AdminPage() {
         )}
       </ScrollReveal>
 
-      {/* ── KPI Grid (4 metrics, mono numerics, flat/uniform) ── */}
+      {/* ── KPI Grid (5-col asymmetric: featured spans 2, others span 1) ──
+          Layout reads as 2 + 1 + 1 + 1 = 5 cols on lg+, 2x2 on mobile/tablet.
+          The featured card carries the dashboard's lead metric (Umsatz) and
+          receives a top accent stripe + tinted gradient via StatCard. */}
       <ScrollReveal delay={200}>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {kpiItems.map((item) => (
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {kpiItems.map((item, idx) => (
             <StatCard
               key={item.label}
               icon={item.icon}
@@ -497,6 +676,8 @@ export default async function AdminPage() {
               href={item.href}
               trend={item.trend}
               animate
+              featured={idx === FEATURED_KPI_INDEX && monthlyRevenue > 0}
+              className={idx === FEATURED_KPI_INDEX ? 'lg:col-span-2' : undefined}
             />
           ))}
         </div>
@@ -545,6 +726,14 @@ export default async function AdminPage() {
                   Noch keine Buchungen vorhanden.
                 </p>
               )}
+              <div className="px-5 pt-3 pb-5 flex justify-end">
+                <Link
+                  href="/bookings?tab=manage"
+                  className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Alle Buchungen anzeigen
+                </Link>
+              </div>
             </CardContent>
           </Card>
 
@@ -556,61 +745,14 @@ export default async function AdminPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="px-5 pb-5">
-              <AdminActivityTimeline
-                totalCount={timelineActivity.length}
-                todaySessionCount={0}
-                todaySessions={[]}
-                recentActivity={timelineActivity}
+              <ActivityFeedCompact
+                items={timelineActivity}
+                emptyMessage="Heute ist noch nichts passiert."
+                footerHref={activityFooterHref}
+                footerLabel="Alle Aktivitäten anzeigen"
               />
             </CardContent>
           </Card>
-        </div>
-      </ScrollReveal>
-
-      {/* ── Smart Contextual Actions ── */}
-      <ScrollReveal delay={400}>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-            Schnellaktionen
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {smartActions.map((action) => (
-              <Link key={action.href + action.label} href={action.href}>
-                <div
-                  className={`group relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
-                    action.urgent
-                      ? 'border-orange-200/70 dark:border-orange-700/40 bg-gradient-to-br from-orange-50 via-warning-50 to-background dark:from-orange-900/20 dark:via-warning-900/10 dark:to-card'
-                      : 'border-border dark:border-white/10 bg-card'
-                  }`}
-                >
-                  <div className="flex items-start gap-3 h-full relative">
-                    <IconBox
-                      icon={action.icon}
-                      size="sm"
-                      variant={action.variant}
-                      className="group-hover:scale-110 transition-transform shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground dark:text-white truncate">
-                          {action.label}
-                        </p>
-                        {action.urgent && (
-                          <span className="shrink-0 h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                        {action.description}
-                      </p>
-                    </div>
-                    <span className="text-muted-foreground/40 group-hover:text-brand-light group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5 text-base leading-none">
-                      →
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
         </div>
       </ScrollReveal>
     </div>

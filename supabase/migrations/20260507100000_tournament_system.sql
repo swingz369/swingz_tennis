@@ -51,14 +51,21 @@ CREATE TABLE IF NOT EXISTS tournament_matches (
 );
 
 ALTER TABLE tournaments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tournaments_select" ON tournaments;
 CREATE POLICY "tournaments_select" ON tournaments FOR SELECT USING (is_superadmin() OR is_club_member(club_id));
+DROP POLICY IF EXISTS "tournaments_manage" ON tournaments;
 CREATE POLICY "tournaments_manage" ON tournaments FOR ALL USING (is_club_admin(club_id));
 
 ALTER TABLE tournament_registrations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "reg_select" ON tournament_registrations;
 CREATE POLICY "reg_select" ON tournament_registrations FOR SELECT USING (user_id = auth.uid() OR is_club_admin((SELECT club_id FROM tournaments WHERE id = tournament_id)));
+DROP POLICY IF EXISTS "reg_insert" ON tournament_registrations;
 CREATE POLICY "reg_insert" ON tournament_registrations FOR INSERT WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "reg_manage" ON tournament_registrations;
 CREATE POLICY "reg_manage" ON tournament_registrations FOR ALL USING (is_club_admin((SELECT club_id FROM tournaments WHERE id = tournament_id)));
 
 ALTER TABLE tournament_matches ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "matches_select" ON tournament_matches;
 CREATE POLICY "matches_select" ON tournament_matches FOR SELECT USING (is_club_member((SELECT club_id FROM tournaments WHERE id = tournament_id)));
+DROP POLICY IF EXISTS "matches_manage" ON tournament_matches;
 CREATE POLICY "matches_manage" ON tournament_matches FOR ALL USING (is_club_admin((SELECT club_id FROM tournaments WHERE id = tournament_id)));

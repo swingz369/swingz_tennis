@@ -16,6 +16,7 @@ import { redirect } from 'next/navigation';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { getHighestRole, type UserRole } from '@/lib/auth-common';
 import { requireAuth } from '@/lib/auth';
+import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 
 export interface AdminContext {
   supabase: Awaited<ReturnType<typeof requireAuth>>['supabase'];
@@ -68,41 +69,30 @@ export async function requireAdminClub(): Promise<AdminContext> {
     redirect('/dashboard');
   }
 
-  // Resolve club context
+  // Resolve club context via shared helper. Same algorithm as
+  // `app/(protected)/layout.tsx`, `app/(protected)/admin/layout.tsx`,
+  // and `app/(protected)/admin/(gated)/layout.tsx` — single source of truth.
   const cookieStore = await cookies();
-  let clubId: string | null = null;
+  const { clubId: helperClubId, resolvedRole } = await resolveActiveClub({
+    cookieValue: cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null,
+    memberships: memberships ?? [],
+    highestRole: role,
+  });
 
-  if (isSuperadmin) {
-    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
-    const isValid = (memberships ?? []).some(
-      (m: { role: string; club_id: string | null }) =>
-        m.role === 'superadmin' && m.club_id === cookieClubId
-    );
-    clubId = isValid ? cookieClubId : null;
-    if (!clubId) redirect('/select-admin-club');
-  } else {
-    // Also honor ADMIN_CLUB_COOKIE for regular admins (allows club switching across managed clubs)
-    const cookieClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
-    if (cookieClubId) {
-      const isValid = (memberships ?? []).some(
-        (m: { role: string; club_id: string | null }) =>
-          m.role === 'admin' && m.club_id === cookieClubId
-      );
-      if (isValid) {
-        clubId = cookieClubId;
-      }
-    }
-    // Fallback: first admin membership
-    if (!clubId) {
-      const adminMembership = (memberships ?? []).find(
-        (m: { role: string; club_id: string | null }) => m.role === 'admin'
-      );
-      clubId = adminMembership?.club_id || null;
-    }
-    if (!clubId) redirect('/dashboard');
+  // Caller-side error policy: superadmin without a valid cookie gets sent to
+  // the picker; admin without any club fallback must be sent back to the
+  // dispatcher (/dashboard) which will route them to /member/trainer.
+  if (helperClubId === null) {
+    redirect(isSuperadmin ? '/select-admin-club' : '/dashboard');
   }
 
-  return { supabase, user, clubId, isSuperadmin, role };
+  return {
+    supabase,
+    user,
+    clubId: helperClubId,
+    isSuperadmin,
+    role: resolvedRole,
+  };
 }
 
 /**
@@ -143,13 +133,22 @@ export async function requireMemberContext(): Promise<MemberContext> {
 export async function requireTrainerContext(): Promise<TrainerContext> {
   const { supabase, user } = await requireAuth();
 
-  // Get trainer membership
+  // Get trainer membership.
+  //
+  // Defensive `trainer_id IS NOT NULL` filter: a user can hold a trainer
+  // membership at one club AND a member membership at another — both rows
+  // share `user_id`. The `role='trainer'` filter alone already isolates the
+  // trainer row, but adding `trainer_id IS NOT NULL` guarantees the row
+  // actually links back to a real `trainers` profile row. Without it, a
+  // legacy seeded membership missing the FK could leave `trainerId` null
+  // downstream (mismatching the trainers-table lookup that follows).
   const { data: membership } = await supabase
     .from('user_club_memberships')
-    .select('club_id')
+    .select('club_id, trainer_id')
     .eq('user_id', user.id)
     .eq('role', 'trainer')
     .eq('is_active', true)
+    .not('trainer_id', 'is', null)
     .maybeSingle();
 
   const clubId = membership?.club_id ?? null;

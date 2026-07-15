@@ -4,14 +4,14 @@ import { withApiAuth } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { db } from '@/src/infrastructure/persistence/db';
 import {
-  seasons,
   seasonPlanEntries,
   trainers,
   courts,
-  trainingGroups,
+  groups,
 } from '@/src/infrastructure/persistence/schema';
 import { and, eq } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
+import { authorizeSeasonAccess } from '@/lib/season-auth';
 
 const log = createLogger('api:seasons:[id]:plan-grid');
 
@@ -38,44 +38,42 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const rateLimitError = await checkRateLimitOrFail(request, RATE_LIMITS.STANDARD);
   if (rateLimitError) return rateLimitError;
 
-  return withApiAuth(request, async (_auth) => {
+  return withApiAuth(request, async (auth) => {
     try {
       const { id: seasonId } = await context.params;
 
-      // 1) Season lookup
-      let season;
-      try {
-        [season] = await db.select().from(seasons).where(eq(seasons.id, seasonId));
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        const stack = err instanceof Error ? err.stack : '';
-        log.error(
-          'plan-grid: season query failed',
-          err instanceof Error ? err : { message: msg, stack }
-        );
-        return NextResponse.json(
-          { error: `Database error loading season: ${msg}` },
-          { status: 500 }
-        );
-      }
-      if (!season) {
-        return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-      }
+      // Centralized authorization: the helper looks up the season, verifies
+      // the caller's club membership matches the season's club, and checks
+      // the per-club role against `allowedRoles`. Superadmin & owner bypass
+      // the membership check via the platform-staff fast path.
+      //
+      // Allowed roles: 'admin' (full read), 'trainer' (read own session
+      // grid), 'member' (read own schedule). Owners and superadmins bypass
+      // via the helper's platform-staff fast path.
+      const access = await authorizeSeasonAccess(auth, seasonId, {
+        allowedRoles: ['admin', 'trainer', 'member'],
+      });
+      if (!access.ok) return access.response;
+      const { season, effectiveRole } = access;
 
-      // 2) Training groups for this club (the FK season_plan_entries.group_id → training_groups.id)
+      // 'effectiveRole' is available for downstream branching if we ever
+      // need to filter slots by per-call role (e.g. trainers see only their
+      // own sessions); currently we return the full grid to any authorized
+      // caller.
+      void effectiveRole;
+
+      // 2) Groups for this club (the FK season_plan_entries.group_id → groups.id)
       let allGroups;
       try {
         allGroups = await db
           .select()
-          .from(trainingGroups)
-          .where(
-            and(eq(trainingGroups.club_id, season.club_id), eq(trainingGroups.is_active, true))
-          );
+          .from(groups)
+          .where(and(eq(groups.club_id, season.club_id), eq(groups.is_active, true)));
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';
         log.error(
-          'plan-grid: trainingGroups query failed',
+          'plan-grid: groups query failed',
           err instanceof Error ? err : { message: msg, stack }
         );
         return NextResponse.json(
@@ -117,12 +115,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
             entry: seasonPlanEntries,
             trainer_name: trainers.name,
             court_name: courts.name,
-            group_name: trainingGroups.name,
+            group_name: groups.name,
           })
           .from(seasonPlanEntries)
           .leftJoin(trainers, eq(seasonPlanEntries.trainer_id, trainers.id))
           .leftJoin(courts, eq(seasonPlanEntries.court_id, courts.id))
-          .leftJoin(trainingGroups, eq(seasonPlanEntries.group_id, trainingGroups.id))
+          .leftJoin(groups, eq(seasonPlanEntries.group_id, groups.id))
           .where(eq(seasonPlanEntries.season_id, seasonId))
           .orderBy(seasonPlanEntries.day_of_week, seasonPlanEntries.start_time);
       } catch (err) {

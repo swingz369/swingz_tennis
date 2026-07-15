@@ -2,7 +2,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { parseMemberCsv, validateMemberRecords } from '@/lib/csv/member-import';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { createLogger } from '@/lib/logger';
@@ -58,14 +57,12 @@ export async function POST(request: NextRequest) {
       return undefined;
     }
 
-    // Determine target club
+    // Determine target club. auth.clubId is the cookie-aware resolved club for
+    // the caller (see lib/auth/resolve-active-club.ts via buildAuthContext) —
+    // superadmin picks up ADMIN_CLUB_COOKIE only when it points at an existing
+    // club, admin gets their pinned admin club.
     const { searchParams } = new URL(request.url);
-    let targetClubId: string | null = auth.clubId;
-    if (auth.role === 'superadmin') {
-      const cookieClubId = request.cookies.get(ADMIN_CLUB_COOKIE)?.value;
-      targetClubId = cookieClubId || null;
-    }
-
+    const targetClubId: string | null = auth.clubId;
     if (!targetClubId) {
       return NextResponse.json({ error: 'Kein Verein ausgewählt' }, { status: 400 });
     }

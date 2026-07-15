@@ -70,6 +70,9 @@ interface ConflictCheckParams {
     trainerUtilizationMaxPct: number;
     slotFailureThreshold: number;
     maxNiveauLevelSteps: number;
+    /** Slot-Dauer in Minuten (DB: season_planning_configs.slot_duration_minutes,
+     *  Default 90). Pflicht für die exakte Trainer-Überlastungs-Berechnung. */
+    slotDurationMinutes: number;
   };
 }
 
@@ -356,9 +359,12 @@ const CONFLICT_RULES: ConflictRule[] = [
         trainerSessions.set(assignment.trainerId, count + 1);
       }
 
+      const slotMinutes = Math.max(1, params.config.slotDurationMinutes ?? 90);
+      const hoursPerSession = slotMinutes / 60;
+
       for (const trainer of params.trainers) {
         const sessions = trainerSessions.get(trainer.id) || 0;
-        const hoursAssigned = sessions * 1.5; // 90-minute sessions
+        const hoursAssigned = sessions * hoursPerSession;
         const maxHours =
           trainer.max_hours_per_week * (params.config.trainerUtilizationMaxPct / 100);
 
@@ -367,7 +373,7 @@ const CONFLICT_RULES: ConflictRule[] = [
             id: `conflict_tol_${trainer.id}`,
             type: 'trainer_over_limit',
             severity: 'warning',
-            description: `Trainer ${trainer.name}: ${sessions} Sessions (${hoursAssigned}h) überschreiten das Limit von ${maxHours}h (${params.config.trainerUtilizationMaxPct}% von ${trainer.max_hours_per_week}h)`,
+            description: `Trainer ${trainer.name}: ${sessions} Sessions (${hoursAssigned.toFixed(2)}h à ${slotMinutes}min) überschreiten das Limit von ${maxHours.toFixed(2)}h (${params.config.trainerUtilizationMaxPct}% von ${trainer.max_hours_per_week}h)`,
             suggestedResolution:
               'Reduzieren Sie die Sessions für diesen Trainer oder erhöhen Sie das Limit.',
             affectedEntities: {
@@ -541,11 +547,23 @@ export class ConflictDetector {
   async detectAll(assignments: GroupAssignment[]): Promise<ConflictDetectionResult[]> {
     const params = await this.buildCheckParams(assignments);
     const allConflicts: ConflictDetectionResult[] = [];
+    // Tier-5 (Audit): Defensiv-Dedup. IDs sind per Rule type-prefixed, aber
+    // dieselbe logische Stelle kann durch zwei Regeln erfasst werden (Court-
+    // und Trainer-Doppelbelegung bei derselben Gruppe). Wir dedupen am Ende
+    // nach `id` und behalten die erste Erwähnung, da Regeln mit höherer
+    // Priorität (critical) im CONFLICT_RULES-Array zuerst stehen.
+    const seenIds = new Set<string>();
 
     for (const rule of CONFLICT_RULES) {
       try {
         const ruleConflicts = await rule.check(params);
-        allConflicts.push(...ruleConflicts);
+        for (const conflict of ruleConflicts) {
+          if (seenIds.has(conflict.id)) {
+            continue;
+          }
+          seenIds.add(conflict.id);
+          allConflicts.push(conflict);
+        }
       } catch (error) {
         console.error(`[ConflictDetector] Rule ${rule.type} failed:`, error);
       }
@@ -718,6 +736,10 @@ export class ConflictDetector {
           (dbConfig as Record<string, unknown>)?.max_niveau_level_steps != null
             ? Number((dbConfig as Record<string, unknown>).max_niveau_level_steps)
             : 1,
+        // Tier-2 (Audit): Slot-Dauer MUSS aus der DB-Config kommen, sonst
+        // rechnet die Trainer-Überlastungs-Prüfung mit dem falschen Multiplikator.
+        // Default 90min spiegelt das Schema-Default in seasonPlanningConfigs.
+        slotDurationMinutes: dbConfig?.slot_duration_minutes ?? 90,
       },
     };
   }

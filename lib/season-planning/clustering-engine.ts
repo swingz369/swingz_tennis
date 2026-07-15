@@ -22,8 +22,12 @@ import {
   seasonStatistics,
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('season-clustering-engine');
 import { and, eq, asc } from 'drizzle-orm';
 import {
+  BUNDESLAND_NAMES,
   getHolidaysForState,
   resolveBundeslandCode,
   isHolidayWeek,
@@ -293,16 +297,46 @@ export class SeasonClusteringEngine {
 
     // Step 7c: Ferien-adjustierte Sessionzahl berechnen und in Explanations aufnehmen
     const holidayWarnings: string[] = [];
+    let holidayFallbackWarning: string | null = null;
     try {
       const [clubRow] = await db
         .select({ bundesland: clubs.bundesland })
         .from(clubs)
         .where(eq(clubs.id, this.clubId))
         .limit(1);
-      if (currentSeason?.start && currentSeason?.end && clubRow?.bundesland) {
-        const code = resolveBundeslandCode(clubRow.bundesland);
-        const holidays = getHolidaysForState(code);
-        if (holidays.length > 0) {
+      // Bundesland-Eingabe kommt aus clubs.bundesland (freier Text, optional).
+      // `resolveBundeslandCode` akzeptiert Kürzel/Klarnamen und fällt für
+      // unbekannte Eingaben dokumentiert auf 'HE' (Hessen) zurück — Ferien
+      // werden dadurch nie «leise» übersprungen. Hier unterscheiden wir die
+      // beiden Fallback-Fälle (NULL vs. unbekannter Text) für den Admin.
+      const KNOWN_STATES = Object.keys(BUNDESLAND_NAMES);
+      const rawBundesland = clubRow?.bundesland ?? null;
+      const code = resolveBundeslandCode(rawBundesland);
+      const holidays = getHolidaysForState(code);
+      if (holidays.length > 0) {
+        if (!rawBundesland) {
+          // Fall 1: clubs.bundesland ist gar nicht gepflegt — wir verwenden
+          // den Default 'HE'. Sichtbar machen, damit Admins ihre Vereins-
+          // Konfiguration vervollständigen können.
+          holidayFallbackWarning = `⚠️ Vereins-Bundesland nicht gesetzt — Ferien werden mit Default 'HE' (Hessen) gefiltert. Tipp: clubs.bundesland setzen, damit Sommer-/Herbstferien dem realen Bundesland entsprechen.`;
+          holidayWarnings.push(holidayFallbackWarning);
+          log.warn('Club without bundesland falls back to HE holidays', {
+            clubId: this.clubId,
+            seasonId: this.seasonId,
+          });
+        } else if (!KNOWN_STATES.includes(rawBundesland)) {
+          // Fall 2: clubs.bundesland ist gesetzt, aber das Kürzel ist nicht
+          // in BUNDESLAND_NAMES — resolveBundeslandCode fällt still auf 'HE'
+          // zurück. Schließt 'HH', 'BY', Klarnamen und Synonyme ein.
+          holidayFallbackWarning = `⚠️ Vereins-Bundesland '${rawBundesland}' nicht erkannt — Ferien werden mit Default 'HE' (Hessen) gefiltert. Bitte das Kürzel in clubs.bundesland korrigieren.`;
+          holidayWarnings.push(holidayFallbackWarning);
+          log.warn('Club bundesland unparseable, falling back to HE', {
+            clubId: this.clubId,
+            seasonId: this.seasonId,
+            raw: rawBundesland,
+          });
+        }
+        if (currentSeason?.start && currentSeason?.end) {
           let holidayWeekCount = 0;
           const cursor = new Date(getMonday(new Date(currentSeason.start)));
           const end = new Date(currentSeason.end);
@@ -2168,9 +2202,17 @@ export class SeasonClusteringEngine {
     for (const [tid, count] of Object.entries(trainerCounts)) {
       const trainer = trainerByIdForExplanations.get(tid);
       if (trainer) {
-        const hours = count * 1.5;
+        // Slot-Dauer kommt aus der DB-Config (default 60min im Engine-Default,
+        // 90min in der DB-Migration). Wir rechnen mit der effektiven Dauer
+        // statt einer hartcodierten 1,5h, sodass 60-Minuten-Konfigurationen
+        // korrekt dargestellt werden. Team-/Doppelstunden sind im Engine-
+        // Engine separat gehandhabt (groupTimeSlots mit teamSlotMinutes).
+        const hoursPerSession = this.config.slotDurationMinutes / 60;
+        const hours = count * hoursPerSession;
         const max = trainer.maxHoursPerWeek * (trainer.utilizationPct / 100);
-        explanations.push(`Trainer ${trainer.name}: ${count} Sessions (${hours}h von max ${max}h)`);
+        explanations.push(
+          `Trainer ${trainer.name}: ${count} Sessions (${hours.toFixed(2)}h à ${this.config.slotDurationMinutes}min von max ${max.toFixed(2)}h)`
+        );
       }
     }
 

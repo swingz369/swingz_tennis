@@ -33,9 +33,13 @@ const __dirname = path.dirname(__filename);
 
 const MIGRATION_PATH = path.join(
   __dirname,
-  '..', '..', '..', '..',
-  'supabase', 'migrations',
-  '20260701_widen_season_planning_history_action_type_check.sql',
+  '..',
+  '..',
+  '..',
+  '..',
+  'supabase',
+  'migrations',
+  '20260701010000_widen_season_planning_history_action_type_check.sql'
 );
 
 // The 18 expected action_type values, partitioned by source-of-truth text.
@@ -59,11 +63,7 @@ const COMMENT_LITERAL_C = [
   'preferences_closed',
   'published',
 ];
-const ALL_EXPECTED = [
-  ...TRIGGER_A_EMITTED,
-  ...TRIGGER_B_EMITTED,
-  ...COMMENT_LITERAL_C,
-];
+const ALL_EXPECTED = [...TRIGGER_A_EMITTED, ...TRIGGER_B_EMITTED, ...COMMENT_LITERAL_C];
 
 describe('Ticket 3.7.3 — Season Planning 23514 Trigger-Channel Migration', () => {
   let sql: string;
@@ -78,13 +78,13 @@ describe('Ticket 3.7.3 — Season Planning 23514 Trigger-Channel Migration', () 
 
   it('DROPs the existing CHECK constraint (idempotent re-apply safe)', () => {
     expect(sql).toMatch(
-      /ALTER\s+TABLE\s+season_planning_history\s+DROP\s+CONSTRAINT\s+IF\s+EXISTS\s+season_planning_history_action_type_check/i,
+      /ALTER\s+TABLE\s+season_planning_history\s+DROP\s+CONSTRAINT\s+IF\s+EXISTS\s+season_planning_history_action_type_check/i
     );
   });
 
   it('ADDs the CHECK constraint with the same constraint name', () => {
     expect(sql).toMatch(
-      /ALTER\s+TABLE\s+season_planning_history\s+ADD\s+CONSTRAINT\s+season_planning_history_action_type_check/i,
+      /ALTER\s+TABLE\s+season_planning_history\s+ADD\s+CONSTRAINT\s+season_planning_history_action_type_check/i
     );
   });
 
@@ -99,7 +99,7 @@ describe('Ticket 3.7.3 — Season Planning 23514 Trigger-Channel Migration', () 
       // Match the value as a single-quoted string literal (the form Postgres CHECK uses).
       const regex = new RegExp(`'\\s*${value}\\s*'`);
       expect(sql).toMatch(regex);
-    },
+    }
   );
 
   it('contains exactly 18 single-quoted action_type literals (regression guard)', () => {
@@ -128,7 +128,10 @@ describe('Ticket 3.7.3 — Season Planning 23514 Trigger-Channel Migration', () 
     const alters = sql.match(/ALTER\s+TABLE\s+\w+/gi) ?? [];
     expect(alters.length).toBeGreaterThan(0);
     for (const stmt of alters) {
-      const tableName = stmt.replace(/^ALTER\s+TABLE\s+/i, '').trim().split(/\s/)[0];
+      const tableName = stmt
+        .replace(/^ALTER\s+TABLE\s+/i, '')
+        .trim()
+        .split(/\s/)[0];
       expect(tableName).toBe('season_planning_history');
     }
   });

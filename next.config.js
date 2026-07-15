@@ -118,7 +118,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://cdn.fontshare.com https://api.fontshare.com https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data: https://cdn.fontshare.com https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co https://api.github.com https://*.sentry.io",
+              "connect-src 'self' https://*.supabase.co https://*.swingz.cloud https://api.stripe.com wss://*.supabase.co wss://*.swingz.cloud https://api.github.com https://*.sentry.io",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
@@ -168,14 +168,14 @@ const nextConfig = {
         permanent: true,
       },
       // Navigation consolidation: old routes → new merged pages
+      // Note: /admin/season-plan/:seasonId is NOT redirected — it's the
+      // grid/schedule view (SeasonPlanGridClient), linked from the "Plan"
+      // tab's "Stundenplan (Grid-Ansicht)" button once a season is
+      // published. It used to be caught by this same-prefix redirect,
+      // which made that button a dead link.
       {
         source: '/admin/season-plan',
         destination: '/admin/seasons',
-        permanent: true,
-      },
-      {
-        source: '/admin/season-plan/:seasonId',
-        destination: '/admin/seasons/:seasonId/planning',
         permanent: true,
       },
       {

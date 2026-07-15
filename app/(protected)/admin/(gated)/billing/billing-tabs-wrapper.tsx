@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { CreditCard, Tag, FileDown, Info, BookOpen } from 'lucide-react';
+import { CreditCard, Tag, FileDown, Info, BookOpen, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import FeeCategoriesClient from './categories/fee-categories-client';
+import { TrainerBillingTab } from '@/components/billing/trainer-billing-tab';
 
 interface FeeConfig {
   id: string;
@@ -170,10 +171,12 @@ export function BillingCategoriesTabs({
   clubId: string;
   defaultTab?: string;
 }) {
-  const tab = ['categories', 'sepa', 'datev'].includes(defaultTab) ? defaultTab : 'invoices';
+  const tab = ['categories', 'trainer', 'sepa', 'datev'].includes(defaultTab)
+    ? defaultTab
+    : 'invoices';
   return (
     <Tabs defaultValue={tab} className="space-y-6">
-      <TabsList className="w-full max-w-2xl grid grid-cols-4 bg-muted dark:bg-card/5 p-1 rounded-xl">
+      <TabsList className="w-full max-w-3xl grid grid-cols-5 bg-muted dark:bg-card/5 p-1 rounded-xl">
         <TabsTrigger
           value="invoices"
           className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
@@ -187,6 +190,13 @@ export function BillingCategoriesTabs({
         >
           <Tag className="h-4 w-4 mr-2" />
           Kategorien
+        </TabsTrigger>
+        <TabsTrigger
+          value="trainer"
+          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+        >
+          <GraduationCap className="h-4 w-4 mr-2" />
+          Trainer
         </TabsTrigger>
         <TabsTrigger
           value="sepa"
@@ -210,6 +220,11 @@ export function BillingCategoriesTabs({
       {/* Kategorien Tab — reuses FeeCategoriesClient */}
       <TabsContent value="categories">
         <FeeCategoriesClient clubId={clubId} initialCategories={initialCategories} />
+      </TabsContent>
+
+      {/* Trainer-Abrechnung Tab */}
+      <TabsContent value="trainer">
+        <TrainerBillingTab />
       </TabsContent>
 
       {/* SEPA-Export Tab */}

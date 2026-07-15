@@ -33,6 +33,9 @@ export interface MemberEmailData {
   email: string;
   fullName: string;
   groupName: string;
+  /** Group IDs the member is part of — used to filter the ICS feed so each
+   *  member only sees their own sessions, not the full season calendar. */
+  groupIds: string[];
   trainerName: string;
   firstSessionAt: Date | null;
   totalSessions: number;
@@ -147,20 +150,33 @@ interface SessionDbRow {
   max_participants: number | null;
   notes: string | null;
   week_number: number | null;
+  /** JSON array of group UUIDs this session targets (mirrors the
+   *  `sessions.group_ids` column populated by confirm/route.ts). */
+  group_ids: string[] | null;
   trainers: { name: string } | { name: string }[] | null;
   courts: { name: string } | { name: string }[] | null;
 }
 
 /**
  * Fetch sessions from the DB and convert them to CalendarEvent[] for ICS export.
- * Filters to only sessions that match one of the member's group_ids.
+ * Filters to only sessions that target at least one of the member's groups
+ * (intersection of `sessions.group_ids` with `memberGroupIds`). Without this
+ * filter every member would receive the union of ALL groups' sessions —
+ * a privacy + data-quality blocker that was previously masked by an empty
+ * `memberGroupIds: []` argument upstream.
  */
 async function buildCalendarEventsForMember(
-  memberId: string,
+  _memberId: string,
   publishedSessionIds: string[],
   memberGroupIds: string[]
 ): Promise<CalendarEvent[]> {
-  if (publishedSessionIds.length === 0 || memberGroupIds.length === 0) return [];
+  if (publishedSessionIds.length === 0 || memberGroupIds.length === 0) {
+    log.info('ICS builder skipped (no sessions or no groups for member)', {
+      sessions: publishedSessionIds.length,
+      groups: memberGroupIds.length,
+    });
+    return [];
+  }
 
   const supabase = createServiceClient();
 
@@ -176,6 +192,7 @@ async function buildCalendarEventsForMember(
       max_participants,
       notes,
       week_number,
+      group_ids,
       trainers(name),
       courts(name)
     `
@@ -188,19 +205,34 @@ async function buildCalendarEventsForMember(
   }
 
   const rows = (data ?? []) as unknown as SessionDbRow[];
+  const groupSet = new Set(memberGroupIds);
 
-  // Filter to sessions that target one of the member's groups
-  // (sessions.group_ids is a JSON array of group UUIDs)
-  const matched = rows.filter((_row) => {
-    void _row;
-    // We can't directly read group_ids in the select; rely on week_number as a proxy
-    // and the fact that the confirm route already restricts to entries the member is in.
-    // For a more precise filter we'd need to add group_ids to the select.
-    return true;
+  // Filter to sessions whose `group_ids` overlap with the member's groups.
+  // Defence-in-depth: Sessions ohne group_ids (Legacy-Zeilen ohne
+  // season_plan_entry-Bezug) werden konsistent AUSGESCHLOSSEN statt
+  // an alle Empfänger geleakt — der Filter ist genau für den umgekehrten
+  // Fall gebaut. Admins sehen die fehlende Verkn\u00fcpfung in der Logging-Ausgabe
+  // und k\u00f6nnen Legacy-Daten \u00fcber eine Re-Publish reparieren.
+  const matched = rows.filter((row) => {
+    if (!Array.isArray(row.group_ids) || row.group_ids.length === 0) {
+      log.warn(
+        'Session ohne group_ids aus ICS gefiltert (Legacy-Row oder fehlender plan_entry-Bezug) — Empfänger sieht diese Session NICHT in seinem Kalender.',
+        { sessionId: row.id, week_number: row.week_number }
+      );
+      return false;
+    }
+    return row.group_ids.some((gid) => groupSet.has(gid));
   });
 
+  if (matched.length === 0) {
+    log.warn('No published session matched any of the recipient groups', {
+      recipients: memberGroupIds.length,
+      sessions: rows.length,
+    });
+  }
+
   // Suppress unused-var TS error for memberId (kept for future filtering by RSVP)
-  void memberId;
+  void _memberId;
 
   return matched.map((row) => {
     const startDate = parseISO(row.timeslot_start);
@@ -267,11 +299,14 @@ export class SeasonConfirmationEmailService {
     // and avoid hammering the DB session lookup
     for (const recipient of params.recipients) {
       try {
-        // Build the ICS for this member's sessions
+        // Build the ICS for this member's sessions. Filter by the member's
+        // own `groupIds` so each email only contains sessions for groups
+        // the recipient is actually enrolled in (before this fix every
+        // member received every published session).
         const events = await buildCalendarEventsForMember(
           recipient.memberId,
           params.publishedSessionIds,
-          [] // group ids are already encoded in the session selection
+          recipient.groupIds ?? []
         );
         const icsContent = events.length > 0 ? generateICS(events) : '';
 
@@ -439,7 +474,9 @@ export class SeasonConfirmationEmailService {
       }
     }
 
-    // Build recipients
+    // Build recipients — carry `groupIds` forward so the ICS builder can
+    // filter by the member's own groups (privacy + correctness; without this
+    // every member would receive every other group's sessions).
     return (userRows ?? [])
       .filter((u) => u.email)
       .map((u) => {
@@ -458,6 +495,7 @@ export class SeasonConfirmationEmailService {
           email: u.email as string,
           fullName: u.full_name ?? 'Mitglied',
           groupName,
+          groupIds: Array.from(groupIds),
           trainerName,
           firstSessionAt: firstSessionGlobal,
           totalSessions: totalSessionsGlobal,

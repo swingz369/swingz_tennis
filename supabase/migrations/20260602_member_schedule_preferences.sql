@@ -47,19 +47,23 @@ CREATE INDEX IF NOT EXISTS member_sched_prefs_level_idx ON member_schedule_prefe
 -- RLS: Members can read/write their own preferences; admins can read/write all
 ALTER TABLE member_schedule_preferences ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own schedule preferences" ON member_schedule_preferences;
 CREATE POLICY "Users can view own schedule preferences"
   ON member_schedule_preferences FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own schedule preferences" ON member_schedule_preferences;
 CREATE POLICY "Users can insert own schedule preferences"
   ON member_schedule_preferences FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own schedule preferences" ON member_schedule_preferences;
 CREATE POLICY "Users can update own schedule preferences"
   ON member_schedule_preferences FOR UPDATE
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all schedule preferences" ON member_schedule_preferences;
 CREATE POLICY "Admins can view all schedule preferences"
   ON member_schedule_preferences FOR SELECT
   USING (EXISTS (
@@ -70,6 +74,7 @@ CREATE POLICY "Admins can view all schedule preferences"
       AND user_club_memberships.is_active = true
   ));
 
+DROP POLICY IF EXISTS "Admins can update all schedule preferences" ON member_schedule_preferences;
 CREATE POLICY "Admins can update all schedule preferences"
   ON member_schedule_preferences FOR UPDATE
   USING (EXISTS (

@@ -1,0 +1,60 @@
+-- #############################################################################
+-- F6.3 — Audit-Log Composite Index for DSGVO Idempotency Query (Q1, 2026-06-26)
+-- #############################################################################
+--
+-- BACKGROUND
+-- ==========
+-- `lib/services/anonymize.service.ts` (`AnonymizeService.anonymizeUser()`)
+-- uses a pre-existing audit row as the **durable idempotency sentinel** for
+-- retried DSGVO Art. 17 wipes. The SELECT runs on every call:
+--
+--   SELECT id, details
+--     FROM audit_logs
+--    WHERE action          = 'DSGVO_DELETE'
+--      AND resource_type   = 'user'
+--      AND resource_id     = $userId
+--      AND details->>'schema_version' = '2'
+--    LIMIT 1;
+--
+-- The existing single-column indexes (`audit_logs_action_idx`,
+-- `audit_logs_resource_idx` on (resource_id,resource_type)) cover parts
+-- of this WHERE — but the planner is forced to combine them via BitmapAnd
+-- or to fall back to a sequential scan at scale. At ~10⁶ audit rows this
+-- is fast enough; above that, the per-call cost grows linearly with
+-- table size and starts to dominate the request (50–200 ms on prod data).
+--
+-- THE FIX
+-- =======
+-- A single composite B-tree covering all three identifier columns, in
+-- the same order as the WHERE clause:
+--
+--     (action, resource_type, resource_id)
+--
+-- Postgres uses leftmost-prefix rules, so a query that filters on
+-- (action=...) → (resource_type=...) → (resource_id=...) is a clean
+-- index-only scan down to a small handful of candidate rows. The JSONB
+-- `details->>'schema_version'` filter remains a post-fetch heap check
+-- (acceptable: it's a string-int comparison on ~1 row by that point).
+--
+-- PRODUCTION NOTE
+-- ===============
+-- This migration uses the plain `CREATE INDEX IF NOT EXISTS` form (NOT
+-- CONCURRENTLY) to match the project's existing migration style
+-- (cf. `20260516_performance_indices.sql`). The trade-off:
+--
+--   * Plain:  ~seconds-to-minutes AccessExclusive lock; no concurrent
+--             INSERTs/UPDATEs during build.
+--   * CONCURRENTLY: no lock; ~2× build time; CANNOT run inside
+--             Supabase's auto-transacted migration runner — would fail
+--             with "CREATE INDEX IF NOT EXISTS CONCURRENTLY cannot run inside a
+--             transaction block".
+--
+-- For prod tables >10⁶ rows, run the equivalent CONCURRENTLY version
+-- manually via the Supabase SQL editor during a low-traffic window,
+-- then drop this migration entry from the pending-migrations list.
+-- The IF NOT EXISTS guard makes both versions safe to apply multiple
+-- times.
+-- #############################################################################
+
+CREATE INDEX IF NOT EXISTS audit_logs_action_resource_type_id_idx
+  ON audit_logs (action, resource_type, resource_id);

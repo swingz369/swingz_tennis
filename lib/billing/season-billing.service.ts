@@ -254,7 +254,7 @@ export class SeasonBillingService {
     const { data: entries } = await this.supabase
       .from('season_plan_entries')
       .select(
-        'id, group_id, trainer_id, duration_minutes, expected_participants, starts_from_week, ends_at_week, day_of_week, start_time, end_time'
+        'id, group_id, trainer_id, duration_minutes, expected_participants, starts_from_week, ends_at_week, day_of_week, start_time, end_time, sessions_per_week'
       )
       .eq('season_id', seasonId);
 
@@ -365,12 +365,14 @@ export class SeasonBillingService {
 
       const startWeek = entry.starts_from_week || 1;
       const endWeek = entry.ends_at_week || totalSeasonWeeks;
-      const grossSessions = Math.max(1, endWeek - startWeek + 1);
+      const sessionsPerWeek = entry.sessions_per_week || 1;
+      const grossSessions = Math.max(1, endWeek - startWeek + 1) * sessionsPerWeek;
 
-      // Subtract inactive weeks for this group
+      // Subtract inactive weeks for this group (an inactive week removes all
+      // sessions_per_week occurrences that week, not just one)
       const inactiveSet = inactiveWeeksByGroup.get(entry.group_id);
       const inactiveCount = inactiveSet ? inactiveSet.size : 0;
-      const netSessions = Math.max(0, grossSessions - inactiveCount);
+      const netSessions = Math.max(0, grossSessions - inactiveCount * sessionsPerWeek);
 
       const durationHours = entry.duration_minutes / 60;
       const totalTrainerCost = effectiveRate * durationHours * netSessions;

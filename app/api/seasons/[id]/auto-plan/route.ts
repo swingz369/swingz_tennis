@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail, RATE_LIMITS } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
+import { getClubFeatures, featureDisabledResponse } from '@/lib/require-feature';
 import { db } from '@/src/infrastructure/persistence/db';
 import { seasons } from '@/src/infrastructure/persistence/schema';
 import { eq } from 'drizzle-orm';
@@ -99,6 +100,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         const dryRun = body.dry_run || false;
         const useAI = body.use_ai === true || finalConfig.use_ai === true;
+
+        // Server-side Premium-Gate: der Client-Toggle allein reicht nicht, ein
+        // Admin könnte use_ai per curl direkt anfragen (analog ai-analysis/route.ts).
+        if (useAI && !isSuperadmin) {
+          const features = await getClubFeatures(auth.supabase, clubId);
+          if (!features.ai_analysis) {
+            return featureDisabledResponse('ai_analysis');
+          }
+        }
 
         // Update season status
         if (!dryRun) {

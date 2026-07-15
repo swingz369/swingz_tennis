@@ -3,6 +3,7 @@ import { ProtectedClientLayout } from './protected-client-layout';
 import { ProtectedRoute } from '@/components/layout/protected-route';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
+import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
@@ -37,24 +38,37 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const uniqueClubs = allClubs.filter((c, i, self) => i === self.findIndex((x) => x.id === c.id));
 
-  // Resolve active club from ADMIN_CLUB_COOKIE. Owner skipped — uses service client.
+  // Resolve active club:
+  //   • Superadmin: PRESERVE LEGACY LOOSE POLICY. The original code trusted
+  //     ADMIN_CLUB_COOKIE without membership validation here because the
+  //     navbar's `selectedClubId` field is used by the superadmin club-switcher
+  //     to display the current club — and superadmin memberships typically
+  //     have club_id=NULL (per schema/platform-staff design). Tightening this
+  //     would silently de-select the superadmin's UI on cold-SSR F5, breaking
+  //     a UX path that exists independently of the admin auth chain.
+  //   • Admin: route through the shared helper for single-source-of-truth
+  //     alignment with `app/(protected)/admin/(gated)/layout.tsx`,
+  //     `lib/admin-context.ts`, and `lib/api-auth.ts`. Admin DOES enforce
+  //     membership-match (F5 cold-SSR hang was caused by this branch
+  //     diverging in the previous fix).
+  //   • Owner: navbar uses service-client lookup outside this layout; here we
+  //     return null (no ADMIN_CLUB_COOKIE owner UI to populate).
   const cookieStore = await cookies();
-  let selectedClubId: string | null = null;
+  const cookieValue = cookieStore.get(ADMIN_CLUB_COOKIE)?.value ?? null;
 
+  let selectedClubId: string | null = null;
   if (isSuperAdmin) {
-    selectedClubId = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
+    selectedClubId = cookieValue || null;
   } else if (isAdmin) {
-    const cookieValue = cookieStore.get(ADMIN_CLUB_COOKIE)?.value || null;
-    if (
-      cookieValue &&
-      (memberships ?? []).some((m: any) => m.role === 'admin' && m.club_id === cookieValue)
-    ) {
-      selectedClubId = cookieValue;
-    } else {
-      // Fallback: first admin membership's club
-      const adminMembership = (memberships ?? []).find((m: any) => m.role === 'admin' && m.club_id);
-      selectedClubId = adminMembership?.club_id ?? null;
-    }
+    const { clubId } = await resolveActiveClub({
+      cookieValue,
+      memberships: (memberships ?? []).map((m: any) => ({
+        role: m.role,
+        club_id: m.club_id,
+      })),
+      highestRole: 'admin',
+    });
+    selectedClubId = clubId;
   }
 
   // Cookie-Set im Server Component ist nicht möglich (Next.js 13+).

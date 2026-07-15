@@ -140,11 +140,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers
+DROP TRIGGER IF EXISTS trigger_update_trainer_rating_summary ON trainer_feedback;
 CREATE TRIGGER trigger_update_trainer_rating_summary
   AFTER INSERT OR UPDATE OR DELETE ON trainer_feedback
   FOR EACH ROW
   EXECUTE FUNCTION update_trainer_rating_summary();
 
+DROP TRIGGER IF EXISTS set_feedback_updated_at ON trainer_feedback;
 CREATE TRIGGER set_feedback_updated_at
   BEFORE UPDATE ON trainer_feedback
   FOR EACH ROW
@@ -154,6 +156,7 @@ CREATE TRIGGER set_feedback_updated_at
 ALTER TABLE trainer_feedback ENABLE ROW LEVEL SECURITY;
 
 -- Members can create feedback for their own bookings
+DROP POLICY IF EXISTS "Members can create own feedback" ON trainer_feedback;
 CREATE POLICY "Members can create own feedback"
   ON trainer_feedback
   FOR INSERT
@@ -168,6 +171,7 @@ CREATE POLICY "Members can create own feedback"
   );
 
 -- Members can view visible feedback
+DROP POLICY IF EXISTS "Members can view visible feedback" ON trainer_feedback;
 CREATE POLICY "Members can view visible feedback"
   ON trainer_feedback
   FOR SELECT
@@ -181,6 +185,7 @@ CREATE POLICY "Members can view visible feedback"
   );
 
 -- Members can update their own feedback (within 24h)
+DROP POLICY IF EXISTS "Members can update own recent feedback" ON trainer_feedback;
 CREATE POLICY "Members can update own recent feedback"
   ON trainer_feedback
   FOR UPDATE
@@ -190,6 +195,7 @@ CREATE POLICY "Members can update own recent feedback"
   );
 
 -- Trainers can view feedback about themselves
+DROP POLICY IF EXISTS "Trainers can view own feedback" ON trainer_feedback;
 CREATE POLICY "Trainers can view own feedback"
   ON trainer_feedback
   FOR SELECT
@@ -199,6 +205,7 @@ CREATE POLICY "Trainers can view own feedback"
   );
 
 -- Admins can view all feedback in their club
+DROP POLICY IF EXISTS "Admins can view all feedback" ON trainer_feedback;
 CREATE POLICY "Admins can view all feedback"
   ON trainer_feedback
   FOR SELECT
@@ -212,6 +219,7 @@ CREATE POLICY "Admins can view all feedback"
   );
 
 -- Admins can moderate feedback
+DROP POLICY IF EXISTS "Admins can moderate feedback" ON trainer_feedback;
 CREATE POLICY "Admins can moderate feedback"
   ON trainer_feedback
   FOR UPDATE
@@ -228,6 +236,7 @@ CREATE POLICY "Admins can moderate feedback"
 ALTER TABLE trainer_rating_summary ENABLE ROW LEVEL SECURITY;
 
 -- Everyone in club can view rating summaries
+DROP POLICY IF EXISTS "Club members can view rating summaries" ON trainer_rating_summary;
 CREATE POLICY "Club members can view rating summaries"
   ON trainer_rating_summary
   FOR SELECT

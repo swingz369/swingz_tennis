@@ -1,6 +1,6 @@
 -- Migration: Add Trainer Availability Table
 -- Date: 2026-05-06
--- Purpose: Create table for trainer time slot availability management
+-- Purpose: CREATE TABLE IF NOT EXISTS for trainer time slot availability management
 
 -- ==============================================================================
 -- 1. Trainer Availabilities Table
@@ -20,10 +20,10 @@ CREATE TABLE IF NOT EXISTS trainer_availabilities (
     CONSTRAINT trainer_availabilities_time_order CHECK (start_time < end_time)
 );
 
-CREATE INDEX trainer_availabilities_trainer_idx ON trainer_availabilities(trainer_id);
-CREATE INDEX trainer_availabilities_date_idx ON trainer_availabilities(date);
-CREATE INDEX trainer_availabilities_trainer_date_idx ON trainer_availabilities(trainer_id, date);
-CREATE INDEX trainer_availabilities_status_idx ON trainer_availabilities(status);
+CREATE INDEX IF NOT EXISTS trainer_availabilities_trainer_idx ON trainer_availabilities(trainer_id);
+CREATE INDEX IF NOT EXISTS trainer_availabilities_date_idx ON trainer_availabilities(date);
+CREATE INDEX IF NOT EXISTS trainer_availabilities_trainer_date_idx ON trainer_availabilities(trainer_id, date);
+CREATE INDEX IF NOT EXISTS trainer_availabilities_status_idx ON trainer_availabilities(status);
 
 COMMENT ON TABLE trainer_availabilities IS 'Trainer availability slots (when trainers can work)';
 COMMENT ON COLUMN trainer_availabilities.status IS 'Status: available (free), unavailable (off), booked (assigned), blocked (admin hold)';
@@ -37,6 +37,7 @@ COMMENT ON COLUMN trainer_availabilities.recurring_pattern IS 'Optional: JSON pa
 ALTER TABLE trainer_availabilities ENABLE ROW LEVEL SECURITY;
 
 -- Trainers can view all availabilities (to avoid conflicts)
+DROP POLICY IF EXISTS "trainer_availabilities_select" ON trainer_availabilities;
 CREATE POLICY "trainer_availabilities_select" ON trainer_availabilities
     FOR SELECT
     USING (
@@ -48,6 +49,7 @@ CREATE POLICY "trainer_availabilities_select" ON trainer_availabilities
     );
 
 -- Trainers can create their own availabilities
+DROP POLICY IF EXISTS "trainer_availabilities_insert" ON trainer_availabilities;
 CREATE POLICY "trainer_availabilities_insert" ON trainer_availabilities
     FOR INSERT
     WITH CHECK (
@@ -56,6 +58,7 @@ CREATE POLICY "trainer_availabilities_insert" ON trainer_availabilities
     );
 
 -- Trainers can update their own availabilities (not booked ones)
+DROP POLICY IF EXISTS "trainer_availabilities_update" ON trainer_availabilities;
 CREATE POLICY "trainer_availabilities_update" ON trainer_availabilities
     FOR UPDATE
     USING (
@@ -64,6 +67,7 @@ CREATE POLICY "trainer_availabilities_update" ON trainer_availabilities
     );
 
 -- Trainers can delete their own availabilities (not booked ones)
+DROP POLICY IF EXISTS "trainer_availabilities_delete" ON trainer_availabilities;
 CREATE POLICY "trainer_availabilities_delete" ON trainer_availabilities
     FOR DELETE
     USING (
@@ -117,6 +121,7 @@ COMMENT ON FUNCTION check_availability_overlap IS 'Detect time slot conflicts fo
 -- 4. Updated_at Trigger
 -- ==============================================================================
 
+DROP TRIGGER IF EXISTS update_trainer_availabilities_updated_at ON trainer_availabilities;
 CREATE TRIGGER update_trainer_availabilities_updated_at
     BEFORE UPDATE ON trainer_availabilities
     FOR EACH ROW

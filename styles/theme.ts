@@ -188,6 +188,13 @@ export const spacing = {
 
 export const radius = {
   none: '0',
+  /** Single Source of Truth for the dashboard design system (10 px).
+   *  Mirrored exactly to `app/globals.css` `--radius: 10px` (literal
+   *  pixel, was 0.625rem so the contract is root-font-independent and
+   *  self-documenting). Use this when building new components or when
+   *  the CSS variable isn't reachable (e.g. inline styles in email
+   *  templates, SVG geometry). */
+  base: '10px',
   sm: '0.375rem',
   md: '0.5rem',
   lg: '0.75rem',

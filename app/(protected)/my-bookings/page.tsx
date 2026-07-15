@@ -1,5 +1,6 @@
-import MemberCourtBookings from '@/components/member-court-bookings';
+import { redirect } from 'next/navigation';
 
-export default function MemberCourtBookingsPage() {
-  return <MemberCourtBookings />;
+// Konsolidiert: alle Buchungs-Flows laufen über /bookings (Tab „Meine Buchungen").
+export default function MyBookingsRedirect() {
+  redirect('/bookings?tab=my');
 }

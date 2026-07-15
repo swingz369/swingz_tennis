@@ -108,6 +108,22 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
+
+  /* ── Corner Radius — Single Source of Truth (10 px base) ─────────────
+     The dashboard design system reference base. Exposed as a CSS custom
+     property so future shadcn-style component overrides can read it via
+     `hsl(var(--radius))` or `calc(var(--radius) - 2px)` for sm/md variants.
+
+     Hard-coded pixel value (was 0.625rem) so the contract is
+     root-font-independent and self-documenting. CALC math still works
+     because every consumer reads `var(--radius)` and combines with
+     explicit `--radius: 10px` literals (e.g. `calc(10px - 2px)`).
+
+     Existing Tailwind utilities (`rounded-2xl`, `rounded-xl`, …) keep
+     their current pixel values from `styles/theme.ts`. This token is for
+     new utilities and inline styles. Matches `styles/theme.ts` radius.base.
+     Dark mode reuses the same token (corner geometry is theme-agnostic). */
+  --radius: 10px;
 }
 
 .dark {

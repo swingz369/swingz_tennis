@@ -7,9 +7,9 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { db } from '@/src/infrastructure/persistence/db';
-import { seasons, users } from '@/src/infrastructure/persistence/schema';
+import { seasons, users, seasonPlanEntries } from '@/src/infrastructure/persistence/schema';
 import { seasonWaitlists } from '@/src/infrastructure/persistence/season-planning-schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:seasons:[id]:planning:waitlist');
@@ -31,6 +31,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isAdmin = await verifyRole(auth, 'admin');
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
+
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
 
       const waitlist = await db
         .select({
@@ -66,8 +73,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
   return withCSRFProtection(request, async () => {
     return withApiAuth(request, async (auth) => {
       try {
-        const { id: _seasonId } = await context.params;
+        const { id: seasonId } = await context.params;
         const isAdmin = await verifyRole(auth, 'admin');
+        const isSuperadmin = await verifyRole(auth, 'superadmin');
         if (!isAdmin) return forbiddenResponse('Nur Admins');
 
         const body = await request.json();
@@ -84,6 +92,58 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         if (!entry)
           return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
+
+        if (entry.season_id !== seasonId) {
+          return NextResponse.json({ error: 'Waitlist entry not found' }, { status: 404 });
+        }
+
+        if (!isSuperadmin) {
+          const hasClubAccess = auth.memberships.some(
+            (m) => m.club_id === entry.club_id && (m.role === 'admin' || m.role === 'superadmin')
+          );
+          if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+        }
+
+        // Add the member to the target group's plan entries (capacity permitting)
+        const targetGroupId = promoteToGroupId || entry.group_id;
+        const targetEntries = await db
+          .select()
+          .from(seasonPlanEntries)
+          .where(
+            and(
+              eq(seasonPlanEntries.season_id, seasonId),
+              eq(seasonPlanEntries.group_id, targetGroupId)
+            )
+          );
+
+        if (targetEntries.length === 0) {
+          return NextResponse.json(
+            { error: 'Keine Trainingstermine für die Zielgruppe gefunden' },
+            { status: 400 }
+          );
+        }
+
+        const full = targetEntries.filter((e) => {
+          const participants = (e.expected_participants as string[]) || [];
+          return (
+            !participants.includes(entry.member_id) && participants.length >= e.max_participants
+          );
+        });
+        if (full.length > 0) {
+          return NextResponse.json(
+            { error: 'Zielgruppe hat keinen freien Platz mehr' },
+            { status: 409 }
+          );
+        }
+
+        for (const planEntry of targetEntries) {
+          const participants = (planEntry.expected_participants as string[]) || [];
+          if (participants.includes(entry.member_id)) continue;
+          await db
+            .update(seasonPlanEntries)
+            .set({ expected_participants: [...participants, entry.member_id] })
+            .where(eq(seasonPlanEntries.id, planEntry.id));
+        }
 
         // Update waitlist entry
         await db

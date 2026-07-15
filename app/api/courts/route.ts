@@ -8,7 +8,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
-import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('api:courts');
@@ -22,21 +21,10 @@ export async function GET(req: NextRequest) {
     if (rateLimitError) return rateLimitError;
 
     const url = new URL(req.url);
-    let clubId = url.searchParams.get('clubId');
-
-    // If no clubId in query, use from auth context
-    if (!clubId) {
-      if (auth.role === 'superadmin') {
-        const cookieClubId = req.cookies.get(ADMIN_CLUB_COOKIE)?.value;
-        if (!cookieClubId) {
-          return NextResponse.json({ error: 'clubId required' }, { status: 400 });
-        }
-        clubId = cookieClubId;
-      } else {
-        clubId = auth.clubId;
-      }
-    }
-
+    // auth.clubId was resolved by withApiAuth → resolveActiveClub, honoring
+    // ADMIN_CLUB_COOKIE for superadmin (club-exists) and members/admins (membership).
+    // Query ?clubId= still wins for explicit overrides.
+    const clubId = url.searchParams.get('clubId') ?? auth.clubId;
     if (!clubId) {
       return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
@@ -109,19 +97,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'number must be a positive integer' }, { status: 400 });
     }
 
-    // Determine effective clubId
-    let effectiveClubId: string | null = null;
-    if (auth.role === 'superadmin') {
-      effectiveClubId = bodyClubId || req.cookies.get(ADMIN_CLUB_COOKIE)?.value || null;
-      if (!effectiveClubId) {
-        return NextResponse.json({ error: 'clubId required for superadmin' }, { status: 400 });
-      }
-    } else {
-      effectiveClubId = auth.clubId;
-    }
-
+    // Determine effective clubId. auth.clubId is the cookie-aware resolved club
+    // for the caller; body.clubId still wins for superadmin overrides. For
+    // non-superadmins, body.clubId is intentionally NOT honored — admin/trainer
+    // membership is pinned to exactly one club (or trainers can be cross-club
+    // but cannot create courts in clubs they don't manage).
+    const effectiveClubId: string | null =
+      auth.role === 'superadmin' ? (bodyClubId ?? auth.clubId) : auth.clubId;
     if (!effectiveClubId) {
-      return NextResponse.json({ error: 'No club context' }, { status: 400 });
+      return NextResponse.json({ error: 'clubId required' }, { status: 400 });
     }
 
     const { data: court, error } = await auth.supabase

@@ -141,19 +141,83 @@ export function Sidebar({
   }, [open, onClose]);
 
   // Centralised role detection via hook
-  const { currentRole, isOwner, isSuperAdmin, isAdmin } = useUserRole(roles);
+  const { currentRole, isOwner, isSuperAdmin, isAdmin, isTrainer } = useUserRole(roles);
   const colors = roleColors[currentRole];
 
-  // Pending member registrations — surfaced as a nav badge instead of only inside the Mitglieder tab
+  // Pending member registrations — surfaced as a nav badge instead of only inside the Mitglieder tab.
+  //
+  // Refresh strategy: mount-fetch + 45 s polling + refetch on tab-focus
+  // and on every pathname change. Without this, the badge stays frozen
+  // at the value captured when the sidebar first mounted — admins would
+  // see "3" forever even after approving all three requests, because
+  // (1) the dashboard Server Component re-fetches on every navigation
+  // and (2) the sidebar is a Client Component that only fetched once.
+  //
+  // Realtime-via-Supabase-channel would be the “instant” upgrade, but
+  // for a single badge counter the polling cost is ~96 requests/day per
+  // active admin and is the lowest-complexity fix. Provide an opt-out
+  // later if write-load becomes a concern.
   useEffect(() => {
     if (!isAdmin) return undefined;
     const controller = new AbortController();
-    apiFetch('/api/admin/approvals/count', { signal: controller.signal })
-      .then((res) => res.json())
-      .then((data) => setApprovalCount(data?.count ?? 0))
-      .catch(() => {});
-    return () => controller.abort();
-  }, [isAdmin]);
+
+    // Race-condition guard: the same `controller.signal` is reused across
+    // every fetchCount() call, so back-to-back calls (interval firing
+    // while a previous fetch is still pending) run in parallel. Without
+    // a generation counter, the slower response can clobber the freshly-
+    // arrived value, briefly causing the badge to flip back to a stale
+    // number. The guard ensures only the most-recent response may
+    // update the state.
+    const fetchGenRef = { current: 0 };
+    const fetchCount = () => {
+      const myGen = ++fetchGenRef.current;
+      return (
+        apiFetch('/api/admin/approvals/count', { signal: controller.signal })
+          .then((res) => res.json())
+          .then((data) => {
+            // Gate on typeof: malformed shapes (e.g. `{ error: '...' }`)
+            // would otherwise briefly clear the badge to 0 until the
+            // next successful fetch lands. The previous in-flight value
+            // is preserved when we skip the setState.
+            if (
+              fetchGenRef.current === myGen &&
+              typeof data?.count === 'number' &&
+              Number.isFinite(data.count)
+            ) {
+              setApprovalCount(data.count);
+            }
+          })
+          // 401 / 403 / 5xx all collapse to a silent no-op — UX stays calm.
+          .catch(() => {})
+      );
+    };
+
+    // 1) Initial fetch on mount.
+    fetchCount();
+    // 2) Poll every 45 s while the sidebar stays mounted.
+    const interval = window.setInterval(fetchCount, 45_000);
+    // 3) Refetch when the tab regains visibility (e.g. user switched
+    //    back from another app or another tab).
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchCount();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // Re-run when the admin role or the active club changes — a
+    // superadmin switching clubs must see the badge recompute.
+  }, [isAdmin, pathname]);
+
+  // 4) Separate effect: refetch immediately when the user navigates
+  // (e.g. from /admin/members after approving a request, then back).
+  // We only re-fetch when the new path is past the *initial* load —
+  // for that we piggy-back on the same useEffect with `pathname` in
+  // the dependency array above. Splitting into two effects would
+  // double-fetch on mount; the merged dependency is intentional.
 
   // Feature flags — hide sidebar sections for disabled modules
   const activeClubId = selectedClubId ?? clubs?.[0]?.id;
@@ -232,7 +296,10 @@ export function Sidebar({
               ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
               : []),
             ...(!hiddenSections.has('work_duty')
-              ? [{ name: 'Arbeitsdienste', href: '/admin/work-duties' }]
+              ? [
+                  { name: 'Arbeitsdienste', href: '/admin/work-duties' },
+                  { name: 'Arbeitsdienst-Zuweisungen', href: '/admin/work-duties/assignments' },
+                ]
               : []),
             { name: 'Nachrichten', href: '/messages' },
             { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
@@ -255,6 +322,8 @@ export function Sidebar({
             { name: 'Saisonplanung', href: '/admin/seasons' },
             { name: 'Wochenstundenplan', href: '/scheduler' },
             { name: 'Trainer-Profile', href: '/admin/trainers' },
+            { name: 'Stundennachweise', href: '/admin/hours-logs' },
+            { name: 'Abwesenheiten', href: '/admin/absences' },
             { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
           ],
         },
@@ -263,6 +332,7 @@ export function Sidebar({
           icon: Trophy,
           subItems: [
             { name: 'Platzverwaltung', href: '/admin/courts' },
+            { name: 'Platzarten', href: '/admin/court-types' },
             { name: 'Wartungsplan', href: '/admin/maintenance' },
             ...(!hiddenSections.has('weather_integration')
               ? [{ name: 'Platzsperren & Wetter', href: '/admin/weather' }]
@@ -274,7 +344,7 @@ export function Sidebar({
               ? [{ name: 'Turniere', href: '/admin/tournaments' }]
               : []),
             ...(!hiddenSections.has('ai_matchmaking')
-              ? [{ name: 'KI-Matchmaking', href: '/matchmaking' }]
+              ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
               : []),
           ],
         },
@@ -283,6 +353,7 @@ export function Sidebar({
           icon: DollarSign,
           subItems: [
             { name: 'Abrechnung', href: '/admin/billing' },
+            { name: 'Preisregeln', href: '/admin/pricing' },
             { name: 'Abonnement', href: '/admin/subscription' },
             ...(!hiddenSections.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
           ],
@@ -332,6 +403,22 @@ export function Sidebar({
       ];
     }
 
+    if (isTrainer) {
+      return [
+        {
+          label: 'Training',
+          icon: GraduationCap,
+          subItems: [
+            { name: 'Verfügbarkeit', href: '/trainer/availability' },
+            { name: 'Trainingspräferenzen', href: '/trainer/planning-preferences' },
+            { name: 'Stundennachweise', href: '/trainer/hours-logs' },
+            { name: 'Abwesenheiten', href: '/trainer/absences' },
+            { name: 'Trainer-Profil', href: '/trainer/profile' },
+          ],
+        },
+      ];
+    }
+
     if (isSuperAdmin) {
       return [
         {
@@ -372,7 +459,10 @@ export function Sidebar({
     ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Stundenplan', href: '/scheduler', icon: Calendar }]
       : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
+    ...(!isAdmin &&
+    !isSuperAdmin &&
+    !isOwner &&
+    (!isTrainer || (roles?.includes('member') ?? false))
       ? [{ name: 'Trainings­präferenzen', href: '/member/preferences', icon: GraduationCap }]
       : []),
     ...(!isAdmin && !isSuperAdmin && !isOwner
@@ -390,19 +480,41 @@ export function Sidebar({
     ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Vereinsdokumente', href: '/documents', icon: CheckCircle }]
       : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
+    ...(!isAdmin &&
+    !isSuperAdmin &&
+    !isOwner &&
+    (!isTrainer || (roles?.includes('member') ?? false))
       ? [{ name: 'Arbeitsdienste', href: '/member/work-duties', icon: HardHat }]
       : []),
     ...(!isAdmin && !isSuperAdmin && !isOwner && !hiddenSections.has('shop')
-      ? [{ name: 'Shop', href: '/shop', icon: ShoppingBag }]
+      ? [
+          { name: 'Shop', href: '/shop', icon: ShoppingBag },
+          { name: 'Meine Bestellungen', href: '/meine-bestellungen', icon: ShoppingBag },
+        ]
       : []),
     ...(!isAdmin && !isSuperAdmin && !isOwner
       ? [{ name: 'Board-Beschlüsse', href: '/decisions', icon: Gavel }]
       : []),
   ];
 
-  const dashboardHref = isOwner ? '/owner' : isSuperAdmin ? '/superadmin' : '/admin';
-  const sectionLabel = isOwner ? 'Swingz' : isSuperAdmin ? 'Plattform' : 'Administration';
+  const dashboardHref = isOwner
+    ? '/owner'
+    : isSuperAdmin
+      ? '/superadmin'
+      : isAdmin
+        ? '/admin'
+        : isTrainer
+          ? '/trainer'
+          : '/member';
+  const sectionLabel = isOwner
+    ? 'Swingz'
+    : isSuperAdmin
+      ? 'Plattform'
+      : isAdmin
+        ? 'Administration'
+        : isTrainer
+          ? 'Trainer'
+          : 'Mein Verein';
 
   // ────────────────────────────────────────────────────────────────────
   // Render
@@ -412,7 +524,9 @@ export function Sidebar({
     <aside
       ref={sidebarRef}
       className={cn(
-        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-border bg-background transition-transform duration-300 ease-out will-change-transform',
+        // border-r entfernt — weiches bg-tone-shift zur Trennung statt harter Linie.
+        // Mobile-overlay behält die volle shadow-2xl als modalen Lift.
+        'min-h-[calc(100vh-4rem)] w-64 overflow-y-auto bg-muted/40 dark:bg-white/[0.035] transition-transform duration-300 ease-out will-change-transform',
         'md:translate-x-0',
         open
           ? 'fixed inset-y-0 left-0 z-50 translate-x-0 shadow-2xl shadow-black/10'
@@ -541,7 +655,7 @@ export function Sidebar({
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
               isExactActive(pathname, dashboardHref)
                 ? `${colors.bg} ${colors.text}`
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'
             )}
             aria-current={isExactActive(pathname, dashboardHref) ? 'page' : undefined}
           >
@@ -572,7 +686,7 @@ export function Sidebar({
                             'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                             isActive
                               ? `${colors.bg} ${colors.text}`
-                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                              : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'
                           )}
                           aria-current={isActive ? 'page' : undefined}
                         >
@@ -590,6 +704,11 @@ export function Sidebar({
                       onClose={onClose}
                       colors={colors}
                       extraAction={section.extraAction}
+                      defaultOpen={
+                        section.label === 'Mitglieder' ||
+                        section.label === 'Spielbetrieb' ||
+                        (isTrainer && !isAdmin && section.label === 'Training')
+                      }
                     />
                   ))}
             </div>
@@ -609,7 +728,7 @@ export function Sidebar({
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                       isActive
                         ? `${colors.bg} ${colors.text}`
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                     aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}

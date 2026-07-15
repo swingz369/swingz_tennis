@@ -158,6 +158,20 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
     sidebarSection: 'pricing',
     order: 13,
   },
+  // Tier-4 (Audit): KI-Analyse als eigenes Modul. Server-seitiges Gate in
+  // api/seasons/planning/ai-analysis/route.ts checkt `clubs.features.ai_analysis`
+  // via requireFeature. Default OFF — Clubs können das Modul im Onboarding-
+  // Wizard oder in Settings → Module aktivieren.
+  {
+    key: 'ai_analysis',
+    label: 'KI-Analyse (Saisonplanung)',
+    description:
+      'KI-gestützte Plausibilitäts- und Konflikt-Analyse des generierten Saisonplans (Google Gemini Flash).',
+    icon: 'Brain',
+    category: 'optional',
+    sidebarSection: 'ai_analysis',
+    order: 14,
+  },
 ] as const;
 
 export type FeatureKey = (typeof CLUB_FEATURES)[number]['key'];

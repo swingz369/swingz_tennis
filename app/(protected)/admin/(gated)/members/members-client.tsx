@@ -397,7 +397,12 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                     aria-label="Alle auswählen"
                   />
                 </TableHead>
-                <TableHead className="text-center">Planung</TableHead>
+                <TableHead
+                  className="text-center"
+                  title="Wird das Mitglied bei der Saison-/Stundenplanung berücksichtigt?"
+                >
+                  Planung
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>E-Mail</TableHead>
                 <TableHead className="hidden lg:table-cell">Telefon</TableHead>

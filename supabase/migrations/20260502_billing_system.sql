@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- INVOICES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS invoices (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   member_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   invoice_number varchar(50) NOT NULL UNIQUE,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS invoices (
 -- INVOICE ITEMS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS invoice_items (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   invoice_id uuid NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
   description varchar(255) NOT NULL,
   quantity integer NOT NULL DEFAULT 1,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS invoice_items (
 -- PAYMENTS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS payments (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   member_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   invoice_id uuid REFERENCES invoices(id) ON DELETE SET NULL,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS payments (
 -- SEPA MANDATES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS sepa_mandates (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   member_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   mandate_reference varchar(35) NOT NULL UNIQUE,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS sepa_mandates (
 -- DUNNING RECORDS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS dunning_records (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   member_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   invoice_id uuid NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
@@ -172,6 +172,7 @@ ALTER TABLE sepa_mandates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dunning_records ENABLE ROW LEVEL SECURITY;
 
 -- Invoices policies
+DROP POLICY IF EXISTS "club_members_can_view_own_invoices" ON invoices;
 CREATE POLICY "club_members_can_view_own_invoices" ON invoices
   FOR SELECT USING (
     member_id = auth.uid()
@@ -184,6 +185,7 @@ CREATE POLICY "club_members_can_view_own_invoices" ON invoices
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_create_invoices" ON invoices;
 CREATE POLICY "admins_can_create_invoices" ON invoices
   FOR INSERT WITH CHECK (
     EXISTS (
@@ -195,6 +197,7 @@ CREATE POLICY "admins_can_create_invoices" ON invoices
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_update_invoices" ON invoices;
 CREATE POLICY "admins_can_update_invoices" ON invoices
   FOR UPDATE USING (
     EXISTS (
@@ -207,6 +210,7 @@ CREATE POLICY "admins_can_update_invoices" ON invoices
   );
 
 -- Invoice items policies
+DROP POLICY IF EXISTS "club_members_can_view_invoice_items" ON invoice_items;
 CREATE POLICY "club_members_can_view_invoice_items" ON invoice_items
   FOR SELECT USING (
     EXISTS (
@@ -225,6 +229,7 @@ CREATE POLICY "club_members_can_view_invoice_items" ON invoice_items
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_manage_invoice_items" ON invoice_items;
 CREATE POLICY "admins_can_manage_invoice_items" ON invoice_items
   FOR ALL USING (
     EXISTS (
@@ -238,6 +243,7 @@ CREATE POLICY "admins_can_manage_invoice_items" ON invoice_items
   );
 
 -- Payments policies
+DROP POLICY IF EXISTS "club_members_can_view_own_payments" ON payments;
 CREATE POLICY "club_members_can_view_own_payments" ON payments
   FOR SELECT USING (
     member_id = auth.uid()
@@ -250,6 +256,7 @@ CREATE POLICY "club_members_can_view_own_payments" ON payments
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_manage_payments" ON payments;
 CREATE POLICY "admins_can_manage_payments" ON payments
   FOR ALL USING (
     EXISTS (
@@ -262,6 +269,7 @@ CREATE POLICY "admins_can_manage_payments" ON payments
   );
 
 -- SEPA mandates policies
+DROP POLICY IF EXISTS "members_can_view_own_mandates" ON sepa_mandates;
 CREATE POLICY "members_can_view_own_mandates" ON sepa_mandates
   FOR SELECT USING (
     member_id = auth.uid()
@@ -274,6 +282,7 @@ CREATE POLICY "members_can_view_own_mandates" ON sepa_mandates
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_manage_mandates" ON sepa_mandates;
 CREATE POLICY "admins_can_manage_mandates" ON sepa_mandates
   FOR ALL USING (
     EXISTS (
@@ -286,6 +295,7 @@ CREATE POLICY "admins_can_manage_mandates" ON sepa_mandates
   );
 
 -- Dunning records policies
+DROP POLICY IF EXISTS "members_can_view_own_dunning" ON dunning_records;
 CREATE POLICY "members_can_view_own_dunning" ON dunning_records
   FOR SELECT USING (
     member_id = auth.uid()
@@ -298,6 +308,7 @@ CREATE POLICY "members_can_view_own_dunning" ON dunning_records
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_manage_dunning" ON dunning_records;
 CREATE POLICY "admins_can_manage_dunning" ON dunning_records
   FOR ALL USING (
     EXISTS (
@@ -321,18 +332,23 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_invoices_updated_at ON invoices;
 CREATE TRIGGER update_invoices_updated_at BEFORE UPDATE ON invoices
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_invoice_items_updated_at ON invoice_items;
 CREATE TRIGGER update_invoice_items_updated_at BEFORE UPDATE ON invoice_items
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_payments_updated_at ON payments;
 CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_sepa_mandates_updated_at ON sepa_mandates;
 CREATE TRIGGER update_sepa_mandates_updated_at BEFORE UPDATE ON sepa_mandates
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_dunning_records_updated_at ON dunning_records;
 CREATE TRIGGER update_dunning_records_updated_at BEFORE UPDATE ON dunning_records
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -435,6 +451,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_invoice_status_after_payment ON payments;
 CREATE TRIGGER update_invoice_status_after_payment
   AFTER INSERT OR UPDATE ON payments
   FOR EACH ROW EXECUTE FUNCTION update_invoice_status();

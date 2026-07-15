@@ -40,6 +40,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       const isSuperadmin = await verifyRole(auth, 'superadmin');
       if (!isAdmin && !isSuperadmin) return forbiddenResponse('Nur Admins');
 
+      if (!isSuperadmin) {
+        const hasClubAccess = auth.memberships.some(
+          (m) => m.club_id === season.club_id && (m.role === 'admin' || m.role === 'superadmin')
+        );
+        if (!hasClubAccess) return forbiddenResponse('Kein Zugriff auf diesen Club');
+      }
+
       // Get trainer preferences
       const trainerPrefs = await db
         .select({

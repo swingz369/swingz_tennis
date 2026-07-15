@@ -6,8 +6,7 @@
 -- =====================================================
 
 -- =====================================================
--- 1. CREATE TABLE
--- =====================================================
+-- 1. CREATE TABLE IF NOT EXISTS -- =====================================================
 
 CREATE TABLE IF NOT EXISTS public.trainer_profiles (
   -- Primary key
@@ -68,22 +67,22 @@ CREATE TABLE IF NOT EXISTS public.trainer_profiles (
 -- =====================================================
 
 -- Primary lookup indexes
-CREATE INDEX idx_trainer_profiles_club_id ON public.trainer_profiles(club_id);
-CREATE INDEX idx_trainer_profiles_user_id ON public.trainer_profiles(user_id);
-CREATE INDEX idx_trainer_profiles_status ON public.trainer_profiles(status);
-CREATE INDEX idx_trainer_profiles_email ON public.trainer_profiles(email);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_club_id ON public.trainer_profiles(club_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_user_id ON public.trainer_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_status ON public.trainer_profiles(status);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_email ON public.trainer_profiles(email);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_trainer_profiles_club_status ON public.trainer_profiles(club_id, status)
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_club_status ON public.trainer_profiles(club_id, status)
   WHERE status = 'active';
 
 -- Text search indexes
-CREATE INDEX idx_trainer_profiles_first_name ON public.trainer_profiles USING gin(first_name gin_trgm_ops);
-CREATE INDEX idx_trainer_profiles_last_name ON public.trainer_profiles USING gin(last_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_first_name ON public.trainer_profiles USING gin(first_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_last_name ON public.trainer_profiles USING gin(last_name gin_trgm_ops);
 
 -- Timestamp indexes
-CREATE INDEX idx_trainer_profiles_created_at ON public.trainer_profiles(created_at DESC);
-CREATE INDEX idx_trainer_profiles_updated_at ON public.trainer_profiles(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_created_at ON public.trainer_profiles(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_trainer_profiles_updated_at ON public.trainer_profiles(updated_at DESC);
 
 -- =====================================================
 -- 3. ROW LEVEL SECURITY (RLS)
@@ -93,30 +92,35 @@ CREATE INDEX idx_trainer_profiles_updated_at ON public.trainer_profiles(updated_
 ALTER TABLE public.trainer_profiles ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Superadmins have full access to all trainer profiles
+DROP POLICY IF EXISTS trainer_profiles_superadmin_all ON public.trainer_profiles;
 CREATE POLICY trainer_profiles_superadmin_all
   ON public.trainer_profiles
   FOR ALL
   USING (is_superadmin());
 
 -- Policy 2: Club admins can manage their club's trainer profiles
+DROP POLICY IF EXISTS trainer_profiles_admin_manage ON public.trainer_profiles;
 CREATE POLICY trainer_profiles_admin_manage
   ON public.trainer_profiles
   FOR ALL
   USING (user_is_admin_of_club(club_id));
 
 -- Policy 3: Trainers can view their club's trainer profiles
+DROP POLICY IF EXISTS trainer_profiles_trainer_view ON public.trainer_profiles;
 CREATE POLICY trainer_profiles_trainer_view
   ON public.trainer_profiles
   FOR SELECT
   USING (user_is_trainer_of_club(club_id));
 
 -- Policy 4: Trainers can update their own profile
+DROP POLICY IF EXISTS trainer_profiles_trainer_update_own ON public.trainer_profiles;
 CREATE POLICY trainer_profiles_trainer_update_own
   ON public.trainer_profiles
   FOR UPDATE
   USING (user_id = auth.uid() AND user_is_trainer_of_club(club_id));
 
 -- Policy 5: Members can view their club's active trainer profiles
+DROP POLICY IF EXISTS trainer_profiles_member_view_active ON public.trainer_profiles;
 CREATE POLICY trainer_profiles_member_view_active
   ON public.trainer_profiles
   FOR SELECT
@@ -130,6 +134,7 @@ CREATE POLICY trainer_profiles_member_view_active
 -- =====================================================
 
 -- Trigger: Update updated_at timestamp
+DROP TRIGGER IF EXISTS set_trainer_profiles_updated_at ON public.trainer_profiles;
 CREATE TRIGGER set_trainer_profiles_updated_at
   BEFORE UPDATE ON public.trainer_profiles
   FOR EACH ROW
@@ -175,6 +180,7 @@ END;
 $$;
 
 -- Trigger: Validate status transitions
+DROP TRIGGER IF EXISTS validate_trainer_profile_status ON public.trainer_profiles;
 CREATE TRIGGER validate_trainer_profile_status
   BEFORE UPDATE OF status ON public.trainer_profiles
   FOR EACH ROW

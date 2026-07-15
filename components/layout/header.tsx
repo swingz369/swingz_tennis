@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { IconBox } from '@/components/ui/icon-box';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useUserRole } from '@/hooks/use-user-role';
 import {
   Menu,
   LogOut,
@@ -55,9 +55,16 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, [userMenuOpen]);
 
-  const isOwner = user?.roles?.includes('owner');
-  const isAdmin = user?.roles?.some((r) => r === 'admin' || r === 'superadmin');
-  const isSuperAdmin = user?.roles?.includes('superadmin');
+  // Rollen-basierter Header-Subtitle (analog zur Sidebar, damit Owner/Superadmin
+  // nicht das falsche Label sehen).
+  const { isOwner, isSuperAdmin, isAdmin } = useUserRole(user?.roles);
+  const headerSectionLabel = isOwner
+    ? 'Swingz'
+    : isSuperAdmin
+      ? 'Plattform'
+      : isAdmin
+        ? 'Administration'
+        : 'Mitglied';
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -85,55 +92,67 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-background/70 dark:bg-brand-950/70 backdrop-blur-2xl border-b border-border/60 dark:border-white/[0.06] supports-[backdrop-filter]:bg-background/60 supports-[backdrop-filter]:dark:bg-brand-950/60"
+      className="sticky top-0 z-50 w-full bg-background/80 dark:bg-brand-950/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-brand-950/70"
       role="banner"
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-8">
+        {/* Brand cluster — Logo + Marke als geschlossene Einheit.
+            Tintierter Gradient-Ring gibt dem Logo visuell Gewicht,
+            damit es nicht in der 16-px-Bar „verloren“ wirkt. */}
         <Link
           href={dashboardLink}
-          className="flex items-center gap-3 group"
+          className="flex items-center gap-3 shrink-0 group"
           aria-label="SwingZ Home"
         >
-          <div className="relative">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-light/15 via-brand-light/10 to-brand-primary/15 ring-1 ring-brand-light/25 group-hover:ring-brand-light/50 transition-all overflow-hidden">
             {clubLogoUrl && !imgFailed ? (
               // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions
               <img
                 key={clubLogoUrl}
                 src={clubLogoUrl}
                 alt="Club Logo"
-                className="h-8 w-8 object-contain relative"
+                className="h-6 w-6 object-contain"
                 onError={() => setImgFailed(true)}
                 onLoad={() => setImgFailed(false)}
               />
             ) : (
-              <IconBox icon={Trophy} size="md" variant="gradient-primary" />
+              <Trophy className="h-5 w-5 text-brand-light" aria-hidden="true" />
             )}
           </div>
-          <span className="hidden sm:inline text-xl font-bold tracking-tight text-foreground dark:text-white">
-            SWINGZ
-          </span>
+          <div className="hidden sm:flex flex-col leading-tight">
+            <span className="text-base font-bold tracking-tight text-foreground dark:text-white">
+              SWINGZ
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70 -mt-0.5">
+              {headerSectionLabel}
+            </span>
+          </div>
         </Link>
 
-        {/* Command palette trigger — styled like a disabled input, opens the
-            command palette (also reachable via Cmd/Ctrl+K anywhere). */}
-        <div className="hidden md:block flex-1 max-w-md mx-8">
+        {/* Command palette trigger — als zentrierte primäre Aktion.
+            Subtiler bg (kein input-border mehr), gerundet-xl, mit kbd-Hint.
+            `hidden md:flex` verhindert, dass die Search-Bar auf Mobile die
+            rechten Action-Buttons aus dem Viewport drückt. */}
+        <div className="hidden md:flex flex-1 justify-center min-w-0">
           <button
             type="button"
             onClick={() => setCommandPaletteOpen(true)}
-            className="flex w-full items-center gap-2 rounded-lg border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="group flex w-full max-w-md items-center gap-2.5 rounded-xl bg-muted/40 dark:bg-white/[0.04] hover:bg-muted/70 dark:hover:bg-white/[0.08] border border-transparent hover:border-border/50 dark:hover:border-white/[0.08] px-3.5 py-2 text-sm text-muted-foreground hover:text-foreground transition-all"
             aria-label="Suche oder Befehl öffnen"
           >
-            <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="flex-1 text-left">Suche oder Befehl…</span>
-            <span className="rounded border border-border bg-background px-1.5 py-0.5 text-2xs font-medium text-muted-foreground">
+            <Search
+              className="h-4 w-4 shrink-0 transition-colors group-hover:text-brand-light"
+              aria-hidden="true"
+            />
+            <span className="flex-1 text-left truncate">Suche oder Befehl…</span>
+            <kbd className="hidden lg:inline-flex items-center h-5 rounded-md border border-border/60 dark:border-white/10 bg-background/80 dark:bg-white/[0.04] px-1.5 text-[11px] font-mono font-medium text-muted-foreground">
               ⌘K
-            </span>
+            </kbd>
           </button>
         </div>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-1.5">
+        {/* Right actions — Utility-Cluster (Theme / Notifications / User / Mobile) */}
+        <div className="flex items-center gap-0.5 shrink-0">
           {/* Theme Toggle */}
           <ThemeToggle />
 

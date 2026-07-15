@@ -79,8 +79,8 @@ export function MyBookings() {
   const handleCancel = async (id: string) => {
     setCancelling(id);
     try {
-      const res = await apiFetch(`/api/bookings/${id}`, {
-        method: 'DELETE',
+      const res = await apiFetch(`/api/bookings/${id}/cancel`, {
+        method: 'POST',
         credentials: 'include',
       });
       if (!res.ok) {

@@ -32,30 +32,30 @@ CREATE TABLE IF NOT EXISTS fee_configurations (
 -- ============================================================================
 
 -- Query by club (tenant isolation)
-CREATE INDEX idx_fee_configurations_club_id ON fee_configurations(club_id);
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_club_id ON fee_configurations(club_id);
 
 -- Query by type (membership, training, court, other)
-CREATE INDEX idx_fee_configurations_type ON fee_configurations(type);
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_type ON fee_configurations(type);
 
 -- Query active configurations
-CREATE INDEX idx_fee_configurations_is_active ON fee_configurations(is_active) 
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_is_active ON fee_configurations(is_active) 
   WHERE is_active = true;
 
 -- Query by billing cycle
-CREATE INDEX idx_fee_configurations_billing_cycle ON fee_configurations(billing_cycle);
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_billing_cycle ON fee_configurations(billing_cycle);
 
 -- Query by validity dates (find currently valid configurations)
-CREATE INDEX idx_fee_configurations_validity ON fee_configurations(valid_from, valid_until);
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_validity ON fee_configurations(valid_from, valid_until);
 
 -- Composite index for active configs by club
-CREATE INDEX idx_fee_configurations_club_active ON fee_configurations(club_id, is_active) 
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_club_active ON fee_configurations(club_id, is_active) 
   WHERE is_active = true;
 
 -- Composite index for club + type queries
-CREATE INDEX idx_fee_configurations_club_type ON fee_configurations(club_id, type);
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_club_type ON fee_configurations(club_id, type);
 
 -- GIN index for JSONB conditions (fast filtering by member type, age, etc.)
-CREATE INDEX idx_fee_configurations_conditions ON fee_configurations USING GIN (conditions);
+CREATE INDEX IF NOT EXISTS idx_fee_configurations_conditions ON fee_configurations USING GIN (conditions);
 
 -- ============================================================================
 -- RLS POLICIES
@@ -65,12 +65,14 @@ CREATE INDEX idx_fee_configurations_conditions ON fee_configurations USING GIN (
 ALTER TABLE fee_configurations ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Superadmins have full access (cross-tenant)
+DROP POLICY IF EXISTS "Superadmins have full access to all fee configurations" ON fee_configurations;
 CREATE POLICY "Superadmins have full access to all fee configurations"
   ON fee_configurations
   FOR ALL
   USING (is_superadmin());
 
 -- Policy 2: Club admins can view fee configurations in their clubs
+DROP POLICY IF EXISTS "Club admins can view fee configurations in their clubs" ON fee_configurations;
 CREATE POLICY "Club admins can view fee configurations in their clubs"
   ON fee_configurations
   FOR SELECT
@@ -85,6 +87,7 @@ CREATE POLICY "Club admins can view fee configurations in their clubs"
   );
 
 -- Policy 3: Club admins can create fee configurations in their clubs
+DROP POLICY IF EXISTS "Club admins can create fee configurations in their clubs" ON fee_configurations;
 CREATE POLICY "Club admins can create fee configurations in their clubs"
   ON fee_configurations
   FOR INSERT
@@ -99,6 +102,7 @@ CREATE POLICY "Club admins can create fee configurations in their clubs"
   );
 
 -- Policy 4: Club admins can update fee configurations in their clubs
+DROP POLICY IF EXISTS "Club admins can update fee configurations in their clubs" ON fee_configurations;
 CREATE POLICY "Club admins can update fee configurations in their clubs"
   ON fee_configurations
   FOR UPDATE
@@ -113,6 +117,7 @@ CREATE POLICY "Club admins can update fee configurations in their clubs"
   );
 
 -- Policy 5: Club admins can delete fee configurations in their clubs
+DROP POLICY IF EXISTS "Club admins can delete fee configurations in their clubs" ON fee_configurations;
 CREATE POLICY "Club admins can delete fee configurations in their clubs"
   ON fee_configurations
   FOR DELETE
@@ -127,6 +132,7 @@ CREATE POLICY "Club admins can delete fee configurations in their clubs"
   );
 
 -- Policy 6: Trainers can view fee configurations in their clubs (read-only)
+DROP POLICY IF EXISTS "Trainers can view fee configurations in their clubs" ON fee_configurations;
 CREATE POLICY "Trainers can view fee configurations in their clubs"
   ON fee_configurations
   FOR SELECT
@@ -141,6 +147,7 @@ CREATE POLICY "Trainers can view fee configurations in their clubs"
   );
 
 -- Policy 7: Members can view active fee configurations in their clubs (read-only)
+DROP POLICY IF EXISTS "Members can view active fee configurations in their clubs" ON fee_configurations;
 CREATE POLICY "Members can view active fee configurations in their clubs"
   ON fee_configurations
   FOR SELECT
@@ -169,6 +176,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS fee_configurations_updated_at ON fee_configurations;
 CREATE TRIGGER fee_configurations_updated_at
   BEFORE UPDATE ON fee_configurations
   FOR EACH ROW

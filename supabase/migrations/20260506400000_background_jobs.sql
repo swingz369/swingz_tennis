@@ -53,10 +53,10 @@ CREATE TABLE IF NOT EXISTS background_jobs (
   CONSTRAINT valid_job_type CHECK (job_type IN ('scheduled', 'one_time', 'recurring'))
 );
 
-CREATE INDEX idx_background_jobs_status ON background_jobs(status);
-CREATE INDEX idx_background_jobs_job_type ON background_jobs(job_type);
-CREATE INDEX idx_background_jobs_scheduled_at ON background_jobs(scheduled_at) WHERE status = 'pending';
-CREATE INDEX idx_background_jobs_created_at ON background_jobs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_background_jobs_status ON background_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_background_jobs_job_type ON background_jobs(job_type);
+CREATE INDEX IF NOT EXISTS idx_background_jobs_scheduled_at ON background_jobs(scheduled_at) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_background_jobs_created_at ON background_jobs(created_at DESC);
 
 -- ============================================================
 -- Job Execution Log
@@ -81,8 +81,8 @@ CREATE TABLE IF NOT EXISTS job_execution_log (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_job_execution_log_job_id ON job_execution_log(job_id);
-CREATE INDEX idx_job_execution_log_created_at ON job_execution_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_job_execution_log_job_id ON job_execution_log(job_id);
+CREATE INDEX IF NOT EXISTS idx_job_execution_log_created_at ON job_execution_log(created_at DESC);
 
 -- ============================================================
 -- Helper Functions
@@ -340,11 +340,13 @@ ALTER TABLE background_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE job_execution_log ENABLE ROW LEVEL SECURITY;
 
 -- Superadmin can see all jobs
+DROP POLICY IF EXISTS "background_jobs_superadmin_all" ON background_jobs;
 CREATE POLICY "background_jobs_superadmin_all" ON background_jobs
   FOR ALL
   USING (is_superadmin());
 
 -- Admins can see jobs for their club (if payload contains club_id)
+DROP POLICY IF EXISTS "background_jobs_admin_select" ON background_jobs;
 CREATE POLICY "background_jobs_admin_select" ON background_jobs
   FOR SELECT
   USING (
@@ -353,11 +355,13 @@ CREATE POLICY "background_jobs_admin_select" ON background_jobs
   );
 
 -- Service role can manage all jobs
+DROP POLICY IF EXISTS "background_jobs_service_role" ON background_jobs;
 CREATE POLICY "background_jobs_service_role" ON background_jobs
   FOR ALL
   USING (auth.jwt()->>'role' = 'service_role');
 
 -- Job execution log follows same rules
+DROP POLICY IF EXISTS "job_execution_log_superadmin_all" ON job_execution_log;
 CREATE POLICY "job_execution_log_superadmin_all" ON job_execution_log
   FOR ALL
   USING (
@@ -373,11 +377,11 @@ CREATE POLICY "job_execution_log_superadmin_all" ON job_execution_log
 -- ============================================================
 
 -- Composite index for job queue processing
-CREATE INDEX idx_background_jobs_queue ON background_jobs(status, priority DESC, scheduled_at ASC)
+CREATE INDEX IF NOT EXISTS idx_background_jobs_queue ON background_jobs(status, priority DESC, scheduled_at ASC)
   WHERE status = 'pending';
 
 -- Index for job history queries
-CREATE INDEX idx_background_jobs_history ON background_jobs(job_name, status, completed_at DESC)
+CREATE INDEX IF NOT EXISTS idx_background_jobs_history ON background_jobs(job_name, status, completed_at DESC)
   WHERE status IN ('completed', 'failed');
 
 -- ============================================================

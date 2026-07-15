@@ -35,6 +35,10 @@ export interface AdminSectionProps {
     icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
     onClick: () => void;
   };
+  /** Open this section on first render even without an active child route —
+   * for the groups an admin reaches for constantly (members, court ops), so
+   * the dashboard doesn't hide its own main features behind an extra click. */
+  defaultOpen?: boolean;
 }
 
 // Pre-defined colour themes (mirrors roleColors in sidebar)
@@ -86,9 +90,10 @@ export function AdminSection({
   onClose,
   colors,
   extraAction,
+  defaultOpen = false,
 }: AdminSectionProps) {
   const hasActiveChild = subItems.some((item) => isActivePath(pathname, item.href));
-  const [isOpen, setIsOpen] = useState(hasActiveChild);
+  const [isOpen, setIsOpen] = useState(hasActiveChild || defaultOpen);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   // Keyboard navigation within section (roving tabindex)

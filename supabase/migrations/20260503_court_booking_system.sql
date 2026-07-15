@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- COURT TYPES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS court_types (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name varchar(100) NOT NULL UNIQUE,
   description text,
   surface_type varchar(50) NOT NULL CHECK (surface_type IN ('clay', 'hard', 'grass', 'carpet', 'artificial_grass')),
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS court_types (
 -- COURTS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS courts (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   court_type_id uuid NOT NULL REFERENCES court_types(id) ON DELETE RESTRICT,
   name varchar(100) NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS courts (
 -- BOOKING RULES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS booking_rules (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   name varchar(100) NOT NULL,
   description text,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS booking_rules (
 -- BOOKINGS TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS bookings (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   court_id uuid NOT NULL REFERENCES courts(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS bookings (
 -- WAITLIST ENTRIES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS waitlist_entries (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   club_id uuid NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
   court_id uuid REFERENCES courts(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS waitlist_entries (
 -- COURT AVAILABILITY TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS court_availability (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   court_id uuid NOT NULL REFERENCES courts(id) ON DELETE CASCADE,
   day_of_week integer NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
   start_time time NOT NULL,
@@ -184,10 +184,12 @@ ALTER TABLE waitlist_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE court_availability ENABLE ROW LEVEL SECURITY;
 
 -- Court types policies (read-only for all authenticated users)
+DROP POLICY IF EXISTS "authenticated_users_can_view_court_types" ON court_types;
 CREATE POLICY "authenticated_users_can_view_court_types" ON court_types
   FOR SELECT USING (auth.uid() IS NOT NULL);
 
 -- Courts policies
+DROP POLICY IF EXISTS "club_members_can_view_courts" ON courts;
 CREATE POLICY "club_members_can_view_courts" ON courts
   FOR SELECT USING (
     EXISTS (
@@ -198,6 +200,7 @@ CREATE POLICY "club_members_can_view_courts" ON courts
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_manage_courts" ON courts;
 CREATE POLICY "admins_can_manage_courts" ON courts
   FOR ALL USING (
     EXISTS (
@@ -210,6 +213,7 @@ CREATE POLICY "admins_can_manage_courts" ON courts
   );
 
 -- Booking rules policies
+DROP POLICY IF EXISTS "club_members_can_view_booking_rules" ON booking_rules;
 CREATE POLICY "club_members_can_view_booking_rules" ON booking_rules
   FOR SELECT USING (
     EXISTS (
@@ -220,6 +224,7 @@ CREATE POLICY "club_members_can_view_booking_rules" ON booking_rules
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_manage_booking_rules" ON booking_rules;
 CREATE POLICY "admins_can_manage_booking_rules" ON booking_rules
   FOR ALL USING (
     EXISTS (
@@ -232,6 +237,7 @@ CREATE POLICY "admins_can_manage_booking_rules" ON booking_rules
   );
 
 -- Bookings policies
+DROP POLICY IF EXISTS "users_can_view_own_bookings" ON bookings;
 CREATE POLICY "users_can_view_own_bookings" ON bookings
   FOR SELECT USING (
     user_id = auth.uid()
@@ -244,6 +250,7 @@ CREATE POLICY "users_can_view_own_bookings" ON bookings
     )
   );
 
+DROP POLICY IF EXISTS "users_can_create_bookings" ON bookings;
 CREATE POLICY "users_can_create_bookings" ON bookings
   FOR INSERT WITH CHECK (
     user_id = auth.uid()
@@ -255,6 +262,7 @@ CREATE POLICY "users_can_create_bookings" ON bookings
     )
   );
 
+DROP POLICY IF EXISTS "users_can_update_own_bookings" ON bookings;
 CREATE POLICY "users_can_update_own_bookings" ON bookings
   FOR UPDATE USING (
     user_id = auth.uid()
@@ -268,6 +276,7 @@ CREATE POLICY "users_can_update_own_bookings" ON bookings
   );
 
 -- Waitlist entries policies
+DROP POLICY IF EXISTS "users_can_view_own_waitlist_entries" ON waitlist_entries;
 CREATE POLICY "users_can_view_own_waitlist_entries" ON waitlist_entries
   FOR SELECT USING (
     user_id = auth.uid()
@@ -280,6 +289,7 @@ CREATE POLICY "users_can_view_own_waitlist_entries" ON waitlist_entries
     )
   );
 
+DROP POLICY IF EXISTS "users_can_create_waitlist_entries" ON waitlist_entries;
 CREATE POLICY "users_can_create_waitlist_entries" ON waitlist_entries
   FOR INSERT WITH CHECK (
     user_id = auth.uid()
@@ -291,6 +301,7 @@ CREATE POLICY "users_can_create_waitlist_entries" ON waitlist_entries
     )
   );
 
+DROP POLICY IF EXISTS "users_can_update_own_waitlist_entries" ON waitlist_entries;
 CREATE POLICY "users_can_update_own_waitlist_entries" ON waitlist_entries
   FOR UPDATE USING (
     user_id = auth.uid()
@@ -304,6 +315,7 @@ CREATE POLICY "users_can_update_own_waitlist_entries" ON waitlist_entries
   );
 
 -- Court availability policies
+DROP POLICY IF EXISTS "club_members_can_view_court_availability" ON court_availability;
 CREATE POLICY "club_members_can_view_court_availability" ON court_availability
   FOR SELECT USING (
     EXISTS (
@@ -315,6 +327,7 @@ CREATE POLICY "club_members_can_view_court_availability" ON court_availability
     )
   );
 
+DROP POLICY IF EXISTS "admins_can_manage_court_availability" ON court_availability;
 CREATE POLICY "admins_can_manage_court_availability" ON court_availability
   FOR ALL USING (
     EXISTS (
@@ -331,21 +344,27 @@ CREATE POLICY "admins_can_manage_court_availability" ON court_availability
 -- TRIGGERS FOR UPDATED_AT
 -- ============================================
 
+DROP TRIGGER IF EXISTS update_court_types_updated_at ON court_types;
 CREATE TRIGGER update_court_types_updated_at BEFORE UPDATE ON court_types
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_courts_updated_at ON courts;
 CREATE TRIGGER update_courts_updated_at BEFORE UPDATE ON courts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_booking_rules_updated_at ON booking_rules;
 CREATE TRIGGER update_booking_rules_updated_at BEFORE UPDATE ON booking_rules
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_bookings_updated_at ON bookings;
 CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_waitlist_entries_updated_at ON waitlist_entries;
 CREATE TRIGGER update_waitlist_entries_updated_at BEFORE UPDATE ON waitlist_entries
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_court_availability_updated_at ON court_availability;
 CREATE TRIGGER update_court_availability_updated_at BEFORE UPDATE ON court_availability
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

@@ -64,13 +64,13 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
 function Sparkline({ points, className }: { points: number[]; className?: string }) {
   if (points.length < 2) return null;
   const width = 64;
-  const height = 20;
+  const height = 24;
   const min = Math.min(...points);
   const max = Math.max(...points);
   const range = max - min || 1;
   const step = width / (points.length - 1);
   const coords = points
-    .map((p, i) => `${i * step},${height - ((p - min) / range) * height}`)
+    .map((p, i) => `${i * step},${height - ((p - min) / range) * (height - 2) - 1}`)
     .join(' ');
 
   return (
@@ -78,14 +78,14 @@ function Sparkline({ points, className }: { points: number[]; className?: string
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
-      className={className}
+      className={cn('opacity-80', className)}
       aria-hidden="true"
     >
       <polyline
         points={coords}
         fill="none"
         stroke="currentColor"
-        strokeWidth={1.5}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -145,7 +145,7 @@ export function StatCard({
   const content = (
     <div
       className={cn(
-        'border border-border dark:border-white/10 rounded-2xl cursor-pointer group transition-colors',
+        'border border-border dark:border-white/10 rounded-2xl shadow-sm cursor-pointer group transition-colors',
         colors.border,
         featured &&
           'border-t-[3px] border-t-[hsl(var(--brand-accent-dashboard))] bg-gradient-to-b from-[hsl(var(--brand-accent-dashboard)/0.06)] to-transparent',

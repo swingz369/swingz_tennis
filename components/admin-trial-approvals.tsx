@@ -19,6 +19,7 @@ import {
   ChevronDown,
   AlertCircle,
   UserPlus,
+  Bell,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { useUserClub } from '@/hooks/use-user-data';
@@ -86,6 +87,8 @@ export default function AdminTrialApprovals() {
   const [convertLoading, setConvertLoading] = useState(false);
   const [convertError, setConvertError] = useState<string | null>(null);
   const [convertedIds, setConvertedIds] = useState<Set<string>>(new Set());
+  const [reminderSending, setReminderSending] = useState<string | null>(null);
+  const [reminderSentIds, setReminderSentIds] = useState<Set<string>>(new Set());
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -219,6 +222,22 @@ export default function AdminTrialApprovals() {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleSendReminder = async (id: string) => {
+    setReminderSending(id);
+    try {
+      const res = await apiFetch(`/api/trial-trainings/${id}/reminder`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Erinnerung konnte nicht gesendet werden');
+      setReminderSentIds((prev) => new Set(prev).add(id));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
+    } finally {
+      setReminderSending(null);
     }
   };
 
@@ -491,7 +510,28 @@ export default function AdminTrialApprovals() {
 
                     {/* Zu Mitglied konvertieren — für geplante/abgeschlossene Probetrainings */}
                     {(r.status === 'scheduled' || r.status === 'completed') && (
-                      <div className="pt-2">
+                      <div className="pt-2 flex flex-wrap items-center gap-2">
+                        {r.status === 'scheduled' &&
+                          (reminderSentIds.has(r.id) ? (
+                            <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
+                              <CheckCircle className="h-3 w-3" /> Erinnerung gesendet
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={reminderSending === r.id}
+                              onClick={() => handleSendReminder(r.id)}
+                              className="gap-1"
+                            >
+                              {reminderSending === r.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Bell className="h-4 w-4" />
+                              )}
+                              Erinnerung senden
+                            </Button>
+                          ))}
                         {convertedIds.has(r.id) ? (
                           <Badge className="bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-700/50 gap-1">
                             <CheckCircle className="h-3 w-3" /> Konvertiert

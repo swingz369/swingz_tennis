@@ -52,6 +52,7 @@ import {
 } from '@/hooks/use-sessions';
 import FeedbackModal from '@/components/feedback/feedback-modal';
 import SessionWaitlistButton from '@/components/session-waitlist-button';
+import { MyBookings } from '@/components/bookings/my-bookings';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent } from '@/components/ui/card';
 import UnifiedCourtCalendar from '@/components/unified-court-calendar';
@@ -390,7 +391,7 @@ function BookingsContent() {
       {/* ── Tabs ── */}
       <ScrollReveal delay={300}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full max-w-md ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <TabsList className={`grid w-full max-w-xl ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="courts" className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               <span>Platz-Kalender</span>
@@ -398,6 +399,10 @@ function BookingsContent() {
             <TabsTrigger value="bookings" className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4" />
               <span>Buchungen</span>
+            </TabsTrigger>
+            <TabsTrigger value="my" className="flex items-center gap-2">
+              <CalendarCheck className="h-4 w-4" />
+              <span>Meine Buchungen</span>
             </TabsTrigger>
             {isAdmin && (
               <TabsTrigger value="manage" className="flex items-center gap-2">
@@ -623,6 +628,10 @@ function BookingsContent() {
           </TabsContent>
 
           {/* Verwaltung Tab (Admin/Superadmin) */}
+          <TabsContent value="my" className="mt-6">
+            <MyBookings />
+          </TabsContent>
+
           {isAdmin && (
             <TabsContent value="manage" className="mt-6">
               {clubId && courtsLoaded ? (
