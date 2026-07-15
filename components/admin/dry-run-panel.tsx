@@ -762,17 +762,6 @@ function RsvpPieSection({
                       d.color === 'info-500' && 'bg-info-500',
                       d.color === 'gray-400' && 'bg-gray-400'
                     )}
-                    style={{
-                      backgroundColor: (
-                        {
-                          'success-500': '#22c55e',
-                          'error-500': '#ef4444',
-                          'warning-500': '#f59e0b',
-                          'info-500': '#3b82f6',
-                          'gray-400': '#9ca3af',
-                        } as Record<string, string>
-                      )[d.color],
-                    }}
                   />
                   <span className="text-foreground truncate">{d.label}</span>
                 </div>

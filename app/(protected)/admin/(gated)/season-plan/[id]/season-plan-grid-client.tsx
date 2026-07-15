@@ -220,10 +220,7 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
         </Card>
       ) : (
         <Card variant="bordered" className="overflow-x-auto">
-          <div
-            className="grid border-b border-border/60 dark:border-white/10"
-            style={{ gridTemplateColumns: '60px repeat(7, minmax(120px, 1fr))' }}
-          >
+          <div className="grid border-b border-border/60 dark:border-white/10 grid-cols-[60px_repeat(7,minmax(120px,1fr))]">
             <div className="p-2 text-xs font-semibold text-muted-foreground border-r border-border/60 dark:border-white/10 sticky left-0 bg-card z-10">
               Zeit
             </div>
@@ -242,19 +239,15 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
             ))}
           </div>
 
-          <div
-            className="grid"
-            style={{ gridTemplateColumns: '60px repeat(7, minmax(120px, 1fr))' }}
-          >
+          <div className="grid grid-cols-[60px_repeat(7,minmax(120px,1fr))]">
             {timeRows.map((row, rowIdx) => {
               const showHourLabel = row.minute === 0;
               return (
                 <div key={row.label} className="contents">
                   <div
-                    className={`p-1.5 text-2xs tabular-nums text-right text-muted-foreground border-r border-b border-border/40 dark:border-white/5 sticky left-0 bg-card z-10 ${
+                    className={`min-h-8 p-1.5 text-2xs tabular-nums text-right text-muted-foreground border-r border-b border-border/40 dark:border-white/5 sticky left-0 bg-card z-10 ${
                       row.minute === 30 ? 'opacity-60' : 'font-medium'
                     }`}
-                    style={{ minHeight: 32 }}
                   >
                     {showHourLabel ? row.label : ''}
                   </div>
@@ -269,8 +262,8 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
                       return (
                         <div
                           key={`${dayIdx}-${rowIdx}`}
-                          className="border-r border-b border-border/40 dark:border-white/5 p-1 flex gap-0.5"
-                          style={{ minHeight: 32, gridRow: `span ${rows}` }}
+                          className="min-h-8 border-r border-b border-border/40 dark:border-white/5 p-1 flex gap-0.5"
+                          style={{ gridRow: `span ${rows}` }}
                         >
                           {slot.map((s) => (
                             <div
@@ -308,10 +301,9 @@ export function SeasonPlanGridClient({ seasonId, seasonName }: Props) {
                     return (
                       <div
                         key={`${dayIdx}-${rowIdx}`}
-                        className={`border-r border-b border-border/40 dark:border-white/5 ${
+                        className={`min-h-8 border-r border-b border-border/40 dark:border-white/5 ${
                           showHourBg ? 'bg-muted/20 dark:bg-background/20' : ''
                         }`}
-                        style={{ minHeight: 32 }}
                       />
                     );
                   })}

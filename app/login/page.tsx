@@ -55,28 +55,12 @@ export default function LoginPage() {
       {/* ── Left: Brand Panel ── */}
       <div className="hidden lg:flex lg:flex-1 relative">
         <div className="absolute inset-0">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `
-                radial-gradient(ellipse 100% 60% at 50% -20%, hsl(var(--brand-primary-light) / 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse 70% 50% at 100% 50%, hsl(var(--brand-secondary) / 0.2) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 60% at 0% 80%, hsl(var(--brand-accent) / 0.08) 0%, transparent 50%),
-                linear-gradient(180deg, hsl(var(--brand-secondary)) 0%, hsl(150 50% 12%) 100%)
-              `,
-            }}
-          />
+          <div className="absolute inset-0 bg-login-hero" />
           {/* Aurora blobs */}
           <div className="absolute inset-0 opacity-25 overflow-hidden">
             <div className="absolute top-20 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-            <div
-              className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
-              style={{ animationDelay: '5s' }}
-            />
-            <div
-              className="absolute bottom-20 left-1/3 w-56 h-56 bg-brand-secondary/10 rounded-full blur-3xl animate-aurora"
-              style={{ animationDelay: '10s' }}
-            />
+            <div className="absolute top-40 right-20 w-64 h-64 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
+            <div className="absolute bottom-20 left-1/3 w-56 h-56 bg-brand-secondary/10 rounded-full blur-3xl animate-aurora [animation-delay:10s]" />
           </div>
           <div className="absolute inset-0 noise opacity-[0.04]" />
           <svg

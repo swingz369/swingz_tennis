@@ -20,22 +20,10 @@ export default function ContactPage() {
       {/* Header */}
       <header className="relative overflow-hidden bg-brand-secondary">
         <div className="absolute inset-0">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `
-                radial-gradient(ellipse 100% 100% at 30% 0%, hsl(var(--brand-primary-light) / 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse 70% 100% at 100% 100%, hsl(var(--brand-accent) / 0.12) 0%, transparent 50%),
-                linear-gradient(135deg, hsl(150 55% 10%) 0%, hsl(var(--brand-secondary)) 60%, hsl(150 30% 8%) 100%)
-              `,
-            }}
-          />
+          <div className="absolute inset-0 bg-auth-hero" />
           <div className="absolute inset-0 opacity-25 overflow-hidden">
             <div className="absolute -top-10 left-10 w-48 h-48 bg-brand-light/15 rounded-full blur-3xl animate-aurora" />
-            <div
-              className="absolute -bottom-16 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora"
-              style={{ animationDelay: '5s' }}
-            />
+            <div className="absolute -bottom-16 right-20 w-56 h-56 bg-brand-accent/8 rounded-full blur-3xl animate-aurora [animation-delay:5s]" />
           </div>
           <div className="absolute inset-0 noise opacity-[0.04]" />
         </div>

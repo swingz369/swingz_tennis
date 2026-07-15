@@ -93,10 +93,22 @@ _Vorgelagert (`35d83641`): bestehende uncommittete Sprint-Änderungen (187 Datei
 2. **PageHeader-Adoption nicht massenhaft erzwungen** — 29 von 57 h1-Dateien in `(protected)` nutzen `PageHeader`. Die visuelle Vereinheitlichung ist über die normalisierte h1-Skala erreicht; die strukturelle Umstellung der restlichen 28 Dateien ist manuelle JSX-Chirurgie pro Seite (dynamische Titel, individuelle Aktionen) und als Folge-Task sinnvoller als per Skript riskiert.
 3. **Brand-Gradients (37) bleiben** — alle on-palette, einheitlicher Stil für Hero-Karten und Avatare. Eliminiert wurden nur off-brand Palette-Gradients.
 
+## Nachtrag 2026-07-15: Folge-Tasks 1+2 umgesetzt
+
+**PageHeader-Adoption (`5f101943`):** 37 weitere `(protected)`-Seiten nutzen jetzt `PageHeader` — 31 Standard-Header (h1+p) skriptbasiert, 6 manuell (Button-Zeilen → `actions`-Prop, bare h1s). `PageHeader.description` auf `ReactNode` erweitert für dynamische Beschreibungen. Abdeckung: 66 Dateien. Die 19 verbleibenden h1-Dateien sind bewusst keine PageHeader-Fälle: dunkle Hero-Banner (Admin-Dashboard, Buchungen), Detail-Header mit Badges/Back-Buttons/dynamischen Titeln (Saison-, Turnier-, Liga-Detail), Error-/Loading-/Success-Screens, Wizard-Schritte — dort passt die API nicht, die h1-Klassen sind bereits kanonisch.
+
+**Inline-Styles-Audit:** 70 → 41. Entfernt wurden alle statischen Inline-Styles:
+
+- Das 10× byte-identisch kopierte Auth-/Legal-Deko-Gradient → Utility `.bg-auth-hero` (Login behält als Flagship seine Variante als `.bg-login-hero`; Forgot-Password auf Standard vereinheitlicht, da Reset-Password ihn schon nutzte)
+- 12× `animationDelay` → Arbitrary-Klassen `[animation-delay:5s/10s]`
+- `dry-run-panel`: redundante Hex-Farb-Map entfernt (Token-Klassen existierten bereits parallel)
+- `willChange: 'transform'` → native Klasse `will-change-transform`
+- Season-Plan-Grid: statisches `gridTemplateColumns` (2×) → `grid-cols-[60px_repeat(7,minmax(120px,1fr))]`, `minHeight: 32` (3×) → `min-h-8`
+
+Die verbleibenden 41 sind ausnahmslos dynamische Laufzeitwerte (Progress-Breiten in %, Kalender-Pixel-Geometrie, Gruppenfarben aus der DB, Größen-Props, Poster-URLs) — legitim per Design-Regel.
+
 ## Offene Punkte (Folge-Tasks)
 
-- [ ] `PageHeader` in den restlichen 28 `(protected)`-Dateien mit eigenem `<h1>` (strukturell, pro Seite)
-- [ ] ~70 Inline-Styles prüfen (dynamische Werte wie Chart-Höhen sind legitim, der Rest nicht)
 - [ ] Screenshots beider Themes für 3 Kern-Pages als visueller Beleg (laufende App + Login nötig)
 - [ ] `payment-flow.test.ts`: 6 designfremde Failures gegen Live-DB — FK-Constraint `invoices_member_id_fkey` + leere UUIDs, vermutlich Testdaten-Drift
 - [ ] Variant-Namen wie `variant: 'blue' | 'orange' | 'purple'` (z. B. Admin-SmartActions) heißen noch nach Farben statt semantisch — kosmetisch, die Klassen dahinter sind migriert

@@ -1280,7 +1280,7 @@ export default function UnifiedCourtCalendar({
         onTouchStart={handleSwipeTouchStart}
         onTouchMove={handleSwipeTouchMove}
         onTouchEnd={handleSwipeTouchEnd}
-        style={{ willChange: 'transform' }}
+        className="will-change-transform"
       >
         {renderDailyView(mobileSelectedDay, activeId)}
       </div>
