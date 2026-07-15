@@ -10,6 +10,10 @@ const config: Config = {
     './src/**/*.{js,ts,jsx,tsx,mdx}',
     './lib/**/*.{js,ts,jsx,tsx}',
   ],
+  // Strings im Code, die wie Arbitrary-Klassen aussehen (z. B. Regex /[-:T.Z]/
+  // in lib/billing/datev-mapper.ts), aber keine sind — sonst generiert
+  // Tailwind daraus ungültiges CSS und der Build bricht.
+  blocklist: ['[-:T.Z]'],
   safelist: [
     'bg-gradient-hero',
     'bg-gradient-primary',
