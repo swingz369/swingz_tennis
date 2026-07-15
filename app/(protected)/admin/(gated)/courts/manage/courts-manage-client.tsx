@@ -691,7 +691,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-brand-primary dark:text-white">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-brand-primary dark:text-white">
             Platzverwaltung
           </h1>
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
@@ -797,7 +797,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           {filteredCourts.length === 0 &&
             (searchQuery ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-light/10 mb-5">
+                <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-brand-light/10 mb-5">
                   <MapPin className="h-10 w-10 text-brand-light" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground dark:text-white">
@@ -1060,7 +1060,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             className="w-full flex items-center justify-between px-4 md:px-6 py-4 text-left hover:bg-muted/50 transition-colors rounded-t-xl"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-primary/10">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/10">
                 <MapPin className="h-5 w-5 text-brand-primary" />
               </div>
               <div>

@@ -55,10 +55,10 @@ describe('RSVP_STATUS_CONFIG Vollständigkeit', () => {
   // ─── Farb-Tokens (Tailwind-Klassen) ───────────────────────────────────
   describe('Farb-Tokens', () => {
     const expectedColors: Record<RsvpStatusKey, string> = {
-      accepted: 'green',
-      declined: 'red',
-      maybe: 'amber',
-      pending: 'blue',
+      accepted: 'success',
+      declined: 'error',
+      maybe: 'warning',
+      pending: 'info',
       unknown: 'muted',
     };
 

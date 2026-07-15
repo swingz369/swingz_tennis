@@ -230,7 +230,7 @@ export default function TrainerPlanningPreferencesPage() {
       )}
 
       {seasons.length === 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-warning-200 dark:border-warning-800 bg-warning-50/60 dark:bg-warning-900/20 px-3 py-2 text-sm text-warning-700 dark:text-warning-300">
+        <div className="flex items-center gap-2 rounded-xl border border-warning-200 dark:border-warning-800 bg-warning-50/60 dark:bg-warning-900/20 px-3 py-2 text-sm text-warning-700 dark:text-warning-300">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           Keine aktiven Saisons gefunden.
         </div>
@@ -263,7 +263,7 @@ export default function TrainerPlanningPreferencesPage() {
           {timePrefs.map((pref, idx) => (
             <div
               key={idx}
-              className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-2.5"
+              className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-2.5"
             >
               <span className="text-xs font-semibold text-muted-foreground w-5 text-center shrink-0">
                 {idx + 1}
@@ -333,19 +333,19 @@ export default function TrainerPlanningPreferencesPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Optionale Hinweise zur Saisonplanung..."
-            className="w-full min-h-[80px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary"
           />
         </CardContent>
       </Card>
 
       {/* Feedback */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-error-200 dark:border-error-800 bg-error-50 dark:bg-error-900/20 px-3 py-2 text-sm text-error-600 dark:text-error-400">
+        <div className="flex items-center gap-2 rounded-xl border border-error-200 dark:border-error-800 bg-error-50 dark:bg-error-900/20 px-3 py-2 text-sm text-error-600 dark:text-error-400">
           <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
         </div>
       )}
       {savedOk && (
-        <div className="flex items-center gap-2 rounded-lg border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-900/20 px-3 py-2 text-sm text-success-700 dark:text-success-300">
+        <div className="flex items-center gap-2 rounded-xl border border-success-200 dark:border-success-800 bg-success-50 dark:bg-success-900/20 px-3 py-2 text-sm text-success-700 dark:text-success-300">
           <CheckCircle className="h-4 w-4 shrink-0" /> Gespeichert
         </div>
       )}

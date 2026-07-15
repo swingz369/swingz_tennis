@@ -49,7 +49,7 @@ export default function GlobalError({
             </p>
 
             {process.env.NODE_ENV !== 'production' && (
-              <details className="mb-8 rounded-lg bg-muted p-4 text-left">
+              <details className="mb-8 rounded-xl bg-muted p-4 text-left">
                 <summary className="cursor-pointer font-semibold">Fehlerdetails</summary>
                 <div className="mt-3 space-y-2">
                   <p className="font-mono text-xs text-destructive">{error.name}</p>

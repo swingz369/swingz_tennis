@@ -86,7 +86,9 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary">White-Label Einstellungen</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">
+          White-Label Einstellungen
+        </h1>
         <p className="text-muted-foreground">
           Passe das Aussehen deines Clubs an und konfiguriere eine eigene Domain.
         </p>

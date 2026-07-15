@@ -49,7 +49,7 @@ export function ContactFormClient() {
 
   if (submitted) {
     return (
-      <div className="bg-success-50 dark:bg-success-900/10 border border-success-200 dark:border-success-700/30 rounded-3xl p-8 text-center">
+      <div className="bg-success-50 dark:bg-success-900/10 border border-success-200 dark:border-success-700/30 rounded-xl p-8 text-center">
         <div className="h-16 w-16 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 className="h-8 w-8 text-success-600 dark:text-success-400" />
         </div>
@@ -122,7 +122,7 @@ export function ContactFormClient() {
       </div>
 
       {error && (
-        <div className="rounded-lg bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 px-4 py-3 text-sm text-error-700 dark:text-error-400">
+        <div className="rounded-xl bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 px-4 py-3 text-sm text-error-700 dark:text-error-400">
           {error}
         </div>
       )}

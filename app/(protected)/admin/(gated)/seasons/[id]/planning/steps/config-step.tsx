@@ -54,7 +54,7 @@ function RemindButton({ seasonId }: { seasonId: string }) {
   }, [seasonId]);
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-4 py-3">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Mail className="h-4 w-4" />
         Mitglieder ohne Präferenzen per E-Mail erinnern
@@ -622,7 +622,7 @@ export function ConfigStep({ aiAvailable = true }: { aiAvailable?: boolean }) {
 
           {/* Membership fee details — conditional */}
           {billingConfig.include_membership_fee && (
-            <div className="grid gap-4 md:grid-cols-3 mt-4 p-4 rounded-lg bg-muted/30 border border-border">
+            <div className="grid gap-4 md:grid-cols-3 mt-4 p-4 rounded-xl bg-muted/30 border border-border">
               <div className="space-y-1.5">
                 <Label
                   htmlFor="billing-membership-amount"

@@ -203,9 +203,9 @@ export default function NotificationSettings() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Push Notifications */}
-          <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-brand-primary/10 rounded-lg">
+              <div className="p-2 bg-brand-primary/10 rounded-xl">
                 {settings.pushNotifications ? (
                   <Bell className="h-5 w-5 text-brand-primary" />
                 ) : (
@@ -233,9 +233,9 @@ export default function NotificationSettings() {
           </div>
 
           {/* Email Notifications */}
-          <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-muted dark:bg-muted rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-info-100 rounded-lg">
+              <div className="p-2 bg-info-100 rounded-xl">
                 <User className="h-5 w-5 text-info-600" />
               </div>
               <div>
@@ -257,7 +257,7 @@ export default function NotificationSettings() {
               Benachrichtigungstypen
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">Buchungsbestätigungen</span>
@@ -268,7 +268,7 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">Trainingserinnerungen</span>
@@ -279,7 +279,7 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">News & Updates</span>
@@ -290,7 +290,7 @@ export default function NotificationSettings() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-lg">
+            <div className="flex items-center justify-between p-3 border dark:border-white/10 rounded-xl">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground dark:text-muted-foreground" />
                 <span className="text-sm">Werbung & Angebote</span>
@@ -353,14 +353,14 @@ export default function NotificationSettings() {
                 return (
                   <div
                     key={notification.id}
-                    className={`flex items-start gap-3 p-4 rounded-lg border transition-colors ${
+                    className={`flex items-start gap-3 p-4 rounded-xl border transition-colors ${
                       notification.read
                         ? 'bg-background dark:bg-card border-border dark:border-white/10'
                         : 'bg-brand-primary/5 border-brand-primary/30'
                     }`}
                   >
                     <div
-                      className={`p-2 rounded-lg ${
+                      className={`p-2 rounded-xl ${
                         notification.read ? 'bg-muted dark:bg-muted' : 'bg-brand-primary/20'
                       }`}
                     >

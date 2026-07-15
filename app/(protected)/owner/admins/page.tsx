@@ -47,7 +47,7 @@ export default async function OwnerAdminsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Admins</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Admins</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Alle Club-Admins auf der Plattform — je genau einem Verein zugeordnet.
         </p>

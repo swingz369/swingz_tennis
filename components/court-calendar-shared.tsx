@@ -120,7 +120,7 @@ export function CourtRowHeader({
 }) {
   return (
     <div className="p-3 flex items-center gap-2.5 border-r border-border/40 bg-muted/20">
-      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+      <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/10 text-primary">
         <MapPin className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">

@@ -146,7 +146,7 @@ export function ModuleSelectionStep({
         <CardContent className="p-5">
           <div className="flex items-start gap-3">
             <div
-              className={`p-2.5 rounded-lg shrink-0 ${
+              className={`p-2.5 rounded-xl shrink-0 ${
                 enabled ? 'bg-brand-primary text-white' : 'bg-muted text-muted-foreground'
               }`}
             >
@@ -185,7 +185,7 @@ export function ModuleSelectionStep({
 
   return (
     <div className="space-y-6">
-      <div className="bg-info-50/50 border border-info-200 rounded-lg p-4 text-sm text-info-800 flex gap-2.5">
+      <div className="bg-info-50/50 border border-info-200 rounded-xl p-4 text-sm text-info-800 flex gap-2.5">
         <Sparkles className="h-4 w-4 mt-0.5 shrink-0" />
         <div>
           <strong>Wähle die Module aus, die du nutzen möchtest.</strong> Du kannst sie später

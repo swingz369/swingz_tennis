@@ -87,7 +87,7 @@ function ShopContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Vereins-Shop</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Vereins-Shop</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Trikots, Bälle & mehr</p>
         </div>
         <Button
@@ -299,13 +299,13 @@ function ShopContent() {
                   key={item.productId}
                   className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-muted/50"
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted dark:bg-muted relative">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted dark:bg-muted relative">
                     {item.imageUrl ? (
                       <Image
                         src={item.imageUrl}
                         alt={item.productName}
                         fill
-                        className="object-cover rounded-lg"
+                        className="object-cover rounded-xl"
                       />
                     ) : (
                       <Package className="h-5 w-5 text-muted-foreground" />

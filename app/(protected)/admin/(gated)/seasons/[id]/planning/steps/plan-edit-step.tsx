@@ -462,7 +462,7 @@ export function PlanEditStep() {
         </CardHeader>
         <CardContent>
           {aiText ? (
-            <div className="rounded-lg bg-brand-light/5 border border-brand-light/20 p-4">
+            <div className="rounded-xl bg-brand-light/5 border border-brand-light/20 p-4">
               <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                 {aiText}
               </p>
@@ -507,7 +507,7 @@ export function PlanEditStep() {
               {state.clusteringResult.waitlistSummary.map((w, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-lg border border-info-100 bg-background p-3 text-sm"
+                  className="flex items-center justify-between rounded-xl border border-info-100 bg-background p-3 text-sm"
                 >
                   <span className="font-medium">{w.memberName}</span>
                   <div className="flex items-center gap-2">
@@ -541,7 +541,7 @@ export function PlanEditStep() {
               {state.clusteringResult.unassignedMembers.map((m) => (
                 <div
                   key={m.memberId}
-                  className="flex items-center justify-between rounded-lg border border-error-100 bg-background p-3 text-sm"
+                  className="flex items-center justify-between rounded-xl border border-error-100 bg-background p-3 text-sm"
                 >
                   <span className="font-medium">{m.memberName}</span>
                   <span className="text-error-600 text-xs">{m.reason}</span>

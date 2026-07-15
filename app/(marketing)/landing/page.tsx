@@ -52,7 +52,7 @@ const PricingSection = dynamic(
     ssr: true,
     loading: () => (
       <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8 hairline-t" aria-hidden="true">
-        <div className="h-32 bg-foreground/[0.03] rounded-sm" />
+        <div className="h-32 bg-foreground/[0.03] rounded-md" />
       </div>
     ),
   }
@@ -106,7 +106,7 @@ export default function LandingPage() {
       {/* ═══════════ SKIP LINK (A11y) ═══════════ */}
       <a
         href="#section-features"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-brand-primary focus:text-primary-foreground focus:rounded-sm focus:font-medium focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-brand-primary focus:text-primary-foreground focus:rounded-md focus:font-medium focus:shadow-lg"
       >
         Direkt zum Inhalt springen
       </a>
@@ -151,7 +151,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-primary-foreground text-sm font-medium rounded-sm hover:bg-brand-primary/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="group inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-brand-primary/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 onClick={() => analytics.signUp('header_cta', 'default')}
               >
                 Probetraining
@@ -208,7 +208,7 @@ export default function LandingPage() {
             <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Link
                 href="/register"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-brand-primary text-primary-foreground font-medium rounded-sm hover:bg-brand-primary/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-brand-primary text-primary-foreground font-medium rounded-md hover:bg-brand-primary/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]"
                 onClick={() => analytics.signUp('hero_cta_primary', 'default')}
               >
                 Kostenlos testen
@@ -219,7 +219,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="#section-features"
-                className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-foreground/15 text-foreground font-medium rounded-sm hover:border-foreground/30 hover:bg-foreground/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="group inline-flex items-center gap-2.5 px-7 py-3.5 border border-foreground/15 text-foreground font-medium rounded-md hover:border-foreground/30 hover:bg-foreground/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 Funktionen erkunden
                 <span
@@ -274,7 +274,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <ol className="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-px max-w-5xl mx-auto bg-foreground/10 border border-foreground/10 rounded-sm overflow-hidden">
+          <ol className="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-px max-w-5xl mx-auto bg-foreground/10 border border-foreground/10 rounded-md overflow-hidden">
             {HOW_STEPS.map((step) => (
               <li
                 key={step.numeral}
@@ -336,7 +336,7 @@ export default function LandingPage() {
           <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/register"
-              className="group inline-flex items-center gap-2.5 px-8 py-4 bg-background text-foreground font-medium rounded-sm hover:bg-background/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-foreground active:scale-[0.98]"
+              className="group inline-flex items-center gap-2.5 px-8 py-4 bg-background text-foreground font-medium rounded-md hover:bg-background/90 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-background focus-visible:ring-offset-2 focus-visible:ring-offset-foreground active:scale-[0.98]"
             >
               Kostenlos registrieren
               <ArrowUpRight
@@ -346,7 +346,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/contact"
-              className="group inline-flex items-center gap-2.5 px-8 py-4 border border-background/30 text-background font-medium rounded-sm hover:border-background/60 hover:bg-background/[0.04] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-background/40 focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
+              className="group inline-flex items-center gap-2.5 px-8 py-4 border border-background/30 text-background font-medium rounded-md hover:border-background/60 hover:bg-background/[0.04] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-background/40 focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
             >
               Persönlich sprechen
             </Link>

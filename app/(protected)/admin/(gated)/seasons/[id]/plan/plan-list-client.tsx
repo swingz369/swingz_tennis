@@ -254,7 +254,7 @@ export function PlanListClient({ seasonId, seasonName, planningStatus }: Props) 
                     {groupedByDay[day].map((e) => (
                       <div
                         key={e.id}
-                        className="p-3 rounded-lg border border-border/60 dark:border-white/10 bg-muted/30 dark:bg-background/30"
+                        className="p-3 rounded-xl border border-border/60 dark:border-white/10 bg-muted/30 dark:bg-background/30"
                       >
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="font-mono text-sm tabular-nums font-semibold">

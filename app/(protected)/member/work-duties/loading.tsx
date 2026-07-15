@@ -15,7 +15,7 @@ export default function Loading() {
                 <div className="h-3 w-16 bg-muted rounded" />
                 <div className="h-6 w-10 bg-muted rounded" />
               </div>
-              <div className="h-8 w-8 bg-muted rounded-lg" />
+              <div className="h-8 w-8 bg-muted rounded-xl" />
             </div>
           </div>
         ))}

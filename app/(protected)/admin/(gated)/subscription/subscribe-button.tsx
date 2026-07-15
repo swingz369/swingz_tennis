@@ -122,7 +122,7 @@ export function PlanCards({
     <div className="space-y-5">
       {/* Billing interval toggle */}
       <div className="flex items-center justify-center">
-        <div className="inline-flex rounded-lg border bg-muted p-1 gap-1">
+        <div className="inline-flex rounded-xl border bg-muted p-1 gap-1">
           {(Object.keys(BILLING_INTERVALS) as BillingInterval[]).map((key) => (
             <button
               key={key}

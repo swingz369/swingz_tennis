@@ -147,7 +147,7 @@ export default async function BillingPage({
         defaultTab={String(params.tab ?? 'invoices')}
       >
         {!hasActiveMembershipFee && (
-          <div className="bg-warning-50 border border-warning-200 rounded-lg p-4 mb-6">
+          <div className="bg-warning-50 border border-warning-200 rounded-xl p-4 mb-6">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
               <div className="flex-1">

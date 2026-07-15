@@ -275,7 +275,7 @@ export function FeedbackModerationPanel({ clubId: _clubId }: FeedbackModerationP
           </div>
 
           {selectedIds.size > 0 && (
-            <div className="mt-4 flex items-center gap-2 p-3 bg-info-50 rounded-lg">
+            <div className="mt-4 flex items-center gap-2 p-3 bg-info-50 rounded-xl">
               <span className="text-sm font-medium">{selectedIds.size} selected</span>
               <div className="flex gap-2 ml-auto">
                 <Button size="sm" variant="outline" onClick={() => handleBulkAction('show')}>

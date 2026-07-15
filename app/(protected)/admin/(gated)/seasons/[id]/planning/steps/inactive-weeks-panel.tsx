@@ -112,7 +112,7 @@ export function InactiveWeeksPanel() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2 max-h-96 overflow-y-auto rounded-lg border border-border">
+        <div className="space-y-2 max-h-96 overflow-y-auto rounded-xl border border-border">
           {groupIds.map((groupId) => {
             const groupWeeks = weeks.filter((w) => w.groupId === groupId);
             const groupName = groups.find((g) => g.groupId === groupId)?.groupName ?? groupId;
@@ -121,7 +121,7 @@ export function InactiveWeeksPanel() {
             return (
               <details
                 key={groupId}
-                className="group rounded-lg border border-muted bg-muted/20 hover:bg-muted/40 transition-colors"
+                className="group rounded-xl border border-muted bg-muted/20 hover:bg-muted/40 transition-colors"
               >
                 <summary className="cursor-pointer px-4 py-2.5 font-medium text-sm flex items-center justify-between">
                   <span>

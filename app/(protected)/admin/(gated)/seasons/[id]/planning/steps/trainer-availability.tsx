@@ -108,7 +108,7 @@ export function TrainerAvailabilityPanel() {
         <CardContent>
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-lg" />
+              <Skeleton key={i} className="h-14 w-full rounded-xl" />
             ))}
           </div>
         </CardContent>
@@ -212,7 +212,7 @@ export function TrainerAvailabilityPanel() {
             return (
               <div
                 key={trainer.trainerId}
-                className={`flex items-center justify-between p-3 rounded-lg border text-sm ${
+                className={`flex items-center justify-between p-3 rounded-xl border text-sm ${
                   !trainer.hasSubmittedPreferences
                     ? 'bg-warning-50 border-warning-200 dark:bg-warning-900/10 dark:border-warning-800'
                     : trainer.utilizationStatus === 'over'
@@ -270,7 +270,7 @@ export function TrainerAvailabilityPanel() {
         </div>
 
         {burnoutWarnings.length > 0 && (
-          <div className="mt-3 p-3 rounded-lg bg-error-50 border border-error-200 dark:bg-error-900/10 dark:border-error-800">
+          <div className="mt-3 p-3 rounded-xl bg-error-50 border border-error-200 dark:bg-error-900/10 dark:border-error-800">
             <p className="text-xs font-medium text-error-700 dark:text-error-400 mb-1">
               Burnout-Risiko
             </p>

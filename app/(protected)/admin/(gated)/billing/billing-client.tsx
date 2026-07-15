@@ -503,7 +503,7 @@ export default function BillingClient({
             </div>
             {/* Bulk actions bar — inline when invoices are selected */}
             {selectedIds.size > 0 && (
-              <div className="flex items-center gap-3 mt-3 p-3 rounded-lg bg-brand-primary/5 border border-brand-primary/20">
+              <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-brand-primary/5 border border-brand-primary/20">
                 <span className="text-sm font-medium text-brand-primary">
                   {selectedIds.size} Rechnung{selectedIds.size !== 1 ? 'en' : ''} ausgewählt
                 </span>
@@ -834,7 +834,7 @@ export default function BillingClient({
           <div className="space-y-4 py-2">
             {/* Fee info */}
             {previewData.warning === 'NO_FEE_CONFIGURED' ? (
-              <div className="bg-warning-50 border border-warning-200 rounded-lg p-3">
+              <div className="bg-warning-50 border border-warning-200 rounded-xl p-3">
                 <p className="text-sm text-warning-800 font-medium">
                   Keine aktive Mitgliedsgebühr konfiguriert.
                 </p>
@@ -844,7 +844,7 @@ export default function BillingClient({
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between text-sm bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center justify-between text-sm bg-muted/50 rounded-xl p-3">
                   <span className="text-muted-foreground">Gebühr:</span>
                   <span className="font-medium">
                     {previewData.feeName || 'Mitgliedsbeitrag'} — {previewData.feeAmount.toFixed(2)}{' '}
@@ -855,7 +855,7 @@ export default function BillingClient({
 
                 {/* Already billed notice */}
                 {previewData.alreadyBilled.length > 0 && (
-                  <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
+                  <div className="text-xs text-muted-foreground bg-muted/30 rounded-xl p-3">
                     <span className="font-medium">
                       {previewData.alreadyBilled.length} Mitglied
                       {previewData.alreadyBilled.length !== 1 ? 'er' : ''} bereits abgerechnet

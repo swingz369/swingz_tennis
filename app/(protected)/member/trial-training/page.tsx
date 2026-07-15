@@ -129,7 +129,7 @@ export default async function MemberTrialTrainingPage() {
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-brand-primary" />
           Probetrainings
         </h1>
@@ -186,7 +186,7 @@ export default async function MemberTrialTrainingPage() {
 
                 {/* Details Grid */}
                 {t.scheduled_date && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-muted/50">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-brand-primary shrink-0" />
                       <div>
@@ -235,7 +235,7 @@ export default async function MemberTrialTrainingPage() {
 
                 {/* Converted State */}
                 {t.status === 'converted' && (
-                  <div className="mt-4 p-3 rounded-lg bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800">
+                  <div className="mt-4 p-3 rounded-xl bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success-600" />
                       <p className="text-sm font-medium text-success-700 dark:text-success-300">

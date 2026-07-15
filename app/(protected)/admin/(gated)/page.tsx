@@ -535,7 +535,7 @@ export default async function AdminPage() {
   const renderSmartAction = (action: SmartAction) => (
     <Link key={action.href + action.label} href={action.href}>
       <div
-        className={`group relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
+        className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
           action.urgent
             ? 'border-brand-accent-200/70 dark:border-brand-accent-700/40 bg-gradient-to-br from-brand-accent-50 via-warning-50 to-background dark:from-brand-accent-900/20 dark:via-warning-900/10 dark:to-card'
             : 'border-border dark:border-white/10 bg-card'
@@ -603,7 +603,7 @@ export default async function AdminPage() {
       {/* ── Erste Schritte Checklist — nur kurz nach Onboarding ── */}
       {showChecklist && !checklistDone && (
         <ScrollReveal delay={50}>
-          <div className="rounded-2xl border border-brand-light/20 bg-brand-light/5 p-5 space-y-3">
+          <div className="rounded-xl border border-brand-light/20 bg-brand-light/5 p-5 space-y-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-brand-light" />
               <p className="text-sm font-semibold text-foreground">Erste Schritte</p>
@@ -729,7 +729,7 @@ export default async function AdminPage() {
               <div className="px-5 pt-3 pb-5 flex justify-end">
                 <Link
                   href="/bookings?tab=manage"
-                  className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Alle Buchungen anzeigen
                 </Link>

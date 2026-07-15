@@ -108,7 +108,7 @@ export default function MeineBestellungenPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Meine Bestellungen</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Meine Bestellungen</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Verfolge deine Shop-Bestellungen</p>
       </div>
 
@@ -290,7 +290,7 @@ export default function MeineBestellungenPage() {
                         className="flex items-center justify-between py-2 border-b border-border dark:border-white/5 last:border-0"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted dark:bg-card/5 shrink-0">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted dark:bg-card/5 shrink-0">
                             <Package className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div>

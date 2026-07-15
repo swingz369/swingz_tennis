@@ -196,7 +196,7 @@ export default function LeaguesClient() {
                       .map((team, idx) => (
                         <div
                           key={team.id}
-                          className="flex items-center justify-between p-2 rounded-lg bg-muted/60 hover:bg-muted transition-colors"
+                          className="flex items-center justify-between p-2 rounded-xl bg-muted/60 hover:bg-muted transition-colors"
                         >
                           <div className="flex items-center gap-2">
                             <span

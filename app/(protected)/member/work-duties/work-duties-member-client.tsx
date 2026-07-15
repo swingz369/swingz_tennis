@@ -278,7 +278,7 @@ export default function WorkDutiesMemberClient({ userId }: { userId: string }) {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${typeInfo.color}`}>
+                      <div className={`p-2 rounded-xl ${typeInfo.color}`}>
                         <TypeIcon className="h-5 w-5" />
                       </div>
                       <div>

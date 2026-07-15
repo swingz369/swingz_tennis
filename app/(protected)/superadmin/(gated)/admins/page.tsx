@@ -13,7 +13,7 @@ export default function Page() {
           <ChevronLeft className="h-4 w-4" /> Zurück
         </Link>
       </div>
-      <h1 className="text-2xl font-bold">Admins verwalten</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Admins verwalten</h1>
       <Card>
         <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
           <Construction className="h-8 w-8 text-muted-foreground" />

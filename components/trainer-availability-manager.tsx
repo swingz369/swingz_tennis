@@ -566,7 +566,7 @@ export default function TrainerAvailabilityManager() {
       {/* ── Stunden-Kontext ────────────────────────────────────────────── */}
       {maxHoursPerWeek !== null && (
         <div
-          className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-sm ${
+          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
             weeklyHours > maxHoursPerWeek
               ? 'border-error-200 dark:border-error-800 bg-error-50 dark:bg-error-900/20 text-error-700 dark:text-error-400'
               : 'border-border bg-muted/30 text-foreground'
@@ -587,7 +587,7 @@ export default function TrainerAvailabilityManager() {
       )}
 
       {/* ── Month / Week navigation ─────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-muted/30 rounded-lg p-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-muted/30 rounded-xl p-3">
         {/* Month row */}
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" onClick={goToPreviousMonth} title="Vorheriger Monat">
@@ -619,7 +619,7 @@ export default function TrainerAvailabilityManager() {
       {/* Message */}
       {message && (
         <div
-          className={`p-3 rounded-lg text-sm ${
+          className={`p-3 rounded-xl text-sm ${
             message.startsWith('Fehler')
               ? 'bg-error-50 dark:bg-error-900/20 text-error-700 dark:text-error-400 border border-error-200 dark:border-error-800'
               : 'bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 border border-success-200 dark:border-success-800'
@@ -644,7 +644,7 @@ export default function TrainerAvailabilityManager() {
                 <button
                   key={start}
                   onClick={() => togglePresetSlot(1, start)}
-                  className="text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors bg-muted text-muted-foreground hover:bg-brand-primary hover:text-white"
+                  className="text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors bg-muted text-muted-foreground hover:bg-brand-primary hover:text-white"
                 >
                   {start}
                 </button>
@@ -665,7 +665,7 @@ export default function TrainerAvailabilityManager() {
 
               return (
                 <Card key={value}>
-                  <CardHeader className="py-3 px-4 bg-muted/50 rounded-t-lg">
+                  <CardHeader className="py-3 px-4 bg-muted/50 rounded-t-xl">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div
@@ -716,7 +716,7 @@ export default function TrainerAvailabilityManager() {
                           <button
                             key={start}
                             onClick={() => togglePresetSlot(value, start)}
-                            className={`text-xs px-2.5 py-1.5 rounded-lg font-medium transition-colors ${
+                            className={`text-xs px-2.5 py-1.5 rounded-xl font-medium transition-colors ${
                               active
                                 ? 'bg-brand-primary text-white shadow-sm'
                                 : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20'
@@ -734,7 +734,7 @@ export default function TrainerAvailabilityManager() {
                         {customSlots.map((slot) => (
                           <div
                             key={slot.id}
-                            className={`flex items-center gap-3 flex-wrap border rounded-lg p-3 ${
+                            className={`flex items-center gap-3 flex-wrap border rounded-xl p-3 ${
                               slot.isAvailable
                                 ? 'bg-success-50/50 dark:bg-success-900/10 border-success-100 dark:border-success-900/30'
                                 : 'bg-muted/50 border-border'
@@ -796,7 +796,7 @@ export default function TrainerAvailabilityManager() {
           </div>
 
           {/* Summary */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground bg-muted/30 rounded-xl p-3">
             <Calendar className="h-4 w-4" />
             <span>
               <strong>{activeDays}</strong> {activeDays === 1 ? 'Tag' : 'Tage'} ·{' '}

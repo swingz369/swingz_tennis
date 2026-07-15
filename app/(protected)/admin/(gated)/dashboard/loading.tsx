@@ -42,7 +42,7 @@ export default function DashboardLoading() {
                 className="flex items-center justify-between p-4 rounded-xl bg-muted dark:bg-card/5"
               >
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="h-9 w-9 bg-muted rounded-lg animate-pulse" />
+                  <div className="h-9 w-9 bg-muted rounded-xl animate-pulse" />
                   <div className="space-y-2 flex-1">
                     <div className="h-4 w-32 bg-muted rounded animate-pulse" />
                     <div className="h-3 w-48 bg-muted rounded animate-pulse" />

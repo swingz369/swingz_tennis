@@ -133,7 +133,7 @@ export function PricingSection() {
       </div>
 
       {/* ── Plans ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-px max-w-5xl mx-auto bg-foreground/10 rounded-sm overflow-hidden border border-foreground/10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-px max-w-5xl mx-auto bg-foreground/10 rounded-md overflow-hidden border border-foreground/10">
         {PRICING_PLANS.map((plan) => (
           <article
             key={plan.name}
@@ -186,7 +186,7 @@ export function PricingSection() {
             <div className="mt-9">
               <Link
                 href="/register"
-                className={`group inline-flex w-full items-center justify-center gap-2 rounded-sm py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                className={`group inline-flex w-full items-center justify-center gap-2 rounded-md py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                   plan.popular
                     ? 'bg-brand-primary text-primary-foreground hover:bg-brand-primary/90 focus-visible:ring-brand-primary'
                     : 'border border-foreground/20 text-foreground hover:border-foreground/40 hover:bg-foreground/[0.03] focus-visible:ring-foreground/30'

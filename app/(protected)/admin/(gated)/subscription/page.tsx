@@ -48,7 +48,7 @@ export default async function AdminSubscriptionPage() {
         breadcrumbs={[{ label: 'Abonnement' }]}
       />
 
-      <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-4 py-3 text-sm">
+      <div className="flex items-center gap-2.5 rounded-xl bg-muted/50 px-4 py-3 text-sm">
         <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span>
           Aktive Mitglieder:{' '}

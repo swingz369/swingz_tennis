@@ -139,7 +139,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-info-500 to-info-600 text-white">
+          <div className="p-2 rounded-xl bg-info-500 text-white">
             <Shuffle className="h-5 w-5" />
           </div>
           <div>
@@ -175,7 +175,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
 
       {/* Error state */}
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-error-50 rounded-lg text-error-600 text-sm border border-error-200">
+        <div className="flex items-center gap-2 p-4 bg-error-50 rounded-xl text-error-600 text-sm border border-error-200">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -253,7 +253,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                       <div className="flex items-start justify-between mb-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-info-400 to-info-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-info-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                               {match.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -339,25 +339,25 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                       {isSelected && (
                         <div className="border-t pt-3 mt-2 space-y-2">
                           <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.compatibilityScore}
                               </p>
                               <p className="text-2xs text-muted-foreground">Gesamt-Score</p>
                             </div>
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.commonSessions}
                               </p>
                               <p className="text-2xs text-muted-foreground">Sessions</p>
                             </div>
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground tabular-nums">
                                 {match.groupOverlap.length}
                               </p>
                               <p className="text-2xs text-muted-foreground">Gruppen</p>
                             </div>
-                            <div className="p-2 bg-muted rounded-lg text-center">
+                            <div className="p-2 bg-muted rounded-xl text-center">
                               <p className="text-lg font-semibold text-foreground">
                                 <span
                                   className={

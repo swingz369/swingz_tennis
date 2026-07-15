@@ -128,7 +128,7 @@ export function PerfHistoryClient() {
           <div
             role="tablist"
             aria-label="Datenquelle"
-            className="inline-flex rounded-lg border border-border/60 dark:border-white/10 p-1 bg-muted/40 dark:bg-background/40"
+            className="inline-flex rounded-xl border border-border/60 dark:border-white/10 p-1 bg-muted/40 dark:bg-background/40"
           >
             <button
               type="button"

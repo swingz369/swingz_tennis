@@ -174,7 +174,7 @@ export default function OnboardingTrialBooking({
   return (
     <Card>
       <CardContent className="p-6 space-y-5">
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-info-50 border border-info-200 dark:bg-info-900/10 dark:border-info-800">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-info-50 border border-info-200 dark:bg-info-900/10 dark:border-info-800">
           <Info className="h-5 w-5 text-info-600 mt-0.5 shrink-0" />
           <div className="text-sm text-info-800 dark:text-info-300 space-y-1">
             <p className="font-medium">So funktioniert&apos;s:</p>
@@ -187,7 +187,7 @@ export default function OnboardingTrialBooking({
         </div>
 
         {/* Pre-filled info */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center text-white font-bold text-sm">
             {firstName.charAt(0).toUpperCase()}
           </div>
@@ -200,7 +200,7 @@ export default function OnboardingTrialBooking({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
@@ -229,7 +229,9 @@ export default function OnboardingTrialBooking({
                   ))}
                 </SelectContent>
               </Select>
-              {fieldErrors.club && <p className="text-xs text-error-500 mt-1">{fieldErrors.club}</p>}
+              {fieldErrors.club && (
+                <p className="text-xs text-error-500 mt-1">{fieldErrors.club}</p>
+              )}
             </div>
           )}
 

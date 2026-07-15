@@ -171,7 +171,7 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
                   )}
 
                 {season.open_conflicts > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-2 text-sm">
+                  <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-2 text-sm">
                     <AlertCircle className="h-4 w-4 text-destructive" />
                     <span className="text-destructive">
                       {season.open_conflicts} offene Konflikte

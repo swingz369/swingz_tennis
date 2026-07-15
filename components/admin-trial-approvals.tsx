@@ -365,7 +365,7 @@ export default function AdminTrialApprovals() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm dark:bg-error-900/20 dark:border-error-700/30 dark:text-error-400">
+        <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm dark:bg-error-900/20 dark:border-error-700/30 dark:text-error-400">
           {error}
         </div>
       )}
@@ -565,7 +565,7 @@ export default function AdminTrialApprovals() {
           const trial = requests.find((r) => r.id === approveId);
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-2xl shadow-2xl border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-2xl border border-border dark:border-white/10 w-full max-w-lg mx-4 overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
@@ -603,7 +603,7 @@ export default function AdminTrialApprovals() {
                       Trainer zuweisen
                     </label>
                     {trainers.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Trainer verfügbar. Bitte zuerst Trainer im System anlegen.
                       </div>
@@ -636,7 +636,7 @@ export default function AdminTrialApprovals() {
                       Platz zuweisen
                     </label>
                     {courts.length === 0 ? (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 text-warning-700 dark:text-warning-400 text-sm">
                         <AlertCircle className="h-4 w-4 shrink-0" />
                         Keine Plätze verfügbar. Bitte zuerst Plätze im System anlegen.
                       </div>
@@ -700,7 +700,7 @@ export default function AdminTrialApprovals() {
           if (!trial) return null;
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-              <div className="bg-background dark:bg-card rounded-2xl shadow-2xl border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
+              <div className="bg-background dark:bg-card rounded-xl shadow-2xl border border-border dark:border-white/10 w-full max-w-md mx-4 overflow-hidden">
                 <div className="px-6 py-4 border-b border-border dark:border-white/5 flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-brand-primary">
@@ -745,7 +745,7 @@ export default function AdminTrialApprovals() {
                   </p>
 
                   {convertError && (
-                    <div className="p-3 rounded-lg bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700/30 text-error-700 dark:text-error-400 text-sm flex items-start gap-2">
+                    <div className="p-3 rounded-xl bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700/30 text-error-700 dark:text-error-400 text-sm flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                       {convertError}
                     </div>

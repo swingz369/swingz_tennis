@@ -41,7 +41,7 @@ export function SettingsTabsWrapper({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
                 activeTab === tab.id
                   ? 'bg-background dark:bg-surface-dark text-brand-primary shadow-sm'
                   : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white'

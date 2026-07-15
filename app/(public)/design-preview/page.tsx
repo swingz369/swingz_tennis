@@ -70,12 +70,12 @@ const shadows = [
 
 const radii = [
   { name: 'None', class: 'rounded-none', size: '0' },
-  { name: 'SM', class: 'rounded-sm', size: '6px' },
+  { name: 'SM', class: 'rounded-md', size: '6px' },
   { name: 'MD', class: 'rounded-md', size: '8px' },
-  { name: 'LG', class: 'rounded-lg', size: '12px' },
+  { name: 'LG', class: 'rounded-xl', size: '12px' },
   { name: 'XL', class: 'rounded-xl', size: '16px' },
-  { name: '2XL', class: 'rounded-2xl', size: '24px' },
-  { name: '3XL', class: 'rounded-3xl', size: '32px' },
+  { name: '2XL', class: 'rounded-xl', size: '24px' },
+  { name: '3XL', class: 'rounded-xl', size: '32px' },
   { name: '4XL', class: 'rounded-4xl', size: '48px' },
   { name: 'Full', class: 'rounded-full', size: '9999px' },
 ];
@@ -166,7 +166,7 @@ function Section({
         <h2 className="text-2xl font-bold font-display text-foreground dark:text-white">{title}</h2>
         <p className="text-sm text-muted-foreground dark:text-muted-foreground">{description}</p>
       </div>
-      <div className="border border-border dark:border-white/[0.06] rounded-2xl bg-background dark:bg-surface-dark/50 p-6">
+      <div className="border border-border dark:border-white/[0.06] rounded-xl bg-background dark:bg-surface-dark/50 p-6">
         {children}
       </div>
     </section>
@@ -265,7 +265,7 @@ export default function DesignPreviewPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap',
+                  'px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 whitespace-nowrap',
                   activeTab === tab.id
                     ? 'bg-brand-light/10 text-brand-light dark:text-success-300'
                     : 'text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-gray-200 hover:bg-muted dark:hover:bg-background/[0.04]'
@@ -310,7 +310,7 @@ export default function DesignPreviewPage() {
                   <div key={cls} className="space-y-1.5">
                     <div
                       className={cn(
-                        'h-10 rounded-lg border border-border/40 dark:border-white/[0.06]',
+                        'h-10 rounded-xl border border-border/40 dark:border-white/[0.06]',
                         cls
                       )}
                     />
@@ -339,7 +339,7 @@ export default function DesignPreviewPage() {
                 ).map((cls) => (
                   <div
                     key={cls}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-muted dark:bg-card/[0.03]"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-muted dark:bg-card/[0.03]"
                   >
                     <span className={cn('text-sm font-semibold', cls)}>SwingZ</span>
                     <span className="text-2xs font-mono text-muted-foreground dark:text-muted-foreground">
@@ -459,7 +459,7 @@ export default function DesignPreviewPage() {
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {' '}
-              <div className="relative overflow-hidden rounded-2xl h-48 bg-gradient-to-br from-brand-primary to-success-900">
+              <div className="relative overflow-hidden rounded-xl h-48 bg-gradient-to-br from-brand-primary to-success-900">
                 <div className="absolute inset-0 bg-grid opacity-[0.08]" />
                 <div className="absolute inset-4 glass rounded-xl flex items-center justify-center">
                   <div className="text-center">
@@ -472,7 +472,7 @@ export default function DesignPreviewPage() {
                   </div>
                 </div>
               </div>
-              <div className="relative overflow-hidden rounded-2xl h-48 bg-gradient-to-br from-brand-accent/80 to-brand-primary/80">
+              <div className="relative overflow-hidden rounded-xl h-48 bg-gradient-to-br from-brand-accent/80 to-brand-primary/80">
                 <div className="absolute inset-0 bg-grid opacity-[0.08]" />
                 <div className="absolute inset-4 glass-strong rounded-xl flex items-center justify-center">
                   <div className="text-center">
@@ -489,7 +489,7 @@ export default function DesignPreviewPage() {
               </div>
             </div>
 
-            <div className="mt-8 p-6 glass rounded-2xl">
+            <div className="mt-8 p-6 glass rounded-xl">
               <p className="text-sm text-muted-foreground dark:text-foreground">
                 Glass-Varianten werden in Sidebar, Bottom-Nav, Modals und Cards eingesetzt. Durch
                 die{' '}
@@ -535,14 +535,14 @@ export default function DesignPreviewPage() {
               </h3>
               <div className="flex flex-wrap gap-3">
                 {[
-                  { label: 'Button', cls: 'rounded-lg' },
+                  { label: 'Button', cls: 'rounded-xl' },
                   { label: 'Card', cls: 'rounded-xl' },
-                  { label: 'Modal', cls: 'rounded-2xl' },
+                  { label: 'Modal', cls: 'rounded-xl' },
                   { label: 'Badge', cls: 'rounded-full' },
                 ].map((ex) => (
                   <div
                     key={ex.label}
-                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-card/[0.03] rounded-lg border border-border/40 dark:border-white/[0.06]"
+                    className="flex items-center gap-2 px-4 py-2 bg-muted dark:bg-card/[0.03] rounded-xl border border-border/40 dark:border-white/[0.06]"
                   >
                     <span className="text-sm text-muted-foreground dark:text-foreground">
                       {ex.label}
@@ -630,7 +630,7 @@ export default function DesignPreviewPage() {
               ))}
             </div>
 
-            <div className="mt-8 p-6 glass rounded-2xl">
+            <div className="mt-8 p-6 glass rounded-xl">
               <h3 className="text-sm font-semibold text-foreground dark:text-foreground mb-2">
                 Spacing in der Praxis
               </h3>
@@ -789,18 +789,18 @@ export default function DesignPreviewPage() {
                   Button States
                 </h3>
                 <div className="flex flex-wrap gap-3">
-                  <button className="px-5 py-2.5 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
+                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
                     Button Default
                   </button>
-                  <button className="px-5 py-2.5 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 shadow-glow-green-sm">
+                  <button className="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-medium hover:bg-brand-dark transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 shadow-glow-green-sm">
                     Button Glow
                   </button>
-                  <button className="px-5 py-2.5 rounded-lg border border-border dark:border-white/[0.08] text-foreground dark:text-foreground text-sm font-medium hover:bg-muted dark:hover:bg-background/[0.04] transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
+                  <button className="px-5 py-2.5 rounded-xl border border-border dark:border-white/[0.08] text-foreground dark:text-foreground text-sm font-medium hover:bg-muted dark:hover:bg-background/[0.04] transition-colors focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2">
                     Button Outline
                   </button>
                   <button
                     disabled
-                    className="px-5 py-2.5 rounded-lg bg-muted dark:bg-card/[0.06] text-muted-foreground dark:text-muted-foreground text-sm font-medium cursor-not-allowed"
+                    className="px-5 py-2.5 rounded-xl bg-muted dark:bg-card/[0.06] text-muted-foreground dark:text-muted-foreground text-sm font-medium cursor-not-allowed"
                   >
                     Button Disabled
                   </button>

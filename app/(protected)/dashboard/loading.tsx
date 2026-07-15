@@ -7,7 +7,7 @@ export default function DashboardLoading() {
       <Skeleton className="h-4 w-64" />
       <div className="space-y-3 pt-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          <Skeleton key={i} className="h-16 w-full rounded-xl" />
         ))}
       </div>
     </div>

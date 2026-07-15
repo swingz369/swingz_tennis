@@ -9,7 +9,7 @@ export default function Loading() {
       </div>
 
       {/* Profile header */}
-      <div className="rounded-2xl border border-border dark:border-white/10 bg-card overflow-hidden">
+      <div className="rounded-xl border border-border dark:border-white/10 bg-card overflow-hidden">
         <div className="p-5 border-b border-border dark:border-white/10">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -35,7 +35,7 @@ export default function Loading() {
 
         {/* Content */}
         <div className="p-5 space-y-4">
-          <div className="rounded-lg border border-border dark:border-white/10 p-5 space-y-4">
+          <div className="rounded-xl border border-border dark:border-white/10 p-5 space-y-4">
             <div className="h-5 w-44 bg-muted rounded" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {Array.from({ length: 6 }).map((_, i) => (

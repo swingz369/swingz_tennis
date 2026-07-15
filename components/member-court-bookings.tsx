@@ -195,10 +195,10 @@ export default function MemberCourtBookings() {
                 return (
                   <div
                     key={booking.id}
-                    className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted transition-colors"
+                    className="flex items-center justify-between p-4 bg-muted rounded-xl hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-brand-primary/10 rounded-lg">
+                      <div className="p-3 bg-brand-primary/10 rounded-xl">
                         <Calendar className="h-5 w-5 text-brand-primary" />
                       </div>
                       <div>
@@ -261,7 +261,7 @@ export default function MemberCourtBookings() {
                 return (
                   <div
                     key={booking.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                    className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${
                       isToday
                         ? 'bg-brand-primary/10 border-brand-primary/30'
                         : 'bg-background border-border hover:bg-muted'
@@ -269,7 +269,7 @@ export default function MemberCourtBookings() {
                   >
                     <div className="flex items-center gap-4">
                       <div
-                        className={`p-3 rounded-lg ${isToday ? 'bg-brand-primary/20' : 'bg-muted'}`}
+                        className={`p-3 rounded-xl ${isToday ? 'bg-brand-primary/20' : 'bg-muted'}`}
                       >
                         <Calendar
                           className={`h-5 w-5 ${isToday ? 'text-brand-primary' : 'text-muted-foreground'}`}
@@ -350,10 +350,10 @@ export default function MemberCourtBookings() {
                   return (
                     <div
                       key={courtId as string}
-                      className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                      className="flex items-center justify-between p-3 bg-muted rounded-xl"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-brand-primary/10 rounded-lg">
+                        <div className="p-2 bg-brand-primary/10 rounded-xl">
                           <MapPin className="h-4 w-4 text-brand-primary" />
                         </div>
                         <div>

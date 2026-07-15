@@ -166,7 +166,7 @@ export default function AdminApprovals() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm">
+        <div className="p-4 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm">
           {error}
         </div>
       )}

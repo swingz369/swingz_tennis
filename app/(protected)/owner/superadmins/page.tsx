@@ -41,7 +41,7 @@ export default async function OwnerSuperadminsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Superadmins</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Superadmins</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Superadmins verwalten mehrere Vereine (Tennisschule-Chef).
         </p>

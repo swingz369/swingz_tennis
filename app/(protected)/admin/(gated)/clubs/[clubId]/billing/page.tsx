@@ -130,7 +130,7 @@ export default async function ClubBillingPage({ params }: { params: Promise<{ cl
   return (
     <div className="space-y-4">
       {/* Club context header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark px-6 py-4 text-white">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark px-6 py-4 text-white">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-background/10 backdrop-blur-sm">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -124,7 +124,7 @@ export function GlobalSearch({ className }: GlobalSearchProps) {
       </div>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
           {loading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">Suche...</div>
           ) : results.length === 0 ? (

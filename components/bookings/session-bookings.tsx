@@ -156,7 +156,7 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
           <div className="text-center py-12 text-muted-foreground">Laden...</div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-lg overflow-hidden min-w-[600px]">
+            <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-xl overflow-hidden min-w-[600px]">
               {/* Day headers */}
               {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                 <div

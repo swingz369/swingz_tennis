@@ -120,7 +120,7 @@ export function RsvpSection({
               disabled={isPending}
               aria-pressed={isActive}
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-transparent transition-all',
+                'flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border border-transparent transition-all',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
                 'focus:outline-none focus:ring-2 focus:ring-primary/40',
                 isActive ? cfg.buttonActiveClass : cfg.buttonClass
@@ -139,7 +139,7 @@ export function RsvpSection({
       <div className="flex items-center gap-1">
         <button
           onClick={handleExportICal}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-info-50 hover:text-info-600 transition-all"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-medium text-muted-foreground bg-muted hover:bg-info-50 hover:text-info-600 transition-all"
           title="In Kalender exportieren (.ics)"
         >
           <CalendarIcon className="h-3.5 w-3.5" />
@@ -147,7 +147,7 @@ export function RsvpSection({
         </button>
         <button
           onClick={handleGoogleCal}
-          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-muted hover:bg-info-50 hover:text-info-600 transition-all"
+          className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-medium text-muted-foreground bg-muted hover:bg-info-50 hover:text-info-600 transition-all"
           title="Zu Google Kalender hinzufügen"
         >
           <CalendarIcon className="h-3.5 w-3.5" />

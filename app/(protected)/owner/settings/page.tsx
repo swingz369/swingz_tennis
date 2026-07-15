@@ -53,7 +53,7 @@ export default async function OwnerSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Plattform-Einstellungen</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Plattform-Einstellungen</h1>
         <p className="text-sm text-muted-foreground mt-1">
           System-Status und globale Konfiguration
         </p>

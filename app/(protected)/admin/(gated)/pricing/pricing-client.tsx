@@ -480,7 +480,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
               type="button"
               onClick={() => toggleDay(day)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors',
+                'px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors',
                 (form.daysOfWeek || []).includes(day)
                   ? 'bg-brand-primary text-white border-brand-primary'
                   : 'bg-muted text-muted-foreground border-border hover:border-brand-primary/30'
@@ -512,7 +512,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
           </p>
         )}
         {form.timeRanges.map((tr, idx) => (
-          <div key={idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+          <div key={idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-xl">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <Input
@@ -600,7 +600,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
             disabled={featureSaving}
             onClick={() => toggleFeature('dynamic_pricing')}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all',
+              'flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all',
               dynamicPricingEnabled
                 ? 'bg-success-50 border-success-300 text-success-800 hover:bg-success-100 dark:bg-success-900 dark:border-success-700 dark:text-success-300'
                 : 'bg-muted border-border text-muted-foreground hover:bg-muted/80'
@@ -654,7 +654,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
       {/* Explanation Cards */}
       {!showForm && rules.length === 0 && !loading && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-info-50 to-info-100 dark:from-info-900 dark:to-info-900 border-info-200">
+          <Card className="bg-info-50 dark:from-info-900 dark:to-info-900 border-info-200">
             <CardContent className="p-4">
               <Clock className="h-8 w-8 text-info-600 mb-2" />
               <h3 className="font-semibold text-sm">Zeitbasierte Preise</h3>
@@ -663,7 +663,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-success-50 to-success-100 dark:from-success-900 dark:to-success-900 border-success-200">
+          <Card className="bg-success-50 dark:from-success-900 dark:to-success-900 border-success-200">
             <CardContent className="p-4">
               <Calendar className="h-8 w-8 text-success-600 mb-2" />
               <h3 className="font-semibold text-sm">Tagespreise</h3>
@@ -672,7 +672,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-brand-accent-50 to-brand-accent-100 dark:from-brand-accent-950 dark:to-brand-accent-900 border-brand-accent-200">
+          <Card className="bg-brand-accent-50 dark:from-brand-accent-950 dark:to-brand-accent-900 border-brand-accent-200">
             <CardContent className="p-4">
               <Sun className="h-8 w-8 text-brand-accent-600 mb-2" />
               <h3 className="font-semibold text-sm">Saison-Preise</h3>

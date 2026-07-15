@@ -130,7 +130,7 @@ export function ActivityFeedCompact({
         <div className="mt-2 flex justify-end">
           <Link
             href={footerHref}
-            className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {footerLabel}
           </Link>

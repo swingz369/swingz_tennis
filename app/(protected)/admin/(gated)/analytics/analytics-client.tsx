@@ -13,7 +13,7 @@ const RechartsLazy = dynamic(() => import('./analytics-charts').then((m) => m.An
   loading: () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-80 rounded-2xl border border-border dark:border-white/10 p-6">
+        <div key={i} className="h-80 rounded-xl border border-border dark:border-white/10 p-6">
           <Skeleton className="h-5 w-40 mb-4" />
           <Skeleton className="h-56 w-full rounded-xl" />
         </div>
@@ -25,7 +25,7 @@ const RechartsLazy = dynamic(() => import('./analytics-charts').then((m) => m.An
 // Lazy-load AI churn panel — heavy component with its own data fetching
 const ChurnRiskPanel = dynamic(
   () => import('@/components/ai/churn-risk-panel').then((m) => m.ChurnRiskPanel),
-  { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-2xl" /> }
+  { ssr: false, loading: () => <Skeleton className="h-64 w-full rounded-xl" /> }
 );
 
 export interface AnalyticsData {
@@ -113,7 +113,7 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
           </div>
           <Card variant="bordered" className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-info-50 dark:bg-info-900/20">
+              <div className="p-2 rounded-xl bg-info-50 dark:bg-info-900/20">
                 <Brain className="h-5 w-5 text-info-500 dark:text-info-400" />
               </div>
               <div>
@@ -122,13 +122,13 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
               </div>
             </div>
             <div className="space-y-3">
-              <div className="p-3 bg-info-50 dark:bg-info-900/20 rounded-lg border border-info-100 dark:border-info-800/30">
+              <div className="p-3 bg-info-50 dark:bg-info-900/20 rounded-xl border border-info-100 dark:border-info-800/30">
                 <p className="text-sm font-medium text-info-800 dark:text-info-300">Matchmaking</p>
                 <p className="text-xs text-info-600 dark:text-info-400 mt-1">
                   Finde Trainingspartner mit passendem Level und freien Zeiten.
                 </p>
               </div>
-              <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-100 dark:border-success-800/30">
+              <div className="p-3 bg-success-50 dark:bg-success-900/20 rounded-xl border border-success-100 dark:border-success-800/30">
                 <p className="text-sm font-medium text-success-800 dark:text-success-300">
                   Empfehlungen
                 </p>

@@ -242,7 +242,7 @@ export default function TrainerProfilePage() {
           <Skeleton className="h-3.5 w-3.5 rounded" />
           <Skeleton className="h-4 w-32 rounded" />
         </div>
-        <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border dark:border-white/10">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1.5">
@@ -260,7 +260,7 @@ export default function TrainerProfilePage() {
               <Skeleton className="h-4 w-12 rounded" />
               <Skeleton className="h-4 w-20 rounded" />
             </div>
-            <div className="rounded-lg border border-border p-5 space-y-4">
+            <div className="rounded-xl border border-border p-5 space-y-4">
               <Skeleton className="h-5 w-44 rounded" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -285,7 +285,7 @@ export default function TrainerProfilePage() {
       error?.includes('Profil-ID');
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
-        <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
+        <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center">
           {isNotFound ? (
             <User className="h-8 w-8 text-muted-foreground" />
           ) : (
@@ -331,7 +331,7 @@ export default function TrainerProfilePage() {
         </span>
       </nav>
 
-      <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+      <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="p-5 border-b border-border dark:border-white/10">
           <div className="flex items-start justify-between gap-4">

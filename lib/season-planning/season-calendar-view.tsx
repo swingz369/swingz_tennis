@@ -226,13 +226,13 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
         {/* Legend */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm bg-success-500" /> Aktiv
+            <span className="inline-block w-3 h-3 rounded-md bg-success-500" /> Aktiv
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm bg-gray-200" /> Inaktiv
+            <span className="inline-block w-3 h-3 rounded-md bg-gray-200" /> Inaktiv
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm bg-warning-100 border border-warning-300" />{' '}
+            <span className="inline-block w-3 h-3 rounded-md bg-warning-100 border border-warning-300" />{' '}
             Ferienwoche
           </span>
         </div>

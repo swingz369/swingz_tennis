@@ -42,7 +42,7 @@ export default function AdminError({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 dark:bg-background">
-      <div className="w-full max-w-lg rounded-2xl bg-card p-8 shadow-lg">
+      <div className="w-full max-w-lg rounded-xl bg-card p-8 shadow-lg">
         <div className="mb-6 flex items-start">
           <div className="flex-shrink-0">
             <svg

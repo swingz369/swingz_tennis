@@ -117,7 +117,7 @@ export default function SuperadminTenantsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Tenant Übersicht</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Tenant Übersicht</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Wählen Sie einen Verein aus, um dessen Administration zu öffnen.
         </p>
@@ -138,7 +138,7 @@ export default function SuperadminTenantsPage() {
             >
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-primary/10 shrink-0">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/10 shrink-0">
                     <Building2 className="h-4 w-4 text-brand-primary" />
                   </div>
                   <span className="truncate">{club.name}</span>

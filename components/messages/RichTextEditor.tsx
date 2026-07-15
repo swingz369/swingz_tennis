@@ -185,7 +185,7 @@ export function RichTextEditor({
   return (
     <div
       className={cn(
-        'rounded-lg border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+        'rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
         className
       )}
     >

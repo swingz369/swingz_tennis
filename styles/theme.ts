@@ -154,10 +154,13 @@ export const radius = {
    *  the CSS variable isn't reachable (e.g. inline styles in email
    *  templates, SVG geometry). */
   base: '10px',
+  // Kanonische 3er-Skala: md (Inputs/Buttons), xl (Cards, = --radius SSOT), full.
+  // sm/lg/2xl/3xl bleiben definiert (dynamische Klassen), sind aber im Code migriert
+  // und werden vom Guardrail (scripts/check-design-tokens.sh) blockiert.
   sm: '0.375rem',
   md: '0.5rem',
   lg: '0.75rem',
-  xl: '1rem',
+  xl: '10px',
   '2xl': '1.5rem',
   '3xl': '2rem',
   '4xl': '3rem',

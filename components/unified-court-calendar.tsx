@@ -169,12 +169,12 @@ function DraggableSessionCard({
   const isCancelled = !!session.cancelledAt;
   return (
     <div
-      className={`px-2.5 py-2 rounded-lg text-xs transition-all duration-150 group ${
+      className={`px-2.5 py-2 rounded-xl text-xs transition-all duration-150 group ${
         isCancelled
           ? 'bg-error-50 text-error-700 border-l-[3px] border-error-400 opacity-70'
           : isDragging
             ? 'opacity-40 rotate-1 scale-105 shadow-xl bg-info-100'
-            : 'bg-gradient-to-b from-info-50 to-info-100/80 text-info-800 hover:shadow-md border-l-[3px] border-info-500 cursor-grab active:cursor-grabbing'
+            : 'bg-info-50 text-info-800 hover:shadow-md border-l-[3px] border-info-500 cursor-grab active:cursor-grabbing'
       }`}
     >
       {isCancelled && (
@@ -222,7 +222,7 @@ function DraggableSessionCard({
 function PlanEntryBadge({ entry }: { entry: PlanEntry }) {
   return (
     <div
-      className="px-2 py-1 rounded-lg text-white text-2xs leading-tight shadow-sm border border-white/20"
+      className="px-2 py-1 rounded-xl text-white text-2xs leading-tight shadow-sm border border-white/20"
       style={{ backgroundColor: entry.group_color || '#7c3aed' }}
       title={`${entry.group_name} · ${entry.trainer_name || ''} · ${entry.start_time}–${entry.end_time}`}
     >
@@ -328,7 +328,7 @@ function PositionedSessionBlock({
           ? `Gebucht von: ${session.bookerNames.join(', ')}`
           : undefined
       }
-      className={`absolute left-0.5 right-0.5 rounded-lg border-l-[3px] ${accentColor} ${bgColor} ${textColor} px-2 py-1.5 overflow-hidden transition-all duration-150 group/block z-10 ${
+      className={`absolute left-0.5 right-0.5 rounded-xl border-l-[3px] ${accentColor} ${bgColor} ${textColor} px-2 py-1.5 overflow-hidden transition-all duration-150 group/block z-10 ${
         isDragging
           ? 'opacity-30 scale-95 shadow-none pointer-events-none'
           : 'cursor-pointer hover:shadow-md'
@@ -447,7 +447,7 @@ function PositionedPlanBlock({
 }) {
   return (
     <div
-      className="absolute left-0.5 right-0.5 rounded-lg text-white px-2 py-1.5 overflow-hidden shadow-sm border border-white/20 z-[5]"
+      className="absolute left-0.5 right-0.5 rounded-xl text-white px-2 py-1.5 overflow-hidden shadow-sm border border-white/20 z-[5]"
       style={{
         top: `${topPx}px`,
         height: `${heightPx}px`,
@@ -1027,7 +1027,7 @@ export default function UnifiedCourtCalendar({
     return (
       <div className="p-4 md:p-6 space-y-4">
         <div className="space-y-2">
-          <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
+          <div className="h-8 w-48 bg-muted rounded-xl animate-pulse" />
           <div className="h-4 w-72 bg-muted rounded-md animate-pulse" />
         </div>
         <div className="h-12 bg-muted rounded-xl animate-pulse" />
@@ -1091,7 +1091,7 @@ export default function UnifiedCourtCalendar({
 
         {/* Warning when no future sessions exist */}
         {visibleSessions.length === 0 && (
-          <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+          <div className="bg-warning-50 border border-warning-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
@@ -1137,7 +1137,7 @@ export default function UnifiedCourtCalendar({
                   setSelectedCourtId(court.id);
                   setViewMode('daily');
                 }}
-                className="group relative flex flex-col text-left rounded-2xl border border-border/60 bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                className="group relative flex flex-col text-left rounded-xl border border-border/60 bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
               >
                 {/* Court icon */}
                 <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary mb-3 group-hover:bg-primary/20 transition-colors">
@@ -1329,7 +1329,7 @@ export default function UnifiedCourtCalendar({
                       return (
                         <DroppableSlot key={timeSlot} id={dropTargetId} isAdmin={isAdmin}>
                           <div
-                            className={`group min-h-[44px] rounded-lg text-2xs flex items-center transition-all duration-150 ${
+                            className={`group min-h-[44px] rounded-xl text-2xs flex items-center transition-all duration-150 ${
                               status === 'blocked' && isAdmin
                                 ? SLOT_STATUS_STYLES_ADMIN_BLOCKED
                                 : SLOT_STATUS_STYLES[status]
@@ -1806,7 +1806,7 @@ export default function UnifiedCourtCalendar({
         onGoToday={goToToday}
       >
         {/* View toggle */}
-        <div className="flex rounded-lg border border-border overflow-hidden">
+        <div className="flex rounded-xl border border-border overflow-hidden">
           <Button
             variant={viewMode === 'weekly' ? 'default' : 'ghost'}
             size="sm"
@@ -1914,7 +1914,7 @@ export default function UnifiedCourtCalendar({
             return (
               <div
                 key={c.id}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-accent-50 border border-brand-accent-200 text-brand-accent-800 text-xs font-medium dark:bg-brand-accent-950/30 dark:border-brand-accent-800 dark:text-brand-accent-300"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-brand-accent-50 border border-brand-accent-200 text-brand-accent-800 text-xs font-medium dark:bg-brand-accent-950/30 dark:border-brand-accent-800 dark:text-brand-accent-300"
               >
                 <Lock className="h-3 w-3" />
                 <span>{courtName}</span>
@@ -1935,7 +1935,7 @@ export default function UnifiedCourtCalendar({
 
       {/* Zero-sessions warning (admin view) */}
       {isAdmin && visibleSessions.length === 0 && (
-        <div className="bg-warning-50 border border-warning-200 rounded-lg p-4">
+        <div className="bg-warning-50 border border-warning-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
             <div className="flex-1">

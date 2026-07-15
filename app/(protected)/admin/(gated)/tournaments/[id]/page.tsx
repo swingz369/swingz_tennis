@@ -231,7 +231,9 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           </Button>
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-brand-primary">{tournament.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-brand-primary">
+                {tournament.name}
+              </h1>
               <Badge variant={SHARED_STATUS_VARIANTS[tournament.status ?? 'draft'] ?? 'secondary'}>
                 {STATUS_LABELS[tournament.status ?? 'draft'] ?? tournament.status}
               </Badge>

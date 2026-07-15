@@ -43,12 +43,19 @@ const config: Config = {
         ring: 'hsl(var(--ring))',
         brand: {
           primary: 'hsl(var(--brand-primary))',
+          light: 'hsl(var(--brand-primary-light))',
+          dark: 'hsl(var(--brand-dark))',
           secondary: 'hsl(var(--brand-secondary))',
           // Orange-Skala aus theme.ts + DEFAULT via CSS-Variable: `bg-brand-accent`
           // bleibt unverändert, `bg-brand-accent-100` etc. ersetzen die früheren
           // hartcodierten `orange-*`-Klassen.
           accent: { DEFAULT: 'hsl(var(--brand-accent))', ...colors.accent },
           'accent-dashboard': 'hsl(var(--brand-accent-dashboard))',
+        },
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+          dark: 'hsl(var(--surface-elevated))',
+          elevated: 'hsl(var(--surface-elevated))',
         },
         gray: colors.gray,
         success: colors.success,

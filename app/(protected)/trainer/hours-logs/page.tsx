@@ -185,7 +185,7 @@ export default function TrainerHoursLogsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-brand-primary dark:text-white">
             Meine Stundennachweise
           </h1>
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
@@ -436,7 +436,7 @@ export default function TrainerHoursLogsPage() {
         <CardContent className="pt-0">
           {logs.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
-              <div className="h-16 w-16 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
+              <div className="h-16 w-16 rounded-xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8" />
               </div>
               <p className="font-medium text-muted-foreground">Keine Stundennachweise</p>

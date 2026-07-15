@@ -119,7 +119,7 @@ export default function AttendanceHistory() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs text-muted-foreground">{s.label}</p>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${s.bg}`}>
+                <div className={`flex h-7 w-7 items-center justify-center rounded-xl ${s.bg}`}>
                   <s.icon className={`h-3.5 w-3.5 ${s.color}`} />
                 </div>
               </div>

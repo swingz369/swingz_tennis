@@ -116,7 +116,7 @@ export function ChurnRiskPanel() {
     <Card variant="bordered" className="transition-all duration-300 hover:shadow-md">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-error-50">
+          <div className="p-2 rounded-xl bg-error-50">
             <AlertTriangle className="h-5 w-5 text-error-500" />
           </div>
           <div>
@@ -147,7 +147,7 @@ export function ChurnRiskPanel() {
         )}
 
         {error && (
-          <div className="flex items-center gap-2 p-4 bg-error-50 rounded-lg text-error-600 text-sm">
+          <div className="flex items-center gap-2 p-4 bg-error-50 rounded-xl text-error-600 text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -196,7 +196,7 @@ export function ChurnRiskPanel() {
                   return (
                     <div
                       key={member.userId}
-                      className={`rounded-lg border p-3 transition-all duration-200 ${
+                      className={`rounded-xl border p-3 transition-all duration-200 ${
                         isExpanded ? 'shadow-sm' : ''
                       } ${riskColor(member.riskLevel)}`}
                     >

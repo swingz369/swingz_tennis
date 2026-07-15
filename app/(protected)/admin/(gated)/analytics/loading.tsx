@@ -29,7 +29,7 @@ export default function AnalyticsLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} variant="bordered" className="p-6">
             <div className="h-6 w-48 bg-muted rounded animate-pulse mb-4" />
-            <div className="h-64 bg-muted rounded-lg border border-border" />
+            <div className="h-64 bg-muted rounded-xl border border-border" />
           </Card>
         ))}
       </div>

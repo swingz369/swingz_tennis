@@ -68,7 +68,7 @@ export function PremiumUpsell({
     >
       {/* ═══ Hero ═══ */}
       <div className="flex flex-col items-center text-center gap-2 -mt-2 mb-4">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-primary to-brand-accent text-white shadow-lg shadow-brand-accent/20">
           <Sparkles className="h-6 w-6" />
         </div>
         <h2 className="text-xl font-bold text-foreground">
@@ -166,7 +166,7 @@ function StatTile({
     purple: 'bg-info-50 border-info-200 text-info-700',
   };
   return (
-    <div className={cn('rounded-lg border p-3', accentStyles[accent])}>
+    <div className={cn('rounded-xl border p-3', accentStyles[accent])}>
       <div className="flex items-center gap-1.5 text-2xs font-medium opacity-90">
         {icon}
         <span className="leading-tight">{label}</span>

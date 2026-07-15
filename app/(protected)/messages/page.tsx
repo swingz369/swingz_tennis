@@ -272,7 +272,7 @@ function MessagesContent() {
                   setFolder('inbox');
                   setSelectedMessage(null);
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex-1 lg:flex-none ${
                   folder === 'inbox'
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted'
@@ -291,7 +291,7 @@ function MessagesContent() {
                   setFolder('sent');
                   setSelectedMessage(null);
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex-1 lg:flex-none ${
                   folder === 'sent'
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted'
@@ -305,7 +305,7 @@ function MessagesContent() {
                   setFolder('news');
                   setSelectedMessage(null);
                 }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1 lg:flex-none ${
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors flex-1 lg:flex-none ${
                   folder === 'news'
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted'
@@ -772,7 +772,7 @@ function ComposeDialog({
                           <button
                             type="button"
                             onClick={() => toggleReceiver(id)}
-                            className="hover:bg-primary/20 rounded-sm p-0.5"
+                            className="hover:bg-primary/20 rounded-md p-0.5"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -805,7 +805,7 @@ function ComposeDialog({
                   </button>
 
                   {memberDropdownOpen && (
-                    <div className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-background shadow-lg">
+                    <div className="absolute z-50 mt-1 w-full rounded-xl border border-border bg-background shadow-lg">
                       <div className="p-2 border-b border-border">
                         <div className="relative">
                           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -893,7 +893,7 @@ function ComposeDialog({
 
         {/* Broadcast info */}
         {isAdmin && recipientMode !== 'individual' && recipientMode !== 'multi' && (
-          <div className="rounded-lg bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-700/30 px-3 py-2 text-sm text-info-800 dark:text-info-300">
+          <div className="rounded-xl bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-700/30 px-3 py-2 text-sm text-info-800 dark:text-info-300">
             {recipientMode === 'all' &&
               '📣 Nachricht wird an alle aktiven Vereinsmitglieder gesendet.'}
             {recipientMode === 'trainers' &&

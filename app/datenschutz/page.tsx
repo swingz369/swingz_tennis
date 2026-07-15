@@ -41,7 +41,7 @@ export default function DatenschutzPage() {
           <nav className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
                 <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
               </div>
               <span className="text-2xl font-bold text-white font-display">SWINGZ</span>

@@ -74,6 +74,7 @@
   /* ── Brand Tokens ── */
   --brand-primary: 150 48% 18%;
   --brand-primary-light: 150 45% 35%;
+  --brand-dark: 150 72% 14%;
   --brand-secondary: 217 33% 24%;
   --brand-accent: 26 100% 60%;
   /* Dashboard-only "action" accent — desaturated clay/terracotta, same value
@@ -154,6 +155,7 @@
   /* ── Brand Tokens ── */
   --brand-primary: 150 70% 28%;
   --brand-primary-light: 150 60% 40%;
+  --brand-dark: 150 72% 14%;
   --brand-secondary: 217 40% 35%;
   --brand-accent: 26 100% 65%;
   /* Lighter Court Clay variant for dark dashboard surfaces — same hue/sat
@@ -204,67 +206,7 @@ body {
 }
 
 @layer utilities {
-  .text-brand-primary {
-    color: hsl(var(--brand-primary));
-  }
-  .text-brand-light {
-    color: hsl(var(--brand-primary-light));
-  }
-  .text-brand-secondary {
-    color: hsl(var(--brand-secondary));
-  }
-  .text-brand-accent {
-    color: hsl(var(--brand-accent));
-  }
-  .bg-brand-primary {
-    background-color: hsl(var(--brand-primary));
-  }
-  .bg-brand-light {
-    background-color: hsl(var(--brand-primary-light));
-  }
-  .bg-brand-secondary {
-    background-color: hsl(var(--brand-secondary));
-  }
-  .bg-brand-accent {
-    background-color: hsl(var(--brand-accent));
-  }
-  .bg-surface-dark {
-    background-color: hsl(var(--surface-elevated));
-  }
-  .border-brand-primary {
-    border-color: hsl(var(--brand-primary));
-  }
-  .border-brand-light {
-    border-color: hsl(var(--brand-primary-light));
-  }
-  .border-brand-accent {
-    border-color: hsl(var(--brand-accent));
-  }
-
-  .bg-brand-primary\/5 {
-    background-color: hsl(var(--brand-primary) / 0.05);
-  }
-  .bg-brand-primary\/10 {
-    background-color: hsl(var(--brand-primary) / 0.1);
-  }
-  .bg-brand-primary\/20 {
-    background-color: hsl(var(--brand-primary) / 0.2);
-  }
-  .bg-brand-light\/5 {
-    background-color: hsl(var(--brand-primary-light) / 0.05);
-  }
-  .bg-brand-light\/10 {
-    background-color: hsl(var(--brand-primary-light) / 0.1);
-  }
-  .bg-brand-light\/20 {
-    background-color: hsl(var(--brand-primary-light) / 0.2);
-  }
-  .bg-brand-accent\/10 {
-    background-color: hsl(var(--brand-accent) / 0.1);
-  }
-  .bg-brand-accent\/20 {
-    background-color: hsl(var(--brand-accent) / 0.2);
-  }
+  /* brand- und surface-Farben kommen aus tailwind.config.ts (alle Varianten inkl. from-, to-, ring-, alpha) */
 
   /* ── Text Gradients ── */
   .text-gradient-primary {

@@ -61,7 +61,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-950 via-surface-dark to-brand-secondary/40 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-brand-dark via-surface-dark to-brand-secondary/40 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
         <div className="w-full max-w-lg">
           {/* Title */}
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-white">Verein auswählen</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Verein auswählen</h1>
             <p className="text-white/50 mt-1 text-sm">
               Hallo, <span className="text-white/80">{userName.split(' ')[0]}</span> — welchen
               Verein möchtest du verwalten?
@@ -116,7 +116,7 @@ export function SelectAdminClubClient({ clubs, userName }: SelectAdminClubClient
                 onClick={() => handleSelect(club.id)}
                 disabled={selecting !== null}
                 className={cn(
-                  'w-full flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-background/5 hover:bg-background/10 hover:border-brand-light/50 transition-all text-left group',
+                  'w-full flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-background/5 hover:bg-background/10 hover:border-brand-light/50 transition-all text-left group',
                   selecting === club.id && 'opacity-60 cursor-wait',
                   selecting !== null && selecting !== club.id && 'opacity-40'
                 )}

@@ -5,7 +5,7 @@ export default function Loading() {
     <div className="space-y-6 max-w-2xl mx-auto animate-pulse">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground dark:text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-brand-primary" />
           Probetrainings
         </h1>
@@ -30,7 +30,7 @@ export default function Loading() {
           <div className="h-4 w-3/4 rounded bg-muted dark:bg-white/10" />
 
           {/* Details grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-lg bg-muted/50">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-muted/50">
             {[1, 2, 3].map((j) => (
               <div key={j} className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded bg-muted dark:bg-white/10 shrink-0" />

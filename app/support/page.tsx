@@ -110,7 +110,7 @@ export default function SupportPage() {
           <nav className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
                 <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
               </div>
               <span className="text-2xl font-bold text-white font-display">SWINGZ</span>
@@ -243,7 +243,7 @@ export default function SupportPage() {
       {/* Status Banner */}
       <section className="pb-16 sm:pb-20">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light p-8 text-white">
+          <div className="rounded-xl bg-gradient-to-br from-brand-primary to-brand-light p-8 text-white">
             <div className="flex items-start gap-4">
               <div className="h-10 w-10 rounded-xl bg-background/20 flex items-center justify-center shrink-0">
                 <Sparkles className="h-5 w-5" />

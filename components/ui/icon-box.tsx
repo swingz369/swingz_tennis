@@ -44,11 +44,11 @@ export interface IconBoxProps {
 
 const sizeClasses: Record<IconBoxSize, { container: string; icon: string }> = {
   xs: {
-    container: 'h-7 w-7 rounded-lg',
+    container: 'h-7 w-7 rounded-xl',
     icon: 'h-3.5 w-3.5',
   },
   sm: {
-    container: 'h-8 w-8 rounded-lg',
+    container: 'h-8 w-8 rounded-xl',
     icon: 'h-4 w-4',
   },
   md: {
@@ -56,7 +56,7 @@ const sizeClasses: Record<IconBoxSize, { container: string; icon: string }> = {
     icon: 'h-5 w-5',
   },
   lg: {
-    container: 'h-14 w-14 rounded-2xl',
+    container: 'h-14 w-14 rounded-xl',
     icon: 'h-7 w-7',
   },
 };

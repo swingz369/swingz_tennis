@@ -21,7 +21,7 @@ export function DashboardTabs({ tabs, children }: { tabs: Tab[]; children: React
             key={tab.key}
             onClick={() => setActive(i)}
             className={cn(
-              'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+              'px-3 py-1.5 text-xs font-medium rounded-xl transition-colors',
               i === active
                 ? 'bg-brand-light/10 text-brand-light'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'

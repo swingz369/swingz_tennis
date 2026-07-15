@@ -219,7 +219,7 @@ export function CourtBookings({ clubId }: Props) {
             {courts.map((court) => {
               const slots = schedules[court.id]?.days?.[0]?.time_slots ?? [];
               return (
-                <div key={court.id} className="border rounded-lg p-4">
+                <div key={court.id} className="border rounded-xl p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="font-semibold flex items-center gap-2">
@@ -293,7 +293,7 @@ export function CourtBookings({ clubId }: Props) {
           </div>
         )}
 
-        <div className="bg-info-50 dark:bg-info-900 border border-info-200 dark:border-info-800 rounded-lg p-4">
+        <div className="bg-info-50 dark:bg-info-900 border border-info-200 dark:border-info-800 rounded-xl p-4">
           <h4 className="font-medium text-info-900 dark:text-info-100 mb-2">Buchungsregeln</h4>
           <ul className="text-sm text-info-700 dark:text-info-200 space-y-1">
             <li>• Buchungsdauer wählbar: 30, 60 oder 90 Minuten</li>

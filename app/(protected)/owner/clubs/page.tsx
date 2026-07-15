@@ -121,7 +121,7 @@ export default function OwnerClubsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Alle Vereine</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Alle Vereine</h1>
         <Button onClick={() => setNewClubOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Verein anlegen
         </Button>
@@ -144,7 +144,7 @@ export default function OwnerClubsPage() {
           {filtered.map((club) => (
             <Card key={club.id} className="border shadow-sm">
               <CardContent className="p-4 flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
                   <Building2 className="h-5 w-5 text-info-600 dark:text-info-400" />
                 </div>
                 <div className="flex-1 min-w-0">

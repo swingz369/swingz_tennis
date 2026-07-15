@@ -40,7 +40,7 @@ export default function TrainerError({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 dark:bg-background">
-      <div className="w-full max-w-lg rounded-2xl bg-card p-8 shadow-lg">
+      <div className="w-full max-w-lg rounded-xl bg-card p-8 shadow-lg">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-foreground">Trainer-Portal Fehler</h2>
           <p className="mt-2 text-sm text-muted-foreground">

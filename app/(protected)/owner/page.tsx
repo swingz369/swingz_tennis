@@ -61,7 +61,9 @@ export default async function OwnerPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Plattform-Übersicht</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display text-foreground">
+            Plattform-Übersicht
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Hallo {firstName} — Swingz Plattform-Dashboard
           </p>
@@ -123,7 +125,7 @@ export default async function OwnerPage() {
           <div className="divide-y divide-border dark:divide-white/10">
             {(clubs ?? []).map((club: any) => (
               <div key={club.id} className="flex items-center gap-4 py-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
                   <Building2 className="h-4 w-4 text-info-600 dark:text-info-400" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -173,7 +175,7 @@ export default async function OwnerPage() {
               href={action.href}
               className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-info-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
                 <action.icon className="h-4 w-4 text-info-600 dark:text-info-400" />
               </div>
               <span className="text-sm font-medium">{action.label}</span>

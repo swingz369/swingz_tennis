@@ -349,9 +349,9 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           <Skeleton className="h-11 w-64 rounded-xl" />
           <Skeleton className="h-11 w-44 rounded-xl" />
         </div>
-        <div className="rounded-lg border border-border/60 dark:border-white/10 p-6 space-y-4">
+        <div className="rounded-xl border border-border/60 dark:border-white/10 p-6 space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            <Skeleton key={i} className="h-12 w-full rounded-xl" />
           ))}
         </div>
       </div>
@@ -405,7 +405,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
       {filteredTrainers.length === 0 ? (
         searchQuery || statusFilter !== 'all' ? (
           <Card variant="flat" className="p-12 text-center">
-            <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-2xl bg-brand-primary/10 mb-6">
+            <div className="flex h-20 w-20 mx-auto items-center justify-center rounded-xl bg-brand-primary/10 mb-6">
               <GraduationCap className="h-10 w-10 text-brand-primary" />
             </div>
             <h3 className="text-2xl font-bold text-brand-primary">Keine Treffer</h3>
@@ -418,7 +418,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
         )
       ) : (
         /* ── Full-Width Trainer Table ─────────────────────────────────── */
-        <div className="rounded-lg border border-border/60 dark:border-white/10 overflow-x-auto">
+        <div className="rounded-xl border border-border/60 dark:border-white/10 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -640,7 +640,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
           Die ausgewählten Trainer werden auf <strong>inaktiv</strong> gesetzt. Sie können sie
           später jederzeit wieder aktivieren.
         </p>
-        <div className="max-h-72 overflow-y-auto rounded-lg border border-border bg-muted/30 p-3">
+        <div className="max-h-72 overflow-y-auto rounded-xl border border-border bg-muted/30 p-3">
           <ul className="space-y-1.5 text-sm">
             {Array.from(selectedIds).map((id) => {
               const t = trainers.find((x) => x.id === id);
@@ -726,7 +726,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
               onChange={(e) => setInviteName(e.target.value)}
             />
           </div>
-          <div className="bg-brand-primary/5 border border-brand-primary/10 p-3 rounded-lg text-sm text-muted-foreground dark:text-muted-foreground">
+          <div className="bg-brand-primary/5 border border-brand-primary/10 p-3 rounded-xl text-sm text-muted-foreground dark:text-muted-foreground">
             Der Trainer erhält eine Einladungs-E-Mail und wird dem Verein mit der Rolle
             &quot;Trainer&quot; hinzugefügt.
           </div>

@@ -242,7 +242,7 @@ export function SeasonPlanningTab() {
           className="space-y-5 border-t pt-5 not-disabled:cursor-auto"
         >
           {/* Switch: treat_high_failure_as_hard */}
-          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2">
                 <Label
@@ -277,7 +277,7 @@ export function SeasonPlanningTab() {
           </div>
 
           {/* Number-Input: backtrack_depth */}
-          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2">
                 <Label
@@ -321,7 +321,7 @@ export function SeasonPlanningTab() {
           </div>
 
           {/* Number-Input: unassigned_rate_threshold (Sprint 4 P0 #3) */}
-          <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4">
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2">
                 <Label

@@ -206,7 +206,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
           <CardHeader className="px-5 pt-5 pb-3 border-b border-border dark:border-white/10">
             <CardTitle className="text-sm font-semibold flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-brand-light/10 text-brand-light">
+                <div className="p-1.5 rounded-xl bg-brand-light/10 text-brand-light">
                   <Calendar className="h-4 w-4" />
                 </div>
                 <span>Kommende Einheiten</span>
@@ -223,7 +223,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
           <CardContent className="px-5 pb-5">
             {sessions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center mb-3">
+                <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-3">
                   <Calendar className="h-7 w-7 text-muted-foreground/50" />
                 </div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -238,7 +238,7 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
                 {sessions.slice(0, 5).map((session) => (
                   <div
                     key={session.id}
-                    className="flex items-center gap-3 py-3.5 hover:bg-muted/50 transition-colors rounded-lg -mx-2 px-2 group/item"
+                    className="flex items-center gap-3 py-3.5 hover:bg-muted/50 transition-colors rounded-xl -mx-2 px-2 group/item"
                   >
                     <div className="h-10 w-10 rounded-xl bg-brand-light/10 text-brand-light flex items-center justify-center shrink-0 group-hover/item:scale-105 transition-transform">
                       <Calendar className="h-5 w-5" />

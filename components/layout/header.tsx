@@ -92,7 +92,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 w-full bg-background/80 dark:bg-brand-950/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-brand-950/70"
+      className="sticky top-0 z-50 w-full bg-background/80 dark:bg-brand-dark/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 supports-[backdrop-filter]:dark:bg-brand-dark/70"
       role="banner"
     >
       <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-8">
@@ -186,7 +186,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
             {/* Dropdown menu with enter animation */}
             <div
-              className={`absolute right-0 top-full mt-2 w-64 rounded-2xl bg-background dark:bg-surface-dark py-2 shadow-2xl ring-1 ring-ring/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
+              className={`absolute right-0 top-full mt-2 w-64 rounded-xl bg-background dark:bg-surface-dark py-2 shadow-2xl ring-1 ring-ring/60 dark:ring-white/10 z-50 transition-all duration-200 origin-top-right ${
                 userMenuOpen
                   ? 'opacity-100 scale-100 translate-y-0'
                   : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'

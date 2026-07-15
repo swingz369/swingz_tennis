@@ -109,7 +109,7 @@ export function ClubDashboardClient({
                   </p>
                 </div>
                 <div
-                  className={`p-3.5 rounded-2xl bg-gradient-to-br ${kpiConfig.gradient} text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl`}
+                  className={`p-3.5 rounded-xl bg-gradient-to-br ${kpiConfig.gradient} text-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl`}
                 >
                   <Icon className="h-6 w-6" />
                 </div>
@@ -178,14 +178,14 @@ export function ClubDashboardClient({
     <div className="space-y-8">
       {/* Hero Header */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-8 text-white">
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-white/70 mb-1">Vereins-Administration</p>
-                <h1 className="text-3xl font-bold">{clubName}</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{clubName}</h1>
                 <p className="text-white/70 mt-2">Verwalte Mitglieder, Trainer, Plätze und mehr</p>
               </div>
               <div className="hidden sm:flex items-center gap-2 rounded-xl bg-background/10 backdrop-blur-sm px-4 py-2.5">

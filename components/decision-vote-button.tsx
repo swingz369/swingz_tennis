@@ -82,7 +82,7 @@ export function DecisionVoteButton({
   const containerClass =
     variant === 'stack'
       ? 'flex flex-col gap-2 w-full'
-      : 'inline-flex items-center gap-2 rounded-lg border bg-muted/40 p-1';
+      : 'inline-flex items-center gap-2 rounded-xl border bg-muted/40 p-1';
 
   return (
     <div className={containerClass} role="group" aria-label="Abstimmung">
@@ -92,7 +92,10 @@ export function DecisionVoteButton({
         variant={isSelected('for') ? 'default' : 'ghost'}
         disabled={disabled || pending}
         onClick={() => castVote('for')}
-        className={cn('gap-1.5', isSelected('for') && 'bg-success-600 hover:bg-success-700 text-white')}
+        className={cn(
+          'gap-1.5',
+          isSelected('for') && 'bg-success-600 hover:bg-success-700 text-white'
+        )}
         aria-pressed={isSelected('for')}
       >
         {pending && vote?.choice === 'for' ? (
@@ -108,7 +111,10 @@ export function DecisionVoteButton({
         variant={isSelected('against') ? 'default' : 'ghost'}
         disabled={disabled || pending}
         onClick={() => castVote('against')}
-        className={cn('gap-1.5', isSelected('against') && 'bg-error-600 hover:bg-error-700 text-white')}
+        className={cn(
+          'gap-1.5',
+          isSelected('against') && 'bg-error-600 hover:bg-error-700 text-white'
+        )}
         aria-pressed={isSelected('against')}
       >
         {pending && vote?.choice === 'against' ? (

@@ -207,7 +207,7 @@ export function QrCheckinForm({ onSuccess }: QrScannerManualProps) {
         {/* Result feedback */}
         {result && (
           <div
-            className={`rounded-lg p-4 flex items-start gap-3 ${
+            className={`rounded-xl p-4 flex items-start gap-3 ${
               result.success
                 ? 'bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800'
                 : 'bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800'

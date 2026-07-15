@@ -29,7 +29,7 @@ export default function DashboardError({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg bg-muted p-4">
+          <div className="rounded-xl bg-muted p-4">
             <p className="text-sm font-mono text-muted-foreground">
               {error.message || 'Unbekannter Fehler'}
             </p>

@@ -121,7 +121,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Mitgliedprofil</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Mitgliedprofil</h1>
         <Button variant="outline">Bearbeiten</Button>
       </div>
 
@@ -214,7 +214,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
                   membership.clubs ? (
                     <div
                       key={membership.clubs.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-center justify-between p-3 border rounded-xl"
                     >
                       <div>
                         <p className="font-medium">{membership.clubs.name}</p>
@@ -246,7 +246,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
               {bookings!.map((booking: Booking) => (
                 <div
                   key={booking.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="flex items-center justify-between p-3 border rounded-xl"
                 >
                   <div className="flex-1">
                     <p className="font-medium">Training</p>

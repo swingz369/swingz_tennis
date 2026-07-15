@@ -241,7 +241,7 @@ function KpiCard({
   return (
     <Card className="border-0 shadow-sm">
       <CardContent className="p-4">
-        <div className={`flex h-9 w-9 items-center justify-center rounded-lg mb-2.5 ${toneClass}`}>
+        <div className={`flex h-9 w-9 items-center justify-center rounded-xl mb-2.5 ${toneClass}`}>
           <Icon className="h-5 w-5" />
         </div>
         <p className="text-xl font-bold tabular-nums leading-tight">{value}</p>

@@ -265,7 +265,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
       <CardContent className="space-y-6">
         {/* ═══ Verdict Banner ═══ */}
         {hasBlockers ? (
-          <div className="rounded-lg border border-error-300 bg-error-50 px-4 py-3 flex items-start gap-3">
+          <div className="rounded-xl border border-error-300 bg-error-50 px-4 py-3 flex items-start gap-3">
             <ShieldAlert className="h-5 w-5 text-error-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-error-800">
@@ -278,7 +278,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
             </div>
           </div>
         ) : (
-          <div className="rounded-lg border border-success-300 bg-success-50 px-4 py-3 flex items-start gap-3">
+          <div className="rounded-xl border border-success-300 bg-success-50 px-4 py-3 flex items-start gap-3">
             <CheckCircle2 className="h-5 w-5 text-success-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-success-800">
@@ -409,7 +409,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
         )}
 
         {/* ═══ Resource Utilization ═══ */}
-        <div className="rounded-lg border border-border bg-muted/20 p-3">
+        <div className="rounded-xl border border-border bg-muted/20 p-3">
           <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
             Ressourcen-Auslastung
@@ -437,7 +437,7 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
         {report.rsvpDistribution && report.rsvpDistribution.total > 0 ? (
           <RsvpPieSection distribution={report.rsvpDistribution} />
         ) : (
-          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-4 text-center">
             <Mail className="h-5 w-5 text-muted-foreground mx-auto mb-1.5" />
             <p className="text-xs text-muted-foreground">
               Noch keine RSVP-Daten für diese Saison — Verteilung wird beim ersten Publish
@@ -591,7 +591,7 @@ function KpiCard({
   return (
     <div
       className={cn(
-        'rounded-lg border p-3',
+        'rounded-xl border p-3',
         highlight ? 'border-brand-primary/30 bg-brand-primary/5' : 'border-border bg-background'
       )}
     >
@@ -754,7 +754,7 @@ function RsvpPieSection({
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className={cn(
-                      'inline-block h-2.5 w-2.5 rounded-sm flex-shrink-0',
+                      'inline-block h-2.5 w-2.5 rounded-md flex-shrink-0',
                       d.color.replace(/-(\d{3})$/, '-500') === 'success-500' && 'bg-success-500',
                       d.color === 'success-500' && 'bg-success-500',
                       d.color === 'error-500' && 'bg-error-500',

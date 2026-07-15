@@ -161,7 +161,7 @@ export function SubstituteTrainerPanel() {
       </CardHeader>
       <CardContent className="space-y-4">
         {substitutes.length > 0 && (
-          <div className="space-y-2 rounded-lg border border-border divide-y">
+          <div className="space-y-2 rounded-xl border border-border divide-y">
             {substitutes.map((s) => (
               <div key={s.groupId} className="p-3 flex items-center justify-between">
                 <div className="text-sm">
@@ -191,7 +191,7 @@ export function SubstituteTrainerPanel() {
         )}
 
         {showForm && (
-          <div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border">
+          <div className="space-y-3 p-4 rounded-xl bg-muted/30 border border-border">
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <Label className="text-xs">Gruppe</Label>

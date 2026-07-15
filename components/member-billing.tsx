@@ -225,7 +225,7 @@ export default function MemberBilling() {
     return (
       <div className="p-4 md:p-6">
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center mb-4">
+          <div className="h-16 w-16 rounded-xl bg-warning-100 dark:bg-warning-900/20 flex items-center justify-center mb-4">
             <AlertCircle className="h-8 w-8 text-warning-600 dark:text-warning-400" />
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">Zugang eingeschränkt</h2>
@@ -349,9 +349,9 @@ export default function MemberBilling() {
               <>
                 <div className="grid gap-3">
                   {membershipCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-info-100 dark:bg-info-900/40">
+                        <div className="p-2 rounded-xl bg-info-100 dark:bg-info-900/40">
                           <CreditCard className="h-4 w-4 text-info-600" />
                         </div>
                         <div>
@@ -363,9 +363,9 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {trainingCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-success-100 dark:bg-success-900/40">
+                        <div className="p-2 rounded-xl bg-success-100 dark:bg-success-900/40">
                           <Calendar className="h-4 w-4 text-success-600" />
                         </div>
                         <div>
@@ -379,9 +379,9 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {otherCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-info-100 dark:bg-info-900/40">
+                        <div className="p-2 rounded-xl bg-info-100 dark:bg-info-900/40">
                           <Receipt className="h-4 w-4 text-info-600" />
                         </div>
                         <div>
@@ -435,10 +435,10 @@ export default function MemberBilling() {
                 return (
                   <div
                     key={invoice.id}
-                    className="flex items-center justify-between p-4 bg-muted rounded-lg hover:bg-muted transition-colors"
+                    className="flex items-center justify-between p-4 bg-muted rounded-xl hover:bg-muted transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-brand-primary/10 rounded-lg">
+                      <div className="p-3 bg-brand-primary/10 rounded-xl">
                         <FileText className="h-5 w-5 text-brand-primary" />
                       </div>
                       <div>

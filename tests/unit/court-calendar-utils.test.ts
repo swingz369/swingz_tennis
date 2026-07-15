@@ -162,28 +162,28 @@ describe('SLOT_STATUS_STYLES', () => {
     expect(SLOT_STATUS_STYLES[status].length).toBeGreaterThan(0);
   });
 
-  it('available uses emerald palette', () => {
-    expect(SLOT_STATUS_STYLES.available).toContain('emerald');
+  it('available uses success palette', () => {
+    expect(SLOT_STATUS_STYLES.available).toContain('success');
   });
 
-  it('session uses blue palette', () => {
-    expect(SLOT_STATUS_STYLES.session).toContain('blue');
+  it('session uses info palette', () => {
+    expect(SLOT_STATUS_STYLES.session).toContain('info');
   });
 
-  it('booked uses amber palette', () => {
-    expect(SLOT_STATUS_STYLES.booked).toContain('amber');
+  it('booked uses warning palette', () => {
+    expect(SLOT_STATUS_STYLES.booked).toContain('warning');
   });
 
-  it('own-booking uses rose palette', () => {
-    expect(SLOT_STATUS_STYLES['own-booking']).toContain('rose');
+  it('own-booking uses error palette', () => {
+    expect(SLOT_STATUS_STYLES['own-booking']).toContain('error');
   });
 
-  it('plan uses violet palette', () => {
-    expect(SLOT_STATUS_STYLES.plan).toContain('violet');
+  it('plan uses info palette', () => {
+    expect(SLOT_STATUS_STYLES.plan).toContain('info');
   });
 
-  it('blocked uses zinc palette', () => {
-    expect(SLOT_STATUS_STYLES.blocked).toContain('zinc');
+  it('blocked uses gray palette', () => {
+    expect(SLOT_STATUS_STYLES.blocked).toContain('gray');
   });
 
   it('admin blocked override includes cursor-pointer', () => {
@@ -205,20 +205,20 @@ describe('DAILY_BLOCK_STYLES', () => {
     expect(style.accent).toBeTruthy();
   });
 
-  it('available uses emerald palette (matching SLOT_STATUS_STYLES)', () => {
-    expect(DAILY_BLOCK_STYLES.available.bg).toContain('emerald');
+  it('available uses success palette (matching SLOT_STATUS_STYLES)', () => {
+    expect(DAILY_BLOCK_STYLES.available.bg).toContain('success');
   });
 
-  it('booked uses amber palette', () => {
-    expect(DAILY_BLOCK_STYLES.booked.bg).toContain('amber');
+  it('booked uses warning palette', () => {
+    expect(DAILY_BLOCK_STYLES.booked.bg).toContain('warning');
   });
 
-  it('own-booking uses rose palette', () => {
-    expect(DAILY_BLOCK_STYLES['own-booking'].bg).toContain('rose');
+  it('own-booking uses error palette', () => {
+    expect(DAILY_BLOCK_STYLES['own-booking'].bg).toContain('error');
   });
 
-  it('blocked uses zinc palette', () => {
-    expect(DAILY_BLOCK_STYLES.blocked.bg).toContain('zinc');
+  it('blocked uses gray palette', () => {
+    expect(DAILY_BLOCK_STYLES.blocked.bg).toContain('gray');
   });
 });
 
@@ -248,9 +248,9 @@ describe('getCalendarLegendItems', () => {
 
   it('dot colors match SLOT_STATUS_STYLES palette', () => {
     const admin = getCalendarLegendItems(true);
-    expect(admin[0].className).toContain('emerald'); // Verfügbar
-    expect(admin[1].className).toContain('violet'); // Gruppentraining
-    expect(admin[2].className).toContain('blue'); // Session
-    expect(admin[3].className).toContain('zinc'); // Gesperrt
+    expect(admin[0].className).toContain('success'); // Verfügbar
+    expect(admin[1].className).toContain('info'); // Gruppentraining
+    expect(admin[2].className).toContain('info'); // Session
+    expect(admin[3].className).toContain('gray'); // Gesperrt
   });
 });

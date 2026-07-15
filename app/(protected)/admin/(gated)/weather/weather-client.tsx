@@ -220,7 +220,7 @@ export default function WeatherClient() {
               </div>
             </div>
             {weather.recommendation !== 'green' && (
-              <div className="mt-4 p-3 rounded-lg bg-warning-50 dark:bg-warning-900/30 border border-warning-200 dark:border-warning-800">
+              <div className="mt-4 p-3 rounded-xl bg-warning-50 dark:bg-warning-900/30 border border-warning-200 dark:border-warning-800">
                 <p className="text-sm text-warning-800 dark:text-warning-300">
                   {weather.recommendation === 'red'
                     ? '⚠️ Achtung: Schlechte Wetterbedingungen — Außenplätze sollten gesperrt werden.'
@@ -251,7 +251,7 @@ export default function WeatherClient() {
               {closures.map((c) => (
                 <div
                   key={c.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted border"
+                  className="flex items-center justify-between p-3 rounded-xl bg-muted border"
                 >
                   <div>
                     <div className="font-medium text-sm">{c.courts?.name ?? 'Platz'}</div>
@@ -283,7 +283,7 @@ export default function WeatherClient() {
 
           {/* New Closure Form */}
           {showNewClosure && (
-            <div className="mt-4 p-4 border rounded-lg bg-muted/50 space-y-3">
+            <div className="mt-4 p-4 border rounded-xl bg-muted/50 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="wc-court" className="text-xs font-medium">

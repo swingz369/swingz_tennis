@@ -135,7 +135,7 @@ export default function PaymentImportDialog() {
               id="payment-csv-upload"
             />
             <label htmlFor="payment-csv-upload">
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors">
+              <div className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 transition-colors">
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground mb-2">
                   Klicken Sie, um eine CSV-Datei auszuwählen

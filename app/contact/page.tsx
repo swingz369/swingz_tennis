@@ -43,7 +43,7 @@ export default function ContactPage() {
           <nav className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
                 <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
               </div>
               <span className="text-2xl font-bold text-white font-display">SWINGZ</span>
@@ -91,7 +91,7 @@ export default function ContactPage() {
 
             {/* Contact Info — Static */}
             <div className="space-y-8">
-              <div className="bg-muted rounded-3xl p-8">
+              <div className="bg-muted rounded-xl p-8">
                 <h3 className="text-xl font-bold text-foreground mb-6">So erreichst du uns</h3>
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
@@ -122,7 +122,7 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-brand-primary to-brand-light rounded-3xl p-8 text-white">
+              <div className="bg-gradient-to-br from-brand-primary to-brand-light rounded-xl p-8 text-white">
                 <Sparkles className="h-8 w-8 mb-4" />
                 <h3 className="text-xl font-bold mb-2">Warum SWINGZ?</h3>
                 <ul className="space-y-2 text-white/80 text-sm mb-6">

@@ -143,7 +143,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
 
         {!loadingData && data && opponent && (
           <>
-            <div className="grid grid-cols-3 items-center gap-2 rounded-lg border p-4">
+            <div className="grid grid-cols-3 items-center gap-2 rounded-xl border p-4">
               <div className="text-center">
                 <div className="text-3xl font-bold text-foreground">{data.myWins}</div>
                 <div className="mt-0.5 text-xs text-muted-foreground">Meine Siege</div>

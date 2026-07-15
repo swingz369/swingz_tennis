@@ -482,7 +482,7 @@ export default function LeagueDetailClient({
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-brand-primary">{league.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-brand-primary">{league.name}</h1>
             <div className="flex gap-2 mt-2 flex-wrap">
               {league.nuliga_url && (
                 <Badge
@@ -794,7 +794,7 @@ export default function LeagueDetailClient({
 
                     {/* Member Assignment */}
                     {assigningTeamId === team.id && (
-                      <div className="mt-3 p-3 border rounded-lg bg-muted/50 space-y-2">
+                      <div className="mt-3 p-3 border rounded-xl bg-muted/50 space-y-2">
                         <div className="relative">
                           <Input
                             placeholder="Mitglied suchen…"
@@ -1018,7 +1018,7 @@ export default function LeagueDetailClient({
 
                     {/* Result Recording */}
                     {editingResultId === md.id && (
-                      <div className="mt-3 p-3 border rounded-lg bg-muted/50 space-y-3">
+                      <div className="mt-3 p-3 border rounded-xl bg-muted/50 space-y-3">
                         <div className="flex items-center gap-4">
                           <div>
                             <label htmlFor="ld-result-type" className="text-xs font-medium">
@@ -1202,7 +1202,7 @@ export default function LeagueDetailClient({
                     {syncHistory.map((entry) => (
                       <div
                         key={entry.id as string}
-                        className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 text-sm"
+                        className="flex items-start gap-3 p-3 rounded-xl bg-muted/40 text-sm"
                       >
                         <div className="mt-0.5">
                           {(entry.status as string) === 'success' ? (

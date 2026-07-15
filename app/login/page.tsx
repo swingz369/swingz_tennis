@@ -96,7 +96,7 @@ export default function LoginPage() {
           <div>
             <Link href="/" className="flex items-center gap-3 mb-12 group w-fit">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
                 <IconBox
                   icon={Trophy}
                   size="md"
@@ -123,7 +123,7 @@ export default function LoginPage() {
 
           {/* Stats + Feature cards */}
           <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-accent to-brand-accent-600 flex items-center justify-center shadow-lg">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
@@ -134,14 +134,14 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+              <div className="p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="h-4 w-4 text-brand-accent" />
                   <p className="font-semibold text-sm">Kostenlos testen</p>
                 </div>
                 <p className="text-white/55 text-xs">14 Tage Probezeit</p>
               </div>
-              <div className="p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
+              <div className="p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <Shield className="h-4 w-4 text-brand-light" />
                   <p className="font-semibold text-sm">DSGVO-konform</p>
@@ -226,7 +226,7 @@ export default function LoginPage() {
                   />
                   <button
                     type="button"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg flex items-center justify-center text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors z-10"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-muted-foreground hover:bg-muted transition-colors z-10"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                   >

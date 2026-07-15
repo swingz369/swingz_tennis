@@ -94,7 +94,7 @@ export function MobileBottomNav({
       <div className="relative flex justify-around items-center h-16 px-2">
         {/* Theme Toggle — absolutely positioned so it doesn't affect justify-around distribution */}
         <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
-          <ThemeToggle iconSize={16} className="h-8 w-8 rounded-lg" />
+          <ThemeToggle iconSize={16} className="h-8 w-8 rounded-xl" />
         </div>
         {/* Active indicator background */}
         {navItems.map((item) => {

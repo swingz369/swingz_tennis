@@ -89,7 +89,7 @@ export default function SearchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Suche</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Suche</h1>
         <p className="text-muted-foreground mt-2">
           Durchsuche alle Daten mit erweiterten Filtern und Sortieroptionen
         </p>
@@ -135,7 +135,7 @@ export default function SearchPage() {
                     <Link href={result.url} className="block">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3 flex-1">
-                          <div className="p-2 rounded-lg bg-muted">
+                          <div className="p-2 rounded-xl bg-muted">
                             <Icon className="h-5 w-5" aria-hidden="true" />
                           </div>
                           <div className="flex-1">

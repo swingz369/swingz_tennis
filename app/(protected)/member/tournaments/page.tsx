@@ -103,7 +103,7 @@ export default function MemberTournamentsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-brand-primary">Turniere</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Turniere</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Vereinsturniere und Anmeldung</p>
       </div>
 
@@ -196,9 +196,7 @@ export default function MemberTournamentsPage() {
                         </p>
                       )}
                       {t.prize_info && (
-                        <p className="text-2xs text-muted-foreground mt-0.5">
-                          🏆 {t.prize_info}
-                        </p>
+                        <p className="text-2xs text-muted-foreground mt-0.5">🏆 {t.prize_info}</p>
                       )}
                       <div className="mt-3">
                         {canRegister && (

@@ -239,7 +239,7 @@ export function MemberSelector() {
               <button
                 key={level}
                 onClick={() => setFilterLevel(level)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-colors ${
                   filterLevel === level
                     ? 'bg-brand-primary text-white'
                     : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-muted dark:text-muted-foreground'
@@ -269,7 +269,7 @@ export function MemberSelector() {
       </div>
 
       {/* Members Table */}
-      <div className="rounded-lg border bg-background dark:bg-surface-dark overflow-hidden">
+      <div className="rounded-xl border bg-background dark:bg-surface-dark overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

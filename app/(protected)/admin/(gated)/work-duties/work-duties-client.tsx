@@ -519,7 +519,7 @@ export default function WorkDutiesClient({
                     }}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-muted">
+                      <div className="p-2 rounded-xl bg-muted">
                         <TypeIcon className="h-5 w-5" />
                       </div>
                       <div>
@@ -621,7 +621,7 @@ export default function WorkDutiesClient({
 
                         {/* Member Assignment Search */}
                         {assigningId === duty.id && (
-                          <div className="mt-2 p-3 border rounded-lg bg-muted/50 space-y-2">
+                          <div className="mt-2 p-3 border rounded-xl bg-muted/50 space-y-2">
                             <div className="relative">
                               <Input
                                 placeholder="Mitglied suchen…"
@@ -874,7 +874,7 @@ export default function WorkDutiesClient({
                     <button
                       key={i}
                       onClick={() => loadTemplate(tpl)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-medium transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-xs font-medium transition-colors"
                     >
                       <Copy className="h-3 w-3" />
                       {tpl.title}
@@ -1053,7 +1053,7 @@ export default function WorkDutiesClient({
                       <button
                         key={wd.value}
                         onClick={() => toggleWeekday(wd.value)}
-                        className={`w-10 h-10 rounded-lg text-xs font-bold transition-colors ${
+                        className={`w-10 h-10 rounded-xl text-xs font-bold transition-colors ${
                           bulkWeekdays.includes(wd.value)
                             ? 'bg-brand-primary text-white'
                             : 'bg-muted text-muted-foreground hover:bg-muted'

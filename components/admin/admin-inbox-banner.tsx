@@ -30,9 +30,9 @@ export function AdminInboxBanner({
 }) {
   if (variant === 'inbox-zero') {
     return (
-      <div className="rounded-2xl border border-border dark:border-white/10 bg-card">
+      <div className="rounded-xl border border-border dark:border-white/10 bg-card">
         <div className="flex items-center gap-4 px-5 sm:px-6 py-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success-50 dark:bg-success-900/20 shrink-0">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success-50 dark:bg-success-900/20 shrink-0">
             <CheckCircle2 className="h-6 w-6 text-success-600 dark:text-success-400" />
           </div>
           <div className="min-w-0 flex-1">
@@ -69,7 +69,7 @@ export function AdminInboxBanner({
               key={`${action.href}-${action.label}`}
               href={action.href}
               className={cn(
-                'group relative overflow-hidden rounded-2xl border p-4',
+                'group relative overflow-hidden rounded-xl border p-4',
                 'transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                 isUrgent
@@ -146,7 +146,7 @@ export function AdminInboxBanner({
               {/* Urgent: subtle pulsing indicator on border via accent-shadow ring */}
               {isUrgent && (
                 <span
-                  className="pointer-events-none absolute inset-0 -z-10 rounded-2xl ring-1 ring-brand-accent-400/20 animate-pulse-glow"
+                  className="pointer-events-none absolute inset-0 -z-10 rounded-xl ring-1 ring-brand-accent-400/20 animate-pulse-glow"
                   aria-hidden="true"
                 />
               )}

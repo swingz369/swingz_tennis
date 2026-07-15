@@ -148,7 +148,7 @@ export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <div className="max-h-56 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
+              <div className="max-h-56 overflow-y-auto space-y-1 border border-border rounded-xl p-2">
                 {membersLoading ? (
                   <p className="text-sm text-muted-foreground text-center py-4">Lade Mitglieder…</p>
                 ) : filteredMembers.length === 0 ? (

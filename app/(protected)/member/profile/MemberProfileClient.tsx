@@ -168,7 +168,7 @@ export function MemberProfileClient({ member }: Props) {
     <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Mein Profil</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Mein Profil</h1>
           <p className="text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
         </div>
         <Button
@@ -471,7 +471,7 @@ export function MemberProfileClient({ member }: Props) {
                 {(family.members ?? []).map((m) => (
                   <div
                     key={m.userId}
-                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                    className="flex items-center gap-3 rounded-xl border border-border px-3 py-2"
                   >
                     <User className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div className="flex-1 min-w-0">

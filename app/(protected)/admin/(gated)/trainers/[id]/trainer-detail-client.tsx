@@ -474,7 +474,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
           <Skeleton className="h-4 w-32 rounded" />
         </div>
 
-        <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden">
           {/* Header skeleton */}
           <div className="p-5 border-b border-border dark:border-white/10">
             <div className="flex items-start justify-between gap-4">
@@ -499,7 +499,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
             </div>
 
             {/* Personal info card skeleton */}
-            <div className="rounded-lg border border-border p-5 space-y-4">
+            <div className="rounded-xl border border-border p-5 space-y-4">
               <Skeleton className="h-5 w-44 rounded" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -512,7 +512,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
             </div>
 
             {/* Emergency contact card skeleton */}
-            <div className="rounded-lg border border-border p-5 space-y-4">
+            <div className="rounded-xl border border-border p-5 space-y-4">
               <Skeleton className="h-5 w-36 rounded" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {[1, 2, 3].map((i) => (
@@ -525,7 +525,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
             </div>
 
             {/* Honorar card skeleton */}
-            <div className="rounded-lg border border-border p-5 space-y-4">
+            <div className="rounded-xl border border-border p-5 space-y-4">
               <Skeleton className="h-5 w-24 rounded" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
@@ -542,7 +542,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
             </div>
 
             {/* Languages card skeleton */}
-            <div className="rounded-lg border border-border p-5 space-y-3">
+            <div className="rounded-xl border border-border p-5 space-y-3">
               <Skeleton className="h-5 w-24 rounded" />
               <div className="flex gap-2">
                 <Skeleton className="h-6 w-20 rounded-full" />
@@ -584,7 +584,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
         </span>
       </nav>
 
-      <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+      <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="p-5 border-b border-border dark:border-white/10">
           <div className="flex items-start justify-between gap-4">
@@ -1115,7 +1115,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                   {weeklyLoading ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                        <Skeleton key={i} className="h-16 w-full rounded-xl" />
                       ))}
                     </div>
                   ) : weeklySlots.length > 0 ? (
@@ -1124,7 +1124,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                         const daySlots = getWeeklySlotsForDay(day.value);
                         if (daySlots.length === 0) return null;
                         return (
-                          <div key={day.value} className="border rounded-lg p-3">
+                          <div key={day.value} className="border rounded-xl p-3">
                             <h4 className="font-semibold text-sm text-brand-primary mb-2">
                               {day.label}
                             </h4>
@@ -1278,7 +1278,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                   {availLoading ? (
                     <div className="space-y-2">
                       {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                        <Skeleton key={i} className="h-12 w-full rounded-xl" />
                       ))}
                     </div>
                   ) : availabilitySlots.length > 0 ? (
@@ -1286,7 +1286,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                       {availabilitySlots.slice(0, 20).map((slot) => (
                         <div
                           key={slot.id}
-                          className={`flex items-center gap-3 p-3 rounded-lg border text-sm ${
+                          className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
                             slot.status === 'available'
                               ? 'bg-success-50 border-success-200 dark:bg-success-900/10 dark:border-success-800'
                               : slot.status === 'booked'
@@ -1421,7 +1421,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                       {trainer.preferredTimeSlots.map((slot, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-3 bg-background dark:bg-background p-3 rounded-lg border shadow-sm text-sm"
+                          className="flex items-center gap-3 bg-background dark:bg-background p-3 rounded-xl border shadow-sm text-sm"
                         >
                           <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="font-medium">
@@ -1461,7 +1461,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                   {trialsLoading ? (
                     <div className="space-y-3">
                       {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                        <Skeleton key={i} className="h-20 w-full rounded-xl" />
                       ))}
                     </div>
                   ) : trialTrainings.length > 0 ? (
@@ -1469,7 +1469,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                       {trialTrainings.map((trial) => (
                         <div
                           key={trial.id}
-                          className={`p-4 rounded-lg border text-sm ${
+                          className={`p-4 rounded-xl border text-sm ${
                             trial.status === 'requested'
                               ? 'bg-warning-50 border-warning-200 dark:bg-warning-900/10 dark:border-warning-800'
                               : trial.status === 'scheduled'

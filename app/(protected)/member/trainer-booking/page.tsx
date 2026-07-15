@@ -242,7 +242,7 @@ export default function MemberTrainerBookingPage() {
     return (
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Trainer buchen</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Trainer buchen</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Wähle einen Trainer für deine Einzelstunde
           </p>
@@ -356,7 +356,7 @@ export default function MemberTrainerBookingPage() {
             return (
               <div key={idx} className="min-h-24">
                 <div
-                  className={`text-center text-2xs font-semibold mb-1 py-1 rounded-lg ${
+                  className={`text-center text-2xs font-semibold mb-1 py-1 rounded-xl ${
                     isToday ? 'bg-brand-light text-white' : 'text-muted-foreground'
                   }`}
                 >
@@ -383,9 +383,7 @@ export default function MemberTrainerBookingPage() {
                       >
                         <div className="font-medium">{slot.start_time}</div>
                         <div className="text-2xs opacity-75">{slot.end_time}</div>
-                        {isBooked && (
-                          <div className="text-2xs opacity-75 mt-0.5">Warteliste</div>
-                        )}
+                        {isBooked && <div className="text-2xs opacity-75 mt-0.5">Warteliste</div>}
                       </button>
                     );
                   })}
@@ -435,7 +433,7 @@ export default function MemberTrainerBookingPage() {
         {confirmSlot && (
           <div className="space-y-3 py-2">
             {actionMode === 'waitlist' && (
-              <div className="rounded-lg bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 px-3 py-2 text-xs text-warning-700 dark:text-warning-300">
+              <div className="rounded-xl bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 px-3 py-2 text-xs text-warning-700 dark:text-warning-300">
                 Dieser Slot ist bereits gebucht. Du kannst dich auf die Warteliste setzen und wirst
                 benachrichtigt, wenn er frei wird.
               </div>

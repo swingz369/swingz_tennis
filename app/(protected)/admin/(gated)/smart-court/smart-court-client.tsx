@@ -157,7 +157,7 @@ export default function SmartCourtClient({ clubId, initialVendor, courts }: Prop
                   aria-checked={isSelected}
                   aria-label={`${meta.name} als Hardware-Vendor auswählen`}
                   onClick={() => setSelectedVendor(v)}
-                  className={`text-left rounded-lg border-2 p-4 transition-all hover:border-brand-primary/50 ${
+                  className={`text-left rounded-xl border-2 p-4 transition-all hover:border-brand-primary/50 ${
                     isSelected
                       ? 'border-brand-primary bg-brand-primary/5 ring-2 ring-brand-primary/20'
                       : 'border-border'

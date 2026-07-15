@@ -246,7 +246,7 @@ export default function MemberProfile() {
         <div>
           <div className="h-4 w-32 bg-muted rounded animate-pulse" />
         </div>
-        <div className="bg-background rounded-2xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
@@ -272,7 +272,7 @@ export default function MemberProfile() {
 
       {/* ── Hero Header ── */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
@@ -302,7 +302,7 @@ export default function MemberProfile() {
         </div>
       </ScrollReveal>
 
-      <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+      <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="p-5 border-b border-border dark:border-white/10 bg-gradient-to-r from-brand-primary/5 to-transparent">
           <div className="flex items-start justify-between gap-4">
@@ -714,7 +714,7 @@ export default function MemberProfile() {
                           <img
                             src={mfaQr}
                             alt="2FA QR-Code"
-                            className="w-40 h-40 rounded-lg border border-border"
+                            className="w-40 h-40 rounded-xl border border-border"
                           />
                         </>
                       )}

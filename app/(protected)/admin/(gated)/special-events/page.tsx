@@ -164,7 +164,7 @@ export default function SpecialEventsPage() {
         >
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
-            className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-card rounded-xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
             role="dialog"

@@ -54,7 +54,7 @@ export function AdminPanelV2Client({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-display text-brand-primary">
+          <h1 className="text-2xl font-bold tracking-tight font-display text-brand-primary">
             Superadmin Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -164,7 +164,7 @@ export function AdminPanelV2Client({
             >
               <CardContent className="p-5">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-info-50 dark:bg-info-900/20 shrink-0">
                     <Building2 className="h-5 w-5 text-info-600 dark:text-info-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -197,7 +197,7 @@ export function AdminPanelV2Client({
 
                 <Link
                   href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-info-600 text-white text-sm font-medium hover:bg-info-700 transition-colors group-hover:shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-info-600 text-white text-sm font-medium hover:bg-info-700 transition-colors group-hover:shadow-sm"
                 >
                   Als Admin verwalten
                   <ChevronRight className="h-4 w-4" />
@@ -285,7 +285,7 @@ export function AdminPanelV2Client({
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="text-center p-4 bg-muted dark:bg-card/5 rounded-lg"
+                    className="text-center p-4 bg-muted dark:bg-card/5 rounded-xl"
                   >
                     <p className="text-2xl font-bold text-info-600 dark:text-info-400">
                       {item.value.toLocaleString('de-DE')}

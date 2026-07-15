@@ -214,7 +214,7 @@ export default function PublicTrialBooking({
       </CardHeader>
       <CardContent>
         {/* Info Banner */}
-        <div className="flex items-start gap-3 p-4 rounded-lg bg-info-50 border border-info-200 dark:bg-info-900/10 dark:border-info-800 mb-6">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-info-50 border border-info-200 dark:bg-info-900/10 dark:border-info-800 mb-6">
           <Info className="h-5 w-5 text-info-600 mt-0.5 shrink-0" />
           <div className="text-sm text-info-800 dark:text-info-300 space-y-1">
             <p className="font-medium">So funktioniert&apos;s:</p>
@@ -227,7 +227,7 @@ export default function PublicTrialBooking({
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-error-50 border border-error-200 text-error-700 text-sm mb-6">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-error-50 border border-error-200 text-error-700 text-sm mb-6">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>

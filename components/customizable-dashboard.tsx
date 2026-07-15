@@ -86,7 +86,7 @@ function SortableWidget({
           <button
             {...attributes}
             {...listeners}
-            className="p-1 rounded-lg hover:bg-muted dark:hover:bg-background/10 text-muted-foreground cursor-grab active:cursor-grabbing"
+            className="p-1 rounded-xl hover:bg-muted dark:hover:bg-background/10 text-muted-foreground cursor-grab active:cursor-grabbing"
             aria-label="Widget verschieben"
           >
             <GripVertical className="h-3.5 w-3.5" />
@@ -99,7 +99,7 @@ function SortableWidget({
               const nextSize = sizeOptions[(currentIdx + 1) % sizeOptions.length];
               onResize(widget.id, nextSize);
             }}
-            className="px-1.5 py-1 rounded-lg hover:bg-muted dark:hover:bg-background/10 text-xs font-mono text-muted-foreground"
+            className="px-1.5 py-1 rounded-xl hover:bg-muted dark:hover:bg-background/10 text-xs font-mono text-muted-foreground"
             title={`Größe: ${widget.size} → ${sizeOptions[(sizeOptions.indexOf(widget.size) + 1) % sizeOptions.length]}`}
           >
             {widget.size.toUpperCase()}
@@ -108,7 +108,7 @@ function SortableWidget({
           {/* Toggle visibility */}
           <button
             onClick={() => onToggleVisibility(widget.id)}
-            className="p-1 rounded-lg hover:bg-muted dark:hover:bg-background/10 text-muted-foreground"
+            className="p-1 rounded-xl hover:bg-muted dark:hover:bg-background/10 text-muted-foreground"
             aria-label={widget.visible ? 'Widget ausblenden' : 'Widget einblenden'}
           >
             {widget.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
@@ -117,7 +117,7 @@ function SortableWidget({
           {/* Remove */}
           <button
             onClick={() => onRemove(widget.id)}
-            className="p-1 rounded-lg hover:bg-error-50 dark:hover:bg-error-900/20 text-error-400 hover:text-error-600"
+            className="p-1 rounded-xl hover:bg-error-50 dark:hover:bg-error-900/20 text-error-400 hover:text-error-600"
             aria-label="Widget entfernen"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -149,7 +149,7 @@ function WidgetPicker({
 }) {
   if (availableWidgets.length === 0) {
     return (
-      <div className="absolute right-0 top-full mt-2 z-30 w-80 bg-background dark:bg-card border border-border dark:border-white/10 rounded-2xl shadow-xl p-6 text-center">
+      <div className="absolute right-0 top-full mt-2 z-30 w-80 bg-background dark:bg-card border border-border dark:border-white/10 rounded-xl shadow-xl p-6 text-center">
         <p className="text-sm text-muted-foreground">
           Alle verfügbaren Widgets sind bereits hinzugefügt.
         </p>
@@ -161,7 +161,7 @@ function WidgetPicker({
   }
 
   return (
-    <div className="absolute right-0 top-full mt-2 z-30 w-80 bg-background dark:bg-card border border-border dark:border-white/10 rounded-2xl shadow-xl overflow-hidden">
+    <div className="absolute right-0 top-full mt-2 z-30 w-80 bg-background dark:bg-card border border-border dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
       <div className="px-4 py-3 border-b border-border dark:border-white/10 bg-muted/30">
         <h3 className="text-sm font-semibold">Widget hinzufügen</h3>
       </div>
@@ -465,7 +465,7 @@ export function CustomizableDashboard({
       {/* Empty state */}
       {layout.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mb-4">
+          <div className="h-16 w-16 rounded-xl bg-muted dark:bg-card/5 flex items-center justify-center mb-4">
             <LayoutGrid className="h-8 w-8 text-muted-foreground/50" />
           </div>
           <p className="font-medium text-muted-foreground mb-2">Dashboard ist leer</p>

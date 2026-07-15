@@ -49,7 +49,7 @@ function DraggableSlotCard({
     <div
       ref={isOverlay ? undefined : setNodeRef}
       {...(isOverlay ? {} : { ...attributes, ...listeners })}
-      className={`group relative rounded-lg px-2.5 py-1.5 cursor-grab active:cursor-grabbing select-none
+      className={`group relative rounded-xl px-2.5 py-1.5 cursor-grab active:cursor-grabbing select-none
         transition-all duration-200 ease-out
         ${
           isOverlay
@@ -203,7 +203,7 @@ function SlotEditModal({
         role="dialog"
         aria-modal="true"
         aria-label={`Edit slot ${slot.groupName}`}
-        className="bg-card rounded-2xl shadow-2xl border border-border w-full max-w-md mx-4 overflow-hidden"
+        className="bg-card rounded-xl shadow-2xl border border-border w-full max-w-md mx-4 overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
@@ -217,7 +217,7 @@ function SlotEditModal({
               <p className="text-xs text-muted-foreground">{slot.memberNames.length} Mitglieder</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-muted transition-colors">
             <X size={16} className="text-muted-foreground" />
           </button>
         </div>
@@ -238,7 +238,7 @@ function SlotEditModal({
                 <button
                   key={d}
                   onClick={() => setDay(i)}
-                  className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all
+                  className={`flex-1 py-2 text-xs font-medium rounded-xl transition-all
                     ${
                       day === i
                         ? 'bg-brand-primary text-white shadow-sm'
@@ -263,7 +263,7 @@ function SlotEditModal({
               id="slot-edit-start"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm
                 focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all"
             >
               {HOURS.map((h) => (
@@ -288,7 +288,7 @@ function SlotEditModal({
               type="text"
               value={trainerName}
               onChange={(e) => setTrainerName(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm
                 focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all"
             />
           </div>
@@ -308,7 +308,7 @@ function SlotEditModal({
               value={courtName}
               onChange={(e) => setCourtName(e.target.value)}
               placeholder="z.B. Platz 1"
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm
                 focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all"
             />
           </div>
@@ -340,13 +340,13 @@ function SlotEditModal({
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border bg-muted/30">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+            className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-xl transition-colors"
           >
             Abbrechen
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors shadow-sm"
+            className="px-4 py-2 text-sm bg-brand-primary text-white rounded-xl hover:bg-brand-primary/90 transition-colors shadow-sm"
           >
             Speichern
           </button>

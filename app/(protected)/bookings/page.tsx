@@ -278,14 +278,14 @@ function BookingsContent() {
     <div className="space-y-6">
       {/* ── Hero Header ── */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-primary via-brand-primary/95 to-brand-dark p-6 md:p-8 text-white">
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-background/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-brand-accent/10 blur-3xl" />
           <div className="relative">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-white/70 mb-1">Buchungen</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Kalender & Reservierungen</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Kalender & Reservierungen</h1>
                 <p className="text-white/70 mt-2">
                   Platzverfügbarkeit, Training und Buchungen verwalten
                 </p>
@@ -322,7 +322,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">diesen Monat</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-info-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CalendarIcon className="h-5 w-5" />
                 </div>
               </div>
@@ -341,7 +341,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">reserviert</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-brand-primary to-brand-light text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CalendarCheck className="h-5 w-5" />
                 </div>
               </div>
@@ -360,7 +360,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">aktive Buchungen</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-success-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-success-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
               </div>
@@ -379,7 +379,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">verfügbare Plätze</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-brand-accent-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-brand-accent to-brand-accent-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Timer className="h-5 w-5" />
                 </div>
               </div>
@@ -439,7 +439,7 @@ function BookingsContent() {
                 <div className="text-center py-12 text-muted-foreground">Laden...</div>
               ) : (
                 <div className="overflow-x-auto -mx-4 px-4">
-                  <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-lg overflow-hidden min-w-[600px]">
+                  <div className="grid grid-cols-7 gap-px bg-muted dark:bg-muted rounded-xl overflow-hidden min-w-[600px]">
                     {/* Day headers */}
                     {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                       <div

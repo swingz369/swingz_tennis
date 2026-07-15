@@ -229,7 +229,7 @@ describe('TrainerAvailabilityManager (integration)', () => {
     // Click "09:30" chip specifically in the Monday card (scope with within)
     const mondayHeading = screen.getByText('Montag');
     // Walk up to the Card that contains the heading (CardHeader→Card)
-    const mondayCard = mondayHeading.closest('.rounded-t-lg')?.parentElement;
+    const mondayCard = mondayHeading.closest('.rounded-t-xl')?.parentElement;
     expect(mondayCard).toBeTruthy();
     const mondayChip09 = within(mondayCard!).getByText('09:30');
     fireEvent.click(mondayChip09);
@@ -309,7 +309,7 @@ describe('TrainerAvailabilityManager (integration)', () => {
     // 2. Remove Tuesday's slot by toggling the "11:00" chip
     // Find the Tuesday card and click the active "11:00" chip
     const dienstagHeading = screen.getByText('Dienstag');
-    const dienstagCard = dienstagHeading.closest('.rounded-t-lg')?.parentElement;
+    const dienstagCard = dienstagHeading.closest('.rounded-t-xl')?.parentElement;
     expect(dienstagCard).toBeTruthy();
     const dienstagChip11 = within(dienstagCard!).getByText('11:00');
     fireEvent.click(dienstagChip11);
@@ -377,7 +377,7 @@ describe('TrainerAvailabilityManager (integration)', () => {
 
     // Toggle off Monday's "08:00" chip to remove the editable slot
     const montagHeading = screen.getByText('Montag');
-    const montagCard = montagHeading.closest('.rounded-t-lg')?.parentElement;
+    const montagCard = montagHeading.closest('.rounded-t-xl')?.parentElement;
     expect(montagCard).toBeTruthy();
     const montagChip08 = within(montagCard!).getByText('08:00');
     fireEvent.click(montagChip08);

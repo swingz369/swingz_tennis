@@ -450,7 +450,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
         <span className="font-medium text-foreground truncate">{member.full_name}</span>
       </nav>
 
-      <div className="bg-background dark:bg-surface-dark rounded-2xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
+      <div className="bg-background dark:bg-surface-dark rounded-xl border border-border dark:border-white/10 shadow-sm overflow-hidden animate-in">
         {/* ── Detail Header ────────────────────────────────────────────── */}
         <div className="p-5 border-b border-border dark:border-white/10">
           <div className="flex items-start justify-between gap-4">
@@ -857,7 +857,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   {absencesLoading ? (
                     <div className="space-y-2">
                       {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                        <Skeleton key={i} className="h-10 w-full rounded-xl" />
                       ))}
                     </div>
                   ) : absences === null ? (
@@ -923,7 +923,7 @@ export function MembersDetailClient({ initialMember, clubId }: Props) {
                   {loading ? (
                     <div className="space-y-2">
                       {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                        <Skeleton key={i} className="h-12 w-full rounded-xl" />
                       ))}
                     </div>
                   ) : bookings.length === 0 ? (

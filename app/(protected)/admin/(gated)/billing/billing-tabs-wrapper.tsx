@@ -179,35 +179,35 @@ export function BillingCategoriesTabs({
       <TabsList className="w-full max-w-3xl grid grid-cols-5 bg-muted dark:bg-card/5 p-1 rounded-xl">
         <TabsTrigger
           value="invoices"
-          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <CreditCard className="h-4 w-4 mr-2" />
           Rechnungen
         </TabsTrigger>
         <TabsTrigger
           value="categories"
-          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <Tag className="h-4 w-4 mr-2" />
           Kategorien
         </TabsTrigger>
         <TabsTrigger
           value="trainer"
-          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <GraduationCap className="h-4 w-4 mr-2" />
           Trainer
         </TabsTrigger>
         <TabsTrigger
           value="sepa"
-          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <FileDown className="h-4 w-4 mr-2" />
           SEPA-Export
         </TabsTrigger>
         <TabsTrigger
           value="datev"
-          className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+          className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
         >
           <BookOpen className="h-4 w-4 mr-2" />
           DATEV

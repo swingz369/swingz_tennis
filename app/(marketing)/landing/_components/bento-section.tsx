@@ -106,7 +106,7 @@ export function BentoSection() {
         </div>
 
         {/* Bento Grid — Magazine lay-flat: Hero tile + Quote tile + 5 Supporting tiles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-foreground/10 border border-foreground/10 rounded-sm overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-foreground/10 border border-foreground/10 rounded-md overflow-hidden">
           {BENTO_FEATURES.map((feat, idx) => {
             const isHero = feat.span === 'lg';
             const isQuote = feat.span === 'quote';

@@ -81,7 +81,9 @@ export default function ClubsAdminPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Vereine verwalten</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">
+            Vereine verwalten
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Vereine deiner Gruppe anlegen und verwalten
           </p>
@@ -102,7 +104,7 @@ export default function ClubsAdminPage() {
           <CardContent>
             <form onSubmit={handleCreateClub} className="space-y-4">
               {error && (
-                <div className="p-3 bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 rounded-lg text-error-700 dark:text-error-400 text-sm">
+                <div className="p-3 bg-error-50 dark:bg-error-900/10 border border-error-200 dark:border-error-700/30 rounded-xl text-error-700 dark:text-error-400 text-sm">
                   {error}
                 </div>
               )}

@@ -84,14 +84,14 @@ export default function MatchmakingPage() {
     <div className="space-y-6">
       {/* ── Hero Header ── */}
       <ScrollReveal>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-info-600 via-info-600 to-info-700 p-6 md:p-8 text-white">
+        <div className="relative overflow-hidden rounded-xl bg-info-600 p-6 md:p-8 text-white">
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-info-400/10 blur-3xl" />
           <div className="relative">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-white/70 mb-1">KI-Verwaltung</p>
-                <h1 className="text-2xl md:text-3xl font-bold">Matchmaking Dashboard</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Matchmaking Dashboard</h1>
                 <p className="text-white/70 mt-2">
                   Übersicht über Spielpartner-Matching und Niveau-Verteilung
                 </p>
@@ -131,7 +131,7 @@ export default function MatchmakingPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">potenzielle Partner</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-info-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Shuffle className="h-5 w-5" />
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function MatchmakingPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">Durchschnitts-Score</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-success-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-success-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Target className="h-5 w-5" />
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default function MatchmakingPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">aktive Mitglieder</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-info-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-xl bg-info-500 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Users className="h-5 w-5" />
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function MatchmakingPage() {
                   <p className="text-xs text-muted-foreground">aktuelle Einstufung</p>
                 </div>
                 <div
-                  className={`p-3 rounded-2xl bg-gradient-to-br ${levelColors[stats?.myLevel ?? 'beginner'] ?? 'from-gray-500 to-gray-600'} text-white shadow-lg transition-all duration-300 group-hover:scale-110`}
+                  className={`p-3 rounded-xl bg-gradient-to-br ${levelColors[stats?.myLevel ?? 'beginner'] ?? 'from-gray-500 to-gray-600'} text-white shadow-lg transition-all duration-300 group-hover:scale-110`}
                 >
                   <Activity className="h-5 w-5" />
                 </div>
@@ -214,7 +214,7 @@ export default function MatchmakingPage() {
                   .map(([level, count]) => (
                     <div
                       key={level}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50"
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/50"
                     >
                       <div
                         className={`h-3 w-3 rounded-full bg-gradient-to-br ${levelColors[level] ?? 'from-gray-400 to-gray-500'}`}

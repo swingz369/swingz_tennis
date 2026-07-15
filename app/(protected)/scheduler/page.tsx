@@ -107,7 +107,7 @@ export default function SchedulerPage() {
       <div className="p-6 space-y-6">
         <CalendarShell title="Stundenplan" subtitle={subtitle} />
         <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center">
-          <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
+          <div className="h-14 w-14 rounded-xl bg-muted flex items-center justify-center">
             <Clock className="h-7 w-7 text-muted-foreground" />
           </div>
           <p className="font-semibold text-brand-primary">Noch kein Stundenplan vorhanden</p>
@@ -228,7 +228,7 @@ function SessionSlotCard({ session }: { session: Session }) {
 function SessionCard({ session }: { session: Session }) {
   return (
     <div
-      className={`rounded-lg p-4 border-l-4 hover:shadow-md transition-all ${
+      className={`rounded-xl p-4 border-l-4 hover:shadow-md transition-all ${
         session.bookedByUser
           ? 'bg-brand-light/10 border-l-brand-light'
           : 'bg-background border-l-brand-light shadow-sm'

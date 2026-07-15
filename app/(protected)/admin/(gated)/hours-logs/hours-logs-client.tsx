@@ -372,7 +372,7 @@ export default function HoursLogsClient() {
         <CardContent className="px-5 pb-5">
           {logs.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
-              <div className="h-16 w-16 rounded-2xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
+              <div className="h-16 w-16 rounded-xl bg-muted dark:bg-card/5 flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8" />
               </div>
               <p className="font-medium text-muted-foreground">Keine Stundennachweise</p>

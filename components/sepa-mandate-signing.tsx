@@ -209,7 +209,7 @@ export default function SEPAMandateSigning() {
                   Dein SEPA-Lastschriftmandat wurde erfolgreich gespeichert.
                 </p>
               </div>
-              <div className="bg-background rounded-lg p-4 text-left space-y-2">
+              <div className="bg-background rounded-xl p-4 text-left space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Kontoinhaber:</span>
                   <span className="font-medium">{formData.accountHolder}</span>
@@ -378,7 +378,9 @@ export default function SEPAMandateSigning() {
                     placeholder="12345"
                     className={errors.postalCode ? 'border-error-500' : ''}
                   />
-                  {errors.postalCode && <p className="text-sm text-error-600">{errors.postalCode}</p>}
+                  {errors.postalCode && (
+                    <p className="text-sm text-error-600">{errors.postalCode}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

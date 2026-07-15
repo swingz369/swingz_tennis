@@ -216,7 +216,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                   <Link href={n.link || '/notifications'}>
                     <div
                       className={cn(
-                        'flex h-7 w-7 items-center justify-center rounded-lg shrink-0 mt-0.5',
+                        'flex h-7 w-7 items-center justify-center rounded-xl shrink-0 mt-0.5',
                         !n.is_read
                           ? 'bg-brand-light/10 text-brand-light'
                           : 'bg-muted text-muted-foreground'

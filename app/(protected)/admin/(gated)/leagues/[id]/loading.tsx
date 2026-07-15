@@ -13,7 +13,7 @@ export default function Loading() {
       {/* Tabs */}
       <div className="flex gap-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-9 w-24 bg-muted rounded-lg" />
+          <div key={i} className="h-9 w-24 bg-muted rounded-xl" />
         ))}
       </div>
 

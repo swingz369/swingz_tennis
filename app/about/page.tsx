@@ -53,7 +53,7 @@ export default function AboutPage() {
           <nav className="flex h-20 items-center justify-between">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-light to-brand-primary rounded-xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
                 <IconBox icon={Trophy} variant="gradient-primary" iconClassName="h-6 w-6" />
               </div>
               <span className="text-2xl font-bold text-white font-display">SWINGZ</span>
@@ -141,7 +141,7 @@ export default function AboutPage() {
                   description: 'Daten werden in der EU verarbeitet und gespeichert.',
                 },
               ].map((item, idx) => (
-                <div key={idx} className="bg-muted rounded-2xl p-6">
+                <div key={idx} className="bg-muted rounded-xl p-6">
                   <item.icon className="h-8 w-8 text-brand-primary mb-3" />
                   <p className="text-sm font-bold text-foreground mb-1">{item.title}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -191,7 +191,7 @@ export default function AboutPage() {
             ].map((vision, idx) => (
               <div
                 key={idx}
-                className="bg-background rounded-2xl p-8 shadow-sm border border-border"
+                className="bg-background rounded-xl p-8 shadow-sm border border-border"
               >
                 <vision.icon className="h-10 w-10 text-brand-accent mb-4" />
                 <h3 className="text-xl font-bold text-foreground mb-3">{vision.title}</h3>
@@ -217,7 +217,7 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="max-w-2xl mx-auto">
-            <div className="bg-muted rounded-3xl p-8 sm:p-10 text-center">
+            <div className="bg-muted rounded-xl p-8 sm:p-10 text-center">
               <div className="h-20 w-20 rounded-full bg-gradient-to-br from-brand-primary to-brand-light flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <span className="text-2xl font-bold text-white">M</span>
               </div>

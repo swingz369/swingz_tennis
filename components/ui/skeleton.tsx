@@ -20,7 +20,7 @@ export function Skeleton({ className }: SkeletonProps) {
 // Card Skeleton – für Listen, Grids
 export function CardSkeleton() {
   return (
-    <div className="rounded-2xl border border-border bg-background p-6 shadow-[0_2px_8px_-2px_rgb(0,0,0,0.08),_0_4px_12px_-3px_rgb(0,0,0,0.06)]">
+    <div className="rounded-xl border border-border bg-background p-6 shadow-[0_2px_8px_-2px_rgb(0,0,0,0.08),_0_4px_12px_-3px_rgb(0,0,0,0.06)]">
       <div className="space-y-3">
         <Skeleton className="h-4 w-1/3" />
         <Skeleton className="h-8 w-2/3" />
@@ -37,7 +37,7 @@ export function CardSkeleton() {
 // KPI Card Skeleton
 export function KPISkeleton() {
   return (
-    <div className="rounded-2xl border border-border bg-background p-6 shadow-soft">
+    <div className="rounded-xl border border-border bg-background p-6 shadow-soft">
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <Skeleton className="h-3 w-20" />

@@ -443,7 +443,7 @@ export function FinalizeStep() {
 
                   {/* ▸ Config Info */}
                   {billingPreview.config && (
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl px-3 py-2">
                       <span className="font-medium text-foreground">Konfiguration:</span>
                       <Badge variant="secondary" className="text-2xs">
                         Stundensatz {billingPreview.config.trainer_hourly_rate.toFixed(2)} €
@@ -473,7 +473,7 @@ export function FinalizeStep() {
                       <Table2 className="h-4 w-4 text-muted-foreground" />
                       Kostenzusammensetzung pro Gruppe
                     </h4>
-                    <div className="rounded-lg border border-border overflow-hidden">
+                    <div className="rounded-xl border border-border overflow-hidden">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="bg-muted/50 border-b border-border">
@@ -548,7 +548,7 @@ export function FinalizeStep() {
                         {billingPreview.memberPreviews.length}
                       </Badge>
                     </h4>
-                    <div className="rounded-lg border border-border overflow-hidden max-h-[420px] overflow-y-auto">
+                    <div className="rounded-xl border border-border overflow-hidden max-h-[420px] overflow-y-auto">
                       <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-muted/50 z-10">
                           <tr className="border-b border-border">
@@ -610,7 +610,7 @@ export function FinalizeStep() {
                   </div>
 
                   {/* ▸ Grand Total Bar */}
-                  <div className="flex items-center justify-between rounded-lg bg-brand-primary/5 border border-brand-primary/20 px-4 py-3">
+                  <div className="flex items-center justify-between rounded-xl bg-brand-primary/5 border border-brand-primary/20 px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-primary/10">
                         <Euro className="h-4 w-4 text-brand-primary" />
@@ -879,7 +879,7 @@ export function FinalizeStep() {
                 .map((conflict) => (
                   <label
                     key={conflict.id}
-                    className="flex items-start gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted transition-colors"
+                    className="flex items-start gap-3 rounded-xl border p-3 cursor-pointer hover:bg-muted transition-colors"
                   >
                     <Checkbox
                       checked={confirmedWarnings.has(conflict.id)}
@@ -935,7 +935,7 @@ export function FinalizeStep() {
         </CardHeader>
         <CardContent>
           {aiReviewText ? (
-            <div className="rounded-lg bg-background border border-info-200 p-4">
+            <div className="rounded-xl bg-background border border-info-200 p-4">
               <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                 {aiReviewText}
               </p>
@@ -982,7 +982,7 @@ export function FinalizeStep() {
         </CardHeader>
         <CardContent>
           <textarea
-            className="w-full min-h-[80px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y"
+            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y"
             placeholder='z.B. "Planung mit Vorstand abgestimmt am..."'
             value={state.adminNotes}
             onChange={(e) => dispatch({ type: 'SET_ADMIN_NOTES', notes: e.target.value })}
@@ -1105,7 +1105,7 @@ function ConflictCard({
 
   return (
     <div
-      className={`rounded-lg border p-4 ${
+      className={`rounded-xl border p-4 ${
         conflict.status === 'resolved'
           ? 'border-success-200 bg-success-50/30 opacity-70'
           : conflict.status === 'ignored'

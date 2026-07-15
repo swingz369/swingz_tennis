@@ -175,7 +175,7 @@ export default function ScheduleReadinessCheck({ clubId, seasonId, onReady }: Re
             .map((item) => (
               <div
                 key={item.key}
-                className={`rounded-lg p-3 ${item.status === 'warn' ? 'bg-warning-50' : 'bg-error-50'}`}
+                className={`rounded-xl p-3 ${item.status === 'warn' ? 'bg-warning-50' : 'bg-error-50'}`}
               >
                 <p
                   className={`text-xs font-semibold mb-1 flex items-center gap-1.5 ${

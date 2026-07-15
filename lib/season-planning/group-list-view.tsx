@@ -44,7 +44,7 @@ export default function GroupListView({
         >
           {/* Day header */}
           <div className="flex items-center gap-3 px-5 py-3 bg-muted/50 border-b border-border">
-            <div className="w-8 h-8 rounded-lg bg-brand-secondary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-brand-secondary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
               {DAYS[day]}
             </div>
             <h2 className="font-semibold text-foreground text-sm">{DAY_LABELS[day]}</h2>
@@ -97,7 +97,7 @@ export default function GroupListView({
                   </div>
                   {/* Member transfer UI */}
                   {expandedSlot === slot.id && (
-                    <div className="mt-3 ml-6 p-3 bg-muted/50 rounded-lg border border-border">
+                    <div className="mt-3 ml-6 p-3 bg-muted/50 rounded-xl border border-border">
                       <p className="text-xs font-medium text-muted-foreground mb-2">
                         Mitglied in andere Gruppe verschieben:
                       </p>

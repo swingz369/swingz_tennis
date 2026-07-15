@@ -533,7 +533,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           <div>
             <div className="flex items-center gap-3">
               <span className="text-3xl">{season.season_type === 'summer' ? '☀️' : '❄️'}</span>
-              <h1 className="text-3xl font-bold tracking-tight">{season.name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{season.name}</h1>
               {season.is_active && (
                 <Badge variant="default">
                   <CheckCircle className="mr-1 h-3 w-3" />

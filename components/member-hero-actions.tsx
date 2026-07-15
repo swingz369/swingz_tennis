@@ -71,7 +71,7 @@ export function MemberHeroActions() {
           <Link
             key={action.href}
             href={action.href}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${action.color}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${action.color}`}
           >
             <Icon className="h-3.5 w-3.5" />
             {action.label}

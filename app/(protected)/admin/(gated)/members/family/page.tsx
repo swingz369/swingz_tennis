@@ -220,7 +220,7 @@ export default function AdminFamilyPage() {
                 {group.members.map((m) => (
                   <div
                     key={m.userId}
-                    className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2"
+                    className="flex items-center justify-between rounded-xl border border-border bg-muted/30 px-3 py-2"
                   >
                     <div>
                       <p className="text-sm font-medium">{m.fullName}</p>
@@ -263,7 +263,7 @@ export default function AdminFamilyPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <div className="max-h-72 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
+          <div className="max-h-72 overflow-y-auto space-y-1 border border-border rounded-xl p-2">
             {membersLoading ? (
               <p className="text-sm text-muted-foreground text-center py-4">Lade Mitglieder…</p>
             ) : filteredMembers.length === 0 ? (

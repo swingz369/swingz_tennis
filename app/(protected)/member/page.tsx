@@ -133,7 +133,7 @@ export default async function MemberPage() {
       {/* ── Greeting ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-display text-foreground dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight font-display text-foreground dark:text-white">
             Hallo, {firstName}!
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -261,7 +261,7 @@ export default async function MemberPage() {
                 return (
                   <div
                     key={b.id}
-                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
                   >
                     <IconBox icon={MapPin} size="sm" variant="green" />
                     <div className="flex-1 min-w-0">
@@ -304,7 +304,7 @@ export default async function MemberPage() {
                 return (
                   <div
                     key={s.id}
-                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-lg transition-colors"
+                    className="flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded-xl transition-colors"
                   >
                     <IconBox icon={Clock} size="sm" variant="light" />
                     <div className="flex-1 min-w-0">

@@ -484,14 +484,14 @@ export default function AdminShopPage() {
         <TabsList className="w-full max-w-md grid grid-cols-2 bg-muted dark:bg-card/5 p-1 rounded-xl">
           <TabsTrigger
             value="products"
-            className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
           >
             <Package className="h-4 w-4 mr-2" />
             Produkte
           </TabsTrigger>
           <TabsTrigger
             value="orders"
-            className="rounded-lg data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
+            className="rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-surface-dark data-[state=active]:text-brand-primary data-[state=active]:shadow-sm"
           >
             <ClipboardList className="h-4 w-4 mr-2" />
             Bestellungen
@@ -582,7 +582,7 @@ export default function AdminShopPage() {
                         <button
                           type="button"
                           onClick={() => setImageMode('upload')}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
                             imageMode === 'upload'
                               ? 'bg-brand-light/10 text-brand-light border-brand-light/30'
                               : 'bg-background dark:bg-surface-dark text-muted-foreground border-border dark:border-white/10'
@@ -594,7 +594,7 @@ export default function AdminShopPage() {
                         <button
                           type="button"
                           onClick={() => setImageMode('url')}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
                             imageMode === 'url'
                               ? 'bg-brand-light/10 text-brand-light border-brand-light/30'
                               : 'bg-background dark:bg-surface-dark text-muted-foreground border-border dark:border-white/10'
@@ -647,7 +647,7 @@ export default function AdminShopPage() {
                             }`}
                           >
                             {imagePreview ? (
-                              <div className="relative w-full max-w-[200px] aspect-square rounded-lg overflow-hidden">
+                              <div className="relative w-full max-w-[200px] aspect-square rounded-xl overflow-hidden">
                                 <Image
                                   src={imagePreview}
                                   alt="Vorschau"
@@ -807,14 +807,14 @@ export default function AdminShopPage() {
                           <TableRow key={product.id}>
                             <TableCell>
                               <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted dark:bg-card/5 shrink-0">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted dark:bg-card/5 shrink-0">
                                   {product.image_url ? (
                                     <Image
                                       src={product.image_url}
                                       alt={product.name}
                                       width={36}
                                       height={36}
-                                      className="h-9 w-9 rounded-lg object-cover"
+                                      className="h-9 w-9 rounded-xl object-cover"
                                     />
                                   ) : (
                                     <Package className="h-4 w-4 text-muted-foreground" />

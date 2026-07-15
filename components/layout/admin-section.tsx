@@ -146,7 +146,7 @@ export function AdminSection({
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          'w-full flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider transition-colors duration-200',
+          'w-full flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider transition-colors duration-200',
           hasActiveChild
             ? `${colors.bg} ${colors.text}`
             : 'text-muted-foreground/70 hover:bg-muted hover:text-muted-foreground'

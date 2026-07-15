@@ -114,7 +114,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                   <button
                     key={session.id}
                     onClick={() => setSelectedSessionId(session.id)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                       isSelected
                         ? 'bg-brand-primary text-white shadow-md'
                         : 'bg-muted text-muted-foreground hover:bg-muted'
@@ -135,13 +135,19 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
             ) : (
               <>
                 <div className="flex gap-3">
-                  <Badge variant="default" className="bg-success-100 text-success-700 border-success-200">
+                  <Badge
+                    variant="default"
+                    className="bg-success-100 text-success-700 border-success-200"
+                  >
                     {accepted.length} zugesagt
                   </Badge>
                   <Badge variant="default" className="bg-error-100 text-error-700 border-error-200">
                     {declined.length} abgesagt
                   </Badge>
-                  <Badge variant="default" className="bg-warning-100 text-warning-700 border-warning-200">
+                  <Badge
+                    variant="default"
+                    className="bg-warning-100 text-warning-700 border-warning-200"
+                  >
                     {maybe.length} vielleicht
                   </Badge>
                 </div>
@@ -159,7 +165,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                         return (
                           <div
                             key={rsvp.id}
-                            className={`flex items-center justify-between p-2.5 rounded-lg text-sm ${
+                            className={`flex items-center justify-between p-2.5 rounded-xl text-sm ${
                               isCheckedIn ? 'bg-success-50 border border-success-200' : 'bg-muted'
                             }`}
                           >
@@ -203,7 +209,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                       {maybe.map((rsvp) => (
                         <div
                           key={rsvp.id}
-                          className="flex items-center justify-between p-2.5 rounded-lg bg-warning-50 text-sm"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-warning-50 text-sm"
                         >
                           <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
                         </div>
@@ -222,7 +228,7 @@ export function TrainerRsvpList({ sessions, trainerId, trainerName }: TrainerRsv
                       {declined.map((rsvp) => (
                         <div
                           key={rsvp.id}
-                          className="flex items-center justify-between p-2.5 rounded-lg bg-error-50 text-sm"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-error-50 text-sm"
                         >
                           <span className="font-medium">{rsvp.user?.fullName || 'Mitglied'}</span>
                           <Badge variant="outline" className="text-error-600 border-error-200">

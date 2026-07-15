@@ -47,14 +47,14 @@ export default async function SuperadminSubscriptionPage() {
       </Suspense>
 
       <div>
-        <h1 className="text-2xl font-bold">Abonnement Tennisschule</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Abonnement Tennisschule</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Gleicher Funktionsumfang in beiden Plänen — der Preis richtet sich nur nach der Anzahl
           deiner Vereine.
         </p>
       </div>
 
-      <div className="flex items-center gap-2.5 rounded-lg bg-muted/50 px-4 py-3 text-sm">
+      <div className="flex items-center gap-2.5 rounded-xl bg-muted/50 px-4 py-3 text-sm">
         <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span>
           Deine Vereine:{' '}

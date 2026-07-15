@@ -655,7 +655,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
             <div className="space-y-4 py-2">
               {/* Member / Trainer */}
               {selectedBooking.source === 'season_plan' ? (
-                <div className="flex items-start gap-3 p-3 bg-warning-50 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-warning-50 rounded-xl">
                   <User className="h-5 w-5 text-warning-600 mt-0.5 flex-shrink-0" />
                   <div>
                     <div className="font-medium">{selectedBooking.trainer_name || '—'}</div>
@@ -670,7 +670,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-xl">
                   <User className="h-5 w-5 text-brand-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <div className="font-medium">{selectedBooking.member_name}</div>
@@ -683,7 +683,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
 
               {/* Court + Type */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-xl">
                   <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <div>
                     <div className="text-sm font-medium">{selectedBooking.court_name}</div>
@@ -700,7 +700,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-xl">
                   <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <div>
                     <div className="text-sm font-medium">
@@ -722,7 +722,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
               </div>
 
               {/* Herkunft */}
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
                 <span className="text-sm text-muted-foreground">Herkunft</span>
                 <Badge
                   variant={SOURCE_CONFIG[selectedBooking.source]?.variant || 'secondary'}
@@ -733,7 +733,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
               </div>
 
               {/* Status */}
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
                 <span className="text-sm text-muted-foreground">Status</span>
                 {(() => {
                   const cfg = STATUS_CONFIG[selectedBooking.status] || STATUS_CONFIG.pending;
@@ -749,7 +749,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
 
               {/* Booked at */}
               {selectedBooking.booked_at && (
-                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
                   <span className="text-sm text-muted-foreground">Gebucht am</span>
                   <span className="text-sm font-medium">
                     {format(parseISO(selectedBooking.booked_at), 'dd.MM.yyyy HH:mm', {
@@ -761,7 +761,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
 
               {/* Payment */}
               {selectedBooking.payment_status && (
-                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
                   <span className="text-sm text-muted-foreground">Zahlung</span>
                   <Badge
                     variant={
@@ -786,7 +786,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
 
               {/* Notes */}
               {selectedBooking.notes && (
-                <div className="p-3 bg-muted/30 rounded-lg">
+                <div className="p-3 bg-muted/30 rounded-xl">
                   <div className="text-xs text-muted-foreground mb-1">Notizen</div>
                   <div className="text-sm">{selectedBooking.notes}</div>
                 </div>
@@ -794,7 +794,7 @@ export default function CourtBookingsList({ clubId, isAdmin }: CourtBookingsList
 
               {/* Cancellation info */}
               {selectedBooking.status === 'cancelled' && selectedBooking.cancelled_at && (
-                <div className="p-3 bg-error-50 border border-error-200 rounded-lg text-sm text-error-700">
+                <div className="p-3 bg-error-50 border border-error-200 rounded-xl text-sm text-error-700">
                   <div className="font-medium">
                     Storniert am{' '}
                     {format(parseISO(selectedBooking.cancelled_at), 'dd.MM.yyyy HH:mm', {

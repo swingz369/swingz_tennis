@@ -17,7 +17,7 @@ export default function Loading() {
             key={i}
             className="flex items-center gap-4 p-4 rounded-xl border border-border dark:border-white/10 bg-card"
           >
-            <div className="h-10 w-10 bg-muted rounded-lg shrink-0" />
+            <div className="h-10 w-10 bg-muted rounded-xl shrink-0" />
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="h-4 w-48 bg-muted rounded" />
               <div className="h-3 w-64 bg-muted rounded" />

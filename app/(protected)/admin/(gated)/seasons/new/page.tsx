@@ -109,7 +109,7 @@ export default function NewSeasonPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Neue Season erstellen</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Neue Season erstellen</h1>
           <p className="text-muted-foreground">Erstellen Sie eine neue Trainings-Season</p>
         </div>
       </div>
