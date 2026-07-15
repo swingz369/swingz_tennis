@@ -8,6 +8,7 @@ const config: Config = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './lib/**/*.{js,ts,jsx,tsx}',
   ],
   safelist: [
     'bg-gradient-hero',
@@ -43,7 +44,10 @@ const config: Config = {
         brand: {
           primary: 'hsl(var(--brand-primary))',
           secondary: 'hsl(var(--brand-secondary))',
-          accent: 'hsl(var(--brand-accent))',
+          // Orange-Skala aus theme.ts + DEFAULT via CSS-Variable: `bg-brand-accent`
+          // bleibt unverändert, `bg-brand-accent-100` etc. ersetzen die früheren
+          // hartcodierten `orange-*`-Klassen.
+          accent: { DEFAULT: 'hsl(var(--brand-accent))', ...colors.accent },
           'accent-dashboard': 'hsl(var(--brand-accent-dashboard))',
         },
         gray: colors.gray,

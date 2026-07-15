@@ -1,41 +1,11 @@
-// SWINGZ Design Tokens – Premium Tennis Club Management
-// Philosophy: Refined Elegance meets Athletic Performance
-// Colors: Deep Forest + Midnight Navy + Sunrise Orange
+// SWINGZ Design Tokens — reiner Tailwind-Config-Zulieferer.
+// EINZIGE Laufzeit-Token-Quelle ist app/globals.css (CSS-Variablen, Light/Dark).
+// Diese Datei liefert nur statische Skalen an tailwind.config.ts — sie wird
+// nirgendwo sonst importiert. Neue Farben hier NICHT ergänzen; erst prüfen,
+// ob ein semantisches Token (success/warning/error/info, brand-*) passt.
 
 export const colors = {
-  // Primary – Forest Green (SwingZ Brand Core)
-  primary: {
-    50: '#f0fdf4',
-    100: '#dcfce7',
-    200: '#bbf7d0',
-    300: '#86efac',
-    400: '#4ade80',
-    500: '#22c55e',
-    600: '#16a34a',
-    700: '#15803d',
-    800: '#166534',
-    900: '#14532d',
-    950: '#0a3d2e',
-    brand: '#1B4332',
-    velvet: '#0f2d22',
-  },
-  // Secondary – Midnight Navy (Depth & Trust)
-  secondary: {
-    50: '#f0f4f8',
-    100: '#d9e2ec',
-    200: '#bcccdc',
-    300: '#9fb3c8',
-    400: '#829ab1',
-    500: '#627d98',
-    600: '#486581',
-    700: '#3e5c76',
-    800: '#334e68',
-    900: '#1e3a5f',
-    950: '#0f1f33',
-    brand: '#1e3a5f',
-    obsidian: '#0a1420',
-  },
-  // Accent – Sunrise Orange (Energy & Action)
+  // Accent – Sunrise Orange (Energy & Action) — als brand-accent-Skala in Tailwind
   accent: {
     50: '#fff7ed',
     100: '#ffedd5',
@@ -175,17 +145,6 @@ export const typography = {
   },
 };
 
-export const spacing = {
-  xs: '0.5rem',
-  sm: '0.75rem',
-  md: '1rem',
-  lg: '1.5rem',
-  xl: '2rem',
-  '2xl': '3rem',
-  '3xl': '4rem',
-  '4xl': '6rem',
-};
-
 export const radius = {
   none: '0',
   /** Single Source of Truth for the dashboard design system (10 px).
@@ -272,30 +231,4 @@ export const gradients = {
     primary: 'linear-gradient(135deg, hsl(150 48% 18%) 0%, hsl(150 45% 35%) 100%)',
     accent: 'linear-gradient(135deg, hsl(26 100% 60%) 0%, hsl(26 100% 73%) 100%)',
   },
-};
-
-export const transitions = {
-  fast: '150ms cubic-bezier(0.4, 0, 0.2, 1)',
-  base: '250ms cubic-bezier(0.4, 0, 0.2, 1)',
-  slow: '350ms cubic-bezier(0.4, 0, 0.2, 1)',
-  spring: '500ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-};
-
-export const breakpoints = {
-  sm: '640px',
-  md: '768px',
-  lg: '1024px',
-  xl: '1280px',
-  '2xl': '1536px',
-};
-
-export const zIndex = {
-  dropdown: 1000,
-  sticky: 1020,
-  fixed: 1030,
-  modalBackdrop: 1040,
-  modal: 1050,
-  popover: 1060,
-  tooltip: 1070,
-  toast: 1080,
 };
