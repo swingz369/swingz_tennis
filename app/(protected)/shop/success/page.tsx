@@ -99,7 +99,7 @@ function SuccessContent() {
                 className={
                   order.payment_status === 'paid'
                     ? 'bg-success-100 text-success-700 border-success-200'
-                    : 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                    : 'bg-warning-100 text-warning-700 border-warning-200'
                 }
               >
                 {order.payment_status === 'paid' ? 'Bezahlt' : 'In Bearbeitung'}

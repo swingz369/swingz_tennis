@@ -49,9 +49,9 @@ export function ContactFormClient() {
 
   if (submitted) {
     return (
-      <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/30 rounded-3xl p-8 text-center">
-        <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+      <div className="bg-success-50 dark:bg-success-900/10 border border-success-200 dark:border-success-700/30 rounded-3xl p-8 text-center">
+        <div className="h-16 w-16 rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center mx-auto mb-4">
+          <CheckCircle2 className="h-8 w-8 text-success-600 dark:text-success-400" />
         </div>
         <h3 className="text-xl font-bold text-foreground mb-2">Nachricht gesendet!</h3>
         <p className="text-muted-foreground">

@@ -60,7 +60,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   event_support: {
     label: 'Veranstaltung',
     icon: Calendar,
-    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
   },
   bar_duty: {
     label: 'Schankdienst',
@@ -70,7 +70,7 @@ const dutyTypeLabels: Record<string, { label: string; icon: typeof HardHat; colo
   cleaning: {
     label: 'Reinigung',
     icon: Sparkles,
-    color: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
+    color: 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300',
   },
   coaching_assist: {
     label: 'Trainerhilfe',

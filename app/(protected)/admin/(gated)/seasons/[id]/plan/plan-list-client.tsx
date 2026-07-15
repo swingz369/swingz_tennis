@@ -47,8 +47,8 @@ interface Props {
 
 const STATUS_COLORS: Record<string, string> = {
   planned: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
-  confirmed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-  cancelled: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  confirmed: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
+  cancelled: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
   draft: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300',
 };
 

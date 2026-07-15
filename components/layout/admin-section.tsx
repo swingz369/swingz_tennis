@@ -44,11 +44,11 @@ export interface AdminSectionProps {
 // Pre-defined colour themes (mirrors roleColors in sidebar)
 export const adminSectionColors: Record<string, AdminSectionColors> = {
   superadmin: {
-    gradient: 'from-purple-500 to-purple-700',
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    text: 'text-purple-700 dark:text-purple-300',
+    gradient: 'from-info-500 to-info-700',
+    bg: 'bg-info-50 dark:bg-info-900/20',
+    text: 'text-info-700 dark:text-info-300',
     light: 'purple',
-    ring: 'ring-purple-300/40',
+    ring: 'ring-info-300/40',
   },
   admin: {
     gradient: 'from-brand-light to-brand-primary',
@@ -58,11 +58,11 @@ export const adminSectionColors: Record<string, AdminSectionColors> = {
     ring: 'ring-brand-light/30',
   },
   trainer: {
-    gradient: 'from-emerald-500 to-emerald-700',
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    text: 'text-emerald-600 dark:text-emerald-300',
+    gradient: 'from-success-500 to-success-700',
+    bg: 'bg-success-50 dark:bg-success-900/20',
+    text: 'text-success-600 dark:text-success-300',
     light: 'emerald',
-    ring: 'ring-emerald-300/40',
+    ring: 'ring-success-300/40',
   },
   neutral: {
     gradient: 'from-gray-500 to-gray-700',

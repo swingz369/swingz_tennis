@@ -63,12 +63,12 @@ describe('ScheduleReadinessCheck — errors', () => {
 
   it('should show XCircle icon in red', async () => {
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
-    await waitFor(() => expect(document.querySelector('.text-red-600')).toBeInTheDocument());
+    await waitFor(() => expect(document.querySelector('.text-error-600')).toBeInTheDocument());
   });
 
   it('should have red background on error', async () => {
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
-    await waitFor(() => expect(document.querySelector('.bg-red-50')).toBeInTheDocument());
+    await waitFor(() => expect(document.querySelector('.bg-error-50')).toBeInTheDocument());
   });
 });
 
@@ -97,7 +97,7 @@ describe('ScheduleReadinessCheck — all OK', () => {
 
   it('should show green background', async () => {
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
-    await waitFor(() => expect(document.querySelector('.bg-green-50')).toBeInTheDocument());
+    await waitFor(() => expect(document.querySelector('.bg-success-50')).toBeInTheDocument());
   });
 });
 
@@ -125,7 +125,7 @@ describe('ScheduleReadinessCheck — warnings', () => {
 
   it('should show amber background for warning chip', async () => {
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
-    await waitFor(() => expect(document.querySelector('.bg-amber-100')).toBeInTheDocument());
+    await waitFor(() => expect(document.querySelector('.bg-warning-100')).toBeInTheDocument());
   });
 });
 
@@ -227,13 +227,13 @@ describe('ScheduleReadinessCheck — chips', () => {
   it('should show green chips for OK items', async () => {
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
     await waitFor(() =>
-      expect(document.querySelectorAll('.bg-green-100').length).toBeGreaterThanOrEqual(3)
+      expect(document.querySelectorAll('.bg-success-100').length).toBeGreaterThanOrEqual(3)
     );
   });
 
   it('should show red chips for error items', async () => {
     mockFetchResponse({ planningMembers: 0, trainerCount: 0, availabilityCount: 0, courtCount: 0 });
     render(<ScheduleReadinessCheck clubId="club-1" seasonId="season-1" onReady={vi.fn()} />);
-    await waitFor(() => expect(document.querySelectorAll('.bg-red-100').length).toBe(2));
+    await waitFor(() => expect(document.querySelectorAll('.bg-error-100').length).toBe(2));
   });
 });

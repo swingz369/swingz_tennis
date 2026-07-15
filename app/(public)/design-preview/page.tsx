@@ -220,7 +220,7 @@ export default function DesignPreviewPage() {
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-background/5 px-4 py-1.5 mb-8">
             {' '}
             <span
-              className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"
+              className="h-2 w-2 rounded-full bg-success-400 animate-pulse"
               aria-hidden="true"
             />
             <span className="text-xs font-medium text-white/70">SwingZ Design System v1.0</span>
@@ -236,17 +236,18 @@ export default function DesignPreviewPage() {
           </p>
           <div className="mt-8 flex items-center justify-center gap-3 text-sm text-white/40">
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />9 Brand Colors
+              <span className="h-1.5 w-1.5 rounded-full bg-success-400" />9 Brand Colors
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-success-400" />
               13 Type Scales
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />8 Shadow Layers
+              <span className="h-1.5 w-1.5 rounded-full bg-success-400" />8 Shadow Layers
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />14 Animations
+              <span className="h-1.5 w-1.5 rounded-full bg-success-400" />
+              14 Animations
             </span>
           </div>
         </div>
@@ -458,7 +459,7 @@ export default function DesignPreviewPage() {
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {' '}
-              <div className="relative overflow-hidden rounded-2xl h-48 bg-gradient-to-br from-brand-primary to-emerald-950">
+              <div className="relative overflow-hidden rounded-2xl h-48 bg-gradient-to-br from-brand-primary to-success-900">
                 <div className="absolute inset-0 bg-grid opacity-[0.08]" />
                 <div className="absolute inset-4 glass rounded-xl flex items-center justify-center">
                   <div className="text-center">
@@ -690,7 +691,17 @@ export default function DesignPreviewPage() {
                 </h3>
                 <div className="flex flex-wrap gap-2 items-center">
                   {buttonVariantsList.map((b) => (
-                    <Button key={b.variant} variant={b.variant} size={size === 'default' ? undefined : size === 'icon' ? 'icon' : (size as 'sm' | 'md' | 'lg' | 'xl')}>
+                    <Button
+                      key={b.variant}
+                      variant={b.variant}
+                      size={
+                        size === 'default'
+                          ? undefined
+                          : size === 'icon'
+                            ? 'icon'
+                            : (size as 'sm' | 'md' | 'lg' | 'xl')
+                      }
+                    >
                       {size === 'icon' ? '✦' : b.label}
                     </Button>
                   ))}
@@ -702,8 +713,12 @@ export default function DesignPreviewPage() {
                 Loading State
               </h3>
               <div className="flex flex-wrap gap-2">
-                <Button variant="primary" isLoading>Speichern</Button>
-                <Button variant="outline" isLoading>Laden</Button>
+                <Button variant="primary" isLoading>
+                  Speichern
+                </Button>
+                <Button variant="outline" isLoading>
+                  Laden
+                </Button>
               </div>
             </div>
           </Section>
@@ -723,8 +738,14 @@ export default function DesignPreviewPage() {
                 <div className="flex flex-wrap gap-3">
                   {iconBoxVariants.map((v) => (
                     <div key={v.variant} className="flex flex-col items-center gap-1">
-                      <IconBox icon={iconBoxIcons[iconBoxVariants.indexOf(v) % iconBoxIcons.length]} size={size} variant={v.variant} />
-                      <span className="text-2xs text-muted-foreground dark:text-muted-foreground font-mono">{v.label}</span>
+                      <IconBox
+                        icon={iconBoxIcons[iconBoxVariants.indexOf(v) % iconBoxIcons.length]}
+                        size={size}
+                        variant={v.variant}
+                      />
+                      <span className="text-2xs text-muted-foreground dark:text-muted-foreground font-mono">
+                        {v.label}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -818,8 +839,8 @@ export default function DesignPreviewPage() {
               </div>
             </div>
 
-            <div className="mt-8 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200/50 dark:border-emerald-500/20">
-              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            <div className="mt-8 p-4 rounded-xl bg-success-50 dark:bg-success-900/10 border border-success-200/50 dark:border-success-500/20">
+              <p className="text-xs font-medium text-success-700 dark:text-success-300">
                 ✅ Alle interaktiven Elemente haben <code className="text-xs">focus-visible</code>
                 -Ring für Tastatur-Navigation (WCAG 2.2 AA).
               </p>

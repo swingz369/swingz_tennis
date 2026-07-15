@@ -43,16 +43,16 @@ interface Club {
 
 const roleColors = {
   owner: {
-    bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-    text: 'text-indigo-700 dark:text-indigo-300',
+    bg: 'bg-info-50 dark:bg-info-900/20',
+    text: 'text-info-700 dark:text-info-300',
     light: 'indigo',
-    ring: 'ring-indigo-300/40',
+    ring: 'ring-info-300/40',
   },
   superadmin: {
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    text: 'text-purple-700 dark:text-purple-300',
+    bg: 'bg-info-50 dark:bg-info-900/20',
+    text: 'text-info-700 dark:text-info-300',
     light: 'purple',
-    ring: 'ring-purple-300/40',
+    ring: 'ring-info-300/40',
   },
   admin: {
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
@@ -61,10 +61,10 @@ const roleColors = {
     ring: 'ring-brand-light/30',
   },
   trainer: {
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    text: 'text-emerald-600 dark:text-emerald-300',
+    bg: 'bg-success-50 dark:bg-success-900/20',
+    text: 'text-success-600 dark:text-success-300',
     light: 'emerald',
-    ring: 'ring-emerald-300/40',
+    ring: 'ring-success-300/40',
   },
   member: {
     bg: 'bg-brand-light/10 dark:bg-brand-light/15',
@@ -606,7 +606,7 @@ export function Sidebar({
               className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <Building2 className="h-4 w-4 shrink-0 text-purple-500" />
+                <Building2 className="h-4 w-4 shrink-0 text-info-500" />
                 <span className="truncate">{activeClub?.name ?? 'Club auswählen'}</span>
               </div>
               <ChevronDown
@@ -625,7 +625,7 @@ export function Sidebar({
                     className={cn(
                       'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
                       club.id === (selectedClubId ?? activeClub?.id)
-                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 font-medium'
+                        ? 'bg-info-50 dark:bg-info-900/20 text-info-700 dark:text-info-300 font-medium'
                         : 'text-muted-foreground hover:bg-muted'
                     )}
                   >
@@ -633,7 +633,7 @@ export function Sidebar({
                       className={cn(
                         'h-4 w-4 shrink-0',
                         club.id === (selectedClubId ?? activeClub?.id)
-                          ? 'text-purple-500'
+                          ? 'text-info-500'
                           : 'text-transparent'
                       )}
                     />

@@ -52,7 +52,7 @@ interface EntityCardProps {
 const ROLE_BADGE_CLASS: Record<string, string> = {
   admin: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-400',
   trainer: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
-  superadmin: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  superadmin: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
   member: 'bg-muted text-foreground dark:bg-muted dark:text-foreground',
 };
 

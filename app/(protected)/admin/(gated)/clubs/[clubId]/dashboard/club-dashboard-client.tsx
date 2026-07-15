@@ -57,7 +57,7 @@ export function ClubDashboardClient({
       label: 'Mitglieder',
       value: stats.members,
       icon: Users,
-      gradient: 'from-info-500 to-indigo-600',
+      gradient: 'from-info-500 to-info-600',
       href: `/admin/members?clubId=${clubId}`,
     },
     {
@@ -65,7 +65,7 @@ export function ClubDashboardClient({
       label: 'Trainer',
       value: stats.trainers,
       icon: UserCheck,
-      gradient: 'from-success-500 to-emerald-700',
+      gradient: 'from-success-500 to-success-700',
       href: `/admin/trainers?clubId=${clubId}`,
     },
     {
@@ -73,7 +73,7 @@ export function ClubDashboardClient({
       label: 'Plätze',
       value: stats.courts,
       icon: Building2,
-      gradient: 'from-purple-500 to-purple-700',
+      gradient: 'from-info-500 to-info-700',
       href: `/admin/courts?clubId=${clubId}`,
     },
   ] as const;

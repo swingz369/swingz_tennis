@@ -56,7 +56,7 @@ function InvoiceTypeBadge({ type }: { type: string }) {
   const config: Record<string, { label: string; className: string }> = {
     season: {
       label: 'Saison',
-      className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
     },
     membership: {
       label: 'Mitgliedsbeitrag',

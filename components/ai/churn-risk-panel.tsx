@@ -103,7 +103,10 @@ export function ChurnRiskPanel() {
           <TrendingDown className="h-3.5 w-3.5 text-warning-500" aria-label="Buchungsrückgang" />
         )}
         {trends.hasOverdueInvoices && (
-          <DollarSign className="h-3.5 w-3.5 text-orange-500" aria-label="Offene Rechnungen" />
+          <DollarSign
+            className="h-3.5 w-3.5 text-brand-accent-500"
+            aria-label="Offene Rechnungen"
+          />
         )}
       </>
     );

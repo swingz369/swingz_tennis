@@ -74,7 +74,7 @@ export function NuligaImport({ leagueId, teamName = '' }: Props) {
         <Button
           variant="outline"
           size="sm"
-          className="gap-1.5 text-warning-600 border-warning-300 hover:bg-warning-50 dark:hover:bg-warning-950"
+          className="gap-1.5 text-warning-600 border-warning-300 hover:bg-warning-50 dark:hover:bg-warning-900"
         >
           <AlertTriangle className="h-3.5 w-3.5" />
           CSV-Fallback

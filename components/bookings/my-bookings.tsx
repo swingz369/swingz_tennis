@@ -102,7 +102,7 @@ export function MyBookings() {
         return <Badge className="bg-success-500">Bestätigt</Badge>;
       case 'pending':
         return (
-          <Badge variant="outline" className="border-yellow-500 text-yellow-700">
+          <Badge variant="outline" className="border-warning-500 text-warning-700">
             Ausstehend
           </Badge>
         );

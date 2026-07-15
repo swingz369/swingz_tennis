@@ -74,7 +74,7 @@ const statusConfig: Record<
     label: 'Mitglied geworden',
     icon: Sparkles,
     color:
-      'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800',
+      'bg-success-50 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800',
     description: 'Super! Du bist jetzt offizielles Mitglied. Willkommen!',
   },
 };
@@ -235,10 +235,10 @@ export default async function MemberTrialTrainingPage() {
 
                 {/* Converted State */}
                 {t.status === 'converted' && (
-                  <div className="mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                  <div className="mt-4 p-3 rounded-lg bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      <CheckCircle2 className="h-4 w-4 text-success-600" />
+                      <p className="text-sm font-medium text-success-700 dark:text-success-300">
                         Willkommen im Verein! Du kannst jetzt alle Mitgliederfunktionen nutzen.
                       </p>
                     </div>
@@ -246,7 +246,7 @@ export default async function MemberTrialTrainingPage() {
                       <Button
                         variant="link"
                         size="sm"
-                        className="mt-1 h-auto p-0 text-emerald-700 dark:text-emerald-300"
+                        className="mt-1 h-auto p-0 text-success-700 dark:text-success-300"
                       >
                         Zum Mitglieder-Dashboard →
                       </Button>

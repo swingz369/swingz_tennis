@@ -196,10 +196,10 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
   // ── Loading state ────────────────────────────────────────────
   if (loading && !report) {
     return (
-      <Card className="border-purple-200 bg-purple-50/30">
+      <Card className="border-info-200 bg-info-50/30">
         <CardContent className="py-10 flex flex-col items-center gap-3">
-          <Loader2 className="h-7 w-7 animate-spin text-purple-600" />
-          <p className="text-sm text-purple-700">
+          <Loader2 className="h-7 w-7 animate-spin text-info-600" />
+          <p className="text-sm text-info-700">
             Simuliere Veröffentlichung — Konflikte, Finanzen, E-Mails werden vorberechnet…
           </p>
         </CardContent>
@@ -230,11 +230,11 @@ export function DryRunPanel({ seasonId, onReadyToPublish }: Props) {
 
   // ── Render full report ───────────────────────────────────────
   return (
-    <Card className="border-purple-200">
+    <Card className="border-info-200">
       <CardHeader>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <CardTitle className="flex items-center gap-2 text-purple-800">
+            <CardTitle className="flex items-center gap-2 text-info-800">
               <Beaker className="h-5 w-5" />
               Dry-Run Vorschau
             </CardTitle>
@@ -704,10 +704,10 @@ const RSVP_PIE_DATA: ReadonlyArray<{
   label: string;
   color: string;
 }> = [
-  { key: 'accepted', label: 'Zusage', color: 'green-500' },
-  { key: 'declined', label: 'Absage', color: 'red-500' },
-  { key: 'maybe', label: 'Vielleicht', color: 'amber-500' },
-  { key: 'pending', label: 'Wartet auf Antwort', color: 'blue-500' },
+  { key: 'accepted', label: 'Zusage', color: 'success-500' },
+  { key: 'declined', label: 'Absage', color: 'error-500' },
+  { key: 'maybe', label: 'Vielleicht', color: 'warning-500' },
+  { key: 'pending', label: 'Wartet auf Antwort', color: 'info-500' },
   { key: 'unknown', label: 'Unbekannt', color: 'gray-400' },
 ];
 
@@ -755,20 +755,20 @@ function RsvpPieSection({
                   <span
                     className={cn(
                       'inline-block h-2.5 w-2.5 rounded-sm flex-shrink-0',
-                      d.color.replace(/-(\d{3})$/, '-500') === 'green-500' && 'bg-success-500',
-                      d.color === 'green-500' && 'bg-success-500',
-                      d.color === 'red-500' && 'bg-error-500',
-                      d.color === 'amber-500' && 'bg-warning-500',
-                      d.color === 'blue-500' && 'bg-info-500',
+                      d.color.replace(/-(\d{3})$/, '-500') === 'success-500' && 'bg-success-500',
+                      d.color === 'success-500' && 'bg-success-500',
+                      d.color === 'error-500' && 'bg-error-500',
+                      d.color === 'warning-500' && 'bg-warning-500',
+                      d.color === 'info-500' && 'bg-info-500',
                       d.color === 'gray-400' && 'bg-gray-400'
                     )}
                     style={{
                       backgroundColor: (
                         {
-                          'green-500': '#22c55e',
-                          'red-500': '#ef4444',
-                          'amber-500': '#f59e0b',
-                          'blue-500': '#3b82f6',
+                          'success-500': '#22c55e',
+                          'error-500': '#ef4444',
+                          'warning-500': '#f59e0b',
+                          'info-500': '#3b82f6',
                           'gray-400': '#9ca3af',
                         } as Record<string, string>
                       )[d.color],

@@ -230,11 +230,11 @@ export function CourtBookings({ clubId }: Props) {
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                             court.surface_type === 'clay'
-                              ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                              ? 'bg-brand-accent-100 text-brand-accent-800 dark:bg-brand-accent-900/30 dark:text-brand-accent-300'
                               : court.surface_type === 'grass'
                                 ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
                                 : court.surface_type === 'artificial_grass'
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                  ? 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300'
                                   : 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300'
                           }`}
                         >
@@ -248,8 +248,8 @@ export function CourtBookings({ clubId }: Props) {
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                             court.is_indoor
-                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                              ? 'bg-info-100 text-info-800 dark:bg-info-900/30 dark:text-info-300'
+                              : 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300'
                           }`}
                         >
                           {court.is_indoor ? (
@@ -293,7 +293,7 @@ export function CourtBookings({ clubId }: Props) {
           </div>
         )}
 
-        <div className="bg-info-50 dark:bg-info-950 border border-info-200 dark:border-info-800 rounded-lg p-4">
+        <div className="bg-info-50 dark:bg-info-900 border border-info-200 dark:border-info-800 rounded-lg p-4">
           <h4 className="font-medium text-info-900 dark:text-info-100 mb-2">Buchungsregeln</h4>
           <ul className="text-sm text-info-700 dark:text-info-200 space-y-1">
             <li>• Buchungsdauer wählbar: 30, 60 oder 90 Minuten</li>

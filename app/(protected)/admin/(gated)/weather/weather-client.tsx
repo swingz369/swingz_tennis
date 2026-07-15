@@ -55,7 +55,7 @@ function WeatherIcon({ condition }: { condition: string }) {
     case 'Drizzle':
       return <CloudRain className="h-8 w-8 text-info-500" />;
     case 'Snow':
-      return <Snowflake className="h-8 w-8 text-cyan-400" />;
+      return <Snowflake className="h-8 w-8 text-info-400" />;
     case 'Thunderstorm':
       return <AlertTriangle className="h-8 w-8 text-error-500" />;
     case 'Clear':
@@ -215,12 +215,12 @@ export default function WeatherClient() {
                 <span>{weather.windSpeed} m/s</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Droplets className="h-4 w-4 text-cyan-400" />
+                <Droplets className="h-4 w-4 text-info-400" />
                 <span>{weather.precipitation} mm</span>
               </div>
             </div>
             {weather.recommendation !== 'green' && (
-              <div className="mt-4 p-3 rounded-lg bg-warning-50 dark:bg-warning-950/30 border border-warning-200 dark:border-warning-800">
+              <div className="mt-4 p-3 rounded-lg bg-warning-50 dark:bg-warning-900/30 border border-warning-200 dark:border-warning-800">
                 <p className="text-sm text-warning-800 dark:text-warning-300">
                   {weather.recommendation === 'red'
                     ? '⚠️ Achtung: Schlechte Wetterbedingungen — Außenplätze sollten gesperrt werden.'

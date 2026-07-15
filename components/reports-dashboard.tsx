@@ -76,13 +76,13 @@ export default function ReportsDashboard() {
       label: 'Buchungen gesamt',
       value: stats?.totalBookings ?? '--',
       icon: Calendar,
-      color: 'text-purple-600',
+      color: 'text-info-600',
     },
     {
       label: 'Platzauslastung',
       value: stats?.courtUtilization ? `${stats.courtUtilization}%` : '--',
       icon: PieChart,
-      color: 'text-teal-600',
+      color: 'text-info-600',
     },
   ];
 

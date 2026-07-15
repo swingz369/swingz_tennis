@@ -47,7 +47,7 @@ export function FamilySwitcher({
           {isParentViewingChild ? (
             <Baby className="h-4 w-4 shrink-0 text-warning-500" />
           ) : (
-            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
+            <ShieldCheck className="h-4 w-4 shrink-0 text-success-500" />
           )}
           <span className="truncate">
             {isParentViewingChild ? `Kind: ${activeChild?.fullName ?? 'Unbekannt'}` : 'Mein Konto'}
@@ -80,7 +80,7 @@ export function FamilySwitcher({
             <ShieldCheck
               className={cn(
                 'h-4 w-4 shrink-0',
-                !isParentViewingChild ? 'text-emerald-500' : 'text-transparent'
+                !isParentViewingChild ? 'text-success-500' : 'text-transparent'
               )}
             />
             <User className="h-3.5 w-3.5 shrink-0" />

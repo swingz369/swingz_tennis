@@ -154,7 +154,7 @@ export default async function OwnerBillingPage() {
                     {hasSmartCourt && (
                       <Badge
                         variant="outline"
-                        className="gap-1 text-xs text-orange-600 border-orange-300 dark:text-orange-400 dark:border-orange-700/50"
+                        className="gap-1 text-xs text-brand-accent-600 border-brand-accent-300 dark:text-brand-accent-400 dark:border-brand-accent-700/50"
                       >
                         <Wifi className="h-3 w-3" />
                         Smart Court

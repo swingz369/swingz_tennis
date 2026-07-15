@@ -137,7 +137,7 @@ export function TrainerMemberNote({ memberId, memberName, className }: Props) {
               <Badge
                 variant="warning"
                 size="sm"
-                className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800"
+                className="bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-400 border-warning-200 dark:border-warning-800"
               >
                 Vorhanden
               </Badge>

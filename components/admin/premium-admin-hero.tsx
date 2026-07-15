@@ -56,7 +56,7 @@ export function PremiumAdminHero({
           className={cn(
             'text-2xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
             isSuperadmin
-              ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300'
+              ? 'bg-info-50 text-info-700 dark:bg-info-900/20 dark:text-info-300'
               : 'bg-[hsl(var(--brand-accent-dashboard)/0.1)] text-[hsl(var(--brand-accent-dashboard))]'
           )}
         >

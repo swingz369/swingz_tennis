@@ -34,19 +34,19 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
     border: 'hover:border-info-200 dark:hover:border-info-700/50',
   },
   green: {
-    text: 'text-emerald-600 dark:text-emerald-400',
-    bg: 'bg-emerald-50 dark:bg-emerald-900/30',
-    border: 'hover:border-emerald-200 dark:hover:border-emerald-700/50',
+    text: 'text-success-600 dark:text-success-400',
+    bg: 'bg-success-50 dark:bg-success-900/30',
+    border: 'hover:border-success-200 dark:hover:border-success-700/50',
   },
   purple: {
-    text: 'text-purple-600 dark:text-purple-400',
-    bg: 'bg-purple-50 dark:bg-purple-900/30',
-    border: 'hover:border-purple-200 dark:hover:border-purple-700/50',
+    text: 'text-info-600 dark:text-info-400',
+    bg: 'bg-info-50 dark:bg-info-900/30',
+    border: 'hover:border-info-200 dark:hover:border-info-700/50',
   },
   orange: {
-    text: 'text-orange-600 dark:text-orange-400',
-    bg: 'bg-orange-50 dark:bg-orange-900/20',
-    border: 'hover:border-orange-200 dark:hover:border-orange-700/50',
+    text: 'text-brand-accent-600 dark:text-brand-accent-400',
+    bg: 'bg-brand-accent-50 dark:bg-brand-accent-900/20',
+    border: 'hover:border-brand-accent-200 dark:hover:border-brand-accent-700/50',
   },
   red: {
     text: 'text-error-600 dark:text-error-400',

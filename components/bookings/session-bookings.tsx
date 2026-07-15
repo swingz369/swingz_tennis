@@ -186,8 +186,8 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                           key={session.id}
                           className={`p-1 rounded text-xs transition-colors cursor-pointer ${
                             session.bookedByUser
-                              ? 'bg-error-50 dark:bg-error-950 text-error-800 dark:text-error-200 border border-error-200 dark:border-error-800'
-                              : 'bg-info-50 dark:bg-info-950 text-info-800 dark:text-info-200 hover:bg-info-100 dark:hover:bg-info-900'
+                              ? 'bg-error-50 dark:bg-error-900 text-error-800 dark:text-error-200 border border-error-200 dark:border-error-800'
+                              : 'bg-info-50 dark:bg-info-900 text-info-800 dark:text-info-200 hover:bg-info-100 dark:hover:bg-info-900'
                           }`}
                           role="button"
                           tabIndex={session.bookedByUser ? -1 : 0}
@@ -244,7 +244,7 @@ export function SessionBookings({ clubId: propClubId }: { clubId?: string }) {
                                       ? 'bg-error-100 dark:bg-error-900 text-error-700 dark:text-error-200'
                                       : session.bookingStatus === 'no_show'
                                         ? 'bg-muted dark:bg-muted text-foreground dark:text-gray-200'
-                                        : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200'
+                                        : 'bg-warning-100 dark:bg-warning-900 text-warning-700 dark:text-warning-200'
                                 }`}
                               >
                                 {getBookingStatusLabel(session.bookingStatus)}

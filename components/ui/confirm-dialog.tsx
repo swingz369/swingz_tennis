@@ -30,7 +30,7 @@ const variantStyles: Record<ConfirmVariant, { icon: React.ElementType; buttonCla
     icon: Trash2,
     buttonClass: 'bg-destructive hover:bg-destructive/90 text-destructive-foreground',
   },
-  warning: { icon: AlertTriangle, buttonClass: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
+  warning: { icon: AlertTriangle, buttonClass: 'bg-warning-500 hover:bg-warning-600 text-white' },
   default: { icon: XCircle, buttonClass: '' },
   primary: {
     icon: CheckCircle,
@@ -71,7 +71,7 @@ export function ConfirmDialog({
               variant === 'danger' || variant === 'destructive'
                 ? 'bg-destructive/10'
                 : variant === 'warning'
-                  ? 'bg-yellow-100'
+                  ? 'bg-warning-100'
                   : variant === 'primary'
                     ? 'bg-brand-primary/10'
                     : 'bg-muted'
@@ -82,7 +82,7 @@ export function ConfirmDialog({
                 variant === 'danger' || variant === 'destructive'
                   ? 'text-destructive'
                   : variant === 'warning'
-                    ? 'text-yellow-600'
+                    ? 'text-warning-600'
                     : variant === 'primary'
                       ? 'text-brand-primary'
                       : 'text-muted-foreground'

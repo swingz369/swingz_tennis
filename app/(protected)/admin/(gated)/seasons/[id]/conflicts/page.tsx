@@ -56,19 +56,19 @@ const SEVERITY_CONFIG: Record<
   critical: {
     icon: AlertTriangle,
     color: 'text-error-600 dark:text-error-400',
-    bg: 'bg-error-50 dark:bg-error-950 border-error-200 dark:border-error-800',
+    bg: 'bg-error-50 dark:bg-error-900 border-error-200 dark:border-error-800',
     label: 'Kritisch',
   },
   warning: {
     icon: AlertCircle,
     color: 'text-warning-600 dark:text-warning-400',
-    bg: 'bg-warning-50 dark:bg-warning-950 border-warning-200 dark:border-warning-800',
+    bg: 'bg-warning-50 dark:bg-warning-900 border-warning-200 dark:border-warning-800',
     label: 'Warnung',
   },
   info: {
     icon: Info,
     color: 'text-info-600 dark:text-info-400',
-    bg: 'bg-info-50 dark:bg-info-950 border-info-200 dark:border-info-800',
+    bg: 'bg-info-50 dark:bg-info-900 border-info-200 dark:border-info-800',
     label: 'Info',
   },
 };
@@ -376,7 +376,7 @@ export default function ConflictsPage({ params }: ConflictsPageProps) {
 
                       {/* Suggested Resolution */}
                       {conflict.suggestedResolution && (
-                        <div className="rounded-md border border-info-200 bg-info-50 px-3 py-2 text-sm text-info-800 dark:border-info-800 dark:bg-info-950 dark:text-info-200">
+                        <div className="rounded-md border border-info-200 bg-info-50 px-3 py-2 text-sm text-info-800 dark:border-info-800 dark:bg-info-900 dark:text-info-200">
                           <span className="font-medium">Vorschlag: </span>
                           {conflict.suggestedResolution}
                         </div>

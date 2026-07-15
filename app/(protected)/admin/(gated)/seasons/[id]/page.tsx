@@ -748,7 +748,7 @@ function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: strin
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-950 dark:text-warning-200">
+      <div className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-900 dark:text-warning-200">
         Bestehende Gruppen in dieser Saison werden <strong>nicht gelöscht</strong> — die kopierten
         Gruppen kommen zusätzlich hinzu.
       </div>

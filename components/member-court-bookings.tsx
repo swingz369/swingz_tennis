@@ -102,7 +102,11 @@ export default function MemberCourtBookings() {
 
     if (bookingDate < now) {
       if (booking.bookingStatus === 'completed') {
-        return { label: 'Abgeschlossen', color: 'bg-success-100 text-success-700', icon: CheckCircle };
+        return {
+          label: 'Abgeschlossen',
+          color: 'bg-success-100 text-success-700',
+          icon: CheckCircle,
+        };
       }
       if (booking.bookingStatus === 'no_show') {
         return { label: 'Nicht erschienen', color: 'bg-muted text-foreground', icon: XCircle };
@@ -114,7 +118,7 @@ export default function MemberCourtBookings() {
       return { label: 'Bestätigt', color: 'bg-info-100 text-info-700', icon: CheckCircle };
     }
 
-    return { label: 'Ausstehend', color: 'bg-yellow-100 text-yellow-700', icon: Clock };
+    return { label: 'Ausstehend', color: 'bg-warning-100 text-warning-700', icon: Clock };
   };
 
   if (sessionsLoading || courtsLoading) {

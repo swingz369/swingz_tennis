@@ -149,7 +149,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
                 <div className="mt-0.5 text-xs text-muted-foreground">Meine Siege</div>
               </div>
               <div className="flex flex-col items-center gap-1">
-                <Trophy className="h-5 w-5 text-yellow-500" />
+                <Trophy className="h-5 w-5 text-warning-500" />
                 <div className="text-xs font-medium text-muted-foreground">{data.total} Spiele</div>
               </div>
               <div className="text-center">
@@ -168,7 +168,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
                 </div>
                 <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full bg-emerald-500 transition-all"
+                    className="h-full bg-success-500 transition-all"
                     style={{ width: `${myWinPct}%` }}
                   />
                   <div
@@ -177,7 +177,7 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
                   />
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span className="text-emerald-600 dark:text-emerald-400">{myWinPct}% Ich</span>
+                  <span className="text-success-600 dark:text-success-400">{myWinPct}% Ich</span>
                   <span className="text-error-500 dark:text-error-400">
                     {oppWinPct}% {opponent.full_name || opponent.email}
                   </span>
@@ -209,9 +209,9 @@ export default function HeadToHead({ myUserId, clubId }: HeadToHeadProps) {
                           className={cn(
                             'text-xs',
                             match.outcome === 'win' &&
-                              'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+                              'border-success-500 bg-success-50 text-success-700 dark:bg-success-900 dark:text-success-300',
                             match.outcome === 'loss' &&
-                              'border-error-400 bg-error-50 text-error-700 dark:bg-error-950 dark:text-error-300',
+                              'border-error-400 bg-error-50 text-error-700 dark:bg-error-900 dark:text-error-300',
                             match.outcome === 'draw' &&
                               'border-muted-foreground text-muted-foreground'
                           )}

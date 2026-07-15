@@ -73,7 +73,7 @@ export default async function OwnerAccessPage() {
                     {r.club_name && <p className="text-xs text-muted-foreground">{r.club_name}</p>}
                     <a
                       href={`mailto:${r.email}`}
-                      className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                      className="flex items-center gap-1 text-xs text-info-600 dark:text-info-400 hover:underline"
                     >
                       <Mail className="h-3 w-3" />
                       {r.email}

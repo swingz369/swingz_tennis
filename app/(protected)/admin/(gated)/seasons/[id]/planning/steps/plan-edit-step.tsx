@@ -271,7 +271,7 @@ export function PlanEditStep() {
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-3xl font-bold ${scoreData.score >= 80 ? 'text-success-600' : scoreData.score >= 60 ? 'text-yellow-600' : 'text-error-600'}`}
+                  className={`text-3xl font-bold ${scoreData.score >= 80 ? 'text-success-600' : scoreData.score >= 60 ? 'text-warning-600' : 'text-error-600'}`}
                 >
                   {scoreData.score}%
                 </span>
@@ -285,7 +285,7 @@ export function PlanEditStep() {
                     scoreData.score >= 80
                       ? 'bg-success-500'
                       : scoreData.score >= 60
-                        ? 'bg-yellow-500'
+                        ? 'bg-warning-500'
                         : 'bg-error-500'
                   }`}
                   style={{ width: `${Math.min(100, scoreData.score)}%` }}
@@ -354,11 +354,11 @@ export function PlanEditStep() {
 
           {/* Warnings Section */}
           {(scoreData.totalWarnings > 0 || courtConflicts.length > 0) && (
-            <Card className="border-yellow-500/50">
+            <Card className="border-warning-500/50">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  <CardTitle className="text-base text-yellow-800">
+                  <AlertTriangle className="h-4 w-4 text-warning-600" />
+                  <CardTitle className="text-base text-warning-800">
                     {scoreData.totalWarnings + courtConflicts.length} Warnung
                     {scoreData.totalWarnings + courtConflicts.length !== 1 ? 'en' : ''}
                   </CardTitle>
@@ -367,19 +367,19 @@ export function PlanEditStep() {
               <CardContent>
                 <ul className="space-y-1.5">
                   {metrics.niveauSpanViolations > 0 && (
-                    <li className="text-sm text-yellow-700">
+                    <li className="text-sm text-warning-700">
                       • {metrics.niveauSpanViolations} Niveau-Spannen-Verletzung
                       {metrics.niveauSpanViolations !== 1 ? 'en' : ''}
                     </li>
                   )}
                   {metrics.highRiskSlotsUsed > 0 && (
-                    <li className="text-sm text-yellow-700">
+                    <li className="text-sm text-warning-700">
                       • {metrics.highRiskSlotsUsed} Hochrisiko-Slot
                       {metrics.highRiskSlotsUsed !== 1 ? 's' : ''} verwendet
                     </li>
                   )}
                   {metrics.trainerOverloadWarnings > 0 && (
-                    <li className="text-sm text-yellow-700">
+                    <li className="text-sm text-warning-700">
                       • {metrics.trainerOverloadWarnings} Trainer-Überlastung
                       {metrics.trainerOverloadWarnings !== 1 ? 'en' : ''}
                     </li>

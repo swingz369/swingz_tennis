@@ -68,7 +68,7 @@ function InvoiceStatusBadge({ status }: { status: string }) {
     draft: { label: 'Entwurf', className: 'bg-muted text-muted-foreground' },
     open: {
       label: 'Offen',
-      className: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
     },
     sent: {
       label: 'Versendet',
@@ -76,11 +76,12 @@ function InvoiceStatusBadge({ status }: { status: string }) {
     },
     reminder_sent: {
       label: 'Erinnerung',
-      className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+      className: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300',
     },
     partially_paid: {
       label: 'Teilbezahlt',
-      className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+      className:
+        'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-300',
     },
     paid: {
       label: 'Bezahlt',
@@ -102,7 +103,7 @@ function InvoiceStatusBadge({ status }: { status: string }) {
     },
     refunded: {
       label: 'Erstattet',
-      className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
     },
   };
   const c = config[status] ?? config.draft;
@@ -115,7 +116,7 @@ function InvoiceTypeBadge({ type }: { type: string }) {
   const config: Record<string, { label: string; className: string }> = {
     season: {
       label: 'Saison',
-      className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+      className: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
     },
     membership: {
       label: 'Mitgliedsbeitrag',
@@ -622,7 +623,7 @@ export default function BillingClient({
                             className={
                               invoice.paidAmount >= invoice.amount
                                 ? 'text-success-600'
-                                : 'text-orange-600'
+                                : 'text-brand-accent-600'
                             }
                           >
                             {invoice.paidAmount.toFixed(2)} {invoice.currency}
@@ -1039,7 +1040,7 @@ export default function BillingClient({
                           <span
                             className={`text-2xs font-semibold px-1.5 py-0.5 rounded-full ${
                               m.role === 'trainer'
-                                ? 'bg-emerald-100 text-emerald-700'
+                                ? 'bg-success-100 text-success-700'
                                 : 'bg-info-100 text-info-700'
                             }`}
                           >

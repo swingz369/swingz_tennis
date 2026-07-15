@@ -496,7 +496,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           onClick={() => handleToggleActive(member.id, member.is_active)}
                         >
                           {member.is_active ? (
-                            <UserX className="h-4 w-4 text-orange-600" />
+                            <UserX className="h-4 w-4 text-brand-accent-600" />
                           ) : (
                             <UserCheck className="h-4 w-4 text-success-600" />
                           )}
@@ -607,7 +607,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         onClick={() => handleToggleActive(member.id, member.is_active)}
                       >
                         {member.is_active ? (
-                          <UserX className="h-4 w-4 text-orange-600" />
+                          <UserX className="h-4 w-4 text-brand-accent-600" />
                         ) : (
                           <UserCheck className="h-4 w-4 text-success-600" />
                         )}

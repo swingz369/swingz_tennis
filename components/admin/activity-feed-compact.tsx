@@ -77,7 +77,7 @@ export function ActivityFeedCompact({
     return variant === 'booking'
       ? 'bg-brand-light'
       : variant === 'join'
-        ? 'bg-emerald-500'
+        ? 'bg-success-500'
         : 'bg-muted-foreground/60';
   }
 

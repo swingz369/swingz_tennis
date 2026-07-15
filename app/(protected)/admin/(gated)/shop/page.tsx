@@ -106,7 +106,7 @@ const STATUS_COLORS: Record<string, string> = {
   confirmed:
     'text-info-600 dark:text-info-400 bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800/30',
   shipped:
-    'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/30',
+    'text-success-600 dark:text-success-400 bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800/30',
   cancelled:
     'text-error-600 dark:text-error-400 bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800/30',
 };
@@ -446,15 +446,15 @@ export default function AdminShopPage() {
             label: 'Bestellungen',
             value: orderStats.total_orders,
             icon: ShoppingBag,
-            color: 'text-purple-600 dark:text-purple-400',
-            bg: 'bg-purple-50 dark:bg-purple-900/30',
+            color: 'text-info-600 dark:text-info-400',
+            bg: 'bg-info-50 dark:bg-info-900/30',
           },
           {
             label: 'Umsatz Shop',
             value: orderStats.total_revenue > 0 ? formatCurrency(orderStats.total_revenue) : '—',
             icon: DollarSign,
             color: 'text-brand-accent',
-            bg: 'bg-orange-50 dark:bg-orange-900/20',
+            bg: 'bg-brand-accent-50 dark:bg-brand-accent-900/20',
           },
         ].map((kpi) => (
           <Card key={kpi.label} className="border border-border dark:border-white/10 shadow-sm p-0">
@@ -846,7 +846,7 @@ export default function AdminShopPage() {
                                   product.stock <= 0
                                     ? 'text-error-500 font-medium'
                                     : product.stock < 5
-                                      ? 'text-orange-500 font-medium'
+                                      ? 'text-brand-accent-500 font-medium'
                                       : 'text-muted-foreground dark:text-muted-foreground'
                                 }
                               >
@@ -1082,7 +1082,7 @@ export default function AdminShopPage() {
                               variant={order.payment_status === 'paid' ? 'default' : 'secondary'}
                               className={`text-2xs px-1.5 py-0 ${
                                 order.payment_status === 'paid'
-                                  ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30'
+                                  ? 'bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400 border-success-200 dark:border-success-800/30'
                                   : ''
                               }`}
                             >

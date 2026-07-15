@@ -64,15 +64,15 @@ export function AdminPanelV2Client({
         <div className="flex items-center gap-3">
           {/* Club Switcher Dropdown */}
           <Select onValueChange={handleClubSwitch}>
-            <SelectTrigger className="w-full sm:w-[260px] border-purple-200 dark:border-purple-800 hover:border-purple-400 transition-colors">
-              <ArrowRightLeft className="h-4 w-4 text-purple-500 dark:text-purple-400 mr-2 shrink-0" />
+            <SelectTrigger className="w-full sm:w-[260px] border-info-200 dark:border-info-800 hover:border-info-400 transition-colors">
+              <ArrowRightLeft className="h-4 w-4 text-info-500 dark:text-info-400 mr-2 shrink-0" />
               <SelectValue placeholder="Verein auswählen…" />
             </SelectTrigger>
             <SelectContent>
               {clubs.map((club) => (
                 <SelectItem key={club.id} value={club.id}>
                   <div className="flex items-center gap-2 truncate">
-                    <Building2 className="h-3.5 w-3.5 text-purple-500 dark:text-purple-400 shrink-0" />
+                    <Building2 className="h-3.5 w-3.5 text-info-500 dark:text-info-400 shrink-0" />
                     <span className="truncate">{club.name}</span>
                     {club.status === 'inactive' && (
                       <Badge variant="secondary" className="text-2xs px-1 py-0 leading-none">
@@ -89,7 +89,7 @@ export function AdminPanelV2Client({
           </Select>
           <Badge
             variant="outline"
-            className="flex items-center gap-1 border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-300 shrink-0"
+            className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300 shrink-0"
           >
             <Shield className="h-3 w-3" /> {userRole}
           </Badge>
@@ -103,8 +103,8 @@ export function AdminPanelV2Client({
             label: 'Vereine',
             value: platformStats.totalClubs,
             icon: Building2,
-            color: 'text-purple-600 dark:text-purple-400',
-            bg: 'bg-purple-50 dark:bg-purple-900/20',
+            color: 'text-info-600 dark:text-info-400',
+            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Mitglieder gesamt',
@@ -150,7 +150,7 @@ export function AdminPanelV2Client({
           <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">Alle Vereine</h2>
           <Link
             href="/superadmin/clubs"
-            className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium flex items-center gap-1"
+            className="text-xs text-info-600 dark:text-info-400 hover:underline font-medium flex items-center gap-1"
           >
             Verwalten <ChevronRight className="h-3 w-3" />
           </Link>
@@ -160,12 +160,12 @@ export function AdminPanelV2Client({
           {clubs.map((club) => (
             <Card
               key={club.id}
-              className="hover:shadow-md transition-all duration-200 border-2 hover:border-purple-400/50 group"
+              className="hover:shadow-md transition-all duration-200 border-2 hover:border-info-400/50 group"
             >
               <CardContent className="p-5">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20 shrink-0">
-                    <Building2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                    <Building2 className="h-5 w-5 text-info-600 dark:text-info-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{club.name}</p>
@@ -197,7 +197,7 @@ export function AdminPanelV2Client({
 
                 <Link
                   href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors group-hover:shadow-sm"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-info-600 text-white text-sm font-medium hover:bg-info-700 transition-colors group-hover:shadow-sm"
                 >
                   Als Admin verwalten
                   <ChevronRight className="h-4 w-4" />
@@ -216,7 +216,7 @@ export function AdminPanelV2Client({
                 Erstelle einen neuen Verein unter{' '}
                 <Link
                   href="/superadmin/clubs"
-                  className="text-purple-600 dark:text-purple-400 hover:underline"
+                  className="text-info-600 dark:text-info-400 hover:underline"
                 >
                   Club-Verwaltung
                 </Link>
@@ -255,7 +255,7 @@ export function AdminPanelV2Client({
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <TrendingUp className="h-5 w-5 text-info-600 dark:text-info-400" />
                 Plattform-Statistiken
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -287,7 +287,7 @@ export function AdminPanelV2Client({
                     key={item.label}
                     className="text-center p-4 bg-muted dark:bg-card/5 rounded-lg"
                   >
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    <p className="text-2xl font-bold text-info-600 dark:text-info-400">
                       {item.value.toLocaleString('de-DE')}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
@@ -317,7 +317,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium"
+                className="text-sm text-info-600 dark:text-info-400 hover:underline font-medium"
               >
                 Zur Vereinsübersicht ↑
               </Link>
@@ -336,7 +336,7 @@ export function AdminPanelV2Client({
               </p>
               <Link
                 href="#club-overview"
-                className="text-sm text-purple-600 dark:text-purple-400 hover:underline font-medium"
+                className="text-sm text-info-600 dark:text-info-400 hover:underline font-medium"
               >
                 Zur Vereinsübersicht ↑
               </Link>

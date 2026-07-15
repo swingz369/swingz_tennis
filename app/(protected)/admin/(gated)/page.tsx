@@ -537,7 +537,7 @@ export default async function AdminPage() {
       <div
         className={`group relative overflow-hidden rounded-2xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg ${
           action.urgent
-            ? 'border-orange-200/70 dark:border-orange-700/40 bg-gradient-to-br from-orange-50 via-warning-50 to-background dark:from-orange-900/20 dark:via-warning-900/10 dark:to-card'
+            ? 'border-brand-accent-200/70 dark:border-brand-accent-700/40 bg-gradient-to-br from-brand-accent-50 via-warning-50 to-background dark:from-brand-accent-900/20 dark:via-warning-900/10 dark:to-card'
             : 'border-border dark:border-white/10 bg-card'
         }`}
       >
@@ -554,7 +554,7 @@ export default async function AdminPage() {
                 {action.label}
               </p>
               {action.urgent && (
-                <span className="shrink-0 h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                <span className="shrink-0 h-2 w-2 rounded-full bg-brand-accent-500 animate-pulse" />
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
@@ -617,17 +617,17 @@ export default async function AdminPage() {
                   <div
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all ${
                       item.done
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 cursor-default'
+                        ? 'bg-success-50 dark:bg-success-900/20 cursor-default'
                         : 'bg-background border border-border hover:border-brand-light/40 cursor-pointer'
                     }`}
                   >
                     <div
                       className={`flex h-6 w-6 items-center justify-center rounded-full shrink-0 ${
-                        item.done ? 'bg-emerald-100 dark:bg-emerald-800' : 'border-2 border-border'
+                        item.done ? 'bg-success-100 dark:bg-success-800' : 'border-2 border-border'
                       }`}
                     >
                       {item.done && (
-                        <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                        <span className="text-success-600 dark:text-success-400 text-xs font-bold">
                           ✓
                         </span>
                       )}

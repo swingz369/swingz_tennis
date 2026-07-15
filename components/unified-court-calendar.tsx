@@ -185,7 +185,9 @@ function DraggableSessionCard({
       <div className="flex items-center gap-1.5">
         <GripVertical className="h-3 w-3 text-info-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
         <span className="font-bold truncate text-2xs">{session.trainerName || 'Trainer'}</span>
-        {session.bookedByUser && <div className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />}
+        {session.bookedByUser && (
+          <div className="w-2 h-2 rounded-full bg-error-500 flex-shrink-0" />
+        )}
       </div>
       <div className="flex items-center gap-2 mt-0.5 text-2xs text-info-600/80">
         <span className="flex items-center gap-0.5">
@@ -303,7 +305,7 @@ function PositionedSessionBlock({
       );
   } else if (isOwnBooking) {
     label = 'Deine Buchung';
-    icon = <div className="w-2.5 h-2.5 rounded-full bg-rose-500" />;
+    icon = <div className="w-2.5 h-2.5 rounded-full bg-error-500" />;
   } else if (isBooked) {
     const bookerInfo = session.bookerNames?.length ? session.bookerNames.join(', ') : 'Mitglied';
     label = `Belegt: ${bookerInfo}`;
@@ -366,7 +368,7 @@ function PositionedSessionBlock({
           </span>
         </div>
         {isAdmin && isBlocked && (
-          <Unlock className="h-3 w-3 text-zinc-400 opacity-0 group-hover/block:opacity-100 transition-opacity flex-shrink-0" />
+          <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover/block:opacity-100 transition-opacity flex-shrink-0" />
         )}
         {isOwnBooking && session.bookingId && (
           <button
@@ -374,7 +376,7 @@ function PositionedSessionBlock({
               e.stopPropagation();
               onCancel(session.id, session.bookingId!);
             }}
-            className="p-0.5 rounded hover:bg-rose-200 text-rose-500 opacity-0 group-hover/block:opacity-100 transition-opacity flex-shrink-0"
+            className="p-0.5 rounded hover:bg-error-200 text-error-500 opacity-0 group-hover/block:opacity-100 transition-opacity flex-shrink-0"
             title="Stornieren"
           >
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1169,7 +1171,7 @@ export default function UnifiedCourtCalendar({
                   {totalToday > 0 ? (
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-2 h-2 rounded-full ${bookedCount === totalToday ? 'bg-warning-500' : 'bg-emerald-500'}`}
+                        className={`w-2 h-2 rounded-full ${bookedCount === totalToday ? 'bg-warning-500' : 'bg-success-500'}`}
                       />
                       <span className="text-xs text-muted-foreground">
                         {totalToday - bookedCount} von {totalToday} Slots frei
@@ -1177,7 +1179,7 @@ export default function UnifiedCourtCalendar({
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-zinc-300" />
+                      <div className="w-2 h-2 rounded-full bg-gray-300" />
                       <span className="text-xs text-muted-foreground">Heute keine Sessions</span>
                     </div>
                   )}
@@ -1366,9 +1368,9 @@ export default function UnifiedCourtCalendar({
                                 <div className="flex items-center gap-1 w-full justify-between px-2">
                                   <div className="flex items-center gap-1.5">
                                     {session.sessionType === 'maintenance' ? (
-                                      <Wrench className="h-3 w-3 text-zinc-500" />
+                                      <Wrench className="h-3 w-3 text-gray-500" />
                                     ) : (
-                                      <PartyPopper className="h-3 w-3 text-zinc-500" />
+                                      <PartyPopper className="h-3 w-3 text-gray-500" />
                                     )}
                                     <span className="truncate text-2xs font-semibold">
                                       {session.notes?.substring(0, 12) ||
@@ -1377,11 +1379,11 @@ export default function UnifiedCourtCalendar({
                                           : 'Event')}
                                     </span>
                                   </div>
-                                  <Unlock className="h-3 w-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <Unlock className="h-3 w-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-1.5 px-2">
-                                  <Lock className="h-3 w-3 text-zinc-400" />
+                                  <Lock className="h-3 w-3 text-gray-400" />
                                   <span className="text-2xs font-semibold">Gesperrt</span>
                                 </div>
                               )
@@ -1395,12 +1397,12 @@ export default function UnifiedCourtCalendar({
                               ) : session.bookedByUser ? (
                                 <div className="flex items-center gap-1 w-full justify-between px-2">
                                   <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
+                                    <div className="w-2 h-2 rounded-full bg-error-500 flex-shrink-0" />
                                     <div className="min-w-0">
-                                      <span className="text-2xs font-bold truncate text-rose-700 block">
+                                      <span className="text-2xs font-bold truncate text-error-700 block">
                                         Deine Buchung
                                       </span>
-                                      <span className="text-[9px] text-rose-500 font-medium">
+                                      <span className="text-[9px] text-error-500 font-medium">
                                         {session.startTime}–{session.endTime}
                                       </span>
                                     </div>
@@ -1411,7 +1413,7 @@ export default function UnifiedCourtCalendar({
                                         e.stopPropagation();
                                         handleCancelBooking(session.id, session.bookingId!);
                                       }}
-                                      className="p-0.5 rounded-md hover:bg-rose-200 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                      className="p-0.5 rounded-md hover:bg-error-200 text-error-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                                       title="Buchung stornieren"
                                     >
                                       <svg
@@ -1488,13 +1490,13 @@ export default function UnifiedCourtCalendar({
                               )
                             ) : status === 'plan' ? (
                               <div className="flex items-center gap-1.5 px-2 min-w-0">
-                                <div className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" />
-                                <span className="text-2xs truncate font-semibold text-violet-700">
+                                <div className="w-2 h-2 rounded-full bg-info-500 flex-shrink-0" />
+                                <span className="text-2xs truncate font-semibold text-info-700">
                                   Gruppentraining
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-2xs px-2 text-emerald-600/70 font-medium">
+                              <span className="text-2xs px-2 text-success-600/70 font-medium">
                                 {timeSlot}
                               </span>
                             )}
@@ -1749,8 +1751,8 @@ export default function UnifiedCourtCalendar({
                       style={{ left: timeColW, top: `${topPx}px` }}
                     >
                       <div className="relative">
-                        <div className="absolute -left-1.5 -top-1.5 w-3 h-3 rounded-full bg-rose-500 shadow-sm" />
-                        <div className="h-0.5 bg-rose-500 shadow-sm" />
+                        <div className="absolute -left-1.5 -top-1.5 w-3 h-3 rounded-full bg-error-500 shadow-sm" />
+                        <div className="h-0.5 bg-error-500 shadow-sm" />
                       </div>
                     </div>
                   );
@@ -1864,10 +1866,10 @@ export default function UnifiedCourtCalendar({
         <div
           className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
             weatherData.recommendation === 'red'
-              ? 'bg-error-50 border-error-200 text-error-800 dark:bg-error-950/30 dark:border-error-800 dark:text-error-300'
+              ? 'bg-error-50 border-error-200 text-error-800 dark:bg-error-900/30 dark:border-error-800 dark:text-error-300'
               : weatherData.recommendation === 'yellow'
-                ? 'bg-warning-50 border-warning-200 text-warning-800 dark:bg-warning-950/30 dark:border-warning-800 dark:text-warning-300'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300'
+                ? 'bg-warning-50 border-warning-200 text-warning-800 dark:bg-warning-900/30 dark:border-warning-800 dark:text-warning-300'
+                : 'bg-success-50 border-success-200 text-success-800 dark:bg-success-900/30 dark:border-success-800 dark:text-success-300'
           }`}
         >
           {weatherData.condition === 'Rain' || weatherData.condition === 'Drizzle' ? (
@@ -1912,7 +1914,7 @@ export default function UnifiedCourtCalendar({
             return (
               <div
                 key={c.id}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-xs font-medium dark:bg-orange-950/30 dark:border-orange-800 dark:text-orange-300"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-accent-50 border border-brand-accent-200 text-brand-accent-800 text-xs font-medium dark:bg-brand-accent-950/30 dark:border-brand-accent-800 dark:text-brand-accent-300"
               >
                 <Lock className="h-3 w-3" />
                 <span>{courtName}</span>

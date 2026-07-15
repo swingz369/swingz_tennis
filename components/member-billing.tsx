@@ -179,7 +179,7 @@ export default function MemberBilling() {
     if (status === 'cancelled' || status === 'refunded') {
       return {
         label: status === 'cancelled' ? 'Storniert' : 'Erstattet',
-        color: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+        color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
         isPaid: true,
       };
     }
@@ -192,7 +192,7 @@ export default function MemberBilling() {
     }
     return {
       label: 'Ausstehend',
-      color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+      color: 'bg-warning-100 text-warning-700 dark:bg-warning-900/20 dark:text-warning-400',
       isPaid: false,
     };
   };
@@ -349,7 +349,7 @@ export default function MemberBilling() {
               <>
                 <div className="grid gap-3">
                   {membershipCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-info-50 dark:bg-info-950/30 border border-info-200 dark:border-info-800">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-info-100 dark:bg-info-900/40">
                           <CreditCard className="h-4 w-4 text-info-600" />
@@ -363,7 +363,7 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {trainingCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-success-50 dark:bg-success-950/30 border border-success-200 dark:border-success-800">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800">
                       <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-success-100 dark:bg-success-900/40">
                           <Calendar className="h-4 w-4 text-success-600" />
@@ -379,10 +379,10 @@ export default function MemberBilling() {
                     </div>
                   )}
                   {otherCosts > 0 && (
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-info-50 dark:bg-info-900/30 border border-info-200 dark:border-info-800">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/40">
-                          <Receipt className="h-4 w-4 text-purple-600" />
+                        <div className="p-2 rounded-lg bg-info-100 dark:bg-info-900/40">
+                          <Receipt className="h-4 w-4 text-info-600" />
                         </div>
                         <div>
                           <div className="font-medium text-sm">Sonstiges</div>

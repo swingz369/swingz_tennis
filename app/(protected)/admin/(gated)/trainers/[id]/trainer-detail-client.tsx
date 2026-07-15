@@ -1471,7 +1471,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                           key={trial.id}
                           className={`p-4 rounded-lg border text-sm ${
                             trial.status === 'requested'
-                              ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-800'
+                              ? 'bg-warning-50 border-warning-200 dark:bg-warning-900/10 dark:border-warning-800'
                               : trial.status === 'scheduled'
                                 ? 'bg-success-50 border-success-200 dark:bg-success-900/10 dark:border-success-800'
                                 : 'bg-error-50 border-error-200 dark:bg-error-900/10 dark:border-error-800'
@@ -1486,7 +1486,7 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
                                 <Badge
                                   className={`text-xs ${
                                     trial.status === 'requested'
-                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800'
+                                      ? 'bg-warning-100 text-warning-700 border-warning-200 dark:bg-warning-900/20 dark:text-warning-300 dark:border-warning-800'
                                       : trial.status === 'scheduled'
                                         ? 'bg-success-100 text-success-700 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800'
                                         : 'bg-error-100 text-error-700 border-error-200 dark:bg-error-900/20 dark:text-error-300 dark:border-error-800'

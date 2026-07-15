@@ -180,7 +180,7 @@ function ShopContent() {
                             <span
                               className={
                                 p.stock <= 2
-                                  ? 'text-orange-600 font-medium'
+                                  ? 'text-brand-accent-600 font-medium'
                                   : p.stock <= 5
                                     ? 'text-warning-600'
                                     : ''

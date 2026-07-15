@@ -28,18 +28,18 @@ describe('StatCard Component', () => {
 
   it('should apply custom iconClassName', () => {
     const { container } = render(
-      <StatCard icon={Users} value={8} label="Test" iconClassName="bg-blue-100" />
+      <StatCard icon={Users} value={8} label="Test" iconClassName="bg-info-100" />
     );
     const iconContainer = container.querySelector('.h-10.w-10');
-    expect(iconContainer).toHaveClass('bg-blue-100');
+    expect(iconContainer).toHaveClass('bg-info-100');
   });
 
   it('should apply custom valueClassName to value and icon', () => {
     const { container } = render(
-      <StatCard icon={Users} value={99} label="Test" valueClassName="text-green-600" />
+      <StatCard icon={Users} value={99} label="Test" valueClassName="text-success-600" />
     );
     const valueElement = container.querySelector('.text-2xl.font-bold');
-    expect(valueElement).toHaveClass('text-green-600');
+    expect(valueElement).toHaveClass('text-success-600');
   });
 
   it('should apply custom className', () => {

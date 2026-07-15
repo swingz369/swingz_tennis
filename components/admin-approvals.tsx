@@ -107,10 +107,12 @@ export default function AdminApprovals() {
     switch (status) {
       case 'pending':
         return (
-          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Ausstehend</Badge>
+          <Badge className="bg-warning-100 text-warning-700 border-warning-200">Ausstehend</Badge>
         );
       case 'approved':
-        return <Badge className="bg-success-100 text-success-700 border-success-200">Genehmigt</Badge>;
+        return (
+          <Badge className="bg-success-100 text-success-700 border-success-200">Genehmigt</Badge>
+        );
       case 'rejected':
         return <Badge className="bg-error-100 text-error-700 border-error-200">Abgelehnt</Badge>;
       default:
@@ -181,7 +183,7 @@ export default function AdminApprovals() {
           {filtered.map((r) => (
             <Card
               key={r.id}
-              className={r.status === 'pending' ? 'border-yellow-200 bg-yellow-50/30' : ''}
+              className={r.status === 'pending' ? 'border-warning-200 bg-warning-50/30' : ''}
             >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-4">

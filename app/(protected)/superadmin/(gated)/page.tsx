@@ -93,7 +93,7 @@ export default async function SuperadminPage() {
         </div>
         <Badge
           variant="outline"
-          className="flex items-center gap-1 border-purple-300 text-purple-700 dark:border-purple-700 dark:text-purple-300"
+          className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300"
         >
           <Shield className="h-3 w-3" /> Superadmin
         </Badge>
@@ -106,8 +106,8 @@ export default async function SuperadminPage() {
             label: 'Vereine (Gruppe)',
             value: clubCount,
             icon: Building2,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50 dark:bg-purple-900/20',
+            color: 'text-info-600',
+            bg: 'bg-info-50 dark:bg-info-900/20',
           },
           {
             label: 'Aktive Mitgliedschaften',
@@ -147,7 +147,7 @@ export default async function SuperadminPage() {
             Alle Vereine
             <Link
               href="/superadmin/clubs"
-              className="text-xs text-purple-600 hover:underline font-normal flex items-center gap-1"
+              className="text-xs text-info-600 hover:underline font-normal flex items-center gap-1"
             >
               Verwalten <ChevronRight className="h-3 w-3" />
             </Link>
@@ -157,8 +157,8 @@ export default async function SuperadminPage() {
           <div className="divide-y divide-border dark:divide-white/10">
             {clubsWithStats.map((club: any) => (
               <div key={club.id} className="flex items-center gap-4 py-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20 shrink-0">
-                  <Building2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                  <Building2 className="h-4 w-4 text-info-600 dark:text-info-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{club.name}</p>
@@ -175,7 +175,7 @@ export default async function SuperadminPage() {
                   {/* "Als Admin verwalten" → setzt Cookie + weiter zu /admin */}
                   <Link
                     href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 hover:underline whitespace-nowrap"
+                    className="text-xs text-info-600 hover:text-info-800 dark:text-info-400 hover:underline whitespace-nowrap"
                   >
                     Als Admin →
                   </Link>
@@ -201,10 +201,10 @@ export default async function SuperadminPage() {
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-purple-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-info-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20 shrink-0">
-                <action.icon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                <action.icon className="h-4 w-4 text-info-600 dark:text-info-400" />
               </div>
               <span className="text-sm font-medium">{action.label}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />

@@ -26,7 +26,7 @@ export const MAX_ROUNDS = 3;
  * Holiday visual marker color for schedule grid.
  * Used as CSS class suffix, e.g. bg-holiday-50.
  */
-export const HOLIDAY_ROW_CLASS = 'bg-amber-50/60 border-l-2 border-l-amber-400';
+export const HOLIDAY_ROW_CLASS = 'bg-warning-50/60 border-l-2 border-l-warning-400';
 
 /**
  * Builds the time slot rows array dynamically based on slot duration.

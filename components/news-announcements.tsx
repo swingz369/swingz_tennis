@@ -199,9 +199,9 @@ export default function NewsAnnouncements({
       case 'urgent':
         return 'bg-error-100 text-error-700 border-error-200';
       case 'high':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
+        return 'bg-brand-accent-100 text-brand-accent-700 border-brand-accent-200';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+        return 'bg-warning-100 text-warning-700 border-warning-200';
       case 'low':
         return 'bg-muted text-foreground border-border';
     }
@@ -320,7 +320,7 @@ export default function NewsAnnouncements({
                     </p>
                     <p className="text-xs text-muted-foreground">Nachrichten</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-info-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                     <Bell className="h-5 w-5" />
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export default function NewsAnnouncements({
                     </p>
                     <p className="text-xs text-muted-foreground">Priorität hoch+</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-error-500 to-rose-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-error-500 to-error-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                     <AlertTriangle className="h-5 w-5" />
                   </div>
                 </div>
@@ -387,7 +387,7 @@ export default function NewsAnnouncements({
                     </p>
                     <p className="text-xs text-muted-foreground">neue Beiträge</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-success-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                     <TrendingUp className="h-5 w-5" />
                   </div>
                 </div>

@@ -85,7 +85,7 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
         );
       default:
         return (
-          <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+          <span className="px-2 py-1 bg-warning-100 text-warning-700 rounded-full text-xs font-medium">
             Ausstehend
           </span>
         );

@@ -1098,7 +1098,7 @@ export default function LeagueDetailClient({
 
           {/* nuLiga Sync Panel */}
           {showNuligaConfig && (
-            <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-950/20 dark:border-info-800">
+            <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-900/20 dark:border-info-800">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
@@ -1131,7 +1131,7 @@ export default function LeagueDetailClient({
                   </p>
                 )}
                 {syncResult && (
-                  <div className="text-xs bg-success-50 dark:bg-success-950/30 border border-success-200 dark:border-success-800 rounded p-2 space-y-1">
+                  <div className="text-xs bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800 rounded p-2 space-y-1">
                     <p className="font-medium text-success-700 dark:text-success-400">
                       Sync-Ergebnis:
                     </p>
@@ -1252,7 +1252,7 @@ export default function LeagueDetailClient({
 
           {/* CSV Import Panel */}
           {showImport && (
-            <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-950/20 dark:border-info-800">
+            <Card className="border-2 border-info-200 bg-info-50/50 dark:bg-info-900/20 dark:border-info-800">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Upload className="h-4 w-4" />

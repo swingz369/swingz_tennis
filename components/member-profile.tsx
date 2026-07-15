@@ -695,7 +695,7 @@ export default function MemberProfile() {
                         onClick={unenrollMfa}
                         disabled={mfaLoading}
                         variant="outline"
-                        className="gap-2 text-error-600 border-error-300 hover:bg-error-50 dark:hover:bg-error-950"
+                        className="gap-2 text-error-600 border-error-300 hover:bg-error-50 dark:hover:bg-error-900"
                       >
                         {mfaLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

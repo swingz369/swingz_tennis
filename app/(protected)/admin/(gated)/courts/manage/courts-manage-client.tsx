@@ -85,14 +85,14 @@ interface CourtsManageClientProps {
 type ViewMode = 'grid' | 'list';
 
 const SURFACE_COLORS: Record<string, string> = {
-  clay: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-800/40',
+  clay: 'bg-brand-accent-100 text-brand-accent-800 border-brand-accent-200 dark:bg-brand-accent-900/20 dark:text-brand-accent-300 dark:border-brand-accent-800/40',
   hard: 'bg-info-100 text-info-800 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800/40',
   grass:
     'bg-success-100 text-success-800 border-success-200 dark:bg-success-900/20 dark:text-success-300 dark:border-success-800/40',
   carpet:
-    'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800/40',
+    'bg-info-100 text-info-800 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800/40',
   artificial_grass:
-    'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-800/40',
+    'bg-info-100 text-info-800 border-info-200 dark:bg-info-900/20 dark:text-info-300 dark:border-info-800/40',
 };
 
 function getSurfaceColorClass(surface: string) {
@@ -521,7 +521,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
             className="h-4 w-4 rounded border-border"
           />
           <span className="flex items-center gap-2 text-sm font-medium">
-            <Lightbulb className="h-4 w-4 text-yellow-500" />
+            <Lightbulb className="h-4 w-4 text-warning-500" />
             Flutlicht vorhanden
           </span>
         </label>

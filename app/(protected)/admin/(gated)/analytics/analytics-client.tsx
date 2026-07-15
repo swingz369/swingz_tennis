@@ -113,8 +113,8 @@ export function AnalyticsClient({ data }: AnalyticsClientProps) {
           </div>
           <Card variant="bordered" className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20">
-                <Brain className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+              <div className="p-2 rounded-lg bg-info-50 dark:bg-info-900/20">
+                <Brain className="h-5 w-5 text-info-500 dark:text-info-400" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold">KI Insights</h3>

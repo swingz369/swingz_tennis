@@ -299,7 +299,7 @@ export default function AdminTrialApprovals() {
     switch (status) {
       case 'requested':
         return (
-          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700/50">
+          <Badge className="bg-warning-100 text-warning-700 border-warning-200 dark:bg-warning-900/30 dark:text-warning-400 dark:border-warning-700/50">
             Angefragt
           </Badge>
         );
@@ -384,7 +384,7 @@ export default function AdminTrialApprovals() {
               key={r.id}
               className={
                 r.status === 'requested'
-                  ? 'border-yellow-200 bg-yellow-50/30 dark:border-yellow-700/40 dark:bg-yellow-900/10'
+                  ? 'border-warning-200 bg-warning-50/30 dark:border-warning-700/40 dark:bg-warning-900/10'
                   : r.status === 'cancelled'
                     ? 'border-error-100 bg-error-50/20 dark:border-error-800/30 dark:bg-error-900/10'
                     : ''

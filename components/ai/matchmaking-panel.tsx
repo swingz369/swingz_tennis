@@ -56,8 +56,8 @@ const levelColors: Record<string, string> = {
   beginner: 'bg-success-100 text-success-700 border-success-200',
   advanced_beginner: 'bg-info-100 text-info-700 border-info-200',
   intermediate: 'bg-warning-100 text-warning-700 border-warning-200',
-  advanced: 'bg-orange-100 text-orange-700 border-orange-200',
-  tournament: 'bg-purple-100 text-purple-700 border-purple-200',
+  advanced: 'bg-brand-accent-100 text-brand-accent-700 border-brand-accent-200',
+  tournament: 'bg-info-100 text-info-700 border-info-200',
 };
 
 function getScoreColor(score: number): string {
@@ -139,7 +139,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-info-500 to-purple-600 text-white">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-info-500 to-info-600 text-white">
             <Shuffle className="h-5 w-5" />
           </div>
           <div>
@@ -253,7 +253,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                       <div className="flex items-start justify-between mb-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-info-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-info-400 to-info-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                               {match.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">
@@ -296,7 +296,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                         {match.groupOverlap.length > 0 && (
                           <Badge
                             variant="secondary"
-                            className="text-2xs px-1.5 py-0 bg-indigo-50 text-indigo-700 border-indigo-200"
+                            className="text-2xs px-1.5 py-0 bg-info-50 text-info-700 border-info-200"
                           >
                             <Users className="h-2.5 w-2.5 mr-1" />
                             {match.groupOverlap.length} Gruppen
@@ -305,7 +305,7 @@ export function MatchmakingPanel({ showAdminBadge }: MatchmakingPanelProps = {})
                         {match.commonSessions > 0 && (
                           <Badge
                             variant="secondary"
-                            className="text-2xs px-1.5 py-0 bg-cyan-50 text-cyan-700 border-cyan-200"
+                            className="text-2xs px-1.5 py-0 bg-info-50 text-info-700 border-info-200"
                           >
                             <Calendar className="h-2.5 w-2.5 mr-1" />
                             {match.commonSessions} Sessions

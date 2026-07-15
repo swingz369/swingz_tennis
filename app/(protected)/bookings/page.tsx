@@ -322,7 +322,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">diesen Monat</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-indigo-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-info-500 to-info-600 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CalendarIcon className="h-5 w-5" />
                 </div>
               </div>
@@ -360,7 +360,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">aktive Buchungen</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-success-500 to-success-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
               </div>
@@ -379,7 +379,7 @@ function BookingsContent() {
                   </p>
                   <p className="text-xs text-muted-foreground">verfügbare Plätze</p>
                 </div>
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-orange-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-brand-accent to-brand-accent-700 text-white shadow-lg transition-all duration-300 group-hover:scale-110">
                   <Timer className="h-5 w-5" />
                 </div>
               </div>
@@ -543,7 +543,7 @@ function BookingsContent() {
                                               ? 'bg-error-100 text-error-700'
                                               : session.bookingStatus === 'no_show'
                                                 ? 'bg-muted text-foreground'
-                                                : 'bg-yellow-100 text-yellow-700'
+                                                : 'bg-warning-100 text-warning-700'
                                         }`}
                                       >
                                         {getBookingStatusLabel(session.bookingStatus)}

@@ -93,7 +93,8 @@ function getSkillBadge(level: string) {
     },
     advanced: {
       label: 'Fortg.',
-      className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+      className:
+        'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-300',
     },
     tournament: {
       label: 'Turnier',

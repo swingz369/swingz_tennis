@@ -124,7 +124,7 @@ export default function LoginPage() {
           {/* Stats + Feature cards */}
           <div className="space-y-4">
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-accent to-orange-600 flex items-center justify-center shadow-lg">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-brand-accent to-brand-accent-600 flex items-center justify-center shadow-lg">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>

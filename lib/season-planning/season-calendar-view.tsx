@@ -210,7 +210,7 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
 
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary">{data.stats.totalWeeks} KW</Badge>
-            <Badge variant="outline" className="bg-amber-50 text-amber-900 border-amber-200">
+            <Badge variant="outline" className="bg-warning-50 text-warning-900 border-warning-200">
               {data.stats.holidayWeeks} Ferienwochen
             </Badge>
             <Button
@@ -226,13 +226,13 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
         {/* Legend */}
         <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm bg-emerald-500" /> Aktiv
+            <span className="inline-block w-3 h-3 rounded-sm bg-success-500" /> Aktiv
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm bg-slate-200" /> Inaktiv
+            <span className="inline-block w-3 h-3 rounded-sm bg-gray-200" /> Inaktiv
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded-sm bg-amber-100 border border-amber-300" />{' '}
+            <span className="inline-block w-3 h-3 rounded-sm bg-warning-100 border border-warning-300" />{' '}
             Ferienwoche
           </span>
         </div>
@@ -275,7 +275,9 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
                         key={w.monday}
                         className={cn(
                           'w-10 shrink-0 text-center text-[10px] font-medium border-r py-1',
-                          w.isHolidayWeek ? 'bg-amber-50 text-amber-900' : 'text-muted-foreground'
+                          w.isHolidayWeek
+                            ? 'bg-warning-50 text-warning-900'
+                            : 'text-muted-foreground'
                         )}
                         title={`KW ${w.isoWeek} · ${w.rangeLabel}${
                           w.holidayNames.length > 0 ? ` · ${w.holidayNames.join(', ')}` : ''
@@ -351,10 +353,10 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
                                     'w-10 h-10 shrink-0 border-r border-b transition-colors relative',
                                     'hover:ring-2 hover:ring-primary/40 focus:outline-none focus:ring-2 focus:ring-primary',
                                     'disabled:opacity-50',
-                                    w.isHolidayWeek && 'bg-amber-50/60',
+                                    w.isHolidayWeek && 'bg-warning-50/60',
                                     isActive
-                                      ? 'bg-emerald-500 hover:bg-emerald-600'
-                                      : 'bg-slate-200 hover:bg-slate-300',
+                                      ? 'bg-success-500 hover:bg-success-600'
+                                      : 'bg-gray-200 hover:bg-gray-300',
                                     isPending && 'animate-pulse'
                                   )}
                                   aria-label={`${group.name} KW ${w.isoWeek} ${isActive ? 'aktiv' : 'inaktiv'} umschalten`}
@@ -369,7 +371,9 @@ export function SeasonCalendarView({ seasonId, clubId, initialData, onChange }: 
                                   <div className="font-medium">
                                     KW {w.isoWeek} · {w.rangeLabel}
                                   </div>
-                                  {holidayTip && <div className="text-amber-700">{holidayTip}</div>}
+                                  {holidayTip && (
+                                    <div className="text-warning-700">{holidayTip}</div>
+                                  )}
                                   <div className="mt-1">
                                     Status: {isActive ? '🟢 Aktiv' : '⚪ Inaktiv'}
                                   </div>

@@ -120,7 +120,7 @@ export function PremiumUpsell({
       <ul className="space-y-2 mb-5">
         {stats.bullets.map((bullet, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <CheckCircle2 className="h-4 w-4 text-success-600 flex-shrink-0 mt-0.5" />
             <span className="leading-relaxed">{bullet}</span>
           </li>
         ))}
@@ -161,9 +161,9 @@ function StatTile({
   // Tailwind stat-pill palette — explicit string-literal class names so the
   // JIT compiler can pick them up (no string-built classes).
   const accentStyles: Record<typeof accent, string> = {
-    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    emerald: 'bg-success-50 border-success-200 text-success-700',
     blue: 'bg-info-50 border-info-200 text-info-700',
-    purple: 'bg-purple-50 border-purple-200 text-purple-700',
+    purple: 'bg-info-50 border-info-200 text-info-700',
   };
   return (
     <div className={cn('rounded-lg border p-3', accentStyles[accent])}>

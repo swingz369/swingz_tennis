@@ -101,11 +101,11 @@ const RULE_TYPE_LABELS: Record<string, string> = {
 };
 
 const RULE_TYPE_COLORS: Record<string, string> = {
-  hourly: 'bg-blue-100 text-blue-800',
-  member: 'bg-green-100 text-green-800',
-  trial: 'bg-yellow-100 text-yellow-800',
-  group: 'bg-purple-100 text-purple-800',
-  season: 'bg-orange-100 text-orange-800',
+  hourly: 'bg-info-100 text-info-800',
+  member: 'bg-success-100 text-success-800',
+  trial: 'bg-warning-100 text-warning-800',
+  group: 'bg-info-100 text-info-800',
+  season: 'bg-brand-accent-100 text-brand-accent-800',
 };
 
 const emptyForm = {
@@ -549,7 +549,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-red-500"
+              className="h-8 w-8 text-error-500"
               onClick={() => removeTimeRange(idx)}
             >
               <Trash2 className="h-4 w-4" />
@@ -602,7 +602,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
             className={cn(
               'flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all',
               dynamicPricingEnabled
-                ? 'bg-green-50 border-green-300 text-green-800 hover:bg-green-100 dark:bg-green-950 dark:border-green-700 dark:text-green-300'
+                ? 'bg-success-50 border-success-300 text-success-800 hover:bg-success-100 dark:bg-success-900 dark:border-success-700 dark:text-success-300'
                 : 'bg-muted border-border text-muted-foreground hover:bg-muted/80'
             )}
           >
@@ -635,13 +635,13 @@ export function PricingClient({ clubId }: PricingClientProps) {
 
       {/* Disabled Banner */}
       {!dynamicPricingEnabled && (
-        <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+        <Card className="bg-warning-50 border-warning-200 dark:bg-warning-900 dark:border-warning-800">
           <CardContent className="p-6 text-center">
-            <DollarSign className="h-12 w-12 mx-auto text-amber-500 mb-3" />
-            <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-2">
+            <DollarSign className="h-12 w-12 mx-auto text-warning-500 mb-3" />
+            <h3 className="text-lg font-semibold text-warning-900 dark:text-warning-100 mb-2">
               Dynamische Preisgestaltung ist deaktiviert
             </h3>
-            <p className="text-sm text-amber-700 dark:text-amber-300 max-w-lg mx-auto">
+            <p className="text-sm text-warning-700 dark:text-warning-300 max-w-lg mx-auto">
               Aktiviere diese Funktion, um zeitbasierte Preise (Peak/Off-Peak), Tagespreise und
               Saison-Aufschläge für Platzbuchungen zu konfigurieren. Solange die Funktion
               deaktiviert ist, gilt für alle Buchungen der einheitliche Standard-Stundensatz des
@@ -654,27 +654,27 @@ export function PricingClient({ clubId }: PricingClientProps) {
       {/* Explanation Cards */}
       {!showForm && rules.length === 0 && !loading && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200">
+          <Card className="bg-gradient-to-br from-info-50 to-info-100 dark:from-info-900 dark:to-info-900 border-info-200">
             <CardContent className="p-4">
-              <Clock className="h-8 w-8 text-blue-600 mb-2" />
+              <Clock className="h-8 w-8 text-info-600 mb-2" />
               <h3 className="font-semibold text-sm">Zeitbasierte Preise</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Definiere Peak- und Off-Peak-Zeiten mit unterschiedlichen Multiplikatoren.
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+          <Card className="bg-gradient-to-br from-success-50 to-success-100 dark:from-success-900 dark:to-success-900 border-success-200">
             <CardContent className="p-4">
-              <Calendar className="h-8 w-8 text-green-600 mb-2" />
+              <Calendar className="h-8 w-8 text-success-600 mb-2" />
               <h3 className="font-semibold text-sm">Tagespreise</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Lege unterschiedliche Preise für Wochentage und Wochenenden fest.
               </p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200">
+          <Card className="bg-gradient-to-br from-brand-accent-50 to-brand-accent-100 dark:from-brand-accent-950 dark:to-brand-accent-900 border-brand-accent-200">
             <CardContent className="p-4">
-              <Sun className="h-8 w-8 text-orange-600 mb-2" />
+              <Sun className="h-8 w-8 text-brand-accent-600 mb-2" />
               <h3 className="font-semibold text-sm">Saison-Preise</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Binde Preise an Sommer- oder Wintersaison für automatische Übergänge.
@@ -765,7 +765,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
                         variant={rule.isActive ? 'default' : 'secondary'}
                         className={cn(
                           'text-xs',
-                          rule.isActive ? 'bg-green-100 text-green-700' : 'bg-muted'
+                          rule.isActive ? 'bg-success-100 text-success-700' : 'bg-muted'
                         )}
                       >
                         {rule.isActive ? 'Aktiv' : 'Inaktiv'}
@@ -784,7 +784,7 @@ export function PricingClient({ clubId }: PricingClientProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-500"
+                          className="h-8 w-8 text-error-500"
                           onClick={() => {
                             setSelectedRule(rule);
                             setShowDelete(true);

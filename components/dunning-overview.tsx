@@ -234,7 +234,7 @@ function KpiCard({
   const toneClass = {
     amber: 'bg-warning-50 dark:bg-warning-900/20 text-warning-600 dark:text-warning-400',
     red: 'bg-error-50 dark:bg-error-900/20 text-error-600 dark:text-error-400',
-    purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
+    purple: 'bg-info-50 dark:bg-info-900/20 text-info-600 dark:text-info-400',
     green: 'bg-success-50 dark:bg-success-900/20 text-success-600 dark:text-success-400',
   }[tone];
 

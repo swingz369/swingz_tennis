@@ -561,7 +561,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                           onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
                         >
                           {trainer.status === 'active' ? (
-                            <UserX className="h-4 w-4 text-orange-600" />
+                            <UserX className="h-4 w-4 text-brand-accent-600" />
                           ) : (
                             <UserCheck className="h-4 w-4 text-success-600" />
                           )}

@@ -10,10 +10,10 @@ export const STATUS_LABELS: Record<string, string> = {
 /** Shared tournament status colors (tailwind classes) */
 export const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  registration: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  completed: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-  cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  registration: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-300',
+  active: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
+  completed: 'bg-gray-100 text-gray-700 dark:bg-gray-800/60 dark:text-gray-300',
+  cancelled: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
 };
 
 /** Shared tournament status badge variants */

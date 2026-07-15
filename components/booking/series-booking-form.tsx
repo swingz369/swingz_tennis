@@ -239,7 +239,7 @@ export default function SeriesBookingForm({
       case 'conflict':
         return <AlertCircle className="h-4 w-4 text-error-600" />;
       case 'warning':
-        return <Info className="h-4 w-4 text-yellow-600" />;
+        return <Info className="h-4 w-4 text-warning-600" />;
     }
   };
 
@@ -408,7 +408,7 @@ export default function SeriesBookingForm({
                       ? 'bg-success-50 border-success-200'
                       : preview.status === 'conflict'
                         ? 'bg-error-50 border-error-200'
-                        : 'bg-yellow-50 border-yellow-200'
+                        : 'bg-warning-50 border-warning-200'
                   }`}
                 >
                   <div className="flex items-center gap-2">

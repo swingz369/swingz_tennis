@@ -56,9 +56,9 @@ export function generateInvoiceHTML(invoice: Invoice): string {
   const formattedDueDate = format(invoice.dueDate, 'dd. MMMM yyyy', { locale: de });
 
   const statusColors: Record<string, string> = {
-    paid: 'bg-green-100 text-green-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    overdue: 'bg-red-100 text-red-800',
+    paid: 'bg-success-100 text-success-800',
+    pending: 'bg-warning-100 text-warning-800',
+    overdue: 'bg-error-100 text-error-800',
   };
 
   const statusLabels: Record<string, string> = {

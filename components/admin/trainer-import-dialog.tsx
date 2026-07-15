@@ -198,7 +198,7 @@ export default function TrainerImportDialog({ onImportComplete }: TrainerImportD
                       <div className="text-xs text-muted-foreground">Fehlgeschlagen</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
+                      <div className="text-2xl font-bold text-warning-600">
                         {result.invalid.length}
                       </div>
                       <div className="text-xs text-muted-foreground">Ungültig</div>
@@ -209,14 +209,14 @@ export default function TrainerImportDialog({ onImportComplete }: TrainerImportD
                   {result.invalid.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center text-sm">
-                        <AlertCircle className="h-4 w-4 mr-2 text-yellow-600" />
+                        <AlertCircle className="h-4 w-4 mr-2 text-warning-600" />
                         Ungültige Datensätze ({result.invalid.length})
                       </h4>
                       <div className="max-h-40 overflow-y-auto space-y-2">
                         {result.invalid.map((item, index) => (
                           <div
                             key={index}
-                            className="text-xs bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded"
+                            className="text-xs bg-warning-50 dark:bg-warning-900/20 p-2 rounded"
                           >
                             <div className="font-medium">{item.record.email || 'Unbekannt'}</div>
                             <div className="text-muted-foreground">{item.errors.join(', ')}</div>

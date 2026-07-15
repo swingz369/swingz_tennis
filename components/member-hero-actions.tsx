@@ -30,7 +30,7 @@ const ACTIONS: QuickAction[] = [
     href: '/messages',
     icon: MessageSquare,
     color:
-      'bg-violet-50 text-violet-700 hover:bg-violet-100 dark:bg-violet-500/20 dark:text-violet-300 dark:hover:bg-violet-500/30',
+      'bg-info-50 text-info-700 hover:bg-info-100 dark:bg-info-500/20 dark:text-info-300 dark:hover:bg-info-500/30',
   },
   {
     label: 'Rechnungen',
@@ -44,21 +44,21 @@ const ACTIONS: QuickAction[] = [
     href: '/member/trainer-booking',
     icon: GraduationCap,
     color:
-      'bg-teal-50 text-teal-700 hover:bg-teal-100 dark:bg-teal-500/20 dark:text-teal-300 dark:hover:bg-teal-500/30',
+      'bg-info-50 text-info-700 hover:bg-info-100 dark:bg-info-500/20 dark:text-info-300 dark:hover:bg-info-500/30',
   },
   {
     label: 'Turniere',
     href: '/member/tournaments',
     icon: Trophy,
     color:
-      'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-500/20 dark:text-orange-300 dark:hover:bg-orange-500/30',
+      'bg-brand-accent-50 text-brand-accent-700 hover:bg-brand-accent-100 dark:bg-brand-accent-500/20 dark:text-brand-accent-300 dark:hover:bg-brand-accent-500/30',
   },
   {
     label: 'Präferenzen',
     href: '/member/preferences',
     icon: ClipboardCheck,
     color:
-      'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30',
+      'bg-success-50 text-success-700 hover:bg-success-100 dark:bg-success-500/20 dark:text-success-300 dark:hover:bg-success-500/30',
   },
 ];
 

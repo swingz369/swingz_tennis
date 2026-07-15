@@ -32,7 +32,7 @@ export function AdminHeroHeader({
             <div>
               <p className="text-sm font-medium text-white/70 mb-1">
                 {clubName} ·{' '}
-                <span className={isSuperadmin ? 'text-purple-300' : 'text-brand-accent'}>
+                <span className={isSuperadmin ? 'text-info-300' : 'text-brand-accent'}>
                   {isSuperadmin ? 'Superadmin' : 'Admin'}
                 </span>
               </p>

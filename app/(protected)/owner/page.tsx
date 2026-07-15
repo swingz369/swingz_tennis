@@ -68,7 +68,7 @@ export default async function OwnerPage() {
         </div>
         <Badge
           variant="outline"
-          className="flex items-center gap-1 border-indigo-300 text-indigo-700 dark:border-indigo-700 dark:text-indigo-300"
+          className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300"
         >
           <Shield className="h-3 w-3" /> Owner
         </Badge>
@@ -112,7 +112,7 @@ export default async function OwnerPage() {
               </Link>
               <Link
                 href="/owner/clubs"
-                className="text-xs text-indigo-600 hover:underline font-normal flex items-center gap-1"
+                className="text-xs text-info-600 hover:underline font-normal flex items-center gap-1"
               >
                 Alle <ChevronRight className="h-3 w-3" />
               </Link>
@@ -123,8 +123,8 @@ export default async function OwnerPage() {
           <div className="divide-y divide-border dark:divide-white/10">
             {(clubs ?? []).map((club: any) => (
               <div key={club.id} className="flex items-center gap-4 py-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 shrink-0">
-                  <Building2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                  <Building2 className="h-4 w-4 text-info-600 dark:text-info-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{club.name}</p>
@@ -140,7 +140,7 @@ export default async function OwnerPage() {
                   )}
                   <Link
                     href={`/api/admin/switch-club-redirect?clubId=${club.id}`}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 hover:underline whitespace-nowrap"
+                    className="text-xs text-info-600 hover:text-info-800 dark:text-info-400 hover:underline whitespace-nowrap"
                   >
                     Als Admin →
                   </Link>
@@ -171,10 +171,10 @@ export default async function OwnerPage() {
             <Link
               key={action.label}
               href={action.href}
-              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-indigo-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border dark:border-white/10 hover:border-info-400/50 hover:shadow-sm transition-all bg-background dark:bg-card/5"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/20 shrink-0">
-                <action.icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-info-50 dark:bg-info-900/20 shrink-0">
+                <action.icon className="h-4 w-4 text-info-600 dark:text-info-400" />
               </div>
               <span className="text-sm font-medium">{action.label}</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />

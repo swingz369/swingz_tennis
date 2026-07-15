@@ -120,8 +120,9 @@ export function MemberSelector() {
   const levelBadgeColor: Record<string, string> = {
     beginner: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
     intermediate: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400',
-    advanced: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-    professional: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    advanced:
+      'bg-brand-accent-100 text-brand-accent-700 dark:bg-brand-accent-900/30 dark:text-brand-accent-400',
+    professional: 'bg-info-100 text-info-700 dark:bg-info-900/30 dark:text-info-400',
   };
 
   const filteredMembers = members.filter((m) => {

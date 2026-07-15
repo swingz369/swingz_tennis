@@ -923,19 +923,19 @@ export function FinalizeStep() {
       <DryRunPanel seasonId={state.seasonId} />
 
       {/* AI Review */}
-      <Card className="border-purple-200 bg-purple-50/30">
+      <Card className="border-info-200 bg-info-50/30">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2 text-purple-800">
+          <CardTitle className="text-base flex items-center gap-2 text-info-800">
             <Brain className="h-4 w-4" />
             KI-Review der Planung
           </CardTitle>
-          <CardDescription className="text-purple-600">
+          <CardDescription className="text-info-600">
             Automatische Zusammenfassung und Bewertung vor der finalen Bestätigung
           </CardDescription>
         </CardHeader>
         <CardContent>
           {aiReviewText ? (
-            <div className="rounded-lg bg-background border border-purple-200 p-4">
+            <div className="rounded-lg bg-background border border-info-200 p-4">
               <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                 {aiReviewText}
               </p>
@@ -944,7 +944,7 @@ export function FinalizeStep() {
             <p className="text-sm text-muted-foreground">KI-Review momentan nicht verfügbar.</p>
           ) : (
             <div className="text-center py-4">
-              <p className="text-sm text-purple-700 mb-3">
+              <p className="text-sm text-info-700 mb-3">
                 Lassen Sie die KI eine Zusammenfassung und Bewertung der Planung erstellen, bevor
                 Sie bestätigen.
               </p>
@@ -953,7 +953,7 @@ export function FinalizeStep() {
                 disabled={aiReviewLoading}
                 variant="outline"
                 size="sm"
-                className="gap-2 border-purple-300 text-purple-700 hover:bg-purple-100"
+                className="gap-2 border-info-300 text-info-700 hover:bg-info-100"
               >
                 {aiReviewLoading ? (
                   <>

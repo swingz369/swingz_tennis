@@ -54,8 +54,8 @@ export function AdminInboxBanner({
     <div className="space-y-3">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1 flex items-center gap-1.5">
         <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent-500 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent-500" />
         </span>
         Aufmerksamkeit benötigt
       </p>
@@ -73,8 +73,8 @@ export function AdminInboxBanner({
                 'transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-light focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                 isUrgent
-                  ? 'border-orange-200/70 dark:border-orange-700/40 bg-gradient-to-br from-orange-50 via-warning-50 to-background dark:from-orange-900/20 dark:via-warning-900/10 dark:to-card'
-                  : 'border-info-200/70 dark:border-info-700/40 bg-gradient-to-br from-info-50 via-indigo-50 to-background dark:from-info-900/20 dark:via-indigo-900/10 dark:to-card'
+                  ? 'border-brand-accent-200/70 dark:border-brand-accent-700/40 bg-gradient-to-br from-brand-accent-50 via-warning-50 to-background dark:from-brand-accent-900/20 dark:via-warning-900/10 dark:to-card'
+                  : 'border-info-200/70 dark:border-info-700/40 bg-gradient-to-br from-info-50 via-info-50 to-background dark:from-info-900/20 dark:via-info-900/10 dark:to-card'
               )}
             >
               {/* Mesh bleed on hover */}
@@ -93,7 +93,7 @@ export function AdminInboxBanner({
                   <div
                     className={cn(
                       'absolute inset-0 rounded-xl blur-md opacity-50',
-                      isUrgent ? 'bg-orange-400/40' : 'bg-info-400/40'
+                      isUrgent ? 'bg-brand-accent-400/40' : 'bg-info-400/40'
                     )}
                     aria-hidden="true"
                   />
@@ -110,7 +110,7 @@ export function AdminInboxBanner({
                       className={cn(
                         'text-sm font-semibold truncate',
                         isUrgent
-                          ? 'text-orange-800 dark:text-orange-300'
+                          ? 'text-brand-accent-800 dark:text-brand-accent-300'
                           : 'text-info-800 dark:text-info-300'
                       )}
                     >
@@ -118,8 +118,8 @@ export function AdminInboxBanner({
                     </p>
                     {isUrgent && (
                       <span className="relative flex h-2 w-2 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-500 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent-500 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent-500" />
                       </span>
                     )}
                   </div>
@@ -127,7 +127,7 @@ export function AdminInboxBanner({
                     className={cn(
                       'text-xs mt-0.5 line-clamp-2',
                       isUrgent
-                        ? 'text-orange-700 dark:text-orange-400'
+                        ? 'text-brand-accent-700 dark:text-brand-accent-400'
                         : 'text-info-700 dark:text-info-400'
                     )}
                   >
@@ -138,7 +138,7 @@ export function AdminInboxBanner({
                   className={cn(
                     'h-4 w-4 shrink-0 mt-0.5',
                     'group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform',
-                    isUrgent ? 'text-orange-400' : 'text-info-400'
+                    isUrgent ? 'text-brand-accent-400' : 'text-info-400'
                   )}
                 />
               </div>
@@ -146,7 +146,7 @@ export function AdminInboxBanner({
               {/* Urgent: subtle pulsing indicator on border via accent-shadow ring */}
               {isUrgent && (
                 <span
-                  className="pointer-events-none absolute inset-0 -z-10 rounded-2xl ring-1 ring-orange-400/20 animate-pulse-glow"
+                  className="pointer-events-none absolute inset-0 -z-10 rounded-2xl ring-1 ring-brand-accent-400/20 animate-pulse-glow"
                   aria-hidden="true"
                 />
               )}
