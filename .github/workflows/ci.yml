@@ -45,6 +45,9 @@ jobs:
       - name: Typecheck
         run: npx tsc --noEmit
 
+      - name: Design-Token-Guardrail
+        run: bash scripts/check-design-tokens.sh
+
       - name: Unit tests
         run: npx vitest run
 

@@ -19,6 +19,7 @@
     "predev": "",
     "start": "next start",
     "lint": "eslint .",
+    "check:design": "bash scripts/check-design-tokens.sh",
     "lint:fix": "eslint . --fix",
     "lint:a11y": "eslint . 2>&1 | grep -i 'jsx-a11y' || true",
     "typecheck": "tsc --noEmit",
