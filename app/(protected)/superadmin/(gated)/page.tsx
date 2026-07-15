@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,12 +86,14 @@ export default async function SuperadminPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Meine Gruppe</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Hallo {firstName} — {clubCount} Verein{clubCount !== 1 ? 'e' : ''} in deiner Gruppe
-          </p>
-        </div>
+        <PageHeader
+          title="Meine Gruppe"
+          description={
+            <>
+              Hallo {firstName} — {clubCount} Verein{clubCount !== 1 ? 'e' : ''} in deiner Gruppe
+            </>
+          }
+        />
         <Badge
           variant="outline"
           className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300"

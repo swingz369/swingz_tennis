@@ -10,6 +10,7 @@ import { Search, User, Calendar, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api-fetch';
 import { createLogger } from '@/lib/logger';
+import { PageHeader } from '@/components/ui/page-header';
 
 const log = createLogger('page:search');
 
@@ -88,12 +89,10 @@ export default function SearchPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Suche</h1>
-        <p className="text-muted-foreground mt-2">
-          Durchsuche alle Daten mit erweiterten Filtern und Sortieroptionen
-        </p>
-      </div>
+      <PageHeader
+        title="Suche"
+        description="Durchsuche alle Daten mit erweiterten Filtern und Sortieroptionen"
+      />
 
       <AdvancedSearch onSearch={handleSearch} onClearFilters={handleClearFilters} />
 

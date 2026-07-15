@@ -22,8 +22,8 @@ export interface PageHeaderAction {
 interface PageHeaderProps {
   /** Page title */
   title: string;
-  /** Optional description below the title */
-  description?: string;
+  /** Optional description below the title (Text oder einfacher JSX-Inhalt) */
+  description?: ReactNode;
   /** Breadcrumb trail (optional) */
   breadcrumbs?: BreadcrumbItem[];
   /** Action buttons rendered on the right */

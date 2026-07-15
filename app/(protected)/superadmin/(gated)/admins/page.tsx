@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChevronLeft, Construction } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function Page() {
   return (
@@ -13,7 +14,7 @@ export default function Page() {
           <ChevronLeft className="h-4 w-4" /> Zurück
         </Link>
       </div>
-      <h1 className="text-2xl font-bold tracking-tight">Admins verwalten</h1>
+      <PageHeader title="Admins verwalten" />
       <Card>
         <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
           <Construction className="h-8 w-8 text-muted-foreground" />

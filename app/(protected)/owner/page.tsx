@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/ui/stat-card';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,14 +61,10 @@ export default async function OwnerPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display text-foreground">
-            Plattform-Übersicht
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Hallo {firstName} — Swingz Plattform-Dashboard
-          </p>
-        </div>
+        <PageHeader
+          title="Plattform-Übersicht"
+          description={<>Hallo {firstName} — Swingz Plattform-Dashboard</>}
+        />
         <Badge
           variant="outline"
           className="flex items-center gap-1 border-info-300 text-info-700 dark:border-info-700 dark:text-info-300"

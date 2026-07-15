@@ -1,8 +1,8 @@
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Calendar, Clock, User, Trophy } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 type ClubMembership = {
   clubs: { id: string; name: string; status: string } | null;
@@ -120,10 +120,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold tracking-tight">Mitgliedprofil</h1>
-        <Button variant="outline">Bearbeiten</Button>
-      </div>
+      <PageHeader title="Mitgliedprofil" actions={[{ label: 'Bearbeiten', variant: 'outline' }]} />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

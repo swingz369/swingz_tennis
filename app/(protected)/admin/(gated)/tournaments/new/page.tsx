@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function NewTournamentPage() {
   const router = useRouter();
@@ -80,10 +81,7 @@ export default function NewTournamentPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Neues Turnier</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Turnier anlegen</p>
-        </div>
+        <PageHeader title="Neues Turnier" description="Turnier anlegen" />
       </div>
 
       <form onSubmit={handleSubmit}>

@@ -29,6 +29,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/ui/page-header';
 
 const MAX_TIME_PREFS = 4;
 const MAX_WISH_PARTNERS = 3;
@@ -306,12 +307,10 @@ export default function MemberPreferencesPage() {
     <div className="max-w-2xl mx-auto space-y-5 py-8 px-4">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Trainings&shy;präferenzen</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Wann möchtest du trainieren? Mit wem? — wird für die Gruppenplanung genutzt.
-          </p>
-        </div>
+        <PageHeader
+          title="Trainings&shy;präferenzen"
+          description="Wann möchtest du trainieren? Mit wem? — wird für die Gruppenplanung genutzt."
+        />
         {isSubmitted && (
           <Badge className="bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800 mt-1 flex-shrink-0">
             <CheckCircle className="h-3 w-3 mr-1" /> Eingereicht

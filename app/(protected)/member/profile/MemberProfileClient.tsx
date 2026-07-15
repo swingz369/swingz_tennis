@@ -23,6 +23,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Member {
   id: string;
@@ -167,10 +168,7 @@ export function MemberProfileClient({ member }: Props) {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Mein Profil</h1>
-          <p className="text-sm text-muted-foreground">Verwalte deine persönlichen Daten</p>
-        </div>
+        <PageHeader title="Mein Profil" description="Verwalte deine persönlichen Daten" />
         <Button
           variant={isEditing ? 'default' : 'outline'}
           size="sm"

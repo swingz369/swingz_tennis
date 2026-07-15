@@ -14,6 +14,7 @@ import {
 import { Pencil, Trash2, Plus, X, Check, Loader2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface FeeConfig {
   id: string;
@@ -169,13 +170,17 @@ export default function FeeCategoriesClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Preiskategorien</h1>
-        <Button onClick={() => setCreating(true)} disabled={creating}>
-          <Plus className="h-4 w-4 mr-2" />
-          Neue Kategorie
-        </Button>
-      </div>
+      <PageHeader
+        title="Preiskategorien"
+        actions={[
+          {
+            label: 'Neue Kategorie',
+            icon: Plus,
+            onClick: () => setCreating(true),
+            disabled: creating,
+          },
+        ]}
+      />
 
       {creating && (
         <Card>

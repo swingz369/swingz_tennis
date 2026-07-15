@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Calendar, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 export interface MemberProfileData {
   member: {
@@ -95,10 +96,7 @@ export function MemberProfileClient({ data }: { data: MemberProfileData }) {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Mitgliedsprofil</h1>
-        <p className="text-muted-foreground">Übersicht für {member.fullName}</p>
-      </div>
+      <PageHeader title="Mitgliedsprofil" description={<>Übersicht für {member.fullName}</>} />
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

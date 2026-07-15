@@ -18,6 +18,7 @@ import { ArrowLeft, Save, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUserClub } from '@/hooks/use-user-data';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function NewSeasonPage() {
   const router = useRouter();
@@ -108,10 +109,10 @@ export default function NewSeasonPage() {
         <Button variant="ghost" size="icon" onClick={() => router.push('/admin/seasons')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Neue Season erstellen</h1>
-          <p className="text-muted-foreground">Erstellen Sie eine neue Trainings-Season</p>
-        </div>
+        <PageHeader
+          title="Neue Season erstellen"
+          description="Erstellen Sie eine neue Trainings-Season"
+        />
       </div>
 
       <form onSubmit={handleSubmit}>

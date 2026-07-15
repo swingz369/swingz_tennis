@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,14 +36,16 @@ export default async function OwnerAccessPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Zugänge & Anfragen</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {pending > 0
-            ? `${pending} offene Anfrage${pending !== 1 ? 'n' : ''}`
-            : 'Interessenten die einen Zugang angefragt haben.'}
-        </p>
-      </div>
+      <PageHeader
+        title="Zugänge & Anfragen"
+        description={
+          <>
+            {pending > 0
+              ? `${pending} offene Anfrage${pending !== 1 ? 'n' : ''}`
+              : 'Interessenten die einen Zugang angefragt haben.'}
+          </>
+        }
+      />
 
       {error ? (
         <Card>

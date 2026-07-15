@@ -14,6 +14,7 @@ import {
   CATEGORY_LABELS,
 } from '@/src/constants/tournaments';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Tournament {
   id: string;
@@ -102,10 +103,7 @@ export default function MemberTournamentsPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Turniere</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Vereinsturniere und Anmeldung</p>
-      </div>
+      <PageHeader title="Turniere" description="Vereinsturniere und Anmeldung" />
 
       {registerSuccess && (
         <div className="flex items-center gap-2 rounded-xl bg-success-50 dark:bg-success-900/20 p-4 text-success-700 dark:text-success-300 text-sm">

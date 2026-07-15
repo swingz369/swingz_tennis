@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/ui/stat-card';
 import { Euro, Building2, CheckCircle, Clock, AlertCircle, Users, Wifi } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -95,12 +96,7 @@ export default async function OwnerBillingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Umsatz & Abos</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Abo-Status aller Vereine auf der Plattform
-        </p>
-      </div>
+      <PageHeader title="Umsatz & Abos" description="Abo-Status aller Vereine auf der Plattform" />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {(

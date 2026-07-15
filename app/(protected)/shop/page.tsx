@@ -9,6 +9,7 @@ import { Loader2, ShoppingCart, Package, Plus, Minus, X, Trash2, ExternalLink } 
 import { toast } from 'sonner';
 import { CartProvider, useCart } from '@/lib/shop/cart-context';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Product {
   id: string;
@@ -86,10 +87,7 @@ function ShopContent() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Vereins-Shop</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Trikots, Bälle & mehr</p>
-        </div>
+        <PageHeader title="Vereins-Shop" description="Trikots, Bälle & mehr" />
         <Button
           onClick={() => setCartOpen(true)}
           variant="outline"

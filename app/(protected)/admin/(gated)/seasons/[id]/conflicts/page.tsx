@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import type { ConflictDetectionResult, ConflictTypeCode } from '@/lib/season-planning/types';
 import { DAY_LABELS } from '@/lib/season-planning/schedule-constants';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface ConflictSummary {
   critical: number;
@@ -226,14 +227,16 @@ export default function ConflictsPage({ params }: ConflictsPageProps) {
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Planungskonflikte</h1>
-          <p className="text-sm text-muted-foreground">
-            {summary.total} Konflikt{summary.total !== 1 ? 'e' : ''} erkannt —{' '}
-            {openConflicts.length} offen, {resolvedConflicts.length} gelöst,{' '}
-            {ignoredConflicts.length} ignoriert
-          </p>
-        </div>
+        <PageHeader
+          title="Planungskonflikte"
+          description={
+            <>
+              {summary.total} Konflikt{summary.total !== 1 ? 'e' : ''} erkannt —{' '}
+              {openConflicts.length} offen, {resolvedConflicts.length} gelöst,{' '}
+              {ignoredConflicts.length} ignoriert
+            </>
+          }
+        />
         <Button variant="outline" size="sm" className="ml-auto" onClick={fetchConflicts}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Neu laden

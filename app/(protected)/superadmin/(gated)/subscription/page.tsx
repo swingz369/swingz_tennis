@@ -7,6 +7,7 @@ import {
   SubscriptionToasts,
 } from '@/app/(protected)/admin/(gated)/subscription/subscribe-button';
 import { Building2 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,13 +47,10 @@ export default async function SuperadminSubscriptionPage() {
         <SubscriptionToasts />
       </Suspense>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Abonnement Tennisschule</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gleicher Funktionsumfang in beiden Plänen — der Preis richtet sich nur nach der Anzahl
-          deiner Vereine.
-        </p>
-      </div>
+      <PageHeader
+        title="Abonnement Tennisschule"
+        description="Gleicher Funktionsumfang in beiden Plänen — der Preis richtet sich nur nach der Anzahl deiner Vereine."
+      />
 
       <div className="flex items-center gap-2.5 rounded-xl bg-muted/50 px-4 py-3 text-sm">
         <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />

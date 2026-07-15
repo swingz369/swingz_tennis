@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Settings, Mail, CreditCard, Database } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,12 +53,10 @@ export default async function OwnerSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Plattform-Einstellungen</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          System-Status und globale Konfiguration
-        </p>
-      </div>
+      <PageHeader
+        title="Plattform-Einstellungen"
+        description="System-Status und globale Konfiguration"
+      />
 
       <Card>
         <CardHeader className="pb-2">

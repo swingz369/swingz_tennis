@@ -8,6 +8,7 @@ import { Building2, Users, Calendar, DollarSign, ArrowRight, Loader2 } from 'luc
 import { createClient } from '@/infrastructure/external/supabase/client';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
+import { PageHeader } from '@/components/ui/page-header';
 
 const log = createLogger('page:superadmin:tenants');
 
@@ -116,12 +117,10 @@ export default function SuperadminTenantsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Tenant Übersicht</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Wählen Sie einen Verein aus, um dessen Administration zu öffnen.
-        </p>
-      </div>
+      <PageHeader
+        title="Tenant Übersicht"
+        description="Wählen Sie einen Verein aus, um dessen Administration zu öffnen."
+      />
 
       {clubs.length === 0 ? (
         <Card>

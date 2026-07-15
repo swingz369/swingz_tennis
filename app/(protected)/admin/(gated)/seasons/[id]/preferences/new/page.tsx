@@ -17,6 +17,7 @@ import { ArrowLeft, Save, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import type { WeeklyAvailability, TimeSlot } from '@/lib/types/season-planning';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface PreferenceFormPageProps {
   params: {
@@ -128,12 +129,10 @@ export default function PreferenceFormPage({ params }: PreferenceFormPageProps) 
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Verfügbarkeit angeben</h1>
-          <p className="text-muted-foreground">
-            Geben Sie Ihre wöchentliche Verfügbarkeit für diese Season an
-          </p>
-        </div>
+        <PageHeader
+          title="Verfügbarkeit angeben"
+          description="Geben Sie Ihre wöchentliche Verfügbarkeit für diese Season an"
+        />
       </div>
 
       <form onSubmit={handleSubmit}>

@@ -17,6 +17,7 @@ import {
 import { ArrowLeft, Save, Trash2, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Season {
   id: string;
@@ -149,10 +150,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
         <Button variant="ghost" size="icon" onClick={() => router.push(`/admin/seasons/${id}`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Saison bearbeiten</h1>
-          <p className="text-muted-foreground">{season.name}</p>
-        </div>
+        <PageHeader title="Saison bearbeiten" description={<>{season.name}</>} />
       </div>
 
       <form onSubmit={handleSubmit}>

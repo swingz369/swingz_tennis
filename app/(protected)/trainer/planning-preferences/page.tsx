@@ -24,6 +24,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { createLogger } from '@/lib/logger';
+import { PageHeader } from '@/components/ui/page-header';
 
 const log = createLogger('trainer:planning-preferences');
 
@@ -202,13 +203,10 @@ export default function TrainerPlanningPreferencesPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5 py-8 px-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Planungspräferenzen</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Wöchentliche Verfügbarkeit für die Saisonplanung — wird vom Clustering-Algorithmus
-          genutzt.
-        </p>
-      </div>
+      <PageHeader
+        title="Planungspräferenzen"
+        description="Wöchentliche Verfügbarkeit für die Saisonplanung — wird vom Clustering-Algorithmus genutzt."
+      />
 
       {/* Season selector */}
       {seasons.length > 0 && (

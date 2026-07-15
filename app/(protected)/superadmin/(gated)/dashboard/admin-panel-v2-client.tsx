@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { ClubWithStats, PlatformStats } from './page';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface AdminPanelV2ClientProps {
   clubs: ClubWithStats[];
@@ -53,14 +54,10 @@ export function AdminPanelV2Client({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display text-brand-primary">
-            Superadmin Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Hallo {firstName} — Plattform-Übersicht über alle Vereine
-          </p>
-        </div>
+        <PageHeader
+          title="Superadmin Dashboard"
+          description={<>Hallo {firstName} — Plattform-Übersicht über alle Vereine</>}
+        />
         <div className="flex items-center gap-3">
           {/* Club Switcher Dropdown */}
           <Select onValueChange={handleClubSwitch}>

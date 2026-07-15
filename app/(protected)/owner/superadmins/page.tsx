@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Building2 } from 'lucide-react';
 import { SuperadminInviteForm } from './invite-form';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,12 +41,10 @@ export default async function OwnerSuperadminsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Superadmins</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Superadmins verwalten mehrere Vereine (Tennisschule-Chef).
-        </p>
-      </div>
+      <PageHeader
+        title="Superadmins"
+        description="Superadmins verwalten mehrere Vereine (Tennisschule-Chef)."
+      />
 
       <Card>
         <CardHeader className="pb-3">

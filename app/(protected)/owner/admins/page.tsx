@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Building2 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,12 +47,10 @@ export default async function OwnerAdminsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admins</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Alle Club-Admins auf der Plattform — je genau einem Verein zugeordnet.
-        </p>
-      </div>
+      <PageHeader
+        title="Admins"
+        description="Alle Club-Admins auf der Plattform — je genau einem Verein zugeordnet."
+      />
 
       <Card>
         <CardHeader className="pb-3">

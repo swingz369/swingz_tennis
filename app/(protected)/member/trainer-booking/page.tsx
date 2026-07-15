@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api-fetch';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Trainer {
   id: string;
@@ -241,12 +242,10 @@ export default function MemberTrainerBookingPage() {
   if (!selectedTrainer) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Trainer buchen</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Wähle einen Trainer für deine Einzelstunde
-          </p>
-        </div>
+        <PageHeader
+          title="Trainer buchen"
+          description="Wähle einen Trainer für deine Einzelstunde"
+        />
 
         {loadingTrainers ? (
           <div className="text-center py-10 text-muted-foreground text-sm">

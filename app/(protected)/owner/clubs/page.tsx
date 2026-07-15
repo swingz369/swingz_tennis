@@ -17,6 +17,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Club {
   id: string;
@@ -120,12 +121,10 @@ export default function OwnerClubsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Alle Vereine</h1>
-        <Button onClick={() => setNewClubOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Verein anlegen
-        </Button>
-      </div>
+      <PageHeader
+        title="Alle Vereine"
+        actions={[{ label: 'Verein anlegen', icon: Plus, onClick: () => setNewClubOpen(true) }]}
+      />
 
       <div className="relative">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

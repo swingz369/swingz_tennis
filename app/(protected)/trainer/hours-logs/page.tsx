@@ -18,6 +18,7 @@ import { Clock, CheckCircle, XCircle, Plus, Calendar, Filter, Hourglass } from '
 import { format, parseISO } from 'date-fns';
 import { de } from '@/lib/locale';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface HoursLog {
   id: string;
@@ -184,14 +185,10 @@ export default function TrainerHoursLogsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-primary dark:text-white">
-            Meine Stundennachweise
-          </h1>
-          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Erfasse und verwalte deine geleisteten Stunden
-          </p>
-        </div>
+        <PageHeader
+          title="Meine Stundennachweise"
+          description="Erfasse und verwalte deine geleisteten Stunden"
+        />
         <Button onClick={() => setShowForm(!showForm)} className="shrink-0">
           <Plus className="h-4 w-4 mr-2" />
           {showForm ? 'Schließen' : 'Neue Stunden'}

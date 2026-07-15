@@ -9,6 +9,7 @@ import type { Club } from '@/lib/clubs';
 import { parseClubsResponse } from '@/lib/clubs';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function ClubsAdminPage() {
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -80,14 +81,10 @@ export default function ClubsAdminPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-brand-primary">
-            Vereine verwalten
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Vereine deiner Gruppe anlegen und verwalten
-          </p>
-        </div>
+        <PageHeader
+          title="Vereine verwalten"
+          description="Vereine deiner Gruppe anlegen und verwalten"
+        />
         <div className="flex gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={handleSeedDemo} disabled={seedingDemo}>
             {seedingDemo ? 'Wird erstellt…' : 'TC Demo anlegen'}

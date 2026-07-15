@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { IconBox } from '@/components/ui/icon-box';
 import { apiFetch } from '@/lib/api-fetch';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface OrderItem {
   product_id: string;
@@ -107,10 +108,7 @@ export default function MeineBestellungenPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Meine Bestellungen</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Verfolge deine Shop-Bestellungen</p>
-      </div>
+      <PageHeader title="Meine Bestellungen" description="Verfolge deine Shop-Bestellungen" />
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap">
