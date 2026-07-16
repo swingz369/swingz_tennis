@@ -15,14 +15,29 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '@playwright/test';
 
-const BASE = 'https://swingz.vercel.app';
+const BASE = process.env.QA_AUDIT_BASE_URL ?? 'https://swingz.vercel.app';
 const TIMEOUT = 20000;
 
-/* ─── Credentials ─── */
-const ADMIN = { email: 'admin@tc-rheinland.de', password: 'TestAdmin2026!' };
-const TRAINER1 = { email: 'trainer.1@tc-rheinland.de', password: 'Trainer2026!' };
-const MEMBER1 = { email: 'mitglied.1@tc-rheinland.de', password: 'TestMitglied2026!' };
-const SUPERADMIN = { email: 'admin@swingz.com', password: 'AdminPass123!' };
+// Läuft gegen Produktion — nur explizit mit QA_AUDIT=1 starten, Credentials aus ENV.
+test.skip(!process.env.QA_AUDIT, 'QA-Audit nur mit QA_AUDIT=1 (läuft gegen Produktion)');
+
+/* ─── Credentials (aus .env.local / CI-Secrets) ─── */
+const ADMIN = {
+  email: process.env.QA_ADMIN_EMAIL ?? '',
+  password: process.env.QA_ADMIN_PASSWORD ?? '',
+};
+const TRAINER1 = {
+  email: process.env.QA_TRAINER_EMAIL ?? '',
+  password: process.env.QA_TRAINER_PASSWORD ?? '',
+};
+const MEMBER1 = {
+  email: process.env.QA_MEMBER_EMAIL ?? '',
+  password: process.env.QA_MEMBER_PASSWORD ?? '',
+};
+const SUPERADMIN = {
+  email: process.env.QA_SUPERADMIN_EMAIL ?? '',
+  password: process.env.QA_SUPERADMIN_PASSWORD ?? '',
+};
 
 /* ─── Helpers ─── */
 const consoleErrors: { url: string; msg: string }[] = [];

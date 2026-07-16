@@ -22,6 +22,7 @@ import {
   Trash2,
   Zap,
   Copy,
+  Bell,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -34,6 +35,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
+import {
+  seasonStatusLabel,
+  seasonTypeLabel,
+  seasonWorkflowPhase,
+  SEASON_WORKFLOW_PHASES,
+} from '@/lib/season-planning/status-labels';
+import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
 import { apiFetch } from '@/lib/api-fetch';
 import { SeasonCalendarTab } from '@/components/admin/season-calendar-tab';
 
@@ -278,9 +286,80 @@ function GroupChangeDialog({
   );
 }
 
+function GroupMemberList({
+  seasonId,
+  clubId,
+  group,
+  groups,
+  refreshKey,
+  onChanged,
+}: {
+  seasonId: string;
+  clubId: string;
+  group: TrainingGroup;
+  groups: TrainingGroup[];
+  refreshKey: number;
+  onChanged: () => void;
+}) {
+  const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await apiFetch(
+          `/api/seasons/${seasonId}/groups/${group.id}/members?clubId=${clubId}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setMembers(data.members ?? []);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [seasonId, clubId, group.id, refreshKey]);
+
+  if (loading) {
+    return <p className="text-sm text-muted-foreground">Lade Mitglieder…</p>;
+  }
+
+  if (members.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">Keine aktiven Mitglieder in dieser Gruppe.</p>
+    );
+  }
+
+  return (
+    <ul className="divide-y divide-border">
+      {members.map((m) => (
+        <li key={m.id} className="flex items-center justify-between py-2">
+          <span className="text-sm">{m.name}</span>
+          <GroupChangeDialog
+            memberId={m.id}
+            currentGroupId={group.id}
+            currentGroupName={group.name}
+            clubId={clubId}
+            groups={groups}
+            onSuccess={onChanged}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function GroupMembersPanel({ seasonId, clubId }: { seasonId: string; clubId: string }) {
   const [groups, setGroups] = useState<TrainingGroup[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  // Nach einem Wechsel alle Gruppenlisten neu laden (Quell- UND Zielgruppe ändern sich)
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -322,17 +401,14 @@ function GroupMembersPanel({ seasonId, clubId }: { seasonId: string; clubId: str
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <GroupChangeDialog
-              memberId=""
-              currentGroupId={group.id}
-              currentGroupName={group.name}
+            <GroupMemberList
+              seasonId={seasonId}
               clubId={clubId}
+              group={group}
               groups={groups}
-              onSuccess={() => {}}
+              refreshKey={refreshKey}
+              onChanged={() => setRefreshKey((k) => k + 1)}
             />
-            <p className="text-xs text-muted-foreground mt-2">
-              Wähle oben ein Mitglied aus, um einen Gruppenwechsel durchzuführen.
-            </p>
           </CardContent>
         </Card>
       ))}
@@ -354,6 +430,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [quickStarting, setQuickStarting] = useState(false);
+  const [reminding, setReminding] = useState(false);
 
   const fetchSeason = useCallback(async () => {
     try {
@@ -389,9 +466,37 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
       if (!response.ok) throw new Error('Fehler beim Öffnen der Präferenzen');
 
+      // Mitglieder direkt per E-Mail informieren — sonst erfährt niemand davon
+      let sent = 0;
+      try {
+        const remindRes = await apiFetch(`/api/seasons/${id}/planning/remind`, { method: 'POST' });
+        if (remindRes.ok) sent = (await remindRes.json()).sent ?? 0;
+      } catch {
+        // E-Mail-Versand optional — das Öffnen war erfolgreich
+      }
+      toast.success(
+        sent > 0
+          ? `Präferenzen geöffnet — ${sent} Mitglieder per E-Mail benachrichtigt`
+          : 'Präferenzen geöffnet'
+      );
+
       await fetchSeason();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
+    }
+  };
+
+  const handleRemind = async () => {
+    setReminding(true);
+    try {
+      const res = await apiFetch(`/api/seasons/${id}/planning/remind`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Erinnerung fehlgeschlagen');
+      toast.success(data.message ?? `${data.sent ?? 0} Erinnerungen versendet`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler');
+    } finally {
+      setReminding(false);
     }
   };
 
@@ -498,17 +603,29 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
   const canOpenPreferences = season.planning_status === 'draft';
   const canPublish = season.planning_status === 'manual_review';
+  const workflowPhase = seasonWorkflowPhase(season.planning_status);
+  const nextStepHint = [
+    'Nächster Schritt: Präferenzen öffnen — Mitglieder werden per E-Mail gebeten, ihre Wunschzeiten abzugeben.',
+    `${season.submitted_preferences} von ${season.total_preferences} Mitgliedern haben Präferenzen abgegeben. Nächster Schritt: Ausstehende erinnern oder die Planung starten.`,
+    'Nächster Schritt: Plan im Wizard prüfen und veröffentlichen.',
+    'Die Saison ist veröffentlicht — Trainingsplan, Konflikte und Gruppenwechsel findest du in den Tabs unten.',
+  ][workflowPhase];
   const canQuickStart =
     ['draft', 'collecting_preferences', 'manual_review'].includes(season.planning_status ?? '') &&
     season.submitted_preferences > 0;
 
   return (
     <div className="space-y-6">
+      <SeasonPlanningTabs seasonId={id} />
       <ConfirmDialog
         open={publishConfirmOpen}
         onOpenChange={setPublishConfirmOpen}
         title="Saison veröffentlichen"
-        description="Möchten Sie diese Saison wirklich veröffentlichen?"
+        description={
+          season.open_conflicts > 0
+            ? `Es gibt noch ${season.open_conflicts} offene Konflikte. Empfehlung: zuerst im Wizard unter „Abschließen" prüfen. Trotzdem veröffentlichen?`
+            : 'Möchten Sie diese Saison wirklich veröffentlichen? Für alle geplanten Gruppen werden Trainingseinheiten erstellt.'
+        }
         confirmLabel="Veröffentlichen"
         variant="primary"
         onConfirm={confirmPublish}
@@ -605,6 +722,50 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
         </div>
       </div>
 
+      {/* Workflow-Fortschritt */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+            {SEASON_WORKFLOW_PHASES.map((phase, i) => (
+              <div key={phase} className="flex items-center gap-2">
+                {i > 0 && <div className="h-px w-5 bg-border" aria-hidden />}
+                <span
+                  className={`flex items-center gap-1.5 text-sm ${
+                    i === workflowPhase
+                      ? 'font-semibold'
+                      : i < workflowPhase
+                        ? 'text-success-600'
+                        : 'text-muted-foreground'
+                  }`}
+                >
+                  {i < workflowPhase ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <span
+                      className={`flex h-5 w-5 items-center justify-center rounded-full border text-xs ${
+                        i === workflowPhase ? 'border-primary text-primary' : ''
+                      }`}
+                    >
+                      {i + 1}
+                    </span>
+                  )}
+                  {phase}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-muted-foreground">{nextStepHint}</p>
+            {workflowPhase === 1 && (
+              <Button variant="outline" size="sm" onClick={handleRemind} disabled={reminding}>
+                <Bell className="mr-2 h-4 w-4" />
+                {reminding ? 'Sende…' : 'Ausstehende erinnern'}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -615,7 +776,7 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
           <CardContent>
             <div className="text-2xl font-bold">{season.submitted_preferences}</div>
             <p className="text-xs text-muted-foreground">
-              von {season.total_preferences} eingereicht
+              von {season.total_preferences} Mitgliedern eingereicht
             </p>
             <div className="mt-2 h-2 w-full rounded-full bg-muted">
               <div
@@ -815,11 +976,11 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status</p>
-                <p className="text-lg">{season.planning_status}</p>
+                <p className="text-lg">{seasonStatusLabel(season.planning_status)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Saison-Typ</p>
-                <p className="text-lg capitalize">{season.season_type}</p>
+                <p className="text-lg">{seasonTypeLabel(season.season_type)}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Jahr</p>

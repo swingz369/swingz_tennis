@@ -172,7 +172,7 @@ export function AdminSection({
           isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         )}
       >
-        <div className="ml-2 pl-2 border-l border-border space-y-0.5 pb-0.5" role="list">
+        <div className="ml-2 pl-2 border-l border-border space-y-0.5 pb-0.5">
           {subItems.map((item) => {
             const isActive = isActivePath(pathname, item.href);
             return (
@@ -180,7 +180,6 @@ export function AdminSection({
                 key={item.name}
                 href={item.href}
                 onClick={() => onClose?.()}
-                role="listitem"
                 className={cn(
                   'flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
                   isActive

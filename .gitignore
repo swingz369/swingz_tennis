@@ -176,3 +176,4 @@ TEST-CREDENTIALS.md
 test-results/
 .vercel
 *.certSigningRequest
+tests/e2e/.auth/
