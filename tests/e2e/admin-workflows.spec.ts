@@ -15,10 +15,9 @@ test.describe('Admin Workflows', () => {
     await page.goto('/admin', { waitUntil: 'networkidle', timeout: 20000 });
     await expect(page.locator('body')).toBeVisible();
 
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
+    const sidebar = page.locator('aside[aria-label="Seitennavigation"]');
     await expect(sidebar).toBeVisible({ timeout: 10000 });
 
-    await expect(sidebar.getByRole('link', { name: /Dashboard/i })).toBeVisible();
     // Check individual sidebar section buttons (avoid regex that matches multiple)
     await expect(sidebar.getByRole('button', { name: /Mitglieder/i })).toBeVisible();
     await expect(sidebar.getByRole('button', { name: /Training/i })).toBeVisible();
@@ -67,11 +66,16 @@ test.describe('Superadmin Workflows', () => {
     await page.goto('/superadmin', { waitUntil: 'networkidle', timeout: 20000 });
     await expect(page.locator('body')).toBeVisible();
 
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
+    const sidebar = page.locator('aside[aria-label="Seitennavigation"]');
     await expect(sidebar).toBeVisible({ timeout: 10000 });
-    await expect(sidebar.getByRole('link', { name: /Vereinsübersicht/i })).toBeVisible();
-    await expect(sidebar.getByRole('link', { name: /Club-Verwaltung/i })).toBeVisible();
-    await expect(sidebar.getByRole('link', { name: /Superadmin Dashboard/i })).toBeVisible();
+    // Sektionen sind Collapsibles — erst aufklappen, dann Items prüfen
+    // (getByText — unabhängig von der Link-Rolle stabil)
+    await expect(sidebar.getByRole('button', { name: /Verwaltung/i })).toBeVisible();
+    const meineVereine = sidebar.getByRole('button', { name: /Meine Vereine/i });
+    if ((await meineVereine.getAttribute('aria-expanded')) !== 'true') {
+      await meineVereine.click();
+    }
+    await expect(sidebar.getByText('Vereinsübersicht')).toBeVisible();
   });
 
   test('Superadmin tenant management renders', async ({ page }) => {
@@ -90,11 +94,15 @@ test.describe('Superadmin Workflows', () => {
     await page.goto('/superadmin', { waitUntil: 'networkidle', timeout: 20000 });
     await expect(page.locator('body')).toBeVisible();
 
-    const sidebar = page.locator('aside[aria-label="Main navigation"]');
+    const sidebar = page.locator('aside[aria-label="Seitennavigation"]');
 
-    // Verify Vereinsübersicht link and navigate
-    await sidebar.getByRole('link', { name: /Vereinsübersicht/i }).click();
-    await expect(page).toHaveURL(/tenants/, { timeout: 8000 });
+    // Verify Vereinsübersicht link and navigate (Sektion erst aufklappen)
+    const meineVereine = sidebar.getByRole('button', { name: /Meine Vereine/i });
+    if ((await meineVereine.getAttribute('aria-expanded')) !== 'true') {
+      await meineVereine.click();
+    }
+    await sidebar.getByText('Vereinsübersicht').click();
+    await expect(page).toHaveURL(/\/superadmin\/clubs/, { timeout: 8000 });
   });
 });
 

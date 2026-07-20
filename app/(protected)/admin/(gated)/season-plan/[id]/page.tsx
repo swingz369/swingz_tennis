@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { SeasonPlanGridClient } from './season-plan-grid-client';
+import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,9 @@ export default async function SeasonPlanGridPage({ params }: { params: Promise<{
   }
 
   return (
-    <SeasonPlanGridClient seasonId={season.id} clubId={season.club_id} seasonName={season.name} />
+    <>
+      <SeasonPlanningTabs seasonId={season.id} />
+      <SeasonPlanGridClient seasonId={season.id} clubId={season.club_id} seasonName={season.name} />
+    </>
   );
 }

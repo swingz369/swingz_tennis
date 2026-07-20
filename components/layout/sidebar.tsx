@@ -11,30 +11,19 @@ import { useClubFeatures } from '@/hooks/use-club-features';
 import { AdminSection } from './admin-section';
 import { FamilySwitcher } from './family-switcher';
 import { useFamilyAccounts } from '@/hooks/use-family-accounts';
+import { Home, Trophy, X, CheckCircle, Building2, ChevronDown, UserPlus } from 'lucide-react';
 import {
-  Home,
-  Users,
-  Settings,
-  GraduationCap,
-  Trophy,
-  X,
-  CheckCircle,
-  CreditCard,
-  Building2,
-  Calendar,
-  ChevronDown,
-  UserPlus,
-  DollarSign,
-  Shield,
-  MessageSquare,
-  HardHat,
-  Shuffle,
-  Landmark,
-  ShoppingBag,
-  Gavel,
-} from 'lucide-react';
+  adminSidebarSections,
+  memberSidebarSections,
+  trainerSidebarSections,
+  superadminSidebarSections,
+  ownerSidebarSections,
+} from '@/lib/navigation';
 import { apiFetch } from '@/lib/api-fetch';
 import { useTenant } from '@/lib/tenant-context';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('sidebar');
 
 interface Club {
   id: string;
@@ -252,7 +241,7 @@ export function Sidebar({
         window.location.reload();
       }
     } catch (error) {
-      console.error('Error switching club:', error);
+      log.error('Fehler beim Vereinswechsel', error instanceof Error ? error : undefined);
     }
   };
 
@@ -277,225 +266,81 @@ export function Sidebar({
     };
   }
 
-  // Role-specific collapsible sections — uniform structure for both roles
-  // Filter out sections whose primary feature is disabled.
+  // Sektionen kommen aus lib/navigation.ts (gemeinsame Quelle mit Mobile-Nav
+  // und Command-Palette) und werden hier nur dekoriert: Approval-Badge,
+  // Einladen-Aktion, Trainer-Zusammenführung.
+  const includeMemberOnly = !isTrainer || (roles?.includes('member') ?? false);
+
   const roleSections: SectionDef[] = (() => {
     if (isAdmin) {
-      const allSections: SectionDef[] = [
-        {
-          label: 'Mitglieder',
-          icon: Users,
-          subItems: [
-            {
-              name: 'Alle Mitglieder',
-              href: '/admin/members',
-              ...(approvalCount > 0 ? { badge: approvalCount } : {}),
-            },
-            { name: 'Familienkonten', href: '/admin/members/family' },
-            ...(!hiddenSections.has('trial_training')
-              ? [{ name: 'Probetrainings', href: '/admin/trial-training' }]
-              : []),
-            ...(!hiddenSections.has('work_duty')
-              ? [
-                  { name: 'Arbeitsdienste', href: '/admin/work-duties' },
-                  { name: 'Arbeitsdienst-Zuweisungen', href: '/admin/work-duties/assignments' },
-                ]
-              : []),
-            { name: 'Nachrichten', href: '/messages' },
-            { name: 'E-Mail-Kampagnen', href: '/admin/email-campaigns' },
-          ],
-          extraAction: onInvite
-            ? {
+      return adminSidebarSections(hiddenSections).map((section) => ({
+        label: section.label,
+        icon: section.icon,
+        subItems: section.items.map((item) =>
+          item.href === '/admin/members' && approvalCount > 0
+            ? { ...item, badge: approvalCount }
+            : item
+        ),
+        ...(section.label === 'Mitglieder' && onInvite
+          ? {
+              extraAction: {
                 label: 'Einladen',
                 icon: UserPlus,
                 onClick: () => {
                   onClose?.();
                   onInvite();
                 },
-              }
-            : undefined,
-        },
-        {
-          label: 'Training',
-          icon: GraduationCap,
-          subItems: [
-            { name: 'Saisonplanung', href: '/admin/seasons' },
-            { name: 'Wochenstundenplan', href: '/scheduler' },
-            { name: 'Trainer-Profile', href: '/admin/trainers' },
-            { name: 'Stundennachweise', href: '/admin/hours-logs' },
-            { name: 'Abwesenheiten', href: '/admin/absences' },
-            { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
-          ],
-        },
-        {
-          label: 'Spielbetrieb',
-          icon: Trophy,
-          subItems: [
-            { name: 'Platzverwaltung', href: '/admin/courts' },
-            { name: 'Platzarten', href: '/admin/court-types' },
-            { name: 'Wartungsplan', href: '/admin/maintenance' },
-            ...(!hiddenSections.has('weather_integration')
-              ? [{ name: 'Platzsperren & Wetter', href: '/admin/weather' }]
-              : []),
-            ...(!hiddenSections.has('league_lineup')
-              ? [{ name: 'Ligen & Teams', href: '/admin/leagues' }]
-              : []),
-            ...(!hiddenSections.has('tournaments')
-              ? [{ name: 'Turniere', href: '/admin/tournaments' }]
-              : []),
-            ...(!hiddenSections.has('ai_matchmaking')
-              ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
-              : []),
-          ],
-        },
-        {
-          label: 'Finanzen',
-          icon: DollarSign,
-          subItems: [
-            { name: 'Abrechnung', href: '/admin/billing' },
-            { name: 'Preisregeln', href: '/admin/pricing' },
-            { name: 'Abonnement', href: '/admin/subscription' },
-            ...(!hiddenSections.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
-          ],
-        },
-        {
-          label: 'Vereinsführung',
-          icon: Landmark,
-          subItems: [
-            { name: 'Vereinseinstellungen', href: '/admin/settings' },
-            { name: 'Auswertungen & Berichte', href: '/admin/analytics' },
-            { name: 'Dokumente', href: '/admin/documents' },
-            { name: 'Versammlungen', href: '/admin/meetings' },
-            { name: 'Board-Beschlüsse', href: '/admin/decisions' },
-          ],
-        },
-      ];
-
-      return allSections.filter((section) => {
-        if (section.label === 'Mitglieder') return !hiddenSections.has('members');
-        if (section.label === 'Training')
-          return !hiddenSections.has('trainers') || !hiddenSections.has('seasons');
-        if (section.label === 'Finanzen') return !hiddenSections.has('finance');
-        return true;
-      });
+              },
+            }
+          : {}),
+      }));
     }
 
     if (isOwner) {
-      return [
-        {
-          label: 'Plattform',
-          icon: Shield,
-          subItems: [
-            { name: 'Alle Vereine', href: '/owner/clubs' },
-            { name: 'Superadmins', href: '/owner/superadmins' },
-            { name: 'Admins', href: '/owner/admins' },
-            { name: 'Zugänge & Anfragen', href: '/owner/access' },
-          ],
-        },
-        {
-          label: 'System',
-          icon: Settings,
-          subItems: [
-            { name: 'Umsatz & Abos', href: '/owner/billing' },
-            { name: 'System-Einstellungen', href: '/owner/settings' },
-          ],
-        },
-      ];
-    }
-
-    if (isTrainer) {
-      return [
-        {
-          label: 'Training',
-          icon: GraduationCap,
-          subItems: [
-            { name: 'Verfügbarkeit', href: '/trainer/availability' },
-            { name: 'Trainingspräferenzen', href: '/trainer/planning-preferences' },
-            { name: 'Stundennachweise', href: '/trainer/hours-logs' },
-            { name: 'Abwesenheiten', href: '/trainer/absences' },
-            { name: 'Trainer-Profil', href: '/trainer/profile' },
-          ],
-        },
-      ];
+      return ownerSidebarSections().map((s) => ({
+        label: s.label,
+        icon: s.icon,
+        subItems: s.items,
+      }));
     }
 
     if (isSuperAdmin) {
+      return superadminSidebarSections().map((s) => ({
+        label: s.label,
+        icon: s.icon,
+        subItems: s.items,
+      }));
+    }
+
+    const memberSections = memberSidebarSections(hiddenSections, includeMemberOnly);
+
+    if (isTrainer) {
+      // Trainer: eigene Trainingssektion + „Spielen"/„Mein Verein" des
+      // Mitglieds. Die Mitglieder-Trainingssektion wird eingeschmolzen
+      // (Stundenplan nach oben, Spieler-Präferenzen dazu); „Trainerstunde
+      // buchen" entfällt für Trainer.
+      const trainer = trainerSidebarSections()[0]!;
       return [
         {
-          label: 'Meine Vereine',
-          icon: Building2,
+          label: trainer.label,
+          icon: trainer.icon,
           subItems: [
-            { name: 'Vereinsübersicht', href: '/superadmin/clubs' },
-            { name: 'Admins verwalten', href: '/superadmin/admins' },
+            { name: 'Stundenplan', href: '/scheduler' },
+            ...trainer.items,
+            ...(includeMemberOnly
+              ? [{ name: 'Trainingspräferenzen (Spieler)', href: '/member/preferences' }]
+              : []),
           ],
         },
-        {
-          label: 'Verwaltung',
-          icon: Settings,
-          subItems: [
-            { name: 'Statistiken', href: '/superadmin/dashboard' },
-            { name: 'Einstellungen', href: '/superadmin/settings' },
-            { name: 'Abonnement', href: '/superadmin/subscription' },
-          ],
-        },
+        ...memberSections
+          .filter((s) => s.label !== 'Training')
+          .map((s) => ({ label: s.label, icon: s.icon, subItems: s.items })),
       ];
     }
 
-    return [];
+    // Mitglied — gruppierte Sektionen statt flacher Liste
+    return memberSections.map((s) => ({ label: s.label, icon: s.icon, subItems: s.items }));
   })();
-
-  interface NavItem {
-    name: string;
-    href: string;
-    icon: React.ComponentType<{
-      className?: string | undefined;
-      'aria-hidden'?: boolean | 'true' | 'false' | undefined;
-    }>;
-    badge?: number;
-  }
-
-  // Secondary navigation — shown consistently for both admin & superadmin
-  const secondaryNav: NavItem[] = [
-    ...(!isAdmin && !isSuperAdmin && !isOwner
-      ? [{ name: 'Stundenplan', href: '/scheduler', icon: Calendar }]
-      : []),
-    ...(!isAdmin &&
-    !isSuperAdmin &&
-    !isOwner &&
-    (!isTrainer || (roles?.includes('member') ?? false))
-      ? [{ name: 'Trainings­präferenzen', href: '/member/preferences', icon: GraduationCap }]
-      : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
-      ? [{ name: 'Nachrichten', href: '/messages', icon: MessageSquare }]
-      : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
-      ? [{ name: 'Matchmaking', href: '/matchmaking', icon: Shuffle }]
-      : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
-      ? [{ name: 'Offene Spiele', href: '/matches', icon: Users }]
-      : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
-      ? [{ name: 'Meine Rechnungen', href: '/billing', icon: CreditCard }]
-      : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
-      ? [{ name: 'Vereinsdokumente', href: '/documents', icon: CheckCircle }]
-      : []),
-    ...(!isAdmin &&
-    !isSuperAdmin &&
-    !isOwner &&
-    (!isTrainer || (roles?.includes('member') ?? false))
-      ? [{ name: 'Arbeitsdienste', href: '/member/work-duties', icon: HardHat }]
-      : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner && !hiddenSections.has('shop')
-      ? [
-          { name: 'Shop', href: '/shop', icon: ShoppingBag },
-          { name: 'Meine Bestellungen', href: '/meine-bestellungen', icon: ShoppingBag },
-        ]
-      : []),
-    ...(!isAdmin && !isSuperAdmin && !isOwner
-      ? [{ name: 'Board-Beschlüsse', href: '/decisions', icon: Gavel }]
-      : []),
-  ];
 
   const dashboardHref = isOwner
     ? '/owner'
@@ -707,43 +552,11 @@ export function Sidebar({
                       defaultOpen={
                         section.label === 'Mitglieder' ||
                         section.label === 'Spielbetrieb' ||
+                        section.label === 'Spielen' ||
                         (isTrainer && !isAdmin && section.label === 'Training')
                       }
                     />
                   ))}
-            </div>
-          )}
-
-          {/* Secondary Navigation — shown for both roles */}
-          {secondaryNav.length > 0 && (
-            <div className="mt-2 space-y-0.5">
-              {secondaryNav.map((item) => {
-                const isActive = isActivePath(pathname, item.href);
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => onClose?.()}
-                    className={cn(
-                      'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
-                      isActive
-                        ? `${colors.bg} ${colors.text}`
-                        : 'text-muted-foreground hover:bg-muted/70 dark:hover:bg-white/[0.06] hover:text-foreground'
-                    )}
-                    aria-current={isActive ? 'page' : undefined}
-                    aria-label={`${item.name}${isActive ? ' (aktuell)' : ''}`}
-                  >
-                    <item.icon
-                      className={cn(
-                        'h-5 w-5 shrink-0 transition-transform duration-200',
-                        isActive && 'scale-110'
-                      )}
-                      aria-hidden="true"
-                    />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              })}
             </div>
           )}
         </nav>

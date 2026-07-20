@@ -1,21 +1,19 @@
 'use client';
 
 /**
- * Editorial Pricing Section (Phase 3)
+ * Pricing-Sektion — App-Design
  *
- * Client component because of the monthly/yearly billing toggle.
- * Hairline-bordered cards on cream paper. Court Clay accent for
- * the "popular" plan via a thin top-rule instead of a dark fill
- * (we're a magazine, not a casino).
- *
- * The reveal animation is opt-in via the `reveal` class on the
- * outer SectionReveal in the parent landing — this component only
- * owns the toggle + price computation.
+ * Client Component wegen des Monatlich/Jährlich-Toggles.
+ * shadcn Card + Switch + Button statt der früheren Editorial-Hairline-Karten.
  */
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 type Plan = {
   name: string;
@@ -82,20 +80,19 @@ export function PricingSection() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       {/* ── Header ── */}
-      <div className="text-center mb-14 sm:mb-20">
-        <p className="editorial-eyebrow text-brand-accent mb-5">
-          <span className="rule-clay mr-3" aria-hidden="true" />
-          Membership
+      <div className="text-center mb-12 sm:mb-16">
+        <p className="text-sm font-semibold uppercase tracking-wider text-brand-accent mb-3">
+          Preise
         </p>
-        <h2 className="font-editorial text-3xl sm:text-4xl md:text-5xl text-foreground tracking-tight">
-          Für jeden Verein die <em className="italic text-brand-primary">richtige Lösung</em>.
+        <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+          Für jeden Verein die richtige Lösung
         </h2>
-        <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+        <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
           Flexible Modelle — vom kleinen Verein bis zum großen Verband. Klar, ohne Kleingedrucktes.
         </p>
 
         {/* ── Billing Toggle ── */}
-        <div className="mt-9 inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-foreground/10 bg-card/50">
+        <div className="mt-8 inline-flex items-center gap-3">
           <span
             className={`text-sm font-medium transition-colors ${
               !billingYearly ? 'text-foreground' : 'text-muted-foreground'
@@ -103,22 +100,11 @@ export function PricingSection() {
           >
             Monatlich
           </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={billingYearly}
+          <Switch
+            checked={billingYearly}
+            onCheckedChange={setBillingYearly}
             aria-label="Jährliche Abrechnung"
-            onClick={() => setBillingYearly((v) => !v)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-              billingYearly ? 'bg-brand-primary' : 'bg-foreground/20'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-background shadow-sm transition-transform duration-300 ${
-                billingYearly ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          />
           <span
             className={`text-sm font-medium transition-colors ${
               billingYearly ? 'text-foreground' : 'text-muted-foreground'
@@ -126,35 +112,32 @@ export function PricingSection() {
           >
             Jährlich
           </span>
-          <span className="ml-1 font-mono text-[10px] tracking-widest uppercase text-brand-accent">
-            −2 Mo.
-          </span>
+          <Badge variant="accent" className="ml-1">
+            2 Monate gratis
+          </Badge>
         </div>
       </div>
 
       {/* ── Plans ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-px max-w-5xl mx-auto bg-foreground/10 rounded-md overflow-hidden border border-foreground/10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
         {PRICING_PLANS.map((plan) => (
-          <article
+          <Card
             key={plan.name}
-            className="relative flex flex-col bg-background p-8 sm:p-10 transition-colors duration-300 hover:bg-foreground/[0.02]"
+            padding="xl"
+            className={`relative flex flex-col ${
+              plan.popular ? 'border-2 border-brand-primary/40 shadow-medium' : ''
+            }`}
           >
             {plan.popular && (
-              <span
-                className="absolute top-0 left-0 right-0 h-[2px] bg-brand-accent"
-                aria-hidden="true"
-              />
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-primary px-3 py-1 text-xs font-semibold text-white shadow-md">
+                Am beliebtesten
+              </span>
             )}
-            {plan.popular && (
-              <p className="font-mono text-[10px] tracking-widest uppercase text-brand-accent mb-4">
-                ◆ Am beliebtesten
-              </p>
-            )}
-            <h3 className="font-editorial text-2xl sm:text-3xl text-foreground">{plan.name}</h3>
+            <h3 className="text-xl font-bold text-foreground dark:text-white">{plan.name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{plan.subtitle}</p>
 
-            <div className="mt-7 flex items-baseline gap-2">
-              <span className="font-editorial text-5xl sm:text-6xl text-foreground">
+            <div className="mt-6 flex items-baseline gap-2">
+              <span className="font-display text-5xl font-extrabold tracking-tight text-foreground dark:text-white">
                 €{billingYearly ? plan.yearlyPrice : plan.price}
               </span>
               <span className="text-sm text-muted-foreground">
@@ -162,50 +145,38 @@ export function PricingSection() {
               </span>
             </div>
             {billingYearly && (
-              <p className="mt-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+              <p className="mt-1.5 text-xs text-muted-foreground">
                 €{plan.yearlyPricePerMonth} / Monat · {plan.savings} gespart
               </p>
             )}
 
-            <p className="mt-5 text-sm text-muted-foreground leading-relaxed">{plan.description}</p>
+            <p className="mt-4 text-sm text-muted-foreground leading-relaxed">{plan.description}</p>
 
-            <ul className="mt-8 space-y-3 flex-1">
+            <ul className="mt-6 space-y-3 flex-1">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-start gap-3 text-sm">
                   <CheckCircle2
-                    className={`h-4 w-4 flex-shrink-0 mt-0.5 ${
-                      plan.popular ? 'text-brand-accent' : 'text-brand-primary'
-                    }`}
+                    className="h-4 w-4 flex-shrink-0 mt-0.5 text-brand-primary dark:text-brand-light"
                     aria-hidden="true"
                   />
-                  <span className="text-foreground/80">{feature}</span>
+                  <span className="text-foreground/80 dark:text-foreground">{feature}</span>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-9">
-              <Link
-                href="/register"
-                className={`group inline-flex w-full items-center justify-center gap-2 rounded-md py-3.5 text-sm font-semibold transition-all duration-300 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-                  plan.popular
-                    ? 'bg-brand-primary text-primary-foreground hover:bg-brand-primary/90 focus-visible:ring-brand-primary'
-                    : 'border border-foreground/20 text-foreground hover:border-foreground/40 hover:bg-foreground/[0.03] focus-visible:ring-foreground/30'
-                }`}
-              >
-                {plan.cta}
-                <span
-                  aria-hidden="true"
-                  className="group-hover:translate-x-0.5 transition-transform"
-                >
-                  →
-                </span>
-              </Link>
-            </div>
-          </article>
+            <Button
+              className="mt-8"
+              fullWidth
+              variant={plan.popular ? 'default' : 'outline'}
+              asChild
+            >
+              <Link href="/register">{plan.cta}</Link>
+            </Button>
+          </Card>
         ))}
       </div>
 
-      <p className="mt-10 text-center font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+      <p className="mt-8 text-center text-sm text-muted-foreground">
         14 Tage Testphase · Keine Kreditkarte · Jederzeit kündbar
       </p>
     </div>

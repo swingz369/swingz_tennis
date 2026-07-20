@@ -72,7 +72,7 @@ export function revalidateTrainers(clubId: string, trainerId?: string) {
   }
 
   revalidatePath('/trainer', 'page');
-  revalidatePath('/admin/schedules', 'page');
+  revalidatePath('/scheduler', 'page');
 }
 
 /**

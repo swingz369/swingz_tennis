@@ -37,8 +37,8 @@ test.describe('Member Route Access', () => {
   test('member can access unified bookings page', async ({ page }) => {
     await page.goto(`${BASE_URL}/bookings`, { waitUntil: 'load', timeout: 15000 });
     await expect(page.locator('body')).toBeVisible();
-    // The unified bookings page has heading "Buchungen & Kalender"
-    await expect(page.getByRole('heading', { name: /Buchungen.*Kalender/i })).toBeVisible({
+    // The unified bookings page has heading "Kalender & Reservierungen"
+    await expect(page.getByRole('heading', { name: /Kalender.*Reservierungen/i })).toBeVisible({
       timeout: 8000,
     });
   });

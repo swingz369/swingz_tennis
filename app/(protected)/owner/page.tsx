@@ -104,7 +104,7 @@ export default async function OwnerPage() {
           <CardTitle className="text-sm font-semibold flex items-center justify-between">
             Vereine
             <div className="flex items-center gap-2">
-              <Link href="/owner/clubs/new">
+              <Link href="/owner/clubs?new=1">
                 <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
                   <Plus className="h-3 w-3" /> Verein anlegen
                 </Button>
@@ -162,7 +162,7 @@ export default async function OwnerPage() {
         </p>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'Verein anlegen', href: '/owner/clubs/new', icon: Building2 },
+            { label: 'Verein anlegen', href: '/owner/clubs?new=1', icon: Building2 },
             { label: 'Admin einladen', href: '/owner/clubs', icon: UserCog },
             { label: 'Alle Vereine', href: '/owner/clubs', icon: Activity },
             { label: 'Superadmins', href: '/owner/superadmins', icon: Shield },

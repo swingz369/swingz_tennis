@@ -102,6 +102,9 @@ const PUBLIC_ROUTES = [
   '/impressum', // Legal notice — public (TMG §5)
   '/privacy', // Privacy summary — public
   '/terms', // Terms of service — public
+  '/avv', // Data processing agreement info — public (Art. 28 DSGVO)
+  '/robots.txt', // SEO — Suchmaschinen dürfen nicht auf Login umgeleitet werden
+  '/sitemap.xml', // SEO — dito
   '/trial-training', // Public trial booking — no auth required
   '/join', // Member self-registration via club link
   '/api/auth/login',

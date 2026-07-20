@@ -53,14 +53,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
         { count: trainerCount },
         { data: groupsData },
       ] = await Promise.all([
-        supabase
-          .from('user_training_preferences')
-          .select('id', { count: 'exact', head: true })
-          .eq('season_id', seasonId),
+        // Erwartete Präferenzen = alle planungsrelevanten Mitglieder des Vereins
+        clubId
+          ? supabase
+              .from('user_club_memberships')
+              .select('id', { count: 'exact', head: true })
+              .eq('club_id', clubId)
+              .eq('role', 'member')
+              .eq('is_active', true)
+              .eq('include_in_planning', true)
+          : Promise.resolve({ count: 0 }),
         supabase
           .from('user_training_preferences')
           .select('id', { count: 'exact', head: true })
           .eq('season_id', seasonId)
+          .eq('user_role', 'member')
           .eq('is_submitted', true),
         supabase
           .from('season_plan_entries')

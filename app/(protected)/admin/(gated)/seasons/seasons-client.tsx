@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { NoSeasonsBrandedEmptyState } from '@/components/ui/empty-state';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
+import { SEASON_STATUS_LABELS } from '@/lib/season-planning/status-labels';
 import { PaginationNav } from '@/components/ui/pagination-nav';
 import { PageHeader } from '@/components/ui/page-header';
 import type { PaginationMeta } from '@/lib/pagination';
@@ -30,20 +31,7 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
   const seasons = initialSeasons;
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<
-      string,
-      { label: string; variant: 'default' | 'secondary' | 'error' | 'outline' }
-    > = {
-      draft: { label: 'Entwurf', variant: 'secondary' },
-      collecting_preferences: { label: 'Sammelt Präferenzen', variant: 'outline' },
-      auto_planning: { label: 'Automatische Planung', variant: 'default' },
-      manual_review: { label: 'Manuelle Überprüfung', variant: 'outline' },
-      finalized: { label: 'Finalisiert', variant: 'default' },
-      completed: { label: 'Abgeschlossen', variant: 'secondary' },
-      archived: { label: 'Archiviert', variant: 'secondary' },
-    };
-
-    const config = statusConfig[status] || { label: status, variant: 'outline' };
+    const config = SEASON_STATUS_LABELS[status] || { label: status, variant: 'outline' as const };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -154,7 +142,9 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
                   </div>
                 </div>
 
-                {['published', 'completed', 'archived'].includes(season.planning_status) &&
+                {['published', 'active', 'completed', 'archived'].includes(
+                  season.planning_status
+                ) &&
                   season.planned_entries > 0 && (
                     <Button
                       variant="outline"

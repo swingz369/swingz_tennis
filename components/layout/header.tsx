@@ -153,6 +153,18 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
         {/* Right actions — Utility-Cluster (Theme / Notifications / User / Mobile) */}
         <div className="flex items-center gap-0.5 shrink-0">
+          {/* Suche auf Mobile — Desktop hat die zentrierte Suchleiste (hidden md:flex) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-9 w-9 text-foreground dark:text-white rounded-xl hover:bg-muted dark:hover:bg-background/10"
+            onClick={() => setCommandPaletteOpen(true)}
+            aria-label="Suche öffnen"
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Suche öffnen</span>
+          </Button>
+
           {/* Theme Toggle */}
           <ThemeToggle />
 

@@ -15,14 +15,17 @@ test.describe('Role-based Access Control', () => {
       await page.goto('/superadmin', { waitUntil: 'networkidle' });
       const sidebar = page.locator('aside[role="navigation"]');
       await expect(sidebar).toBeVisible({ timeout: 10000 });
-      // Sidebar links
-      await expect(sidebar.getByRole('link', { name: /Superadmin Dashboard/i })).toBeVisible();
-      await expect(sidebar.getByRole('link', { name: /Vereinsübersicht/i })).toBeVisible();
-      await expect(sidebar.getByRole('link', { name: /Club-Verwaltung/i })).toBeVisible();
-      await expect(sidebar.getByRole('link', { name: /Plattform-Analyse/i })).toBeVisible();
-      // Section labels (use heading to avoid ambiguous matches with link names)
-      await expect(sidebar.getByRole('heading', { name: /Plattform/i })).toBeVisible();
-      await expect(sidebar.getByRole('heading', { name: /Verwaltung/i })).toBeVisible();
+      // Collapsible section headers (buttons, see lib/navigation.ts superadminSidebarSections)
+      const meineVereine = sidebar.getByRole('button', { name: /Meine Vereine/i });
+      await expect(meineVereine).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Verwaltung/i })).toBeVisible();
+      // Expand "Meine Vereine" → items become visible
+      // (getByText — unabhängig von der Link-Rolle stabil)
+      if ((await meineVereine.getAttribute('aria-expanded')) !== 'true') {
+        await meineVereine.click();
+      }
+      await expect(sidebar.getByText('Vereinsübersicht')).toBeVisible();
+      await expect(sidebar.getByText('Admins verwalten')).toBeVisible();
     });
 
     test('superadmin can access /superadmin/ routes', async ({ page }) => {
@@ -42,19 +45,14 @@ test.describe('Role-based Access Control', () => {
       await page.goto('/admin', { waitUntil: 'networkidle' });
       const sidebar = page.locator('aside[role="navigation"]');
       await expect(sidebar).toBeVisible({ timeout: 10000 });
-      // Direct overview link
-      await expect(sidebar.getByRole('link', { name: /Dashboard/i })).toBeVisible();
-      // Section header buttons (collapsible sections)
+      // Section header buttons (collapsible sections, see lib/navigation.ts adminSidebarSections)
       await expect(sidebar.getByRole('button', { name: /Mitglieder/i })).toBeVisible();
       await expect(sidebar.getByRole('button', { name: /Training/i })).toBeVisible();
-      await expect(sidebar.getByRole('button', { name: /Plätze & Buchungen/i })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Spielbetrieb/i })).toBeVisible();
       await expect(sidebar.getByRole('button', { name: /Finanzen/i })).toBeVisible();
-      await expect(sidebar.getByRole('button', { name: /Einstellungen/i })).toBeVisible();
-      // Übersicht section heading
-      await expect(sidebar.getByRole('heading', { name: /Übersicht/i })).toBeVisible();
-      // Superadmin items should NOT be visible in admin sidebar
-      await expect(sidebar.getByText('Superadmin Dashboard')).not.toBeVisible();
-      await expect(sidebar.getByText('Plattform')).not.toBeVisible();
+      await expect(sidebar.getByRole('button', { name: /Vereinsführung/i })).toBeVisible();
+      // Superadmin-Sektionen should NOT be visible in admin sidebar
+      await expect(sidebar.getByRole('button', { name: /Meine Vereine/i })).not.toBeVisible();
     });
 
     test('admin CANNOT access /superadmin/ routes', async ({ page }) => {
@@ -87,9 +85,8 @@ test.describe('Role-based Access Control', () => {
       await expect(bottomNav).toBeVisible({ timeout: 10000 });
       await expect(bottomNav.getByRole('link', { name: /Übersicht/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Einheiten/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Anwesenheit/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Verfügbarkeit/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Profil/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Saisonplanung/i })).toBeVisible();
     });
 
     test('trainer CANNOT access admin or superadmin routes', async ({ page }) => {
@@ -120,8 +117,8 @@ test.describe('Role-based Access Control', () => {
       const bottomNav = page.locator('nav[aria-label="Navigation"]');
       await expect(bottomNav).toBeVisible({ timeout: 10000 });
       await expect(bottomNav.getByRole('link', { name: /Home/i })).toBeVisible();
+      await expect(bottomNav.getByRole('link', { name: /Stundenplan/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Buchen/i })).toBeVisible();
-      await expect(bottomNav.getByRole('link', { name: /Chat/i })).toBeVisible();
       await expect(bottomNav.getByRole('link', { name: /Rechnungen/i })).toBeVisible();
       // Profil removed — accessible via user menu in header
     });

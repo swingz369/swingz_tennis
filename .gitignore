@@ -165,6 +165,14 @@ tramp
 # Supabase type backups (auto-generated, use scripts/backup-supabase-types.sh)
 .supabase-types-backup/
 
+# Env backups (contain secrets, never commit)
+.env*.bak*
+
+# Tool-generated scratch/output dirs
+.audit-captures/
+graphify-out/
+tests/e2e/screenshots/
+
 
 \n# Build artifacts\n*.tsbuildinfo
 

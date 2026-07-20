@@ -62,6 +62,11 @@ export default function OwnerClubsPage() {
     }
   };
 
+  // /owner → "Verein anlegen" verlinkt hierher mit ?new=1 — Dialog direkt öffnen
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('new')) setNewClubOpen(true);
+  }, []);
+
   useEffect(() => {
     apiFetch('/api/clubs')
       .then((r) => r.json())

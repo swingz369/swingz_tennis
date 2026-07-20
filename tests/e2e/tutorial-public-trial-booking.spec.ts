@@ -31,7 +31,10 @@ test.describe('Tutorial: Public Trial Booking', () => {
     // Fill the form
     await page.getByLabel(/vorname/i).fill('Smoke');
     await page.getByLabel(/nachname/i).fill('Test');
-    await page.getByLabel(/e-?mail/i).fill(`smoke-${Date.now()}@example.com`);
+    await page
+      .getByRole('textbox', { name: /e-?mail/i })
+      .first()
+      .fill(`smoke-${Date.now()}@example.com`);
     await page.getByLabel(/telefon/i).fill('+49 123 4567890');
     await page.locator('input[type="date"]').first().fill('1995-01-01');
     await page.locator('input[type="date"]').nth(1).fill('2030-12-31');

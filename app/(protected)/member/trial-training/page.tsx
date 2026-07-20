@@ -128,14 +128,22 @@ export default async function MemberTrialTrainingPage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-brand-primary" />
-          Probetrainings
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Deine Probetraining-Anfragen und Termine
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground dark:text-white flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-brand-primary" />
+            Probetrainings
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Lade Freunde und Familie zu einem kostenlosen Schnuppertermin ein
+          </p>
+        </div>
+        <Link href="/trial-training">
+          <Button className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Freunde einladen
+          </Button>
+        </Link>
       </div>
 
       {/* Empty State */}
@@ -145,10 +153,10 @@ export default async function MemberTrialTrainingPage() {
             <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground/30" />
             <h3 className="font-semibold text-foreground mb-2">Noch kein Probetraining</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-              Du hast noch kein Probetraining angefragt. Vereinbare jetzt einen kostenlosen
-              Schnuppertermin!
+              Noch keine Probetraining-Anfrage vorhanden. Lade Freunde oder Familie zu einem
+              kostenlosen Schnuppertermin ein!
             </p>
-            <Link href="/bookings">
+            <Link href="/trial-training">
               <Button className="gap-2">
                 <Calendar className="h-4 w-4" />
                 Probetraining anfragen

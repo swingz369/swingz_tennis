@@ -26,7 +26,8 @@ describeIntegration('Payment Flow Integration Tests', () => {
 
     // Create test club
     const { data: club, error: clubError } = await supabase
-      .from('clubs')          .insert({ name: `Payment Test Club ${Date.now()}`, opening_hours: {} } as never)
+      .from('clubs')
+      .insert({ name: `Payment Test Club ${Date.now()}`, opening_hours: {} } as never)
       .select('id')
       .single();
 
@@ -52,13 +53,16 @@ describeIntegration('Payment Flow Integration Tests', () => {
     // Insert into users/profile table
     // The `as any` cast bypasses Supabase's typed-schema mismatch (test
     // uses dynamic field names that the generated types don't know about).
-    await supabase.from('users').upsert({
+    // NB: public.users hat keine role-Spalte — Rolle lebt in user_club_memberships.
+    const { error: profileError } = await supabase.from('users').upsert({
       id: testMemberId,
       email,
       full_name: 'Payment Test User',
-      role: 'member',
       created_at: new Date().toISOString(),
     } as any);
+    if (profileError) {
+      throw new Error(`Failed to create user profile: ${profileError.message}`);
+    }
   });
 
   afterAll(async () => {

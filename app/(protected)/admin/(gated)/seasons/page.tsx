@@ -65,11 +65,20 @@ export default async function SeasonsPage({
       .eq('is_active', true);
     trainerCount = trainersInClub ?? 0;
 
+    // Erwartete Präferenzen = planungsrelevante Mitglieder des Vereins (wie Detail-API)
+    const { count: planningMembers } = await supabase
+      .from('user_club_memberships')
+      .select('id', { count: 'exact', head: true })
+      .eq('club_id', clubId)
+      .eq('role', 'member')
+      .eq('is_active', true)
+      .eq('include_in_planning', true);
+
     if (allSeasonIds.length > 0) {
       const [prefsRes, entriesRes, conflictsRes, groupsRes] = await Promise.all([
         supabase
           .from('user_training_preferences')
-          .select('season_id, is_submitted')
+          .select('season_id, is_submitted, user_role')
           .in('season_id', allSeasonIds),
         supabase
           .from('season_plan_entries')
@@ -93,13 +102,12 @@ export default async function SeasonsPage({
       groupsData = groupsRes.data || [];
     }
 
-    // Compute per-season statistics
-    const prefsBySeason = new Map<string, { total: number; submitted: number }>();
+    // Compute per-season statistics (eingereichte Mitglieder-Präferenzen)
+    const prefsBySeason = new Map<string, { submitted: number }>();
     for (const p of prefsData) {
       const sid = p.season_id as string;
-      const cur = prefsBySeason.get(sid) || { total: 0, submitted: 0 };
-      cur.total++;
-      if (p.is_submitted) cur.submitted++;
+      const cur = prefsBySeason.get(sid) || { submitted: 0 };
+      if (p.is_submitted && p.user_role === 'member') cur.submitted++;
       prefsBySeason.set(sid, cur);
     }
 
@@ -138,7 +146,7 @@ export default async function SeasonsPage({
         notes: s.notes,
         created_at: s.created_at,
         club_id: s.club_id,
-        total_preferences: prefs?.total ?? 0,
+        total_preferences: planningMembers ?? 0,
         submitted_preferences: prefs?.submitted ?? 0,
         planned_entries: entriesBySeason.get(s.id) ?? 0,
         open_conflicts: conflictsBySeason.get(s.id) ?? 0,

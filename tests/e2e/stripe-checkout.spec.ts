@@ -21,8 +21,9 @@ test.describe('Stripe Checkout Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Log in as a member
     await page.goto(`${BASE_URL}/login`);
-    await page.getByLabel(/email/i).fill(TEST_MEMBER_EMAIL);
-    await page.getByLabel(/passwort/i).fill(TEST_MEMBER_PASSWORD);
+    // getByRole statt getByLabel — der Passwort-Toggle-Button trägt aria-label "Passwort anzeigen"
+    await page.getByRole('textbox', { name: /email/i }).fill(TEST_MEMBER_EMAIL);
+    await page.getByRole('textbox', { name: /^passwort$/i }).fill(TEST_MEMBER_PASSWORD);
     await page.getByRole('button', { name: /anmelden/i }).click();
     await page.waitForURL(/dashboard/);
   });

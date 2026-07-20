@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/infrastructure/external/supabase/server';
 import { env } from '@/lib/env';
 import { PlanningWizardClient } from './planning-wizard-client';
+import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,15 +64,18 @@ export default async function PlanningWizardPage({
     : undefined;
 
   return (
-    <PlanningWizardClient
-      seasonId={seasonId}
-      clubId={season.club_id}
-      seasonName={season.name}
-      seasonType={season.season_type}
-      seasonYear={season.year}
-      planningStatus={season.planning_status}
-      initialStep={initialStep}
-      aiAvailable={!!env.GOOGLE_GENERATIVE_AI_API_KEY}
-    />
+    <>
+      <SeasonPlanningTabs seasonId={seasonId} />
+      <PlanningWizardClient
+        seasonId={seasonId}
+        clubId={season.club_id}
+        seasonName={season.name}
+        seasonType={season.season_type}
+        seasonYear={season.year}
+        planningStatus={season.planning_status}
+        initialStep={initialStep}
+        aiAvailable={!!env.GOOGLE_GENERATIVE_AI_API_KEY}
+      />
+    </>
   );
 }

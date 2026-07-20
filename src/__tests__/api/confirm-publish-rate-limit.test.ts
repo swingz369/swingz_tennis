@@ -216,7 +216,7 @@ describe('POST /api/seasons/[id]/planning/confirm — 3/h Rate Limit', () => {
     POST = mod.POST;
     // Use the already-mocked checkRateLimitOrFail (defined at top of file)
     mockedRateLimit = mockCheckRateLimitOrFail;
-  });
+  }, 30000); // Route-Import braucht unter Volllast der Suite > 10s
 
   beforeEach(() => {
     mockedRateLimit.mockReset();

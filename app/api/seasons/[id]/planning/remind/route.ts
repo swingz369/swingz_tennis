@@ -1,5 +1,7 @@
 // POST /api/seasons/[id]/planning/remind
-// Sendet Erinnerungs-E-Mails an Mitglieder, die noch keine Präferenzen abgegeben haben
+// Sendet Erinnerungs-E-Mails an alle planungsrelevanten Mitglieder bzw. Trainer,
+// die ihre Präferenzen noch nicht eingereicht haben — auch ohne angefangenen Entwurf.
+// Body: { role?: 'member' | 'trainer' } (Default: 'member')
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -7,8 +9,13 @@ import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { checkRateLimitOrFail } from '@/lib/rate-limit';
 import { withCSRFProtection } from '@/lib/csrf';
 import { db } from '@/src/infrastructure/persistence/db';
-import { seasons, userTrainingPreferences, users } from '@/src/infrastructure/persistence/schema';
-import { eq, and } from 'drizzle-orm';
+import {
+  seasons,
+  userClubMemberships,
+  userTrainingPreferences,
+  users,
+} from '@/src/infrastructure/persistence/schema';
+import { eq, and, or, isNull } from 'drizzle-orm';
 import { env } from '@/lib/env';
 import { EmailService } from '@/src/infrastructure/email/email.service';
 import { createLogger } from '@/lib/logger';
@@ -47,27 +54,58 @@ export async function POST(request: NextRequest, context: RouteContext) {
           );
         }
 
-        // Find members who haven't submitted preferences
+        if (!season.club_id) {
+          return NextResponse.json({ error: 'Saison hat keinen Verein' }, { status: 400 });
+        }
+
+        const body = await request.json().catch(() => ({}) as { role?: string });
+        const role: 'member' | 'trainer' = body?.role === 'trainer' ? 'trainer' : 'member';
+
+        // Alle aktiven Mitglieder/Trainer des Vereins ohne eingereichte Präferenz —
+        // auch die, die noch gar keinen Entwurf angelegt haben (Left Join)
+        const roleFilters = [
+          eq(userClubMemberships.club_id, season.club_id),
+          eq(userClubMemberships.role, role),
+          eq(userClubMemberships.is_active, true),
+        ];
+        if (role === 'member') {
+          roleFilters.push(eq(userClubMemberships.include_in_planning, true));
+        }
+
         const unsubmitted = await db
-          .select({
-            user_id: userTrainingPreferences.user_id,
+          .selectDistinct({
+            user_id: users.id,
             email: users.email,
             full_name: users.full_name,
           })
-          .from(userTrainingPreferences)
-          .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
+          .from(userClubMemberships)
+          .innerJoin(users, eq(userClubMemberships.user_id, users.id))
+          .leftJoin(
+            userTrainingPreferences,
+            and(
+              eq(userTrainingPreferences.user_id, userClubMemberships.user_id),
+              eq(userTrainingPreferences.season_id, seasonId)
+            )
+          )
           .where(
             and(
-              eq(userTrainingPreferences.season_id, seasonId),
-              eq(userTrainingPreferences.is_submitted, false),
-              eq(userTrainingPreferences.user_role, 'member')
+              ...roleFilters,
+              or(
+                isNull(userTrainingPreferences.id),
+                eq(userTrainingPreferences.is_submitted, false)
+              )
             )
           );
 
         if (unsubmitted.length === 0) {
           return NextResponse.json({
+            sent: 0,
             sentCount: 0,
-            message: 'Alle Mitglieder haben ihre Präferenzen bereits abgegeben.',
+            pendingCount: 0,
+            message:
+              role === 'trainer'
+                ? 'Alle Trainer haben ihre Verfügbarkeiten bereits abgegeben.'
+                : 'Alle Mitglieder haben ihre Präferenzen bereits abgegeben.',
           });
         }
 
@@ -80,39 +118,48 @@ export async function POST(request: NextRequest, context: RouteContext) {
             const deadline = season.preferences_deadline
               ? new Date(season.preferences_deadline).toLocaleDateString('de-DE')
               : 'bald';
+            const what =
+              role === 'trainer'
+                ? 'deine Verfügbarkeiten als Trainer'
+                : 'deine Trainings-Präferenzen';
+            const why =
+              role === 'trainer'
+                ? 'So können wir die Trainingsgruppen passend zu deinen Zeiten planen.'
+                : 'So können wir sicherstellen, dass du in einer passenden Trainingsgruppe eingeteilt wirst.';
 
             const templates = unsubmitted.map((m) => ({
               to: m.email,
               subject: `Erinnerung: Präferenzen für ${seasonName} - SwingZ`,
               html: `
                 <h1>Präferenz-Erinnerung</h1>
-                <p>Hallo ${m.full_name || 'Mitglied'},</p>
-                <p>Du hast deine Trainings-Präferenzen für die <strong>${seasonName}</strong> noch nicht abgegeben.</p>
+                <p>Hallo ${m.full_name || (role === 'trainer' ? 'Trainer' : 'Mitglied')},</p>
+                <p>Du hast ${what} für die <strong>${seasonName}</strong> noch nicht abgegeben.</p>
                 <p>Bitte melde dich in deinem SwingZ-Konto an und gib deine Verfügbarkeiten und Wünsche bis zum <strong>${deadline}</strong> an.</p>
-                <p>So können wir sicherstellen, dass du in einer passenden Trainingsgruppe eingeteilt wirst.</p>
+                <p>${why}</p>
                 <br/>
                 <p>Sportliche Grüße,<br/>Dein SwingZ-Team</p>
               `,
-              text: `Hallo ${m.full_name || 'Mitglied'},\n\nDu hast deine Trainings-Präferenzen für die ${seasonName} noch nicht abgegeben.\nBitte melde dich in deinem SwingZ-Konto an und gib deine Verfügbarkeiten und Wünsche bis zum ${deadline} an.\n\nSportliche Grüße,\nDein SwingZ-Team`,
+              text: `Hallo ${m.full_name || (role === 'trainer' ? 'Trainer' : 'Mitglied')},\n\nDu hast ${what} für die ${seasonName} noch nicht abgegeben.\nBitte melde dich in deinem SwingZ-Konto an und gib deine Verfügbarkeiten und Wünsche bis zum ${deadline} an.\n\nSportliche Grüße,\nDein SwingZ-Team`,
             }));
 
             await emailService.sendBatchEmails(templates);
             sentCount = templates.length;
           } catch (emailError) {
-            log.error('[Remind] Email batch failed:', emailError);
+            log.error(
+              '[Remind] Email batch failed:',
+              emailError instanceof Error ? emailError : undefined
+            );
           }
         }
 
         return NextResponse.json({
+          sent: sentCount,
           sentCount,
           pendingCount: unsubmitted.length,
-          message:
-            unsubmitted.length > 0
-              ? `${sentCount} von ${unsubmitted.length} Erinnerungen versendet`
-              : 'Keine ausstehenden Präferenzen',
+          message: `${sentCount} von ${unsubmitted.length} Erinnerungen versendet`,
         });
       } catch (error) {
-        log.error('POST remind error:', error);
+        log.error('POST remind error:', error instanceof Error ? error : undefined);
         return NextResponse.json(
           { error: error instanceof Error ? error.message : 'Reminder failed' },
           { status: 500 }
