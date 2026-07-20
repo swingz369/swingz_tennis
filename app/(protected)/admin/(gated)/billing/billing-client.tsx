@@ -451,7 +451,7 @@ export default function BillingClient({
     <div className="space-y-6">
       {/* Actions */}
       <div className="flex justify-end items-center">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
           <Button variant="outline" onClick={handleOpenPreview} disabled={previewLoading}>
             {previewLoading ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -469,12 +469,12 @@ export default function BillingClient({
       {
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle>Rechnungen</CardTitle>
                 <CardDescription>Alle generierten Rechnungen</CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
                   variant="outline"
@@ -522,7 +522,7 @@ export default function BillingClient({
               </div>
             )}
             {/* Invoice type filter tabs */}
-            <div className="flex gap-3 border-b mt-4">
+            <div className="flex gap-3 border-b mt-4 overflow-x-auto">
               {(['all', 'season', 'membership', 'adhoc'] as InvoiceTypeFilter[]).map((t) => {
                 const labels: Record<InvoiceTypeFilter, string> = {
                   all: 'Alle',

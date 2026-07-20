@@ -530,14 +530,14 @@ export default function TrainerAvailabilityManager() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">Verfügbarkeit</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Deine wöchentlichen Trainingszeiten
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             size="sm"
             variant="outline"

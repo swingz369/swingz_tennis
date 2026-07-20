@@ -253,6 +253,20 @@ export async function DELETE(
         log.error('Audit logging failed:', auditError);
       }
 
+      // Notify the deactivated member
+      try {
+        await serviceClient.from('notifications').insert({
+          user_id: membership.user_id,
+          club_id: membership.club_id,
+          type: 'member_deactivated',
+          title: 'Mitgliedschaft deaktiviert',
+          message: 'Deine Mitgliedschaft wurde deaktiviert. Bitte wende dich an den Administrator.',
+          read: false,
+        });
+      } catch (notifyError) {
+        log.error('Deactivation notification failed:', notifyError);
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Member deactivated successfully (soft delete)',
