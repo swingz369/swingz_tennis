@@ -390,6 +390,10 @@ export const userClubMemberships = pgTable(
     role: varchar('role', { length: 20 }).notNull().default('member'), // 'member' | 'trainer' | 'admin' | 'superadmin'
     joined_at: timestamp('joined_at').notNull().defaultNow(),
     is_active: boolean('is_active').notNull().default(true),
+    // Soft-Delete-Metadaten, gesetzt von app/api/members/[id]/route.ts (DELETE).
+    // Nachgezogen aus der DB — Spalten existierten dort bereits vor diesem Fix.
+    deactivated_at: timestamp('deactivated_at'),
+    deactivated_by: uuid('deactivated_by'),
     include_in_planning: boolean('include_in_planning').notNull().default(true),
     // A2 — Funktionale Vereinsämter (Host-Flag-System, komplement\u00e4r zur Rolle).
     // Keys + Typen definiert in `lib/auth-common.ts` (`OfficeRole` / `OfficeFlagMap`).
