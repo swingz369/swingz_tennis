@@ -1,5 +1,5 @@
 // POST /api/seasons/[id]/planning/cluster
-// Schritt 4: Run KI-Clustering algorithm
+// Schritt 4: Run automatisches Clustering (regelbasierter Constraint-Solver, kein LLM)
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';

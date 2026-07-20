@@ -57,7 +57,7 @@ export const CLUB_FEATURES: readonly ClubFeature[] = [
   {
     key: 'seasons',
     label: 'Saisonplanung',
-    description: 'Saisonen, KI-Clustering und Stundenpläne für Trainingsgruppen.',
+    description: 'Saisonen, automatisches Clustering und Stundenpläne für Trainingsgruppen.',
     icon: 'CalendarDays',
     category: 'core',
     sidebarSection: 'seasons',
