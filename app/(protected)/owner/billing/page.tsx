@@ -3,7 +3,16 @@ import { createServiceClient } from '@/lib/supabase/service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatCard } from '@/components/ui/stat-card';
-import { Euro, Building2, CheckCircle, Clock, AlertCircle, Users, Wifi } from 'lucide-react';
+import {
+  Euro,
+  Building2,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Users,
+  Wifi,
+  ExternalLink,
+} from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 
 export const dynamic = 'force-dynamic';
@@ -57,8 +66,12 @@ export default async function OwnerBillingPage() {
   const adminUserIds = [...new Set((adminMemberships ?? []).map((m) => m.user_id))];
   const { data: adminUsers } = await sb
     .from('users')
-    .select('id, email, subscription_tier, subscription_status, current_period_end')
+    .select(
+      'id, email, subscription_tier, subscription_status, current_period_end, stripe_customer_id'
+    )
     .in('id', adminUserIds);
+
+  const stripeIsLiveMode = !!process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_');
 
   const userMap = Object.fromEntries((adminUsers ?? []).map((u) => [u.id, u]));
   const clubAdminMap: Record<string, string> = {};
@@ -167,6 +180,18 @@ export default async function OwnerBillingPage() {
                       <span className="text-xs text-muted-foreground hidden sm:inline">
                         bis {new Date(admin.current_period_end).toLocaleDateString('de-DE')}
                       </span>
+                    )}
+                    {admin?.stripe_customer_id && (
+                      <a
+                        href={`https://dashboard.stripe.com/${stripeIsLiveMode ? '' : 'test/'}customers/${admin.stripe_customer_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                        title="In Stripe öffnen"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        <span className="hidden lg:inline">Stripe</span>
+                      </a>
                     )}
                   </div>
                 </div>
