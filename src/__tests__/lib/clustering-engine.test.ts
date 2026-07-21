@@ -327,6 +327,10 @@ function makeMember(overrides: Partial<MemberWithDetails> = {}): MemberWithDetai
     selfAssessedLevel: null,
     previousGroupId: null,
     isMinor: false,
+    maxSessionsPerWeek: 1,
+    preferredCourtIds: [],
+    preferredGroupIds: [],
+    priority: 5,
     ...overrides,
   };
 }
@@ -380,6 +384,7 @@ function makeAssignment(overrides: Partial<GroupAssignment> = {}): GroupAssignme
     endTime: '19:30',
     courtId: 'c1',
     courtName: 'Court 1',
+    maxSize: 6,
     memberIds: ['m1', 'm2'],
     memberDetails: [
       {
@@ -898,8 +903,8 @@ describe('applyWaitlistLogic (Schritt 4d)', () => {
     ];
     // m1 and m2 are in different groups, m2's group is full (m3 fills it)
     const assignments: GroupAssignment[] = [
-      makeAssignment({ groupId: 'g1', memberIds: ['m1'] }),
-      makeAssignment({ groupId: 'g2', memberIds: ['m2', 'm3'], groupName: 'Group 2' }),
+      makeAssignment({ groupId: 'g1', memberIds: ['m1'], maxSize: 2 }),
+      makeAssignment({ groupId: 'g2', memberIds: ['m2', 'm3'], groupName: 'Group 2', maxSize: 2 }),
     ];
     const groups: GroupInfo[] = [
       makeGroup({ id: 'g1', name: 'Group 1' }),

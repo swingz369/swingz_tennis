@@ -47,6 +47,7 @@ async function detectConflictsForSeason(seasonId: string, clubId: string) {
         endTime: entry.end_time?.substring(0, 5) || '00:00',
         courtId: entry.court_id,
         courtName: entry.court_id,
+        maxSize: entry.max_participants ?? 6,
         memberIds: (entry.expected_participants as string[]) || [],
         memberDetails: [],
         waitlistIds: [],

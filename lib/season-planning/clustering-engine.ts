@@ -178,6 +178,35 @@ const LEVEL_LABEL: Record<SkillLevel, string> = {
   professional: 'Profi',
 };
 
+// Bugfix (Q2-Audit): trainer.specialties sind deutsche Freitext-Strings aus der
+// echten Vereinsverwaltung (z.B. 'Anfänger', 'Leistungssport', 'Kindertraining' —
+// siehe scripts/seed-test-club-rheinland.ts), NIEMALS die SkillLevel-Enum-Keys
+// ('beginner'/'advanced'/...). Ein direkter `specialties.includes(level)`-Vergleich
+// matcht daher nie — dieser Keyword-Abgleich ersetzt den toten Vergleich.
+const LEVEL_SPECIALTY_KEYWORDS: Record<SkillLevel, string[]> = {
+  beginner: ['anfänger', 'einsteiger', 'breitensport', 'spielspaß'],
+  intermediate: ['fortgeschritten', 'breitensport', 'mittel'],
+  advanced: ['fortgeschritten', 'leistungssport', 'turniervorbereitung', 'mannschaft', 'wettkampf'],
+  professional: ['leistungssport', 'turniervorbereitung', 'profi', 'wettkampf'],
+};
+
+function specialtyMatchesLevel(specialty: string, level: SkillLevel): boolean {
+  const s = specialty.toLowerCase();
+  return LEVEL_SPECIALTY_KEYWORDS[level].some((kw) => s.includes(kw));
+}
+
+// Bugfix (Q2-Audit): 'Kindertraining' fehlte hier — genau der String, den alle
+// echten Kinder-Trainer-Spezialisierungen tragen (siehe seed-Skripte). Trainer
+// mit dieser Spezialisierung bekamen dadurch bei Kids-Gruppen den -20-Malus
+// statt +25-Bonus. Substring-Match statt exaktem includes() macht den Abgleich
+// robust gegen Groß-/Kleinschreibung und Varianten.
+const YOUTH_SPECIALTY_KEYWORDS = ['jugend', 'kind', 'kids', 'junior', 'u18'];
+
+function isYouthSpecialty(specialty: string): boolean {
+  const s = specialty.toLowerCase();
+  return YOUTH_SPECIALTY_KEYWORDS.some((kw) => s.includes(kw));
+}
+
 // ============================================
 // ENGINE
 // ============================================
@@ -198,6 +227,11 @@ export class SeasonClusteringEngine {
     { groupId: string; attendance: number; members: string[] }
   > | null = null;
   private _cachedPreviousSeasonId: string | null | undefined = undefined;
+  // Bugfix (Q2-Audit): memberId -> previous-season groupId, used to populate
+  // MemberWithDetails.previousGroupId (was hardcoded to null) and to fold real
+  // continuity ("saß letzte Saison in derselben Gruppe") into the affinity-based
+  // group clustering in assignMembersToGroups.
+  private _cachedPreviousGroupMemberships: Map<string, string> | null = null;
 
   // ═══ Sprint 4 P0 #1: Slot-Lookup-Cache (Sprint-4-Optimierung) ═══════
   // Pre-computed availability maps: key = `${kind}|${id}|${day}_${slotStart}`,
@@ -565,11 +599,19 @@ export class SeasonClusteringEngine {
     type MergedPrefRow = Omit<SeasonPrefRow, 'pref'> & {
       pref: Omit<
         SeasonPrefRow['pref'],
-        'unavailable_dates' | 'avoid_member_ids' | 'self_assessed_level'
+        | 'unavailable_dates'
+        | 'avoid_member_ids'
+        | 'self_assessed_level'
+        | 'preferred_group_ids'
+        | 'priority'
       > & {
         unavailable_dates?: string[] | null;
         avoid_member_ids?: string[] | null;
         self_assessed_level?: string | null;
+        // Q2-Audit: msp (baseline) hat keine preferred_group_ids/priority-Spalten —
+        // gleiche Begründung wie die drei utp-only Felder oben.
+        preferred_group_ids?: string[] | null;
+        priority?: number | null;
       };
     };
     const mergedRows: MergedPrefRow[] = [
@@ -592,6 +634,8 @@ export class SeasonClusteringEngine {
           unavailable_dates: null,
           avoid_member_ids: null,
           self_assessed_level: null,
+          preferred_group_ids: null,
+          priority: null,
         },
         user_name: bp.user_name,
         user_email: bp.user_email,
@@ -599,6 +643,8 @@ export class SeasonClusteringEngine {
         user_skill_level: bp.user_skill_level,
       })) as unknown as MergedPrefRow[]),
     ];
+
+    const previousGroups = await this.loadPreviousGroupMemberships();
 
     const result = mergedRows.map((p) => {
       const fb = feedbackMap.get(p.pref.user_id);
@@ -633,8 +679,15 @@ export class SeasonClusteringEngine {
         wishPartnerIds: (p.pref.wish_partner_ids as string[]) || [],
         avoidMemberIds: ((p.pref.avoid_member_ids as string[] | null) ?? []) as string[],
         selfAssessedLevel: (p.pref.self_assessed_level as SkillLevel | null) ?? null,
-        previousGroupId: null,
+        // Bugfix (Q2-Audit): war hartcodiert `null` — jetzt aus der Vorsaison befüllt.
+        previousGroupId: previousGroups.get(p.pref.user_id) ?? null,
         isMinor,
+        // Bugfix (Q2-Audit): wurden aus der DB geladen, aber nie in MemberWithDetails
+        // übernommen — dadurch für den Rest des Engines unsichtbar.
+        maxSessionsPerWeek: p.pref.max_sessions_per_week || 1,
+        preferredCourtIds: ((p.pref.preferred_court_ids as string[] | null) ?? []) as string[],
+        preferredGroupIds: ((p.pref.preferred_group_ids as string[] | null) ?? []) as string[],
+        priority: p.pref.priority ?? 5,
         _unavailByDow: unavailByDow,
         _unassignedReason: undefined,
       };
@@ -777,6 +830,8 @@ export class SeasonClusteringEngine {
       name: g.name,
       level: g.level as SkillLevel,
       ageGroup: g.age_group,
+      // Q2-Audit (Punkt 11): individuelle Gruppenkapazität, falls in der DB gesetzt.
+      maxSize: g.max_size ?? null,
     }));
     this._cachedGroups = result;
     return result;
@@ -874,6 +929,39 @@ export class SeasonClusteringEngine {
     const idx = previousSeasons.findIndex((s) => s.id === this.seasonId);
     const result = idx <= 0 ? null : previousSeasons[idx - 1].id;
     this._cachedPreviousSeasonId = result;
+    return result;
+  }
+
+  /**
+   * Bugfix (Q2-Audit): memberId -> groupId aus der Vorsaison. War bisher komplett
+   * ungenutzt (previousGroupId wurde in loadMembers() hartcodiert auf null gesetzt).
+   * Erste Fundstelle pro Mitglied gewinnt (ein Mitglied kann durch Mehrfach-Sessions
+   * theoretisch in mehreren Vorsaison-Gruppen gewesen sein — hier reicht ein grober
+   * Kontinuitäts-Hinweis, kein exakter Verlauf).
+   */
+  private async loadPreviousGroupMemberships(): Promise<Map<string, string>> {
+    if (this._cachedPreviousGroupMemberships) return this._cachedPreviousGroupMemberships;
+    const result = new Map<string, string>();
+    this._cachedPreviousGroupMemberships = result;
+
+    const previousSeasonId = await this.getPreviousSeasonId();
+    if (!previousSeasonId) return result;
+
+    const entries = await db
+      .select({
+        group_id: seasonPlanEntries.group_id,
+        expected_participants: seasonPlanEntries.expected_participants,
+      })
+      .from(seasonPlanEntries)
+      .where(eq(seasonPlanEntries.season_id, previousSeasonId));
+
+    for (const entry of entries) {
+      if (!entry.group_id) continue;
+      const participants = (entry.expected_participants as string[] | null) ?? [];
+      for (const memberId of participants) {
+        if (!result.has(memberId)) result.set(memberId, entry.group_id);
+      }
+    }
     return result;
   }
 
@@ -1019,11 +1107,13 @@ export class SeasonClusteringEngine {
         // Try to find an existing group with space, matching level/age, and no avoid-conflicts
         let placed = false;
         for (const assignment of assignments) {
-          // Capacity check
-          if (assignment.memberIds.length >= maxSize) continue;
+          // Capacity check — Q2-Audit (Punkt 11): respektiert eine individuelle
+          // Gruppen-Kapazität (groups.max_size) statt immer den globalen Default.
+          const groupInfo = candidateGroups.get(assignment.groupId);
+          const effectiveMaxSize = groupInfo?.maxSize ?? maxSize;
+          if (assignment.memberIds.length >= effectiveMaxSize) continue;
 
           // Level compatibility: within configured niveau step tolerance
-          const groupInfo = candidateGroups.get(assignment.groupId);
           if (groupInfo) {
             const levelDiff = Math.abs(
               LEVEL_RANK[effectiveLevel] - LEVEL_RANK[groupInfo.level as SkillLevel]
@@ -1149,10 +1239,108 @@ export class SeasonClusteringEngine {
         );
       }
     }
-    void membersById; // referenced for parity with other call sites
+    // Bugfix (Q2-Audit): max_sessions_per_week (Mitglieder wollen z.B. 2x/Woche
+    // trainieren) wurde aus der DB geladen, aber vom Engine komplett ignoriert —
+    // jedes Mitglied bekam immer genau 1 Slot/Woche. Additiver Pass NACH allen
+    // Haupt-/Zweit-/Backtracking-Durchläufen: versucht, bereits zugewiesenen
+    // Mitgliedern mit Wunsch > 1 weitere, zeitlich nicht überlappende Sessions
+    // in bestehenden Gruppen mit Kapazität zuzuweisen. Rein additiv — verändert
+    // keine bestehende Zuweisung, daher risikoarm gegenüber dem Rest der Pipeline.
+    this.assignExtraSessions(members, candidateGroups, assignments, membersById);
 
     const finalUnassigned = sortedMembers.filter((m) => !assignedMemberIds.has(m.id));
     return { assignments, unassigned: finalUnassigned };
+  }
+
+  /**
+   * Additive pass for `maxSessionsPerWeek > 1`: places already-assigned members
+   * into further groups (existing assignments with capacity, matching level/age,
+   * no time overlap with the member's current sessions, no avoid-conflicts) until
+   * their desired weekly session count is met or no compatible slot remains.
+   * Members who weren't placed at all in the main pass are untouched here — that
+   * remains the job of the unassigned/backtracking passes.
+   */
+  private assignExtraSessions(
+    members: (MemberWithDetails & { _unassignedReason?: string })[],
+    candidateGroups: Map<string, GroupInfo>,
+    assignments: GroupAssignment[],
+    membersById: Map<string, MemberWithDetails & { _unassignedReason?: string }>
+  ): void {
+    const sessionCount = new Map<string, number>();
+    for (const a of assignments) {
+      for (const mid of a.memberIds) sessionCount.set(mid, (sessionCount.get(mid) || 0) + 1);
+    }
+
+    for (const member of members) {
+      const desired = member.maxSessionsPerWeek || 1;
+      let current = sessionCount.get(member.id) || 0;
+      if (current === 0 || current >= desired) continue;
+
+      const ageGroup = member.isMinor ? 'kids' : 'adult';
+      const maxSize = member.isMinor ? this.config.kidsGroupMaxSize : this.config.groupMaxSize;
+      const effectiveLevel = member.promotedLevel || member.skillLevel;
+
+      while (current < desired) {
+        const memberSlots = assignments.filter((a) => a.memberIds.includes(member.id));
+        const candidate = assignments.find((a) => {
+          if (a.memberIds.includes(member.id)) return false;
+          // Q2-Audit (Punkt 11): individuelle Gruppen-Kapazität respektieren.
+          const groupInfo = candidateGroups.get(a.groupId);
+          if (a.memberIds.length >= (groupInfo?.maxSize ?? maxSize)) return false;
+
+          if (groupInfo) {
+            const levelDiff = Math.abs(
+              LEVEL_RANK[effectiveLevel] - LEVEL_RANK[groupInfo.level as SkillLevel]
+            );
+            if (levelDiff > this.config.maxNiveauLevelSteps) return false;
+            if (groupInfo.ageGroup && groupInfo.ageGroup !== ageGroup) return false;
+          }
+
+          const overlapsExisting = memberSlots.some(
+            (ms) =>
+              ms.dayOfWeek === a.dayOfWeek &&
+              this.timeSlotsOverlap(ms.startTime, ms.endTime, a.startTime, a.endTime)
+          );
+          if (overlapsExisting) return false;
+
+          if (
+            !this.isMemberSlotAvailable(member.id, a.dayOfWeek, {
+              start: a.startTime,
+              end: a.endTime,
+            })
+          )
+            return false;
+
+          if (member.avoidMemberIds.some((id) => a.memberIds.includes(id))) return false;
+          if (a.memberIds.some((mid) => membersById.get(mid)?.avoidMemberIds.includes(member.id)))
+            return false;
+
+          return true;
+        });
+
+        if (!candidate) break; // kein passender freier Slot mehr — kein Fehler, nur Ende dieses Passes
+
+        current++;
+        candidate.memberIds.push(member.id);
+        candidate.memberDetails.push({
+          memberId: member.id,
+          memberName: member.name,
+          niveauMatch: this.computeNiveauMatch(
+            member,
+            candidate.memberIds
+              .map((mid) => membersById.get(mid))
+              .filter((m): m is MemberWithDetails & { _unassignedReason?: string } => !!m)
+          ),
+          experienceMonths: member.experienceMonths,
+          groupExperienceSpan: '—',
+          wishPartnerFulfilled: false,
+          wishPartnerNames: [],
+          isPromoted: !!member.promotedLevel,
+          assignmentReason: `Zusätzliche Session (Wunsch: ${desired}x/Woche, dies ist Session ${current})`,
+        });
+        sessionCount.set(member.id, current);
+      }
+    }
   }
 
   /**
@@ -1355,6 +1543,7 @@ export class SeasonClusteringEngine {
             courtName:
               victims.find((v) => v.dayOfWeek === slot.day && v.startTime === slot.start)
                 ?.courtName ?? null,
+            maxSize: 1,
             memberIds: [member.id],
             memberDetails: [
               {
@@ -1433,10 +1622,26 @@ export class SeasonClusteringEngine {
 
     // ponytail: sort-and-slice — pragmatic grouping, avoids strict level buckets leaving
     // members unassigned when there aren't enough at each level to fill a group.
+    // Bugfix (Q2-Audit / structural): sort key extended beyond niveau+experience with
+    // affinity (wish partners + previous-season continuity) and availability, so slicing
+    // naturally clusters compatible members instead of mixing incompatible schedules/
+    // separating friends by coincidence of sort order. Priority (member-set Wichtigkeit,
+    // 1-5) breaks remaining ties so higher-priority members are less likely to end up
+    // on the waitlist.
+    const affinity = this.computeAffinityGroups(cohort);
     const sorted = [...cohort].sort((a, b) => {
       const aRank = LEVEL_RANK[a.promotedLevel || a.skillLevel];
       const bRank = LEVEL_RANK[b.promotedLevel || b.skillLevel];
       if (aRank !== bRank) return aRank - bRank;
+      const aAff = affinity.get(a.id) ?? 0;
+      const bAff = affinity.get(b.id) ?? 0;
+      if (aAff !== bAff) return aAff - bAff;
+      const aAvail = this.availabilityBitmask(a);
+      const bAvail = this.availabilityBitmask(b);
+      if (aAvail !== bAvail) return aAvail - bAvail;
+      const aPrio = a.priority ?? 5;
+      const bPrio = b.priority ?? 5;
+      if (aPrio !== bPrio) return bPrio - aPrio;
       return a.experienceMonths - b.experienceMonths;
     });
 
@@ -1522,13 +1727,26 @@ export class SeasonClusteringEngine {
       const allMatching = Array.from(candidateGroups.values()).filter(
         (g) => g.level === skillLevel && (!g.ageGroup || g.ageGroup === ageGroup)
       );
-      const existingGroup = allMatching[groupIndex % Math.max(1, allMatching.length)];
+      // Bugfix (Q2-Audit): preferred_group_ids wurde geladen, aber nie ausgewertet —
+      // die Modulo-Zuweisung gewann immer. Jetzt bekommt eine Gruppe Vorrang, die von
+      // mindestens einem Mitglied der Slice explizit gewünscht wurde.
+      const existingGroup =
+        allMatching.find((g) => filteredSlice.some((m) => m.preferredGroupIds.includes(g.id))) ||
+        allMatching[groupIndex % Math.max(1, allMatching.length)];
       let group: GroupInfo;
       if (existingGroup) {
         group = existingGroup;
       } else {
+        // Q2-Audit (Punkt 11): eine neu entstehende Solo-Slice (1 Mitglied — sei es
+        // gewollt oder ein Rest-aus-der-Teilung) IST für Abrechnung/Kalender ein
+        // Einzeltraining, kein "Gruppe mit 1 Person". Entsprechend benannt; die
+        // eigentliche Klassifizierung passiert in saveToDatabase() über
+        // memberIds.length === 1 (deckt auch Second-Pass/Backtracking-Fälle ab).
         const prefix = ageGroup === 'kids' ? 'Kids' : LEVEL_LABEL[skillLevel];
-        const groupName = `${prefix} Gruppe ${groupIndex + 1}`;
+        const groupName =
+          filteredSlice.length === 1
+            ? `Einzeltraining ${prefix} — ${filteredSlice[0].name}`
+            : `${prefix} Gruppe ${groupIndex + 1}`;
         const [newGroup] = await db
           .insert(groups)
           .values({
@@ -1555,6 +1773,22 @@ export class SeasonClusteringEngine {
 
       groupIndex++;
 
+      // Q2-Audit (Punkt 11): individuelle Gruppen-Kapazität respektieren — bestehende
+      // Gruppen können in `groups.max_size` eine von groupMaxSize/kidsGroupMaxSize
+      // abweichende Kapazität haben. Ist die Slice größer, wird sie hier gekürzt;
+      // die überzähligen Mitglieder gehen (wie bei Avoid-Konflikten) in den Second-Pass.
+      const effectiveMaxSize = group.maxSize ?? maxSize;
+      // Snapshot BEFORE the capacity-trim splice so the avoid-conflict removedCount
+      // warning below doesn't conflate the two different reasons for removal.
+      const preCapacityTrimLength = filteredSlice.length;
+      const capacityOverflow =
+        filteredSlice.length > effectiveMaxSize ? filteredSlice.splice(effectiveMaxSize) : [];
+      for (const m of capacityOverflow) {
+        if (!assignedMemberIds.has(m.id) && !m._unassignedReason) {
+          m._unassignedReason = `Gruppe "${group.name}" hat begrenzte Kapazität (${effectiveMaxSize}) — wird in zweiter Runde neu zugewiesen`;
+        }
+      }
+
       // Calculate experience span for display
       const experiences = filteredSlice.map((m) => m.experienceMonths);
       const minExp = Math.min(...experiences);
@@ -1580,10 +1814,15 @@ export class SeasonClusteringEngine {
       if (filteredSlice.length < minSize) {
         warnings.push(`Gruppe hat nur ${filteredSlice.length} Mitglieder (Minimum: ${minSize})`);
       }
-      const removedCount = slice.length - filteredSlice.length;
+      const removedCount = slice.length - preCapacityTrimLength;
       if (removedCount > 0) {
         warnings.push(
           `${removedCount} Mitglieder wegen Avoid-Konflikten aus dieser Gruppe entfernt`
+        );
+      }
+      if (capacityOverflow.length > 0) {
+        warnings.push(
+          `${capacityOverflow.length} Mitglieder wegen begrenzter Gruppenkapazität (${effectiveMaxSize}) in zweiter Runde neu zugewiesen`
         );
       }
 
@@ -1625,6 +1864,7 @@ export class SeasonClusteringEngine {
         endTime: bestSlot.endTime,
         courtId: bestSlot.courtId,
         courtName: bestSlot.courtName,
+        maxSize: effectiveMaxSize,
         memberIds: filteredSlice.map((m) => m.id),
         memberDetails,
         waitlistIds: [],
@@ -1731,18 +1971,24 @@ export class SeasonClusteringEngine {
           // Score trainer: specialization match + availability match
           let score = 0;
           for (const level of memberLevels) {
-            if (trainer.specialties.includes(level)) score += 20;
+            if (trainer.specialties.some((s) => specialtyMatchesLevel(s, level))) score += 20;
           }
           score += (trainer.maxSessionsPerWeek - currentSessions) * 5; // prefer less busy
           score += trainer.canTeachGroups.length > 0 ? 10 : 0;
           // Opt #3: age-group alignment — kids need youth specialists, adults avoid them
           const groupHasMinors = members.some((m) => m.isMinor);
-          const trainerDoesYouth = trainer.specialties.some((s) =>
-            ['Jugendtraining', 'Kids', 'Junior', 'U18'].includes(s)
-          );
+          const trainerDoesYouth = trainer.specialties.some((s) => isYouthSpecialty(s));
           if (groupHasMinors && trainerDoesYouth) score += 25;
           if (groupHasMinors && !trainerDoesYouth) score -= 20;
           if (!groupHasMinors && trainerDoesYouth) score -= 10;
+          // Q2-Audit (Punkt 11): Einzeltraining — Trainer mit passender Spezialisierung
+          // bevorzugen, wenn diese Session nur ein Mitglied hat (Solo-Slice).
+          if (
+            members.length === 1 &&
+            trainer.specialties.some((s) => s.toLowerCase().includes('einzeltraining'))
+          ) {
+            score += 15;
+          }
 
           if (score > bestTrainerScore) {
             bestTrainerScore = score;
@@ -1753,23 +1999,31 @@ export class SeasonClusteringEngine {
         if (!bestTrainer) continue;
 
         // HARD CONSTRAINT: Find available court
+        // Bugfix (Q2-Audit): preferredCourtIds (Trainer + Mitglieder) wurden aus der DB
+        // geladen aber nie ausgewertet — der erste freie Platz gewann immer. Jetzt werden
+        // alle freien Plätze bewertet und der am besten zur Präferenz passende gewählt.
         const courtKey = `${dayOfWeek}_${timeSlot.start}`;
         let selectedCourt: CourtInfo | null = null;
+        let bestCourtScore = -Infinity;
 
         for (const court of courts) {
           const usage = courtTimeSlotUsage.get(court.id) || new Set();
-          if (!usage.has(courtKey)) {
-            // Check existing assignments for this court
-            const isTaken = existingAssignments.some(
-              (a) =>
-                a.courtId === court.id &&
-                a.dayOfWeek === dayOfWeek &&
-                this.timeSlotsOverlap(a.startTime, a.endTime, timeSlot.start, timeSlot.end)
-            );
-            if (!isTaken) {
-              selectedCourt = court;
-              break;
-            }
+          if (usage.has(courtKey)) continue;
+          // Check existing assignments for this court
+          const isTaken = existingAssignments.some(
+            (a) =>
+              a.courtId === court.id &&
+              a.dayOfWeek === dayOfWeek &&
+              this.timeSlotsOverlap(a.startTime, a.endTime, timeSlot.start, timeSlot.end)
+          );
+          if (isTaken) continue;
+
+          let courtScore = 0;
+          if (bestTrainer.preferredCourtIds.includes(court.id)) courtScore += 5;
+          courtScore += members.filter((m) => m.preferredCourtIds.includes(court.id)).length * 2;
+          if (courtScore > bestCourtScore) {
+            bestCourtScore = courtScore;
+            selectedCourt = court;
           }
         }
 
@@ -2010,10 +2264,12 @@ export class SeasonClusteringEngine {
           const partnerAssignment = groupMemberIndex.get(wpid);
           if (!partnerAssignment) continue;
 
-          // Check if there's space in partner's group
+          // Check if there's space in partner's group — Q2-Audit (Punkt 11):
+          // partnerAssignment.maxSize ist die tatsächliche Kapazität dieser Zuweisung
+          // (Gruppen-Override falls gesetzt), nicht immer der globale Default.
           if (
             partnerAssignment.memberIds.length + partnerAssignment.waitlistIds.length >=
-            this.config.groupMaxSize
+            partnerAssignment.maxSize
           ) {
             const position = partnerAssignment.waitlistIds.length + 1;
             partnerAssignment.waitlistIds.push(member.id);
@@ -2131,6 +2387,74 @@ export class SeasonClusteringEngine {
   // ============================================
   // HELPERS
   // ============================================
+
+  /**
+   * Bugfix (Q2-Audit / structural): bitmask of which weekdays a member has ANY
+   * availability window on. Used as a secondary sort key so `assignMembersToGroups`'
+   * sort-and-slice naturally clusters members with overlapping schedules adjacent to
+   * each other, instead of slicing purely by niveau+experience and hoping a common
+   * time slot exists afterwards (previously: whole slices failed outright — "Kein
+   * verfügbarer Zeitslot" — when a level-sorted slice happened to mix incompatible
+   * schedules).
+   */
+  private availabilityBitmask(member: MemberWithDetails): number {
+    let mask = 0;
+    for (let i = 0; i < DAY_NAMES.length; i++) {
+      if ((member.availability[DAY_NAMES[i]] || []).length > 0) mask |= 1 << i;
+    }
+    return mask;
+  }
+
+  /**
+   * Bugfix (Q2-Audit / structural): wish partners (mutual "will mit X trainieren")
+   * and previous-season group-mates previously only influenced slot SCORING after
+   * group composition was already fixed — a bonus for slot timing, never a reason
+   * to actually place two people in the same slice. This union-find groups members
+   * who should end up adjacent in the sort order (and therefore, via sort-and-slice,
+   * in the same group) by wish-partner links and — if `preferHistoricGroups` is on —
+   * shared previous-season group membership. Returns memberId -> small sequential
+   * component index (lower = earlier in sort order; the exact number is arbitrary,
+   * only equality/ordering matters).
+   */
+  private computeAffinityGroups(
+    cohort: (MemberWithDetails & { _unassignedReason?: string })[]
+  ): Map<string, number> {
+    const parent = new Map<string, string>();
+    const find = (id: string): string => {
+      let root = id;
+      while (parent.get(root) && parent.get(root) !== root) root = parent.get(root)!;
+      parent.set(id, root);
+      return root;
+    };
+    const union = (a: string, b: string) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent.set(ra, rb);
+    };
+
+    for (const m of cohort) parent.set(m.id, m.id);
+    const cohortIds = new Set(cohort.map((m) => m.id));
+
+    for (const m of cohort) {
+      for (const wpid of m.wishPartnerIds) {
+        if (cohortIds.has(wpid)) union(m.id, wpid);
+      }
+      if (this.config.preferHistoricGroups && m.previousGroupId) {
+        const anchorKey = `__prevgroup__${m.previousGroupId}`;
+        if (!parent.has(anchorKey)) parent.set(anchorKey, anchorKey);
+        union(m.id, anchorKey);
+      }
+    }
+
+    const rootToIndex = new Map<string, number>();
+    const result = new Map<string, number>();
+    for (const m of cohort) {
+      const root = find(m.id);
+      if (!rootToIndex.has(root)) rootToIndex.set(root, rootToIndex.size);
+      result.set(m.id, rootToIndex.get(root)!);
+    }
+    return result;
+  }
 
   private computeNiveauMatch(
     member: MemberWithDetails & { _unassignedReason?: string },
@@ -2252,9 +2576,17 @@ export class SeasonClusteringEngine {
       duration_minutes: this.config.slotDurationMinutes,
       starts_from_week: 1,
       ends_at_week: null,
-      entry_type: 'training',
+      // Q2-Audit (Punkt 11): eine Session mit genau 1 Teilnehmer ist ein Einzeltraining
+      // ('private_lesson' ist ein bereits vorhandener, DB-seitig erlaubter Wert — siehe
+      // CHECK-Constraint in season_planning_groups-Migration), kein "Gruppentraining
+      // mit 1 Person". Deckt Haupt-Pass, Second-Pass-Reste und Backtracking-Solo-
+      // Zuweisungen gleichermaßen ab, ohne dass jede Entstehungsstelle das explizit
+      // markieren muss.
+      entry_type: g.memberIds.length === 1 ? 'private_lesson' : 'training',
       planning_source: 'auto',
-      max_participants: this.config.groupMaxSize,
+      // Q2-Audit (Punkt 11): individuelle Gruppenkapazität statt immer dem globalen
+      // Default — war zuvor blind this.config.groupMaxSize für ALLE Einträge.
+      max_participants: g.maxSize,
       expected_participants: g.memberIds,
       preference_match_score: String(
         g.memberDetails.reduce((sum, d) => sum + d.niveauMatch, 0) /

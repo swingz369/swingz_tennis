@@ -110,6 +110,10 @@ export interface MemberWithDetails {
   selfAssessedLevel: SkillLevel | null;
   previousGroupId: string | null;
   isMinor: boolean;
+  maxSessionsPerWeek: number;
+  preferredCourtIds: string[];
+  preferredGroupIds: string[];
+  priority: number;
 }
 
 export interface TrainerWithDetails {
@@ -137,6 +141,9 @@ export interface GroupInfo {
   name: string;
   level: SkillLevel;
   ageGroup: string;
+  // Q2-Audit (Punkt 11): individuelle Kapazität; null/undefined = globaler Default
+  // aus season_planning_configs (group_max_size / kids_group_max_size).
+  maxSize?: number | null;
 }
 
 export interface TimeSlotInfo {
@@ -157,6 +164,11 @@ export interface GroupAssignment {
   endTime: string;
   courtId: string | null;
   courtName: string | null;
+  // Q2-Audit (Punkt 11): effektive Kapazität dieser konkreten Zuweisung (Gruppen-
+  // Override falls gesetzt, sonst ageGroup-Default aus der Config) — genutzt für
+  // Kapazitätsprüfungen im Second-Pass/Extra-Sessions und für max_participants
+  // beim Speichern.
+  maxSize: number;
   memberIds: string[];
   memberDetails: Array<{
     memberId: string;

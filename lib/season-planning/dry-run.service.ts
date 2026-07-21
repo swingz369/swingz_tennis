@@ -414,6 +414,7 @@ function buildGroupAssignments(
     end_time: string;
     court_id: string | null;
     expected_participants: unknown;
+    max_participants: number | null;
   }>
 ): GroupAssignment[] {
   const groupMap = new Map<string, GroupAssignment>();
@@ -441,6 +442,7 @@ function buildGroupAssignments(
       endTime,
       courtId: entry.court_id,
       courtName: entry.court_id,
+      maxSize: entry.max_participants ?? 6,
       memberIds: participants,
       memberDetails: participants.map((mid) => ({
         memberId: mid,
@@ -798,6 +800,7 @@ export async function runSeasonDryRun(seasonId: string): Promise<DryRunReport | 
         end_time: e.end_time,
         court_id: e.court_id,
         expected_participants: e.expected_participants,
+        max_participants: e.max_participants,
       }))
     );
     const detector = new ConflictDetector(seasonId, season.club_id);

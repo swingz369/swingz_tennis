@@ -228,6 +228,9 @@ export const groups = pgTable(
     age_group: varchar('age_group', { length: 20 }).notNull().default('senior'),
     is_active: boolean('is_active').notNull().default(true),
     member_ids: jsonb('member_ids').$type<string[]>().notNull().default([]),
+    // Q2-Audit: optionale individuelle Kapazität; NULL = globaler Default aus
+    // season_planning_configs (group_max_size / kids_group_max_size).
+    max_size: integer('max_size'),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },

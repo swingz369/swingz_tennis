@@ -111,6 +111,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
               endTime: entry.end_time?.substring(0, 5) || '00:00',
               courtId: entry.court_id,
               courtName: entry.court_id,
+              maxSize: entry.max_participants ?? 6,
               memberIds: (entry.expected_participants as string[]) || [],
               memberDetails: ((entry.expected_participants as string[]) || []).map((mid) => ({
                 memberId: mid,
