@@ -106,6 +106,7 @@ const PUBLIC_ROUTES = [
   '/robots.txt', // SEO — Suchmaschinen dürfen nicht auf Login umgeleitet werden
   '/sitemap.xml', // SEO — dito
   '/trial-training', // Public trial booking — no auth required
+  '/demo', // Public sales demo — no auth required
   '/join', // Member self-registration via club link
   '/api/auth/login',
   '/api/auth/logout',

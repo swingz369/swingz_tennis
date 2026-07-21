@@ -188,7 +188,9 @@ export default function LandingPage() {
               className="border-white/20 text-white hover:border-white/40 hover:text-white hover:bg-white/5"
               asChild
             >
-              <Link href="#section-features">Funktionen erkunden</Link>
+              <Link href="/demo" onClick={() => analytics.featureUsed('hero_cta_demo')}>
+                Demo ansehen
+              </Link>
             </Button>
           </div>
 
