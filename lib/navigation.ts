@@ -114,7 +114,9 @@ export function adminSidebarSections(hidden: Hidden): NavSection[] {
       icon: DollarSign,
       items: [
         { name: 'Abrechnung', href: '/admin/billing' },
-        { name: 'Preisregeln', href: '/admin/pricing' },
+        ...(!hidden.has('dynamic_pricing')
+          ? [{ name: 'Preisregeln', href: '/admin/pricing' }]
+          : []),
         { name: 'Abonnement', href: '/admin/subscription' },
         ...(!hidden.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
       ],
@@ -156,6 +158,7 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
         { name: 'Offene Spiele', href: '/matches' },
         { name: 'Matchmaking', href: '/matchmaking' },
         ...(!hidden.has('tournaments') ? [{ name: 'Turniere', href: '/member/tournaments' }] : []),
+        ...(!hidden.has('ai_matchmaking') ? [{ name: 'Matchmaking', href: '/matchmaking' }] : []),
         { name: 'Erfolge & Ranglisten', href: '/gamification' },
       ],
     },
@@ -177,7 +180,9 @@ export function memberSidebarSections(hidden: Hidden, includeMemberOnly: boolean
         { name: 'Nachrichten', href: '/messages' },
         { name: 'Meine Rechnungen', href: '/billing' },
         { name: 'Vereinsdokumente', href: '/documents' },
-        ...(includeMemberOnly ? [{ name: 'Arbeitsdienste', href: '/member/work-duties' }] : []),
+        ...(includeMemberOnly && !hidden.has('work_duty')
+          ? [{ name: 'Arbeitsdienste', href: '/member/work-duties' }]
+          : []),
         ...(!hidden.has('trial_training')
           ? [{ name: 'Freunde zum Probetraining einladen', href: '/member/trial-training' }]
           : []),
@@ -318,7 +323,7 @@ export function paletteNavItems(): NavItem[] {
   ];
 }
 
-export function paletteAdminNavItems(): NavItem[] {
+export function paletteAdminNavItems(hidden: Hidden = new Set()): NavItem[] {
   return [
     { name: 'Admin Dashboard', href: '/admin', icon: Home },
     { name: 'Mitglieder', href: '/admin/members', icon: Users },
@@ -327,6 +332,8 @@ export function paletteAdminNavItems(): NavItem[] {
     { name: 'Abrechnung', href: '/admin/billing', icon: FileText },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Einstellungen', href: '/admin/settings', icon: Settings },
-    { name: 'Turniere', href: '/admin/tournaments', icon: Trophy },
+    ...(!hidden.has('tournaments')
+      ? [{ name: 'Turniere', href: '/admin/tournaments', icon: Trophy }]
+      : []),
   ];
 }

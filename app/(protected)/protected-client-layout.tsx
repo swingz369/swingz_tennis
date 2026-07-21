@@ -98,7 +98,11 @@ export function ProtectedClientLayout({ children, user }: ProtectedClientLayoutP
             onMenuClick={() => setSidebarOpen((prev) => !prev)}
             className="md:hidden"
           />
-          <CommandPalette />
+          <CommandPalette
+            roles={user.roles ?? []}
+            selectedClubId={user.selectedClubId ?? null}
+            clubs={user.clubs ?? (user.club ? [user.club] : [])}
+          />
           <KeyboardShortcutsDialog />
         </div>
       </CommandPaletteProvider>

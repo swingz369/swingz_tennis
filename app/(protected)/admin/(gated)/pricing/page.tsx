@@ -7,7 +7,19 @@ export const metadata = {
 };
 
 export default async function PricingPage() {
-  const { clubId } = await requireAdminClub();
+  const { supabase, clubId } = await requireAdminClub();
+
+  const { data: club } = await supabase.from('clubs').select('features').eq('id', clubId).single();
+  const features = (club?.features as Record<string, boolean>) ?? {};
+  if (features.dynamic_pricing !== true) {
+    return (
+      <div className="p-4 md:p-6">
+        <p className="text-muted-foreground">
+          Das Modul „Dynamische Preisgestaltung" ist für diesen Verein nicht aktiviert.
+        </p>
+      </div>
+    );
+  }
 
   return <PricingClient clubId={clubId} />;
 }

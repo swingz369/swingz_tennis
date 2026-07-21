@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/command';
 import { useTheme } from 'next-themes';
 import { useUserRole } from '@/hooks/use-user-role';
+import { useClubFeatures } from '@/hooks/use-club-features';
 import { apiFetch } from '@/lib/api-fetch';
 import { useCommandPalette } from '@/components/command-palette-context';
 
@@ -38,14 +39,27 @@ interface SearchResult {
   url: string;
 }
 
-export function CommandPalette() {
+interface CommandPaletteProps {
+  roles?: string[];
+  selectedClubId?: string | null;
+  clubs?: { id: string }[];
+}
+
+export function CommandPalette({ roles, selectedClubId, clubs }: CommandPaletteProps = {}) {
   const { open, setOpen } = useCommandPalette();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { isAdmin, isSuperAdmin } = useUserRole();
+  const { isAdmin, isSuperAdmin } = useUserRole(roles);
+  const activeClubId = selectedClubId ?? clubs?.[0]?.id;
+  const { features } = useClubFeatures(activeClubId);
+  const hiddenSections = new Set(
+    Object.entries(features)
+      .filter(([, enabled]) => !enabled)
+      .map(([key]) => key)
+  );
 
   // Keyboard shortcut Cmd/Ctrl + K
   useEffect(() => {
@@ -116,7 +130,7 @@ export function CommandPalette() {
     label: string;
     href: string;
     icon: React.ElementType;
-  }> = paletteAdminNavItems().map((item) => ({
+  }> = paletteAdminNavItems(hiddenSections).map((item) => ({
     label: item.name,
     href: item.href,
     icon: item.icon ?? Search,

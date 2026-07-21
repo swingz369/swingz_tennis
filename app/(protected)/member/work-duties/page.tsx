@@ -31,7 +31,7 @@ export default async function MemberWorkDutiesPage() {
   const { data: club } = await supabase.from('clubs').select('features').eq('id', clubId).single();
 
   const features = (club?.features as Record<string, boolean>) ?? {};
-  if (features.work_duty === false) {
+  if (features.work_duty !== true) {
     return (
       <div className="p-4 md:p-6">
         <p className="text-muted-foreground">

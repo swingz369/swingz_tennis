@@ -56,6 +56,13 @@ export default async function MemberPage() {
   const club = Array.isArray(clubsData) ? clubsData[0] : clubsData;
   const clubId = membership.club_id;
 
+  const { data: clubRow } = await supabase
+    .from('clubs')
+    .select('features')
+    .eq('id', clubId)
+    .single();
+  const features = (clubRow?.features as Record<string, boolean>) ?? {};
+
   const { data: profile } = await supabase
     .from('users')
     .select('full_name, email')
@@ -336,14 +343,27 @@ export default async function MemberPage() {
             icon: GraduationCap,
             variant: 'teal',
           },
-          { label: 'Turniere', href: '/member/tournaments', icon: Trophy, variant: 'amber' },
+          ...(features.tournaments === true
+            ? [
+                {
+                  label: 'Turniere',
+                  href: '/member/tournaments',
+                  icon: Trophy,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
           { label: 'Rechnungen', href: '/billing', icon: CreditCard, variant: 'purple' },
-          {
-            label: 'Dienste',
-            href: '/member/work-duties',
-            icon: HardHat,
-            variant: 'amber',
-          },
+          ...(features.work_duty === true
+            ? [
+                {
+                  label: 'Dienste',
+                  href: '/member/work-duties',
+                  icon: HardHat,
+                  variant: 'amber' as const,
+                },
+              ]
+            : []),
           {
             label: 'Präferenzen',
             href: '/member/preferences',
