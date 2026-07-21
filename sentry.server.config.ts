@@ -8,20 +8,25 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+const isProd = process.env.NODE_ENV === 'production';
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
+  enabled: isProd, // keine Tracing-Pipeline im Dev-RAM
 
   // Performance Monitoring (10% sampling in prod to reduce cost)
-  tracesSampleRate: process.env.NODE_ENV === 'development' ? 1.0 : 0.1,
+  tracesSampleRate: isProd ? 0.1 : 0,
 
   // Profiling (captures function-level performance, 10% in prod)
-  profilesSampleRate: process.env.NODE_ENV === 'development' ? 1.0 : 0.1,
+  profilesSampleRate: isProd ? 0.1 : 0,
 
-  integrations: [
-    // PostgreSQL query tracing
-    Sentry.postgresIntegration(),
-  ],
+  integrations: isProd
+    ? [
+        // PostgreSQL query tracing
+        Sentry.postgresIntegration(),
+      ]
+    : [],
 
   // Scrub sensitive data before sending
   beforeSend(event) {

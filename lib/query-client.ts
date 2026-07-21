@@ -40,9 +40,6 @@ export function createQueryClient() {
   });
 }
 
-// Export singleton for app-wide use
-export const queryClient = createQueryClient();
-
 // Query keys factory for consistency
 export const queryKeys = {
   // User queries

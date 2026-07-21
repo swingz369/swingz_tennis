@@ -105,14 +105,18 @@ interface RateLimitStore {
 const memoryStore: RateLimitStore = {};
 
 // Clean up expired entries periodically
-setInterval(() => {
-  const now = Date.now();
-  Object.keys(memoryStore).forEach((key) => {
-    if (memoryStore[key].resetTime < now) {
-      delete memoryStore[key];
-    }
-  });
-}, 60000); // Clean every minute
+// ponytail: globalThis-Guard verhindert doppelte Intervalle bei HMR-Reload in Dev
+const RATE_LIMIT_CLEANUP_KEY = '__swingzRateLimitCleanup';
+if (!(globalThis as any)[RATE_LIMIT_CLEANUP_KEY]) {
+  (globalThis as any)[RATE_LIMIT_CLEANUP_KEY] = setInterval(() => {
+    const now = Date.now();
+    Object.keys(memoryStore).forEach((key) => {
+      if (memoryStore[key].resetTime < now) {
+        delete memoryStore[key];
+      }
+    });
+  }, 60000); // Clean every minute
+}
 
 function inMemoryRateLimit(
   key: string,

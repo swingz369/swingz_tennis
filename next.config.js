@@ -68,7 +68,13 @@ const nextConfig = {
   },
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      'date-fns',
+      'recharts',
+      '@supabase/supabase-js',
+    ],
   },
   // Security Headers
   async headers() {

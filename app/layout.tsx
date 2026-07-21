@@ -4,7 +4,6 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
 import { cookies } from 'next/headers';
-import { QueryProvider } from './query-provider';
 import { ServiceWorkerRegistration } from '@/components/sw-registration';
 import { PwaInstallPrompt } from '@/components/pwa-install-prompt';
 import { SkipToContent } from '@/lib/accessibility';
@@ -93,11 +92,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <SkipToContent />
           <ServiceWorkerRegistration />
           <PwaInstallPrompt />
-          <QueryProvider>
-            <Providers>{children}</Providers>
-            <Toaster position="top-right" richColors />
-            <SonnerAriaBridge />
-          </QueryProvider>
+          <Providers>{children}</Providers>
+          <Toaster position="top-right" richColors />
+          <SonnerAriaBridge />
         </AriaLiveProvider>
       </body>
     </html>
