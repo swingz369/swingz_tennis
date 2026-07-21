@@ -8,6 +8,9 @@
 - **Production-URL:** https://swingz.vercel.app
 - **Branch-Deploys:** jeder Git-Branch → Preview-URL
 - **Custom-Domains:** pro Club (geplant, im Pilot mit swingz.cloud)
+- **Datenbank/Auth/Storage:** ⚠️ **self-hosted Supabase auf einem eigenen VPS**, nicht Supabase
+  Cloud — siehe [`infrastructure-accounts.md`](./infrastructure-accounts.md) für die volle
+  Topologie (VPS-Zugang, geteilter Server mit einem anderen Projekt, Supabase-Account-Verwirrung).
 
 ## 🔐 ENV-Variablen
 

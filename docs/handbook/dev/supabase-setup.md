@@ -1,6 +1,10 @@
 # Supabase-Setup — Clients, RLS, Auth, Disciplines
 
 > Drei Supabase-Clients — die richtige Wahl ist kritisch. Verbindlich: [`docs/BUSINESS_RULES.md`](../../BUSINESS_RULES.md) für Auth- und Member-Regeln.
+>
+> ⚠️ Dies ist **self-hosted Supabase auf einem eigenen VPS**, nicht Supabase Cloud. Für
+> Server-Zugang, geteilte Infrastruktur mit einem anderen Projekt und die Supabase-Account-Historie
+> siehe [`infrastructure-accounts.md`](./infrastructure-accounts.md).
 
 ## 🧩 Drei Clients, drei Zwecke
 

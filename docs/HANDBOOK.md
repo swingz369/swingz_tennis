@@ -99,6 +99,7 @@ Details: [`dev/feature-flags.md`](./handbook/dev/feature-flags.md). Master-Regis
 
 - [`dev/theming-design-tokens.md`](./handbook/dev/theming-design-tokens.md) — Tokens, shadcn, Dark Mode
 - [`dev/deployment-vercel.md`](./handbook/dev/deployment-vercel.md) — Build, Env-Vars, Caching
+- [`dev/infrastructure-accounts.md`](./handbook/dev/infrastructure-accounts.md) — VPS, self-hosted Supabase, Vercel-Team, Account-Trennung
 - [`dev/testing-strategy.md`](./handbook/dev/testing-strategy.md) — Vitest + Playwright + E2E
 - [`dev/background-jobs.md`](./handbook/dev/background-jobs.md) — Jobs-Runner, Cron, Race-Conditions
 
