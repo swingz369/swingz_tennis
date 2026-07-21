@@ -92,10 +92,9 @@ export function adminSidebarSections(hidden: Hidden): NavSection[] {
       icon: Trophy,
       items: [
         { name: 'Platzverwaltung', href: '/admin/courts' },
-        { name: 'Platzarten', href: '/admin/court-types' },
-        { name: 'Wartungsplan', href: '/admin/maintenance' },
+        { name: 'Wartungsplan', href: '/admin/courts?tab=maintenance' },
         ...(!hidden.has('weather_integration')
-          ? [{ name: 'Platzsperren & Wetter', href: '/admin/weather' }]
+          ? [{ name: 'Platzsperren & Wetter', href: '/admin/courts?tab=weather' }]
           : []),
         ...(!hidden.has('league_lineup')
           ? [{ name: 'Ligen & Teams', href: '/admin/leagues' }]
@@ -105,7 +104,7 @@ export function adminSidebarSections(hidden: Hidden): NavSection[] {
           ? [{ name: 'KI-Matchmaking', href: '/admin/ai/matchmaking' }]
           : []),
         ...(!hidden.has('smart_court')
-          ? [{ name: 'Smart Court', href: '/admin/smart-court' }]
+          ? [{ name: 'Smart Court', href: '/admin/courts?tab=smart-court' }]
           : []),
       ],
     },
@@ -328,7 +327,7 @@ export function paletteAdminNavItems(hidden: Hidden = new Set()): NavItem[] {
     { name: 'Admin Dashboard', href: '/admin', icon: Home },
     { name: 'Mitglieder', href: '/admin/members', icon: Users },
     { name: 'Trainer', href: '/admin/trainers', icon: GraduationCap },
-    { name: 'Plätze', href: '/bookings?tab=manage', icon: MapPin },
+    { name: 'Plätze', href: '/admin/courts', icon: MapPin },
     { name: 'Abrechnung', href: '/admin/billing', icon: FileText },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Einstellungen', href: '/admin/settings', icon: Settings },

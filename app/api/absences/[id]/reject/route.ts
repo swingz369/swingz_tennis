@@ -26,6 +26,10 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return rateLimitError;
     }
 
+    if (!auth.clubId) {
+      return NextResponse.json({ error: 'Absence not found' }, { status: 404 });
+    }
+
     try {
       const { id } = await params;
       const body = await _request.json();
@@ -38,7 +42,11 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         );
       }
 
-      const updated = await absenceService.rejectAbsence(id, validation.data.rejectedBy);
+      const updated = await absenceService.rejectAbsence(
+        id,
+        validation.data.rejectedBy,
+        auth.clubId
+      );
 
       if (!updated) {
         return NextResponse.json({ error: 'Absence not found' }, { status: 404 });

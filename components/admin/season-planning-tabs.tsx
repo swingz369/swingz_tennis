@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 /**
- * Gemeinsame Sub-Navigation der Saisonplanungs-Werkzeuge (P1, UX-Audit
- * 2026-07-15): drei fast gleichnamige Seiten (plan / planning /
- * season-plan) bekommen klare Namen und sind untereinander erreichbar.
+ * Sub-Navigation der Saisonplanung: Übersicht (Status, Tabs) und der
+ * Planungs-Wizard. Der eigentliche Wochenplan lebt nicht mehr hier —
+ * er ist die rollenübergreifende gemeinsame Ansicht unter /scheduler.
  */
 export function SeasonPlanningTabs({ seasonId }: { seasonId: string }) {
   const pathname = usePathname();
@@ -16,8 +16,6 @@ export function SeasonPlanningTabs({ seasonId }: { seasonId: string }) {
   const tabs = [
     { name: 'Übersicht', href: overviewHref },
     { name: 'Planungs-Wizard', href: `${overviewHref}/planning` },
-    { name: 'Trainingsplan', href: `${overviewHref}/plan` },
-    { name: 'Rasteransicht', href: `/admin/season-plan/${seasonId}` },
   ];
 
   return (

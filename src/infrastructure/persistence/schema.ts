@@ -17,6 +17,7 @@ import {
   numeric,
   index,
   text,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm/relations';
 type OfficeFlagMap = Record<string, boolean>;
@@ -293,6 +294,12 @@ export const sessions = pgTable(
     notes: text('notes'),
     cancelled_at: timestamp('cancelled_at', { withTimezone: true }),
     cancellation_reason: text('cancellation_reason'),
+    // Rückverweis zur Saisonplanungs-Vorlage — ermöglicht dem Reschedule-Endpoint,
+    // alle künftigen Sessions einer Gruppe wiederzufinden, wenn Zeit/Trainer/Platz
+    // mitten in der Saison geändert werden.
+    plan_entry_id: uuid('plan_entry_id').references((): AnyPgColumn => seasonPlanEntries.id, {
+      onDelete: 'set null',
+    }),
     created_at: timestamp('created_at').notNull().defaultNow(),
     updated_at: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -301,6 +308,7 @@ export const sessions = pgTable(
     trainer_idx: index('sessions_trainer_idx').on(table.trainer_id),
     court_idx: index('sessions_court_idx').on(table.court_id),
     week_idx: index('sessions_week_idx').on(table.week_number),
+    plan_entry_idx: index('sessions_plan_entry_idx').on(table.plan_entry_id),
   })
 );
 

@@ -117,19 +117,6 @@ test.describe('Modal Centering Regression', () => {
     await assertModalCentered(page, 'Billing');
   });
 
-  test('Court-Types: open a modal (Create or Edit) → centered', async ({ page }) => {
-    await page.goto('/admin/court-types', { waitUntil: 'networkidle', timeout: 20000 });
-
-    const opened = await tryOpenModalByButton(page, [
-      /neuer court-?typ|neuen court-?typ|court-?typ.*erstellen|new court/i,
-      /hinzufügen|\+ neu/i,
-      /bearbeiten|edit/i,
-    ]);
-    test.skip(!opened, 'No modal trigger found on /admin/court-types');
-
-    await assertModalCentered(page, 'Court-Types');
-  });
-
   test('Seasons: navigate to a season → open GroupChange → centered', async ({ page }) => {
     const seasonId = await navigateToFirstSeason(page);
     test.skip(!seasonId, 'No season found via API to navigate to');

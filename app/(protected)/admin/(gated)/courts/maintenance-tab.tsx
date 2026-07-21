@@ -23,7 +23,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
-import { PageHeader } from '@/components/ui/page-header';
 
 type Item = {
   id: string;
@@ -42,7 +41,7 @@ const statusColor: Record<string, string> = {
   abgesagt: 'destructive',
 };
 
-export default function MaintenancePage() {
+export function MaintenanceTab() {
   const [items, setItems] = useState<Item[]>([]);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -103,11 +102,16 @@ export default function MaintenancePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Wartungsplan Plätze"
-        breadcrumbs={[{ label: 'Wartungsplan' }]}
-        actions={[{ label: 'Wartung eintragen', icon: Plus, onClick: () => setOpen(true) }]}
-      />
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Wartungsplan</h2>
+          <p className="text-sm text-muted-foreground">Geplante Sperrungen für Instandhaltung</p>
+        </div>
+        <Button className="gap-2" onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Wartung eintragen
+        </Button>
+      </div>
 
       <div className="grid gap-3">
         {items.length === 0 && (

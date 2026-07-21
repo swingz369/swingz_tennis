@@ -13,10 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import {
   Calendar,
   MessageSquare,
   Save,
+  Send,
   Plus,
   X,
   Loader2,
@@ -71,15 +73,19 @@ export default function TrainerPlanningPreferencesPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
+  const [seasons, setSeasons] = useState<
+    Array<{ id: string; name: string; preferences_open: boolean }>
+  >([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState('');
   const [clubId, setClubId] = useState('');
   const [timePrefs, setTimePrefs] = useState<TimePref[]>([]);
   const [notes, setNotes] = useState('');
   const [prefId, setPrefId] = useState<string | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Load club + seasons
   useEffect(() => {
@@ -100,7 +106,7 @@ export default function TrainerPlanningPreferencesPage() {
         setClubId(cid);
         supabase
           .from('seasons')
-          .select('id, name')
+          .select('id, name, preferences_open')
           .eq('club_id', cid)
           .eq('is_active', true)
           .order('created_at', { ascending: false })
@@ -118,7 +124,7 @@ export default function TrainerPlanningPreferencesPage() {
     if (!userId || !selectedSeasonId) return;
     supabase
       .from('user_training_preferences')
-      .select('id, weekly_availability, special_requests')
+      .select('id, weekly_availability, special_requests, is_submitted')
       .eq('user_id', userId)
       .eq('season_id', selectedSeasonId)
       .eq('user_role', 'trainer')
@@ -128,10 +134,12 @@ export default function TrainerPlanningPreferencesPage() {
           setPrefId(data.id);
           setTimePrefs(availabilityToPrefs(data.weekly_availability as WeeklyAvailability));
           setNotes((data as any).special_requests ?? '');
+          setIsSubmitted((data as any).is_submitted ?? false);
         } else {
           setPrefId(null);
           setTimePrefs([]);
           setNotes('');
+          setIsSubmitted(false);
         }
       });
   }, [userId, selectedSeasonId, supabase]);
@@ -190,6 +198,28 @@ export default function TrainerPlanningPreferencesPage() {
     }
   }, [userId, selectedSeasonId, clubId, prefId, timePrefs, notes, supabase]);
 
+  const handleSubmit = useCallback(async () => {
+    if (!userId || !selectedSeasonId || !clubId) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (!prefId) await handleSave();
+      const { error: subErr } = await supabase
+        .from('user_training_preferences')
+        .update({ is_submitted: true, submitted_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('season_id', selectedSeasonId)
+        .eq('user_role', 'trainer');
+      if (subErr) throw subErr;
+      setIsSubmitted(true);
+    } catch (err) {
+      log.error('Submit error', err instanceof Error ? err : undefined);
+      setError(err instanceof Error ? err.message : 'Fehler beim Einreichen');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [userId, selectedSeasonId, clubId, prefId, handleSave, supabase]);
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto space-y-4 py-8 px-4">
@@ -200,13 +230,22 @@ export default function TrainerPlanningPreferencesPage() {
   }
 
   const filledPrefs = timePrefs.filter((p) => p.day && p.start);
+  const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
+  const preferencesOpen = selectedSeason?.preferences_open ?? false;
 
   return (
     <div className="max-w-2xl mx-auto space-y-5 py-8 px-4">
-      <PageHeader
-        title="Planungspräferenzen"
-        description="Wöchentliche Verfügbarkeit für die Saisonplanung — wird vom Clustering-Algorithmus genutzt."
-      />
+      <div className="flex items-start justify-between">
+        <PageHeader
+          title="Planungspräferenzen"
+          description="Wöchentliche Verfügbarkeit für die Saisonplanung — wird vom Clustering-Algorithmus genutzt."
+        />
+        {isSubmitted && (
+          <Badge className="bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 border-success-200 dark:border-success-800 mt-1 flex-shrink-0">
+            <CheckCircle className="h-3 w-3 mr-1" /> Eingereicht
+          </Badge>
+        )}
+      </div>
 
       {/* Season selector */}
       {seasons.length > 0 && (
@@ -219,7 +258,10 @@ export default function TrainerPlanningPreferencesPage() {
             <SelectContent>
               {seasons.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
-                  {s.name}
+                  {s.name}{' '}
+                  <span className="text-muted-foreground text-xs">
+                    {s.preferences_open ? '· offen' : '· geschlossen'}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -231,6 +273,13 @@ export default function TrainerPlanningPreferencesPage() {
         <div className="flex items-center gap-2 rounded-xl border border-warning-200 dark:border-warning-800 bg-warning-50/60 dark:bg-warning-900/20 px-3 py-2 text-sm text-warning-700 dark:text-warning-300">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
           Keine aktiven Saisons gefunden.
+        </div>
+      )}
+
+      {!preferencesOpen && selectedSeasonId && (
+        <div className="flex items-center gap-2 rounded-xl border border-warning-200 dark:border-warning-800 bg-warning-50/60 dark:bg-warning-900/20 px-3 py-2 text-sm text-warning-700 dark:text-warning-300">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          Präferenzabgabe für diese Saison ist geschlossen — Speichern nicht mehr möglich.
         </div>
       )}
 
@@ -266,7 +315,11 @@ export default function TrainerPlanningPreferencesPage() {
               <span className="text-xs font-semibold text-muted-foreground w-5 text-center shrink-0">
                 {idx + 1}
               </span>
-              <Select value={pref.day} onValueChange={(v) => updateTimePref(idx, 'day', v)}>
+              <Select
+                value={pref.day}
+                onValueChange={(v) => updateTimePref(idx, 'day', v)}
+                disabled={isSubmitted}
+              >
                 <SelectTrigger className="flex-1 h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -278,7 +331,11 @@ export default function TrainerPlanningPreferencesPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={pref.start} onValueChange={(v) => updateTimePref(idx, 'start', v)}>
+              <Select
+                value={pref.start}
+                onValueChange={(v) => updateTimePref(idx, 'start', v)}
+                disabled={isSubmitted}
+              >
                 <SelectTrigger className="w-28 h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -295,13 +352,14 @@ export default function TrainerPlanningPreferencesPage() {
                 size="icon"
                 className="h-9 w-9 text-muted-foreground hover:text-error-500 shrink-0"
                 onClick={() => removeTimePref(idx)}
+                disabled={isSubmitted}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
 
-          {timePrefs.length < MAX_TIME_PREFS && (
+          {timePrefs.length < MAX_TIME_PREFS && !isSubmitted && (
             <Button
               variant="outline"
               size="sm"
@@ -330,8 +388,9 @@ export default function TrainerPlanningPreferencesPage() {
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
+            disabled={isSubmitted}
             placeholder="Optionale Hinweise zur Saisonplanung..."
-            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary"
+            className="w-full min-h-[80px] rounded-xl border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:opacity-50"
           />
         </CardContent>
       </Card>
@@ -348,15 +407,24 @@ export default function TrainerPlanningPreferencesPage() {
         </div>
       )}
 
-      <div className="flex justify-end pt-1">
+      <div className="flex items-center justify-end gap-3 pt-1">
         <Button
           variant="outline"
           className="gap-2"
           onClick={handleSave}
-          disabled={saving || !selectedSeasonId}
+          disabled={saving || !selectedSeasonId || isSubmitted || !preferencesOpen}
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Speichern
+        </Button>
+        <Button
+          variant="primary"
+          className="gap-2"
+          onClick={handleSubmit}
+          disabled={submitting || isSubmitted || filledPrefs.length === 0 || !preferencesOpen}
+        >
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          {isSubmitted ? 'Eingereicht ✓' : 'Einreichen'}
         </Button>
       </div>
     </div>

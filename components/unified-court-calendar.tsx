@@ -28,6 +28,9 @@ import {
 } from 'date-fns';
 import { de } from '@/lib/locale';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { IconBox } from '@/components/ui/icon-box';
 import {
   Download,
   MapPin,
@@ -1863,47 +1866,56 @@ export default function UnifiedCourtCalendar({
 
       {/* Weather banner (admin only) */}
       {isAdmin && weatherData && (
-        <div
-          className={`flex items-center gap-3 p-3 rounded-xl border text-sm ${
-            weatherData.recommendation === 'red'
-              ? 'bg-error-50 border-error-200 text-error-800 dark:bg-error-900/30 dark:border-error-800 dark:text-error-300'
-              : weatherData.recommendation === 'yellow'
-                ? 'bg-warning-50 border-warning-200 text-warning-800 dark:bg-warning-900/30 dark:border-warning-800 dark:text-warning-300'
-                : 'bg-success-50 border-success-200 text-success-800 dark:bg-success-900/30 dark:border-success-800 dark:text-success-300'
-          }`}
-        >
-          {weatherData.condition === 'Rain' || weatherData.condition === 'Drizzle' ? (
-            <CloudRain className="h-5 w-5 flex-shrink-0" />
-          ) : weatherData.condition === 'Snow' ? (
-            <Snowflake className="h-5 w-5 flex-shrink-0" />
-          ) : weatherData.condition === 'Thunderstorm' ? (
-            <AlertTriangle className="h-5 w-5 flex-shrink-0" />
-          ) : weatherData.condition === 'Clear' ? (
-            <Sun className="h-5 w-5 flex-shrink-0" />
-          ) : (
-            <Cloud className="h-5 w-5 flex-shrink-0" />
-          )}
-          <div className="flex-1 min-w-0">
-            <span className="font-bold">{weatherData.city}</span>
-            <span className="ml-2">
-              {Math.round(weatherData.temperature)}°C · {weatherData.description}
-            </span>
-            <span className="ml-2 text-xs opacity-75">
-              ({weatherData.windSpeed} m/s, {weatherData.precipitation} mm)
-            </span>
-          </div>
-          {weatherData.recommendation !== 'green' && (
-            <span className="font-semibold text-xs whitespace-nowrap">
-              {weatherData.recommendation === 'red' ? '⚠️ Außenplätze sperren' : '⚡ Platz prüfen'}
-            </span>
-          )}
-          <Link
-            href="/admin/weather"
-            className="text-xs font-medium underline opacity-75 hover:opacity-100 transition-opacity whitespace-nowrap"
-          >
-            Details →
-          </Link>
-        </div>
+        <Card>
+          <CardContent className="flex items-center gap-3 p-3 text-sm">
+            <IconBox
+              icon={
+                weatherData.condition === 'Rain' || weatherData.condition === 'Drizzle'
+                  ? CloudRain
+                  : weatherData.condition === 'Snow'
+                    ? Snowflake
+                    : weatherData.condition === 'Thunderstorm'
+                      ? AlertTriangle
+                      : weatherData.condition === 'Clear'
+                        ? Sun
+                        : Cloud
+              }
+              size="sm"
+              variant={
+                weatherData.recommendation === 'red'
+                  ? 'red'
+                  : weatherData.recommendation === 'yellow'
+                    ? 'amber'
+                    : 'green'
+              }
+            />
+            <div className="flex-1 min-w-0">
+              <span className="font-semibold text-foreground">{weatherData.city}</span>
+              <span className="ml-2 text-muted-foreground">
+                {Math.round(weatherData.temperature)}°C · {weatherData.description}
+              </span>
+              <span className="ml-2 text-xs text-muted-foreground/70">
+                ({weatherData.windSpeed} m/s, {weatherData.precipitation} mm)
+              </span>
+            </div>
+            {weatherData.recommendation !== 'green' && (
+              <Badge
+                variant={weatherData.recommendation === 'red' ? 'error' : 'warning'}
+                className="whitespace-nowrap"
+              >
+                {weatherData.recommendation === 'red'
+                  ? '⚠️ Außenplätze sperren'
+                  : '⚡ Platz prüfen'}
+              </Badge>
+            )}
+            <Link
+              href="/admin/courts?tab=weather"
+              className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors whitespace-nowrap"
+            >
+              Details →
+            </Link>
+          </CardContent>
+        </Card>
       )}
 
       {/* Active closure indicators */}

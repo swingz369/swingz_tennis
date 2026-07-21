@@ -69,10 +69,9 @@ interface WeeklyAvailabilitySlot {
 
 interface TrainerDetailClientProps {
   trainerId: string;
-  clubId: string;
 }
 
-export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientProps) {
+export function TrainerDetailClient({ trainerId }: TrainerDetailClientProps) {
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
   const { isAdmin } = useUserRole(currentUser?.roles);
@@ -364,15 +363,15 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
     }
     setAbsenceSaving(true);
     try {
-      const res = await apiFetch('/api/trainer-absences', {
+      const res = await apiFetch('/api/absences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          trainer_id: trainer.userId,
-          club_id: clubId,
-          start_date: absenceStartDate,
-          end_date: absenceEndDate,
-          reason: absenceReason,
+          trainerId: trainer.id,
+          trainerName: `${trainer.firstName} ${trainer.lastName}`.trim(),
+          type: absenceReason,
+          startDate: absenceStartDate,
+          endDate: absenceEndDate,
         }),
       });
       if (!res.ok) {
@@ -1652,7 +1651,6 @@ export function TrainerDetailClient({ trainerId, clubId }: TrainerDetailClientPr
               <SelectContent>
                 <SelectItem value="vacation">Urlaub</SelectItem>
                 <SelectItem value="sick">Krankheit</SelectItem>
-                <SelectItem value="training">Weiterbildung</SelectItem>
                 <SelectItem value="personal">Persönlich</SelectItem>
                 <SelectItem value="other">Sonstiges</SelectItem>
               </SelectContent>

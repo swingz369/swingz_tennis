@@ -10,5 +10,5 @@ export default async function TrainerDetailPage({ params }: { params: Promise<{ 
   const { clubId } = await requireAdminClub();
   if (!clubId) redirect('/login');
 
-  return <TrainerDetailClient trainerId={id} clubId={clubId} />;
+  return <TrainerDetailClient trainerId={id} />;
 }

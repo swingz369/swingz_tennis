@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
           notes,
           cancelled_at,
           cancellation_reason,
+          plan_entry_id,
           schedules!inner(club_id),
           courts(name)
         `
@@ -212,6 +213,7 @@ export async function GET(req: NextRequest) {
           bookerNames,
           cancelledAt: (s as any).cancelled_at ?? null,
           cancellationReason: (s as any).cancellation_reason ?? null,
+          planEntryId: (s as any).plan_entry_id ?? null,
         };
       });
 

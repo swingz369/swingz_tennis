@@ -416,7 +416,7 @@ export default async function AdminPage() {
   smartActions.push({
     label: 'Platz verwalten',
     description: 'Plätze sperren oder Kalender einsehen',
-    href: '/bookings?tab=manage',
+    href: '/admin/courts',
     icon: LockKeyhole,
     variant: 'purple',
   });
@@ -728,7 +728,7 @@ export default async function AdminPage() {
               )}
               <div className="px-5 pt-3 pb-5 flex justify-end">
                 <Link
-                  href="/bookings?tab=manage"
+                  href="/bookings"
                   className="text-xs font-medium text-muted-foreground hover:text-brand-light transition-colors px-1 py-0.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   Alle Buchungen anzeigen

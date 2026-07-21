@@ -195,6 +195,23 @@ export function verifyClubAccess(auth: AuthContext, requestedClubId: string): bo
 }
 
 /**
+ * Verify a trainer is active in the admin's club. Used for resources like
+ * hours_logs that reference trainer_id but carry no club_id of their own —
+ * club membership is looked up via trainer_club. Superadmin/owner bypass.
+ */
+export async function verifyTrainerInClub(auth: AuthContext, trainerId: string): Promise<boolean> {
+  if (auth.role === 'owner' || auth.role === 'superadmin') return true;
+  if (!auth.clubId) return false;
+  const { data } = await auth.supabase
+    .from('trainer_club')
+    .select('trainer_id')
+    .eq('trainer_id', trainerId)
+    .eq('club_id', auth.clubId)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+/**
  * Verify user holds a functional office in their club (A2: Ämter-Flags).
  * Admins and above always pass implicitly.
  */

@@ -145,12 +145,24 @@ export function AbsenceManagement({
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Aktion fehlgeschlagen');
       }
+      const data = await res.json().catch(() => ({}));
       setAbsences((prev) =>
         prev.map((a) =>
           a.id === id ? { ...a, status: decision === 'approve' ? 'approved' : 'rejected' } : a
         )
       );
       toast.success(decision === 'approve' ? 'Abwesenheit genehmigt' : 'Abwesenheit abgelehnt');
+
+      const sessionConflicts = data?.sessionConflicts as
+        | Array<{ id: string; date: string }>
+        | undefined;
+      if (decision === 'approve' && sessionConflicts && sessionConflicts.length > 0) {
+        toast.warning(
+          `Achtung: ${sessionConflicts.length} bereits geplante Trainingseinheit${
+            sessionConflicts.length === 1 ? '' : 'en'
+          } fällt/fallen in den Abwesenheitszeitraum — bitte Vertretung organisieren oder Termine verschieben.`
+        );
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Aktion fehlgeschlagen');
     } finally {

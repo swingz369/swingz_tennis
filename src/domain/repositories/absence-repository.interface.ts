@@ -90,6 +90,20 @@ export interface IAbsenceRepository {
   ): Promise<Absence[]>;
 
   /**
+   * Find already-scheduled (non-cancelled) sessions for a trainer that fall
+   * within an absence date range — used to warn admins before approval.
+   * @param trainerId - Trainer ID
+   * @param startDate - Absence start date (ISO string)
+   * @param endDate - Absence end date (ISO string)
+   * @returns Sessions overlapping the date range
+   */
+  findSessionConflicts(
+    trainerId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<Array<{ id: string; date: string }>>;
+
+  /**
    * Update an existing absence
    * @param id - Absence ID
    * @param input - Partial absence data to update

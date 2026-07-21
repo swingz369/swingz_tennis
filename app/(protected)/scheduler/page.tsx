@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Clock, User, MapPin } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Clock, User, MapPin, Pencil } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +10,8 @@ import { useSessions, type Session } from '@/hooks/use-sessions';
 import { useUserRoles, useUserClub } from '@/hooks/use-user-data';
 import { useCurrentUser } from '@/hooks/use-current-user';
 import { CalendarShell } from '@/components/calendar/CalendarShell';
+import { RescheduleSessionDialog } from '@/components/scheduler/reschedule-session-dialog';
+import { QUERY_KEYS } from '@/lib/cache';
 
 // ponytail: module-level so Date.now() isn't called on each render (react-hooks/purity)
 const ADMIN_DATE_FROM = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -34,9 +37,11 @@ const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 export default function SchedulerPage() {
   const { data: clubData } = useUserClub();
   const clubId = clubData?.clubId ?? null;
+  const queryClient = useQueryClient();
 
   const { data: user } = useCurrentUser();
   const { data: roles = [] } = useUserRoles();
+  const [editSession, setEditSession] = useState<Session | null>(null);
 
   const isAdmin = roles.includes('admin') || roles.includes('superadmin');
   const isTrainer = roles.includes('trainer');
@@ -175,7 +180,11 @@ export default function SchedulerPage() {
                         className="min-h-[60px] border-r border-border last:border-r-0 p-1.5 hover:bg-muted/50"
                       >
                         {sessions.map((s) => (
-                          <SessionSlotCard key={s.id} session={s} />
+                          <SessionSlotCard
+                            key={s.id}
+                            session={s}
+                            onEdit={isAdmin && s.planEntryId ? () => setEditSession(s) : undefined}
+                          />
                         ))}
                       </div>
                     );
@@ -200,20 +209,41 @@ export default function SchedulerPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {editSession && (
+        <RescheduleSessionDialog
+          session={editSession}
+          onClose={() => setEditSession(null)}
+          onSuccess={() => {
+            setEditSession(null);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sessions(clubId || '') });
+          }}
+        />
+      )}
     </div>
   );
 }
 
 /** Compact card shown inside the grid slot */
-function SessionSlotCard({ session }: { session: Session }) {
+function SessionSlotCard({ session, onEdit }: { session: Session; onEdit?: () => void }) {
   return (
     <div
-      className={`p-1.5 rounded text-xs border ${
+      className={`group relative p-1.5 rounded text-xs border ${
         session.bookedByUser
           ? 'bg-brand-light/15 border-brand-light/40 text-brand-light'
           : 'bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800 text-info-800 dark:text-info-300'
       }`}
     >
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label="Trainingszeit verschieben"
+          className="absolute right-1 top-1 rounded p-0.5 opacity-0 transition-opacity hover:bg-black/10 group-hover:opacity-100"
+        >
+          <Pencil className="h-3 w-3" />
+        </button>
+      )}
       <div className="font-medium truncate">{session.trainerName || 'Trainer'}</div>
       <div className="text-2xs text-muted-foreground truncate">
         {session.startTime}–{session.endTime}

@@ -62,7 +62,6 @@ import type { Court } from '@/lib/types/court-booking';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { NoCourtsBrandedEmptyState } from '@/components/ui/empty-state';
 import { apiFetch } from '@/lib/api-fetch';
-import { PageHeader } from '@/components/ui/page-header';
 
 interface CourtType {
   id: string;
@@ -688,18 +687,16 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
   );
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <PageHeader
-          title="Platzverwaltung"
-          description={
-            <>
-              {courts.length} {courts.length === 1 ? 'Platz' : 'Plätze'} ·{' '}
-              {courts.filter((c) => c.is_active).length} aktiv
-            </>
-          }
-        />
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Plätze & Typen</h2>
+          <p className="text-sm text-muted-foreground">
+            {courts.length} {courts.length === 1 ? 'Platz' : 'Plätze'} ·{' '}
+            {courts.filter((c) => c.is_active).length} aktiv
+          </p>
+        </div>
         {!showInlineForm && (
           <Button
             className="gap-2"

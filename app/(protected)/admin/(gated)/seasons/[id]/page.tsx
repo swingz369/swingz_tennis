@@ -21,8 +21,9 @@ import {
   CheckCircle,
   Trash2,
   Zap,
-  Copy,
   Bell,
+  LayoutGrid,
+  MoreVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -34,6 +35,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import type { SeasonWithStats } from '@/lib/types/season-planning';
 import {
   seasonStatusLabel,
@@ -688,11 +695,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
                   : 'Planung fortsetzen'}
             </Button>
           </Link>
-          <Button variant="outline" onClick={() => router.push(`/admin/seasons/${id}/edit`)}>
-            <Settings className="mr-2 h-4 w-4" />
-            Bearbeiten
-          </Button>
-
           {canOpenPreferences && (
             <Button onClick={handleOpenPreferences}>
               <Users className="mr-2 h-4 w-4" />
@@ -707,18 +709,27 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
             </Button>
           )}
 
-          <Button
-            variant="destructive"
-            onClick={() => setDeleteConfirmOpen(true)}
-            disabled={deleting}
-          >
-            {deleting ? (
-              <Clock className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="mr-2 h-4 w-4" />
-            )}
-            Löschen
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Weitere Aktionen">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => router.push(`/admin/seasons/${id}/edit`)}>
+                <Settings className="mr-2 h-4 w-4" />
+                Bearbeiten
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setDeleteConfirmOpen(true)}
+                disabled={deleting}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Löschen
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -832,116 +843,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 }
 
 /* Extracted tabs component so the IIFE is not needed */
-interface SeasonSummary {
-  id: string;
-  name: string;
-  season_type: string;
-  year: number;
-  planning_status: string;
-}
-
-function CopyGroupsPanel({ seasonId, clubId }: { seasonId: string; clubId: string }) {
-  const [seasons, setSeasons] = useState<SeasonSummary[]>([]);
-  const [loadingSeasons, setLoadingSeasons] = useState(true);
-  const [sourceSeasonId, setSourceSeasonId] = useState('');
-  const [copying, setCopying] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await apiFetch(`/api/seasons?clubId=${clubId}`);
-        if (res.ok) {
-          const data = await res.json();
-          const all: SeasonSummary[] = data.seasons ?? data ?? [];
-          // Nur abgeschlossene oder veröffentlichte Saisons als Quelle, außer die aktuelle
-          const candidates = all
-            .filter(
-              (s) =>
-                s.id !== seasonId &&
-                ['published', 'active', 'completed', 'archived'].includes(s.planning_status)
-            )
-            .slice(0, 3);
-          setSeasons(candidates);
-        }
-      } finally {
-        setLoadingSeasons(false);
-      }
-    };
-    load();
-  }, [clubId, seasonId]);
-
-  const handleCopy = async () => {
-    if (!sourceSeasonId) return;
-    setCopying(true);
-    try {
-      const res = await apiFetch(`/api/seasons/${seasonId}/copy-groups`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sourceSeasonId }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? 'Fehler beim Kopieren der Gruppen');
-        return;
-      }
-      toast.success(
-        `${data.copiedGroups} Gruppe${data.copiedGroups !== 1 ? 'n' : ''} mit ${data.copiedMembers} Mitglied${data.copiedMembers !== 1 ? 'ern' : ''} übernommen.`
-      );
-      setSourceSeasonId('');
-    } catch {
-      toast.error('Netzwerkfehler beim Kopieren');
-    } finally {
-      setCopying(false);
-    }
-  };
-
-  if (loadingSeasons) {
-    return <p className="text-sm text-muted-foreground">Lade Saisons…</p>;
-  }
-
-  if (seasons.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Keine abgeschlossenen Saisons als Quelle verfügbar.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800 dark:border-warning-800 dark:bg-warning-900 dark:text-warning-200">
-        Bestehende Gruppen in dieser Saison werden <strong>nicht gelöscht</strong> — die kopierten
-        Gruppen kommen zusätzlich hinzu.
-      </div>
-
-      <div className="flex items-end gap-3">
-        <div className="flex-1">
-          <Label htmlFor="source-season">Saison als Vorlage wählen</Label>
-          <Select value={sourceSeasonId} onValueChange={setSourceSeasonId}>
-            <SelectTrigger id="source-season" className="mt-1">
-              <SelectValue placeholder="Saison auswählen…" />
-            </SelectTrigger>
-            <SelectContent>
-              {seasons.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.name} ({s.year})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={handleCopy} disabled={copying || !sourceSeasonId} className="shrink-0">
-          {copying ? (
-            <Clock className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Copy className="mr-2 h-4 w-4" />
-          )}
-          Gruppen übernehmen
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: string }) {
   const router = useRouter();
@@ -964,7 +865,6 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
           </>
         )}
         <TabsTrigger value="calendar">Saisonkalender</TabsTrigger>
-        <TabsTrigger value="copy-groups">Gruppen übernehmen</TabsTrigger>
       </TabsList>
 
       <TabsContent value="overview" className="space-y-4">
@@ -1043,20 +943,13 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
               <CardDescription>Geplante Training-Sessions für diese Season</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button onClick={() => router.push(`/admin/seasons/${seasonId}/plan`)}>
-                Plan anzeigen
+              <Button onClick={() => router.push('/scheduler')}>
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Wochenplan öffnen
               </Button>
-              <div>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(`/admin/season-plan/${seasonId}`)}
-                >
-                  Stundenplan (Grid-Ansicht)
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Wochenraster mit farbcodierten Gruppen, Trainern und Plätzen
-                </p>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Gemeinsame Wochenplan-Ansicht — dort auch direkt bearbeitbar
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -1115,21 +1008,6 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
 
       <TabsContent value="calendar">
         <SeasonCalendarTab seasonId={seasonId} clubId={season.club_id ?? ''} />
-      </TabsContent>
-
-      <TabsContent value="copy-groups">
-        <Card>
-          <CardHeader>
-            <CardTitle>Gruppen aus vorheriger Saison übernehmen</CardTitle>
-            <CardDescription>
-              Kopiert Trainingsgruppen inklusive Mitgliederzuordnungen aus einer abgeschlossenen
-              Saison in diese Saison — ohne Neu-Clustering.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CopyGroupsPanel seasonId={seasonId} clubId={season.club_id ?? ''} />
-          </CardContent>
-        </Card>
       </TabsContent>
     </Tabs>
   );

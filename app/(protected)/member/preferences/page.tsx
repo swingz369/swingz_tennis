@@ -343,7 +343,7 @@ export default function MemberPreferencesPage() {
       {!preferencesOpen && selectedSeasonId && (
         <div className="flex items-center gap-2 rounded-xl border border-warning-200 dark:border-warning-800 bg-warning-50/60 dark:bg-warning-900/20 px-3 py-2 text-sm text-warning-700 dark:text-warning-300">
           <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-          Präferenzabgabe für diese Saison geschlossen — Speichern bleibt möglich.
+          Präferenzabgabe für diese Saison ist geschlossen — Speichern nicht mehr möglich.
         </div>
       )}
 
@@ -598,7 +598,7 @@ export default function MemberPreferencesPage() {
           variant="outline"
           className="gap-2"
           onClick={handleSave}
-          disabled={saving || isSubmitted}
+          disabled={saving || isSubmitted || !preferencesOpen}
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Speichern
@@ -607,7 +607,7 @@ export default function MemberPreferencesPage() {
           variant="primary"
           className="gap-2"
           onClick={handleSubmit}
-          disabled={submitting || isSubmitted || filledPrefs.length === 0}
+          disabled={submitting || isSubmitted || filledPrefs.length === 0 || !preferencesOpen}
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           {isSubmitted ? 'Eingereicht ✓' : 'Einreichen'}

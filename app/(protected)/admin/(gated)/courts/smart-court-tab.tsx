@@ -26,7 +26,6 @@ import { apiFetch } from '@/lib/api-fetch';
 import { Cpu, DoorOpen, Lightbulb, Lock, Save, Loader2, Info as InfoIcon } from 'lucide-react';
 import type { HardwareVendor } from '@/lib/hardware/adapter';
 import { listHardwareVendors } from '@/lib/hardware/adapter';
-import { PageHeader } from '@/components/ui/page-header';
 
 type CourtRow = {
   id: string;
@@ -123,12 +122,13 @@ export default function SmartCourtClient({ clubId, initialVendor, courts }: Prop
   const didVendorChange = selectedVendor !== initialVendor;
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <PageHeader
-        title="Smart Court Konfiguration"
-        description="Wähle den Hardware-Vendor, der für die Buchungs-Automation (Licht + Tür + Heizung) dieses Vereins verwendet wird. Der Booking-Webhook (EPIC 3.1.2) liest diesen Vendor-Wert aus clubs.features.hardware_vendor."
-        breadcrumbs={[{ label: 'Smart Court' }]}
-      />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-foreground">Smart Court Konfiguration</h2>
+        <p className="text-sm text-muted-foreground">
+          Hardware-Vendor für die Buchungs-Automation (Licht + Tür + Heizung) dieses Vereins.
+        </p>
+      </div>
 
       {/* Vendor-Selection-Card */}
       <Card>

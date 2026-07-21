@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
+import { withApiAuth, verifyRole, verifyTrainerInClub, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
 import { hoursLogService } from '@/src/application/services/hours-log-service.adapter';
 import { createLogger } from '@/lib/logger';
@@ -32,6 +32,20 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
         return NextResponse.json(
           { success: false, error: 'Ablehnungsgrund erforderlich' },
           { status: 400 }
+        );
+      }
+
+      const existing = await hoursLogService.getHoursLogById(id);
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: 'Stundennachweis nicht gefunden' },
+          { status: 404 }
+        );
+      }
+      if (!(await verifyTrainerInClub(auth, existing.trainerId))) {
+        return NextResponse.json(
+          { success: false, error: 'Stundennachweis nicht gefunden' },
+          { status: 404 }
         );
       }
 

@@ -56,7 +56,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         })
         .from(userTrainingPreferences)
         .innerJoin(users, eq(userTrainingPreferences.user_id, users.id))
-        .innerJoin(trainersTable, eq(users.email, trainersTable.email))
+        .innerJoin(trainersTable, eq(users.id, trainersTable.user_id))
         .where(
           and(
             eq(userTrainingPreferences.season_id, seasonId),

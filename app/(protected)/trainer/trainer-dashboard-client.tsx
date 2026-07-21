@@ -12,6 +12,7 @@ import {
   BarChart3,
   Bell,
   Timer,
+  Target,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { QuickActions } from '@/components/ui/quick-actions';
@@ -290,6 +291,12 @@ export default function TrainerDashboardClient({ sessions, stats }: TrainerDashb
               href: '/trainer/availability',
               icon: Clock,
               variant: 'purple',
+            },
+            {
+              label: 'Planungspräferenzen',
+              href: '/trainer/planning-preferences',
+              icon: Target,
+              variant: 'indigo',
             },
             { label: 'Profil', href: '/trainer/profile', icon: Users, variant: 'green' },
             { label: 'Abrechnung', href: '/billing', icon: BarChart3, variant: 'amber' },

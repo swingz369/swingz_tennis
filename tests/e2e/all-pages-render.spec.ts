@@ -55,7 +55,6 @@ const ADMIN_ROUTES: RouteTest[] = [
   { path: '/admin/hours-logs', expectedContent: /stunden|hours/i },
   { path: '/admin/tournaments', expectedContent: /turnier|tournament/i },
   { path: '/admin/tournaments/new', expectedContent: /turnier|tournament|erstellen/i },
-  { path: '/admin/court-types', expectedContent: /platzart|platztyp|court/i },
   { path: '/admin/onboarding', expectedContent: /Schritt|Verein|onboarding/i },
 ];
 

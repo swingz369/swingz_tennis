@@ -1,6 +1,6 @@
-import { eq, and, gte, lte, desc, ne } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, ne, isNull } from 'drizzle-orm';
 import { db } from '../db';
-import { trainerAbsences } from '../schema';
+import { trainerAbsences, sessions } from '../schema';
 import type { IAbsenceRepository } from '@/domain/repositories/absence-repository.interface';
 import type {
   Absence,
@@ -157,6 +157,30 @@ export class DrizzleAbsenceRepository implements IAbsenceRepository {
       .orderBy(desc(trainerAbsences.start_date));
 
     return result.map((row) => this.mapToDomain(row));
+  }
+
+  async findSessionConflicts(
+    trainerId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<Array<{ id: string; date: string }>> {
+    const dayEnd = new Date(endDate);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const result = await db
+      .select({ id: sessions.id, timeslot_start: sessions.timeslot_start })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.trainer_id, trainerId),
+          isNull(sessions.cancelled_at),
+          gte(sessions.timeslot_start, new Date(startDate)),
+          lte(sessions.timeslot_start, dayEnd)
+        )
+      )
+      .orderBy(sessions.timeslot_start);
+
+    return result.map((row) => ({ id: row.id, date: row.timeslot_start.toISOString() }));
   }
 
   async update(id: string, input: UpdateAbsenceInput, clubId: string): Promise<Absence | null> {

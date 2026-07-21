@@ -173,6 +173,17 @@ class AbsenceServiceAdapter {
   }
 
   /**
+   * Find scheduled sessions of a trainer that overlap an absence date range
+   */
+  async findSessionConflicts(
+    trainerId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<Array<{ id: string; date: string }>> {
+    return this.absenceRepo.findSessionConflicts(trainerId, startDate, endDate);
+  }
+
+  /**
    * Approve an absence request
    */
   async approveAbsence(

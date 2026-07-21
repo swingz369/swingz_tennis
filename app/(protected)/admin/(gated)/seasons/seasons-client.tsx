@@ -152,7 +152,7 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
                       className="w-full"
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/admin/season-plan/${season.id}`);
+                        router.push('/scheduler');
                       }}
                     >
                       <LayoutGrid className="mr-2 h-4 w-4" />

@@ -356,6 +356,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
                   court_id: entry.court_id,
                   max_participants: entry.max_participants || 10,
                   notes: 'Erstellt durch Saisonplanung',
+                  plan_entry_id: entry.id,
                 })
                 .returning({ id: sessions.id });
 
@@ -399,6 +400,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
                     court_id: entry.court_id,
                     max_participants: entry.max_participants || 10,
                     notes: 'Erstellt durch Saisonplanung (2. Wochentermin)',
+                    plan_entry_id: entry.id,
                   })
                   .returning({ id: sessions.id });
                 createdSessionIds.push(s2.id);

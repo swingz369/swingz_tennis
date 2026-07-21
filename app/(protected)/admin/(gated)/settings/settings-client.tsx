@@ -13,10 +13,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Settings, Building2, Zap, Sparkles } from 'lucide-react';
+import { Settings, Building2, Zap } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { ModuleSelectionStep } from '@/components/onboarding/module-selection-step';
-import { SeasonPlanningTab } from './season-planning-tab';
 import { PageHeader } from '@/components/ui/page-header';
 
 type OpeningHours = {
@@ -70,7 +69,7 @@ type SystemSettings = {
 };
 
 export default function SettingsClient() {
-  const [activeTab, setActiveTab] = useState<'club' | 'system' | 'modules' | 'planning'>('club');
+  const [activeTab, setActiveTab] = useState<'club' | 'system' | 'modules'>('club');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -268,19 +267,6 @@ export default function SettingsClient() {
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Module
-          </div>
-        </button>
-        <button
-          onClick={() => setActiveTab('planning')}
-          className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'planning'
-              ? 'border-brand-primary text-brand-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Saisonplanung
           </div>
         </button>
       </div>
@@ -543,9 +529,6 @@ export default function SettingsClient() {
           </CardContent>
         </Card>
       )}
-
-      {/* Season Planning Tab */}
-      {activeTab === 'planning' && <SeasonPlanningTab />}
 
       {/* System Settings Tab (Superadmin only) */}
       {activeTab === 'system' && (

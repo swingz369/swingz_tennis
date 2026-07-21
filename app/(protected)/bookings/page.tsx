@@ -37,11 +37,9 @@ import {
   CheckCircle2,
   Timer,
   Award,
-  Settings,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportBookingsCSV } from '@/lib/csv-export';
-import { createClient } from '@/lib/supabase/client';
 import { useUserClub, useUserMember, useUserRoles } from '@/hooks/use-user-data';
 import {
   useSessions,
@@ -56,8 +54,6 @@ import { MyBookings } from '@/components/bookings/my-bookings';
 import { AnimatedCounter, ScrollReveal } from '@/components/animations';
 import { Card, CardContent } from '@/components/ui/card';
 import UnifiedCourtCalendar from '@/components/unified-court-calendar';
-import { CourtsManageClient } from '@/app/(protected)/admin/(gated)/courts/manage/courts-manage-client';
-import type { Court } from '@/lib/types/court-booking';
 
 export default function BookingsPage() {
   return (
@@ -73,11 +69,6 @@ function BookingsContent() {
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [courts, setCourts] = useState<Court[]>([]);
-  const [courtTypesForManage, setCourtTypesForManage] = useState<
-    Array<{ id: string; name: string; surface: string }>
-  >([]);
-  const [courtsLoaded, setCourtsLoaded] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState<{
     open: boolean;
     sessionId: string;
@@ -95,7 +86,7 @@ function BookingsContent() {
   // Update tab when URL param changes
   useEffect(() => {
     const tab = searchParams?.get('tab');
-    if (tab && (tab === 'bookings' || tab === 'courts' || tab === 'manage')) {
+    if (tab && (tab === 'bookings' || tab === 'courts' || tab === 'my')) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -106,36 +97,6 @@ function BookingsContent() {
 
   const clubId = clubData?.clubId ?? null;
   const memberId = memberData?.memberId ?? null;
-  const isAdmin = userRoles.includes('admin') || userRoles.includes('superadmin');
-
-  // Platzverwaltung (Verwaltung-Tab): nur für Admin/Superadmin, nur bei Bedarf laden
-  useEffect(() => {
-    if (!isAdmin || !clubId || activeTab !== 'manage' || courtsLoaded) return;
-    const supabase = createClient();
-    (async () => {
-      const [{ data: courtsData }, { data: types }] = await Promise.all([
-        supabase
-          .from('courts')
-          .select('*')
-          .eq('club_id', clubId)
-          .order('number', { ascending: true }),
-        supabase
-          .from('court_types')
-          .select('id, name, surface_type')
-          .eq('is_active', true)
-          .order('name', { ascending: true }),
-      ]);
-      setCourts((courtsData || []) as Court[]);
-      setCourtTypesForManage(
-        (types || []).map((t: { id: string; name: string; surface_type: string }) => ({
-          id: t.id,
-          name: t.name,
-          surface: t.surface_type,
-        }))
-      );
-      setCourtsLoaded(true);
-    })();
-  }, [isAdmin, clubId, activeTab, courtsLoaded]);
 
   const { data: sessions = [], isLoading, error: sessionsError } = useSessions(clubId);
 
@@ -391,25 +352,19 @@ function BookingsContent() {
       {/* ── Tabs ── */}
       <ScrollReveal delay={300}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full max-w-xl ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+          <TabsList className="grid w-full max-w-xl grid-cols-3">
             <TabsTrigger value="courts" className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               <span>Platz-Kalender</span>
             </TabsTrigger>
             <TabsTrigger value="bookings" className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4" />
-              <span>Buchungen</span>
+              <span>Trainerstunden</span>
             </TabsTrigger>
             <TabsTrigger value="my" className="flex items-center gap-2">
               <CalendarCheck className="h-4 w-4" />
               <span>Meine Buchungen</span>
             </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="manage" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span>Verwaltung</span>
-              </TabsTrigger>
-            )}
           </TabsList>
 
           {/* Bookings Tab */}
@@ -627,24 +582,9 @@ function BookingsContent() {
             <UnifiedCourtCalendar />
           </TabsContent>
 
-          {/* Verwaltung Tab (Admin/Superadmin) */}
           <TabsContent value="my" className="mt-6">
             <MyBookings />
           </TabsContent>
-
-          {isAdmin && (
-            <TabsContent value="manage" className="mt-6">
-              {clubId && courtsLoaded ? (
-                <CourtsManageClient
-                  initialCourts={courts}
-                  courtTypes={courtTypesForManage}
-                  clubId={clubId}
-                />
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">Laden...</div>
-              )}
-            </TabsContent>
-          )}
         </Tabs>
       </ScrollReveal>
 
