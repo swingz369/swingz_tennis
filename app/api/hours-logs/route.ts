@@ -39,15 +39,27 @@ export async function GET(_request: NextRequest) {
         )
         .order('date', { ascending: false });
 
+      // hours_logs.trainer_id references trainers.id, not the Supabase auth
+      // user id — resolve it once for the "own logs" cases below.
+      let ownTrainerId: string | null = null;
+      if (!isAdmin && !isSuperadmin) {
+        const { data: trainerRow } = await supabase
+          .from('trainers')
+          .select('id')
+          .eq('user_id', auth.user.id)
+          .maybeSingle();
+        ownTrainerId = trainerRow?.id ?? null;
+      }
+
       if (trainerId) {
         // Trainer can only view their own logs
-        if (!isAdmin && !isSuperadmin && trainerId !== auth.user.id) {
+        if (!isAdmin && !isSuperadmin && trainerId !== ownTrainerId) {
           return forbiddenResponse('Trainer können nur ihre eigenen Stundennachweise sehen');
         }
         query = query.eq('trainer_id', trainerId);
       } else if (!isAdmin && !isSuperadmin) {
         // Non-admin trainer sees only own logs
-        query = query.eq('trainer_id', auth.user.id);
+        query = query.eq('trainer_id', ownTrainerId ?? '');
       }
 
       if (status) {
@@ -146,14 +158,29 @@ export async function POST(_request: NextRequest) {
 
       const supabase = auth.supabase;
 
-      // For trainers, always use their own user ID — the body's trainerId is ignored
-      const trainerId = auth.user.id;
+      // For trainers, always use their own trainers.id — the body's trainerId
+      // is ignored. hours_logs.trainer_id references trainers.id, not the
+      // Supabase auth user id, so it must be resolved via trainers.user_id.
+      const { data: trainerRow } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('user_id', auth.user.id)
+        .maybeSingle();
+
+      if (!trainerRow) {
+        return NextResponse.json(
+          { error: 'Kein Trainer-Profil für diesen Account gefunden' },
+          { status: 404 }
+        );
+      }
+
+      const trainerId = trainerRow.id;
 
       // Fetch trainer name for display
       const { data: user } = await supabase
         .from('users')
         .select('full_name')
-        .eq('id', trainerId)
+        .eq('id', auth.user.id)
         .maybeSingle();
 
       const { data: hoursLog, error } = await supabase
