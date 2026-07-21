@@ -3,7 +3,7 @@ import { createClient } from '@/infrastructure/external/supabase/server';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'SWINGZ — KI-gestütztes Tennisclub-Management',
+  title: 'SWINGZ — Modernes Tennisclub-Management',
   description:
     'Die Plattform für intelligente Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb. Early Access jetzt kostenlos.',
   alternates: {

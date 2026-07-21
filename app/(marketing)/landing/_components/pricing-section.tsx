@@ -26,51 +26,70 @@ type Plan = {
   description: string;
   features: string[];
   cta: string;
+  ctaHref: string;
   popular: boolean;
 };
+
+const COMMON_FEATURES = [
+  'Unbegrenzte Trainer',
+  'Buchungs-Management',
+  'Mitgliederverwaltung',
+  'Automatisierte Saisonplanung',
+  'Erweiterte Analytics & Reports',
+  'Shop-Modul',
+  'E-Mail-Support',
+  'EU-Hosting',
+];
 
 const PRICING_PLANS: Plan[] = [
   {
     name: 'Starter',
-    subtitle: 'Für kleine Vereine',
+    subtitle: 'Für kleine & mittlere Vereine',
     price: '29',
     yearlyPrice: '290',
     yearlyPricePerMonth: '24,17',
     savings: '58 €',
     period: '/Monat',
-    description: 'Alles, was ein kleiner Verein braucht — fokussiert auf das Wesentliche.',
-    features: [
-      'Bis zu 50 Mitglieder',
-      'Bis zu 3 Trainer',
-      'Buchungs-Management',
-      'Mitgliederverwaltung',
-      'E-Mail-Support',
-      'EU-Hosting',
-    ],
-    cta: 'Kostenlos testen',
+    description:
+      'Alles, was ein Verein braucht — bis zu 200 Mitglieder. Danach wechselt ihr automatisch zu Professional.',
+    features: ['Bis zu 200 Mitglieder', ...COMMON_FEATURES],
+    cta: 'Jetzt registrieren',
+    ctaHref: '/register',
     popular: false,
   },
   {
     name: 'Professional',
-    subtitle: 'Für wachsende Vereine',
+    subtitle: 'Für größere Vereine',
+    price: '49',
+    yearlyPrice: '490',
+    yearlyPricePerMonth: '40,83',
+    savings: '98 €',
+    period: '/Monat',
+    description:
+      'Der gleiche Funktionsumfang wie Starter — der einzige Unterschied ist die Mitgliederanzahl.',
+    features: ['Ab 250 Mitglieder', ...COMMON_FEATURES],
+    cta: 'Jetzt registrieren',
+    ctaHref: '/register',
+    popular: true,
+  },
+  {
+    name: 'Tennisschule',
+    subtitle: 'Für Organisationen mit mehreren Vereinen',
     price: '79',
     yearlyPrice: '790',
     yearlyPricePerMonth: '65,83',
     savings: '158 €',
     period: '/Monat',
-    description: 'KI-Planung, erweiterte Analytik und Saison-Wizard für ambitionierte Vereine.',
+    description: 'Für Tennisschulen und Verbände, die mehrere Vereine zentral verwalten.',
     features: [
-      'Unbegrenzte Mitglieder',
-      'Unbegrenzte Trainer',
-      'KI-Scheduling-Optimierung',
-      'Erweiterte Analytics & Reports',
-      'Saisonplanungs-Wizard',
-      'Shop-Modul',
-      'Priority-Support',
-      'API-Zugang',
+      'Bis zu 5 Vereine (danach 99 €/Monat)',
+      'Zentrale Verwaltung aller Vereine',
+      'Club-Switcher',
+      ...COMMON_FEATURES,
     ],
-    cta: 'Kostenlos testen',
-    popular: true,
+    cta: 'Kontakt aufnehmen',
+    ctaHref: '/contact',
+    popular: false,
   },
 ];
 
@@ -88,7 +107,8 @@ export function PricingSection() {
           Für jeden Verein die richtige Lösung
         </h2>
         <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-          Flexible Modelle — vom kleinen Verein bis zum großen Verband. Klar, ohne Kleingedrucktes.
+          Flexible Modelle — vom kleinen Verein bis zur Tennisschule mit mehreren Vereinen. Klar,
+          ohne Kleingedrucktes.
         </p>
 
         {/* ── Billing Toggle ── */}
@@ -119,7 +139,7 @@ export function PricingSection() {
       </div>
 
       {/* ── Plans ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
         {PRICING_PLANS.map((plan) => (
           <Card
             key={plan.name}
@@ -170,15 +190,13 @@ export function PricingSection() {
               variant={plan.popular ? 'default' : 'outline'}
               asChild
             >
-              <Link href="/register">{plan.cta}</Link>
+              <Link href={plan.ctaHref}>{plan.cta}</Link>
             </Button>
           </Card>
         ))}
       </div>
 
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        14 Tage Testphase · Keine Kreditkarte · Jederzeit kündbar
-      </p>
+      <p className="mt-8 text-center text-sm text-muted-foreground">Jederzeit kündbar</p>
     </div>
   );
 }

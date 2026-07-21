@@ -52,7 +52,7 @@ const HOW_STEPS = [
   {
     step: '1',
     title: 'Registrieren',
-    body: 'Erstellt euren Club in wenigen Minuten — keine Kreditkarte, keine Verpflichtung.',
+    body: 'Erstellt euren Club in wenigen Minuten und legt direkt los.',
   },
   {
     step: '2',
@@ -62,7 +62,7 @@ const HOW_STEPS = [
   {
     step: '3',
     title: 'Durchstarten',
-    body: 'Plant Trainingseinheiten, verwaltet Buchungen, optimiert mit KI.',
+    body: 'Plant Trainingseinheiten, verwaltet Buchungen, organisiert die ganze Saison.',
   },
 ];
 
@@ -153,7 +153,7 @@ export default function LandingPage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm text-white/80 mb-8 animate-in">
             <Sparkles className="h-3.5 w-3.5 text-brand-accent" aria-hidden="true" />
-            KI-gestütztes Tennisclub-Management
+            Modernes Tennisclub-Management
           </div>
 
           {/* Headline */}
@@ -178,7 +178,7 @@ export default function LandingPage() {
                 href="/register"
                 onClick={() => analytics.signUp('hero_cta_primary', 'default')}
               >
-                Kostenlos testen
+                Jetzt registrieren
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
@@ -199,10 +199,6 @@ export default function LandingPage() {
             <span>DSGVO-konform</span>
             <span aria-hidden="true">·</span>
             <span>EU-Hosting</span>
-            <span aria-hidden="true">·</span>
-            <span>14 Tage kostenlos testen</span>
-            <span aria-hidden="true">·</span>
-            <span>Keine Kreditkarte</span>
           </div>
         </div>
       </section>
@@ -277,8 +273,8 @@ export default function LandingPage() {
                 Bereit für die neue Saison?
               </h2>
               <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-white/75 leading-relaxed">
-                14 Tage kostenlos. Keine Kreditkarte. Volle Plattform. Auf Wunsch richten wir deinen
-                Club persönlich ein.
+                Volle Plattform, transparente Preise. Auf Wunsch richten wir deinen Club persönlich
+                ein.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button
@@ -287,7 +283,7 @@ export default function LandingPage() {
                   asChild
                 >
                   <Link href="/register">
-                    Kostenlos registrieren
+                    Jetzt registrieren
                     <ArrowRight className="h-5 w-5" aria-hidden="true" />
                   </Link>
                 </Button>

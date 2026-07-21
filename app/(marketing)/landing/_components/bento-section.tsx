@@ -12,7 +12,7 @@ import { SectionReveal } from './section-reveal';
 const FEATURES = [
   {
     icon: Sparkles,
-    title: 'KI-Scheduling',
+    title: 'Automatisierte Planung',
     body: 'Wochenplanung unter Berücksichtigung von Trainer-Kapazitäten, Gruppenbedürfnissen und Hallenverfügbarkeit — vollautomatisch, mit Audit-Trail für jeden Vorschlag.',
     highlight: true,
   },
@@ -64,8 +64,7 @@ export function BentoSection() {
             Sechs Werkzeuge. Ein Vereinsleben.
           </h2>
           <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            KI-gestützt, mit Bedacht entworfen. Jedes Werkzeug tut das, was es tun muss — ohne
-            Umwege.
+            Mit Bedacht entworfen. Jedes Werkzeug tut das, was es tun muss — ohne Umwege.
           </p>
         </div>
 
