@@ -62,7 +62,9 @@ const COLOR_MAP: Record<StatColor, { text: string; bg: string; border: string }>
 
 /** Minimal inline sparkline — no charting library, just a normalized polyline. */
 function Sparkline({ points, className }: { points: number[]; className?: string }) {
-  if (points.length < 2) return null;
+  // A flat series (all-zero, or no real growth data) renders as a
+  // meaningless dash — worse than showing nothing.
+  if (points.length < 2 || new Set(points).size < 2) return null;
   const width = 64;
   const height = 24;
   const min = Math.min(...points);

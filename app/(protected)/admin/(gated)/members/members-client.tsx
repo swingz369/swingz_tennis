@@ -30,7 +30,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportMembersCSV } from '@/lib/csv-export';
-import MemberImportDialog from '@/components/admin/member-import-dialog';
 import type { Member } from './member.types';
 import type { PaginationMeta } from '@/lib/pagination';
 import { PaginationNav } from '@/components/ui/pagination-nav';
@@ -277,7 +276,6 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
           breadcrumbs={[{ label: 'Alle Mitglieder' }]}
         />
         <div className="flex gap-2">
-          <MemberImportDialog onImportComplete={() => router.refresh()} />
           <Button onClick={() => setShowInviteDialog(true)} className="gap-2">
             <UserPlus className="h-4 w-4" />
             Mitglied einladen
@@ -367,6 +365,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
           className="h-8 w-8"
           onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
           title={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
+          aria-label={viewMode === 'table' ? 'Kartenansicht' : 'Tabellenansicht'}
         >
           {viewMode === 'table' ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
         </Button>
@@ -484,7 +483,13 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="Details" asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Details"
+                          aria-label="Details"
+                          asChild
+                        >
                           <Link href={`/admin/members/${member.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
@@ -493,6 +498,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                           variant="ghost"
                           size="icon"
                           title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                          aria-label={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
                           onClick={() => handleToggleActive(member.id, member.is_active)}
                         >
                           {member.is_active ? (
@@ -593,6 +599,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         size="icon"
                         className="h-8 w-8"
                         title="Details"
+                        aria-label="Details"
                         asChild
                       >
                         <Link href={`/admin/members/${member.id}`}>
@@ -604,6 +611,7 @@ export function MembersClient({ initialMembers, clubId, pagination }: MembersCli
                         size="icon"
                         className="h-8 w-8"
                         title={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
+                        aria-label={member.is_active ? 'Deaktivieren' : 'Aktivieren'}
                         onClick={() => handleToggleActive(member.id, member.is_active)}
                       >
                         {member.is_active ? (

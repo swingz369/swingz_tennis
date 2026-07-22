@@ -239,6 +239,7 @@ export default function AdminFamilyPage() {
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-error-500"
                         onClick={() => handleRemoveMember(group.familyGroupId, m.userId)}
+                        aria-label={`${m.fullName} aus Familie entfernen`}
                       >
                         <X className="h-3.5 w-3.5" />
                       </Button>

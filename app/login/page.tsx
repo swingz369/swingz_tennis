@@ -94,14 +94,14 @@ export default function LoginPage() {
 
             <h1 className="text-4xl font-extrabold leading-tight max-w-md">
               Die Zukunft des{' '}
-              <span className="text-gradient-primary bg-clip-text text-transparent">
+              <span className="text-gradient-accent bg-clip-text text-transparent">
                 Tennisclub-Managements
               </span>
             </h1>
 
             <p className="mt-6 text-white/55 text-lg max-w-md leading-relaxed">
-              KI-gestützte Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb —
-              ab sofort verfügbar.
+              Automatisierte Trainingsplanung, intuitive Buchungsverwaltung und smarter Club-Betrieb
+              — ab sofort verfügbar.
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export default function LoginPage() {
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="font-semibold">KI-gestützte Saisonplanung</p>
+                <p className="font-semibold">Automatisierte Saisonplanung</p>
                 <p className="text-white/60 text-sm">Automatisch optimierte Trainingspläne</p>
               </div>
             </div>
@@ -121,9 +121,9 @@ export default function LoginPage() {
               <div className="p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <Zap className="h-4 w-4 text-brand-accent" />
-                  <p className="font-semibold text-sm">Kostenlos testen</p>
+                  <p className="font-semibold text-sm">Persönliches Onboarding</p>
                 </div>
-                <p className="text-white/55 text-xs">14 Tage Probezeit</p>
+                <p className="text-white/55 text-xs">Wir richten deinen Club ein</p>
               </div>
               <div className="p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-white/10 hover:bg-background/8 transition-colors">
                 <div className="flex items-center gap-2 mb-1">
@@ -275,7 +275,7 @@ export default function LoginPage() {
                   href="/register"
                   className="text-brand-primary hover:text-brand-light font-semibold transition-colors underline-offset-2 hover:underline"
                 >
-                  Registrierung anfragen
+                  Zugang anfragen
                 </a>
               </p>
             </div>

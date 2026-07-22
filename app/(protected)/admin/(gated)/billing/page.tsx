@@ -173,7 +173,6 @@ export default async function BillingPage({
           members={members}
           clubId={clubId}
           invoicePagination={invoicePagination}
-          searchParams={params}
         />
       </BillingCategoriesTabs>
     </div>

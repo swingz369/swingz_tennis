@@ -161,12 +161,19 @@ export function SeasonsClient({ initialSeasons, pagination }: SeasonsClientProps
                   )}
 
                 {season.open_conflicts > 0 && (
-                  <div className="flex items-center gap-2 rounded-xl bg-destructive/10 p-2 text-sm">
-                    <AlertCircle className="h-4 w-4 text-destructive" />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/admin/seasons/${season.id}?tab=conflicts`);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl bg-destructive/10 p-2 text-sm text-left hover:bg-destructive/20 transition-colors"
+                  >
+                    <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
                     <span className="text-destructive">
                       {season.open_conflicts} offene Konflikte
                     </span>
-                  </div>
+                  </button>
                 )}
               </CardContent>
             </Card>

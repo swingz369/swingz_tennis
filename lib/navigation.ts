@@ -54,7 +54,7 @@ type Hidden = Set<string>;
 
 // ── Sidebar: Admin ───────────────────────────────────────────────────
 
-export function adminSidebarSections(hidden: Hidden): NavSection[] {
+export function adminSidebarSections(hidden: Hidden, belongsToTennisschule = false): NavSection[] {
   const sections: NavSection[] = [
     {
       label: 'Mitglieder',
@@ -83,8 +83,6 @@ export function adminSidebarSections(hidden: Hidden): NavSection[] {
         { name: 'Wochenstundenplan', href: '/scheduler' },
         { name: 'Trainer-Profile', href: '/admin/trainers' },
         { name: 'Stundennachweise', href: '/admin/hours-logs' },
-        { name: 'Abwesenheiten', href: '/admin/absences' },
-        { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
       ],
     },
     {
@@ -92,7 +90,7 @@ export function adminSidebarSections(hidden: Hidden): NavSection[] {
       icon: Trophy,
       items: [
         { name: 'Platzverwaltung', href: '/admin/courts' },
-        { name: 'Wartungsplan', href: '/admin/courts?tab=maintenance' },
+        { name: 'Sonderveranstaltungen', href: '/admin/special-events' },
         ...(!hidden.has('weather_integration')
           ? [{ name: 'Platzsperren & Wetter', href: '/admin/courts?tab=weather' }]
           : []),
@@ -116,7 +114,9 @@ export function adminSidebarSections(hidden: Hidden): NavSection[] {
         ...(!hidden.has('dynamic_pricing')
           ? [{ name: 'Preisregeln', href: '/admin/pricing' }]
           : []),
-        { name: 'Abonnement', href: '/admin/subscription' },
+        // Vereine, die zu einer Tennisschule gehören, verwalten ihr Abo auf
+        // Ebene der Tennisschule (Superadmin) — nicht pro Einzelverein.
+        ...(!belongsToTennisschule ? [{ name: 'Abonnement', href: '/admin/subscription' }] : []),
         ...(!hidden.has('shop') ? [{ name: 'Shop', href: '/admin/shop' }] : []),
       ],
     },
@@ -127,8 +127,6 @@ export function adminSidebarSections(hidden: Hidden): NavSection[] {
         { name: 'Vereinseinstellungen', href: '/admin/settings' },
         { name: 'Auswertungen & Berichte', href: '/admin/analytics' },
         { name: 'Dokumente', href: '/admin/documents' },
-        { name: 'Versammlungen', href: '/admin/meetings' },
-        { name: 'Board-Beschlüsse', href: '/admin/decisions' },
       ],
     },
   ];

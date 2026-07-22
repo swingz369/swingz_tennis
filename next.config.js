@@ -214,10 +214,26 @@ const nextConfig = {
         destination: '/admin/settings',
         permanent: true,
       },
+      // Abwesenheiten wurde als Tab in Stundennachweise integriert (gehört fachlich
+      // zusammen: beides Trainer-Zeiterfassung). permanent:false (307), nicht 308 —
+      // ein 308 hier hat zuvor schon einmal eine Seite dauerhaft im Browser-Cache
+      // "verschluckt", siehe /admin/hours-logs-Vorfall.
       {
-        source: '/admin/hours-logs',
-        destination: '/admin/trainers',
-        permanent: true,
+        source: '/admin/absences',
+        destination: '/admin/hours-logs',
+        permanent: false,
+      },
+      // Versammlungen + Board-Beschlüsse wurden als Tabs in Dokumente integriert
+      // (Vereinsführungs-Themen gehören fachlich zusammen). permanent:false (307).
+      {
+        source: '/admin/meetings',
+        destination: '/admin/documents',
+        permanent: false,
+      },
+      {
+        source: '/admin/decisions',
+        destination: '/admin/documents',
+        permanent: false,
       },
     ];
   },

@@ -149,6 +149,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             action: 'update',
             entityType: 'club',
             entityId: id,
+            clubId: id,
             details: input as unknown as Record<string, unknown>,
           });
         } catch (auditError) {
@@ -195,6 +196,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
           action: 'delete',
           entityType: 'club',
           entityId: id,
+          clubId: id,
           details: {},
         });
       } catch (auditError) {

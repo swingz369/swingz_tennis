@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import { requireAdminClub } from '@/lib/admin-context';
 import { createServiceClient } from '@/lib/supabase/service';
 import { PLANS, recommendSoloPlan, SOLO_THRESHOLD, type PlanKey } from '@/lib/plans';
@@ -17,7 +18,11 @@ const FEATURES = [
 ];
 
 export default async function AdminSubscriptionPage() {
-  const { user, clubId } = await requireAdminClub();
+  const { user, clubId, isSuperadmin } = await requireAdminClub();
+
+  // Vereine einer Tennisschule verwalten ihr Abo beim Superadmin, nicht pro Einzelverein.
+  if (isSuperadmin) redirect('/superadmin/subscription');
+
   const sb = createServiceClient();
 
   const [{ data: profile }, { count: memberCount }] = await Promise.all([
@@ -26,7 +31,8 @@ export default async function AdminSubscriptionPage() {
       .from('user_club_memberships')
       .select('*', { count: 'exact', head: true })
       .eq('club_id', clubId)
-      .eq('is_active', true),
+      .eq('is_active', true)
+      .not('role', 'in', '(trainer,superadmin)'),
   ]);
 
   const tier = profile?.subscription_tier ?? 'free';

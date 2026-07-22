@@ -13,10 +13,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Settings, Building2, Zap } from 'lucide-react';
+import { Settings, Building2, Zap, AlertTriangle } from 'lucide-react';
 import { apiFetch } from '@/lib/api-fetch';
 import { ModuleSelectionStep } from '@/components/onboarding/module-selection-step';
 import { PageHeader } from '@/components/ui/page-header';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import MemberImportDialog from '@/components/admin/member-import-dialog';
+import { SOLO_THRESHOLD } from '@/lib/plans';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('settings-client');
 
 type OpeningHours = {
   monday: { open: string; close: string };
@@ -26,6 +32,16 @@ type OpeningHours = {
   friday: { open: string; close: string };
   saturday: { open: string; close: string };
   sunday: { open: string; close: string };
+};
+
+const WEEKDAY_LABELS: Record<keyof OpeningHours, string> = {
+  monday: 'Montag',
+  tuesday: 'Dienstag',
+  wednesday: 'Mittwoch',
+  thursday: 'Donnerstag',
+  friday: 'Freitag',
+  saturday: 'Samstag',
+  sunday: 'Sonntag',
 };
 
 const BUNDESLAENDER = [
@@ -72,6 +88,7 @@ export default function SettingsClient() {
   const [activeTab, setActiveTab] = useState<'club' | 'system' | 'modules'>('club');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   // Club settings state
   const [clubSettings, setClubSettings] = useState<ClubSettings>({
@@ -127,6 +144,15 @@ export default function SettingsClient() {
             : 'transfer',
           invoice_number_prefix: clubData.club.invoicePrefix ?? '',
         }));
+      } else {
+        // Fetch failed (e.g. expired session) — form state must NOT silently fall back
+        // to its default values, or a "Speichern" click would overwrite real club data.
+        setLoadError(true);
+        toast.error(
+          clubRes.status === 401
+            ? 'Sitzung abgelaufen — bitte Seite neu laden und erneut anmelden'
+            : 'Einstellungen konnten nicht geladen werden — bitte Seite neu laden'
+        );
       }
 
       // Check if user is superadmin (via roles API)
@@ -142,7 +168,8 @@ export default function SettingsClient() {
         // Non-critical: superadmin tab stays hidden on error
       }
     } catch (err) {
-      console.error('Failed to fetch settings:', err);
+      log.error('Failed to fetch settings', err instanceof Error ? err : undefined);
+      setLoadError(true);
       toast.error('Fehler beim Laden der Einstellungen');
     } finally {
       setLoading(false);
@@ -154,6 +181,10 @@ export default function SettingsClient() {
   }, []); // fetchSettings is a stable component-level const
 
   const handleSaveClubSettings = async () => {
+    if (loadError) {
+      toast.error('Speichern nicht möglich — Einstellungen konnten nicht geladen werden');
+      return;
+    }
     setSaving(true);
     try {
       const res = await apiFetch(`/api/clubs/${clubSettings.id}`, {
@@ -180,7 +211,7 @@ export default function SettingsClient() {
         toast.error(`Fehler: ${error.error || 'Unbekannter Fehler'}`);
       }
     } catch (err) {
-      console.error('Failed to save club settings:', err);
+      log.error('Failed to save club settings', err instanceof Error ? err : undefined);
       toast.error('Fehler beim Speichern');
     } finally {
       setSaving(false);
@@ -203,7 +234,7 @@ export default function SettingsClient() {
         toast.error(`Fehler: ${error.error || 'Unbekannter Fehler'}`);
       }
     } catch (err) {
-      console.error('Failed to save system settings:', err);
+      log.error('Failed to save system settings', err instanceof Error ? err : undefined);
       toast.error('Fehler beim Speichern');
     } finally {
       setSaving(false);
@@ -225,6 +256,17 @@ export default function SettingsClient() {
         description="Grundlegende Konfiguration deines Vereins"
         breadcrumbs={[{ label: 'Vereinseinstellungen' }]}
       />
+
+      {loadError && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Einstellungen konnten nicht geladen werden</AlertTitle>
+          <AlertDescription>
+            Die angezeigten Werte sind möglicherweise nicht aktuell. Bitte Seite neu laden, bevor
+            gespeichert wird — Speichern ist so lange deaktiviert.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-4 border-b">
@@ -293,37 +335,12 @@ export default function SettingsClient() {
                 />
               </div>
               <div>
-                <Label htmlFor="maxMembers">Maximale Mitgliederzahl</Label>
-                <Input
-                  id="maxMembers"
-                  type="number"
-                  value={clubSettings.maxMembers}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setClubSettings((prev) => ({ ...prev, maxMembers: val }));
-                  }}
-                />
+                <Label>Mitgliederzahl</Label>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Kein Limit — dein Verein kann beliebig viele Mitglieder haben. Ab {SOLO_THRESHOLD}{' '}
+                  Mitgliedern wechselt dein Abonnement automatisch in den nächsthöheren Tarif.
+                </p>
               </div>
-            </div>
-
-            {/* Status */}
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={clubSettings.status}
-                onValueChange={(value: 'active' | 'inactive' | 'suspended') =>
-                  setClubSettings({ ...clubSettings, status: value })
-                }
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Status wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Aktiv</SelectItem>
-                  <SelectItem value="inactive">Inaktiv</SelectItem>
-                  <SelectItem value="suspended">Suspendiert</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Pricing */}
@@ -364,7 +381,7 @@ export default function SettingsClient() {
                   ] as const
                 ).map((day) => (
                   <div key={day} className="flex items-center gap-2">
-                    <div className="w-28 capitalize">{day}</div>
+                    <div className="w-28">{WEEKDAY_LABELS[day]}</div>
                     <Input
                       type="time"
                       value={clubSettings.openingHours[day].open}
@@ -506,10 +523,26 @@ export default function SettingsClient() {
 
             {/* Save Button */}
             <div className="flex justify-end">
-              <Button onClick={handleSaveClubSettings} disabled={saving}>
+              <Button onClick={handleSaveClubSettings} disabled={saving || loadError}>
                 {saving ? 'Wird gespeichert...' : 'Speichern'}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Mitglieder-Import (einmaliger Bulk-Import, gehört nicht in die tägliche Mitgliederverwaltung) */}
+      {activeTab === 'club' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Mitglieder-Import</CardTitle>
+            <CardDescription>
+              Mehrere Mitglieder auf einmal aus einer CSV-Datei importieren — typischerweise nur
+              einmalig beim Einrichten des Vereins nötig
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MemberImportDialog />
           </CardContent>
         </Card>
       )}

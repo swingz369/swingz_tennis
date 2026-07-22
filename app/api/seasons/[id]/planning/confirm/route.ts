@@ -425,9 +425,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
           }
 
           // 4. Update season status (inside transaction)
+          // is_active was previously never set anywhere — the "Seasons aktiv"
+          // dashboard stat showed 0 even for a published, in-progress season.
+          // At most one season is active per club at a time.
           await tx
             .update(seasons)
-            .set({ planning_status: 'published', published_at: new Date() })
+            .set({ is_active: false })
+            .where(and(eq(seasons.club_id, season.club_id), eq(seasons.is_active, true)));
+          await tx
+            .update(seasons)
+            .set({ planning_status: 'published', published_at: new Date(), is_active: true })
             .where(eq(seasons.id, seasonId));
 
           // 5. Persist detected conflicts (pass tx so it participates in the transaction)

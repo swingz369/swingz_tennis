@@ -205,7 +205,7 @@ export default async function AnalyticsPage({
           {clubs.length > 1 && <ClubSelector clubs={clubs} selectedClubId={effectiveClubId} />}
         </div>
 
-        <AnalyticsClient data={analyticsData} />
+        <AnalyticsClient data={analyticsData} clubId={effectiveClubId} />
       </div>
     </AnalyticsTabsClient>
   );

@@ -177,8 +177,9 @@ export default function SpecialEventsPage() {
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <Label>Name *</Label>
+                <Label htmlFor="event-name">Name *</Label>
                 <Input
+                  id="event-name"
                   value={form.name}
                   onChange={(e) => f('name', e.target.value)}
                   placeholder="z.B. Sommercamp 2026"
@@ -187,8 +188,9 @@ export default function SpecialEventsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Typ</Label>
+                  <Label htmlFor="event-type">Typ</Label>
                   <select
+                    id="event-type"
                     value={form.event_type}
                     onChange={(e) => f('event_type', e.target.value)}
                     className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
@@ -201,8 +203,9 @@ export default function SpecialEventsPage() {
                   </select>
                 </div>
                 <div>
-                  <Label>Status</Label>
+                  <Label htmlFor="event-status">Status</Label>
                   <select
+                    id="event-status"
                     value={form.status}
                     onChange={(e) => f('status', e.target.value)}
                     className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
@@ -217,8 +220,9 @@ export default function SpecialEventsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Start *</Label>
+                  <Label htmlFor="event-start-date">Start *</Label>
                   <Input
+                    id="event-start-date"
                     type="date"
                     value={form.start_date}
                     onChange={(e) => f('start_date', e.target.value)}
@@ -226,8 +230,9 @@ export default function SpecialEventsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Ende *</Label>
+                  <Label htmlFor="event-end-date">Ende *</Label>
                   <Input
+                    id="event-end-date"
                     type="date"
                     value={form.end_date}
                     onChange={(e) => f('end_date', e.target.value)}
@@ -237,8 +242,9 @@ export default function SpecialEventsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Von</Label>
+                  <Label htmlFor="event-start-time">Von</Label>
                   <Input
+                    id="event-start-time"
                     type="time"
                     value={form.start_time}
                     onChange={(e) => f('start_time', e.target.value)}
@@ -246,8 +252,9 @@ export default function SpecialEventsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Bis</Label>
+                  <Label htmlFor="event-end-time">Bis</Label>
                   <Input
+                    id="event-end-time"
                     type="time"
                     value={form.end_time}
                     onChange={(e) => f('end_time', e.target.value)}
@@ -257,8 +264,9 @@ export default function SpecialEventsPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Max. Teilnehmer</Label>
+                  <Label htmlFor="event-max-participants">Max. Teilnehmer</Label>
                   <Input
+                    id="event-max-participants"
                     type="number"
                     min={1}
                     value={form.max_participants}
@@ -267,8 +275,9 @@ export default function SpecialEventsPage() {
                   />
                 </div>
                 <div>
-                  <Label>Preis/Person (€)</Label>
+                  <Label htmlFor="event-price">Preis/Person (€)</Label>
                   <Input
+                    id="event-price"
                     type="number"
                     min={0}
                     step={0.5}
@@ -279,8 +288,9 @@ export default function SpecialEventsPage() {
                 </div>
               </div>
               <div>
-                <Label>Ort / Platz</Label>
+                <Label htmlFor="event-location">Ort / Platz</Label>
                 <Input
+                  id="event-location"
                   value={form.location ?? ''}
                   onChange={(e) => f('location', e.target.value)}
                   placeholder="z.B. Platz 1+2"
@@ -288,8 +298,9 @@ export default function SpecialEventsPage() {
                 />
               </div>
               <div>
-                <Label>Beschreibung</Label>
+                <Label htmlFor="event-description">Beschreibung</Label>
                 <textarea
+                  id="event-description"
                   value={form.description ?? ''}
                   onChange={(e) => f('description', e.target.value)}
                   rows={3}

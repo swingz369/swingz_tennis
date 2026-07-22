@@ -533,7 +533,7 @@ function ComposeDialog({
   onSent: () => void;
 }) {
   const [subject, setSubject] = useState(
-    replyTo?.subject.startsWith('Re:') ? replyTo.subject : `Re: ${replyTo?.subject ?? ''}`
+    replyTo ? (replyTo.subject.startsWith('Re:') ? replyTo.subject : `Re: ${replyTo.subject}`) : ''
   );
   const [content, setContent] = useState('');
   const [recipientMode, setRecipientMode] = useState<'individual' | 'all' | 'trainers' | 'multi'>(

@@ -1,191 +1,92 @@
-'use client';
-import { useState, useEffect, useRef } from 'react';
-import { Upload, Trash2, FileText, Download, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { apiFetch } from '@/lib/api-fetch';
+import { Suspense } from 'react';
+import { requireAdminClub } from '@/lib/admin-context';
 import { PageHeader } from '@/components/ui/page-header';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DocumentsClient } from './documents-client';
+import { DocumentsTabsWrapper } from './documents-tabs-wrapper';
+import type { BoardDecision, DecisionVote, MeetingInvitation } from '@/lib/types/decisions';
+import { createLogger } from '@/lib/logger';
 
-const CATEGORIES = ['satzung', 'protokoll', 'beschluss', 'lizenz', 'vertrag', 'sonstige'];
+export const dynamic = 'force-dynamic';
+const log = createLogger('admin:documents');
 
-type Doc = {
-  id: string;
-  name: string;
-  category: string;
-  file_url: string;
-  file_size_bytes: number;
-  mime_type: string;
-  created_at: string;
-};
+export default async function AdminDocumentsPage() {
+  // RLS-enforcing client (not the service client) — board_decisions RLS
+  // policies require a real membership row for the querying user, so this
+  // is defense-in-depth against a wrong/spoofed clubId, not just app logic.
+  const { clubId, supabase } = await requireAdminClub();
 
-export default function AdminDocumentsPage() {
-  const [docs, setDocs] = useState<Doc[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('sonstige');
-  const fileRef = useRef<HTMLInputElement>(null);
+  const decisionsRes = await supabase
+    .from('board_decisions')
+    .select('*')
+    .eq('club_id', clubId)
+    .order('meeting_date', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(200);
 
-  const load = () =>
-    apiFetch('/api/admin/documents')
-      .then((r) => r.json())
-      .then((d) => setDocs(d.documents ?? []))
-      .finally(() => setLoading(false));
-  useEffect(() => {
-    load();
-  }, []);
+  if (decisionsRes.error) {
+    log.error('Failed to fetch board_decisions', { error: decisionsRes.error.message });
+  }
 
-  const handleUpload = async () => {
-    const file = fileRef.current?.files?.[0];
-    if (!file) {
-      toast.error('Keine Datei ausgewählt');
-      return;
-    }
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('name', name || file.name);
-      fd.append('category', category);
-      const res = await apiFetch('/api/admin/documents', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? 'Fehler');
-        return;
-      }
-      toast.success('Dokument hochgeladen');
-      setDocs((prev) => [data.document, ...prev]);
-      setName('');
-      setCategory('sonstige');
-      if (fileRef.current) fileRef.current.value = '';
-    } finally {
-      setUploading(false);
-    }
-  };
+  const decisions = (decisionsRes.data ?? []) as unknown as BoardDecision[];
 
-  const handleDelete = async (id: string) => {
-    const res = await apiFetch(`/api/admin/documents/${id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      toast.error('Löschen fehlgeschlagen');
-      return;
-    }
-    setDocs((prev) => prev.filter((d) => d.id !== id));
-    toast.success('Dokument gelöscht');
-  };
+  // meeting_invitations has no club_id column — club-scoping only exists
+  // indirectly via decision_id, same as the decision_votes query below.
+  const decisionIds = decisions.map((d) => d.id);
+  const [votesRes, invitationsRes] =
+    decisionIds.length > 0
+      ? await Promise.all([
+          supabase
+            .from('decision_votes')
+            .select('*')
+            .in('decision_id', decisionIds)
+            .order('voted_at', { ascending: false })
+            .limit(500),
+          supabase
+            .from('meeting_invitations')
+            .select('decision_id, status, member_id')
+            .in('decision_id', decisionIds)
+            .eq('status', 'pending')
+            .limit(200),
+        ])
+      : [
+          { data: [] as DecisionVote[], error: null },
+          {
+            data: [] as Pick<MeetingInvitation, 'decision_id' | 'status' | 'member_id'>[],
+            error: null,
+          },
+        ];
 
-  const fmt = (bytes: number) =>
-    bytes > 1024 * 1024
-      ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
-      : `${Math.round(bytes / 1024)} KB`;
+  if (votesRes.error) {
+    log.warn('decision_votes fetch failed', { error: votesRes.error.message });
+  }
+  if (invitationsRes.error) {
+    log.error('Failed to fetch meeting_invitations', { error: invitationsRes.error.message });
+  }
+
+  const votes = (votesRes.data ?? []) as DecisionVote[];
+  const invitations = (invitationsRes.data ?? []) as unknown as Pick<
+    MeetingInvitation,
+    'decision_id' | 'status' | 'member_id'
+  >[];
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dokumente" breadcrumbs={[{ label: 'Dokumente' }]} />
-      <Card className="max-w-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Dokument hochladen</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <Label>Datei *</Label>
-            <Input
-              ref={fileRef}
-              type="file"
-              className="mt-1.5"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg"
-            />
-          </div>
-          <div>
-            <Label>Name</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Satzung 2024"
-              className="mt-1.5"
-            />
-          </div>
-          <div>
-            <Label>Kategorie</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={handleUpload} disabled={uploading} className="w-full gap-2">
-            {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="h-4 w-4" />
-            )}
-            Hochladen
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Alle Dokumente ({docs.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Lade...</p>
-          ) : docs.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Noch keine Dokumente hochgeladen.
-            </p>
-          ) : (
-            <div className="divide-y divide-border">
-              {docs.map((doc) => (
-                <div key={doc.id} className="flex items-center gap-3 py-3">
-                  <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {fmt(doc.file_size_bytes)} ·{' '}
-                      {new Date(doc.created_at).toLocaleDateString('de-DE')}
-                    </p>
-                  </div>
-                  <Badge variant="secondary" className="text-xs shrink-0">
-                    {doc.category}
-                  </Badge>
-                  <a href={doc.file_url} target="_blank" rel="noreferrer">
-                    <Button size="icon" variant="ghost" className="h-8 w-8">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </a>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-destructive"
-                    onClick={() => handleDelete(doc.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="px-6 pt-6">
+        <PageHeader
+          title="Dokumente & Vereinsführung"
+          description="Vereinsdokumente, Versammlungen und Board-Beschlüsse an einem Ort."
+        />
+      </div>
+      <Suspense fallback={<Skeleton className="h-96 w-full mx-6" />}>
+        <DocumentsTabsWrapper
+          initialDecisions={decisions}
+          initialVotes={votes}
+          initialInvitations={invitations}
+        >
+          <DocumentsClient />
+        </DocumentsTabsWrapper>
+      </Suspense>
     </div>
   );
 }

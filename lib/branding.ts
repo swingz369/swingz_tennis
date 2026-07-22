@@ -39,21 +39,6 @@ export const DEFAULT_BRANDING: ClubBranding = {
   extended: {},
 };
 
-export function mergeBranding(custom: Partial<ClubBranding> = {}): ClubBranding {
-  return {
-    ...DEFAULT_BRANDING,
-    ...custom,
-    brand: {
-      ...DEFAULT_BRANDING.brand,
-      ...custom.brand,
-    },
-    logos: {
-      ...DEFAULT_BRANDING.logos,
-      ...custom.logos,
-    },
-  };
-}
-
 export function hexToHsl(hex: string): string {
   const clean = hex.replace('#', '');
   const r = parseInt(clean.substring(0, 2), 16) / 255;

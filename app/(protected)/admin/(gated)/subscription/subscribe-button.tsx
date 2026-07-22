@@ -171,9 +171,9 @@ export function PlanCards({
                     <span className="text-3xl font-extrabold">€{plan.pricePerMonth}</span>
                     <span className="text-sm text-muted-foreground">/Monat</span>
                   </div>
-                  {interval !== 'monthly' && (
+                  {interval === 'annual' && (
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      zahlbar als €{total} {interval === 'annual' ? 'jährlich' : 'alle 6 Monate'}
+                      zahlbar als €{total} jährlich
                     </p>
                   )}
                 </div>

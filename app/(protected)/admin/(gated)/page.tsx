@@ -15,7 +15,6 @@ import {
   ActivityFeedCompact,
   type TimelineActivityItem,
 } from '@/components/admin/activity-feed-compact';
-import { AdminInboxBanner, type AttentionAction } from '@/components/admin/admin-inbox-banner';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconBox } from '@/components/ui/icon-box';
@@ -508,27 +507,6 @@ export default async function AdminPage() {
   // as a false alarm next to the neutral "alles erledigt" banner above.
   const FEATURED_KPI_INDEX = 2;
 
-  // Attention actions for InboxBanner
-  const attentionActions: AttentionAction[] = [];
-  if (needsApprovals) {
-    attentionActions.push({
-      label: `${pendingApprovals} Anfrage${(pendingApprovals ?? 0) > 1 ? 'n' : ''} genehmigen`,
-      description: 'Neue Mitgliedsanfragen warten auf dich',
-      href: '/admin/members?tab=approvals',
-      icon: UserPlus,
-      tone: 'orange',
-    });
-  }
-  if (needsBilling) {
-    attentionActions.push({
-      label: 'Rechnungen ausstehend',
-      description: `Monatsabrechnung für ${memberCount ?? 0} Mitglieder erstellen`,
-      href: '/admin/billing',
-      icon: CreditCard,
-      tone: 'blue',
-    });
-  }
-
   // Smart-action card markup — extracted as a closure so the Side-Column
   // layout (P0-D) can render the same cards inside the right Hero column
   // without duplicating the whole JSX block.
@@ -571,38 +549,63 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6 max-w-[1400px] mx-auto">
-      {/* ── Side-Column Hero + Schnellaktionen (war P0-D / P1-G) ──
-          SmartActions sitzen jetzt rechts neben dem PremiumAdminHero
-          (lg+:col-span-2), sind also sofort über dem Fold. Auf Mobile
-          stacken sie sauber unter den Hero. Der redundante
-          "Mitglied einladen"-Hero-Button ist entfernt — die Karte unten
-          rechts hat denselben CTA ohne Echo. Semantisch liest sich
-          die Reihenfolge für Screenreader jetzt: Identifikation →
-          Schnellwerkzeuge → dringende Aufgaben → Statistik. */}
+      {/* ── Hero + Schnellaktionen, one framed unit ──
+          Both live inside a single card now instead of a bare text block
+          next to boxed action cards — that mismatch used to read as
+          leftover whitespace under the greeting. Urgent smart actions
+          already carry the orange pulse treatment, so there is no
+          separate "attention" banner repeating the same CTA below. */}
       <ScrollReveal>
-        <div className="grid gap-4 lg:grid-cols-5 lg:items-start">
-          <div className="lg:col-span-3">
-            <PremiumAdminHero
-              firstName={firstName}
-              clubName={club.name}
-              isSuperadmin={isSuperadmin}
-              todaySessionCount={activeSessions ?? 0}
-            />
-          </div>
-          <div className="lg:col-span-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
-              Schnellaktionen
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {smartActions.map(renderSmartAction)}
+        <div className="rounded-xl border border-border dark:border-white/10 bg-card p-5 sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-5 lg:items-start">
+            <div className="lg:col-span-3">
+              <PremiumAdminHero
+                firstName={firstName}
+                clubName={club.name}
+                isSuperadmin={isSuperadmin}
+                todaySessionCount={activeSessions ?? 0}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                Schnellaktionen
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {smartActions.map(renderSmartAction)}
+              </div>
             </div>
           </div>
         </div>
       </ScrollReveal>
 
+      {/* ── KPI Grid — leads with the numbers, right after the hero ──
+          (5-col asymmetric: featured spans 2, others span 1). Layout reads
+          as 2 + 1 + 1 + 1 = 5 cols on lg+, 2x2 on mobile/tablet. The
+          featured card carries the dashboard's lead metric (Umsatz) and
+          receives a top accent stripe + tinted gradient via StatCard. */}
+      <ScrollReveal delay={100}>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {kpiItems.map((item, idx) => (
+            <StatCard
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              value={item.value}
+              sub={item.sub}
+              color={item.color}
+              href={item.href}
+              trend={item.trend}
+              animate
+              featured={idx === FEATURED_KPI_INDEX && monthlyRevenue > 0}
+              className={idx === FEATURED_KPI_INDEX ? 'lg:col-span-2' : undefined}
+            />
+          ))}
+        </div>
+      </ScrollReveal>
+
       {/* ── Erste Schritte Checklist — nur kurz nach Onboarding ── */}
       {showChecklist && !checklistDone && (
-        <ScrollReveal delay={50}>
+        <ScrollReveal delay={200}>
           <div className="rounded-xl border border-brand-light/20 bg-brand-light/5 p-5 space-y-3">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-brand-light" />
@@ -649,39 +652,6 @@ export default async function AdminPage() {
           </div>
         </ScrollReveal>
       )}
-
-      {/* ── Inbox Banner: attention required ↔ all-clear ── */}
-      <ScrollReveal delay={100}>
-        {attentionActions.length > 0 ? (
-          <AdminInboxBanner variant="urgent" actions={attentionActions} />
-        ) : (
-          <AdminInboxBanner variant="inbox-zero" />
-        )}
-      </ScrollReveal>
-
-      {/* ── KPI Grid (5-col asymmetric: featured spans 2, others span 1) ──
-          Layout reads as 2 + 1 + 1 + 1 = 5 cols on lg+, 2x2 on mobile/tablet.
-          The featured card carries the dashboard's lead metric (Umsatz) and
-          receives a top accent stripe + tinted gradient via StatCard. */}
-      <ScrollReveal delay={200}>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          {kpiItems.map((item, idx) => (
-            <StatCard
-              key={item.label}
-              icon={item.icon}
-              label={item.label}
-              value={item.value}
-              sub={item.sub}
-              color={item.color}
-              href={item.href}
-              trend={item.trend}
-              animate
-              featured={idx === FEATURED_KPI_INDEX && monthlyRevenue > 0}
-              className={idx === FEATURED_KPI_INDEX ? 'lg:col-span-2' : undefined}
-            />
-          ))}
-        </div>
-      </ScrollReveal>
 
       {/* ── Letzte Buchungen + Aktivität (zweispaltig) ── */}
       <ScrollReveal delay={300}>

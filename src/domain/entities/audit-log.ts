@@ -47,6 +47,7 @@ export class AuditLog {
   private readonly details: AuditDetails;
   private readonly ipAddress?: string | undefined;
   private readonly userAgent?: string | undefined;
+  private readonly clubId?: Id | undefined;
   private readonly createdAt: Date;
 
   private constructor(
@@ -58,7 +59,8 @@ export class AuditLog {
     details: AuditDetails,
     ipAddress?: string,
     userAgent?: string,
-    createdAt?: Date
+    createdAt?: Date,
+    clubId?: Id
   ) {
     this.id = id;
     this.actorId = actorId;
@@ -68,6 +70,7 @@ export class AuditLog {
     this.details = details;
     this.ipAddress = ipAddress;
     this.userAgent = userAgent;
+    this.clubId = clubId;
     this.createdAt = createdAt ?? new Date();
   }
 
@@ -78,7 +81,8 @@ export class AuditLog {
     resourceId: Id,
     details: AuditDetails = {},
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
+    clubId?: Id
   ): AuditLog {
     return new AuditLog(
       Id.create(),
@@ -88,7 +92,9 @@ export class AuditLog {
       resourceId,
       details,
       ipAddress,
-      userAgent
+      userAgent,
+      undefined,
+      clubId
     );
   }
 
@@ -101,7 +107,8 @@ export class AuditLog {
     details: AuditDetails,
     createdAt: Date,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
+    clubId?: Id
   ): AuditLog {
     return new AuditLog(
       id,
@@ -112,7 +119,8 @@ export class AuditLog {
       details,
       ipAddress,
       userAgent,
-      createdAt
+      createdAt,
+      clubId
     );
   }
 
@@ -146,6 +154,10 @@ export class AuditLog {
 
   public getUserAgent(): string | undefined {
     return this.userAgent;
+  }
+
+  public getClubId(): Id | undefined {
+    return this.clubId;
   }
 
   public getCreatedAt(): Date {

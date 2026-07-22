@@ -40,9 +40,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'trainer');
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or Admin access required');
+      return forbiddenResponse('Admin access required');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);
@@ -82,9 +82,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'trainer');
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or Admin access required');
+      return forbiddenResponse('Admin access required');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -15,14 +16,45 @@ import {
 } from '@/components/ui/select';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
-import { Mail } from 'lucide-react';
+import { Mail, History } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { formatDateTime } from '@/lib/format';
 
 interface ClubMember {
   id: string;
   name: string;
   email: string;
 }
+
+interface Campaign {
+  id: string;
+  subject: string;
+  target_group: string;
+  recipient_count: number;
+  status: string;
+  created_at: string;
+}
+
+const CAMPAIGN_STATUS_LABEL: Record<string, string> = {
+  queued: 'In Warteschlange',
+  sending: 'Wird versendet',
+  sent: 'Versendet',
+  failed: 'Fehlgeschlagen',
+};
+
+const CAMPAIGN_STATUS_TONE: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
+  queued: 'warning',
+  sending: 'warning',
+  sent: 'success',
+  failed: 'error',
+};
+
+const CAMPAIGN_TARGET_LABEL: Record<string, string> = {
+  all: 'Alle',
+  members: 'Mitglieder',
+  trainers: 'Trainer',
+  custom: 'Ausgewählt',
+};
 
 export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
   const [subject, setSubject] = useState('');
@@ -37,6 +69,23 @@ export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
   const [membersLoading, setMembersLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Campaign history
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
+
+  const fetchCampaigns = useCallback(() => {
+    setCampaignsLoading(true);
+    apiFetch('/api/email-campaigns')
+      .then((res) => (res.ok ? res.json() : { campaigns: [] }))
+      .then((data) => setCampaigns(data.campaigns ?? []))
+      .catch(() => toast.error('Kampagnen-Verlauf konnte nicht geladen werden'))
+      .finally(() => setCampaignsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, [fetchCampaigns]);
 
   function handleTargetChange(v: typeof targetGroup) {
     setTargetGroup(v);
@@ -99,6 +148,7 @@ export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
         setSubject('');
         setBody('');
         setSelectedIds(new Set());
+        fetchCampaigns();
       } else {
         const d = await res.json();
         toast.error(d.error ?? 'Fehler beim Versenden');
@@ -194,6 +244,41 @@ export default function EmailCampaignsClient({ clubId }: { clubId: string }) {
           <Button onClick={handleSend} disabled={loading}>
             {loading ? 'Wird versendet...' : 'Kampagne versenden'}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Verlauf
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {campaignsLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Lade Verlauf…</p>
+          ) : campaigns.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Noch keine Kampagnen versendet.
+            </p>
+          ) : (
+            <div className="divide-y divide-border">
+              {campaigns.map((c) => (
+                <div key={c.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{c.subject}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {CAMPAIGN_TARGET_LABEL[c.target_group] ?? c.target_group} ·{' '}
+                      {c.recipient_count} Empfänger · {formatDateTime(c.created_at)}
+                    </p>
+                  </div>
+                  <Badge variant={CAMPAIGN_STATUS_TONE[c.status] ?? 'default'} className="shrink-0">
+                    {CAMPAIGN_STATUS_LABEL[c.status] ?? c.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

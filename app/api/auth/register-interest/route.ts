@@ -13,8 +13,11 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const { name, clubName, email, message } = body;
 
-  if (!name || !email) {
-    return NextResponse.json({ error: 'Name und E-Mail sind erforderlich' }, { status: 400 });
+  if (!name || !clubName || !email) {
+    return NextResponse.json(
+      { error: 'Name, Vereinsname und E-Mail sind erforderlich' },
+      { status: 400 }
+    );
   }
 
   const sb = createServiceClient();

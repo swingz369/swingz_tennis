@@ -139,6 +139,7 @@ export async function POST(_request: NextRequest) {
           action: 'create',
           entityType: 'payment',
           entityId: memberId,
+          clubId,
           details: { plan },
         });
 

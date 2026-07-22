@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/layout/protected-route';
 import { requireAuth } from '@/lib/auth';
 import { ADMIN_CLUB_COOKIE } from '@/lib/cookies';
 import { resolveActiveClub } from '@/lib/auth/resolve-active-club';
+import { DEFAULT_BRANDING, brandingToCSSVars, type ClubBranding } from '@/lib/branding';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const auth = await requireAuth();
@@ -97,9 +98,49 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     selectedClubId,
   };
 
+  // Resolve the active club's branding server-side so colors apply on first
+  // paint (no client fetch, no flash) — same clubId used for the sidebar/
+  // header logo and nav everywhere else in this layout.
+  let branding: ClubBranding = DEFAULT_BRANDING;
+  if (primaryClub?.id) {
+    const { data: clubBranding } = await supabase
+      .from('clubs')
+      .select(
+        'primary_color, secondary_color, accent_color, logo_light_url, logo_dark_url, favicon_url'
+      )
+      .eq('id', primaryClub.id)
+      .maybeSingle();
+    if (clubBranding) {
+      branding = {
+        clubId: primaryClub.id,
+        brand: {
+          primaryColor: clubBranding.primary_color || DEFAULT_BRANDING.brand.primaryColor,
+          secondaryColor: clubBranding.secondary_color || DEFAULT_BRANDING.brand.secondaryColor,
+          accentColor: clubBranding.accent_color || DEFAULT_BRANDING.brand.accentColor,
+        },
+        logos: {
+          light: clubBranding.logo_light_url ?? null,
+          dark: clubBranding.logo_dark_url ?? null,
+          favicon: clubBranding.favicon_url ?? null,
+        },
+        customDomain: null,
+        extended: {},
+      };
+    }
+  }
+  const brandCssVars = Object.entries(brandingToCSSVars(branding))
+    .map(([key, value]) => `${key}:${value};`)
+    .join('');
+
   return (
-    <ProtectedRoute>
-      <ProtectedClientLayout user={userData}>{children}</ProtectedClientLayout>
-    </ProtectedRoute>
+    <>
+      {/* Per-club color theming — SSR'd so it's present on first paint, no flash */}
+      <style dangerouslySetInnerHTML={{ __html: `:root{${brandCssVars}}` }} />
+      <ProtectedRoute>
+        <ProtectedClientLayout user={userData} branding={branding}>
+          {children}
+        </ProtectedClientLayout>
+      </ProtectedRoute>
+    </>
   );
 }

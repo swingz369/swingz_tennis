@@ -35,7 +35,7 @@ const TIME_SLOTS = [
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 export default function SchedulerPage() {
-  const { data: clubData } = useUserClub();
+  const { data: clubData, isLoading: isClubLoading } = useUserClub();
   const clubId = clubData?.clubId ?? null;
   const queryClient = useQueryClient();
 
@@ -49,7 +49,14 @@ export default function SchedulerPage() {
   // Admins see the full season schedule (up to 1 year); members see only upcoming bookable sessions
   const adminDateRange = isAdmin ? { dateFrom: ADMIN_DATE_FROM, dateTo: ADMIN_DATE_TO } : undefined;
 
-  const { data: allSessions = [], isLoading, error } = useSessions(clubId, adminDateRange);
+  const {
+    data: allSessions = [],
+    isLoading: isSessionsLoading,
+    error,
+  } = useSessions(clubId, adminDateRange);
+  // clubId resolves async; sessions query stays disabled until then, so wait for both
+  // to avoid flashing the empty state before the club (and its sessions) is known.
+  const isLoading = isClubLoading || (!!clubId && isSessionsLoading);
   const isMember = !isAdmin && !isTrainer;
 
   const subtitle = isAdmin

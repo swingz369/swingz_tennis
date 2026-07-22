@@ -18,6 +18,7 @@ import { ArrowLeft, Save, Trash2, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { SeasonPlanningTabs } from '@/components/admin/season-planning-tabs';
 
 interface Season {
   id: string;
@@ -143,15 +144,35 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
   if (!season) return null;
 
   const isDraft = season.planning_status === 'draft';
+  const statusLabels: Record<string, string> = {
+    draft: 'Entwurf',
+    preferences_open: 'Präferenzen offen',
+    manual_review: 'Wird geprüft',
+    published: 'Veröffentlicht',
+  };
+  const statusLabel = statusLabels[season.planning_status] ?? season.planning_status;
 
   return (
     <div className="space-y-6">
+      <SeasonPlanningTabs seasonId={id} />
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => router.push(`/admin/seasons/${id}`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <PageHeader title="Saison bearbeiten" description={<>{season.name}</>} />
       </div>
+
+      {!isDraft && (
+        <Card className="border-warning-200 bg-warning-50 dark:bg-warning-900/20">
+          <CardContent className="pt-4 pb-4 flex items-center gap-3 text-sm text-warning-800 dark:text-warning-300">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            Diese Saison ist bereits veröffentlicht (Status:{' '}
+            <strong className="mx-1">{statusLabel}</strong>). Saison-Typ, Jahr und Zeitraum sind
+            gesperrt, da bereits Trainingspläne und Buchungen darauf basieren — nur Beschreibung,
+            Notizen und die Präferenz-Deadline lassen sich noch ändern.
+          </CardContent>
+        </Card>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card>
@@ -170,6 +191,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
                   onValueChange={(v: 'summer' | 'winter') =>
                     setFormData((p) => ({ ...p, season_type: v }))
                   }
+                  disabled={!isDraft}
                 >
                   <SelectTrigger id="season_type">
                     <SelectValue />
@@ -192,6 +214,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
                   max="2030"
                   value={formData.year}
                   onChange={(e) => setFormData((p) => ({ ...p, year: parseInt(e.target.value) }))}
+                  disabled={!isDraft}
                   required
                 />
               </div>
@@ -219,6 +242,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => setFormData((p) => ({ ...p, start_date: e.target.value }))}
+                  disabled={!isDraft}
                   required
                 />
               </div>
@@ -231,6 +255,7 @@ export default function EditSeasonPage({ params }: EditSeasonPageProps) {
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => setFormData((p) => ({ ...p, end_date: e.target.value }))}
+                  disabled={!isDraft}
                   required
                 />
               </div>

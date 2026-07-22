@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,16 +14,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { CenteredModal } from '@/components/ui/centered-modal';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DollarSign, Plus, FileText, Loader2, Trash2, Send, Sparkles } from 'lucide-react';
+import { DollarSign, FileText, Loader2, Trash2, Send, Sparkles } from 'lucide-react';
 import CreateInvoiceDialog from '@/components/billing/create-invoice-dialog';
 import PaymentImportDialog from '@/components/billing/payment-import-dialog';
 import { PaginationNav } from '@/components/ui/pagination-nav';
-import { buildPageUrl } from '@/lib/pagination';
 import type { PaginationMeta } from '@/lib/pagination';
 import { apiFetch } from '@/lib/api-fetch';
 
@@ -56,12 +53,6 @@ export type Invoice = {
 };
 
 type InvoiceTypeFilter = 'all' | 'season' | 'membership' | 'adhoc';
-
-interface LineItem {
-  description: string;
-  quantity: number;
-  unit_price: number;
-}
 
 function InvoiceStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
@@ -135,7 +126,6 @@ interface BillingClientProps {
   members: { id: string; name: string; email: string; role?: string }[];
   clubId?: string | null;
   invoicePagination?: PaginationMeta;
-  searchParams?: Record<string, string | string[] | undefined>;
 }
 
 export default function BillingClient({
@@ -143,16 +133,9 @@ export default function BillingClient({
   members,
   clubId,
   invoicePagination,
-  searchParams,
 }: BillingClientProps) {
   const router = useRouter();
   const clubMembers = members as ((typeof members)[number] & { role?: string })[];
-  const [memberSearch, setMemberSearch] = useState('');
-  const filteredMembers = clubMembers.filter((m) => {
-    if (!memberSearch.trim()) return true;
-    const q = memberSearch.toLowerCase();
-    return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
-  });
   const [generatingInvoices, setGeneratingInvoices] = useState(false);
 
   // Invoice generation preview
@@ -177,49 +160,43 @@ export default function BillingClient({
   } | null>(null);
   const [previewExcluded, setPreviewExcluded] = useState<Set<string>>(new Set());
 
-  // Invoice type filter
+  // Invoice type filter + pagination — both drive a client-side re-fetch of just
+  // the invoice table (no full page reload, no server component round-trip)
   const [invoiceTypeFilter, setInvoiceTypeFilter] = useState<InvoiceTypeFilter>('all');
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [page, setPage] = useState(invoicePagination?.page ?? 1);
+  const [pagination, setPagination] = useState<PaginationMeta | undefined>(invoicePagination);
+  const limit = invoicePagination?.limit ?? 25;
 
-  // Adhoc invoice dialog
-  const [showAdhocDialog, setShowAdhocDialog] = useState(false);
-  const [adhocMemberId, setAdhocMemberId] = useState('');
-  const [adhocDueDate, setAdhocDueDate] = useState('');
-  const [adhocNotes, setAdhocNotes] = useState('');
-  const [adhocItems, setAdhocItems] = useState<LineItem[]>([
-    { description: '', quantity: 1, unit_price: 0 },
-  ]);
-  const [submittingAdhoc, setSubmittingAdhoc] = useState(false);
-
-  const addItem = () =>
-    setAdhocItems((prev) => [...prev, { description: '', quantity: 1, unit_price: 0 }]);
-
-  const removeItem = (idx: number) => setAdhocItems((prev) => prev.filter((_, i) => i !== idx));
-
-  const updateItem = (idx: number, field: keyof LineItem, value: string | number) =>
-    setAdhocItems((prev) =>
-      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
-    );
-
-  const adhocTotal = adhocItems.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2);
-
-  useEffect(() => {
-    if (!clubId) return;
-    // Skip re-fetch when no type filter is active — use server-paginated initial data
-    if (invoiceTypeFilter === 'all') {
-      setInvoices(initialInvoices);
-      return;
-    }
-    setLoadingInvoices(true);
-    const params = new URLSearchParams({ clubId, type: invoiceTypeFilter });
-    apiFetch(`/api/admin/billing/invoices?${params.toString()}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json.data) {
-          setInvoices(
-            (json.data as Record<string, unknown>[]).map((inv) => {
-              return {
+  const fetchInvoices = useCallback(
+    async (targetPage: number, filter: InvoiceTypeFilter) => {
+      if (!clubId) return;
+      setLoadingInvoices(true);
+      try {
+        const params = new URLSearchParams({
+          clubId,
+          page: String(targetPage),
+          limit: String(limit),
+        });
+        if (filter !== 'all') params.set('type', filter);
+        const res = await apiFetch(`/api/admin/billing/invoices?${params.toString()}`);
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(json.error ?? 'Fehler beim Laden der Rechnungen');
+          return;
+        }
+        const meta = json.pagination as PaginationMeta | undefined;
+        // Deleted the last invoice(s) of a page? Rewind to the new last page
+        // instead of leaving the table empty — the effect below re-fetches it.
+        if (meta && targetPage > meta.totalPages) {
+          setPage(meta.totalPages);
+          return;
+        }
+        setInvoices(
+          (json.data as Record<string, unknown>[]).map(
+            (inv) =>
+              ({
                 id: String(inv.id),
                 invoiceNumber: String(inv.invoiceNumber || ''),
                 memberId: String(inv.memberId || ''),
@@ -233,14 +210,29 @@ export default function BillingClient({
                 invoiceDate: String(inv.invoiceDate || ''),
                 dueDate: String(inv.dueDate || ''),
                 paidAt: inv.paidAt ? String(inv.paidAt) : undefined,
-              } as Invoice;
-            })
-          );
-        }
-      })
-      .catch(() => toast.error('Fehler beim Laden der Rechnungen'))
-      .finally(() => setLoadingInvoices(false));
-  }, [clubId, invoiceTypeFilter, initialInvoices]);
+              }) as Invoice
+          )
+        );
+        if (meta) setPagination(meta);
+      } catch {
+        toast.error('Fehler beim Laden der Rechnungen');
+      } finally {
+        setLoadingInvoices(false);
+      }
+    },
+    [clubId, limit]
+  );
+
+  // Skip the very first run — page 1 / filter "all" is already server-rendered
+  // into initialInvoices, so fetching it again on mount would be wasted work.
+  const isFirstLoad = useRef(true);
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
+    fetchInvoices(page, invoiceTypeFilter);
+  }, [page, invoiceTypeFilter, fetchInvoices]);
 
   const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
@@ -299,7 +291,9 @@ export default function BillingClient({
     );
     if (successCount > 0) {
       toast.success(`${successCount} Rechnung${successCount !== 1 ? 'en' : ''} gelöscht`);
-      setInvoices((prev) => prev.filter((inv) => !selectedIds.has(inv.id)));
+      // Re-fetch the current page so the next invoices slide up to fill the gap
+      // instead of leaving deleted rows as an empty page.
+      await fetchInvoices(page, invoiceTypeFilter);
     }
     if (failCount > 0) {
       toast.error(
@@ -334,45 +328,6 @@ export default function BillingClient({
     }
   };
 
-  const handleSubmitAdhoc = async () => {
-    if (!clubId || !adhocMemberId || !adhocDueDate || adhocItems.length === 0) {
-      toast.error('Bitte alle Pflichtfelder ausfüllen');
-      return;
-    }
-    setSubmittingAdhoc(true);
-    try {
-      const res = await apiFetch('/api/billing/invoices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          club_id: clubId,
-          member_id: adhocMemberId,
-          due_date: adhocDueDate,
-          notes: adhocNotes || undefined,
-          items: adhocItems,
-        }),
-      });
-      if (res.ok) {
-        toast.success('Zusatz-Rechnung erstellt');
-        setShowAdhocDialog(false);
-        setAdhocMemberId('');
-        setAdhocDueDate('');
-        setAdhocNotes('');
-        setAdhocItems([{ description: '', quantity: 1, unit_price: 0 }]);
-        // Re-trigger invoice fetch
-        setInvoiceTypeFilter((prev) => prev);
-        router.refresh();
-      } else {
-        const err = await res.json();
-        toast.error(`Fehler: ${err.error || 'Unbekannt'}`);
-      }
-    } catch {
-      toast.error('Netzwerkfehler');
-    } finally {
-      setSubmittingAdhoc(false);
-    }
-  };
-
   const handleDeleteInvoice = async () => {
     if (!invoiceToDelete) return;
     setDeletingInvoiceId(invoiceToDelete.id);
@@ -382,7 +337,8 @@ export default function BillingClient({
       });
       if (res.ok) {
         toast.success('Rechnung gelöscht');
-        setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceToDelete.id));
+        // Re-fetch the current page so the next invoice slides up to fill the gap.
+        await fetchInvoices(page, invoiceTypeFilter);
         setDeleteConfirmOpen(false);
         setInvoiceToDelete(null);
       } else {
@@ -435,6 +391,10 @@ export default function BillingClient({
       if (res.ok) {
         toast.success(data.message ?? `${data.created} Rechnung(en) erstellt`);
         setInvoiceTypeFilter('membership');
+        setPage(1);
+        // Fetch directly — setState above is a no-op re-run trigger if the
+        // filter/page were already 'membership'/1 before this action.
+        await fetchInvoices(1, 'membership');
         setPreviewOpen(false);
         setPreviewData(null);
       } else {
@@ -469,39 +429,11 @@ export default function BillingClient({
       {
         <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <CardTitle>Rechnungen</CardTitle>
-                <CardDescription>Alle generierten Rechnungen</CardDescription>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-error-600 hover:text-error-700 hover:bg-error-50 border-error-200"
-                  onClick={() => {
-                    const allDeletable = invoices
-                      .filter((inv) => inv.status !== 'paid')
-                      .map((inv) => inv.id);
-                    if (allDeletable.length === 0) {
-                      toast.warning('Keine löschbaren Rechnungen vorhanden');
-                      return;
-                    }
-                    setSelectedIds(new Set(allDeletable));
-                    setBulkDeleteConfirmOpen(true);
-                  }}
-                  disabled={invoices.filter((inv) => inv.status !== 'paid').length === 0}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Alle löschen ({invoices.filter((inv) => inv.status !== 'paid').length})
-                </Button>
-                <Button size="sm" onClick={() => setShowAdhocDialog(true)}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Neue Zusatz-Rechnung
-                </Button>
-              </div>
+            <div>
+              <CardTitle>Rechnungen</CardTitle>
+              <CardDescription>Alle generierten Rechnungen</CardDescription>
             </div>
-            {/* Bulk actions bar — inline when invoices are selected */}
+            {/* Bulk actions bar — inline when invoices are selected via header checkbox or row checkboxes */}
             {selectedIds.size > 0 && (
               <div className="flex items-center gap-3 mt-3 p-3 rounded-xl bg-brand-primary/5 border border-brand-primary/20">
                 <span className="text-sm font-medium text-brand-primary">
@@ -536,6 +468,7 @@ export default function BillingClient({
                     onClick={() => {
                       setInvoiceTypeFilter(t);
                       setSelectedIds(new Set());
+                      setPage(1);
                     }}
                     className={`px-1 py-2 text-sm font-medium border-b-2 transition-colors ${
                       invoiceTypeFilter === t
@@ -662,6 +595,7 @@ export default function BillingClient({
                             variant="ghost"
                             onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
                             title="PDF herunterladen"
+                            aria-label="PDF herunterladen"
                           >
                             <FileText className="h-3 w-3" />
                           </Button>
@@ -674,6 +608,7 @@ export default function BillingClient({
                                 setDeleteConfirmOpen(true);
                               }}
                               title="Rechnung löschen"
+                              aria-label="Rechnung löschen"
                             >
                               <Trash2 className="h-3 w-3 text-error-400" />
                             </Button>
@@ -689,18 +624,10 @@ export default function BillingClient({
         </Card>
       }
 
-      {/* Invoice Pagination (only when no type filter — filtered data comes from unpaginated API) */}
-      {invoiceTypeFilter === 'all' &&
-        invoicePagination &&
-        invoicePagination.totalPages > 1 &&
-        searchParams && (
-          <PaginationNav
-            meta={invoicePagination}
-            buildUrl={(p) => `?${buildPageUrl(searchParams, p)}`}
-            compact
-            className="mt-2"
-          />
-        )}
+      {/* Invoice Pagination — client-side page swap, no full page reload */}
+      {pagination && pagination.totalPages > 1 && (
+        <PaginationNav meta={pagination} onPageChange={setPage} compact className="mt-2" />
+      )}
 
       {/* Bulk Delete Confirmation Dialog */}
       <CenteredModal open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)}>
@@ -977,160 +904,6 @@ export default function BillingClient({
             {previewData
               ? `${previewData.members.length - previewExcluded.size} Rechnung${previewData.members.length - previewExcluded.size !== 1 ? 'en' : ''} erstellen`
               : 'Generieren'}
-          </Button>
-        </div>
-      </CenteredModal>
-
-      {/* Adhoc Invoice Dialog */}
-      <CenteredModal open={showAdhocDialog} onClose={() => setShowAdhocDialog(false)}>
-        <div className="space-y-1.5">
-          <h2 className="text-lg font-bold">Neue Zusatz-Rechnung</h2>
-          <p className="text-sm text-muted-foreground">
-            Erstelle eine manuelle Rechnung für ein Mitglied
-          </p>
-        </div>
-        <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-4">
-            {' '}
-            <div>
-              <Label htmlFor="adhoc-member">Mitglied / Trainer *</Label>
-              <div className="relative">
-                <Input
-                  id="adhoc-member"
-                  placeholder="Name oder E-Mail suchen..."
-                  value={
-                    adhocMemberId
-                      ? (clubMembers.find((m) => m.id === adhocMemberId)?.name ?? '')
-                      : memberSearch
-                  }
-                  onChange={(e) => {
-                    setAdhocMemberId('');
-                    setMemberSearch(e.target.value);
-                  }}
-                  onBlur={() => setTimeout(() => setMemberSearch(''), 200)}
-                />
-                {adhocMemberId && (
-                  <button
-                    onClick={() => {
-                      setAdhocMemberId('');
-                      setMemberSearch('');
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-              {!adhocMemberId && memberSearch.trim().length > 0 && (
-                <div className="mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-md">
-                  {filteredMembers.length > 0 ? (
-                    filteredMembers.slice(0, 20).map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          setAdhocMemberId(m.id);
-                          setMemberSearch('');
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center justify-between"
-                      >
-                        <span>
-                          {m.name} <span className="text-muted-foreground">({m.email})</span>
-                        </span>
-                        {m.role && (
-                          <span
-                            className={`text-2xs font-semibold px-1.5 py-0.5 rounded-full ${
-                              m.role === 'trainer'
-                                ? 'bg-success-100 text-success-700'
-                                : 'bg-info-100 text-info-700'
-                            }`}
-                          >
-                            {m.role === 'trainer' ? 'Trainer' : 'Mitglied'}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-                      Keine Ergebnisse für „{memberSearch}"
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="adhoc-due">Fälligkeitsdatum *</Label>
-              <Input
-                id="adhoc-due"
-                type="date"
-                value={adhocDueDate}
-                onChange={(e) => setAdhocDueDate(e.target.value)}
-              />
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="adhoc-notes">Notizen</Label>
-            <Input
-              id="adhoc-notes"
-              value={adhocNotes}
-              onChange={(e) => setAdhocNotes(e.target.value)}
-              placeholder="Optionale Anmerkungen"
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Positionen *</Label>
-              <Button type="button" size="sm" variant="outline" onClick={addItem}>
-                <Plus className="h-3 w-3 mr-1" />
-                Position hinzufügen
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {adhocItems.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-[1fr_80px_100px_36px] gap-2 items-center">
-                  <Input
-                    placeholder="Beschreibung"
-                    value={item.description}
-                    onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="Anz."
-                    value={item.quantity}
-                    onChange={(e) => updateItem(idx, 'quantity', parseInt(e.target.value, 10) || 1)}
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    placeholder="Preis €"
-                    value={item.unit_price}
-                    onChange={(e) => updateItem(idx, 'unit_price', parseFloat(e.target.value) || 0)}
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => removeItem(idx)}
-                    disabled={adhocItems.length === 1}
-                  >
-                    <Trash2 className="h-4 w-4 text-error-400" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 text-right text-sm font-medium text-foreground">
-              Gesamt: {adhocTotal} €
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2 pt-2 justify-end">
-          <Button variant="outline" onClick={() => setShowAdhocDialog(false)}>
-            Abbrechen
-          </Button>
-          <Button onClick={handleSubmitAdhoc} disabled={submittingAdhoc}>
-            {submittingAdhoc && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Rechnung erstellen
           </Button>
         </div>
       </CenteredModal>

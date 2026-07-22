@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,6 @@ import {
   AlertCircle,
   TrendingUp,
   Play,
-  Settings,
   FileText,
   Clock,
   CheckCircle,
@@ -716,10 +715,6 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/admin/seasons/${id}/edit`)}>
-                <Settings className="mr-2 h-4 w-4" />
-                Bearbeiten
-              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteConfirmOpen(true)}
                 disabled={deleting}
@@ -844,14 +839,32 @@ export default function SeasonDetailPage({ params }: SeasonDetailPageProps) {
 
 /* Extracted tabs component so the IIFE is not needed */
 
+const SEASON_TAB_VALUES = [
+  'overview',
+  'preferences',
+  'plan',
+  'conflicts',
+  'group-change',
+  'calendar',
+] as const;
+
 function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isPublished = ['published', 'active', 'completed', 'archived'].includes(
     season.planning_status ?? ''
   );
+  const requestedTab = searchParams.get('tab');
+  const publishedOnlyTabs = ['preferences', 'plan', 'conflicts', 'group-change'];
+  const initialTab =
+    requestedTab &&
+    (SEASON_TAB_VALUES as readonly string[]).includes(requestedTab) &&
+    (isPublished || !publishedOnlyTabs.includes(requestedTab))
+      ? requestedTab
+      : 'overview';
 
   return (
-    <Tabs defaultValue="overview" className="space-y-4">
+    <Tabs defaultValue={initialTab} className="space-y-4">
       <TabsList>
         <TabsTrigger value="overview">Übersicht</TabsTrigger>
         {isPublished && (
@@ -870,7 +883,7 @@ function SeasonTabs({ season, seasonId }: { season: SeasonWithStats; seasonId: s
       <TabsContent value="overview" className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>Season Details</CardTitle>
+            <CardTitle>Saison-Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">

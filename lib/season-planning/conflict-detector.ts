@@ -744,3 +744,51 @@ export class ConflictDetector {
     };
   }
 }
+
+/**
+ * Live conflict detection for a single season — read-only (never calls
+ * persistConflicts/writes). Used as the single source of truth for
+ * "offene Konflikte" counts/badges, replacing reads against the
+ * `planning_conflicts` table, which is only ever populated once at
+ * Publish-time and drifts out of sync as the plan changes afterwards.
+ */
+export async function detectConflictsForSeason(seasonId: string, clubId: string) {
+  const detector = new ConflictDetector(seasonId, clubId);
+  const entries = await db
+    .select()
+    .from(seasonPlanEntries)
+    .where(eq(seasonPlanEntries.season_id, seasonId));
+
+  const assignments: GroupAssignment[] = [];
+  const groupMap = new Map<string, GroupAssignment>();
+  for (const entry of entries) {
+    const gid = entry.group_id || entry.id;
+    if (groupMap.has(gid)) {
+      groupMap.get(gid)!.memberIds.push(...((entry.expected_participants as string[]) || []));
+    } else {
+      groupMap.set(gid, {
+        groupId: gid,
+        groupName: gid,
+        trainerId: entry.trainer_id,
+        trainerName: entry.trainer_id,
+        dayOfWeek: entry.day_of_week as any,
+        startTime: entry.start_time?.substring(0, 5) || '00:00',
+        endTime: entry.end_time?.substring(0, 5) || '00:00',
+        courtId: entry.court_id,
+        courtName: entry.court_id,
+        maxSize: entry.max_participants ?? 6,
+        memberIds: (entry.expected_participants as string[]) || [],
+        memberDetails: [],
+        waitlistIds: [],
+        waitlistDetails: [],
+        warnings: [],
+        conflictIds: [],
+      });
+    }
+  }
+  assignments.push(...groupMap.values());
+
+  const conflicts = await detector.detectAll(assignments);
+  const summary = detector.summarize(conflicts);
+  return { conflicts, summary };
+}

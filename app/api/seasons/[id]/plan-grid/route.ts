@@ -9,7 +9,7 @@ import {
   courts,
   groups,
 } from '@/src/infrastructure/persistence/schema';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { createLogger } from '@/lib/logger';
 import { authorizeSeasonAccess } from '@/lib/season-auth';
 
@@ -73,12 +73,17 @@ export async function GET(request: NextRequest, context: RouteContext) {
       }
 
       // 2) Groups for this club (the FK season_plan_entries.group_id → groups.id)
-      let allGroups;
+      // Supabase REST client, not Drizzle — direct postgres/Drizzle connections
+      // are unreliable from the dev environment (see CLAUDE.md).
+      let allGroups: { id: string; name: string; level: string | null; age_group: string | null }[];
       try {
-        allGroups = await db
-          .select()
-          .from(groups)
-          .where(and(eq(groups.club_id, season.club_id), eq(groups.is_active, true)));
+        const { data, error } = await auth.supabase
+          .from('groups')
+          .select('id, name, level, age_group')
+          .eq('club_id', season.club_id)
+          .eq('is_active', true);
+        if (error) throw new Error(error.message);
+        allGroups = data ?? [];
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const stack = err instanceof Error ? err.stack : '';

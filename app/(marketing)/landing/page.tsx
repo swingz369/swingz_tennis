@@ -127,7 +127,7 @@ export default function LandingPage() {
               </Button>
               <Button size="sm" asChild>
                 <Link href="/register" onClick={() => analytics.signUp('header_cta', 'default')}>
-                  Probetraining
+                  Jetzt registrieren
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
@@ -222,7 +222,7 @@ export default function LandingPage() {
               id="how-heading"
               className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground max-w-3xl mx-auto"
             >
-              Vom Probetraining zur ganzen Saison
+              Von der Anmeldung zur ganzen Saison
             </h2>
           </div>
 

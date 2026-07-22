@@ -273,7 +273,7 @@ export function Sidebar({
 
   const roleSections: SectionDef[] = (() => {
     if (isAdmin) {
-      return adminSidebarSections(hiddenSections).map((section) => ({
+      return adminSidebarSections(hiddenSections, isSuperAdmin).map((section) => ({
         label: section.label,
         icon: section.icon,
         subItems: section.items.map((item) =>

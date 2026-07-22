@@ -11,6 +11,7 @@ import { LogoUpload } from '@/components/ui/logo-upload';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
 import { PageHeader } from '@/components/ui/page-header';
+import { DEFAULT_BRANDING } from '@/lib/branding';
 
 interface BrandingData {
   primaryColor: string;
@@ -55,6 +56,15 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
   useEffect(() => {
     fetchBranding();
   }, [fetchBranding]);
+
+  const resetColorsToDefault = () => {
+    setBranding((prev) => ({
+      ...prev,
+      primaryColor: DEFAULT_BRANDING.brand.primaryColor,
+      secondaryColor: DEFAULT_BRANDING.brand.secondaryColor,
+      accentColor: DEFAULT_BRANDING.brand.accentColor,
+    }));
+  };
 
   const saveBranding = async () => {
     setSaving(true);
@@ -156,7 +166,10 @@ export default function BrandingSettingsClient({ clubId }: { clubId: string }) {
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={resetColorsToDefault} disabled={saving}>
+                Auf Standard zurücksetzen
+              </Button>
               <Button onClick={saveBranding} disabled={saving}>
                 {saving ? 'Wird gespeichert...' : 'Speichern'}
               </Button>

@@ -9,9 +9,9 @@ const log = createLogger('api:hourly-rates:trainers');
 
 export async function POST(_request: NextRequest) {
   return withApiAuth(_request, async (auth) => {
-    const hasPermission = await verifyRole(auth, 'trainer');
+    const hasPermission = await verifyRole(auth, 'admin');
     if (!hasPermission) {
-      return forbiddenResponse('Trainer or Admin access required');
+      return forbiddenResponse('Admin access required');
     }
 
     const rateLimitError = await checkRateLimitOrFail(_request, RATE_LIMITS.STRICT);

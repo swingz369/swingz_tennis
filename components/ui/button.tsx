@@ -3,6 +3,23 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
+// Recurses into fragments/elements (e.g. `<>{icon}{label}</>`) so icon+text
+// buttons aren't misdetected as textless — a shallow direct-children check
+// missed text nested one level down and fell back to a meaningless
+// aria-label="Button" even though the button had a real visible label.
+function nodeHasVisibleText(node: React.ReactNode): boolean {
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node).trim().length > 0;
+  }
+  if (Array.isArray(node)) {
+    return node.some(nodeHasVisibleText);
+  }
+  if (React.isValidElement(node)) {
+    return nodeHasVisibleText((node.props as { children?: React.ReactNode }).children);
+  }
+  return false;
+}
+
 const buttonVariants = cva(
   'inline-flex items-center justify-center whitespace-nowrap rounded-xl font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
   {
@@ -72,11 +89,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button';
 
-    const hasTextContent =
-      React.Children.count(children) > 0 &&
-      React.Children.toArray(children).some(
-        (child) => typeof child === 'string' || typeof child === 'number'
-      );
+    const hasTextContent = nodeHasVisibleText(children);
 
     const computedAriaLabel = ariaLabel || (!hasTextContent ? 'Button' : undefined);
 

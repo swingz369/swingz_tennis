@@ -717,7 +717,13 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
           <CardHeader className="border-b border-border dark:border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={handleCloseForm} className="shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleCloseForm}
+                  className="shrink-0"
+                  aria-label="Zurück"
+                >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div>
@@ -731,7 +737,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleCloseForm}>
+              <Button variant="ghost" size="icon" onClick={handleCloseForm} aria-label="Schließen">
                 <X className="h-5 w-5" />
               </Button>
             </div>
@@ -840,7 +846,12 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                         </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 flex-shrink-0"
+                              aria-label="Weitere Aktionen"
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -1020,7 +1031,7 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
+                                <Button variant="ghost" size="icon" aria-label="Weitere Aktionen">
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -1123,7 +1134,12 @@ export function CourtsManageClient({ initialCourts, courtTypes, clubId }: Courts
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 flex-shrink-0"
+                                aria-label="Weitere Aktionen"
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>

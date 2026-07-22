@@ -76,7 +76,7 @@ export async function PATCH(
         specializations,
         experience,
         status,
-        hourlyRate,
+        hourlyRate: rawHourlyRate,
         contractedHourlyRate: rawContractedRate,
         extraHoursRate: rawExtraRate,
         availability,
@@ -86,10 +86,26 @@ export async function PATCH(
       } = body;
 
       // ── Role-based field gating ─────────────────────────────────────────
-      // contracted_hourly_rate: admin-only write
+      // hourly_rate (legacy) + contracted_hourly_rate: admin-only write
       // extra_hours_rate: admin AND trainer (own profile) may write
+      let hourlyRate: number | undefined = undefined;
       let contractedHourlyRate: number | undefined = undefined;
       let extraHoursRate: number | undefined = undefined;
+
+      if (rawHourlyRate !== undefined) {
+        if (!isAdmin) {
+          return forbiddenResponse('Nur Admins können den Stundensatz ändern');
+        }
+        if (
+          rawHourlyRate !== null &&
+          (typeof rawHourlyRate !== 'number' ||
+            !Number.isFinite(rawHourlyRate) ||
+            rawHourlyRate < 0)
+        ) {
+          return NextResponse.json({ error: 'Stundensatz muss ≥ 0 sein' }, { status: 400 });
+        }
+        hourlyRate = rawHourlyRate;
+      }
 
       if (rawContractedRate !== undefined) {
         if (!isAdmin) {
@@ -128,7 +144,7 @@ export async function PATCH(
         specializations,
         experience,
         status,
-        hourlyRate,
+        ...(hourlyRate !== undefined ? { hourlyRate } : {}),
         ...(contractedHourlyRate !== undefined ? { contractedHourlyRate } : {}),
         ...(extraHoursRate !== undefined ? { extraHoursRate } : {}),
         availability,

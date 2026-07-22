@@ -549,7 +549,13 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="Details" asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Details"
+                          aria-label="Details"
+                          asChild
+                        >
                           <Link href={`/admin/trainers/${trainer.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
@@ -558,6 +564,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
                           variant="ghost"
                           size="icon"
                           title={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                          aria-label={trainer.status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
                           onClick={() => handleToggleTrainerStatus(trainer.id, trainer.status)}
                         >
                           {trainer.status === 'active' ? (
@@ -632,6 +639,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
             className="h-8 w-8"
             onClick={() => setBulkConfirmOpen(false)}
             disabled={bulkDeactivating}
+            aria-label="Schließen"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -695,6 +703,7 @@ export default function TrainerProfileManagement({ clubId: _clubId }: { clubId: 
             size="icon"
             className="h-8 w-8"
             onClick={() => setShowInviteForm(false)}
+            aria-label="Schließen"
           >
             <X className="h-4 w-4" />
           </Button>

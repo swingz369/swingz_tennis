@@ -23,6 +23,7 @@ import {
   seasonPlanningConfigs,
 } from '@/src/infrastructure/persistence/season-planning-schema';
 import { createLogger } from '@/lib/logger';
+import { createServiceClient } from '@/lib/supabase/service';
 
 const log = createLogger('season-clustering-engine');
 import { and, eq, asc } from 'drizzle-orm';
@@ -821,11 +822,15 @@ export class SeasonClusteringEngine {
 
   private async loadGroups(): Promise<GroupInfo[]> {
     if (this._cachedGroups) return this._cachedGroups;
-    const groupRows = await db
-      .select()
-      .from(groups)
-      .where(and(eq(groups.club_id, this.clubId), eq(groups.is_active, true)));
-    const result = groupRows.map((g) => ({
+    // Supabase REST, not Drizzle — direct postgres/Drizzle connections are
+    // unreliable from the dev environment (see CLAUDE.md).
+    const { data: groupRows, error } = await createServiceClient()
+      .from('groups')
+      .select('id, name, level, age_group, max_size')
+      .eq('club_id', this.clubId)
+      .eq('is_active', true);
+    if (error) throw new Error(`Failed to load groups: ${error.message}`);
+    const result = (groupRows ?? []).map((g) => ({
       id: g.id,
       name: g.name,
       level: g.level as SkillLevel,

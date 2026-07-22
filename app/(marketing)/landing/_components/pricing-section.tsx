@@ -67,7 +67,7 @@ const PRICING_PLANS: Plan[] = [
     period: '/Monat',
     description:
       'Der gleiche Funktionsumfang wie Starter — der einzige Unterschied ist die Mitgliederanzahl.',
-    features: ['Ab 250 Mitglieder', ...COMMON_FEATURES],
+    features: ['Ab 201 Mitglieder', ...COMMON_FEATURES],
     cta: 'Jetzt registrieren',
     ctaHref: '/register',
     popular: true,

@@ -112,13 +112,14 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="clubName">Vereinsname</Label>
+                    <Label htmlFor="clubName">Vereinsname *</Label>
                     <Input
                       id="clubName"
                       value={clubName}
                       onChange={(e) => setClubName(e.target.value)}
                       placeholder="TC Musterstadt e.V."
                       className="mt-1.5"
+                      required
                     />
                   </div>
                   <div>
@@ -145,7 +146,11 @@ export default function RegisterPage() {
                     />
                   </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={loading || !name || !email}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loading || !name || !clubName || !email}
+                  >
                     {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     Anfrage absenden
                   </Button>

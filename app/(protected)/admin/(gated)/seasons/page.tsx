@@ -2,6 +2,7 @@ import { requireAdminClub } from '@/lib/admin-context';
 import { getPagination, buildPaginationMeta } from '@/lib/pagination';
 import { SeasonsClient } from './seasons-client';
 import type { PaginationMeta } from '@/lib/pagination';
+import { detectConflictsForSeason } from '@/lib/season-planning/conflict-detector';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,6 @@ export default async function SeasonsPage({
     // Fetch real stats from related tables (scoped to ALL seasons for club-wide KPIs)
     let prefsData: any[] = [];
     let entriesData: any[] = [];
-    let conflictsData: any[] = [];
     let groupsData: any[] = [];
     let trainerCount = 0;
 
@@ -75,7 +75,7 @@ export default async function SeasonsPage({
       .eq('include_in_planning', true);
 
     if (allSeasonIds.length > 0) {
-      const [prefsRes, entriesRes, conflictsRes, groupsRes] = await Promise.all([
+      const [prefsRes, entriesRes, groupsRes] = await Promise.all([
         supabase
           .from('user_training_preferences')
           .select('season_id, is_submitted, user_role')
@@ -85,11 +85,6 @@ export default async function SeasonsPage({
           .select('season_id, group_id')
           .in('season_id', allSeasonIds),
         supabase
-          .from('planning_conflicts')
-          .select('season_id, status')
-          .in('season_id', allSeasonIds)
-          .eq('status', 'open'),
-        supabase
           .from('season_plan_entries')
           .select('season_id, group_id')
           .in('season_id', allSeasonIds)
@@ -98,8 +93,21 @@ export default async function SeasonsPage({
 
       prefsData = prefsRes.data || [];
       entriesData = entriesRes.data || [];
-      conflictsData = conflictsRes.data || [];
       groupsData = groupsRes.data || [];
+    }
+
+    // Live conflict count — scoped to the paginated (displayed) seasons only,
+    // not all-time, to bound the extra reads. Replaces the stale
+    // planning_conflicts table, which is only populated once at Publish-time.
+    const displayedSeasonIds = (seasonsData || []).map((s: any) => s.id as string);
+    const conflictsBySeasonLive = new Map<string, number>();
+    if (displayedSeasonIds.length > 0) {
+      const results = await Promise.all(
+        displayedSeasonIds.map((sid) =>
+          detectConflictsForSeason(sid, clubId).then((r) => [sid, r.summary.total] as const)
+        )
+      );
+      for (const [sid, total] of results) conflictsBySeasonLive.set(sid, total);
     }
 
     // Compute per-season statistics (eingereichte Mitglieder-Präferenzen)
@@ -115,12 +123,6 @@ export default async function SeasonsPage({
     for (const e of entriesData) {
       const sid = e.season_id as string;
       entriesBySeason.set(sid, (entriesBySeason.get(sid) || 0) + 1);
-    }
-
-    const conflictsBySeason = new Map<string, number>();
-    for (const c of conflictsData) {
-      const sid = c.season_id as string;
-      conflictsBySeason.set(sid, (conflictsBySeason.get(sid) || 0) + 1);
     }
 
     const groupsBySeason = new Map<string, Set<string>>();
@@ -149,7 +151,7 @@ export default async function SeasonsPage({
         total_preferences: planningMembers ?? 0,
         submitted_preferences: prefs?.submitted ?? 0,
         planned_entries: entriesBySeason.get(s.id) ?? 0,
-        open_conflicts: conflictsBySeason.get(s.id) ?? 0,
+        open_conflicts: conflictsBySeasonLive.get(s.id) ?? 0,
         trainers_count: trainerCount,
         groups_covered: groupsBySeason.get(s.id)?.size ?? 0,
       };

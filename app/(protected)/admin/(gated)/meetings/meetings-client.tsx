@@ -27,7 +27,7 @@ type Meeting = {
   status: string;
 };
 
-export default function MeetingsPage() {
+export function MeetingsClient() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);

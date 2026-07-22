@@ -8,6 +8,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { withApiAuth, verifyRole, forbiddenResponse } from '@/lib/api-auth';
 import { RATE_LIMITS, checkRateLimitOrFail } from '@/lib/rate-limit';
+import { createServiceClient } from '@/lib/supabase/service';
 import type { Database } from '@/types/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '@/lib/logger';
@@ -91,17 +92,27 @@ export async function GET(req: NextRequest) {
       const trainersMap = new Map<string, string>();
 
       if (trainerIds.length > 0) {
-        const { data: trainerData } = await supabase
+        // Display-name lookup only — uses the service client because the
+        // RLS-scoped user client cannot read other users'/trainers' rows,
+        // which silently produced the 'Trainer' fallback for every session.
+        const serviceSupabase = createServiceClient();
+
+        const { data: trainerData } = await serviceSupabase
           .from('trainers')
           .select('id, name, email')
           .in('id', trainerIds);
 
         ((trainerData ?? []) as Pick<TrainerRow, 'id' | 'name' | 'email'>[]).forEach((t) => {
-          trainersMap.set(t.id, t.name || t.email || 'Trainer');
+          // Only set an entry when we have a real name/email — an unconditional
+          // set here (even with the 'Trainer' fallback) would block the users-table
+          // lookup below from ever filling in a proper name via `full_name`.
+          if (t.name || t.email) {
+            trainersMap.set(t.id, (t.name || t.email) as string);
+          }
         });
 
         // Also check users table for trainer names
-        const { data: usersData } = await supabase
+        const { data: usersData } = await serviceSupabase
           .from('users')
           .select('id, full_name')
           .in('id', trainerIds);
@@ -117,9 +128,13 @@ export async function GET(req: NextRequest) {
       const sessionIds = typedSessions.map((s) => s.id);
       const activeStatuses: BookingRow['status'][] = ['pending', 'confirmed'];
 
+      // Same RLS gap as the trainer lookup above: the joined `users.full_name`
+      // for other members doesn't resolve via the RLS-scoped client, so this
+      // uses the service client too (the explicit club_id filter below keeps
+      // the query scoped to the requested club).
       const { data: allActiveBookings } =
         sessionIds.length > 0
-          ? await supabase
+          ? await createServiceClient()
               .from('bookings')
               .select('id, session_id, status, member_id, users!bookings_member_id_fkey(full_name)')
               .in('session_id', sessionIds)

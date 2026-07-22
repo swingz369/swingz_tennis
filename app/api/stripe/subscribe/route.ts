@@ -13,7 +13,7 @@ import { createLogger } from '@/lib/logger';
 const log = createLogger('api:stripe:subscribe');
 
 const VALID_PLANS: PlanKey[] = ['solo_s', 'solo_l', 'school_s', 'school_l'];
-const VALID_INTERVALS: BillingInterval[] = ['monthly', '6months', 'annual'];
+const VALID_INTERVALS: BillingInterval[] = ['monthly', 'annual'];
 
 export async function POST(request: NextRequest) {
   return withApiAuth(request, async (auth) => {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
     if (!VALID_INTERVALS.includes(interval)) {
       return NextResponse.json(
-        { error: 'Ungültiges Intervall. Erlaubt: monthly, 6months, annual' },
+        { error: 'Ungültiges Intervall. Erlaubt: monthly, annual' },
         { status: 400 }
       );
     }
